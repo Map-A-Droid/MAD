@@ -72,7 +72,7 @@ class APIMadAPK(APKHandler):
             except (BadZipFile, LargeZipFile) as err:
                 return (str(err), 406)
             except WizardError as err:
-                self._logger.warning(str(err))
+                self._logger.warning(err)
                 return (str(err), 406)
             except Exception:
                 self._logger.opt(exception=True).critical("An unhanded exception occurred!")

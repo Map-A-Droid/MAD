@@ -273,8 +273,8 @@ class statistics(object):
             monName = get_mon_name(dat[2])
             diff: int = dat[0]
             if diff == 0:
-                logger.warning('No deeper mon stats are possible - not enough data '
-                               '(check config.ini // game_stats_raw)')
+                logger.warning('No deeper pokemon stats are possible - not enough data (check config.ini // '
+                               'game_stats_raw)')
                 diff = 1
 
             ratio = round(dat[1] * 100 / diff, 2)

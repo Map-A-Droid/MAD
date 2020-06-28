@@ -315,7 +315,6 @@ class DbSchemaUpdater:
         return int(self._db_exec.execute(query, vals)[0][0]) >= 1
 
     def create_madmin_databases_if_not_exists(self):
-        logger.debug2("DbWrapperBase::create_madmin_databases_if_not_exists called")
         for table in madmin_conversion.TABLES:
             self._db_exec.execute(table, commit=True)
 

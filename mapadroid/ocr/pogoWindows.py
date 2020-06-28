@@ -61,8 +61,7 @@ class PogoWindows:
 
     def __most_present_colour(self, filename, max_colours) -> Optional[List[int]]:
         if filename is None or max_colours is None:
-            logger.warning("Cannot retrieve most present colour of {} with {} max colours", filename,
-                           max_colours)
+            logger.warning("Cannot retrieve most present colour of {} with {} max colours", filename, max_colours)
             return None
         try:
             with Image.open(filename) as img:
@@ -85,7 +84,7 @@ class PogoWindows:
         origin_logger = get_origin_logger(logger, origin=identifier)
         # run the check for the file here once before having the subprocess check it (as well)
         if not os.path.isfile(filename):
-            origin_logger.error("isGpsSignalLost: {} does not exist", str(filename))
+            origin_logger.error("isGpsSignalLost: {} does not exist", filename)
             return None
 
         return self.__thread_pool.apply_async(self.__internal_is_gps_signal_lost,
@@ -94,18 +93,18 @@ class PogoWindows:
     def __internal_is_gps_signal_lost(self, filename, identifier) -> Optional[bool]:
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
-            origin_logger.error("isGpsSignalLost: {} does not exist", str(filename))
+            origin_logger.error("isGpsSignalLost: {} does not exist", filename)
             return None
 
         origin_logger.debug("isGpsSignalLost: checking for red bar")
         try:
             col = cv2.imread(filename)
         except Exception:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return True
 
         if col is None:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return True
 
         width, height, _ = col.shape
@@ -129,16 +128,16 @@ class PogoWindows:
                             click=False,
                             canny=False, secondratio=False):
         origin_logger = get_origin_logger(logger, origin=identifier)
-        origin_logger.debug("__read_circle_count: Reading circles")
+        origin_logger.debug2("__read_circle_count: Reading circles")
 
         try:
             screenshot_read = cv2.imread(filename)
         except Exception:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return -1
 
         if screenshot_read is None:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return -1
 
         height, width, _ = screenshot_read.shape
@@ -148,7 +147,7 @@ class PogoWindows:
                               int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
                                   int(width) / 8)]
 
-        origin_logger.debug("__read_circle_count: Determined screenshot scale: {} x {}", str(height), str(width))
+        origin_logger.debug("__read_circle_count: Determined screenshot scale: {} x {}", height, width)
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
@@ -162,7 +161,7 @@ class PogoWindows:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
 
-        origin_logger.debug("__read_circle_count: Detect radius of circle: Min {} / Max {}", str(radMin), str(radMax))
+        origin_logger.debug("__read_circle_count: Detect radius of circle: Min {} / Max {}", radMin, radMax)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
                                    minRadius=radMin,
                                    maxRadius=radMax)
@@ -190,7 +189,7 @@ class PogoWindows:
                                 width / 2, ((int(height) - int(height / 4.5))) + y)
                             time.sleep(2)
 
-            origin_logger.debug("__read_circle_count: Determined screenshot to have {} Circle.", str(circle))
+            origin_logger.debug("__read_circle_count: Determined screenshot to have {} Circle.", circle)
             return circle
         else:
             origin_logger.debug("__read_circle_count: Determined screenshot to have 0 Circle")
@@ -203,11 +202,11 @@ class PogoWindows:
         try:
             screenshot_read = cv2.imread(filename)
         except Exception:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
 
         if screenshot_read is None:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
 
         height, width, _ = screenshot_read.shape
@@ -216,7 +215,7 @@ class PogoWindows:
             screenshot_read = screenshot_read[int(height) - int(height / 5):int(height),
                               int(width) / 2 - int(width) / 8:int(width) / 2 + int(width) / 8]
 
-        origin_logger.debug("__readCircleCords: Determined screenshot scale: {} x {}", str(height), str(width))
+        origin_logger.debug("__readCircleCords: Determined screenshot scale: {} x {}", height, width)
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
@@ -227,7 +226,7 @@ class PogoWindows:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
 
-        origin_logger.debug("__readCircleCords: Detect radius of circle: Min {} Max {}", str(radMin), str(radMax))
+        origin_logger.debug("__readCircleCords: Detect radius of circle: Min {} Max {}", radMin, radMax)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
                                    minRadius=radMin,
                                    maxRadius=radMax)
@@ -238,8 +237,8 @@ class PogoWindows:
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
             for (x, y, r) in circles:
-                origin_logger.debug("__readCircleCords: Found Circle x: {} y: {}", str(width / 2),
-                             str((int(height) - int(height / 5)) + y))
+                origin_logger.debug("__readCircleCords: Found Circle x: {} y: {}", width / 2,
+                                    (int(height) - int(height / 5)) + y)
                 return True, width / 2, (int(height) - int(height / 5)) + y, height, width
         else:
             origin_logger.debug("__readCircleCords: Found no Circle")
@@ -248,7 +247,7 @@ class PogoWindows:
     def get_trash_click_positions(self, origin, filename, full_screen=False):
         origin_logger = get_origin_logger(logger, origin=origin)
         if not os.path.isfile(filename):
-            origin_logger.error("get_trash_click_positions: {} does not exist", str(filename))
+            origin_logger.error("get_trash_click_positions: {} does not exist", filename)
             return None
 
         return self.__thread_pool.apply_async(trash_image_matching, (origin, filename, full_screen,)).get()
@@ -256,7 +255,7 @@ class PogoWindows:
     def read_amount_raid_circles(self, filename, identifier, communicator):
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
-            origin_logger.error("read_amount_raid_circles: {} does not exist", str(filename))
+            origin_logger.error("read_amount_raid_circles: {} does not exist", filename)
             return 0
 
         return self.__thread_pool.apply_async(self.__internal_read_amount_raid_circles,
@@ -275,7 +274,7 @@ class PogoWindows:
             circle = 6
 
         if circle > 0:
-            origin_logger.debug("readCircles: Determined screenshot to have {} Circle.", str(circle))
+            origin_logger.debug("readCircles: Determined screenshot to have {} Circle.", circle)
             return circle
 
         logger.debug("readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
@@ -284,7 +283,7 @@ class PogoWindows:
     def look_for_button(self, origin, filename, ratiomin, ratiomax, communicator, upper: bool = False):
         origin_logger = get_origin_logger(logger, origin=origin)
         if not os.path.isfile(filename):
-            origin_logger.error("look_for_button: {} does not exist", str(filename))
+            origin_logger.error("look_for_button: {} does not exist", filename)
             return False
 
         return self.__thread_pool.apply_async(self.__internal_look_for_button,
@@ -298,16 +297,16 @@ class PogoWindows:
             screenshot_read = cv2.imread(filename)
             gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         except:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
 
         if screenshot_read is None:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
 
         height, width, _ = screenshot_read.shape
         _widthold = float(width)
-        origin_logger.debug("lookForButton: Determined screenshot scale: {} x {}", str(height), str(width))
+        origin_logger.debug("lookForButton: Determined screenshot scale: {} x {}", height, width)
 
         # resize for better line quality
         # gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
@@ -319,9 +318,9 @@ class PogoWindows:
         # checking for all possible button lines
 
         maxLineLength = (width / ratiomin) + (width * 0.18)
-        origin_logger.debug("lookForButton: MaxLineLength: {}", str(maxLineLength))
+        origin_logger.debug("lookForButton: MaxLineLength: {}", maxLineLength)
         minLineLength = (width / ratiomax) - (width * 0.02)
-        origin_logger.debug("lookForButton: MinLineLength: {}", str(minLineLength))
+        origin_logger.debug("lookForButton: MinLineLength: {}", minLineLength)
 
         kernel = np.ones((2, 2), np.uint8)
         # kernel = np.zeros(shape=(2, 2), dtype=np.uint8)
@@ -370,7 +369,7 @@ class PogoWindows:
                         _x1 = x1
                         _x2 = x2
                     origin_logger.debug("lookForButton: Found Buttonline Nr. {} - Line lenght: {}px Coords - X: {} {} "
-                                        "Y: {} {}", str(lineCount), str(x2 - x1), str(x1), str(x2), str(y1), str(y1))
+                                        "Y: {} {}", lineCount, x2 - x1, x1, x2, y1, y1)
 
         if 1 < lineCount <= 6:
             # recalculate click area for real resolution
@@ -425,10 +424,10 @@ class PogoWindows:
         try:
             screenshot_read = cv2.imread(filename)
         except Exception:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
         if screenshot_read is None:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
 
         if self.__read_circle_count(os.path.join('', filename), identifier, float(11), communicator,
@@ -443,12 +442,12 @@ class PogoWindows:
                           int(0):int(width)]
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
-        origin_logger.debug("__check_raid_line: Determined screenshot scale: {} x {}", str(height), str(width))
+        origin_logger.debug("__check_raid_line: Determined screenshot scale: {} x {}", height, width)
         edges = cv2.Canny(gray, 50, 150, apertureSize=3)
         maxLineLength = width / 3.30 + width * 0.03
-        origin_logger.debug("__check_raid_line: MaxLineLength: {}", str(maxLineLength))
+        origin_logger.debug("__check_raid_line: MaxLineLength: {}", maxLineLength)
         minLineLength = width / 6.35 - width * 0.03
-        origin_logger.debug("__check_raid_line: MinLineLength: {}", str(minLineLength))
+        origin_logger.debug("__check_raid_line: MinLineLength: {}", minLineLength)
         maxLineGap = 50
 
         lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
@@ -462,8 +461,7 @@ class PogoWindows:
                             x2 - x1 >= minLineLength) and x1 > width / 2 and x2 > width / 2 and y1 < (
                             height / 2):
                         origin_logger.debug("__check_raid_line: Raid-tab is active - Line length: {}px "
-                                            "Coords - x: {} {} Y: {} {}", str(x2 - x1), str(x1), str(x2), str(y1),
-                                            str(y2))
+                                            "Coords - x: {} {} Y: {} {}", x2 - x1, x1, x2, y1, y2)
                         return True
                 else:
                     if y1 == y2 and (x2 - x1 <= maxLineLength) and (
@@ -493,10 +491,10 @@ class PogoWindows:
         try:
             image = cv2.imread(filename)
         except Exception:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
         if image is None:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
 
         height, width, _ = image.shape
@@ -520,7 +518,7 @@ class PogoWindows:
     def check_raidscreen(self, filename, identifier, communicator):
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
-            origin_logger.error("check_raidscreen: {} does not exist", str(filename))
+            origin_logger.error("check_raidscreen: {} does not exist", filename)
             return None
 
         return self.__thread_pool.apply_async(self.__internal_check_raidscreen,
@@ -544,7 +542,7 @@ class PogoWindows:
     def check_nearby(self, filename, identifier, communicator):
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
-            origin_logger.error("check_nearby: {} does not exist", str(filename))
+            origin_logger.error("check_nearby: {} does not exist", filename)
             return False
 
         return self.__thread_pool.apply_async(self.__internal_check_nearby,
@@ -555,10 +553,10 @@ class PogoWindows:
         try:
             screenshot_read = cv2.imread(filename)
         except Exception:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
         if screenshot_read is None:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             return False
 
         if self.__check_raid_line(filename, identifier, communicator):
@@ -580,7 +578,7 @@ class PogoWindows:
     def __check_close_present(self, filename, identifier, communicator, radiusratio=12, Xcord=True):
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
-            origin_logger.warning("__check_close_present: {} does not exist", str(filename))
+            origin_logger.warning("__check_close_present: {} does not exist", filename)
             return False
 
         try:
@@ -602,7 +600,7 @@ class PogoWindows:
     def check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
-            origin_logger.error("check_close_except_nearby_button: {} does not exist", str(filename))
+            origin_logger.error("check_close_except_nearby_button: {} does not exist", filename)
             return False
 
         return self.__thread_pool.apply_async(self.__internal_check_close_except_nearby_button,
@@ -617,11 +615,11 @@ class PogoWindows:
         try:
             screenshot_read = cv2.imread(filename)
         except:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             origin_logger.debug("__internal_check_close_except_nearby_button: Screenshot corrupted...")
             return False
         if screenshot_read is None:
-            origin_logger.error("__internal_check_close_except_nearby_button: Screenshot corrupted :(")
+            origin_logger.error("__internal_check_close_except_nearby_button: Screenshot corrupted")
             return False
 
         if not close_raid:
@@ -658,7 +656,7 @@ class PogoWindows:
     def get_inventory_text(self, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
-            origin_logger.error("get_inventory_text: {} does not exist", str(filename))
+            origin_logger.error("get_inventory_text: {} does not exist", filename)
             return None
 
         return self.__thread_pool.apply_async(self.__internal_get_inventory_text,
@@ -695,7 +693,7 @@ class PogoWindows:
     def check_pogo_mainscreen(self, filename, identifier):
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
-            origin_logger.error("check_pogo_mainscreen: {} does not exist", str(filename))
+            origin_logger.error("check_pogo_mainscreen: {} does not exist", filename)
             return False
 
         return self.__thread_pool.apply_async(self.__internal_check_pogo_mainscreen,
@@ -708,11 +706,11 @@ class PogoWindows:
         try:
             screenshot_read = cv2.imread(filename)
         except Exception:
-            origin_logger.error("Screenshot corrupted :(")
+            origin_logger.error("Screenshot corrupted")
             logger.debug("__internal_check_pogo_mainscreen: Screenshot corrupted...")
             return False
         if screenshot_read is None:
-            origin_logger.error("__internal_check_pogo_mainscreen: Screenshot corrupted :(")
+            origin_logger.error("__internal_check_pogo_mainscreen: Screenshot corrupted")
             return False
 
         height, width, _ = screenshot_read.shape
@@ -758,7 +756,7 @@ class PogoWindows:
                     returning_dict = pytesseract.image_to_data(frame, output_type=Output.DICT, timeout=40,
                                                                config='--dpi 70')
                 except Exception as e:
-                    origin_logger.error("Tesseract Error: {}. Exception: {}", str(returning_dict), e)
+                    origin_logger.error("Tesseract Error: {}. Exception: {}", returning_dict, e)
                     returning_dict = None
         except (FileNotFoundError, ValueError) as e:
             origin_logger.error("Failed opening image {} with exception {}", screenpath, e)
@@ -819,7 +817,7 @@ class PogoWindows:
             with Image.open(image) as frame_org:
                 width, height = frame_org.size
 
-                origin_logger.debug("Screensize: W:{} x H:{}", str(width), str(height))
+                origin_logger.debug("Screensize: W:{} x H:{}", width, height)
 
                 if width < 1080:
                     origin_logger.info('Resize screen ...')
@@ -836,9 +834,9 @@ class PogoWindows:
                         globaldict = pytesseract.image_to_data(text, output_type=Output.DICT, timeout=40,
                                                                config='--dpi 70')
                     except Exception as e:
-                        origin_logger.error("Tesseract Error: {}. Exception: {}", str(globaldict), e)
+                        origin_logger.error("Tesseract Error: {}. Exception: {}", globaldict, e)
                         globaldict = None
-                    origin_logger.debug("Screentext: {}", str(globaldict))
+                    origin_logger.debug("Screentext: {}", globaldict)
                     if globaldict is None or 'text' not in globaldict:
                         continue
                     n_boxes = len(globaldict['level'])

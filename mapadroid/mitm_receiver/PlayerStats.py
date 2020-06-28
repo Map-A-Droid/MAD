@@ -30,7 +30,7 @@ class PlayerStats(object):
         self._poke_stop_visits: int = 0
 
     def set_level(self, level: int):
-        self._logger.debug('set level {}', str(level))
+        self._logger.info('set level {}', level)
         self._level = int(level)
         return True
 
@@ -38,7 +38,7 @@ class PlayerStats(object):
         return self._level
 
     def set_poke_stop_visits(self, visits: int):
-        self._logger.debug4('set pokestops visited {}', str(visits))
+        self._logger.debug2('set pokestops visited {}', visits)
         self._poke_stop_visits = visits
         return True
 
@@ -245,7 +245,7 @@ class PlayerStats(object):
                       str(quest_count)
                       )
 
-        origin_logger.debug('Submit complete stats - Period: {}: {}', str(period), str(stats_data))
+        origin_logger.debug('Submit complete stats - Period: {}: {}', period, stats_data)
 
         return stats_data
 
@@ -262,7 +262,7 @@ class PlayerStats(object):
                          str(location_ok),
                          str(location_nok))
 
-        origin_logger.debug4('Submit location stats - Period: {}: {}', str(period), str(location_data))
+        origin_logger.debug4('Submit location stats - Period: {}: {}', period, location_data)
 
         return location_data
 
@@ -275,8 +275,7 @@ class PlayerStats(object):
             for loc_raw in data['location']:
                 data_location_raw.append(loc_raw)
 
-        origin_logger.debug4('Submit raw location stats - Period: {} - Count: {}', str(period),
-                             str(len(data_location_raw)))
+        origin_logger.debug4('Submit raw location stats - Period: {} - Count: {}', period, len(data_location_raw))
 
         return data_location_raw
 
@@ -341,7 +340,5 @@ class PlayerStats(object):
                                               str(int(period))
                                               ))
 
-        origin_logger.debug('Submit raw detection stats for Period: {} - Count: {}', str(period),
-                            str(len(data_location_raw)))
-
+        origin_logger.debug('Submit raw detection stats for Period: {} - Count: {}', period, len(data_location_raw))
         return data_location_raw

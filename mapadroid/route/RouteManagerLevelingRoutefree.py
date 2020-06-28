@@ -49,8 +49,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                                                                                   ignore_spinned=self.settings.get("ignore_spinned_stops", True),
                                                                                   maxdistance=5)
                 if len(unvisited_stops) == 0:
-                    self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!",
-                                origin)
+                    self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
                     continue
 
                 for coord in unvisited_stops:
@@ -185,7 +184,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
             self.logger.debug('Init Mode - coord is valid')
             return True
         stop = Location(lat, lng)
-        self.logger.info('Checking Stop with ID {}', str(stop))
+        self.logger.info('Checking Stop with ID {}', stop)
         if stop in self._coords_to_be_ignored:
             self.logger.info('Already tried this Stop and failed it')
             return False

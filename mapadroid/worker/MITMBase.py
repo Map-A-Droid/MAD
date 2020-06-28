@@ -95,20 +95,15 @@ class MITMBase(WorkerBase):
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
         if distance > max_radius:
-            self.logger.debug2("Data is too far away!! avg location {}, {} from "
-                "data with self.current_location location {}, {} - that's a "
-                "{}m distance with max_radius {} for mode {}", avg_lat, avg_lng,
-                                                self.current_location.lat,
-                                                self.current_location.lng,
-                                                distance, max_radius, mode)
+            self.logger.debug2("Data is too far away!! avg location {}, {} from  data with self.current_location "
+                               "location {}, {} - that's a {}m distance with max_radius {} for mode {}", avg_lat,
+                               avg_lng, self.current_location.lat, self.current_location.lng, distance, max_radius,
+                               mode)
             return False
         else:
-            self.logger.debug("Data distance is ok! found avg location {}, {} "
-                "from data with self.current_location location {}, {} - that's "
-                "a {}m distance with max_radius {} for mode {}", avg_lat, avg_lng,
-                                                  self.current_location.lat,
-                                                  self.current_location.lng,
-                                                  distance, max_radius, mode)
+            self.logger.debug("Data distance is ok! found avg location {}, {} from data with self.current_location "
+                             "location {}, {} - that's a {}m distance with max_radius {} for mode {}", avg_lat, avg_lng,
+                             self.current_location.lat, self.current_location.lng, distance, max_radius, mode)
             return True
 
     def _wait_for_data(self, timestamp: float = None, proto_to_wait_for=106, timeout=None):
@@ -134,8 +129,7 @@ class MITMBase(WorkerBase):
         # TODO: discuss, probably wiser to add to timeout or get the diff of how long it takes for RGC to issue a cmd
         timestamp = timestamp - (timestamp_last_received - timestamp_last_data)
 
-        self.logger.info('Waiting for data after {}',
-                    datetime.fromtimestamp(timestamp))
+        self.logger.info('Waiting for data after {}', datetime.fromtimestamp(timestamp))
         data_requested = LatestReceivedType.UNDEFINED
 
         failover_timestamp: int = time.time()
@@ -157,7 +151,7 @@ class MITMBase(WorkerBase):
                 max_distance_of_mode = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
                 max_distance_for_worker: int = self._applicationArgs.maximum_valid_distance \
                     if max_distance_of_mode < self._applicationArgs.maximum_valid_distance else max_distance_of_mode
-                self.logger.debug("Distance of worker {} to data location: {}", str(self._origin), str(distance_to_data))
+                self.logger.debug("Distance of worker {} to data location: {}", self._origin, distance_to_data)
                 if max_distance_for_worker and distance_to_data > max_distance_for_worker:
                     self.logger.debug("Real data too far from worker position, waiting...")
                     check_data = False
@@ -167,7 +161,7 @@ class MITMBase(WorkerBase):
                     latest, proto_to_wait_for, timestamp)
             if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                     or self._stop_worker_event.is_set():
-                self.logger.error("Worker {} get killed while sleeping", str(self._origin))
+                self.logger.error("killed while sleeping")
                 raise InternalStopWorkerException
 
             time.sleep(1)
@@ -215,13 +209,13 @@ class MITMBase(WorkerBase):
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
                         and self.get_devicesettings_value("reboot", False):
-                    self.logger.error("Too many timeouts - Rebooting device {}", str(self._origin))
+                    self.logger.error("Too many timeouts - Rebooting device")
                     self._reboot(mitm_mapper=self._mitm_mapper)
                     raise InternalStopWorkerException
 
                 # self._mitm_mapper.
                 self._restart_count = 0
-                self.logger.error("Too many timeouts - Restarting game on {}", str(self._origin))
+                self.logger.error("Too many timeouts - Restarting game")
                 self._restart_pogo(True, self._mitm_mapper)
 
         self.worker_stats()
@@ -248,22 +242,22 @@ class MITMBase(WorkerBase):
         while not self._mitm_mapper.get_injection_status(self._origin):
             self._check_for_mad_job()
             if reboot and self._not_injected_count >= injection_thresh_reboot:
-                self.logger.error("Worker {} not injected in time - reboot", str(self._origin))
+                self.logger.error("Not injected in time - reboot")
                 self._reboot(self._mitm_mapper)
                 return False
-            self.logger.info("Didn't receive any data from worker {} yet. (Retry count: {}/{})",
-                        str(self._origin), str(self._not_injected_count), str(injection_thresh_reboot))
+            self.logger.info("Didn't receive any data yet. (Retry count: {}/{})", self._not_injected_count,
+                             injection_thresh_reboot)
             if (self._not_injected_count != 0 and self._not_injected_count % window_check_frequency == 0) \
                 and not self._stop_worker_event.is_set():
-                self.logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
-                            str(self._origin), str(self._not_injected_count))
+                self.logger.info("Retry check_windows while waiting for injection at count {}",
+                                 self._not_injected_count)
                 self._ensure_pogo_topmost()
             self._not_injected_count += 1
             wait_time = 0
             while wait_time < 20:
                 wait_time += 1
                 if self._stop_worker_event.is_set():
-                    self.logger.error("Worker {} killed while waiting for injection", str(self._origin))
+                    self.logger.error("Killed while waiting for injection")
                     return False
                 time.sleep(1)
         return True
@@ -282,7 +276,7 @@ class MITMBase(WorkerBase):
             x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                    self._resocalc.get_coords_quest_menu(self)[1]
             self._communicator.click(int(x), int(y))
-            self.logger.debug("_clear_quests Open menu: {}, {}", str(int(x)), str(int(y)))
+            self.logger.debug("_clear_quests Open menu: {}, {}", int(x), int(y))
             time.sleep(6 + int(delayadd))
 
         if self._enhanced_mode:
@@ -294,23 +288,22 @@ class MITMBase(WorkerBase):
         x, y = self._resocalc.get_quest_listview(self)[0], \
                self._resocalc.get_quest_listview(self)[1]
         self._communicator.click(int(x), int(y))
-        self.logger.debug("_clear_quests Open field: {}, {}", str(int(x)), str(int(y)))
+        self.logger.debug("_clear_quests Open field: {}, {}", int(x), int(y))
         time.sleep(4 + int(delayadd))
 
         trashcancheck = self._get_trash_positions(full_screen=True)
-        self.logger.debug("_clear_quests Found trash: {}", str(trashcancheck))
+        self.logger.debug("_clear_quests Found trash: {}", trashcancheck)
         if trashcancheck is None:
             self.logger.error('Could not find any trashcan - abort')
             return
         if len(trashcancheck) == 0:
             self._clear_quests_failcount += 1
             if self._clear_quests_failcount < 3:
-                self.logger.warning("Could not find any trashcan on a valid screen"
-                    "shot {} time(s) in a row!", self._clear_quests_failcount)
+                self.logger.warning("Could not find any trashcan on a valid screenshot {} time(s) in a row!",
+                                    self._clear_quests_failcount)
             else:
                 self._clear_quests_failcount = 0
-                self.logger.error("Unable to clear quests 3 times in a row. Restart "
-                        "pogo ...")
+                self.logger.error("Unable to clear quests 3 times in a row. Restart pogo ...")
                 if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
@@ -382,27 +375,23 @@ class MITMBase(WorkerBase):
     def worker_stats(self):
         self.logger.debug('===============================')
         self.logger.debug('Worker Stats')
-        self.logger.debug('Origin: {} [{}]', str(self._origin), str(self._dev_id))
-        self.logger.debug('Routemanager: {} [{}]', str(self._routemanager_name), str(self._area_id))
-        self.logger.debug('Restart Counter: {}', str(self._restart_count))
-        self.logger.debug('Reboot Counter: {}', str(self._reboot_count))
-        self.logger.debug('Reboot Option: {}', str(
-            self.get_devicesettings_value("reboot", False)))
-        self.logger.debug('Current Pos: {} {}', str(
-            self.current_location.lat), str(self.current_location.lng))
-        self.logger.debug('Last Pos: {} {}', str(
-            self.last_location.lat), str(self.last_location.lng))
+        self.logger.debug('Origin: {} [{}]', self._origin, self._dev_id)
+        self.logger.debug('Routemanager: {} [{}]', self._routemanager_name), str(self._area_id)
+        self.logger.debug('Restart Counter: {}', self._restart_count)
+        self.logger.debug('Reboot Counter: {}', self._reboot_count)
+        self.logger.debug('Reboot Option: {}', self.get_devicesettings_value("reboot", False))
+        self.logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
+        self.logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
         routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
                                                                                  self._origin)
         if routemanager_status is None:
             self.logger.warning("Routemanager not available")
             routemanager_status = [None, None]
         else:
-            self.logger.debug('Route Pos: {} - Route Length: {}', str(routemanager_status[0]),
-                         str(routemanager_status[1]))
+            self.logger.debug('Route Pos: {} - Route Length: {}', routemanager_status[0], routemanager_status[1])
         routemanager_init: bool = self._mapping_manager.routemanager_get_init(self._routemanager_name)
-        self.logger.debug('Init Mode: {}', str(routemanager_init))
-        self.logger.debug('Last Date/Time of Data: {}', str(self._rec_data_time))
+        self.logger.debug('Init Mode: {}', routemanager_init)
+        self.logger.debug('Last Date/Time of Data: {}', self._rec_data_time)
         self.logger.debug('===============================')
         save_data = {
             'device_id': self._dev_id,
@@ -438,8 +427,7 @@ class MITMBase(WorkerBase):
     def _restart_pogodroid(self):
         successful_stop = self._worker_specific_setup_stop()
         time.sleep(1)
-        self.logger.debug(
-            "restartPogoDroid: stop PogoDroid resulted in {}", str(successful_stop))
+        self.logger.debug("restartPogoDroid: stop PogoDroid resulted in {}", successful_stop)
         if successful_stop:
             return self._worker_specific_setup_start()
         else:

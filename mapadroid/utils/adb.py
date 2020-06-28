@@ -24,10 +24,7 @@ class ADBConnect(object):
                 pass
             self.check_adblib = 'adb.client' in sys.modules or 'ppadb.client' in sys.modules
             if not self.check_adblib:
-                logger.warning(
-                    "Could not find pure-python-adb library - no support for ADB."
-                    "If you have no idea what ADB is or not planning to use it - IGNORE :)"
-                )
+                logger.warning("Could not find pure-python-adb library.  If you are not using ADB you can ignore this")
                 self._useadb = False
             else:
                 self._client = AdbClient(
@@ -41,7 +38,7 @@ class ADBConnect(object):
                 self._client.device(adb).shell('echo checkadb')
                 return True
         except RuntimeError as e:
-            logger.exception('MADmin: Exception occurred while checking adb status ({}).', str(adb))
+            logger.exception('MADmin: Exception occurred while checking adb status ({}).', adb)
         return None
 
     def return_adb_devices(self):
@@ -88,7 +85,7 @@ class ADBConnect(object):
             device = self._client.device(adb)
             if device is not None:
                 device.shell("input tap " + str(x) + " " + str(y))
-                origin_logger.info('MADMin ADB Click x:{} y:{}', str(x), str(y))
+                origin_logger.info('MADMin ADB Click x:{} y:{}', x, y)
                 time.sleep(1)
                 return True
         except Exception as e:
@@ -102,7 +99,7 @@ class ADBConnect(object):
             if device is not None:
                 device.shell("input swipe " + str(x) + " " +
                              str(y) + " " + str(xe) + " " + str(ye) + " 100")
-                origin_logger.info('MADMin ADB Swipe x:{} y:{} xe:{} ye:{}', str(x), str(y), str(xe), str(ye))
+                origin_logger.info('MADMin ADB Swipe x:{} y:{} xe:{} ye:{}', x, y, xe, ye)
                 time.sleep(1)
                 return True
         except Exception as e:
@@ -115,7 +112,7 @@ class ADBConnect(object):
             device = self._client.device(adb)
             if device is not None:
                 device.shell("adb push  " + str(filename) + " /sdcard/Download")
-                origin_logger.info('MADMin ADB Push File {}', str(filename))
+                origin_logger.info('MADMin ADB Push File {}', filename)
                 time.sleep(1)
                 return True
         except Exception as e:

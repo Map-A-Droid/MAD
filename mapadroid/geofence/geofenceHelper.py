@@ -26,8 +26,8 @@ class GeofenceHelper:
                 include_geofence, excluded=False, fence_fallback=fence_name)
             self.excluded_areas = self.parse_geofences_file(
                 exclude_geofence, excluded=True, fence_fallback=fence_name)
-            logger.debug2("Loaded {} geofenced and {} excluded areas.", len(
-                self.geofenced_areas), len(self.excluded_areas))
+            logger.debug2("Loaded {} geofenced and {} excluded areas.", len(self.geofenced_areas),
+                          len(self.excluded_areas))
 
     def get_polygon_from_fence(self):
         maxLat, minLat, maxLon, minLon = -90, 90, -180, 180
@@ -65,7 +65,7 @@ class GeofenceHelper:
         # Import: We are working with n-tuples in some functions be carefull
         # and do not break compatibility
         logger.debug('Using matplotlib: {}.', self.use_matplotlib)
-        logger.debug('Found {} coordinates to geofence.', len(coordinates))
+        logger.debug2('Found {} coordinates to geofence.', len(coordinates))
 
         geofenced_coordinates = []
         for c in coordinates:
@@ -82,8 +82,7 @@ class GeofenceHelper:
             else:
                 geofenced_coordinates.append(c)
 
-        logger.debug2("Geofenced to {} coordinates",
-                      len(geofenced_coordinates))
+        logger.debug2("Geofenced to {} coordinates", len(geofenced_coordinates))
         return geofenced_coordinates
 
     def is_enabled(self):
@@ -107,7 +106,7 @@ class GeofenceHelper:
                         'name': name,
                         'polygon': []
                     })
-                    logger.debug('Found geofence: {}', name)
+                    logger.debug2('Found geofence: {}', name)
                     first_line = False
                 else:  # Coordinate line.
                     if first_line:
@@ -120,7 +119,7 @@ class GeofenceHelper:
                             'name': fencename,
                             'polygon': []
                         })
-                        logger.debug('Found geofence with no name')
+                        logger.debug2('Found geofence with no name')
                         first_line = False
                     lat, lon = line.split(",")
                     LatLon = {'lat': float(lat), 'lon': float(lon)}

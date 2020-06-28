@@ -79,9 +79,9 @@ class WorkerFactory:
         while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
                 and walker_index < len(walker_area_array):
             origin_logger.info('not using area {} - Walkervalue out of range',
-                        str(self.__mapping_manager.routemanager_get_name(walker_area_name)))
+                        self.__mapping_manager.routemanager_get_name(walker_area_name))
             if walker_index >= len(walker_area_array) - 1:
-                origin_logger.error('CCan NOT find any active area defined for current time. Check Walker entries')
+                origin_logger.error('Can NOT find any active area defined for current time. Check Walker entries')
                 walker_index = 0
                 self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index',
                                                                   walker_index)
@@ -122,9 +122,9 @@ class WorkerFactory:
 
         origin_logger.debug('Devicesettings: {}', devicesettings)
         origin_logger.info('using walker area {} [{}/{}]',
-                           str(self.__mapping_manager.routemanager_get_name(walker_configuration.walker_area_name)),
-                           str(walker_configuration.walker_index + 1),
-                           str(walker_configuration.total_walkers_allowed_for_assigned_area))
+                           self.__mapping_manager.routemanager_get_name(walker_configuration.walker_area_name),
+                           walker_configuration.walker_index + 1,
+                           walker_configuration.total_walkers_allowed_for_assigned_area)
         return walker_configuration
 
     async def __update_settings_of_origin(self, origin: str, walker_configuration: WalkerConfiguration):

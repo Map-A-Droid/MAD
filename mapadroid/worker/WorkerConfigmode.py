@@ -159,7 +159,7 @@ class WorkerConfigmode(AbstractWorker):
                     self._start_pogo()
                 except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                         WebsocketWorkerConnectionClosedException):
-                    self.logger.error("Timeout during init of worker {}", str(self._origin))
+                    self.logger.error("Timeout during init")
             return False
         else:
             self.logger.error("Unknown walker mode! Killing worker")
@@ -211,13 +211,13 @@ class WorkerConfigmode(AbstractWorker):
             injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
         while not self._mitm_mapper.get_injection_status(self._origin):
             if reboot and self._not_injected_count >= injection_thresh_reboot:
-                self.logger.error("Worker not get injected in time - reboot")
+                self.logger.error("Nt get injected in time - reboot")
                 self._reboot()
                 return False
             self.logger.info("Didn't receive any data yet. (Retry count: {}/{})", str(self._not_injected_count),
                              str(injection_thresh_reboot))
             if self._stop_worker_event.isSet():
-                self.logger.error("Worker was killed while waiting for injection")
+                self.logger.error("Killed while waiting for injection")
                 return False
             self._not_injected_count += 1
             wait_time = 0
@@ -246,11 +246,11 @@ class WorkerConfigmode(AbstractWorker):
     def _wait_pogo_start_delay(self):
         delay_count: int = 0
         pogo_start_delay: int = self.get_devicesettings_value("post_pogo_start_delay", 60)
-        self.logger.info('Waiting for pogo start: {} seconds', str(pogo_start_delay))
+        self.logger.info('Waiting for pogo start: {} seconds', pogo_start_delay)
 
         while delay_count <= pogo_start_delay:
             if self._stop_worker_event.is_set():
-                self.logger.error("Worker {} get killed while waiting for pogo start", str(self._origin))
+                self.logger.error("Killed while waiting for pogo start")
                 raise InternalStopWorkerException
             time.sleep(1)
             delay_count += 1

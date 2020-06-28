@@ -157,7 +157,7 @@ class control(object):
         origin = request.args.get('origin')
         useadb = request.args.get('adb', False)
         origin_logger = get_origin_logger(self._logger, origin=origin)
-        origin_logger.info('MADmin: Making screenshot ({})')
+        origin_logger.info('MADmin: Making screenshot')
 
         devicemappings = self._mapping_manager.get_all_devicemappings()
         adb = devicemappings.get(origin, {}).get('adb', False)
@@ -208,10 +208,8 @@ class control(object):
         adb = devicemappings.get(origin, {}).get('adb', False)
 
         if useadb == 'True' and self._adb_connect.make_screenclick(adb, origin, real_click_x, real_click_y):
-            origin_logger.info('MADMin: ADB screenclick successfully ({})')
+            origin_logger.info('MADMin: ADB screenclick successfully')
         else:
-            origin_logger.info('MADMin WS Click x:{} y:{}', str(
-                real_click_x), str(real_click_y))
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.click(int(real_click_x), int(real_click_y))
 
@@ -244,9 +242,8 @@ class control(object):
                                                                    real_click_ye):
             origin_logger.bind(name=origin).info('MADMin: ADB screenswipe successfully')
         else:
-            origin_logger.bind(name=origin).info('MADMin WS Swipe x:{} y:{} xe:{} ye:{}', str(real_click_x),
-                              str(real_click_y),
-                              str(real_click_xe), str(real_click_ye))
+            origin_logger.bind(name=origin).info('MADMin WS Swipe x:{} y:{} xe:{} ye:{}', real_click_x, real_click_y,
+                              real_click_xe, real_click_ye)
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.touch_and_hold(int(real_click_x), int(
                 real_click_y), int(real_click_xe), int(real_click_ye))
@@ -265,30 +262,30 @@ class control(object):
         device_id = devicemappings.get(origin, {}).get('device_id', False)
         if device_id != False:
             self._db.save_last_restart(device_id)
-        origin_logger.info('MADmin: Restart Pogo ({})', str(origin))
+        origin_logger.info('MADmin: Restart Pogo')
         if useadb == 'True' and \
                 self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
-            origin_logger.info('MADMin: ADB shell force-stop game command successfully ({})', str(origin))
+            origin_logger.info('MADMin: ADB shell force-stop game command successfully')
             if restart:
                 time.sleep(1)
                 started = self._adb_connect.send_shell_command(adb, origin,
                                                                "am start com.nianticlabs.pokemongo")
                 if started:
-                    origin_logger.info('MADMin: ADB shell start game command successfully ({})', str(origin))
+                    origin_logger.info('MADMin: ADB shell start game command successfully')
                 else:
-                    origin_logger.error('MADMin: ADB shell start game command failed ({})', str(origin))
+                    origin_logger.error('MADMin: ADB shell start game command failed')
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             if restart:
-                origin_logger.info('MADMin: trying to restart game on {}', str(origin))
+                origin_logger.info('MADMin: trying to restart game')
                 temp_comm.restart_app("com.nianticlabs.pokemongo")
 
                 time.sleep(1)
             else:
-                origin_logger.info('MADMin: trying to stop game on {}', str(origin))
+                origin_logger.info('MADMin: trying to stop game')
                 temp_comm.stop_app("com.nianticlabs.pokemongo")
 
-            origin_logger.info('MADMin: WS command successfully ({})', str(origin))
+            origin_logger.info('MADMin: WS command successfully')
         time.sleep(2)
         return self.take_screenshot(origin, useadb)
 
@@ -302,11 +299,11 @@ class control(object):
         device_id = devicemappings.get(origin, {}).get('device_id', False)
         if device_id != False:
             self._db.save_last_reboot(device_id)
-        origin_logger.info('MADmin: Restart device ({})', str(origin))
+        origin_logger.info('MADmin: Restart device')
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                     adb, origin, "am broadcast -a android.intent.action.BOOT_COMPLETED")):
-            origin_logger.info('MADMin: ADB shell command successfully ({})', str(origin))
+            origin_logger.info('MADMin: ADB shell command successfully')
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reboot()
@@ -321,11 +318,11 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
-        origin_logger.info('MADmin: Clear game data for device ({})', str(origin))
+        origin_logger.info('MADmin: Clear game data for device')
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                     adb, origin, "pm clear com.nianticlabs.pokemongo")):
-            origin_logger.info('MADMin: ADB shell command successfully ({})', str(origin))
+            origin_logger.info('MADMin: ADB shell command successfully')
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reset_app_data("com.nianticlabs.pokemongo")
@@ -344,12 +341,12 @@ class control(object):
         sleeptime = request.args.get('sleeptime', "0")
         if len(coords) < 2:
             return 'Wrong Format!'
-        origin_logger.info('MADmin: Set GPS Coords {}, {} - WS Mode only!', str(coords[0]), str(coords[1]))
+        origin_logger.info('MADmin: Set GPS Coords {}, {} - WS Mode only!', coords[0], coords[1])
         try:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.set_location(Location(coords[0], coords[1]), 0)
             if int(sleeptime) > 0:
-                origin_logger.info("MADmin: Set additional sleeptime: {}", str(sleeptime))
+                origin_logger.info("MADmin: Set additional sleeptime: {}", sleeptime)
                 self._ws_server.set_geofix_sleeptime_worker(origin, sleeptime)
         except Exception as e:
             origin_logger.exception('MADmin: Exception occurred while set gps coords: {}.', e)
@@ -369,8 +366,7 @@ class control(object):
         if len(text) == 0:
             return 'Empty text'
         origin_logger.info('MADmin: Send text')
-        if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin,
-                                                                     'input text "' + text + '"'):
+        if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin, 'input text "' + text + '"'):
             origin_logger.info('MADMin: Send text successfully')
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
@@ -403,7 +399,7 @@ class control(object):
                 temp_comm.back_button()
             pass
             successfull = True
-        origin_logger.info('MADmin: Command "{}" {}', command, str(successfull))
+        origin_logger.info('MADmin: Command "{}" {}', command, successfull)
 
 
         time.sleep(2)

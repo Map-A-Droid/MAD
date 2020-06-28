@@ -29,7 +29,7 @@ class DbPogoProtoSubmit:
         Update/Insert mons from a map_proto dict
         """
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug4("DbPogoProtoSubmit::mons called with data received")
+        origin_logger.debug3("DbPogoProtoSubmit::mons called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -66,10 +66,10 @@ class DbPogoProtoSubmit:
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
                 if getdetspawntime is None:
-                    origin_logger.debug4("adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", mon_id, lat, lon,
+                    origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", mon_id, lat, lon,
                                         despawn_time, spawnid)
                 else:
-                    origin_logger.debug4("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
+                    origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
                                         despawn_time, spawnid)
 
                 mon_args.append(
@@ -98,7 +98,7 @@ class DbPogoProtoSubmit:
         if wild_pokemon is None or wild_pokemon.get("encounter_id", 0) == 0 or not str(wild_pokemon["spawnpoint_id"]):
             return
 
-        origin_logger.debug4("Updating IV sent for encounter at {}", str(timestamp))
+        origin_logger.debug3("Updating IV sent for encounter at {}", timestamp)
 
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -120,10 +120,10 @@ class DbPogoProtoSubmit:
         mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if getdetspawntime is None:
-            origin_logger.debug4("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
+            origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
                                 longitude, despawn_time)
         else:
-            origin_logger.debug4("updating IV mon #{} at {}, {}. Despawning at {} (non-init)", pokemon_data["id"],
+            origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (non-init)", pokemon_data["id"],
                                 latitude, longitude, despawn_time)
 
         capture_probability = encounter_proto.get("capture_probability")
@@ -201,12 +201,12 @@ class DbPogoProtoSubmit:
         )
 
         self._db_exec.execute(query, vals, commit=True)
-        origin_logger.debug4("Done updating mon in DB")
+        origin_logger.debug3("Done updating mon in DB")
         return True
 
     def spawnpoints(self, origin: str, map_proto: dict, proto_dt: datetime):
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug4("DbPogoProtoSubmit::spawnpoints called with data received")
+        origin_logger.debug3("DbPogoProtoSubmit::spawnpoints called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -296,7 +296,7 @@ class DbPogoProtoSubmit:
         Update/Insert pokestops from a map_proto dict
         """
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug4("DbPogoProtoSubmit::stops called with data received")
+        origin_logger.debug3("DbPogoProtoSubmit::stops called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -327,7 +327,7 @@ class DbPogoProtoSubmit:
         :param stop_proto:
         :return:
         """
-        logger.debug4("DbPogoProtoSubmit::pokestops_details called")
+        logger.debug3("DbPogoProtoSubmit::pokestops_details called")
 
         query_stops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, "
@@ -345,7 +345,7 @@ class DbPogoProtoSubmit:
 
     def quest(self, origin: str, quest_proto: dict, mitm_mapper):
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug4("DbPogoProtoSubmit::quest called")
+        origin_logger.debug3("DbPogoProtoSubmit::quest called")
         fort_id = quest_proto.get("fort_id", None)
         if fort_id is None:
             return False
@@ -397,8 +397,7 @@ class DbPogoProtoSubmit:
             item_item, item_amount, target,
             json_condition, json.dumps(rewards), task, quest_template
         )
-        origin_logger.debug4("DbPogoProtoSubmit::quest submitted quest typ {} at stop {}", str(quest_type),
-                             str(fort_id))
+        origin_logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
         self._db_exec.execute(query_quests, vals, commit=True)
 
         return True
@@ -408,7 +407,7 @@ class DbPogoProtoSubmit:
         Update/Insert gyms from a map_proto dict
         """
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug4("DbPogoProtoSubmit::gyms called with data received from")
+        origin_logger.debug3("DbPogoProtoSubmit::gyms called with data received from")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -466,7 +465,7 @@ class DbPogoProtoSubmit:
                     )
         self._db_exec.executemany(query_gym, gym_args, commit=True)
         self._db_exec.executemany(query_gym_details, gym_details_args, commit=True)
-        origin_logger.debug4("submit_gyms done")
+        origin_logger.debug3("submit_gyms done")
         return True
 
     def gym(self, origin: str, map_proto: dict):
@@ -474,7 +473,7 @@ class DbPogoProtoSubmit:
         Update gyms from a map_proto dict
         """
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug4("Updating gyms")
+        origin_logger.debug3("Updating gyms")
         if map_proto.get("result", 0) != 1:
             return False
         status = map_proto.get("gym_status_and_defenders", None)
@@ -516,7 +515,7 @@ class DbPogoProtoSubmit:
         Update/Insert raids from a map_proto dict
         """
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug4("DbPogoProtoSubmit::raids called with data received")
+        origin_logger.debug3("DbPogoProtoSubmit::raids called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -570,8 +569,8 @@ class DbPogoProtoSubmit:
 
                     mitm_mapper.collect_raid_stats(origin, gymid)
 
-                    origin_logger.debug4("Adding/Updating gym {} with level {} ending at {}", str(gymid), str(level),
-                                         str(raidend_date))
+                    origin_logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, level,
+                                         raidend_date)
 
                     raid_args.append(
                         (
@@ -588,7 +587,7 @@ class DbPogoProtoSubmit:
                         )
                     )
         self._db_exec.executemany(query_raid, raid_args, commit=True)
-        origin_logger.debug("DbPogoProtoSubmit::raids: Done submitting raids with data received")
+        origin_logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
         return True
 
     def weather(self, origin, map_proto, received_timestamp):
@@ -596,7 +595,7 @@ class DbPogoProtoSubmit:
         Update/Insert weather from a map_proto dict
         """
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug("DbPogoProtoSubmit::weather called with data received")
+        origin_logger.debug3("DbPogoProtoSubmit::weather called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -647,7 +646,7 @@ class DbPogoProtoSubmit:
 
     def _extract_args_single_stop(self, stop_data):
         if stop_data["type"] != 1:
-            logger.warning("{} is not a pokestop", str(stop_data))
+            logger.warning("{} is not a pokestop", stop_data)
             return None
 
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
@@ -745,7 +744,7 @@ class DbPogoProtoSubmit:
         )
 
     def _get_detected_endtime(self, spawn_id):
-        logger.debug4("DbPogoProtoSubmit::_get_detected_endtime called")
+        logger.debug3("DbPogoProtoSubmit::_get_detected_endtime called")
 
         query = (
             "SELECT calc_endminsec "
@@ -766,7 +765,7 @@ class DbPogoProtoSubmit:
     def _get_spawndef(self, spawn_ids):
         if not spawn_ids:
             return False
-        logger.debug4("DbPogoProtoSubmit::_get_spawndef called")
+        logger.debug3("DbPogoProtoSubmit::_get_spawndef called")
 
         spawnids = ",".join(map(str, spawn_ids))
         spawnret = {}

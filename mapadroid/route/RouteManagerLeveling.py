@@ -42,8 +42,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                     continue
                 unvisited_stops = self.db_wrapper.stops_from_db_unvisited(self.geofence_helper, origin)
                 if len(unvisited_stops) == 0:
-                    self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!",
-                                origin)
+                    self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
                     continue
                 if len(self._route) > 0:
                     self.logger.info("Making a subroute of unvisited stops..")
@@ -84,8 +83,8 @@ class RouteManagerLeveling(RouteManagerQuests):
         time.sleep(5)
         stops_in_fence = self.db_wrapper.stops_from_db(self.geofence_helper)
 
-        self.logger.info('Detected stops without quests: {}', str(len(stops_in_fence)))
-        self.logger.debug('Detected stops without quests: {}', str(stops_in_fence))
+        self.logger.info('Detected stops without quests: {}', len(stops_in_fence))
+        self.logger.debug('Detected stops without quests: {}', stops_in_fence)
         self._stoplist: List[Location] = stops_in_fence
 
     def _retrieve_latest_priority_queue(self):
@@ -174,8 +173,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                 self._start_check_routepools()
 
                 if not self._first_started:
-                    self.logger.info(
-                        "First starting quest route - copying original route for later use")
+                    self.logger.info("First starting quest route - copying original route for later use")
                     self._routecopy = self._route.copy()
                     self._first_started = True
                 else:
@@ -196,7 +194,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                 if 0 < len(stops) < len(self._route) \
                         and len(stops) / len(self._route) <= 0.3:
                     # Calculating new route because 70 percent of stops are processed
-                    self.logger.info('There are less stops without quest than routepositions - recalc')
+                    self.logger.info('There are less stops without quest than route positions - recalc')
                     self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
                     self.logger.warning("Something wrong with area: it have many new stops - you should delete "

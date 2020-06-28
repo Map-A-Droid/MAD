@@ -68,14 +68,14 @@ class WebsocketConnectedClientEntry:
             self.received_messages[message_id] = new_entry
 
         if isinstance(message, bytes):
-            self.logger.debug("sending binary: {}", str(message[:10]))
+            self.logger.debug("sending binary: {}", message[:10])
         else:
             self.logger.debug("sending command: {}", message.strip())
         # send message
         await self.__send_message(message_id, message, byte_command)
 
         # wait for it to trigger...
-        self.logger.debug2("Timeout towards: {}", str(timeout))
+        self.logger.debug2("Timeout towards: {}", timeout)
         response = None
         try:
             event_triggered = await asyncio.wait_for(new_entry.message_received_event.wait(), timeout=timeout)
@@ -83,9 +83,9 @@ class WebsocketConnectedClientEntry:
                 self.logger.debug("Received answer in time, popping response")
                 self.fail_counter = 0
                 if isinstance(new_entry.message, str):
-                    self.logger.debug4("Response: {}", str(new_entry.message.strip()))
+                    self.logger.debug4("Response: {}", new_entry.message.strip())
                 else:
-                    self.logger.debug4("Received binary data , starting with {}", str(new_entry.message[:10]))
+                    self.logger.debug4("Received binary data , starting with {}", new_entry.message[:10])
                 response = new_entry.message
         except asyncio.TimeoutError:
             self.logger.warning("Timeout, increasing timeout-counter")
@@ -97,7 +97,7 @@ class WebsocketConnectedClientEntry:
             self.logger.debug2("Cleaning up received messaged.")
             async with self.received_mutex:
                 self.received_messages.pop(message_id)
-        self.logger.debug("Done sending command to {}.")
+        self.logger.debug("Done sending command")
         return response
 
     async def __send_message(self, message_id: int, message: MessageTyping,
@@ -109,7 +109,7 @@ class WebsocketConnectedClientEntry:
             to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder='big')
             to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
             to_be_sent += message
-            self.logger.debug4("To be sent to (message ID: {}): {}", message_id, str(to_be_sent[:10]))
+            self.logger.debug4("To be sent to (message ID: {}): {}", message_id, to_be_sent[:10])
         else:
             self.logger.error("Tried to send invalid message (bytes without byte command or no byte/str passed)")
             return

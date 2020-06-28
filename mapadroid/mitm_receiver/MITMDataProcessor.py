@@ -30,10 +30,9 @@ class MitmDataProcessor(Process):
                 except NotImplementedError:
                     items_left = 0
 
-                logger.debug("MITM data processing worker retrieved data. Queue length left afterwards: {}",
-                             str(items_left))
+                logger.debug("MITM data processing worker retrieved data. Queue length left afterwards: {}", items_left)
                 if items_left > 50:
-                    logger.warning("MITM data processing workers are falling behind! Queue length: {}", str(items_left))
+                    logger.warning("MITM data processing workers are falling behind! Queue length: {}", items_left)
 
                 if item is None:
                     logger.warning("Received none from queue of data")
@@ -56,7 +55,8 @@ class MitmDataProcessor(Process):
         origin_logger = get_origin_logger(logger, origin=origin)
         data_type = data.get("type", None)
         raw = data.get("raw", False)
-        origin_logger.debug2("Processing data")
+        origin_logger.debug2("Processing received data")
+        processed_timestamp = datetime.fromtimestamp(received_timestamp)
         if raw:
             origin_logger.debug4("Received raw payload: {}", data["payload"])
 
@@ -68,8 +68,7 @@ class MitmDataProcessor(Process):
             origin_logger.debug4("Received data: {}", data)
             if data_type == 106:
                 # process GetMapObject
-                origin_logger.info("Processing GMO received. Received at {}",
-                                   str(datetime.fromtimestamp(received_timestamp)))
+                origin_logger.info("Processing GMO received. Received at {}", processed_timestamp)
 
                 if self.__application_args.weather:
                     self.__db_submit.weather(origin, data["payload"], received_timestamp)
@@ -78,7 +77,7 @@ class MitmDataProcessor(Process):
                 self.__db_submit.gyms(origin, data["payload"])
                 self.__db_submit.raids(origin, data["payload"], self.__mitm_mapper)
 
-                self.__db_submit.spawnpoints(origin, data["payload"], datetime.fromtimestamp(received_timestamp))
+                self.__db_submit.spawnpoints(origin, data["payload"], processed_timestamp)
                 self.__db_submit.mons(origin, data["payload"], self.__mitm_mapper)
                 self.__db_submit.cells(origin, data["payload"])
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
@@ -86,8 +85,7 @@ class MitmDataProcessor(Process):
             elif data_type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
-                    origin_logger.debug("Processing encounter received at {}",
-                                        str(datetime.fromtimestamp(received_timestamp)))
+                    origin_logger.debug("Processing encounter received at {}", processed_timestamp)
                     self.__db_submit.mon_iv(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                     origin_logger.debug2("Done processing encounter")
                 else:

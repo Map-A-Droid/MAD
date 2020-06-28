@@ -33,7 +33,7 @@ class EndpointAction(object):
         self.mapping_manager: MappingManager = mapping_manager
 
     def __call__(self, *args, **kwargs):
-        logger.debug3("HTTP Request from {}".format(str(request.remote_addr)))
+        logger.debug2("HTTP Request from {}", request.remote_addr)
         origin = request.headers.get('Origin')
         origin_logger = get_origin_logger(logger, origin=origin)
         abort = False
@@ -49,8 +49,7 @@ class EndpointAction(object):
             auth = request.headers.get('Authorization', None)
             if auth is None or not check_auth(auth, self.application_args,
                                               self.mapping_manager.get_auths()):
-                origin_logger.warning(
-                    "Unauthorized attempt to POST from {}", str(request.remote_addr))
+                origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                 self.response = Response(status=403, headers={})
                 abort = True
         else:
@@ -60,15 +59,14 @@ class EndpointAction(object):
                 abort = True
             elif (self.mapping_manager.get_all_devicemappings().keys() is not None
                   and (origin is None or origin not in self.mapping_manager.get_all_devicemappings().keys())):
-                origin_logger.warning("MITMReceiver request without Origin or disallowed Origin: {}".format(origin))
+                origin_logger.warning("MITMReceiver request without Origin or disallowed Origin")
                 self.response = Response(status=403, headers={})
                 abort = True
             elif self.mapping_manager.get_auths() is not None:
                 auth = request.headers.get('Authorization', None)
                 if auth is None or not check_auth(origin_logger, auth, self.application_args,
                                                   self.mapping_manager.get_auths()):
-                    origin_logger.warning(
-                        "Unauthorized attempt to POST from {}", str(request.remote_addr))
+                    origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                     self.response = Response(status=403, headers={})
                     abort = True
 
@@ -98,8 +96,7 @@ class EndpointAction(object):
                     self.response = Response(status=200, headers={"Content-Type": "application/json"})
                     self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
-                origin_logger.warning(
-                    "Could not get JSON data from request: {}", str(e))
+                origin_logger.warning("Could not get JSON data from request: {}", e)
                 self.response = Response(status=500, headers={})
                 import traceback
                 traceback.print_exc()
@@ -194,7 +191,7 @@ class MITMReceiver(Process):
     def proto_endpoint(self, origin: str, data: Union[dict, list]):
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug2("Receiving proto")
-        origin_logger.debug4("Proto data received from{}", str(data))
+        origin_logger.debug4("Proto data received {}", data)
         if isinstance(data, list):
             # list of protos... we hope so at least....
             origin_logger.debug2("Receiving list of protos")
@@ -218,15 +215,13 @@ class MITMReceiver(Process):
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90
                 or location_of_data.lng > 180 or location_of_data.lng < -180):
-            origin_logger.warning("Received invalid location in data: {}", str(location_of_data))
+            origin_logger.warning("Received invalid location in data: {}", location_of_data)
             location_of_data: Location = Location(0, 0)
-        self.__mitm_mapper.update_latest(
-            origin, timestamp_received_raw=timestamp, timestamp_received_receiver=time.time(), key=type,
-            values_dict=data, location=location_of_data)
+        self.__mitm_mapper.update_latest(origin, timestamp_received_raw=timestamp,
+                                         timestamp_received_receiver=time.time(), key=type, values_dict=data,
+                                         location=location_of_data)
         origin_logger.debug2("Placing data received to data_queue")
-        self._data_queue.put(
-            (timestamp, data, origin)
-        )
+        self._data_queue.put((timestamp, data, origin))
 
     def get_latest(self, origin, data):
         injected_settings = self.__mitm_mapper.request_latest(

@@ -67,7 +67,7 @@ class JoinQueue(object):
                 return
 
             if routejoin is not None:
-                logger.info("Try to join routethreads for route {}", str(routejoin))
+                logger.info("Try to join routethreads for route {}", routejoin)
                 self._mapping_mananger.routemanager_join(routejoin)
 
     def set_queue(self, item):
@@ -149,15 +149,14 @@ class MappingManager:
     def get_monlist(self, listname, areaname):
         if type(listname) is list:
             logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json.'
-                ' Using empty list instead.', str(areaname))
+                ' Using empty list instead.', areaname)
             return []
         if listname is not None and int(listname) in self._monlists:
             return self._monlists[int(listname)]
         elif listname is None:
             return []
         else:
-            logger.warning(
-                "IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
+            logger.warning("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
                 listname, areaname)
             return []
 
@@ -445,8 +444,7 @@ class MappingManager:
                                                          0, False))
                     areas_procs[area_id] = proc
                 else:
-                    logger.info(
-                        "Init mode enabled. Going row-based for {}", str(area.get("name", "unknown")))
+                    logger.info("Init mode enabled. Going row-based for {}", area.get("name", "unknown"))
                     # we are in init, let's write the init route to file to make it visible in madmin
                     calc_coords = []
                     if area["routecalc"] is not None:
@@ -536,7 +534,7 @@ class MappingManager:
             elif mode == "pokestops":
                 coords = self.__db_wrapper.stops_from_db(geofence_helper)
             else:
-                logger.error("Mode not implemented yet: {}", str(mode))
+                logger.error("Mode not implemented yet: {}", mode)
                 exit(1)
         else:
             # calculate all level N cells (mapping back from mapping above linked to mode)

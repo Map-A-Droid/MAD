@@ -59,7 +59,7 @@ class WordToScreenMatching(object):
             for account in temp_accounts:
                 ptc_temp = account.split(',')
                 if len(ptc_temp) != 2:
-                    self._logger.warning('Cannot use this account (Wrong format!): {}', str(account))
+                    self._logger.warning('Cannot use this account (Wrong format!): {}', account)
                     continue
                 username = ptc_temp[0]
                 password = ptc_temp[1]
@@ -75,7 +75,7 @@ class WordToScreenMatching(object):
                 self._GGL_accounts.append(Login_GGL(account))
             self._accountcount = len(self._GGL_accounts)
 
-        self._logger.info('Added {} account(s) to memory', str(self._accountcount))
+        self._logger.info('Added {} account(s) to memory', self._accountcount)
         return
 
     def get_next_account(self):
@@ -169,7 +169,7 @@ class WordToScreenMatching(object):
 
             self._ratio = self._height / self._width
 
-            self._logger.debug("Screenratio: {}", str(self._ratio))
+            self._logger.debug("Screenratio: {}", self._ratio)
 
             if 'text' not in global_dict:
                 self._logger.error('Error while text detection')
@@ -407,7 +407,7 @@ class WordToScreenMatching(object):
             password_y = self._height / 1.875 + self._screenshot_y_offset
             button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
         else:
-            self._logger.error("Unhandled ratio, unlikely to be the case. Do open a github issue ;)")
+            self._logger.error("Unhandled ratio, unlikely to be the case. Do open a github issue")
             return ScreenType.ERROR
         # username
         self._communicator.click(self._width / 2, username_y)
@@ -497,9 +497,9 @@ class WordToScreenMatching(object):
             bounds: str = ""
             for item in xmlroot.iter('node'):
                 if str(item.attrib['text']).upper() in click_text:
-                    self._logger.debug("Found text {}", str(item.attrib['text']))
+                    self._logger.debug("Found text {}", item.attrib['text'])
                     bounds = item.attrib['bounds']
-                    self._logger.debug("Bounds {}", str(item.attrib['bounds']))
+                    self._logger.debug("Bounds {}", item.attrib['bounds'])
 
                     match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
 
@@ -509,7 +509,7 @@ class WordToScreenMatching(object):
                     time.sleep(2)
                     return True
         except Exception as e:
-            self._logger.error('Something wrong while parsing xml: {}', str(e))
+            self._logger.error('Something wrong while parsing xml: {}', e)
             return False
 
         time.sleep(2)
@@ -527,7 +527,7 @@ class WordToScreenMatching(object):
                 if mail.lower() in str(item.attrib['text']).lower():
                     self._logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
                     bounds = item.attrib['bounds']
-                    self._logger.debug("Bounds {}", str(item.attrib['bounds']))
+                    self._logger.debug("Bounds {}", item.attrib['bounds'])
                     match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
                     click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
                     click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
@@ -535,7 +535,7 @@ class WordToScreenMatching(object):
                     time.sleep(2)
                     return True
         except Exception as e:
-            self._logger.error('Something wrong while parsing xml: {}', str(e))
+            self._logger.error('Something wrong while parsing xml: {}', e)
             return False
 
         time.sleep(2)
@@ -550,8 +550,7 @@ class WordToScreenMatching(object):
         try:
             devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
         except (EOFError, FileNotFoundError) as e:
-            self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker",
-                                 str(e))
+            self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
             return None
         if devicemappings is None:
             return default_value
@@ -588,7 +587,7 @@ class WordToScreenMatching(object):
         screenshot_filename = "screenshot_{}{}{}".format(str(self._id), str(addon), screenshot_ending)
 
         if fileaddon:
-            self._logger.info("Creating debugscreen: {}", (screenshot_filename))
+            self._logger.info("Creating debugscreen: {}", screenshot_filename)
 
         return os.path.join(
             self._applicationArgs.temp_path, screenshot_filename)

@@ -29,7 +29,7 @@ def trash_image_matching(origin, screen_img, full_screen):
     screen = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
 
     if screen is None:
-        origin_logger.error('trash_image_matching: {} appears to be corrupted', str(screen_img))
+        origin_logger.error('trash_image_matching: {} appears to be corrupted', screen_img)
         return None
 
     trash = cv2.imread(os.path.join(mapadroid.MAD_ROOT, 'static/img/trashcan.png'), 0)

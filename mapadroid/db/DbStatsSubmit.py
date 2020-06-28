@@ -52,7 +52,7 @@ class DbStatsSubmit:
         return True
 
     def cleanup_statistics(self):
-        logger.debug("Cleanup statistics tables")
+        logger.info("Cleanup statistics tables")
         query = (
             "DELETE FROM trs_stats_detect WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
         )

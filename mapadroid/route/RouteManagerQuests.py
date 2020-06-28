@@ -35,8 +35,8 @@ class RouteManagerQuests(RouteManagerBase):
         time.sleep(5)
         stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
 
-        self.logger.info('Detected stops without quests: {}', str(len(stops)))
-        self.logger.debug('Detected stops without quests: {}', str(stops))
+        self.logger.info('Detected stops without quests: {}', len(stops))
+        self.logger.debug('Detected stops without quests: {}', stops)
         self._stoplist: List[Location] = stops
 
     def _retrieve_latest_priority_queue(self):
@@ -119,15 +119,13 @@ class RouteManagerQuests(RouteManagerBase):
 
             for stop, error_count in self._stops_not_processed.items():
                 if stop not in self._stoplist:
-                    self.logger.info(
-                        "Location {} is no longer in our stoplist and will be ignored", str(stop))
+                    self.logger.info("Location {} is no longer in our stoplist and will be ignored", stop)
                     self._coords_to_be_ignored.add(stop)
                 elif error_count < 4:
-                    self.logger.warning("Found stop not processed yet: {}", str(stop))
+                    self.logger.warning("Found stop not processed yet: {}", stop)
                     list_of_stops_to_return.append(stop)
                 else:
-                    self.logger.error("Stop {} has not been processed thrice in a row, "
-                                 "please check your DB", str(stop))
+                    self.logger.error("Stop {} has not been processed thrice in a row, please check your DB", stop)
                     self._coords_to_be_ignored.add(stop)
 
             if len(list_of_stops_to_return) > 0:
@@ -172,7 +170,7 @@ class RouteManagerQuests(RouteManagerBase):
                 new_stops = list(set(stops) - set(self._route))
                 if len(new_stops) > 0:
                     for stop in new_stops:
-                        self.logger.warning("Stop with coords {} seems new and not in route.", str(stop))
+                        self.logger.warning("Stop with coords {} seems new and not in route.", stop)
 
                 if len(stops) == 0:
                     self.logger.info('No unprocessed Stops detected in route - quit worker')
@@ -229,7 +227,7 @@ class RouteManagerQuests(RouteManagerBase):
             self.logger.debug('Init Mode - coord is valid')
             return True
         stop = Location(lat, lng)
-        self.logger.info('Checking Stop with ID {}', str(stop))
+        self.logger.info('Checking Stop with ID {}', stop)
         if stop not in self._stoplist:
             self.logger.info('Already got this Stop')
             return False
