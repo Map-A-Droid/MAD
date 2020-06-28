@@ -33,8 +33,7 @@
 </ul>
 To create a own MAD plugin, create a new folder below <code> plugins </code> of your MAD root directory.<br><br>
 <h3 id="folderstructure">Folder structure</h3>
-<pre>
-<code>
+<pre><code>
     mad root
       -plugins
         -pluginfolder
@@ -47,21 +46,21 @@ To create a own MAD plugin, create a new folder below <code> plugins </code> of 
 <h3 id="files">Files</h3>
 <h5>plugin.ini(.example)</h5>
 This file is required to define global settings in the plugin. (The following content is required at least)<br>
-<code>
-    [plugin]<br>
-    active = activate this plugin (true/false)<br>
-</code>
+<pre><code>
+    [plugin]
+    active = activate this plugin (true/false)
+</code></pre>
 You could add as many new sections and arguments how you want.<br><br>
 <h5>version.mpl</h5>
 This file is required to define plugin information. (The following content is required at least)<br>
-<code>
-    [plugin]<br>
-    pluginname = Name of plugin<br>
-    description = Short plugin description<br>
-    author = your name<br>
-    url = URL if available<br>
-    version = 1.0 <br>
-</code><br><br>
+<pre><code>
+    [plugin]
+    pluginname = Name of plugin
+    description = Short plugin description
+    author = your name
+    url = URL if available
+    version = 1.0
+</code></pre><br><br>
 <h5>pluginname.py</h5>
 Use this <a href="{{url_for('.static', filename='madPluginExample.txt')}}" target="_new">file</a> as template for your plugins. You need to adjust the file with every new plugin:
 <code>class <strong>MadPluginExample</strong>(mapadroid.utils.pluginBase.Plugin):</code>
@@ -104,20 +103,20 @@ MAD Objects in this dictionary:
 <h3 id="examples">Examples</h3>
 <h4>Accessing own settings from plugin.ini</h4>
 <strong>Build-in object</strong>
-<code>
+<pre><code>
     self._pluginconfig
-</code>
+</code></pre>
 <strong>config.ini</strong>
-<code>
-    [example]<br>
-    timer=100<br>
-    use=False<br>
-</code>
+<pre><code>
+    [example]
+    timer=100
+    use=False
+</code></pre>
 <strong>plugin.py</strong>
-<code>
+<pre><code>
     timer = self._pluginconfig.get("example", "timer", fallback=100)<br>
     use = self._pluginconfig.getboolean("example", "use", fallback=False)
-</code><br>
+</code></pre><br>
 
 <h4>Replace existing MAD function</h4>
 <strong>Example function</strong>
@@ -198,6 +197,5 @@ That´s a easy way to restart all failed or cancelled jobs - without clicking x 
     {{url_for('.static', filename='filename')}}
 </code>
 That´s the easierst way to access static files from your template.
-
 
 {% endblock %}
