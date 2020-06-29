@@ -135,7 +135,7 @@ class DbPogoProtoSubmit:
             # initialize to not run into nullpointer
 
         # ditto detector
-        if pokemon_data.get("id") in (13, 46, 163, 165, 167, 187, 223, 293, 316, 322, 399, 590) and \
+        if pokemon_data.get("id") in (46, 163, 165, 167, 187, 223, 293, 316, 322, 399, 590) and \
                 ((pokemon_display.get("weather_boosted_value", None) is not None
                   and pokemon_display.get("weather_boosted_value", None) > 0) \
                  and (pokemon_data.get("individual_attack") < 4 or pokemon_data.get(
