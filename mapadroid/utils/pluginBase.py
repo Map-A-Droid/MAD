@@ -1,5 +1,6 @@
 import inspect
 import os
+import xattr
 import pkgutil
 import configparser
 import zipfile
@@ -8,6 +9,7 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint, request, flash, redirect, url_for, send_from_directory, send_file
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.functions import generate_path
+
 
 class Plugin(object):
     """Base class that each plugin must inherit from. within this class
@@ -111,10 +113,12 @@ class PluginCollection(object):
 
     def zip_plugin(self, plugin_name, folder):
         plugin_file = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.mp')
-        plugin_filepath = os.path.join(self.plugin_package, str(plugin_name))
         if not os.path.isdir(folder):
             self._logger.error("Plugin folder does not exists - abort")
             return None
+
+        if os.path.isfile(plugin_file):
+            os.remove(plugin_file)
 
         zipobj = zipfile.ZipFile(plugin_file, 'w', zipfile.ZIP_DEFLATED)
         rootlen = len(folder) + 1
@@ -125,20 +129,32 @@ class PluginCollection(object):
                         fn = os.path.join(base, file)
                         zipobj.write(fn, fn[rootlen:])
 
+        xattr.setxattr(plugin_file, 'plugin.name', plugin_name.encode('utf-8'))
+
         return plugin_file
 
     def unzip_plugin(self, mpl_file):
         base = os.path.basename(mpl_file)
+        plugin_meta_name = str(os.path.splitext(base)[0])
+        try:
+            plugin_meta_name = xattr.getxattr(mpl_file, 'plugin.name').decode('utf-8')
+            self._logger.info("Plugin meta name:" + str(plugin_meta_name))
+        except IOError:
+            self._logger.info("No meta name in .MP file - using filename as folder")
+
+        extractpath = os.path.join(self.plugin_package, plugin_meta_name)
+        self._logger.info("Try to install new plugin: " + str(mpl_file))
+        self._logger.debug("Plugin base path: " + str(base))
+        self._logger.debug("Plugin extract path: " + str(extractpath))
         try:
             with zipfile.ZipFile(mpl_file, 'r') as zip_ref:
-                zip_ref.extractall(os.path.join(self.plugin_package, str(os.path.splitext(base)[0])))
+                zip_ref.extractall(extractpath)
 
-            #check for plugin.ini.example
+            # check for plugin.ini.example
             if not os.path.isfile(
-                    os.path.join(self.plugin_package, str(os.path.splitext(base)[0]), "plugin.ini.example")):
-                with open(os.path.join(self.plugin_package, str(os.path.splitext(base)[0]),
-                                       "plugin.ini.example"), 'w') \
-                        as pluginini:
+                    os.path.join(extractpath, "plugin.ini.example")):
+                self._logger.debug("Creating basic plugin.ini.example")
+                with open(os.path.join(extractpath, "plugin.ini.example"), 'w') as pluginini:
                     pluginini.write('[plugin]\n')
                     pluginini.write('active = false\n')
         except:
@@ -179,10 +195,7 @@ class PluginCollection(object):
 
         mp_file = self.zip_plugin(plugin, mad_plugin['path'])
         if mp_file is None:
-            flash('Dont know this plugin!')
             return redirect(url_for('plugins'), code=302)
 
-        return send_file(generate_path(self._mad['args'].temp_path) + "/" + plugin + ".mp",
-                         as_attachment=True, attachment_filename=plugin + ".mp")
-
-
+        return send_file(self._mad['args'].temp_path + "/" + plugin + ".mp",
+                         as_attachment=True, attachment_filename=plugin + ".mp", cache_timeout=0)
