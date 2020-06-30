@@ -29,6 +29,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 app.secret_key = "8bc96865945be733f3973ba21d3c5949"
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 @app.after_request
 def after_request(response):
