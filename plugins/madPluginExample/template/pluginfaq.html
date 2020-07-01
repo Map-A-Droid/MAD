@@ -30,6 +30,7 @@
     <li><a href="#files">Plugin Files</a></li>
     <li><a href="#objecthandling">Object handling</a></li>
     <li><a href="#examples">Examples</a></li>
+    <li><a href="#sharing">Share plugin</a></li>
 </ul>
 To create a own MAD plugin, create a new folder below <code> plugins </code> of your MAD root directory.<br><br>
 <h3 id="folderstructure">Folder structure</h3>
@@ -197,5 +198,10 @@ That´s a easy way to restart all failed or cancelled jobs - without clicking x 
     {{url_for('.static', filename='filename')}}
 </code>
 That´s the easierst way to access static files from your template.
-
+<h3 id="sharing">Share plugin</h3>
+Use the download icon on plugin overview to download a MAD specific plugin file. Other people could easily install it now.<br>
+To download a "non-gui" plugin with madmin, just use the direct download link:
+<code>
+    /download_plugin?plugin=<b>pluginfoldername</b>
+</code>
 {% endblock %}

@@ -76,7 +76,6 @@ class PluginCollection(object):
                               f'{plugin["plugin"].perform_operation()}')
             plugin["name"] = plugin["plugin"].pluginname
 
-
     def walk_package(self, package):
         """Recursively walk the supplied package to retrieve all plugins
         """
@@ -112,7 +111,7 @@ class PluginCollection(object):
                 for child_pkg in child_pkgs:
                     self.walk_package(package + '.' + child_pkg)
 
-    def zip_plugin(self, plugin_name, folder):
+    def zip_plugin(self, plugin_name, folder, version):
         plugin_file_temp = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.tmp')
         plugin_file = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.mp')
         if not os.path.isdir(folder):
@@ -139,7 +138,8 @@ class PluginCollection(object):
         with open(plugin_file_temp, mode='rb') as tmpFile:
             fileContent = tmpFile.read()
 
-        plugin_dict = {"plugin_name": plugin_name, "plugin_content": base64.b64encode(fileContent).decode('utf-8')}
+        plugin_dict = {"plugin_name": plugin_name, "plugin_content": base64.b64encode(fileContent).decode('utf-8'),
+                       "plugin_version": version}
 
         with open(plugin_file, 'w') as exportFile:
             exportFile.write(json.dumps(plugin_dict))
@@ -165,6 +165,7 @@ class PluginCollection(object):
 
         plugin_content = base64.b64decode(data['plugin_content'])
         plugin_meta_name = data['plugin_name']
+        plugin_version = data['plugin_version']
 
         tmp_plugin = open(plugin_tmp_zip, "wb")
         tmp_plugin.write(bytearray(plugin_content))
@@ -173,6 +174,16 @@ class PluginCollection(object):
         extractpath = os.path.join(self.plugin_package, plugin_meta_name)
         self._logger.debug("Plugin base path: " + str(base))
         self._logger.debug("Plugin extract path: " + str(extractpath))
+
+        installed_version = None
+
+        if os.path.isfile(extractpath + str("/version.mpl")):
+            installed_version = self.get_plugin_version(str(extractpath))
+
+        if installed_version is not None and plugin_version == installed_version:
+            self._logger.warning("Plugin version already installed - abort")
+            return False
+
         try:
             with zipfile.ZipFile(plugin_tmp_zip, 'r') as zip_ref:
                 zip_ref.extractall(extractpath)
@@ -226,9 +237,15 @@ class PluginCollection(object):
         if mad_plugin is None:
             return redirect(url_for('plugins'), code=302)
 
-        mp_file = self.zip_plugin(plugin, mad_plugin['path'])
+        mp_file = self.zip_plugin(plugin, mad_plugin['path'], self.get_plugin_version(mad_plugin['path']))
         if mp_file is None:
             return redirect(url_for('plugins'), code=302)
 
         return send_file(generate_path(self._mad['args'].temp_path) + "/" + plugin + ".mp",
                          as_attachment=True, attachment_filename=plugin + ".mp", cache_timeout=0)
+
+    @staticmethod
+    def get_plugin_version(plugin_folder):
+        plugin_config = configparser.ConfigParser()
+        plugin_config.read(plugin_folder + "/version.mpl")
+        return plugin_config.get("plugin", "version", fallback="unknown")
