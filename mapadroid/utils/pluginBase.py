@@ -1,12 +1,13 @@
 import inspect
 import os
-import xattr
+import base64
+import json
 import pkgutil
 import configparser
 import zipfile
 
 from werkzeug.utils import secure_filename
-from flask import Blueprint, request, flash, redirect, url_for, send_from_directory, send_file
+from flask import Blueprint, request, flash, redirect, url_for, send_file
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.functions import generate_path
 
@@ -112,6 +113,7 @@ class PluginCollection(object):
                     self.walk_package(package + '.' + child_pkg)
 
     def zip_plugin(self, plugin_name, folder):
+        plugin_file_temp = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.tmp')
         plugin_file = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.mp')
         if not os.path.isdir(folder):
             self._logger.error("Plugin folder does not exists - abort")
@@ -120,7 +122,10 @@ class PluginCollection(object):
         if os.path.isfile(plugin_file):
             os.remove(plugin_file)
 
-        zipobj = zipfile.ZipFile(plugin_file, 'w', zipfile.ZIP_DEFLATED)
+        if os.path.isfile(plugin_file_temp):
+            os.remove(plugin_file_temp)
+
+        zipobj = zipfile.ZipFile(plugin_file_temp, 'w', zipfile.ZIP_DEFLATED)
         rootlen = len(folder) + 1
         for base, dirs, files in os.walk(folder):
             if "__pycache__" not in base:
@@ -129,26 +134,50 @@ class PluginCollection(object):
                         fn = os.path.join(base, file)
                         zipobj.write(fn, fn[rootlen:])
 
-        xattr.setxattr(plugin_file, 'plugin.name', plugin_name.encode('utf-8'))
+        zipobj.close()
+
+        with open(plugin_file_temp, mode='rb') as tmpFile:
+            fileContent = tmpFile.read()
+
+        plugin_dict = {"plugin_name": plugin_name, "plugin_content": base64.b64encode(fileContent).decode('utf-8')}
+
+        with open(plugin_file, 'w') as exportFile:
+            exportFile.write(json.dumps(plugin_dict))
+
+        os.remove(plugin_file_temp)
 
         return plugin_file
 
     def unzip_plugin(self, mpl_file):
+
         base = os.path.basename(mpl_file)
-        plugin_meta_name = str(os.path.splitext(base)[0])
+        plugin_tmp_zip = mpl_file + ".zip"
+        self._logger.info("Try to install/update plugin: " + str(base))
+
         try:
-            plugin_meta_name = xattr.getxattr(mpl_file, 'plugin.name').decode('utf-8')
-            self._logger.info("Plugin meta name:" + str(plugin_meta_name))
-        except IOError:
-            self._logger.info("No meta name in .MP file - using filename as folder")
+            with open(mpl_file) as plugin_file:
+                data = json.load(plugin_file)
+        except (TypeError, ValueError):
+            self._logger.error("Old or wrong plugin format - abort")
+            return False
+        else:
+            pass
+
+        plugin_content = base64.b64decode(data['plugin_content'])
+        plugin_meta_name = data['plugin_name']
+
+        tmp_plugin = open(plugin_tmp_zip, "wb")
+        tmp_plugin.write(bytearray(plugin_content))
+        tmp_plugin.close()
 
         extractpath = os.path.join(self.plugin_package, plugin_meta_name)
-        self._logger.info("Try to install new plugin: " + str(mpl_file))
         self._logger.debug("Plugin base path: " + str(base))
         self._logger.debug("Plugin extract path: " + str(extractpath))
         try:
-            with zipfile.ZipFile(mpl_file, 'r') as zip_ref:
+            with zipfile.ZipFile(plugin_tmp_zip, 'r') as zip_ref:
                 zip_ref.extractall(extractpath)
+
+            os.remove(plugin_tmp_zip)
 
             # check for plugin.ini.example
             if not os.path.isfile(
@@ -160,6 +189,8 @@ class PluginCollection(object):
         except:
             self._logger.error("Cannot install new plugin: " + str(mpl_file))
             return False
+
+        self._logger.info("Installation successfully")
         return True
 
     @auth_required
@@ -178,9 +209,11 @@ class PluginCollection(object):
                 file.save(os.path.join(self._mad['args'].temp_path, filename))
                 if self.unzip_plugin(os.path.join(self._mad['args'].temp_path, filename)):
                     flash('Plugin uploaded successfully - check plugin.ini and restart MAD now!')
+                else:
+                    flash('Error while installation - check MAD log.')
                 return redirect(url_for('plugins'), code=302)
             else:
-                flash('Allowed file type is mpl only!')
+                flash('Allowed file type is mp only!')
                 return redirect(url_for('plugins'), code=302)
 
     @auth_required
@@ -197,5 +230,5 @@ class PluginCollection(object):
         if mp_file is None:
             return redirect(url_for('plugins'), code=302)
 
-        return send_file(self._mad['args'].temp_path + "/" + plugin + ".mp",
+        return send_file(generate_path(self._mad['args'].temp_path) + "/" + plugin + ".mp",
                          as_attachment=True, attachment_filename=plugin + ".mp", cache_timeout=0)
