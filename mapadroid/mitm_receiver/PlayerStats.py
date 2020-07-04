@@ -30,8 +30,9 @@ class PlayerStats(object):
         self._poke_stop_visits: int = 0
 
     def set_level(self, level: int):
-        self._logger.info('set level {}', level)
-        self._level = int(level)
+        if self._level != level:
+            self._logger.info('set level {}', level)
+            self._level = int(level)
         return True
 
     def get_level(self) -> int:
