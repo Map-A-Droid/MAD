@@ -72,7 +72,11 @@ class WorkerFactory:
             await self.__initalize_devicesettings(origin)
         walker_index = await self.__get_walker_index(devicesettings, origin)
 
-        walker_settings: dict = walker_area_array[walker_index]
+        try:
+            walker_settings: dict = walker_area_array[walker_index]
+        except IndexError:
+            origin_logger.warning('No area defined for the current walker')
+            return None
 
         # preckeck walker setting
         walker_area_name = walker_area_array[walker_index]['walkerarea']
