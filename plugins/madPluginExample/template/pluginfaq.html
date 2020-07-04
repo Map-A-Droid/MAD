@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+    code {
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    border-left: 3px solid #f36d33;
+    color: #666;
+    page-break-inside: avoid;
+    font-family: 'Courier New';
+    line-height: 1.6;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>MAD plugin</h2>
+<strong>Legend</strong><br>
+<ul>
+    <li><a href="#folderstructure">Folder structure</a></li>
+    <li><a href="#files">Plugin Files</a></li>
+    <li><a href="#objecthandling">Object handling</a></li>
+    <li><a href="#examples">Examples</a></li>
+    <li><a href="#sharing">Share plugin</a></li>
+</ul>
+To create a own MAD plugin, create a new folder below <code> plugins </code> of your MAD root directory.<br><br>
+<h3 id="folderstructure">Folder structure</h3>
+<pre><code>
+    mad root
+      -plugins
+        -pluginfolder
+          -[static] (needed for static files if you want to create a new MADmin endpoint)
+          -[template] (needed for templates if you want to create a new MADmin endpoint)
+          -pluginname.py (plugin base file)
+          -plugin.ini (plugin configuration)
+          -version.mpl (plugin definition)
+</code></pre><br>
+<h3 id="files">Files</h3>
+<h5>plugin.ini(.example)</h5>
+This file is required to define global settings in the plugin. (The following content is required at least)<br>
+<pre><code>
+    [plugin]
+    active = activate this plugin (true/false)
+</code></pre>
+You could add as many new sections and arguments how you want.<br><br>
+<h5>version.mpl</h5>
+This file is required to define plugin information. (The following content is required at least)<br>
+<pre><code>
+    [plugin]
+    pluginname = Name of plugin
+    description = Short plugin description
+    author = your name
+    url = URL if available
+    version = 1.0
+</code></pre><br><br>
+<h5>pluginname.py</h5>
+Use this <a href="{{url_for('.static', filename='madPluginExample.txt')}}" target="_new">file</a> as template for your plugins. You need to adjust the file with every new plugin:
+<code>class <strong>MadPluginExample</strong>(mapadroid.utils.pluginBase.Plugin):</code>
+Define a unique classname for your plugin.<br><br>
+<pre><code>
+    self._routes = [<br>
+        ("/pluginfaq", self.example_route),<br>
+    ]
+</code></pre>
+Add MADmin endpoints - if you want it. (/Endpoint, function)<br><br>
+
+<pre><code>
+    self._hotlink = [<br>
+        ("Plugin faq", "pluginfaq", "Description"),<br>
+    ]
+</code></pre>
+Add information for MADmin plugin page. (name, URL, description)<br><br>
+
+<h3 id="objecthandling">MAD object handling</h3>
+MAD based on a few object. You could access them via the dictionary
+<code>this._mad</code><br>
+MAD Objects in this dictionary:
+
+<pre><code>
+    db_wrapper = Database functions
+    args = MAD global arguments
+    madmin = MADmin
+    logger = logger
+    data_manager = data manager
+    mapping_manager = mapping manager
+    jobstatus = MAD global job status (json)
+    device_Updater = device updater
+    ws_server = websocket server
+    webhook_worker = webhook
+    mitm_receiver_process = MITM data receiver
+    mitm_mapper = mitm mapper
+    event = MAD event system
+</code></pre><br>
+
+<h3 id="examples">Examples</h3>
+<h4>Accessing own settings from plugin.ini</h4>
+<strong>Build-in object</strong>
+<pre><code>
+    self._pluginconfig
+</code></pre>
+<strong>config.ini</strong>
+<pre><code>
+    [example]
+    timer=100
+    use=False
+</code></pre>
+<strong>plugin.py</strong>
+<pre><code>
+    timer = self._pluginconfig.get("example", "timer", fallback=100)<br>
+    use = self._pluginconfig.getboolean("example", "use", fallback=False)
+</code></pre><br>
+
+<h4>Replace existing MAD function</h4>
+<strong>Example function</strong>
+<pre><code>
+    ### From DbStatsSubmit.py
+    
+        def submit_stats_detections_raw(self, data):
+            query_status = (
+                "INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, is_shiny, timestamp_scan) "
+                "VALUES (%s, %s, %s, %s, %s, %s) "
+            )
+            self._db_exec.executemany(query_status, data, commit=True)
+            return True
+</code></pre>
+<strong>plugin.py</strong>
+<pre><code>
+    def perform_operation(self):
+        ....
+        self._mad['db_wrapper'].stats_submit.submit_stats_detections_raw = self.submit_stats_detections_raw_plugin
+    
+    def submit_stats_detections_raw_plugin(self, data):
+        query_status = (
+            "INSERT IGNORE INTO own_table (worker, type_id, type, count, is_shiny, timestamp_scan) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+        )
+        self._mad['db_wrapper'].executemany(query_status, data, commit=True)
+        return True
+</code></pre>
+This example store the raw stats in a own table.<br><br>
+
+<h4>Restart all failed / cancelled jobs</h4>
+<strong>plugin.py</strong>
+<pre><code>
+    def __init__(self, mad):
+        ...
+        self._routes = [
+            ("/restartallcanceledjobs", self.restartcanceledjobs),
+            ("/restartallfailedjobs", self.restartfailedjobs),
+        ]
+
+        self._hotlink = [
+            ("Restart all canceled jobs", "/restartallcanceledjobs", "Requeue all canceled jobs"),
+            ("Restart all failed jobs", "/restartallfailedjobs", "Requeue all failed jobs),
+        ]
+
+    ### Add at end of file:
+
+    def restartcanceledjobs(self):
+            jobLog = self._mad['device_Updater'].get_log(withautojobs=False)
+            ids = (self.getting_job_ids(jobLog, status='cancelled'))
+            for id in ids:<br>
+                    self._mad['logger'].info("Restarting cancelled job " + str(id))
+                    self._mad['device_Updater'].restart_job(str(id))
+            flash("Requeued " + str(len(ids)) + " canceled job(s)")
+            return redirect(url_for('plugins'), code=302)
+
+    def restartfailedjobs(self):<br>
+            jobLog = self._mad['device_Updater'].get_log(withautojobs=False)
+            ids = (self.getting_job_ids(jobLog, status='failed'))
+            for id in ids:<br>
+                    self._mad['logger'].info("Restarting failed job " + str(id))
+                    self._mad['device_Updater'].restart_job(str(id))
+            flash("Requeued " + str(len(ids)) + " failed job(s)")
+            return redirect(url_for('plugins'), code=302)
+
+    def getting_job_ids(self, jobLog, status: str= None):
+            ids: list = []
+            for job in jobLog.copy():
+                    if str(job['status']) == str(status):
+                            ids.append(job['id'])
+            return ids
+</code></pre>
+That´s a easy way to restart all failed or cancelled jobs - without clicking x times in normal job view.
+<br><br>
+<h4>Accessing static file from template</h4>
+<strong>your template file</strong>
+<code>
+    {{url_for('.static', filename='filename')}}
+</code>
+That´s the easierst way to access static files from your template.
+<h3 id="sharing">Share plugin</h3>
+Use the download icon on plugin overview to download a MAD specific plugin file. Other people could easily install it now.<br>
+To download a "non-gui" plugin with madmin, just use the direct download link:
+<code>
+    /download_plugin?plugin=<b>pluginfoldername</b>
+</code>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .plugin_group {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .plugin_author {
+        background-color: black;
+        color: white;
+        font-size: large;
+        padding: 5px;
+        width: 100%;
+    }
+
+    .plugin_authorurl {
+        font-size: small;
+        text-align: right;
+        margin-top: -5px;
+        float: right;
+    }
+
+    .plugin_header:before {
+        content: '\1F3F7';
+       font-style: normal;
+    }
+
+    .plugin_header {
+        padding-top: 5px;
+        margin-bottom: 15px;
+        font-weight: bolder;
+    }
+
+    .plugin_link {
+        margin-bottom: -5px;
+    }
+
+    .plugin_description {
+        font-size: small;
+        margin-bottom: 5px;
+        font-style: italic;
+    }
+
+    .plugin_global_description {
+        font-weight: bold;
+        margin: 10px 0 10px 0;
+        font-style: normal;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>Select Plugin</h2>
+<p>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+</p>
+<p>
+     {% for item in plugin_hotlinks %}
+        <div class="plugin_group">
+            <div class="plugin_author">{{item}}</div>
+
+            {% for plugin in plugin_hotlinks[item] %}
+    <div class="plugin_header">{{plugin}} <a href="{{ url_for("MAD_Plugin_Controller.download_plugin") }}?plugin={{plugin}}" target_new><i class="fa fa-download" aria-hidden="true"></i></a>
+                <div class="plugin_authorurl">Version: {{plugin_hotlinks[item][plugin]['version']}}<br>
+                    <a href="{{plugin_hotlinks[item][plugin]['authorurl']}}" target="_new">{{plugin_hotlinks[item][plugin]['authorurl']}}</a></div>
+                <div class="plugin_global_description">{{plugin_hotlinks[item][plugin]['description']}}</div>
+                {% for link in plugin_hotlinks[item][plugin]['links'] %}
+                    <div class="plugin_link"><a href="{{ url_for(link.linkurl) }}">{{link.linkname}}</a></div>
+                    <div class="plugin_description">-> {{link.description}}</div>
+                {% endfor %}
+            {% endfor %}
+    </div>
+
+    {% endfor %}
+</p>
+
+<hr>
+<p>
+    <h3>Upload new plugin or updating existing one</h3>
+    <form method="post" action="{{ url_for("MAD_Plugin_Controller.upload_plugin") }}" enctype="multipart/form-data">
+  <dl>
+    <p>
+      <input type="file" name="file" autocomplete="off" required>
+    </p>
+  </dl>
+  <p>
+    <input type="submit" value="Upload">
+  </p>
+</form>
+</p>
+{% endblock %}

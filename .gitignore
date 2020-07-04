@@ -1,5 +1,6 @@
 gym_info.json
 temp/*
+plugins/*
 personal_commands/*
 version.json
 *.pyc

@@ -17,7 +17,6 @@ class apk_manager(object):
         self._mapping_manager = mapping_manager
         self._deviceUpdater = deviceUpdater
         self.storage_obj = storage_obj
-        self.add_route()
 
     def add_route(self):
         routes = [
@@ -31,6 +30,9 @@ class apk_manager(object):
             elif len(route_def) == 3:
                 route, view_func, methods = route_def
                 self._app.route(route, methods=methods)(view_func)
+
+    def start_modul(self):
+        self.add_route()
 
     def allowed_file(self, filename):
         return '.' in filename and filename.rsplit('.', 1)[

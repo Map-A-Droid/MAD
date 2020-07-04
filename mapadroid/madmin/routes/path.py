@@ -10,7 +10,7 @@ logger = get_logger(LoggerEnums.madmin)
 
 
 class path(object):
-    def __init__(self, db, args, app, mapping_manager: MappingManager, jobstatus, data_manager):
+    def __init__(self, db, args, app, mapping_manager: MappingManager, jobstatus, data_manager, plugin_hotlink):
         self._db = db
         self._args = args
         self._app = app
@@ -21,7 +21,7 @@ class path(object):
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self._mapping_manager = mapping_manager
         self._data_manager = data_manager
-        self.add_route()
+        self._plugin_hotlink = plugin_hotlink
 
     def add_route(self):
         routes = [
@@ -33,10 +33,14 @@ class path(object):
             ("/quests_pub", self.quest_pub),
             ("/pick_worker", self.pickworker),
             ("/jobstatus", self.jobstatus),
-            ('/robots.txt', self.send_static_file)
+            ('/robots.txt', self.send_static_file),
+            ("/plugins", self.plugins)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
+
+    def start_modul(self):
+        self.add_route()
 
     @auth_required
     def pushscreens(self, path):
@@ -85,3 +89,25 @@ class path(object):
 
     def send_static_file(self):
         return send_from_directory(self._app.static_folder, request.path[1:])
+
+    @auth_required
+    def plugins(self):
+        plugins = {}
+
+        for plugin in self._plugin_hotlink:
+            if plugin['author'] not in plugins:
+                plugins[plugin['author']] = {}
+
+            if plugin['Plugin'] not in plugins[plugin['author']]:
+                plugins[plugin['author']][plugin['Plugin']] = {}
+                plugins[plugin['author']][plugin['Plugin']]['links'] = []
+
+            plugins[plugin['author']][plugin['Plugin']]['authorurl'] = plugin['authorurl']
+            plugins[plugin['author']][plugin['Plugin']]['version'] = plugin['version']
+            plugins[plugin['author']][plugin['Plugin']]['description'] = plugin['description']
+            plugins[plugin['author']][plugin['Plugin']]['links'].append({'linkname': plugin['linkname'],
+                                                                         'linkurl': plugin['linkurl'],
+                                                                         'description': plugin['linkdescription']})
+        return render_template('plugins.html',
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Select Plugin", plugin_hotlinks=plugins)

@@ -164,6 +164,9 @@ class Communicator(AbstractCommunicator):
     def enter_button(self) -> bool:
         return self.__runAndOk("touch keyevent 61", self.__command_timeout)
 
+    def ok_button(self) -> bool:
+        return self.__runAndOk("touch keyevent 66", self.__command_timeout)
+
     def enter_text(self, text: str) -> bool:
         return self.__runAndOk("touch text " + str(text), self.__command_timeout)
 

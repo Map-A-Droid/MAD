@@ -40,7 +40,6 @@ class control(object):
         self._ws_connected_phones: list = []
         self._logger = logger
         self._app = app
-        self.add_route()
 
     def add_route(self):
         routes = [
@@ -71,6 +70,9 @@ class control(object):
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
+
+    def start_modul(self):
+        self.add_route()
 
     @auth_required
     @nocache

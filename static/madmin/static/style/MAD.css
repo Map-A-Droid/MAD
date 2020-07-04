@@ -24,6 +24,8 @@
 [data-theme="dark"] tbody { color: #ccc; }
 [data-theme="dark"] .table-hover tbody tr:hover { color: #ccc !important; }
 
+[data-theme="dark"] .plugin_author { background-color: #506680 }
+
 [data-theme="dark"] #show-data-complete_filter, #show-data-detection_raw_length,
 #show-data-detection_raw_filter, #show-data-location_raw_length, #show-data-location_raw_filter { color: #bbb;}
 [data-theme="dark"] thead {
@@ -173,6 +175,8 @@
     background-color: #000 !important;
     border: 1px solid #fff;
 }
+
+[data-theme="dark"] hr { background-color: #eee; }
 
 [data-theme="dark"] .leaflet-control-zoom-in, [data-theme="dark"] .leaflet-control-zoom-out {
     background-color: #000;

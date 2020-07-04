@@ -235,6 +235,10 @@ class WebsocketServer(object):
             # TODO: cleanup thread is not really desired, I'd prefer to only restart a worker if the route changes :(
             self.__worker_shutdown_queue.put(entry.worker_thread)
         logger.info("Done with connection from {} ({})", origin, websocket_client_connection.remote_address)
+        entry = self.__current_users.get(origin, None)
+        if entry is not None:
+            logger.debug("Delete internal entry of {}", origin)
+            del self.__current_users[origin]
 
     async def __add_worker_and_thread_to_entry(self, entry, origin) -> bool:
         communicator: AbstractCommunicator = Communicator(
@@ -359,6 +363,12 @@ class WebsocketServer(object):
             self.get_connected_origins(),
             self.__loop)
         return future.result()
+
+    def get_screenmatching(self, origin: str):
+        entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
+        return (entry.worker_instance.screenmatching
+                if entry is not None and entry.worker_instance is not None
+                else False)
 
     def get_origin_communicator(self, origin: str) -> Optional[AbstractCommunicator]:
         # TODO: this should probably lock?

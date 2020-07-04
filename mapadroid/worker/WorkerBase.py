@@ -1248,5 +1248,8 @@ class WorkerBase(AbstractWorker):
         self._resocalc.get_x_y_ratio(
             self, self._screen_x, self._screen_y, x_offset, y_offset)
 
+    def screenmatching(self):
+        return self._WordToScreenMatching
+
 
 

@@ -26,17 +26,14 @@ class statistics(object):
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
-        self.add_route()
         self.outdatedays = self._args.outdated_spawnpoints
 
     def add_route(self):
         routes = [
             ("/statistics", self.statistics),
             ("/statistics_mon", self.statistics_mon),
-
             ("/statistics_shiny", self.statistics_shiny),
             ("/get_game_stats_shiny", self.game_stats_shiny_v2),
-
             ("/get_game_stats", self.game_stats),
             ("/get_game_stats_mon", self.game_stats_mon),
             ("/statistics_detection_worker_data", self.statistics_detection_worker_data),
@@ -62,6 +59,9 @@ class statistics(object):
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
+
+    def start_modul(self):
+        self.add_route()
 
     def generate_mon_icon_url(self, id, form=None, costume=None, shiny=False):
         base_path = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border'
