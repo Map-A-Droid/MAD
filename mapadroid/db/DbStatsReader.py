@@ -330,7 +330,7 @@ class DbStatsReader:
         res = self._db_exec.execute(query)
         return res
 
-    def get_quests_count4(self, days):
+    def get_quests_count(self, days):
         logger.debug3('Fetching quests count from db')
         query_where = ""
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(quest_timestamp), '%y-%m-%d %k:00:00'))"
