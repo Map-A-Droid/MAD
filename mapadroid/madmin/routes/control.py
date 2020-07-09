@@ -13,7 +13,7 @@ from mapadroid.madmin.functions import (
 from mapadroid.utils import MappingManager
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.collections import Location
-from mapadroid.utils.functions import (creation_date, generate_phones, image_resize)
+from mapadroid.utils.functions import (creation_date, generate_phones, image_resize, generate_path)
 from mapadroid.utils.madGlobals import ScreenshotType
 from mapadroid.utils.updater import jobType
 from mapadroid.websocket.WebsocketServer import WebsocketServer
@@ -321,10 +321,10 @@ class control(object):
         self._logger.info('MADmin: fetching logcat ({})', str(origin))
 
         filename = generate_device_logcat_zip_path(origin, self._args)
-
+        self._logger.info("Logcat of {} being stored at {}".format(origin, filename))
         if self._fetch_logcat_websocket(origin, filename):
             # TODO: send file to user?
-            send_file(filename)
+            send_file(generate_path(filename))
         else:
             self._logger.error("Failed fetching logcat of {}".format(origin))
 
