@@ -324,9 +324,11 @@ class control(object):
         self._logger.info("Logcat of {} being stored at {}".format(origin, filename))
         if self._fetch_logcat_websocket(origin, filename):
             # TODO: send file to user?
-            send_file(generate_path(filename))
+            return send_file(generate_path(filename))
         else:
             self._logger.error("Failed fetching logcat of {}".format(origin))
+            # TODO: Return proper error :P
+            return None
 
     @auth_required
     def clear_game_data(self):
