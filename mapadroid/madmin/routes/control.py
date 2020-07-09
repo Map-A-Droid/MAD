@@ -312,6 +312,8 @@ class control(object):
 
     def _fetch_logcat_websocket(self, origin: str, path_to_store_logcat_at: str) -> bool:
         temp_comm = self._ws_server.get_origin_communicator(origin)
+        if not temp_comm:
+            return False
         return temp_comm.get_compressed_logcat(path_to_store_logcat_at)
 
     @auth_required
@@ -324,7 +326,7 @@ class control(object):
         self._logger.info("Logcat of {} being stored at {}".format(origin, filename))
         if self._fetch_logcat_websocket(origin, filename):
             # TODO: send file to user?
-            return send_file(generate_path(filename))
+            return send_file(generate_path(filename), as_attachment=True, attachment_filename="logcat_{}.zip".format(origin))
         else:
             self._logger.error("Failed fetching logcat of {}".format(origin))
             # TODO: Return proper error :P
