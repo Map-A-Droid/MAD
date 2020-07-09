@@ -2,12 +2,13 @@ import datetime
 import os
 import time
 from PIL import Image
-from flask import (render_template, request, redirect, flash, jsonify, url_for)
+from flask import (render_template, request, redirect, flash, jsonify, url_for, send_file)
 from werkzeug.utils import secure_filename
 import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import (
-    auth_required, generate_device_screenshot_path, nocache, allowed_file, uploaded_files
+    auth_required, generate_device_screenshot_path, nocache, allowed_file, uploaded_files,
+    generate_device_logcat_zip_path
 )
 from mapadroid.utils import MappingManager
 from mapadroid.utils.adb import ADBConnect
@@ -50,6 +51,7 @@ class control(object):
             ("/quit_pogo", self.quit_pogo),
             ("/restart_phone", self.restart_phone),
             ("/clear_game_data", self.clear_game_data),
+            ("/download_logcat", self.get_logcat),
             ("/send_gps", self.send_gps),
             ("/send_text", self.send_text),
             ("/upload", self.upload),
@@ -307,6 +309,24 @@ class control(object):
             temp_comm.reboot()
         self._ws_server.force_disconnect(origin)
         return redirect(url_for('get_phonescreens'), code=302)
+
+    def _fetch_logcat_websocket(self, origin: str, path_to_store_logcat_at: str) -> bool:
+        temp_comm = self._ws_server.get_origin_communicator(origin)
+        return temp_comm.get_compressed_logcat(path_to_store_logcat_at)
+
+    @auth_required
+    @logger.catch
+    def get_logcat(self):
+        origin = request.args.get('origin')
+        self._logger.info('MADmin: fetching logcat ({})', str(origin))
+
+        filename = generate_device_logcat_zip_path(origin, self._args)
+
+        if self._fetch_logcat_websocket(origin, filename):
+            # TODO: send file to user?
+            send_file(filename)
+        else:
+            self._logger.error("Failed fetching logcat of {}".format(origin))
 
     @auth_required
     def clear_game_data(self):

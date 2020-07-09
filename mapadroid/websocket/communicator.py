@@ -216,3 +216,23 @@ class Communicator(AbstractCommunicator):
                                                                             location_to.lat, location_to.lng,
                                                                             speed),
                                        self.__command_timeout + seconds_traveltime)
+
+    def get_compressed_logcat(self, path: str) -> bool:
+        encoded = self.__run_get_gesponse("more logcat\r\n")
+        if encoded is None:
+            return False
+        elif isinstance(encoded, str):
+            self.logger.debug("Logcat response not binary (expected a ZIP)")
+            if "KO: " in encoded:
+                self.logger.error(
+                    "get_compressed_logcat: Could not retrieve logcat. Make sure your RGC is updated.")
+            elif "OK:" not in encoded:
+                self.logger.error("get_compressed_logcat: response not OK")
+            return False
+        else:
+            self.logger.debug("Storing logcat...")
+
+            with open(path, "wb") as fh:
+                fh.write(encoded)
+            self.logger.debug("Done storing logcat, returning")
+            return True

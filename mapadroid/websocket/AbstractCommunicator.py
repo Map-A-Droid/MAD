@@ -172,3 +172,14 @@ class AbstractCommunicator(ABC):
         :return:
         """
         pass
+
+    @abstractmethod
+    def get_compressed_logcat(self, path: str) -> bool:
+        """
+
+        Args:
+            path: The path to store the compressed logcat at (will be a zip file)
+
+        Returns:
+
+        """
