@@ -376,7 +376,7 @@ class MITMBase(WorkerBase):
         self.logger.debug('===============================')
         self.logger.debug('Worker Stats')
         self.logger.debug('Origin: {} [{}]', self._origin, self._dev_id)
-        self.logger.debug('Routemanager: {} [{}]', self._routemanager_name), str(self._area_id)
+        self.logger.debug('Routemanager: {} [{}]', self._routemanager_name, self._area_id)
         self.logger.debug('Restart Counter: {}', self._restart_count)
         self.logger.debug('Reboot Counter: {}', self._reboot_count)
         self.logger.debug('Reboot Option: {}', self.get_devicesettings_value("reboot", False))
