@@ -9,7 +9,7 @@ from mapadroid.utils.madGlobals import ScreenshotType, WebsocketWorkerConnection
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import WebsocketConnectedClientEntry
 from mapadroid.worker.AbstractWorker import AbstractWorker
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
 
 logger = get_logger(LoggerEnums.websocket)
@@ -23,7 +23,7 @@ class Communicator(AbstractCommunicator):
                  command_timeout: float):
         # Throws ValueError if unable to connect!
         # catch in code using this class
-        self.logger = get_logger(LoggerEnums.websocket, name=str(worker_id))
+        self.logger = get_origin_logger(get_logger(LoggerEnums.websocket), origin=worker_id)
         self.worker_id: str = worker_id
         self.worker_instance_ref: Optional[AbstractWorker] = worker_instance_ref
         self.websocket_client_entry = websocket_client_entry
@@ -31,12 +31,11 @@ class Communicator(AbstractCommunicator):
         self.__sendMutex = Lock()
 
     def cleanup(self) -> None:
-        self.logger.info(
-            "Communicator of {} calling exit to cleanup worker in websocket", str(self.worker_id))
+        self.logger.info("Communicator calling exit to cleanup worker in websocket")
         try:
             self.terminate_connection()
         except (WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException):
-            self.logger.info("Communicator-cleanup of {} resulted in timeout or connection has already been closed", str(self.worker_id))
+            self.logger.info("Communicator-cleanup resulted in timeout or connection has already been closed")
 
     def __runAndOk(self, command, timeout) -> bool:
         return self.__run_and_ok_bytes(command, timeout)
@@ -70,8 +69,7 @@ class Communicator(AbstractCommunicator):
 
     def stop_app(self, package_name: str) -> bool:
         if not self.__runAndOk("more stop {}\r\n".format(package_name), self.__command_timeout):
-            self.logger.error(
-                "Failed stopping {}, please check if SU has been granted", package_name)
+            self.logger.error("Failed stopping {}, please check if SU has been granted", package_name)
             return False
         else:
             return True
@@ -104,6 +102,7 @@ class Communicator(AbstractCommunicator):
         return self.__runAndOk("more screen on\r\n", self.__command_timeout)
 
     def click(self, x: int, y: int) -> bool:
+        self.logger.debug('Click {} / {}', x, y)
         return self.__runAndOk("screen click {} {}\r\n".format(str(int(round(x))), str(int(round(y)))),
                                self.__command_timeout)
 
@@ -138,10 +137,9 @@ class Communicator(AbstractCommunicator):
         if encoded is None:
             return False
         elif isinstance(encoded, str):
-            self.logger.debug("Screenshot response not binary")
+            self.logger.debug2("Screenshot response not binary")
             if "KO: " in encoded:
-                self.logger.error(
-                    "get_screenshot: Could not retrieve screenshot. Make sure your RGC is updated.")
+                self.logger.error("get_screenshot: Could not retrieve screenshot. Make sure your RGC is updated.")
                 return False
             elif "OK:" not in encoded:
                 self.logger.error("get_screenshot: response not OK")
@@ -149,10 +147,9 @@ class Communicator(AbstractCommunicator):
             return False
         else:
             self.logger.debug("Storing screenshot...")
-
             with open(path, "wb") as fh:
                 fh.write(encoded)
-            self.logger.debug("Done storing, returning")
+            self.logger.debug2("Done storing, returning")
             return True
 
     def back_button(self) -> bool:
@@ -195,7 +192,7 @@ class Communicator(AbstractCommunicator):
         try:
             return self.__runAndOk("exit\r\n", timeout=5)
         except WebsocketWorkerConnectionClosedException:
-            self.logger.info("Cannot gracefully terminate connection of {}, it's already been closed", self.worker_id)
+            self.logger.info("Cannot gracefully terminate connection, it's already been closed")
             return True
 
     # coords need to be float values

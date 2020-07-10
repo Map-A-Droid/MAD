@@ -47,7 +47,7 @@ class TokenDispenser(requests.Session):
                 logger.warning(err)
                 last_err = err
             except Exception as err:
-                logger.warning("Unknown exception, %s", str(err))
+                logger.warning("Unknown exception, {}", err)
                 last_err = err
             attempt += 1
             if attempt < self.retries:

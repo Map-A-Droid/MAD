@@ -56,11 +56,9 @@ def route_calc_impl(lessCoordinates, route_name, num_processes):
         output_levels = 0.05
     else:
         output_levels = 0.1
-    logger.info("There are {} markov steps.  Updating status every {}%", markov_step,
-                round(output_levels * 100, 1))
+    logger.info("There are {} markov steps.  Updating status every {}%", markov_step, round(output_levels * 100, 1))
     while T > T_MIN and cost_best_counter < halt:
-        logger.debug("Still calculating... cost_best_counter: {}",
-                     str(cost_best_counter))
+        logger.debug("Still calculating... cost_best_counter: {}", cost_best_counter)
         perc_comp = float(cost_best_counter / halt)
         try:
             last_comp = output_percs[-1]

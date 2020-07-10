@@ -273,8 +273,8 @@ class statistics(object):
             monName = get_mon_name(dat[2])
             diff: int = dat[0]
             if diff == 0:
-                logger.warning('No deeper mon stats are possible - not enought data '
-                               '(check config.ini // game_stats_raw)')
+                logger.warning('No deeper pokemon stats are possible - not enough data (check config.ini // '
+                               'game_stats_raw)')
                 diff = 1
 
             ratio = round(dat[1] * 100 / diff, 2)
@@ -324,16 +324,16 @@ class statistics(object):
     @logger.catch
     @auth_required
     def game_stats_shiny_v2(self):
-        logger.debug('game_stats_shiny_v2')
+        logger.debug2('game_stats_shiny_v2')
         timestamp_from = request.args.get('from', None)
         if (timestamp_from):
             timestamp_from = self.local2utc(int(timestamp_from))
-            logger.debug('using timestamp_from: {}', timestamp_from)
+            logger.debug2('using timestamp_from: {}', timestamp_from)
 
         timestamp_to = request.args.get('to', None)
         if (timestamp_to):
             timestamp_to = self.local2utc(int(timestamp_to))
-            logger.debug('using timestamp_to: {}', timestamp_to)
+            logger.debug2('using timestamp_to: {}', timestamp_to)
 
         tmp_perworker_v2 = {}
         data = self._db_stats_reader.get_shiny_stats_v2(timestamp_from, timestamp_to)

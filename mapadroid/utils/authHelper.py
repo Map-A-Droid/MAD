@@ -1,12 +1,7 @@
 import base64
 import re
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
-
-logger = get_logger(LoggerEnums.utils)
-
-
-def check_auth(authHeader, args, auths):
+def check_auth(logger, authHeader, args, auths):
     valid = False
     if auths is None:
         return False
@@ -15,15 +10,15 @@ def check_auth(authHeader, args, auths):
         decoded = base64.b64decode(auth_code.group(1)).decode('utf-8')
         (username, password) = decoded.split(":", 1)
         if auths[username] != password:
-            logger.warning("Auth attempt from {} failed", str(authHeader))
+            logger.warning("Auth attempt from {} failed", authHeader)
         else:
             valid = True
     except AttributeError as err:
         logger.warning("Auth without Basic auth, aborting.")
     except KeyError:
-        logger.warning('Auth attempt from non-configured user {}', str(username))
+        logger.warning('Auth attempt from non-configured user {}', username)
     except TypeError as err:
-        logger.warning('Unable to decode header {}', str(authHeader))
+        logger.warning('Unable to decode header {}', authHeader)
     except ValueError as err:
-        logger.warning('Unable to determine auth parameters from {}', str(authHeader))
+        logger.warning('Unable to determine auth parameters from {}', authHeader)
     return valid

@@ -49,8 +49,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                                                                                   ignore_spinned=self.settings.get("ignore_spinned_stops", True),
                                                                                   maxdistance=5)
                 if len(unvisited_stops) == 0:
-                    self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!",
-                                origin)
+                    self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
                     continue
 
                 for coord in unvisited_stops:
@@ -114,7 +113,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         try:
 
             if self._shutdown_route:
-                self.logger.info('Other worker shutdown route {} - leaving it', str(self.name))
+                self.logger.info('Other worker shutdown route - leaving it')
                 return False
 
             self._worker_changed_update_routepools()
@@ -138,10 +137,10 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         try:
             if not self._is_started:
                 self._is_started = True
-                self.logger.info("Starting routemanager {}", str(self.name))
+                self.logger.info("Starting routemanager")
 
                 if self._shutdown_route:
-                    self.logger.info('Other worker shutdown route {} - leaving it', str(self.name))
+                    self.logger.info('Other worker shutdown route - leaving it')
                     return False
 
                 self._prio_queue = None
@@ -168,7 +167,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         return False
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route {}', str(self.name))
+        self.logger.info('Shutdown Route')
         if self._is_started:
             self._is_started = False
             self._round_started_time = None
@@ -185,7 +184,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
             self.logger.debug('Init Mode - coord is valid')
             return True
         stop = Location(lat, lng)
-        self.logger.info('Checking Stop with ID {}', str(stop))
+        self.logger.info('Checking Stop with ID {}', stop)
         if stop in self._coords_to_be_ignored:
             self.logger.info('Already tried this Stop and failed it')
             return False

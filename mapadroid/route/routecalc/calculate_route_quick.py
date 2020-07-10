@@ -7,12 +7,13 @@ logger = get_logger(LoggerEnums.routemanager)
 
 
 def route_calc_impl(coords, route_name, num_processes=1):
-    less_coords_array = []
-    for i in range(len(coords)):
-        less_coords_array.append([coords[i][0].item(), coords[i][1].item()])
+    with logger.contextualize(origin=route_name):
+        less_coords_array = []
+        for i in range(len(coords)):
+            less_coords_array.append([coords[i][0].item(), coords[i][1].item()])
 
-    length, path = tsp(less_coords_array)
-    logger.info("Found {} long solution: ", length)
+        length, path = tsp(less_coords_array)
+        logger.info("Found {} long solution: ", length)
 
     return path
 

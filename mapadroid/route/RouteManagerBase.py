@@ -19,7 +19,7 @@ from mapadroid.data_manager.modules.routecalc import RouteCalc
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger, routelogger_set_origin
 
 
 logger = get_logger(LoggerEnums.routemanager)
@@ -166,13 +166,13 @@ class RouteManagerBase(ABC):
     def stop_routemanager(self, joinwithqueue=True):
         # call routetype stoppper
         if self._joinqueue is not None and joinwithqueue:
-            self.logger.info("Adding route {} to queue".format(str(self.name)))
+            self.logger.info("Adding route to queue")
             self._joinqueue.set_queue(self.name)
 
         self._quit_route()
         self._stop_update_thread.set()
 
-        self.logger.info("Shutdown of route {} completed".format(str(self.name)))
+        self.logger.info("Shutdown of route completed")
 
     def _init_route_queue(self):
         with self._manager_mutex:
@@ -188,55 +188,47 @@ class RouteManagerBase(ABC):
             self._coords_unstructured = None
 
     def register_worker(self, worker_name) -> bool:
+        route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         with self._workers_registered_mutex:
             if worker_name in self._workers_registered:
-                self.logger.info("Worker {} already registered to routemanager {}", str(
-                    worker_name), str(self.name))
+                route_logger.info("already registered")
                 return False
             else:
-                self.logger.info("Worker {} registering to routemanager {}",
-                            str(worker_name), str(self.name))
+                route_logger.info("registering to routemanager")
                 self._workers_registered.add(worker_name)
                 self._positiontyp[worker_name] = 0
                 return True
 
     def unregister_worker(self, worker_name):
+        route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         with self._workers_registered_mutex and self._manager_mutex:
             if worker_name in self._workers_registered:
-                self.logger.info("Worker {} unregistering from routemanager {}", str(
-                    worker_name), str(self.name))
+                route_logger.info("unregistering from routemanager")
                 self._workers_registered.remove(worker_name)
                 if worker_name in self._routepool:
-                    self.logger.info("Deleting old routepool of {}", str(worker_name))
+                    self.logger.info("Deleting old routepool of {}", worker_name)
                     del self._routepool[worker_name]
             else:
                 # TODO: handle differently?
-                self.logger.info(
-                    "Worker {} failed unregistering from routemanager {} since subscription was previously lifted",
-                    str(
-                        worker_name), str(self.name))
+                route_logger.info("failed unregistering from routemanager since subscription was previously lifted")
                 if worker_name in self._routepool:
-                    self.logger.info("Deleting old routepool of {}", str(worker_name))
+                    self.logger.info("Deleting old routepool of {}", worker_name)
                     del self._routepool[worker_name]
             if len(self._workers_registered) == 0 and self._is_started:
-                self.logger.info(
-                    "Routemanager {} does not have any subscribing workers anymore, calling stop",
-                    str(self.name))
+                self.logger.info("Routemanager does not have any subscribing workers anymore, calling stop", self.name)
                 self.stop_routemanager()
 
     def stop_worker(self):
+        route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         with self._workers_registered_mutex:
             for worker in self._workers_registered:
-                self.logger.info("Worker {} removed from routemanager {}", str(
-                    worker), str(self.name))
+                route_logger.info("removed from routemanager")
                 self._workers_registered.remove(worker)
                 if worker in self._routepool:
-                    self.logger.info("Deleting old routepool of {}", str(worker))
+                    self.logger.info("Deleting old routepool of {}", worker)
                     del self._routepool[worker]
             if len(self._workers_registered) == 0 and self._is_started:
-                self.logger.info(
-                    "Routemanager {} does not have any subscribing workers anymore, calling stop",
-                    str(self.name))
+                self.logger.info("Routemanager does not have any subscribing workers anymore, calling stop")
                 self.stop_routemanager()
 
     def _check_started(self):
@@ -262,7 +254,7 @@ class RouteManagerBase(ABC):
                                                     target=self._update_priority_queue_loop)
             self._update_prio_queue_thread.daemon = True
             self._update_prio_queue_thread.start()
-            self.logger.info("Started PrioQ for area {}".format(str(self.name)))
+            self.logger.info("Started PrioQ")
 
     # list_coords is a numpy array of arrays!
     def add_coords_numpy(self, list_coords: np.ndarray):
@@ -378,8 +370,8 @@ class RouteManagerBase(ABC):
                 # TODO: verify if this procedure is good for other modes, too
                 if self.mode == "mon_mitm":
                     new_queue = self._filter_priority_queue_internal(new_queue)
-                    self.logger.info("Merging existing Q of {} events with {} "
-                                "clustered new events", len(self._prio_queue), len(new_queue))
+                    self.logger.debug2("Merging existing Q of {} events with {} clustered new events",
+                                       len(self._prio_queue), len(new_queue))
                     merged = set(new_queue + self._prio_queue)
                     merged = list(merged)
                     self.logger.info("Merging resulted in queue with {} entries", len(merged))
@@ -389,7 +381,7 @@ class RouteManagerBase(ABC):
                 heapq.heapify(merged)
                 self._prio_queue = merged
             self.logger.info("Finalized new priority queue with {} entries", len(merged))
-            self.logger.debug("Priority queue entries: {}", str(merged))
+            self.logger.debug2("Priority queue entries: {}", str(merged))
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
@@ -509,12 +501,12 @@ class RouteManagerBase(ABC):
             # clustering
             return latest
         if self.mode == "mon_mitm" and self.remove_from_queue_backlog == 0:
-            self.logger.error("You are running area {} in mon_mitm mode with "
+            self.logger.error("You are running in mon_mitm mode with "
                          "priority queue enabled and remove_from_queue_backlog "
                          "set to 0. This may result in building up a significant "
                          "queue backlog and reduced scanning performance. "
                          "Please review this setting or set it to the default "
-                         "of 300.", self.name)
+                         "of 300.")
 
         if self.remove_from_queue_backlog is not None:
             delete_before = time.time() - self.remove_from_queue_backlog
@@ -541,17 +533,16 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].worker_sleeping = 0
 
     def get_next_location(self, origin: str) -> Optional[Location]:
-        self.logger.debug("get_next_location of {} called", str(self.name))
-
+        route_logger = routelogger_set_origin(self.logger, origin=origin)
+        route_logger.debug4("get_next_location called")
         if not self._is_started:
-            self.logger.info(
-                "Starting routemanager {} in get_next_location", str(self.name))
+            route_logger.info("Starting routemanager in get_next_location")
             if not self._start_routemanager():
-                self.logger.info('No coords available - quit worker')
+                route_logger.info('No coords available - quit worker')
                 return None
 
         if self._start_calc:
-            self.logger.info("Another process already calculate the new route")
+            route_logger.info("Another process already calculate the new route")
             return None
 
         with self._manager_mutex:
@@ -560,19 +551,19 @@ class RouteManagerBase(ABC):
                     self.register_worker(origin)
 
             if origin not in self._routepool:
-                self.logger.debug("No subroute/routepool entry of {} present, creating it", origin)
+                route_logger.debug("No subroute/routepool entry present, creating it")
                 self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [],
                                                          time_added=time.time())
 
                 if origin in self._worker_start_position:
                     self._routepool[origin].current_pos = self._worker_start_position[origin]
                 if not self._worker_changed_update_routepools():
-                    self.logger.info("Failed updating routepools after adding a worker to it")
+                    route_logger.info("Failed updating routepools after adding a worker to it")
                     return None
 
             elif self._routepool[origin].has_prio_event and self.mode != 'iv_mitm':
                 prioevent = self._routepool[origin].prio_coords
-                self.logger.info('Worker {} getting a nearby prio event {}', origin, prioevent)
+                route_logger.info('getting a nearby prio event {}', prioevent)
                 self._routepool[origin].has_prio_event = False
                 self.__set_routepool_entry_location(origin, prioevent)
                 self._routepool[origin].last_round_prio_event = True
@@ -581,8 +572,7 @@ class RouteManagerBase(ABC):
         # first check if a location is available, if not, block until we have one...
         got_location = False
         while not got_location and self._is_started and not self.init:
-            self.logger.debug(
-                "{}: Checking if a location is available...", str(self.name))
+            route_logger.debug("Checking if a location is available...")
             with self._manager_mutex:
                 if self.mode == "iv_mitm":
                     got_location = self._prio_queue is not None and len(self._prio_queue) > 0
@@ -591,8 +581,7 @@ class RouteManagerBase(ABC):
                     # normal mode - should always have a route
                     got_location = True
 
-        self.logger.debug(
-            "{}: Location available, acquiring lock and trying to return location", self.name)
+        route_logger.debug("Location available, acquiring lock and trying to return location")
         with self._manager_mutex:
             # check priority queue for items of priority that are past our time...
             # if that is not the case, simply increase the index in route and return the location on route
@@ -617,24 +606,20 @@ class RouteManagerBase(ABC):
                     else:
                         delete_before = 0
                     if next_timestamp < delete_before:
-                        self.logger.warning("Prio event for route {} surpassed the "
-                                       "maximum backlog time and will be skipped. "
-                                       "Make sure you run enough workers or reduce "
-                                       "the size of the area! "
-                                       "(event was scheduled for {})",
-                                       self.name, next_readableTime)
+                        route_logger.warning("Prio event surpassed the maximum backlog time and will be skipped. Make "
+                                             "sure you run enough workers or reduce the size of the area! (event was "
+                                             "scheduled for {})", next_readableTime)
                         return self.get_next_location(origin)
                 if self._other_worker_closer_to_prioq(next_coord, origin):
                     self._last_round_prio[origin] = True
                     self._positiontyp[origin] = 1
-                    self.logger.info("Prio event of route {} scheduled for {} passed to a closer worker.",
-                                self.name, next_readableTime)
+                    route_logger.info("Prio event scheduled for {} passed to a closer worker.", next_readableTime)
                     # Let's recurse and find another location
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
-                self.logger.info("Route {} is moving to {}, {} for a priority event scheduled for {}",
-                            self.name, next_coord.lat, next_coord.lng, next_readableTime)
+                route_logger.info("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
+                                  next_coord.lng, next_readableTime)
                 next_coord = self._check_coord_and_maybe_del(next_coord, origin)
                 if next_coord is None:
                     # Coord was not ok, lets recurse
@@ -646,19 +631,18 @@ class RouteManagerBase(ABC):
 
             # logic for when PrioQ is disabled
 
-            self.logger.debug("{}: Moving on with route", self.name)
+            route_logger.debug("Moving on with route")
             self._positiontyp[origin] = 0
             # TODO: this check is likely always true now.............
             if self._check_worker_rounds() > self._roundcount:
                 self._roundcount = self._check_worker_rounds()
                 if self._round_started_time is not None:
-                    self.logger.info("All subroutes of {} reached the first spot again. It took {}",
-                                self.name, self._get_round_finished_string())
+                    self.logger.info("All subroutes reached the first spot again. It took {}",
+                                     self._get_round_finished_string())
                 self._round_started_time = datetime.now()
                 if len(self._route) == 0:
                     return None
-                self.logger.info("Round of route {} started at {}",
-                            self.name, self._round_started_time)
+                self.logger.info("Round started at {}", self._round_started_time)
             elif self._round_started_time is None:
                 self._round_started_time = datetime.now()
 
@@ -670,56 +654,54 @@ class RouteManagerBase(ABC):
             if self.init and self._check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
                     len(self._routepool[origin].queue) == 0:
                 # we are done with init, let's calculate a new route
-                self.logger.warning("Init of {} done, it took {}, calculating new route...",
-                               self.name, self._get_round_finished_string())
+                self.logger.warning("Init done, it took {}, calculating new route...",
+                                     self._get_round_finished_string())
                 if self._start_calc:
                     self.logger.info("Another process already calculate the new route")
                     return None
                 self._start_calc = True
                 self._clear_coords()
                 coords = self._get_coords_post_init()
-                self.logger.debug("Setting {} coords to as new points in route of {}",
-                             len(coords), self.name)
+                self.logger.debug("Setting {} coords to as new points ", len(coords))
                 self.add_coords_list(coords)
-                self.logger.debug("Route of {} is being calculated", self.name)
+                self.logger.debug("Route being calculated")
                 self._recalc_route_workertype()
                 self.init = False
                 self._change_init_mapping(self.name)
                 self._start_calc = False
-                self.logger.debug("Initroute of {} is finished - restart worker", self.name)
+                self.logger.debug("Initroute is finished - restart worker")
                 return None
 
             elif len(self._current_route_round_coords) >= 0 and len(self._routepool[origin].queue) == 0:
                 # only quest could hit this else!
-                self.logger.info("Worker finished his subroute, updating all subroutes if necessary")
+                route_logger.info("finished subroute, updating all subroutes if necessary")
 
                 if self.mode == 'pokestops' and not self.init:
                     # check for coords not in other workers to get a real open coord list
                     if not self._get_coords_after_finish_route():
-                        self.logger.info("No more coords available - dont update routepool")
+                        route_logger.info("No more coords available - dont update routepool")
                         return None
 
                 if not self._worker_changed_update_routepools():
-                    self.logger.info("Failed updating routepools ...")
+                    route_logger.info("Failed updating routepools ...")
                     return None
 
                 if len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) == 0:
-                    self.logger.info("Subroute-update won't help or queue and subroute are empty, "
-                                     "signalling worker to reconnect")
+                    route_logger.info("Subroute-update won't help or queue and subroute are empty, signaling worker to "
+                                      "reconnect")
                     self._routepool[origin].last_access = time.time()
                     return None
                 elif len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) > 0:
                     [self._routepool[origin].queue.append(i) for i in self._routepool[origin].subroute]
                 elif len(self._routepool[origin].queue) > 0 and len(self._routepool[origin].subroute) > 0:
-                    self.logger.info("Getting new coords for route {}", str(self.name))
+                    route_logger.info("Getting new coords")
                 else:
-                    self.logger.info("Not getting new coords - leaving worker")
+                    route_logger.info("Not getting new coords - leaving worker")
                     return None
 
             if len(self._routepool[origin].queue) == 0:
-                self.logger.warning("Having updated routepools and checked lengths of queue and subroute, "
-                                    "{}'s queue is still empty, signalling worker to stop whatever he is doing",
-                                    self.name)
+                route_logger.warning("Having updated routepools and checked lengths of queue and subroute, "
+                                     "queue is still empty, signaling worker to stop whatever he is doing")
                 self._routepool[origin].last_access = time.time()
                 return None
 
@@ -729,10 +711,8 @@ class RouteManagerBase(ABC):
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
                         and not self.init:
                     self._current_route_round_coords.remove(next_coord)
-                self.logger.info("{}: Moving on with location {}, {} [{} coords left (Workerpool)]",
-                                 str(self.name), next_coord.lat, next_coord.lng,
-                                 str(len(self._routepool[origin].queue) + 1))
-
+                route_logger.info("Moving on with location {}, {} [{} coords left (Workerpool)]", next_coord.lat,
+                                  next_coord.lng, len(self._routepool[origin].queue) + 1)
                 self._last_round_prio[origin] = False
                 self._routepool[origin].last_round_prio_event = False
                 next_coord = self._check_coord_and_maybe_del(next_coord, origin)
@@ -742,8 +722,8 @@ class RouteManagerBase(ABC):
             return None
 
     def _check_coord_and_maybe_del(self, next_coord, origin):
-        self.logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}", str(
-            self.name), str(next_coord))
+        route_logger = routelogger_set_origin(self.logger, origin=origin)
+        route_logger.debug("Done grabbing next coord, releasing lock and returning location: {}", next_coord)
         if self._check_coords_before_returning(next_coord.lat, next_coord.lng, origin):
             if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
                     and not self.init:
@@ -771,7 +751,8 @@ class RouteManagerBase(ABC):
         return unprocessed_coords
 
     def _other_worker_closer_to_prioq(self, prioqcoord, origin):
-        self.logger.debug('Check distances from worker to PrioQ coord')
+        route_logger = routelogger_set_origin(self.logger, origin=origin)
+        route_logger.debug('Check distances from worker to PrioQ coord')
         closer_worker = None
         with self._workers_registered_mutex:
             if len(self._workers_registered) == 1:
@@ -782,7 +763,7 @@ class RouteManagerBase(ABC):
         distance_worker = get_distance_of_two_points_in_meters(current_worker_pos.lat, current_worker_pos.lng,
                                                                prioqcoord.lat, prioqcoord.lng)
 
-        self.logger.debug("Worker {} distance to PrioQ {}: {}", origin, prioqcoord, distance_worker)
+        route_logger.debug("distance to PrioQ {}: {}", prioqcoord, distance_worker)
         temp_distance = distance_worker
 
         for worker in self._routepool.keys():
@@ -792,12 +773,10 @@ class RouteManagerBase(ABC):
             worker_pos = self._routepool[worker].current_pos
             prio_distance = get_distance_of_two_points_in_meters(worker_pos.lat, worker_pos.lng,
                                                                  prioqcoord.lat, prioqcoord.lng)
-            self.logger.debug("Worker {} distance to PrioQ {}: {}", worker, prioqcoord, prio_distance)
+            route_logger.debug("distance to PrioQ {}: {}", prioqcoord, prio_distance)
             if prio_distance < temp_distance:
-                self.logger.debug("Worker {} closer then {} by {} meters",
-                             worker,
-                             origin,
-                             int(distance_worker) - int(prio_distance))
+                route_logger.debug("Worker {} closer by {} meters", worker,
+                                   int(distance_worker) - int(prio_distance))
                 temp_distance = prio_distance
                 closer_worker = worker
 
@@ -805,10 +784,10 @@ class RouteManagerBase(ABC):
             with self._manager_mutex:
                 self._routepool[closer_worker].has_prio_event = True
                 self._routepool[closer_worker].prio_coords = prioqcoord
-            self.logger.debug("Worker {} is closer to PrioQ event {}", closer_worker, prioqcoord)
+            route_logger.debug("Worker {} is closer to PrioQ event {}", closer_worker, prioqcoord)
             return True
 
-        self.logger.debug("No Worker is closer to PrioQ event {} than {}", prioqcoord, origin)
+        route_logger.debug("No Worker is closer to PrioQ event {}", prioqcoord)
 
         return False
 
@@ -820,9 +799,8 @@ class RouteManagerBase(ABC):
                 for origin in list(self._routepool):
                     entry: RoutePoolEntry = self._routepool[origin]
                     if time.time() - entry.last_access > timeout + entry.worker_sleeping:
-                        self.logger.warning(
-                            "Worker {} has not accessed a location in {} seconds, removing from routemanager",
-                            origin, timeout)
+                        self.logger.warning("Worker {} has not accessed a location in {} seconds, removing from "
+                                            "routemanager", origin, timeout)
                         self.unregister_worker(origin)
 
             i = 0
@@ -857,9 +835,8 @@ class RouteManagerBase(ABC):
                 self.logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
 
-            self.logger.debug("Current route for all workers: {}".format(str(self._current_route_round_coords)))
-            self.logger.info(
-                "Current route for all workers length: {}".format(str(len(self._current_route_round_coords))))
+            self.logger.debug("Current route for all workers: {}", self._current_route_round_coords)
+            self.logger.info("Current route for all workers length: {}", len(self._current_route_round_coords))
 
             if workers > len(self._current_route_round_coords):
                 less_coords = True
@@ -876,8 +853,8 @@ class RouteManagerBase(ABC):
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
 
-            self.logger.debug("Workers in route: {}".format(str(self._routepool)))
-            self.logger.debug("New subroute length: {}".format(str(new_subroute_length)))
+            self.logger.debug("Workers in route: {}", self._routepool)
+            self.logger.debug("New subroute length: {}", new_subroute_length)
 
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
@@ -892,7 +869,7 @@ class RouteManagerBase(ABC):
                 for origin, time_added in sorted_routepools:
                     if origin not in self._routepool:
                         # TODO probably should restart this job or something
-                        self.logger.info('{} must have unregistered when we weren\'t looking.. skip it')
+                        self.logger.info('{} must have unregistered when we weren\'t looking.. skip it', origin)
                         continue
                     entry: RoutePoolEntry = self._routepool[origin]
                     self.logger.debug("Checking subroute of {}", origin)
@@ -905,22 +882,20 @@ class RouteManagerBase(ABC):
                         j += 1
                         new_subroute.append(temp_total_round.popleft())
 
-                    self.logger.debug("New Subroute for worker {}: {}".format(str(origin), str(new_subroute)))
-                    self.logger.debug("Old Subroute for worker {}: {}".format(str(origin), str(entry.subroute)))
+                    self.logger.debug("New Subroute for worker {}: {}", origin, new_subroute)
+                    self.logger.debug("Old Subroute for worker {}: {}", origin, entry.subroute)
 
                     i += 1
                     if len(entry.subroute) == 0:
-                        self.logger.debug(
-                            "{}'s subroute is empty, assuming he has freshly registered and desperately needs a "
-                            "queue", origin)
+                        self.logger.debug("{}'s subroute is empty, assuming he has freshly registered and desperately "
+                                         "needs a queue", origin)
                         # worker is freshly registering, pass him his fair share
                         entry.subroute = new_subroute
                         # let's clean the queue just to make sure
                         entry.queue.clear()
                     elif len(new_subroute) == len(entry.subroute):
-                        self.logger.debug(
-                            "{}'s subroute is as long as the old one, we will assume it hasn't changed (for now)",
-                            origin)
+                        self.logger.debug("{}'s subroute is as long as the old one, we will assume it hasn't changed "
+                                         "(for now)", origin)
                         # apparently nothing changed
                         if compare(new_subroute, entry.subroute):
                             self.logger.info("Apparently no changes in subroutes...")
@@ -963,21 +938,18 @@ class RouteManagerBase(ABC):
                         else:
                             # we now are at a point where we need to also check the end of the old queue and
                             # append possibly missing coords to it
-                            self.logger.debug(
-                                "Checking if the last element of the old queue is present in new subroute")
+                            self.logger.debug("Checking if the last element of the old queue is present in new "
+                                              "subroute")
                             last_el_old_q: Location = old_queue[len(old_queue) - 1]
                             if last_el_old_q in new_subroute:
                                 # we have the last element in the old subroute, we can actually append stuff with the
                                 # diff to the new route
-                                self.logger.debug(
-                                    "Last element of old queue is present in new subroute, appending the rest of "
-                                    "the new subroute to the queue")
+                                self.logger.debug("Last element of old queue is present in new subroute, appending the "
+                                                  "rest of the new subroute to the queue")
                                 new_subroute_copy = collections.deque(new_subroute)
-                                while len(
-                                        new_subroute_copy) > 0 and new_subroute_copy.popleft() != last_el_old_q:
+                                while len(new_subroute_copy) > 0 and new_subroute_copy.popleft() != last_el_old_q:
                                     pass
-                                self.logger.debug("Length of subroute to be extended by {}",
-                                             len(new_subroute_copy))
+                                self.logger.debug("Length of subroute to be extended by {}", len(new_subroute_copy))
                                 # replace queue with old_queue
                                 entry.queue.clear()
                                 entry.queue = old_queue
@@ -1009,20 +981,19 @@ class RouteManagerBase(ABC):
                         # check last element of new subroute:
                         if last_el_new_route is not None and last_el_new_route in old_queue_list:
                             # if in current queue, remove from end of new subroute to end of old queue
-                            self.logger.debug(
-                                "Last element of new subroute is in old queue, removing everything after that "
-                                "element")
+                            self.logger.debug("Last element of new subroute is in old queue, removing everything after "
+                                              "that element")
                             del old_queue_list[old_queue.index(last_el_new_route): len(old_queue_list) - 1]
                         elif last_el_old_route in new_subroute:
                             # append from end of queue (compared to new subroute) to end of new subroute
-                            self.logger.debug(
-                                "Last element of old queue in new subroute, appending everything afterwards")
+                            self.logger.debug("Last element of old queue in new subroute, appending everything "
+                                              "afterwards")
                             missing_new_route_part: List[Location] = new_subroute.copy()
                             del missing_new_route_part[0: new_subroute.index(last_el_old_route)]
                             old_queue_list.extend(missing_new_route_part)
 
                         else:
-                            self.logger.debug("Worker {} getting a completely new route - replace it")
+                            self.logger.debug("Worker {} getting a completely new route - replace it", origin)
                             new_subroute_copy = collections.deque(new_subroute)
                             old_queue_list.clear()
                             while len(new_subroute_copy) > 0:
@@ -1113,7 +1084,8 @@ class RouteManagerBase(ABC):
         return self._calctype
 
     def redo_stop(self, worker, lat, lon):
-        self.logger.info('Worker {} redo a unprocessed Stop ({}, {})'.format(str(worker), str(lat), str(lon)))
+        route_logger = routelogger_set_origin(self.logger, origin=worker)
+        self.logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
         if worker in self._routepool:
             self._routepool[worker].has_prio_event = True
             self._routepool[worker].prio_coords = Location(lat, lon)
@@ -1126,11 +1098,12 @@ class RouteManagerBase(ABC):
         for origin in self._routepool:
             [coordlist.append(i) for i in self._routepool[origin].queue]
 
-        self.logger.debug('Open Coords from workers: {}'.format(str(coordlist)))
+        self.logger.debug('Open Coords from workers: {}', coordlist)
         return coordlist
 
     def set_worker_startposition(self, worker, lat, lon):
-        self.logger.info("Getting startposition for walker {} ({} / {})".format(str(worker), str(lat), str(lon)))
+        route_logger = routelogger_set_origin(self.logger, origin=worker)
+        route_logger.info("Getting startposition ({} / {})", lat, lon)
         if worker not in self._worker_start_position:
             self._worker_start_position[worker] = Location(0.0, 0.0)
 

@@ -97,7 +97,7 @@ class DbWrapper:
         The result may not be sorted by priority, to be done at a higher level!
         :return: unsorted list of next hatches within delay_after_hatch
         """
-        logger.debug("DbWrapper::get_next_raid_hatches called")
+        logger.debug3("DbWrapper::get_next_raid_hatches called")
         db_time_to_check = datetime.utcfromtimestamp(
             time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -118,23 +118,21 @@ class DbWrapper:
                 continue
             elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence(
                     [latitude, longitude]):
-                logger.debug(
-                    "Excluded hatch at {}, {} since the coordinate is not inside the given include fences",
-                    str(
-                        latitude), str(longitude))
+                logger.debug3("Excluded hatch at {}, {} since the coordinate is not inside the given include fences",
+                    str(latitude), str(longitude))
                 continue
             timestamp = self.__db_timestring_to_unix_timestamp(str(start))
             data.append((timestamp + delay_after_hatch,
                          Location(latitude, longitude)))
 
-        logger.debug("Latest Q: {}", str(data))
+        logger.debug4("Latest Q: {}", data)
         return data
 
     def set_scanned_location(self, lat, lng, capture_time):
         """
         Update scannedlocation (in RM) of a given lat/lng
         """
-        logger.debug("DbWrapper::set_scanned_location called")
+        logger.debug3("DbWrapper::set_scanned_location called")
         now = datetime.utcfromtimestamp(
             time.time()).strftime('%Y-%m-%d %H:%M:%S')
         cell_id = int(S2Helper.lat_lng_to_cell_id(float(lat), float(lng), 16))
@@ -154,7 +152,7 @@ class DbWrapper:
         """
         Update scannedlocation (in RM) of a given lat/lng
         """
-        logger.debug("DbWrapper::check_stop_quest called")
+        logger.debug3("DbWrapper::check_stop_quest called")
         query = (
             "SELECT trs_quest.GUID "
             "from trs_quest inner join pokestop on pokestop.pokestop_id = trs_quest.GUID where "
@@ -167,10 +165,10 @@ class DbWrapper:
         res = self.execute(query, data)
         number_of_rows = len(res)
         if number_of_rows > 0:
-            logger.debug('Pokestop has already a quest with CURDATE()')
+            logger.debug3('Pokestop has already a quest with CURDATE()')
             return True
         else:
-            logger.debug('Pokestop has not a quest with CURDATE()')
+            logger.debug3('Pokestop has not a quest with CURDATE()')
             return False
 
     def gyms_from_db(self, geofence_helper):
@@ -178,12 +176,12 @@ class DbWrapper:
         Retrieve all the gyms valid within the area set by geofence_helper
         :return: numpy array with coords
         """
-        logger.debug("DbWrapper::gyms_from_db called")
+        logger.debug3("DbWrapper::gyms_from_db called")
         if geofence_helper is None:
             logger.error("No geofence_helper! Not fetching gyms.")
             return []
 
-        logger.debug("Filtering with rectangle")
+        logger.debug3("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
 
         query = (
@@ -197,8 +195,8 @@ class DbWrapper:
         list_of_coords: List[Location] = []
         for (latitude, longitude) in res:
             list_of_coords.append(Location(latitude, longitude))
-        logger.debug("Got {} coordinates in this rect (minLat, minLon, "
-                     "maxLat, maxLon): {}", len(list_of_coords), str(rectangle))
+        logger.debug3("Got {} coordinates in this rect (minLat, minLon, maxLat, maxLon): {}", len(list_of_coords),
+                      rectangle)
 
         geofenced_coords = geofence_helper.get_geofenced_coordinates(
             list_of_coords)
@@ -209,12 +207,12 @@ class DbWrapper:
         Retrieve all encountered ids inside the geofence.
         :return: the new value of latest and a dict like encounter_id: disappear_time
         """
-        logger.debug("DbWrapper::update_encounters_from_db called")
+        logger.debug3("DbWrapper::update_encounters_from_db called")
         if geofence_helper is None:
             logger.error("No geofence_helper! Not fetching encounters.")
             return 0, {}
 
-        logger.debug("Filtering with rectangle")
+        logger.debug3("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
         query = (
             "SELECT latitude, longitude, encounter_id, "
@@ -241,10 +239,8 @@ class DbWrapper:
 
         encounter_id_coords = geofence_helper.get_geofenced_coordinates(
             list_of_coords)
-        logger.debug(
-            "Got {} encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, last_modified): {}",
-            len(
-                encounter_id_coords), str(params))
+        logger.debug3("Got {} encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, "
+                     "last_modified): {}", len(encounter_id_coords), params)
         encounter_id_infos = {}
         for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
             encounter_id_infos[encounter_id] = disappear_time
@@ -256,7 +252,7 @@ class DbWrapper:
         Retrieve all the pokestops valid within the area set by geofence_helper
         :return: numpy array with coords
         """
-        logger.debug("DbWrapper::stops_from_db called")
+        logger.debug3("DbWrapper::stops_from_db called")
 
         minLat, minLon, maxLat, maxLon = -90, -180, 90, 180
         query_where: str = ""
@@ -294,7 +290,7 @@ class DbWrapper:
         Retrieve all the pokestops valid within the area set by geofence_helper
         :return: numpy array with coords
         """
-        logger.debug("DbWrapper::quests_from_db called")
+        logger.debug3("DbWrapper::quests_from_db called")
         questinfo = {}
 
         query = (
@@ -359,7 +355,7 @@ class DbWrapper:
         """
         Get Pokemon Spawns for dynamic rarity
         """
-        logger.debug('Fetching pokemon spawns from db')
+        logger.debug3('Fetching pokemon spawns from db')
         query_where = ''
         if hours:
             hours = datetime.utcnow() - timedelta(hours=hours)
@@ -384,7 +380,7 @@ class DbWrapper:
                 "eligible mon IDs specified. Make sure both settings are set in area options: "
                 "min_time_left_seconds and mon_ids_iv ")
             return []
-        logger.debug("Getting mons to be encountered")
+        logger.debug3("Getting mons to be encountered")
         query = (
             "SELECT latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, "
             "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire "
@@ -411,10 +407,8 @@ class DbWrapper:
                 continue
             elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence(
                     [latitude, longitude]):
-                logger.debug(
-                    "Excluded encounter at {}, {} since the coordinate is not inside the given include fences",
-                    str(
-                        latitude), str(longitude))
+                logger.debug3("Excluded encounter at {}, {} since the coordinate is not inside the given include "
+                              " fences", latitude, longitude)
                 continue
 
             next_to_encounter.append((pokemon_id, Location(latitude, longitude), encounter_id))
@@ -430,7 +424,7 @@ class DbWrapper:
         return to_be_encountered
 
     def stop_from_db_without_quests(self, geofence_helper):
-        logger.debug("DbWrapper::stop_from_db_without_quests called")
+        logger.debug3("DbWrapper::stop_from_db_without_quests called")
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
 
@@ -457,7 +451,7 @@ class DbWrapper:
             return list_of_coords
 
     def any_stops_unvisited(self, geofence_helper: GeofenceHelper, origin: str):
-        logger.debug("DbWrapper::any_stops_unvisited called")
+        logger.debug3("DbWrapper::any_stops_unvisited called")
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
         query = (
             "SELECT pokestop.latitude, pokestop.longitude "
@@ -480,7 +474,7 @@ class DbWrapper:
             return len(res) > 0
 
     def stops_from_db_unvisited(self, geofence_helper: GeofenceHelper, origin: str):
-        logger.debug("DbWrapper::stops_from_db_unvisited called")
+        logger.debug3("DbWrapper::stops_from_db_unvisited called")
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
         query = (
             "SELECT pokestop.latitude, pokestop.longitude "
@@ -708,7 +702,7 @@ class DbWrapper:
         return pokestops
 
     def delete_stop(self, latitude: float, longitude: float):
-        logger.debug('Deleting stop from db')
+        logger.debug3('Deleting stop from db')
         query = (
             "delete from pokestop where latitude=%s and longitude=%s"
         )
@@ -720,14 +714,14 @@ class DbWrapper:
         self.execute(query, (origin,), commit=True)
 
     def submit_pokestop_visited(self, origin, latitude, longitude):
-        logger.debug("Flag pokestop as visited...")
+        logger.debug3("Flag pokestop as visited...")
         query = "INSERT IGNORE INTO trs_visited SELECT pokestop_id,'{}' " \
                 "FROM pokestop WHERE latitude={} AND longitude={}".format(origin, str(latitude),
                                                                           str(longitude))
         self.execute(query, commit=True)
 
     def get_detected_spawns(self, geofence_helper, include_event_id) -> List[Location]:
-        logger.debug("DbWrapper::get_detected_spawns called")
+        logger.debug3("DbWrapper::get_detected_spawns called")
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
         event_ids: list = []
@@ -746,32 +740,24 @@ class DbWrapper:
         ).format(minLat, minLon, maxLat, maxLon, str(', '.join(str(v) for v in event_ids)))
 
         list_of_coords: List[Location] = []
-        logger.debug(
-            "DbWrapper::get_detected_spawns executing select query")
+        logger.debug3("DbWrapper::get_detected_spawns executing select query")
         res = self.execute(query)
-        logger.debug(
-            "DbWrapper::get_detected_spawns result of query: {}", str(res))
+        logger.debug4("DbWrapper::get_detected_spawns result of query: {}", res)
         for (latitude, longitude) in res:
             list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
-            logger.debug(
-                "DbWrapper::get_detected_spawns applying geofence")
+            logger.debug3("DbWrapper::get_detected_spawns applying geofence")
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
-            logger.debug(geofenced_coords)
+            logger.debug4(geofenced_coords)
             return geofenced_coords
         else:
-            logger.debug(
-                "DbWrapper::get_detected_spawns converting to numpy")
-            # to_return = np.zeros(shape=(len(list_of_coords), 2))
-            # for i in range(len(to_return)):
-            #     to_return[i][0] = list_of_coords[i][0]
-            #     to_return[i][1] = list_of_coords[i][1]
+            logger.debug3("DbWrapper::get_detected_spawns converting to numpy")
             return list_of_coords
 
     def get_undetected_spawns(self, geofence_helper, include_event_id):
-        logger.debug("DbWrapper::get_undetected_spawns called")
+        logger.debug3("DbWrapper::get_undetected_spawns called")
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
         event_ids: list = []
@@ -791,32 +777,24 @@ class DbWrapper:
         ).format(minLat, minLon, maxLat, maxLon, str(', '.join(str(v) for v in event_ids)))
 
         list_of_coords: List[Location] = []
-        logger.debug(
-            "DbWrapper::get_undetected_spawns executing select query")
+        logger.debug3("DbWrapper::get_undetected_spawns executing select query")
         res = self.execute(query)
-        logger.debug(
-            "DbWrapper::get_undetected_spawns result of query: {}", str(res))
+        logger.debug4("DbWrapper::get_undetected_spawns result of query: {}", res)
         for (latitude, longitude) in res:
             list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
-            logger.debug(
-                "DbWrapper::get_undetected_spawns applying geofence")
+            logger.debug4("DbWrapper::get_undetected_spawns applying geofence")
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
-            logger.debug(geofenced_coords)
+            logger.debug4(geofenced_coords)
             return geofenced_coords
         else:
-            logger.debug(
-                "DbWrapper::get_undetected_spawns converting to numpy")
-            # to_return = np.zeros(shape=(len(list_of_coords), 2))
-            # for i in range(len(to_return)):
-            #     to_return[i][0] = list_of_coords[i][0]
-            #     to_return[i][1] = list_of_coords[i][1]
+            logger.debug3("DbWrapper::get_undetected_spawns converting to numpy")
             return list_of_coords
 
     def delete_spawnpoints(self, spawnpoint_ids):
-        logger.debug("dbWrapper::delete_spawnpoints")
+        logger.debug3("dbWrapper::delete_spawnpoints")
         if len(spawnpoint_ids) == 0:
             return True
         query = (
@@ -829,7 +807,7 @@ class DbWrapper:
         return True
 
     def delete_status_entry(self, deviceid):
-        logger.debug("dbWrapper::delete_status_entry")
+        logger.debug3("dbWrapper::delete_status_entry")
         query = (
             "DELETE "
             "FROM trs_status "
@@ -840,7 +818,7 @@ class DbWrapper:
         return True
 
     def convert_spawnpoints(self, spawnpoint_ids):
-        logger.debug("dbWrapper::convert_spawnpoints")
+        logger.debug3("dbWrapper::convert_spawnpoints")
         query = (
             "UPDATE trs_spawn "
             "set eventid = 1 WHERE spawnpoint in ({})".format(str(','.join(spawnpoint_ids)))
@@ -850,7 +828,7 @@ class DbWrapper:
         return True
 
     def delete_spawnpoint(self, spawnpoint_id):
-        logger.debug("dbWrapper::delete_spawnpoints")
+        logger.debug3("dbWrapper::delete_spawnpoints")
         query = (
             "DELETE "
             "FROM trs_spawn "
@@ -861,7 +839,7 @@ class DbWrapper:
         return True
 
     def convert_spawnpoint(self, spawnpoint_id):
-        logger.debug("dbWrapper::convert_spawnpoints")
+        logger.debug3("dbWrapper::convert_spawnpoints")
         query = (
             "UPDATE trs_spawn "
             "set eventid = 1 WHERE spawnpoint={}".format(str(spawnpoint_id))
@@ -871,7 +849,7 @@ class DbWrapper:
         return True
 
     def get_all_spawnpoints(self):
-        logger.debug("dbWrapper::get_all_spawnpoints")
+        logger.debug3("dbWrapper::get_all_spawnpoints")
         spawn = []
         query = (
             "SELECT spawnpoint "
@@ -887,7 +865,7 @@ class DbWrapper:
     def download_spawns(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
                         oSwLat=None, oSwLon=None, timestamp=None, fence=None, eventid=None, todayonly=False,
                         olderthanxdays=None):
-        logger.debug("dbWrapper::download_spawns")
+        logger.debug3("dbWrapper::download_spawns")
         spawn = {}
         query_where = ""
 
@@ -961,7 +939,7 @@ class DbWrapper:
         :return:
         """
 
-        logger.debug("DbWrapper::retrieve_next_spawns called")
+        logger.debug3("DbWrapper::retrieve_next_spawns called")
 
         current_time_of_day = datetime.now().replace(microsecond=0)
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
@@ -1018,7 +996,7 @@ class DbWrapper:
         :return:
         """
 
-        logger.debug("DbWrapper::get_nearest_stops_from_position called")
+        logger.debug3("DbWrapper::get_nearest_stops_from_position called")
         limitstr: str = ""
         ignore_spinnedstr: str = ""
         loopcount: int = 0
@@ -1083,7 +1061,7 @@ class DbWrapper:
         return []
 
     def save_last_walker_position(self, origin, lat, lng):
-        logger.debug("dbWrapper::save_last_walker_position")
+        logger.debug3("dbWrapper::save_last_walker_position")
 
         query = (
             "update settings_device set startcoords_of_walker='%s, %s' where instance_id=%s and name=%s"
@@ -1094,7 +1072,7 @@ class DbWrapper:
         self.execute(query, vals, commit=True)
 
     def insert_usage(self, instance, cpu, mem, garbage, timestamp):
-        logger.debug("dbWrapper::insert_usage")
+        logger.debug3("dbWrapper::insert_usage")
 
         query = (
             "INSERT into trs_usage (instance, cpu, memory, garbage, timestamp) VALUES "
@@ -1108,13 +1086,13 @@ class DbWrapper:
         return
 
     def save_status(self, data):
-        logger.debug("dbWrapper::save_status")
+        logger.debug3("dbWrapper::save_status")
         literals = ['currentPos', 'lastPos', 'lastProtoDateTime']
         data['instance_id'] = self.instance_id
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
     def save_last_reboot(self, dev_id):
-        logger.debug("dbWrapper::save_last_reboot")
+        logger.debug3("dbWrapper::save_last_reboot")
         literals = ['lastPogoReboot', 'globalrebootcount']
         data = {
             'instance_id': self.instance_id,
@@ -1127,7 +1105,7 @@ class DbWrapper:
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
     def save_last_restart(self, dev_id):
-        logger.debug("dbWrapper::save_last_restart")
+        logger.debug3("dbWrapper::save_last_restart")
         literals = ['lastPogoRestart', 'globalrestartcount']
         data = {
             'instance_id': self.instance_id,
@@ -1147,7 +1125,7 @@ class DbWrapper:
         self.autoexec_insert('trs_status', data, optype='ON DUPLICATE')
 
     def download_status(self):
-        logger.debug("dbWrapper::download_status")
+        logger.debug3("dbWrapper::download_status")
         sql = "SELECT `device_id`, `name`, `routePos`, `routeMax`, `area_id`, `rmname`, `mode`, `rebootCounter`,\n"\
               "`init`, `currentSleepTime`, `rebootingOption`, `restartCounter`, `globalrebootcount`,\n"\
               "`globalrestartcount`, `lastPogoRestart`, `lastProtoDateTime`, `currentPos`, `lastPos`,\n"\
@@ -1158,7 +1136,7 @@ class DbWrapper:
         return workers
 
     def get_events(self, event_id=None):
-        logger.debug("dbWrapper::get_events")
+        logger.debug3("dbWrapper::get_events")
         eventidstr: str = ""
         if event_id is not None:
             eventidstr = "where `id` = " + str(event_id)
@@ -1169,7 +1147,7 @@ class DbWrapper:
         return events
 
     def save_event(self, event_name, event_start, event_end, event_lure_duration=30, id=None):
-        logger.debug("DbWrapper::save_event called")
+        logger.debug3("DbWrapper::save_event called")
         if id is None:
             query = (
                 "INSERT INTO trs_event (event_name, event_start, event_end, event_lure_duration) "
@@ -1187,7 +1165,7 @@ class DbWrapper:
         return True
 
     def delete_event(self, id=None):
-        logger.debug("DbWrapper::delete_event called")
+        logger.debug3("DbWrapper::delete_event called")
         if id is None:
             return False
         else:
@@ -1207,7 +1185,7 @@ class DbWrapper:
         return True
 
     def get_current_event(self):
-        logger.debug("DbWrapper::get_current_event called")
+        logger.debug3("DbWrapper::get_current_event called")
         sql = (
             "SELECT id, event_lure_duration "
             "FROM trs_event "
@@ -1217,15 +1195,14 @@ class DbWrapper:
         found = self._db_exec.execute(sql)
 
         if found and len(found) > 0 and found[0][0]:
-            logger.info("Found an active Event with id {} (Lure Duration: {})".format(str(found[0][0]),
-                                                                                      str(found[0][1])))
+            logger.info("Found an active Event with id {} (Lure Duration: {})", found[0][0], found[0][1])
             return found[0][0], found[0][1]
         else:
             logger.info("There is no active event - returning default value (1) (Lure Duration: 30)")
             return 1, 30
 
     def check_if_event_is_active(self, eventid):
-        logger.debug("DbWrapper::check_if_event_is_active called")
+        logger.debug3("DbWrapper::check_if_event_is_active called")
         if int(eventid) == 1:
             return False
         sql = "select * " \

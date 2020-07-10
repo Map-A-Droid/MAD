@@ -261,7 +261,7 @@ class WorkerQuests(MITMBase):
                 if delay_used > 7200:  # There's a maximum of 2 hours wait time
                     delay_used = 7200
             self.logger.debug(
-                "Need more sleep after Teleport: {} seconds!", str(int(delay_used)))
+                "Need more sleep after Teleport: {} seconds!", int(delay_used))
         else:
             delay_used = distance / speed
             self.logger.info("main: Walking {} m, this will take {} seconds", distance, delay_used)
@@ -306,8 +306,7 @@ class WorkerQuests(MITMBase):
 
         if self.get_devicesettings_value('last_action_time', None) is not None:
             timediff = time.time() - self.get_devicesettings_value('last_action_time', 0)
-            self.logger.info(
-                "Timediff between now and last action time: {}", str(int(timediff)))
+            self.logger.info("Timediff between now and last action time: {}", int(timediff))
             delay_used = delay_used - timediff
         elif self.get_devicesettings_value('last_action_time', None) is None and not self._level_mode:
             self.logger.info('Starting first time - we wait because of some default pogo delays ...')
@@ -329,8 +328,8 @@ class WorkerQuests(MITMBase):
             self.logger.info('No need to wait before spinning, continuing...')
         else:
             delay_used = math.floor(delay_used)
-            self.logger.info("Real sleep time: {} seconds: next action {}",
-                        str(delay_used), str(datetime.now() + timedelta(seconds=delay_used)))
+            self.logger.info("Real sleep time: {} seconds: next action {}", delay_used,
+                             datetime.now() + timedelta(seconds=delay_used))
             cleanupbox: bool = False
             lastcleanupbox = self.get_devicesettings_value('last_cleanup_time', None)
 
@@ -351,7 +350,7 @@ class WorkerQuests(MITMBase):
                 cleanupbox = False
                 if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                         or self._stop_worker_event.is_set():
-                    self.logger.error("Worker {} get killed while sleeping", str(self._origin))
+                    self.logger.error("Worker was killed while sleeping")
                     self._current_sleep_time = 0
                     raise InternalStopWorkerException
                 time.sleep(1)
@@ -488,17 +487,15 @@ class WorkerQuests(MITMBase):
                     if success_counter == 0:
                         self._clear_box_failcount += 1
                         if self._clear_box_failcount < 3:
-                            self.logger.warning("Failed clearing box {} times in "
-                                                "a row, retry later...",
+                            self.logger.warning("Failed clearing box {} time(s) in a row, retry later...",
                                                 self._clear_box_failcount)
                         else:
-                            self.logger.error("Unable to delete any items 3 times in"
-                                              " a row - restart pogo ...")
+                            self.logger.error("Unable to delete any items 3 times in a row - restart pogo ...")
                             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
                     continue
-                self.logger.info('Found no item to delete. Scrolling down ({} times)', str(error_counter))
+                self.logger.info('Found no item to delete. Scrolling down ({} times)', error_counter)
                 self._communicator.touch_and_hold(int(200), int(600), int(200), int(100))
                 time.sleep(5)
 
@@ -527,17 +524,17 @@ class WorkerQuests(MITMBase):
                         # TODO: could this be running forever?
                         trash += 1
                         continue
-                    self.logger.debug("Found item {}", str(item_text))
+                    self.logger.debug("Found item {}", item_text)
                     match_one_item: bool = False
                     for text in not_allow:
                         if self.similar(text, item_text) > 0.6:
                             match_one_item = True
                             break
                     if match_one_item:
-                        self.logger.debug('Not allowed to delete item. Skipping: {}', str(item_text))
+                        self.logger.debug('Not allowed to delete item. Skipping: {}', item_text)
                         trash += 1
                     else:
-                        self.logger.info('Going to delete item: {}', str(item_text))
+                        self.logger.info('Going to delete item: {}', item_text)
                         self._communicator.click(int(trashcancheck[trash].x), int(trashcancheck[trash].y))
                         time.sleep(1 + int(delayadd))
 
@@ -562,7 +559,7 @@ class WorkerQuests(MITMBase):
                                 stop_screen_clear.set()
                                 delete_allowed = True
                         else:
-                            self.logger.error('Unknown error while deleting item: {}', str(item_text))
+                            self.logger.error('Unknown error while deleting item: {}', item_text)
                             stop_screen_clear.set()
                             stop_inventory_clear.set()
                 except UnicodeEncodeError:
@@ -595,8 +592,7 @@ class WorkerQuests(MITMBase):
             if encounter_ids:
                 self.logger.debug("Found {} new encounter_ids", len(encounter_ids))
                 for encounter_id, disappear in encounter_ids.items():
-                    self.logger.debug("id: {}, despawn: {}",
-                                 encounter_id, disappear)
+                    self.logger.debug("id: {}, despawn: {}", encounter_id, disappear)
             self._encounter_ids = {**encounter_ids, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.
@@ -701,9 +697,8 @@ class WorkerQuests(MITMBase):
                 if data_received != LatestReceivedType.UNDEFINED:
                     spinnable_stop, _ = self._current_position_has_spinnable_stop(timestamp)
                     if not spinnable_stop:
-                        self.logger.info("Stop {}, {} "
-                                         "considered to be ignored in the next round due to failed spinnable check",
-                                         str(self.current_location.lat), str(self.current_location.lng))
+                        self.logger.info("Stop {}, {} considered to be ignored in the next round due to failed "
+                                         "spinnable check", self.current_location.lat, self.current_location.lng)
                         self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
                                                                                     self.current_location.lat,
                                                                                     self.current_location.lng)
@@ -819,8 +814,7 @@ class WorkerQuests(MITMBase):
                 if self._open_pokestop(self._stop_process_time) is None:
                     return
             elif data_received == FortSearchResultTypes.FULL:
-                self.logger.warning("Failed getting quest but got items - quest "
-                               "box is probably full. Start cleanup.")
+                self.logger.warning("Failed getting quest but got items - quest box is probably full. Start cleanup.")
                 reached_main_menu = self._check_pogo_main_screen(10, True)
                 if not reached_main_menu:
                     if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
@@ -832,8 +826,7 @@ class WorkerQuests(MITMBase):
                 break
             else:
                 if data_received == LatestReceivedType.MON:
-                    self.logger.info("Got MON data after opening stop. This does not"
-                                     " make sense - just retry...")
+                    self.logger.info("Got MON data after opening stop. This does not make sense - just retry...")
                 else:
                     self.logger.info("Brief speed lock or we already spun it, trying again")
                 if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat,
@@ -869,8 +862,7 @@ class WorkerQuests(MITMBase):
         elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp:
             return LatestReceivedType.MON
         elif proto_to_wait_for not in latest:
-            self.logger.debug(
-                "No data linked to the requested proto since MAD started.")
+            self.logger.debug("No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         else:
             # when waiting for stop or spin data, it is enough to make sure
@@ -883,10 +875,9 @@ class WorkerQuests(MITMBase):
                     self.get_devicesettings_value('last_cleanup_time', 0),
                     self.get_devicesettings_value('last_questclear_time', 0)]
                     if isinstance(x, int) or isinstance(x, float))
-                self.logger.debug("timestamp {} being replaced with {} because "
-                    "we're waiting for proto {}",
-                    datetime.fromtimestamp(timestamp).strftime('%H:%M:%S'),
-                    datetime.fromtimestamp(replacement).strftime('%H:%M:%S'),
+                self.logger.debug("timestamp {} being replaced with {} because we're waiting for proto {}",
+                                  datetime.fromtimestamp(timestamp).strftime('%H:%M:%S'),
+                                  datetime.fromtimestamp(replacement).strftime('%H:%M:%S'),
                     proto_to_wait_for)
                 timestamp = replacement
             # proto has previously been received, let's check the timestamp...
@@ -896,7 +887,7 @@ class WorkerQuests(MITMBase):
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
-                self.logger.debug4("Latest data received: {}".format(str(latest_data)))
+                self.logger.debug4("Latest data received: {}", latest_data)
                 if latest_data is None:
                     time.sleep(0.5)
                     return None
@@ -938,8 +929,8 @@ class WorkerQuests(MITMBase):
                         len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                     return LatestReceivedType.CLEAR
             else:
-                self.logger.debug("latest timestamp of proto {} ({}) is older than {}", str(
-                    proto_to_wait_for), str(latest_timestamp), str(timestamp))
+                self.logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
+                                  latest_timestamp, timestamp)
                 # TODO: timeoutopen error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)

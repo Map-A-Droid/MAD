@@ -149,8 +149,7 @@ class RouteCalc(Resource):
             for i in range(len(lessCoordinates)):
                 lessCoordinates[i][0] = newCoords[i][0]
                 lessCoordinates[i][1] = newCoords[i][1]
-            logger.debug("Coords summed up: {}, that's just {} coords",
-                         str(lessCoordinates), str(len(lessCoordinates)))
+            logger.debug("Coords summed up: {}, that's just {} coords", lessCoordinates, len(lessCoordinates))
         logger.debug("Got {} coordinates", len(lessCoordinates))
         if len(lessCoordinates) < 3:
             logger.debug("less than 3 coordinates... not gonna take a shortest route on that")
@@ -173,7 +172,7 @@ class RouteCalc(Resource):
                 calc_dur = int(calc_dur * 60)
                 time_unit = 'seconds'
 
-            logger.info("Calculated route for {} in {} {}", route_name, str(calc_dur), time_unit)
+            logger.info("Calculated route for {} in {} {}", route_name, calc_dur, time_unit)
 
             for i in range(len(sol_best)):
                 export_data.append({'lat': lessCoordinates[int(sol_best[i])][0].item(),

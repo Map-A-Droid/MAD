@@ -72,5 +72,5 @@ class MonIVList(Resource):
             try:
                 self._dbc.autoexec_insert('settings_monivlist_to_mon', mon_data)
             except mysql.connector.Error:
-                logger.info('Duplicate pokemon %s detected in list %s' % (mon, self.identifier,))
+                logger.info('Duplicate pokemon {} detected in list {}', mon, self.identifier,)
         return self.identifier

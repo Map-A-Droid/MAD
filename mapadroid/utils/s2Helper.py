@@ -59,8 +59,7 @@ class S2Helper:
         p2 = s2sphere.LatLng.from_degrees(south, east)
         cell_ids = region.get_covering(
             s2sphere.LatLngRect.from_point_pair(p1, p2))
-        logger.debug('Detecting ' + str(len(cell_ids)) +
-                     ' L{} Cells in Area'.format(str(cell_size)))
+        logger.debug('Detecting {} L{} Cells in Area', len(cell_ids), cell_size)
         for cell_id in cell_ids:
             split_cell_id = str(cell_id).split(' ')
             position = S2Helper.get_position_from_cell(
@@ -96,8 +95,7 @@ class S2Helper:
             split_cell_id = str(cell_id).split(' ')
             position = S2Helper.middle_of_cell(int(split_cell_id[1], 16))
             calc_route_data.append([position[0], position[1]])
-        logger.debug('Detecting ' + str(len(calc_route_data)) +
-                     ' L{} Cells in Area'.format(str(cell_size)))
+        logger.debug('Detecting {} L{} Cells in Area', len(calc_route_data), cell_size)
 
         return calc_route_data
 
@@ -180,8 +178,8 @@ class S2Helper:
         if geofence_helper is not None and geofence_helper.is_enabled():
             results = geofence_helper.get_geofenced_coordinates(results)
             if not results:
-                logger.error('No cells regarded as valid for desired scan area. '
-                             'Check your provided geofences. Aborting.')
+                logger.error('No cells regarded as valid for desired scan area. Check your provided geofences. '
+                             'Aborting.')
             else:
                 logger.info("Ordering location")
                 results = S2Helper.order_location_list_rows(results)

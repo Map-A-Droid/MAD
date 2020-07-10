@@ -90,6 +90,7 @@ class APIHandler(object):
             headers = {
                 'X-Status': err.reason
             }
+            self._logger.debug2('Formatting error: {}', headers)
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
         except Exception:
             self._logger.opt(exception=True).critical("An unhanded exception occurred!")

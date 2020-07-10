@@ -14,7 +14,7 @@ from mapadroid.worker.WorkerConfigmode import WorkerConfigmode
 from mapadroid.worker.WorkerMITM import WorkerMITM
 from mapadroid.worker.WorkerQuests import WorkerQuests
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
 
 logger = get_logger(LoggerEnums.worker)
@@ -39,16 +39,16 @@ class WorkerFactory:
 
     async def __get_walker_index(self, devicesettings, origin):
         walker_index = devicesettings.get('walker_area_index', 0)
+        origin_logger = get_origin_logger(logger, origin=origin)
         if walker_index > 0:
             # check status of last area
             if not devicesettings.get('finished', False):
-                logger.info(
-                    'Something wrong with last round - get back to old area')
+                origin_logger.info('Something wrong with last round - get back to old area')
                 walker_index -= 1
                 self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index',
                                                                   walker_index)
             else:
-                logger.debug('Previous area was finished, move on')
+                origin_logger.debug('Previous area was finished, move on')
         return walker_index
 
     async def __initalize_devicesettings(self, origin):
@@ -62,6 +62,7 @@ class WorkerFactory:
 
     async def __get_walker_settings(self, origin: str, client_mapping: dict, devicesettings: dict) \
             -> Optional[WalkerConfiguration]:
+        origin_logger = get_origin_logger(logger, origin=origin)
         walker_area_array = client_mapping.get("walker", None)
         if walker_area_array is None:
             logger.error("No valid walker could be found for {}", origin)
@@ -71,19 +72,20 @@ class WorkerFactory:
             await self.__initalize_devicesettings(origin)
         walker_index = await self.__get_walker_index(devicesettings, origin)
 
-        walker_settings: dict = walker_area_array[walker_index]
+        try:
+            walker_settings: dict = walker_area_array[walker_index]
+        except IndexError:
+            origin_logger.warning('No area defined for the current walker')
+            return None
 
         # preckeck walker setting
         walker_area_name = walker_area_array[walker_index]['walkerarea']
         while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
                 and walker_index < len(walker_area_array):
-            logger.info(
-                '{} not using area {} - Walkervalue out of range', str(origin),
-                str(self.__mapping_manager.routemanager_get_name(walker_area_name)))
+            origin_logger.info('not using area {} - Walkervalue out of range',
+                        self.__mapping_manager.routemanager_get_name(walker_area_name))
             if walker_index >= len(walker_area_array) - 1:
-                logger.error(
-                    'Can NOT find any active area defined for current time. Check Walker entries for device: {}',
-                    str(origin))
+                origin_logger.error('Can NOT find any active area defined for current time. Check Walker entries')
                 walker_index = 0
                 self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index',
                                                                   walker_index)
@@ -94,7 +96,7 @@ class WorkerFactory:
             walker_settings = walker_area_array[walker_index]
             walker_area_name = walker_area_array[walker_index]['walkerarea']
 
-        logger.debug("Checking walker_area_index length")
+        origin_logger.debug("Checking walker_area_index length")
         if walker_index >= len(walker_area_array):
             # check if array is smaller than expected - f.e. on the fly changes in mappings.json
             self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', 0)
@@ -107,10 +109,11 @@ class WorkerFactory:
         return walker_configuration
 
     async def __prep_settings(self, origin: str) -> Optional[WalkerConfiguration]:
+        origin_logger = get_origin_logger(logger, origin=origin)
         last_known_state = {}
         client_mapping = self.__mapping_manager.get_devicemappings_of(origin)
         devicesettings = self.__mapping_manager.get_devicesettings_of(origin)
-        logger.info("Setting up routemanagers for {}", str(origin))
+        origin_logger.info("Setting up routemanagers")
 
         walker_configuration: Optional[WalkerConfiguration] = await self.__get_walker_settings(origin, client_mapping,
                                                                                                devicesettings)
@@ -121,11 +124,11 @@ class WorkerFactory:
         if walker_configuration.walker_area_name not in self.__mapping_manager.get_all_routemanager_names():
             raise WrongAreaInWalker()
 
-        logger.debug('Devicesettings {}: {}', str(origin), devicesettings)
-        logger.info('{} using walker area {} [{}/{}]', str(origin), str(
-            self.__mapping_manager.routemanager_get_name(walker_configuration.walker_area_name)),
-                    str(walker_configuration.walker_index + 1),
-                    str(walker_configuration.total_walkers_allowed_for_assigned_area))
+        origin_logger.debug('Devicesettings: {}', devicesettings)
+        origin_logger.info('using walker area {} [{}/{}]',
+                           self.__mapping_manager.routemanager_get_name(walker_configuration.walker_area_name),
+                           walker_configuration.walker_index + 1,
+                           walker_configuration.total_walkers_allowed_for_assigned_area)
         return walker_configuration
 
     async def __update_settings_of_origin(self, origin: str, walker_configuration: WalkerConfiguration):
@@ -142,6 +145,7 @@ class WorkerFactory:
     async def get_worker_using_settings(self, origin: str, enable_configmode: bool,
                                         communicator: AbstractCommunicator) \
             -> Optional[AbstractWorker]:
+        origin_logger = get_origin_logger(logger, origin=origin)
         if enable_configmode:
             return self.get_configmode_worker(origin, communicator)
 
@@ -149,9 +153,9 @@ class WorkerFactory:
         # TODO: get worker
         walker_configuration: Optional[WalkerConfiguration] = await self.__prep_settings(origin)
         if walker_configuration is None:
-            logger.error("Failed to find a walker configuration for {}", origin)
+            origin_logger.error("Failed to find a walker configuration")
             return None
-        logger.debug("Setting up worker for {}", str(origin))
+        origin_logger.debug("Setting up worker")
         await self.__update_settings_of_origin(origin, walker_configuration)
 
         dev_id = self.__mapping_manager.get_all_devicemappings()[origin]['device_id']
@@ -160,7 +164,7 @@ class WorkerFactory:
             walker_configuration.walker_area_name
         )
         if dev_id is None or area_id is None or walker_routemanager_mode == WorkerType.UNDEFINED:
-            logger.error("Failed to instantiate worker for {} due to invalid settings found", origin)
+            origin_logger.error("Failed to instantiate worker due to invalid settings found")
             return None
 
         # we can finally create an instance of the worker, bloody hell...
@@ -171,10 +175,11 @@ class WorkerFactory:
     def get_worker(self, origin: str, worker_type: WorkerType, communicator: AbstractCommunicator,
                    dev_id: str, last_known_state: dict, area_id: int,
                    walker_settings: dict, walker_area_name: str) -> Optional[AbstractWorker]:
+        origin_logger = get_origin_logger(logger, origin=origin)
         if origin is None or worker_type is None or worker_type == WorkerType.UNDEFINED:
             return None
         elif worker_type in [WorkerType.CONFIGMODE, WorkerType.CONFIGMODE.value]:
-            logger.error("WorkerFactory::get_worker called with configmode arg, use get_configmode_worker instead")
+            origin_logger.error("WorkerFactory::get_worker called with configmode arg, use get_configmode_worker instead")
             return None
         # TODO: validate all values
         elif worker_type in [WorkerType.IV_MITM, WorkerType.IV_MITM.value,
@@ -195,7 +200,7 @@ class WorkerFactory:
                                     db_wrapper=self.__db_wrapper, area_id=area_id, routemanager_name=walker_area_name,
                                     event=self.__event)
         else:
-            logger.error("WorkerFactor::get_worker failed to create a worker...")
+            origin_logger.error("WorkerFactor::get_worker failed to create a worker...")
             return None
 
     def get_configmode_worker(self, origin: str, communicator: AbstractCommunicator) -> WorkerConfigmode:

@@ -38,7 +38,7 @@ class WorkerMITM(MITMBase):
         return ["iv_mitm", "raids_mitm", "mon_mitm"]
 
     def _health_check(self):
-        self.logger.debug("_health_check: called")
+        self.logger.debug4("_health_check: called")
         pass
 
     def _cleanup(self):
@@ -86,8 +86,7 @@ class WorkerMITM(MITMBase):
                     delay_used = 10
                 elif distance > 2500:
                     delay_used = 8
-                self.logger.debug(
-                    "Need more sleep after Teleport: {} seconds!", str(delay_used))
+                self.logger.debug("Need more sleep after Teleport: {} seconds!", delay_used)
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
@@ -123,7 +122,7 @@ class WorkerMITM(MITMBase):
             cur_time = math.floor(time.time())
             self.logger.debug2("Done walking, fetching time to sleep")
             delay_used = self.get_devicesettings_value('post_walk_delay', 7)
-        self.logger.debug2("Sleeping for {}s".format(str(delay_used)))
+        self.logger.debug2("Sleeping for {}s", delay_used)
         time.sleep(float(delay_used))
         self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location
@@ -207,12 +206,10 @@ class WorkerMITM(MITMBase):
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested: Union[LatestReceivedType, dict] = LatestReceivedType.UNDEFINED
         if latest is None:
-            self.logger.debug(
-                "Nothing received from {} since MAD started", str(self._origin))
+            self.logger.debug("Nothing received from since MAD started")
             time.sleep(0.5)
         elif proto_to_wait_for not in latest:
-            self.logger.debug(
-                "No data linked to the requested proto since MAD started.")
+            self.logger.debug("No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         else:
             # proto has previously been received, let's check the timestamp...
@@ -222,8 +219,8 @@ class WorkerMITM(MITMBase):
             mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
             latest_timestamp = latest_proto.get("timestamp", 0)
             self.logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
-                         datetime.fromtimestamp(latest_timestamp), datetime.fromtimestamp(timestamp),
-                         str(proto_to_wait_for))
+                              datetime.fromtimestamp(latest_timestamp), datetime.fromtimestamp(timestamp),
+                              proto_to_wait_for)
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data: dict = latest_proto.get("values", None)
@@ -265,12 +262,11 @@ class WorkerMITM(MITMBase):
                     else:
                         self.logger.debug("Got data requested: {}", data_requested)
                 else:
-                    self.logger.warning(
-                        "No mode specified to wait for - this should not even happen...")
+                    self.logger.warning("No mode specified to wait for - this should not even happen...")
                     time.sleep(0.5)
             else:
-                self.logger.debug("latest timestamp of proto {} ({}) is older than {}",
-                             str(proto_to_wait_for), str(latest_timestamp), str(timestamp))
+                self.logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
+                                  latest_timestamp, timestamp)
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
