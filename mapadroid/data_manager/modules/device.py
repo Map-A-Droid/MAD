@@ -345,7 +345,7 @@ class Device(Resource):
 
     def flush_level(self) -> None:
         origin_logger = get_origin_logger(logger, origin=self['origin'])
-        lorigin_logger.info('Removing visitation status')
+        origin_logger.info('Removing visitation status')
         self._dbc.flush_levelinfo(self['origin'])
 
     def _load(self) -> None:
