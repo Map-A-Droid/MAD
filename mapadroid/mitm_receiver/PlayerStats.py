@@ -99,7 +99,7 @@ class PlayerStats(object):
         self._logger.debug2("Creating stats_collector task")
         with self.__mapping_mutex:
             if not self._stats_collector_start:
-                if time.time() - self._last_processed_timestamp > 300 or \
+                if time.time() - self._last_processed_timestamp >= self.__application_args.game_stats_save_time or \
                         self.compare_hour(self._last_processed_timestamp):
                     self._last_processed_timestamp = time.time()
 
