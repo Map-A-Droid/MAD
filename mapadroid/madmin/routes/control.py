@@ -242,10 +242,10 @@ class control(object):
         if useadb == 'True' and self._adb_connect.make_screenswipe(adb, origin, real_click_x,
                                                                    real_click_y, real_click_xe,
                                                                    real_click_ye):
-            origin_logger.bind(name=origin).info('MADMin: ADB screenswipe successfully')
+            origin_logger.info('MADMin: ADB screenswipe successfully')
         else:
-            origin_logger.bind(name=origin).info('MADMin WS Swipe x:{} y:{} xe:{} ye:{}', real_click_x, real_click_y,
-                              real_click_xe, real_click_ye)
+            origin_logger.info('MADMin WS Swipe x:{} y:{} xe:{} ye:{}', real_click_x, real_click_y, real_click_xe,
+                               real_click_ye)
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.touch_and_hold(int(real_click_x), int(
                 real_click_y), int(real_click_xe), int(real_click_ye))

@@ -75,8 +75,8 @@ class MitmMapper(object):
             logger.error("Playerstats consumer stopping because of {}", e)
         logger.info("Shutting down Playerstats update consumer")
 
-    def __process_stats(self, stats, client_id: int, last_processed_timestamp: float):
-        origin_logger = get_origin_logger(logger, origin=origin)
+    def __process_stats(self, stats, client_id: str, last_processed_timestamp: float):
+        origin_logger = get_origin_logger(logger, origin=client_id)
         origin_logger.debug('Submitting stats')
         data_send_stats = []
         data_send_location = []

@@ -1,6 +1,6 @@
 import math
 
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import logger, get_origin_logger
 from .util import *
 
 try:
@@ -53,7 +53,7 @@ def format_solution(manager, routing, solution):
 
 
 def route_calc_ortools(lessCoordinates, route_name):
-    route_logger = logger.bind(origin=route_name)
+    route_logger = get_origin_logger(logger, origin=route_name)
     data = create_data_model(lessCoordinates)
 
     # Create the routing index manager.
@@ -91,7 +91,7 @@ def route_calc_ortools(lessCoordinates, route_name):
 
 
 def route_calc_all(lessCoordinates, route_name, num_processes, algorithm):
-    route_logger = logger.bind(origin=route_name)
+    route_logger = get_origin_logger(logger, origin=route_name)
     # check to see if we can use OR-Tools to perform our routecalc
     import platform
     if platform.architecture()[0] == "64bit" and algorithm == 'route':  # OR-Tools is only available for 64bit python

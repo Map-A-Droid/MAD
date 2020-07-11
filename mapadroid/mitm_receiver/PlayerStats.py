@@ -6,7 +6,7 @@ from math import floor
 from multiprocessing import Lock
 from pathlib import Path
 from mapadroid.mitm_receiver import MitmMapper
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
 
 logger = get_logger(LoggerEnums.mitm)
@@ -230,7 +230,7 @@ class PlayerStats(object):
         mon_count = 0
         mon_iv_count = 0
         quest_count = 0
-        origin_logger = logger.bind(origin=client_id)
+        origin_logger = get_origin_logger(logger, client_id)
         if 106 in data:
             raid_count = data[106].get('raid_count', 0)
             mon_count = data[106].get('mon_count', 0)
@@ -252,7 +252,7 @@ class PlayerStats(object):
 
     @staticmethod
     def stats_location_parser(client_id: str, data, period):
-        origin_logger = logger.bind(origin=client_id)
+        origin_logger = get_origin_logger(logger, client_id)
         location_count = data.get('location_count', 0)
         location_ok = data.get('location_ok', 0)
         location_nok = data.get('location_nok', 0)
@@ -269,7 +269,7 @@ class PlayerStats(object):
 
     @staticmethod
     def stats_location_raw_parser(client_id: str, data, period):
-        origin_logger = logger.bind(origin=client_id)
+        origin_logger = get_origin_logger(logger, client_id)
         data_location_raw = []
 
         if 'location' in data:
@@ -282,7 +282,7 @@ class PlayerStats(object):
 
     @staticmethod
     def stats_detection_raw_parser(client_id: str, data, period):
-        origin_logger = logger.bind(origin=client_id)
+        origin_logger = get_origin_logger(logger, client_id)
         data_location_raw = []
         # elf.__stats_collected[106]['mon'][encounter_id]
 
