@@ -113,6 +113,11 @@ def generate_device_screenshot_path(phone_name: str, device_mappings: dict, args
     return os.path.join(args.temp_path, screenshot_filename)
 
 
+def generate_device_logcat_zip_path(origin: str, args: dict):
+    filename = "logcat_{}.zip".format(origin)
+    return os.path.join(args.temp_path, filename)
+
+
 def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=None):
     areas = mapping_manager.get_areas()
     geofences = {}
