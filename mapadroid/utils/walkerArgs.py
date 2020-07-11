@@ -281,8 +281,8 @@ def parseArgs():
     parser.add_argument('-ggrs', '--game_stats_raw', action='store_true', default=False,
                         help='Generate worker raw stats (only with --game_stats)')
 
-    parser.add_argument('-gsst', '--game_stats_save_time', default=300,
-                        help='Generate worker raw stats (only with --game_stats)')
+    parser.add_argument('-gsst', '--game_stats_save_time', default=300, type=int,
+                        help='Number of seconds until worker information is saved to database')
 
     parser.add_argument('-rds', '--raw_delete_shiny', default=0,
                         help='Delete shiny mon in raw stats older then x days (0 =  Disable (Default))')

@@ -84,6 +84,7 @@
 ######################
 #game_stats                  # Generate worker stats
 #game_stats_raw              # Generate worker raw stats (only with --game_stats)')
+#game_stats_save_time        # Number of seconds until worker information is saved to database (Default: 300)
 #raw_delete_shiny:           # Delete shiny mon in raw stats older then x days (0 =  Disable (Default))
 
 # MADmin
