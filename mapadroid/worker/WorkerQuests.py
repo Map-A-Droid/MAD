@@ -156,7 +156,7 @@ class WorkerQuests(MITMBase):
         self.logger.debug("Getting time")
         speed = routemanager_settings.get("speed", 0)
         max_distance = routemanager_settings.get("max_distance", None)
-        if (speed == 0 or(max_distance and 0 < max_distance < distance) or
+        if (speed == 0 or (max_distance and 0 < max_distance < distance) or
                 (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self.logger.debug("main: Teleporting...")
             self._transporttype = 0

@@ -258,7 +258,7 @@ def stream_package(db, storage_obj, package: APK_Type, architecture: APK_Arch) -
         stream_with_context(gen_func),
         content_type=package_info.mimetype,
         headers={
-            'Content-Disposition': f'attachment; filename=%s' % (package_info.filename)
+            'Content-Disposition': 'attachment; filename={}'.format(package_info.filename)
         }
     )
 
