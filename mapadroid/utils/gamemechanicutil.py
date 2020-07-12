@@ -1,19 +1,14 @@
 import time
 from datetime import datetime, timedelta
 
-from mapadroid.utils.language import open_json_file
-
 
 def calculate_mon_level(cp_multiplier):
     if cp_multiplier < 0.734:
-        pokemon_level = (
-                58.35178527 * cp_multiplier * cp_multiplier
-                - 2.838007664 * cp_multiplier
-                + 0.8539209906
-        )
+        pokemon_level = 58.35178527 * cp_multiplier * cp_multiplier - 2.838007664 * cp_multiplier + 0.8539209906
     else:
         pokemon_level = 171.0112688 * cp_multiplier - 95.20425243
     return round(pokemon_level) * 2 / 2
+
 
 def gen_despawn_timestamp(known_despawn):
     despawn_time = datetime.now() + timedelta(seconds=300)
@@ -41,14 +36,8 @@ def gen_despawn_timestamp(known_despawn):
             seconds=known_despawn.second - now.second,
         )
     elif now.minute > known_despawn.minute:
-        despawn = (
-                now
-                + timedelta(hours=1)
-                - timedelta(
-            minutes=(now.minute - known_despawn.minute),
-            seconds=now.second - known_despawn.second,
-        )
-        )
+        despawn = (now + timedelta(hours=1) - timedelta(minutes=(now.minute - known_despawn.minute),
+                                                        seconds=now.second - known_despawn.second))
 
     despawn_uts = int(time.mktime(despawn.timetuple()))
 
@@ -265,3 +254,25 @@ def form_mapper(mon_id, form_id):
     mon_form = mon.get(str(form_id), 0)
 
     return mon_form
+
+
+def is_mon_ditto(logger, pokemon_data):
+    logger.debug3('Determining if mon is a ditto')
+    logger.debug4(pokemon_data)
+    potential_dittos = [46, 163, 165, 167, 187, 223, 293, 316, 322, 399, 590]
+    weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
+    valid_atk = pokemon_data.get("individual_attack") < 4
+    valid_def = pokemon_data.get("individual_defense") < 4
+    valid_sta = pokemon_data.get("individual_stamina") < 4
+    cp_multi = pokemon_data.get("cp_multiplier")
+    valid_boost_attrs = valid_atk or valid_def or valid_sta or cp_multi < .3
+    if pokemon_data.get("id") not in potential_dittos:
+        return False
+    elif weather_boost is None:
+        return False
+    elif weather_boost > 0 and valid_boost_attrs:
+        return True
+    elif weather_boost == 0 and cp_multi > 0.733:
+        return True
+    else:
+        return False

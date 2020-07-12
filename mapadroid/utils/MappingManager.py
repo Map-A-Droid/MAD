@@ -1,6 +1,5 @@
-import os
 import time
-from multiprocessing import Lock, Event, Queue
+from multiprocessing import Lock, Event
 from multiprocessing.managers import SyncManager
 from multiprocessing.pool import ThreadPool
 from queue import Empty, Queue
@@ -149,7 +148,7 @@ class MappingManager:
     def get_monlist(self, listname, areaname):
         if type(listname) is list:
             logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json.'
-                ' Using empty list instead.', areaname)
+                         ' Using empty list instead.', areaname)
             return []
         if listname is not None and int(listname) in self._monlists:
             return self._monlists[int(listname)]
@@ -157,7 +156,7 @@ class MappingManager:
             return []
         else:
             logger.warning("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
-                listname, areaname)
+                           listname, areaname)
             return []
 
     def get_all_routemanager_names(self):
@@ -272,8 +271,8 @@ class MappingManager:
         else:
             return None
 
-    def routemanager_get_current_route(self, routemanager_name: str) -> Optional[
-        Tuple[List[Location], Dict[str, List[Location]]]]:
+    def routemanager_get_current_route(self, routemanager_name: str) -> Optional[Tuple[List[Location],
+                                                                                       Dict[str, List[Location]]]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_current_route() if routemanager is not None else None
 
@@ -327,9 +326,8 @@ class MappingManager:
                        args=args,
                        kwargs=kwargs)
             t.start()
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
+        except Exception:
+            logger.opt(exception=True).error('Unable to start recalculation')
         return successful
 
     def __inherit_device_settings(self, devicesettings, poolsettings):
@@ -358,13 +356,10 @@ class MappingManager:
                 raise RuntimeError("Cannot work without geofence_included")
 
             try:
-                geofence_included = self.__data_manager.get_resource('geofence',
-                                                                     identifier=area["geofence_included"])
-            except:
+                geofence_included = self.__data_manager.get_resource('geofence', identifier=area["geofence_included"])
+            except Exception:
                 raise RuntimeError("geofence_included for area '{}' is specified but does not exist ('{}').".format(
-                        area["name"], geofence_included
-                    )
-                )
+                                   area["name"], geofence_included))
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
             try:
@@ -373,7 +368,7 @@ class MappingManager:
                                                                          identifier=geofence_excluded_raw_path)
                 else:
                     geofence_excluded = None
-            except:
+            except Exception:
                 raise RuntimeError(
                     "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
                         area["name"], geofence_excluded_raw_path
@@ -510,7 +505,7 @@ class MappingManager:
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
                        init: bool = False, range_init: int = 630, including_stops: bool = False,
-                       include_event_id=None) -> List[ Location]:
+                       include_event_id=None) -> List[Location]:
         coords: List[Location] = []
         if not init:
             # grab data from DB depending on mode
@@ -522,7 +517,7 @@ class MappingManager:
                         stops = self.__db_wrapper.stops_from_db(geofence_helper)
                         if stops:
                             coords.extend(stops)
-                    except:
+                    except Exception:
                         pass
             elif mode == "mon_mitm":
                 if coords_spawns_known:

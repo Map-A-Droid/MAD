@@ -1,13 +1,9 @@
 import logging
 import os
-
 from flask import Flask, render_template
-from flask.logging import default_handler
 from werkzeug.middleware.proxy_fix import ProxyFix
-
 import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.mad_apk import AbstractAPKStorage
 from mapadroid.madmin.api import APIEntry
 from mapadroid.madmin.reverseproxy import ReverseProxied
 from mapadroid.madmin.routes.apks import apk_manager
@@ -21,6 +17,7 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, get_logger, LoggerEnums
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
+
 logger = get_logger(LoggerEnums.madmin)
 app = Flask(__name__,
             static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
@@ -33,6 +30,7 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 log = logging.getLogger('werkzeug')
 handler = InterceptHandler(log_section=LoggerEnums.madmin)
 log.addHandler(handler)
+
 
 
 @app.after_request
@@ -53,8 +51,7 @@ def internal_error(self, exception):
 
 class madmin(object):
     def __init__(self, args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
-                     deviceUpdater, jobstatus, storage_obj):
-
+                 deviceUpdater, jobstatus, storage_obj):
         self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
         self._app = app
@@ -65,7 +62,6 @@ class madmin(object):
         self._data_manager = data_manager
         self._jobstatus = jobstatus
         self._plugin_hotlink: list = []
-
         self.path = path(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
                          self._data_manager, self._plugin_hotlink)
         self.map = map(self._db_wrapper, self._args, self._mapping_manager, self._app, self._data_manager)
@@ -95,7 +91,7 @@ class madmin(object):
             self.event.start_modul()
             self.control.start_modul()
             self._app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)
-        except:
+        except:  # noqa: E722
             logger.opt(exception=True).critical('Unable to load MADmin component')
         logger.info('Finished madmin')
 

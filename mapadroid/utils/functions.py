@@ -65,11 +65,11 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
 
     return (
         phone_template.replace('<<phonename>>', phonename)
-            .replace('<<adb_option>>', str(adb_option))
-            .replace('<<add_text>>', add_text)
-            .replace('<<screen>>', screen)
-            .replace('<<creationdate>>', creationdate)
-            .replace('<<time>>', str(int(time.time())))
+                      .replace('<<adb_option>>', str(adb_option))
+                      .replace('<<add_text>>', add_text)
+                      .replace('<<screen>>', screen)
+                      .replace('<<creationdate>>', creationdate)
+                      .replace('<<time>>', str(int(time.time())))
     )
 
 

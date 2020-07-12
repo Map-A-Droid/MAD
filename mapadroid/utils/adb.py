@@ -15,13 +15,12 @@ class ADBConnect(object):
         self._client = None
         if self._useadb:
             try:
-                from adb.client import Client as AdbClient
-            except ImportError:
-                pass
-            try:
                 from ppadb.client import Client as AdbClient
             except ImportError:
-                pass
+                try:
+                    from adb.client import Client as AdbClient
+                except ImportError:
+                    pass
             self.check_adblib = 'adb.client' in sys.modules or 'ppadb.client' in sys.modules
             if not self.check_adblib:
                 logger.warning("Could not find pure-python-adb library.  If you are not using ADB you can ignore this")
@@ -37,7 +36,7 @@ class ADBConnect(object):
             if self._client.device(adb) is not None:
                 self._client.device(adb).shell('echo checkadb')
                 return True
-        except RuntimeError as e:
+        except RuntimeError:
             logger.exception('MADmin: Exception occurred while checking adb status ({}).', adb)
         return None
 

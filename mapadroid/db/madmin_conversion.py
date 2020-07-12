@@ -36,7 +36,7 @@ TABLES = [
         PRIMARY KEY (`monlist_id`),
         -- UNIQUE KEY (`name`, `instance_id`),
         CONSTRAINT `fk_mil_instance`
-            FOREIGN KEY (`instance_id`) 
+            FOREIGN KEY (`instance_id`)
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
@@ -63,7 +63,7 @@ TABLES = [
         PRIMARY KEY (`auth_id`),
         -- UNIQUE (`instance_id`, `username`, `password`),
         CONSTRAINT `fk_sauth_instance`
-            FOREIGN KEY (`instance_id`) 
+            FOREIGN KEY (`instance_id`)
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
@@ -98,7 +98,7 @@ TABLES = [
         PRIMARY KEY (`pool_id`),
         -- UNIQUE KEY (`instance_id`, `name`),
         CONSTRAINT `fk_sds_instance`
-            FOREIGN KEY (`instance_id`) 
+            FOREIGN KEY (`instance_id`)
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
@@ -131,7 +131,7 @@ TABLES = [
         PRIMARY KEY (`area_id`),
         -- UNIQUE KEY (`instance_id`, `name`),
         CONSTRAINT `fk_sa_instance`
-            FOREIGN KEY (`instance_id`) 
+            FOREIGN KEY (`instance_id`)
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB;""",
@@ -142,7 +142,7 @@ TABLES = [
         `routecalc` int UNSIGNED NOT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_idle`
-            FOREIGN KEY (`area_id`) 
+            FOREIGN KEY (`area_id`)
             REFERENCES `settings_area` (`area_id`)
             ON DELETE CASCADE,
         CONSTRAINT `fk_area_idle_geofence`
@@ -168,11 +168,11 @@ TABLES = [
         `min_time_left_seconds` int(11) DEFAULT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_iv_mitm`
-            FOREIGN KEY (`area_id`) 
+            FOREIGN KEY (`area_id`)
             REFERENCES `settings_area` (`area_id`)
             ON DELETE CASCADE,
         CONSTRAINT `fk_ai_monid`
-            FOREIGN KEY (`monlist_id`) 
+            FOREIGN KEY (`monlist_id`)
             REFERENCES `settings_monivlist` (`monlist_id`),
         CONSTRAINT `fk_area_iv_mitm_geofence`
             FOREIGN KEY (`geofence_included`)
@@ -200,11 +200,11 @@ TABLES = [
         `min_time_left_seconds` int DEFAULT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_mon_mitm`
-            FOREIGN KEY (`area_id`) 
+            FOREIGN KEY (`area_id`)
             REFERENCES `settings_area` (`area_id`)
             ON DELETE CASCADE,
         CONSTRAINT `fk_am_monid`
-            FOREIGN KEY (`monlist_id`) 
+            FOREIGN KEY (`monlist_id`)
             REFERENCES `settings_monivlist` (`monlist_id`),
         CONSTRAINT `fk_area_mon_mitm_geofence`
             FOREIGN KEY (`geofence_included`)
@@ -228,7 +228,7 @@ TABLES = [
         `cleanup_every_spin` boolean DEFAULT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_pokestops`
-            FOREIGN KEY (`area_id`) 
+            FOREIGN KEY (`area_id`)
             REFERENCES `settings_area` (`area_id`)
             ON DELETE CASCADE,
         CONSTRAINT `fk_area_pokestops_geofence`
@@ -256,11 +256,11 @@ TABLES = [
         `monlist_id` int UNSIGNED DEFAULT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_raids_mitm`
-            FOREIGN KEY (`area_id`) 
+            FOREIGN KEY (`area_id`)
             REFERENCES `settings_area` (`area_id`)
             ON DELETE CASCADE,
         CONSTRAINT `fk_ar_monid`
-            FOREIGN KEY (`monlist_id`) 
+            FOREIGN KEY (`monlist_id`)
             REFERENCES `settings_monivlist` (`monlist_id`),
         CONSTRAINT `fk_area_raids_mitm_geofence`
             FOREIGN KEY (`geofence_included`)
@@ -278,7 +278,7 @@ TABLES = [
         PRIMARY KEY (`walker_id`),
         -- UNIQUE KEY `origin` (`name`, `instance_id`),
         CONSTRAINT `fk_w_instance`
-            FOREIGN KEY (`instance_id`) 
+            FOREIGN KEY (`instance_id`)
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
@@ -295,7 +295,7 @@ TABLES = [
         `eventid` int DEFAULT NULL,
         PRIMARY KEY (`walkerarea_id`),
         CONSTRAINT `fk_wa_instance`
-            FOREIGN KEY (`instance_id`) 
+            FOREIGN KEY (`instance_id`)
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE,
         CONSTRAINT `settings_walkerarea_ibfk_1`
@@ -367,7 +367,7 @@ TABLES = [
             FOREIGN KEY (`pool_id`)
             REFERENCES `settings_devicepool` (`pool_id`),
         CONSTRAINT `fk_sd_instance`
-            FOREIGN KEY (`instance_id`) 
+            FOREIGN KEY (`instance_id`)
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",

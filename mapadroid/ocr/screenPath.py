@@ -467,7 +467,6 @@ class WordToScreenMatching(object):
             self._logger.error("Invalid screen path: {}", screenpath)
             return ScreenType.ERROR
         globaldict = self._pogoWindowManager.get_screen_text(screenpath, self._id)
-        frame = None
 
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         if not globaldict:

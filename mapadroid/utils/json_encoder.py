@@ -3,6 +3,7 @@ from mapadroid.data_manager.modules.resource import Resource
 from mapadroid.mad_apk.apk_enums import APK_Arch, APK_Type
 from mapadroid.mad_apk.custom_types import MAD_Package, MAD_Packages, MAD_APKS
 
+
 class MAD_Encoder(json.JSONEncoder):
     def apk_encode(self, o):
         if isinstance(o, MAD_APKS) or isinstance(o, MAD_Packages):

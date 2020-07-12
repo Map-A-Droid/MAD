@@ -83,7 +83,7 @@ class WorkerFactory:
         while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
                 and walker_index < len(walker_area_array):
             origin_logger.info('not using area {} - Walkervalue out of range',
-                        self.__mapping_manager.routemanager_get_name(walker_area_name))
+                               self.__mapping_manager.routemanager_get_name(walker_area_name))
             if walker_index >= len(walker_area_array) - 1:
                 origin_logger.error('Can NOT find any active area defined for current time. Check Walker entries')
                 walker_index = 0
@@ -110,7 +110,6 @@ class WorkerFactory:
 
     async def __prep_settings(self, origin: str) -> Optional[WalkerConfiguration]:
         origin_logger = get_origin_logger(logger, origin=origin)
-        last_known_state = {}
         client_mapping = self.__mapping_manager.get_devicemappings_of(origin)
         devicesettings = self.__mapping_manager.get_devicesettings_of(origin)
         origin_logger.info("Setting up routemanagers")
@@ -179,7 +178,8 @@ class WorkerFactory:
         if origin is None or worker_type is None or worker_type == WorkerType.UNDEFINED:
             return None
         elif worker_type in [WorkerType.CONFIGMODE, WorkerType.CONFIGMODE.value]:
-            origin_logger.error("WorkerFactory::get_worker called with configmode arg, use get_configmode_worker instead")
+            origin_logger.error("WorkerFactory::get_worker called with configmode arg, use get_configmode_worker"
+                                "instead")
             return None
         # TODO: validate all values
         elif worker_type in [WorkerType.IV_MITM, WorkerType.IV_MITM.value,
@@ -217,4 +217,3 @@ class WorkerFactory:
                                   routemanager_name=None,
                                   event=self.__event)
         return worker
-

@@ -1,6 +1,7 @@
 import base64
 import re
 
+
 def check_auth(logger, authHeader, args, auths):
     valid = False
     if auths is None:
@@ -13,12 +14,12 @@ def check_auth(logger, authHeader, args, auths):
             logger.warning("Auth attempt from {} failed", authHeader)
         else:
             valid = True
-    except AttributeError as err:
+    except AttributeError:
         logger.warning("Auth without Basic auth, aborting.")
     except KeyError:
         logger.warning('Auth attempt from non-configured user {}', username)
-    except TypeError as err:
+    except TypeError:
         logger.warning('Unable to decode header {}', authHeader)
-    except ValueError as err:
+    except ValueError:
         logger.warning('Unable to determine auth parameters from {}', authHeader)
     return valid

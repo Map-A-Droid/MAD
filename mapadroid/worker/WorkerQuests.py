@@ -156,9 +156,8 @@ class WorkerQuests(MITMBase):
         self.logger.debug("Getting time")
         speed = routemanager_settings.get("speed", 0)
         max_distance = routemanager_settings.get("max_distance", None)
-        if (speed == 0 or
-                (max_distance and 0 < max_distance < distance)
-                or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
+        if (speed == 0 or(max_distance and 0 < max_distance < distance) or
+                (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self.logger.debug("main: Teleporting...")
             self._transporttype = 0
             self._communicator.set_location(
@@ -434,7 +433,7 @@ class WorkerQuests(MITMBase):
                     self.clear_thread_task = ClearThreadTasks.IDLE
                 time.sleep(1)
             except (InternalStopWorkerException, WebsocketWorkerRemovedException,
-                    WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException) as e:
+                    WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException):
                 self.logger.error("Worker removed while clearing quest/box")
                 self._stop_worker_event.set()
                 return
@@ -451,26 +450,17 @@ class WorkerQuests(MITMBase):
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère', 'Premium',
                      'Raid', 'Teil',
                      'Élément', 'mystérieux', 'Mysterious', 'Component', 'Mysteriöses')
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-               self._resocalc.get_close_main_button_coords(self)[
-                   1]
+        x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
-        x, y = self._resocalc.get_item_menu_coords(
-            self)[0], self._resocalc.get_item_menu_coords(self)[1]
+        x, y = self._resocalc.get_item_menu_coords(self)
         self._communicator.click(int(x), int(y))
         time.sleep(2 + int(delayadd))
-        _data_err_counter = 0
-        _pos = 1
-        text_x1, text_x2, text_y1, text_y2 = self._resocalc.get_delete_item_text(
-            self)
+        text_x1, text_x2, text_y1, text_y2 = self._resocalc.get_delete_item_text(self)
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
-        click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)[0], \
-                                      self._resocalc.get_swipe_item_amount(self)[1], \
-                                      self._resocalc.get_swipe_item_amount(self)[2]
-        click_duration = int(
-            self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000
+        click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)
+        click_duration = int(self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000
         delrounds_remaining = int(self.get_devicesettings_value("inventory_clear_rounds", 10))
         first_round = True
         delete_allowed = False
@@ -542,8 +532,7 @@ class WorkerQuests(MITMBase):
                             click_x1, click_y, click_x2, click_y, click_duration)
                         time.sleep(1)
 
-                        delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
-                                     self._resocalc.get_confirm_delete_item_coords(self)[1]
+                        delx, dely = self._resocalc.get_confirm_delete_item_coords(self)
                         curTime = time.time()
                         self._communicator.click(int(delx), int(dely))
 
@@ -570,9 +559,7 @@ class WorkerQuests(MITMBase):
                     stop_screen_clear.set()
                     pass
 
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-               self._resocalc.get_close_main_button_coords(self)[
-                   1]
+        x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
         return True
@@ -655,9 +642,8 @@ class WorkerQuests(MITMBase):
                 rocket_incident_diff_ms = 0
                 if len(fort.get('pokestop_displays', [])) > 0:
                     # Rocket lenghts above 1 hour are probably not grunts and should be safe to spin.
-                    rocket_incident_diff_ms = fort.get('pokestop_displays')[0].get('incident_expiration_ms',
-                                                                                   0) - \
-                                              fort.get('pokestop_displays')[0].get('incident_start_ms', 0)
+                    rocket_incident_diff_ms = fort.get('pokestop_displays')[0].get('incident_expiration_ms', 0) - \
+                        fort.get('pokestop_displays')[0].get('incident_start_ms', 0)
                 if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0 or \
                         (0 < rocket_incident_diff_ms <= 3600000):
                     self._rocket = True
@@ -873,14 +859,16 @@ class WorkerQuests(MITMBase):
             # the need to add arbitrary timedeltas for possible small delays,
             # which we don't do in other workers either
             if proto_to_wait_for in [101, 104]:
-                replacement = max(x for x in [self._latest_quest,
+                potential_replacements = [
+                    self._latest_quest,
                     self.get_devicesettings_value('last_cleanup_time', 0),
-                    self.get_devicesettings_value('last_questclear_time', 0)]
-                    if isinstance(x, int) or isinstance(x, float))
+                    self.get_devicesettings_value('last_questclear_time', 0)
+                ]
+                replacement = max(x for x in potential_replacements if isinstance(x, int) or isinstance(x, float))
                 self.logger.debug("timestamp {} being replaced with {} because we're waiting for proto {}",
                                   datetime.fromtimestamp(timestamp).strftime('%H:%M:%S'),
                                   datetime.fromtimestamp(replacement).strftime('%H:%M:%S'),
-                    proto_to_wait_for)
+                                  proto_to_wait_for)
                 timestamp = replacement
             # proto has previously been received, let's check the timestamp...
             # TODO: int vs str-key?
@@ -901,8 +889,7 @@ class WorkerQuests(MITMBase):
                                              .get('quest', {}) \
                                              .get('quest_type', False)
                     result: int = payload.get("result", 0)
-                    if (result == 1
-                          and len(payload.get('items_awarded', [])) == 0):
+                    if result == 1 and len(payload.get('items_awarded', [])) == 0:
                         return FortSearchResultTypes.TIME
                     elif result == 1 and quest_type == 0:
                         return FortSearchResultTypes.FULL

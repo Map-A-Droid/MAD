@@ -4,7 +4,7 @@ import io
 import requests
 import zipfile
 from threading import Thread
-from typing import NoReturn, Optional, Tuple
+from typing import NoReturn, Optional
 import urllib3
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APK_Arch, APK_Type, APK_Package

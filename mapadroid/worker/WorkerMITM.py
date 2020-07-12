@@ -22,9 +22,9 @@ logger = get_logger(LoggerEnums.worker)
 
 
 class WorkerMITM(MITMBase):
-    def __init__(self, args, dev_id, id, last_known_state, communicator: AbstractCommunicator, mapping_manager: MappingManager,
-                 area_id: int, routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
-                 pogo_window_manager: PogoWindows, walker, event):
+    def __init__(self, args, dev_id, id, last_known_state, communicator: AbstractCommunicator,
+                 mapping_manager: MappingManager, area_id: int, routemanager_name: str, mitm_mapper: MitmMapper,
+                 db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker, event):
         MITMBase.__init__(self, args, dev_id, id, last_known_state, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_name=routemanager_name,
@@ -68,8 +68,8 @@ class WorkerMITM(MITMBase):
             max_distance = int(200)
 
         if (speed == 0 or
-                (max_distance and 0 < max_distance < distance)
-                or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
+                (max_distance and 0 < max_distance < distance) or
+                (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self.logger.debug("main: Teleporting...")
             self._transporttype = 0
             self._communicator.set_location(

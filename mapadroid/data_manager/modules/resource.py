@@ -2,7 +2,7 @@ import copy
 from collections import UserDict
 import mysql
 from ..dm_exceptions import DependencyError, SaveIssue, UnknownIdentifier, UpdateIssue
-from mapadroid.utils.logging import  get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
 logger = get_logger(LoggerEnums.data_manager)
@@ -365,7 +365,7 @@ class Resource(object):
                     issues[key].update(set_issues)
         if issues:
             logger.warning('Unable to save the resource {} / {}: {}', self.__class__.__name__, self.identifier,
-                         issues)
+                           issues)
             raise UpdateIssue(**issues)
 
     def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
@@ -411,7 +411,7 @@ class Resource(object):
         sql = "SELECT `%s`\n" \
               "FROM `%s`\n" \
               "WHERE `instance_id` = %%s"
-        args = [res_obj.primary_key, res_obj.table,]
+        args = [res_obj.primary_key, res_obj.table, ]
         param_args = [instance_id]
         for key, val in kwargs.items():
             valid = False

@@ -113,25 +113,20 @@ class WebhookWorker:
 
                     if response.status_code != 200:
                         logger.warning("Got status code other than 200 OK from webhook destination: {}",
-                                     response.status_code)
+                                       response.status_code)
                     else:
                         if webhook_count > 1:
-                            whcount_text = " [wh {}/{}]".format(
-                                current_wh_num, webhook_count
-                            )
+                            whcount_text = " [wh {}/{}]".format(current_wh_num, webhook_count)
                         else:
                             whcount_text = ""
 
                         if len(payload_list) > 1:
-                            whchunk_text = " [pl {}/{}]".format(
-                                current_pl_num, len(payload_list)
-                            )
+                            whchunk_text = " [pl {}/{}]".format(current_pl_num, len(payload_list))
                         else:
                             whchunk_text = ""
 
                         logger.success("Successfully sent payload to webhook{}{}. Stats: {}", whchunk_text,
-                                       whcount_text, json.dumps(self.__payload_type_count(payload_chunk)),
-                        )
+                                       whcount_text, json.dumps(self.__payload_type_count(payload_chunk)))
                 except Exception as e:
                     logger.warning("Exception occured while sending webhook: {}", e)
 
@@ -299,9 +294,7 @@ class WebhookWorker:
                 continue
 
             # skip ex raid mon if disabled
-            is_exclusive = (
-                    raid["is_exclusive"] is not None and raid["is_exclusive"] != 0
-            )
+            is_exclusive = raid["is_exclusive"] is not None and raid["is_exclusive"] != 0
             if not self.__args.webhook_submit_exraids and is_exclusive:
                 continue
 
@@ -365,11 +358,9 @@ class WebhookWorker:
             if self.__is_in_excluded_area([mon["latitude"], mon["longitude"]]):
                 continue
 
-            if (
-                    not self.__args.pokemon_webhook_nonivs
-                    and mon["pokemon_id"] in self.__IV_MON
-                    and (mon["individual_attack"] is None)
-            ):
+            if not self.__args.pokemon_webhook_nonivs \
+               and mon["pokemon_id"] in self.__IV_MON \
+               and (mon["individual_attack"] is None):
                 # skipping this mon since IV has not been scanned yet
                 continue
 
@@ -431,10 +422,8 @@ class WebhookWorker:
                 mon_payload["great_catch"] = mon["great_catch"]
                 mon_payload["ultra_catch"] = mon["ultra_catch"]
 
-            if (
-                    mon["weather_boosted_condition"] is not None
-                    and mon["weather_boosted_condition"] > 0
-            ):
+            if mon["weather_boosted_condition"] is not None \
+               and mon["weather_boosted_condition"] > 0:
                 if self.__args.quest_webhook_flavor == "default":
                     mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
                 if self.__args.quest_webhook_flavor == "poracle":

@@ -8,12 +8,12 @@ from mapadroid.utils.logging import get_logger, LoggerEnums
 
 logger = get_logger(LoggerEnums.database)
 
+
 class PooledQuerySyncManager(SyncManager):
     pass
 
 
 class PooledQueryExecutor:
-
     def __init__(self, host, port, username, password, database, poolsize=1):
         self.host = host
         self.port = port
@@ -310,9 +310,8 @@ class PooledQueryExecutor:
         """
         optype = optype.upper()
         if optype not in ["INSERT", "REPLACE", "INSERT IGNORE", "ON DUPLICATE"]:
-            raise ProgrammingError(
-                "MySQL operation must be 'INSERT', 'REPLACE', 'INSERT IGNORE', 'ON DUPLICATE'," \
-                "got '%s'" % optype)
+            raise ProgrammingError("MySQL operation must be 'INSERT', 'REPLACE', 'INSERT IGNORE', 'ON DUPLICATE',"
+                                   "got '%s'" % optype)
         if type(keyvals) is not dict:
             raise Exception("Data must be a dictionary")
         if type(literals) is not list:

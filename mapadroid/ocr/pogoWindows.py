@@ -144,8 +144,8 @@ class PogoWindows:
 
         if crop:
             screenshot_read = screenshot_read[int(height) - int(int(height / 4)):int(height),
-                              int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
-                                  int(width) / 8)]
+                                              int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
+                                              int(width) / 8)]
 
         origin_logger.debug("__read_circle_count: Determined screenshot scale: {} x {}", height, width)
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
@@ -213,7 +213,7 @@ class PogoWindows:
 
         if crop:
             screenshot_read = screenshot_read[int(height) - int(height / 5):int(height),
-                              int(width) / 2 - int(width) / 8:int(width) / 2 + int(width) / 8]
+                                              int(width) / 2 - int(width) / 8:int(width) / 2 + int(width) / 8]
 
         origin_logger.debug("__readCircleCords: Determined screenshot scale: {} x {}", height, width)
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
@@ -230,7 +230,6 @@ class PogoWindows:
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
                                    minRadius=radMin,
                                    maxRadius=radMax)
-        circle = 0
         # ensure at least some circles were found
         if circles is not None:
             # convert the (x, y) coordinates and radius of the circles to integers
@@ -296,7 +295,7 @@ class PogoWindows:
         try:
             screenshot_read = cv2.imread(filename)
             gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
-        except:
+        except cv2.error:
             origin_logger.error("Screenshot corrupted")
             return False
 
@@ -326,11 +325,8 @@ class PogoWindows:
         # kernel = np.zeros(shape=(2, 2), dtype=np.uint8)
         edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
 
-        maxLineGap = 50
         lineCount = 0
         lines = []
-        _x = 0
-        _y = height
         lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
                                 maxLineGap=5)
         if lines is None:
@@ -439,7 +435,7 @@ class PogoWindows:
 
         height, width, _ = screenshot_read.shape
         screenshot_read = screenshot_read[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
-                          int(0):int(width)]
+                                          int(0):int(width)]
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         origin_logger.debug("__check_raid_line: Determined screenshot scale: {} x {}", height, width)
@@ -448,8 +444,6 @@ class PogoWindows:
         origin_logger.debug("__check_raid_line: MaxLineLength: {}", maxLineLength)
         minLineLength = width / 6.35 - width * 0.03
         origin_logger.debug("__check_raid_line: MinLineLength: {}", minLineLength)
-        maxLineGap = 50
-
         lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
                                 maxLineGap=2)
         if lines is None:
@@ -614,7 +608,7 @@ class PogoWindows:
                             filename)
         try:
             screenshot_read = cv2.imread(filename)
-        except:
+        except cv2.error:
             origin_logger.error("Screenshot corrupted")
             origin_logger.debug("__internal_check_close_except_nearby_button: Screenshot corrupted...")
             return False
@@ -624,9 +618,9 @@ class PogoWindows:
 
         if not close_raid:
             origin_logger.debug("__internal_check_close_except_nearby_button: Raid is not to be closed...")
-            if (not os.path.isfile(filename)
-                    or self.__check_raid_line(filename, identifier, communicator)
-                    or self.__check_raid_line(filename, identifier, communicator, True)):
+            if not os.path.isfile(filename) \
+               or self.__check_raid_line(filename, identifier, communicator) \
+               or self.__check_raid_line(filename, identifier, communicator, True):
                 # file not found or raid tab present
                 origin_logger.debug("__internal_check_close_except_nearby_button: Not checking for close button (X). "
                                     "Input wrong OR nearby window open")
@@ -715,7 +709,7 @@ class PogoWindows:
 
         height, width, _ = screenshot_read.shape
         gray = screenshot_read[int(height) - int(round(height / 5)):int(height),
-               0: int(int(width) / 4)]
+                               0: int(int(width) / 4)]
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
         radMax = int((width / float(6) + 3) / 2)
@@ -826,7 +820,7 @@ class PogoWindows:
 
                 texts = [frame_org]
                 for thresh in [200, 175, 150]:
-                    fn = lambda x : 255 if x > thresh else 0
+                    fn = lambda x: 255 if x > thresh else 0  # noqa: E731
                     frame = frame_org.convert('L').point(fn, mode='1')
                     texts.append(frame)
                 for text in texts:

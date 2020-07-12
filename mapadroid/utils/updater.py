@@ -8,11 +8,9 @@ from enum import Enum
 from multiprocessing import Queue, Event
 from queue import Empty
 from threading import RLock, Thread
-import requests
-from mapadroid.utils import global_variables
 from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APK_Type, file_generator, lookup_apk_enum, \
-     lookup_arch_enum, APK_Package, APK_Arch, supported_pogo_version, MAD_Packages
+from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APK_Type, file_generator, lookup_arch_enum, \
+    APK_Package, APK_Arch, supported_pogo_version, MAD_Packages
 
 
 logger = get_logger(LoggerEnums.utils)
@@ -127,8 +125,7 @@ class deviceUpdater(object):
                 algo = self.get_job_algo_value(algotyp=self._globaljoblog[globalid].get('algotype',
                                                                                         'flex'),
                                                algovalue=self._globaljoblog[globalid].get('algovalue',
-                                                                                          0)) \
-                       + waittime
+                                                                                          0)) + waittime
 
                 processtime = datetime.timestamp(datetime.now() + timedelta(minutes=algo))
 
@@ -213,8 +210,7 @@ class deviceUpdater(object):
 
                     continue
 
-                if (
-                        laststatus is None or laststatus == 'future') and not startwithinit and processtime is None and \
+                if (laststatus is None or laststatus == 'future') and not startwithinit and processtime is None and \
                         self._globaljoblog[globalid].get('autojob', False):
                     logger.debug("Autjob (no init run) {} on device {} - File/Job: {} - queued to real starttime "
                                  "(ID: {})", jobtype, origin, file_, id_)
@@ -313,7 +309,7 @@ class deviceUpdater(object):
                             try:
                                 if self.start_job_type(item, jobtype, temp_comm):
                                     logger.info('Job {} executed successfully - Device {} - File/Job {} (ID: {})',
-                                                 jobtype, origin, file_, id_)
+                                                jobtype, origin, file_, id_)
                                     if self._log[str(id_)]['status'] == 'not required':
                                         jobstatus = jobReturn.NOT_REQUIRED
                                     elif self._log[str(id_)]['status'] == 'not supported':
@@ -335,7 +331,7 @@ class deviceUpdater(object):
                                 # start worker
                                 self._websocket.set_job_deactivated(origin)
 
-                            except:
+                            except Exception:
                                 logger.error('Job {} could not be executed successfully (fatal error) - Device {} - '
                                              'File/Job {} (ID: {})', jobtype, origin, file_, id_)
                                 errorcount += 1
@@ -345,8 +341,8 @@ class deviceUpdater(object):
                                 jobstatus = jobReturn.FAILURE
 
                     # check jobstatus and readd if possible
-                    if jobstatus not in SUCCESS_STATES and (jobstatus == jobReturn.NOCONNECT
-                                                            and self._args.job_restart_notconnect == 0):
+                    if jobstatus not in SUCCESS_STATES and \
+                            (jobstatus == jobReturn.NOCONNECT and self._args.job_restart_notconnect == 0):
                         logger.error("Job for {} (File/Job: {} - Type {}) failed 3 times in row - aborting (ID: {})",
                                      origin, file_, jobtype, id_)
                         self._globaljoblog[globalid]['laststatus'] = 'faulty'
@@ -385,7 +381,7 @@ class deviceUpdater(object):
                     errorcount = 0
                     time.sleep(10)
 
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 logger.info("process_update_queue-{} received keyboard interrupt, stopping", threadnumber)
                 break
 
@@ -495,7 +491,6 @@ class deviceUpdater(object):
                     returning = False
                 return returning if not 'RemoteGpsController'.lower() in str(file_).lower() else True
             elif jobtype == jobtype.SMART_UPDATE:
-                requires_update: bool = False
                 package_ver: str = None
                 package_raw = self._log[str(item)]['file']
                 version_job = "dumpsys package %s | grep versionName" % (package_raw,)
@@ -503,15 +498,14 @@ class deviceUpdater(object):
                 package_ver_job = ws_conn.passthrough(version_job)
                 try:
                     architecture_raw = re.search(r'\[(\S+)\]', architecture_job).group(1)
-                except:
+                except AttributeError:
                     logger.warning('Unable to determine the architecture of the device')
                     return False
                 try:
                     package_ver = re.search(r'versionName=([0-9\.]+)', package_ver_job).group(1)
-                except:
+                except AttributeError:
                     if package_ver_job and package_ver_job.split('\n')[0].strip() == 'OK':
                         logger.info('No information returned.  Assuming package is not installed')
-                        requires_update = True
                     else:
                         logger.warning('Unable to determine version for {}: {}', self._log[str(item)]['file'],
                                        package_ver_job)
@@ -520,8 +514,8 @@ class deviceUpdater(object):
                 architecture = lookup_arch_enum(architecture_raw)
                 package_all: MAD_Packages = self._storage_obj.get_current_package_info(package)
                 if package_all is None:
-                        logger.warning('No MAD APK for {} [{}]', package, architecture.name)
-                        return False
+                    logger.warning('No MAD APK for {} [{}]', package, architecture.name)
+                    return False
                 try:
                     mad_apk = package_all[architecture]
                 except KeyError:
@@ -544,7 +538,6 @@ class deviceUpdater(object):
                     logger.info('Smart Update APK Installation for {} to {}', package.name,
                                 self._log[str(item)]['origin'])
                     apk_file = bytes()
-                    gen = file_generator(self._db, self._storage_obj, package, architecture)
                     for chunk in file_generator(self._db, self._storage_obj, package, architecture):
                         apk_file += chunk
                     if mad_apk.mimetype == 'application/zip':
@@ -583,7 +576,8 @@ class deviceUpdater(object):
 
         else:
             for job in self._log.copy():
-                if not self._log[job].get('redo', False): self.delete_log_id(job)
+                if not self._log[job].get('redo', False):
+                    self.delete_log_id(job)
 
     def send_webhook(self, id_, status):
         if not self._log[str(id_)]['auto']:

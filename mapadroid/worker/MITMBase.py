@@ -102,8 +102,8 @@ class MITMBase(WorkerBase):
             return False
         else:
             self.logger.debug("Data distance is ok! found avg location {}, {} from data with self.current_location "
-                             "location {}, {} - that's a {}m distance with max_radius {} for mode {}", avg_lat, avg_lng,
-                             self.current_location.lat, self.current_location.lng, distance, max_radius, mode)
+                              "location {}, {} - that's a {}m distance with max_radius {} for mode {}", avg_lat,
+                              avg_lng, self.current_location.lat, self.current_location.lng, distance, max_radius, mode)
             return True
 
     def _wait_for_data(self, timestamp: float = None, proto_to_wait_for=106, timeout=None):
@@ -140,10 +140,10 @@ class MITMBase(WorkerBase):
             latest = self._mitm_mapper.request_latest(self._origin)
             latest_location: Optional[Location] = latest.get("location", None)
             check_data = True
-            if (proto_to_wait_for == 106 and latest_location is not None
-                    and latest_location.lat != 0.0 and latest_location.lng != 0.0):
+            if (proto_to_wait_for == 106 and latest_location is not None and
+                    latest_location.lat != 0.0 and latest_location.lng != 0.0):
                 self.logger.debug("Checking worker location {} against real data location {}", self.current_location,
-                             latest_location)
+                                  latest_location)
                 distance_to_data = get_distance_of_two_points_in_meters(float(latest_location.lat),
                                                                         float(latest_location.lng),
                                                                         float(self.current_location.lat),
@@ -248,7 +248,7 @@ class MITMBase(WorkerBase):
             self.logger.info("Didn't receive any data yet. (Retry count: {}/{})", self._not_injected_count,
                              injection_thresh_reboot)
             if (self._not_injected_count != 0 and self._not_injected_count % window_check_frequency == 0) \
-                and not self._stop_worker_event.is_set():
+                    and not self._stop_worker_event.is_set():
                 self.logger.info("Retry check_windows while waiting for injection at count {}",
                                  self._not_injected_count)
                 self._ensure_pogo_topmost()
@@ -273,20 +273,17 @@ class MITMBase(WorkerBase):
     def _clear_quests(self, delayadd, openmenu=True):
         self.logger.debug('{_clear_quests} called')
         if openmenu:
-            x, y = self._resocalc.get_coords_quest_menu(self)[0], \
-                   self._resocalc.get_coords_quest_menu(self)[1]
+            x, y = self._resocalc.get_coords_quest_menu(self)
             self._communicator.click(int(x), int(y))
             self.logger.debug("_clear_quests Open menu: {}, {}", int(x), int(y))
             time.sleep(6 + int(delayadd))
 
         if self._enhanced_mode:
-            x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-                   self._resocalc.get_close_main_button_coords(self)[1]
+            x, y = self._resocalc.get_close_main_button_coords(self)
             self._communicator.click(int(x), int(y))
             return
 
-        x, y = self._resocalc.get_quest_listview(self)[0], \
-               self._resocalc.get_quest_listview(self)[1]
+        x, y = self._resocalc.get_quest_listview(self)
         self._communicator.click(int(x), int(y))
         self.logger.debug("_clear_quests Open field: {}, {}", int(x), int(y))
         time.sleep(4 + int(delayadd))
@@ -311,8 +308,7 @@ class MITMBase(WorkerBase):
         else:
             self.logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
         # get confirm box coords
-        x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
-               self._resocalc.get_confirm_delete_quest_coords(self)[1]
+        x, y = self._resocalc.get_confirm_delete_quest_coords(self)
 
         for trash in range(len(trashcancheck)):
             self._clear_quests_failcount = 0
@@ -328,8 +324,7 @@ class MITMBase(WorkerBase):
             self._communicator.click(int(x), int(y))
             time.sleep(1 + int(delayadd))
 
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-               self._resocalc.get_close_main_button_coords(self)[1]
+        x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
 
         time.sleep(1.5)
@@ -340,8 +335,7 @@ class MITMBase(WorkerBase):
     def _open_gym(self, delayadd):
         self.logger.debug('{_open_gym} called')
         time.sleep(.5)
-        x, y = self._resocalc.get_gym_click_coords(
-            self)[0], self._resocalc.get_gym_click_coords(self)[1]
+        x, y = self._resocalc.get_gym_click_coords(self)
         self._communicator.click(int(x), int(y))
         time.sleep(.5 + int(delayadd))
         self.logger.debug('{_open_gym} finished')
@@ -349,15 +343,13 @@ class MITMBase(WorkerBase):
 
     def _spin_wheel(self, delayadd):
         self.logger.debug('{_spin_wheel} called')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
-                    self._resocalc.get_gym_spin_coords(self)[2]
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         return
 
     def _close_gym(self, delayadd):
         self.logger.debug('{_close_gym} called')
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-               self._resocalc.get_close_main_button_coords(self)[1]
+        x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
         self.logger.debug('{_close_gym} called')
@@ -365,8 +357,7 @@ class MITMBase(WorkerBase):
     def _turn_map(self, delayadd):
         self.logger.debug('{_turn_map} called')
         self.logger.info('Turning map')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
-                    self._resocalc.get_gym_spin_coords(self)[2]
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(int(delayadd))
         self.logger.debug('{_turn_map} called')

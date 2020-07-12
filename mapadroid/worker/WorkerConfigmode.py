@@ -98,7 +98,8 @@ class WorkerConfigmode(AbstractWorker):
         if self._walker is None:
             return True
         walkereventid = self._walker.get('eventid', None)
-        if walkereventid is None: walkereventid = 1
+        if walkereventid is None:
+            walkereventid = 1
         if walkereventid != self._event.get_current_event_id():
             self.logger.warning("A other Event has started - leaving now")
             return False
@@ -190,13 +191,11 @@ class WorkerConfigmode(AbstractWorker):
             self._communicator.turn_screen_on()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
-        start_result = False
         while not pogo_topmost:
             self._mitm_mapper.set_injection_status(self._origin, False)
-            start_result = self._communicator.start_app(
-                "com.nianticlabs.pokemongo")
+            self._communicator.start_app("com.nianticlabs.pokemongo")
             time.sleep(1)
-            pogo_topmost = self._communicator.is_pogo_topmost()
+            self._communicator.is_pogo_topmost()
 
         reached_raidtab = False
         self._wait_pogo_start_delay()

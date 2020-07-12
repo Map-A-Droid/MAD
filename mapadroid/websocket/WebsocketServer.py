@@ -2,7 +2,7 @@ import functools
 import queue
 import time
 from threading import Thread, current_thread, Lock, Event
-from typing import Dict, Optional, Set, KeysView, Coroutine, List
+from typing import Dict, Optional, Set, Coroutine, List
 import random as rand
 import websockets
 import asyncio
@@ -190,7 +190,7 @@ class WebsocketServer(object):
                 origin_logger.info("There is a worker thread entry present, handling accordingly")
                 if entry.websocket_client_connection.open:
                     origin_logger.error("Old connection open while a new one is attempted to be established, "
-                                 "aborting handling of connection")
+                                        "aborting handling of connection")
                     continue_register = False
 
                 entry.websocket_client_connection = websocket_client_connection
@@ -278,7 +278,7 @@ class WebsocketServer(object):
                                   "'APPLY SETTINGS'")
             (origin, False)
         elif origin not in self.__mapping_manager.get_all_devicemappings().keys():
-            if(self.__data_manager.search('device', params={'origin':origin})):
+            if(self.__data_manager.search('device', params={'origin': origin})):
                 origin_logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
             else:
                 origin_logger.warning("Register attempt of unknown origin.  Please create the device in MADmin and "

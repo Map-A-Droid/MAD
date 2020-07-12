@@ -44,9 +44,12 @@ def uploaded_files(datetimeformat, jobs):
     for file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
         creationdate = datetime.datetime.fromtimestamp(
             creation_date(file)).strftime(datetimeformat)
-        fileJson = (
-        {'jobname': os.path.basename(file), 'creation': creationdate, 'type': 'jobType.INSTALLATION'})
-        files.append(fileJson)
+        upfile = {
+            'jobname': os.path.basename(file),
+            'creation': creationdate,
+            'type': 'jobType.INSTALLATION'
+        }
+        files.append((upfile))
 
     for command in jobs:
         files.append({'jobname': command, 'creation': '', 'type': 'jobType.CHAIN'})

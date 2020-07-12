@@ -13,7 +13,7 @@ class DbWebhookReader:
         # TODO: DbWrapper is currently required because `dbWrapper.quests_from_db` is shared between
         # map and webhook. Old typehinting used to avoid circular dependencies. This should be
         # resolved in future iterations.
-        self._db_wrapper = db_wrapper  # type: db.DbWrapper
+        self._db_wrapper = db_wrapper
 
     def get_raids_changed_since(self, timestamp):
         logger.debug2("DbWebhookReader::get_raids_changed_since called")

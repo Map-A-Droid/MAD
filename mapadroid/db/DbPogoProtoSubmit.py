@@ -1,10 +1,9 @@
 import json
 import time
 from datetime import datetime, timedelta
-from typing import List, Optional
 from bitstring import BitArray
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
-from mapadroid.utils.gamemechanicutil import gen_despawn_timestamp
+from mapadroid.utils.gamemechanicutil import gen_despawn_timestamp, is_mon_ditto
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
@@ -67,10 +66,10 @@ class DbPogoProtoSubmit:
 
                 if getdetspawntime is None:
                     origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", mon_id, lat, lon,
-                                        despawn_time, spawnid)
+                                         despawn_time, spawnid)
                 else:
                     origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
-                                        despawn_time, spawnid)
+                                         despawn_time, spawnid)
 
                 mon_args.append(
                     (
@@ -121,31 +120,20 @@ class DbPogoProtoSubmit:
 
         if getdetspawntime is None:
             origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
-                                longitude, despawn_time)
+                                 longitude, despawn_time)
         else:
             origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (non-init)", pokemon_data["id"],
-                                latitude, longitude, despawn_time)
+                                 latitude, longitude, despawn_time)
 
         capture_probability = encounter_proto.get("capture_probability")
         capture_probability_list = capture_probability.get("capture_probability_list")
         if capture_probability_list is not None:
             capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
 
-        pokemon_display = pokemon_data.get("display")
-        if pokemon_display is None:
-            pokemon_display = {}
-            # initialize to not run into nullpointer
+        pokemon_display = pokemon_data.get("display", {})
 
         # ditto detector
-        if pokemon_data.get("id") in (46, 163, 165, 167, 187, 223, 293, 316, 322, 399, 590) and \
-                ((pokemon_display.get("weather_boosted_value", None) is not None
-                  and pokemon_display.get("weather_boosted_value", None) > 0) \
-                 and (pokemon_data.get("individual_attack") < 4 or pokemon_data.get(
-                            "individual_defense") < 4 or
-                      pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3) or \
-                 (pokemon_display.get("weather_boosted_value", None) is not None
-                  and pokemon_display.get("weather_boosted_value", None) == 0) \
-                 and pokemon_data.get("cp_multiplier") > .733):
+        if is_mon_ditto(origin_logger, pokemon_data):
             # mon must be a ditto :D
             mon_id = 132
             gender = 3
@@ -523,7 +511,8 @@ class DbPogoProtoSubmit:
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_raid = (
-            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, is_exclusive, gender, costume) "
+            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, "
+            "is_exclusive, gender, costume) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
@@ -771,8 +760,8 @@ class DbPogoProtoSubmit:
         spawnret = {}
 
         query = (
-                "SELECT spawnpoint, spawndef "
-                "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
+            "SELECT spawnpoint, spawndef "
+            "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
         )
         # vals = (spawn_id,)
 

@@ -107,17 +107,13 @@ class Communicator(AbstractCommunicator):
                                self.__command_timeout)
 
     def swipe(self, x1: int, y1: int, x2: int, y2: int) -> Optional[MessageTyping]:
-        self.logger.debug('Swiping from {}/{} to {}/{}', x1, y1, x2, y2)
-        return self.__run_get_gesponse("touch swipe {} {} {} {}\r\n".format(
-            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2))))
-        )
+        return self.__run_get_gesponse("touch swipe {} {} {} {}\r\n".format(str(int(round(x1))), str(int(round(y1))),
+                                                                            str(int(round(x2))), str(int(round(y2)))))
 
     def touch_and_hold(self, x1: int, y1: int, x2: int, y2: int, duration: int = 3000) -> bool:
-        self.logger.debug('Touch and holding from {}/{} to {}/{} for {}ms', x1, y1, x2, y2, duration)
-        return self.__runAndOk("touch swipe {} {} {} {} {}".format(
-            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2))),
-            str(int(duration))), self.__command_timeout
-        )
+        return self.__runAndOk("touch swipe {} {} {} {} {}".format(str(int(round(x1))), str(int(round(y1))),
+                                                                   str(int(round(x2))), str(int(round(y2))),
+                                                                   str(int(duration))), self.__command_timeout)
 
     def get_screensize(self) -> Optional[MessageTyping]:
         return self.__run_get_gesponse("screen size")

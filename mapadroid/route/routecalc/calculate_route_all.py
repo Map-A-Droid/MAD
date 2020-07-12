@@ -1,8 +1,5 @@
 import math
-
 from mapadroid.utils.logging import logger, get_origin_logger
-from .util import *
-
 try:
     from ortools.constraint_solver import routing_enums_pb2
     from ortools.constraint_solver import pywrapcp

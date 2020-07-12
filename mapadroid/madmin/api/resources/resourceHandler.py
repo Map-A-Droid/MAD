@@ -1,10 +1,7 @@
 import collections
 import copy
 import re
-
 import flask
-
-import mapadroid.data_manager.modules
 from mapadroid.madmin.functions import auth_required
 from mapadroid.data_manager.dm_exceptions import (
     UnknownIdentifier,
@@ -15,7 +12,7 @@ from mapadroid.data_manager.dm_exceptions import (
     SaveIssue
 )
 from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
-from mapadroid.data_manager.modules import *
+from mapadroid.data_manager.modules import MAPPINGS
 from .. import apiHandler
 
 
@@ -48,11 +45,11 @@ class ResourceHandler(apiHandler.APIHandler):
     def get_resource_data_root(self, resource_def, resource_info):
         try:
             fetch_all = int(self.api_req.params.get('fetch_all'))
-        except:
+        except TypeError:
             fetch_all = 0
         try:
             hide_resource = int(self.api_req.params.get('hide_resource', 0))
-        except:
+        except TypeError:
             hide_resource = 0
         link_disp_field = self.api_req.params.get('link_disp_field', self.default_sort)
         raw_data = {}
@@ -69,7 +66,7 @@ class ResourceHandler(apiHandler.APIHandler):
         else:
             for key, val in raw_data.items():
                 api_response_data[key_translation % key] = val
-        if not fetch_all and link_disp_field != None:
+        if not fetch_all and link_disp_field is not None:
             for key, val in api_response_data.items():
                 try:
                     api_response_data[key] = val[link_disp_field]
@@ -92,11 +89,11 @@ class ResourceHandler(apiHandler.APIHandler):
         }
         try:
             resource['fields'] = self.get_resource_info_elems(resource_def.configuration['fields'])
-        except:
+        except KeyError:
             pass
         try:
             resource['settings'] = self.get_resource_info_elems(resource_def.configuration['settings'])
-        except:
+        except KeyError:
             pass
         return resource
 
@@ -113,7 +110,7 @@ class ResourceHandler(apiHandler.APIHandler):
             }
             try:
                 field_data['values'] = settings['values']
-            except:
+            except KeyError:
                 pass
             variables.append(field_data)
         return variables
@@ -135,7 +132,7 @@ class ResourceHandler(apiHandler.APIHandler):
             try:
                 entity = working_conf[key]['settings']
                 if 'uri' in entity:
-                    if entity['uri'] != True:
+                    if entity['uri'] is not True:
                         valid_data[key] = val
                     elif val:
                         regex = re.compile(r'%s/(\d+)' % (flask.url_for(entity['uri_source'])))
@@ -180,7 +177,7 @@ class ResourceHandler(apiHandler.APIHandler):
                 continue
             if val is not None:
                 try:
-                    if entity['uri'] != True:
+                    if entity['uri'] is not True:
                         valid_data[key] = val
                         continue
                     uri = '%s/%%s' % (flask.url_for(entity['uri_source']),)
@@ -200,7 +197,7 @@ class ResourceHandler(apiHandler.APIHandler):
                     empty = entity['empty']
                     if empty is not None:
                         valid_data[key] = empty
-                except:
+                except KeyError:
                     continue
         return valid_data
 
@@ -220,9 +217,7 @@ class ResourceHandler(apiHandler.APIHandler):
         """
         # Begin processing the request
         try:
-            endpoint = kwargs.get('endpoint', None)
             identifier = kwargs.get('identifier', None)
-            config = kwargs.get('config', None)
             self.populate_mode(identifier, flask.request.method)
             if flask.request.method == 'DELETE':
                 return self.delete(identifier)
@@ -315,7 +310,6 @@ class ResourceHandler(apiHandler.APIHandler):
 
     def post(self, identifier, data, resource_def, resource_info, *args, **kwargs):
         """ API call to create data """
-        mode = self.api_req.headers.get('X-Mode')
         resource = resource_def(self._data_manager)
         if identifier is None:
             try:

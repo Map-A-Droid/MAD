@@ -277,8 +277,7 @@ class DbSchemaUpdater:
     def create_column(self, column_mod: dict):
         alter_query = (
             "ALTER TABLE {} "
-            "ADD COLUMN {} {}"
-                .format(column_mod["table"], column_mod["column"], column_mod["ctype"])
+            "ADD COLUMN {} {}".format(column_mod["table"], column_mod["column"], column_mod["ctype"])
         )
         if "modify_key" in column_mod:
             alter_query = alter_query + ", " + column_mod["modify_key"]

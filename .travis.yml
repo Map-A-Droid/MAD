@@ -11,6 +11,8 @@ before_install:
   - mysql -u root -e "GRANT ALL ON mad.* TO 'mad'@'localhost';"
 install:
   - pip3 install -r requirements.txt
+  - pip3 install flake8
 script:
+  - python3 -m flake8
   - python3 start.py -ut -wm -cm -cf configs/config.ini.travis -mf configs/mappings.travis.json
   - python3 start.py -ut -wm -cf configs/config.ini.travis -mf configs/mappings.travis.json

@@ -120,7 +120,8 @@ def parseArgs():
                         help='Temp Folder for OCR Scanning. Default: temp')
 
     parser.add_argument('-upload', '--upload_path', default=os.path.join(mapadroid.MAD_ROOT, 'upload'),
-                        help='Path for uploaded Files via madmin and for device installation. Default: /absolute/path/to/upload')
+                        help='Path for uploaded Files via madmin and for device installation. Default: '
+                             '/absolute/path/to/upload')
 
     parser.add_argument('-pgasset', '--pogoasset', required=False,
                         help=('Path to Pogo Asset.'
@@ -182,7 +183,8 @@ def parseArgs():
                              '- urls have to start with http*')
 
     parser.add_argument('-whea', '--webhook_excluded_areas', default="",
-                        help='Comma-separated list of area names to exclude elements from within to be sent to a webhook')
+                        help='Comma-separated list of area names to exclude elements from within to be sent to a '
+                             'webhook')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
     parser.add_argument('-pwhn', '--pokemon_webhook_nonivs', action='store_true', default=False,

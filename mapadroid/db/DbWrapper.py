@@ -37,7 +37,7 @@ class DbWrapper:
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
         try:
             self.get_instance_id()
-        except:
+        except Exception:
             self.instance_id = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
                            'installed, this message is safe to ignore')
@@ -116,10 +116,9 @@ class DbWrapper:
             if latitude is None or longitude is None:
                 logger.warning("lat or lng is none")
                 continue
-            elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence(
-                    [latitude, longitude]):
+            elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
                 logger.debug3("Excluded hatch at {}, {} since the coordinate is not inside the given include fences",
-                    str(latitude), str(longitude))
+                              latitude, longitude)
                 continue
             timestamp = self.__db_timestring_to_unix_timestamp(str(start))
             data.append((timestamp + delay_after_hatch,
@@ -240,7 +239,7 @@ class DbWrapper:
         encounter_id_coords = geofence_helper.get_geofenced_coordinates(
             list_of_coords)
         logger.debug3("Got {} encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, "
-                     "last_modified): {}", len(encounter_id_coords), params)
+                      "last_modified): {}", len(encounter_id_coords), params)
         encounter_id_infos = {}
         for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
             encounter_id_infos[encounter_id] = disappear_time
@@ -361,10 +360,7 @@ class DbWrapper:
             hours = datetime.utcnow() - timedelta(hours=hours)
             query_where = ' where disappear_time > \'%s\' ' % str(hours)
 
-        query = (
-                "SELECT pokemon_id, count(pokemon_id) from pokemon %s group by pokemon_id" % str(
-            query_where)
-        )
+        query = "SELECT pokemon_id, count(pokemon_id) from pokemon %s group by pokemon_id" % str(query_where)
 
         res = self.execute(query)
 
@@ -648,22 +644,21 @@ class DbWrapper:
     def get_stops_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None,
                                oSwLon=None,
                                timestamp=None, check_quests=False):
-        stops = {}
         args = []
         conversions = ['ps.`last_modified`', 'ps.`lure_expiration`', 'ps.`last_updated`',
                        'ps.`incident_start`',
                        'ps.`incident_expiration`']
         # base query to fetch stops
         query = (
-            "SELECT ps.`pokestop_id`, ps.`enabled`, ps.`latitude`, ps.`longitude`,\n" \
-            "%s,\n" \
-            "%s,\n" \
-            "%s,\n" \
-            "%s,\n" \
-            "%s,\n" \
-            "ps.`active_fort_modifier`, ps.`name`, ps.`image`, ps.`incident_grunt_type`\n" \
-            "FROM pokestop ps\n" \
-            )
+            "SELECT ps.`pokestop_id`, ps.`enabled`, ps.`latitude`, ps.`longitude`,\n"
+            "%s,\n"
+            "%s,\n"
+            "%s,\n"
+            "%s,\n"
+            "%s,\n"
+            "ps.`active_fort_modifier`, ps.`name`, ps.`image`, ps.`incident_grunt_type`\n"
+            "FROM pokestop ps\n"
+        )
         query_where = (
             "WHERE (ps.`latitude` >= %%s AND ps.`longitude` >= %%s "
             " AND ps.`latitude` <= %%s AND ps.`longitude` <= %%s) "
@@ -725,7 +720,7 @@ class DbWrapper:
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
         event_ids: list = []
-        #adding default spawns
+        # adding default spawns
         event_ids.append(1)
 
         if include_event_id is not None:
@@ -915,8 +910,8 @@ class DbWrapper:
         query += query_where
         res = self.execute(query)
 
-        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned, eventname, eventid) \
-                in res:
+        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned, eventname,
+             eventid) in res:
             spawn[spawnid] = {
                 'id': spawnid,
                 'lat': lat,
@@ -974,19 +969,14 @@ class DbWrapper:
 
             spawn_duration_minutes = 60 if spawndef == 15 else 30
 
-            timestamp = time.mktime(temp_date.timetuple()) - \
-                        spawn_duration_minutes * 60
+            timestamp = time.mktime(temp_date.timetuple()) - spawn_duration_minutes * 60
             # check if we calculated a time in the past, if so, add an hour to it...
             timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
             # TODO: consider the following since I am not sure if the prio Q clustering handles stuff properly yet
             # if timestamp >= current_time + 600:
             #     # let's skip monspawns that are more than 10minutes in the future
             #     continue
-            next_up.append(
-                (
-                    timestamp, Location(latitude, longitude)
-                )
-            )
+            next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
 
     def get_nearest_stops_from_position(self, geofence_helper, origin: str, lat, lon, limit: int = 20,
@@ -1282,6 +1272,7 @@ class DbWrapper:
         }
         return self.autoexec_insert('versions', update_data, optype="ON DUPLICATE")
 
+
 def adjust_tz_to_utc(column: str, as_name: str = None) -> str:
     # I would like to use convert_tz but this may not be populated.  Use offsets instead
     is_dst = time.daylight and time.localtime().tm_isdst > 0
@@ -1289,6 +1280,6 @@ def adjust_tz_to_utc(column: str, as_name: str = None) -> str:
     if not as_name:
         try:
             as_name = re.findall(r'(\w+)', column)[-1]
-        except:
+        except Exception:
             as_name = column
     return "UNIX_TIMESTAMP(%s) + %s AS '%s'" % (column, utc_offset, as_name)

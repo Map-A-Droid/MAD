@@ -2,6 +2,7 @@ import json
 from typing import List, Optional
 from flask import (jsonify, render_template, request, redirect, url_for)
 from flask_caching import Cache
+from mapadroid.data_manager import DataManagerException
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import (
     auth_required, getCoordFloat, getBoundParameter, get_geofences, generate_coords_from_geofence
@@ -9,7 +10,7 @@ from mapadroid.madmin.functions import (
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.language import i8ln, get_mon_name
+from mapadroid.utils.language import get_mon_name
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.utils.logging import get_logger, LoggerEnums
@@ -106,7 +107,6 @@ class map:
 
             if route is None:
                 continue
-            s2cells = {}
             routeexport.append(get_routepool_route(name, mode, route))
             if len(workers) > 1:
                 for worker, worker_route in workers.items():
@@ -355,7 +355,7 @@ class map:
         resource.update(update_data)
         try:
             resource.save()
-        except:
+        except DataManagerException:
             # TODO - present the user with an issue.  probably fence-name already exists
             pass
         return redirect(url_for('map'), code=302)

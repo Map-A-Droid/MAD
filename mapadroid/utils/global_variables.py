@@ -21,10 +21,11 @@ MAD_APK_ARCH = {
     'armeabi-v7a': MAD_APK_ARCH_ARMEABI_V7A,
     'arm64-v8a': MAD_APK_ARCH_ARM64_V8A,
 }
-# Configured devices can be found @ https://github.com/NoMore201/googleplay-api/blob/664c399f8196e1eb7d2fcda4af34e5dc1fca0f20/gpapi/device.properties
+# Configured devices can be found @
+# https://github.com/NoMore201/googleplay-api/blob/664c399f8196e1eb7d2fcda4af34e5dc1fca0f20/gpapi/device.properties
 MAD_APK_SEARCH = {
-    MAD_APK_ARCH_ARMEABI_V7A: 'hammerhead', # Nexus 5
-    MAD_APK_ARCH_ARM64_V8A: 'angler' # Nexus 6p
+    MAD_APK_ARCH_ARMEABI_V7A: 'hammerhead',  # Nexus 5
+    MAD_APK_ARCH_ARM64_V8A: 'angler'  # Nexus 6p
 }
 MAD_APK_ALLOWED_EXTENSIONS = set(['apk', 'zip'])
 URL_RGC_APK = 'https://raw.githubusercontent.com/Map-A-Droid/MAD/master/APK/RemoteGpsController.apk'

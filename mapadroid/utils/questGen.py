@@ -288,7 +288,7 @@ def questtask(typeid, condition, target, quest_template):
                 # PVP against team leader.
                 text = _('Battle a Team Leader {0} times')
             elif con.get('type') == 23:
-                gotta_win = con.get('with_pvp_combat', {}).get('requires_win') == True
+                gotta_win = con.get('with_pvp_combat', {}).get('requires_win') is True
 
                 if gotta_win:
                     text = _('Win a battle against another Trainer {0} times')

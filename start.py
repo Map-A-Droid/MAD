@@ -39,7 +39,7 @@ from mapadroid.utils.logging import initLogging, get_logger, LoggerEnums
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
 initLogging(args)
-logger = get_logger(LoggerEnums.database)
+logger = get_logger(LoggerEnums.system)
 
 
 # Patch to make exceptions in threads cause an exception.
@@ -84,7 +84,8 @@ def find_referring_graphs(obj):
     referrers = (r for r in gc.get_referrers(obj)
                  if r not in REFERRERS_TO_IGNORE)
     for ref in referrers:
-        if isinstance(ref, Graph):
+        print(type(ref))
+        if isinstance(ref, Graph):  # noqa: F821
             # A graph node
             yield ref
         elif isinstance(ref, dict):
@@ -163,8 +164,8 @@ if __name__ == "__main__":
     pogoWindowManager: Optional[PogoWindows] = None
     storage_elem: Optional[AbstractAPKStorage] = None
     storage_manager: Optional[StorageSyncManager] = None
-    t_whw: Thread = None # Thread for WebHooks
-    t_ws: Thread = None # Thread - WebSocket Server
+    t_whw: Thread = None  # Thread for WebHooks
+    t_ws: Thread = None  # Thread - WebSocket Server
     webhook_worker: Optional[WebhookWorker] = None
     ws_server: WebsocketServer = None
     if args.config_mode:
@@ -189,7 +190,7 @@ if __name__ == "__main__":
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
     try:
         instance_id = db_wrapper.get_instance_id()
-    except:
+    except Exception:
         instance_id = None
     data_manager = DataManager(db_wrapper, instance_id)
     MADPatcher(args, data_manager)
@@ -260,16 +261,25 @@ if __name__ == "__main__":
             t_usage.daemon = True
             t_usage.start()
 
-    madmin = madmin(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater,
-                          jobstatus, storage_elem)
+    madmin = madmin(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater, jobstatus, storage_elem)
 
     # starting plugin system
-    plugin_parts={'db_wrapper': db_wrapper, 'args': args, 'madmin': madmin, 'data_manager': data_manager,
-                  'mapping_manager': mapping_manager, 'jobstatus': jobstatus, 'device_Updater': device_Updater,
-                  'ws_server': ws_server, 'webhook_worker': webhook_worker,
-                  'mitm_receiver_process': mitm_receiver_process, 'mitm_mapper': mitm_mapper, 'event': event,
-                  'logger': logger, 'storage_elem': storage_elem
-                  }
+    plugin_parts = {
+        'args': args,
+        'data_manager': data_manager,
+        'db_wrapper': db_wrapper,
+        'device_Updater': device_Updater,
+        'event': event,
+        'jobstatus': jobstatus,
+        'logger': get_logger(LoggerEnums.plugin),
+        'madmin': madmin,
+        'mapping_manager': mapping_manager,
+        'mitm_mapper': mitm_mapper,
+        'mitm_receiver_process': mitm_receiver_process,
+        'storage_elem': storage_elem,
+        'webhook_worker': webhook_worker,
+        'ws_server': ws_server,
+    }
     mad_plugins = PluginCollection('plugins', plugin_parts)
     mad_plugins.apply_all_plugins_on_value()
 
@@ -299,7 +309,7 @@ if __name__ == "__main__":
                     api.get('/api')
                     api_ready = True
                     logger.info('API is ready for unit testing')
-                except:
+                except Exception:
                     time.sleep(1)
             loader = unittest.TestLoader()
             start_dir = 'mapadroid/tests/'
@@ -353,7 +363,7 @@ if __name__ == "__main__":
                 logger.debug("Calling db_pool_manager shutdown")
                 db_pool_manager.shutdown()
                 logger.debug("Done shutting down db_pool_manager")
-        except:
+        except Exception:
             logger.opt(exception=True).critical("An unhanded exception occurred during shutdown!")
         logger.info("Done shutting down")
         logger.debug(str(sys.exc_info()))

@@ -3,7 +3,6 @@ import multiprocessing
 from typing import List
 import gpxdata
 import s2sphere
-from geopy import Point
 # from utils.collections import Location
 # from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -72,8 +71,7 @@ class S2Helper:
     @staticmethod
     def get_position_from_cell(cell_id):
         cell = s2sphere.CellId(id_=int(cell_id)).to_lat_lng()
-        return s2sphere.math.degrees(cell.lat().radians), \
-               s2sphere.math.degrees(cell.lng().radians), 0
+        return s2sphere.math.degrees(cell.lat().radians), s2sphere.math.degrees(cell.lng().radians), 0
 
     @staticmethod
     def get_s2_cells_from_fence(geofence, cell_size=16):
@@ -244,13 +242,7 @@ class S2Helper:
     def sort_row_from_west(row):
         if row is None or len(row) == 0:
             return []
-        new_row = []
         return sorted(row, key=lambda x: x.lng)
-        # while len(row) > 0:
-        #     most_west = S2Helper.get_most_west(row)
-        #     row.remove(most_west)
-        #     new_row.append(most_west)
-        # return new_row
 
     @staticmethod
     def get_most_west(location_list):
@@ -275,20 +267,14 @@ class S2Helper:
         start = gpxdata.TrackPoint(init_loc.lat, init_loc.lng)
         destination = start + gpxdata.CourseDistance(bearing, distance)
 
-        origin = Point(init_loc.lat, init_loc.lng)
-        # start = start + gpxdata.CourseDistance(course, distance)
-        # destination = distance.distance(kilometers=distance).destination(
-        #     origin, bearing)
-        # return Location(destination.latitude, destination.longitude)
         return Location(destination.lat, destination.lon)
 
     @staticmethod
     # Returns a set of S2 cells within circle around position
     def get_S2cells_from_circle(lat, lng, radius, level=15):
         EARTH = 6371000
-        region = s2sphere.Cap.from_axis_angle( \
-            s2sphere.LatLng.from_degrees(lat, lng).to_point(), \
-            s2sphere.Angle.from_degrees(360 * radius / (2 * math.pi * EARTH)))
+        region = s2sphere.Cap.from_axis_angle(s2sphere.LatLng.from_degrees(lat, lng).to_point(),
+                                              s2sphere.Angle.from_degrees(360 * radius / (2 * math.pi * EARTH)))
         coverer = s2sphere.RegionCoverer()
         coverer.min_level = level
         coverer.max_level = level

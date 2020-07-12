@@ -19,7 +19,7 @@ from mapadroid.data_manager.modules.routecalc import RouteCalc
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger, routelogger_set_origin
+from mapadroid.utils.logging import get_logger, LoggerEnums, routelogger_set_origin
 
 
 logger = get_logger(LoggerEnums.routemanager)
@@ -225,7 +225,7 @@ class RouteManagerBase(ABC):
                 route_logger.info("removed from routemanager")
                 self._workers_registered.remove(worker)
                 if worker in self._routepool:
-                    self.logger.info("Deleting old routepool of {}", worker)
+                    self.logger.info("Deleting old routepool")
                     del self._routepool[worker]
             if len(self._workers_registered) == 0 and self._is_started:
                 self.logger.info("Routemanager does not have any subscribing workers anymore, calling stop")
@@ -395,14 +395,9 @@ class RouteManagerBase(ABC):
 
     def _get_round_finished_string(self):
         round_finish_time = datetime.now()
-        round_completed_in = (
-                "%d hours, %d minutes, %d seconds" % (
-            self.dhms_from_seconds(
-                self.date_diff_in_seconds(
-                    round_finish_time, self._round_started_time)
-            )
-        )
-        )
+        round_completed_in = ("%d hours, %d minutes, %d seconds" % (self.dhms_from_seconds(self.date_diff_in_seconds(
+                                                                                           round_finish_time,
+                                                                                           self._round_started_time))))
         return round_completed_in
 
     def add_coord_to_be_removed(self, lat: float, lon: float):
@@ -501,12 +496,10 @@ class RouteManagerBase(ABC):
             # clustering
             return latest
         if self.mode == "mon_mitm" and self.remove_from_queue_backlog == 0:
-            self.logger.error("You are running in mon_mitm mode with "
-                         "priority queue enabled and remove_from_queue_backlog "
-                         "set to 0. This may result in building up a significant "
-                         "queue backlog and reduced scanning performance. "
-                         "Please review this setting or set it to the default "
-                         "of 300.")
+            self.logger.error("You are running in mon_mitm mode with priority queue enabled and "
+                              "remove_from_queue_backlog set to 0. This may result in building up a significant queue "
+                              "backlog and reduced scanning performance. Please review this setting or set it to the "
+                              "default of 300.")
 
         if self.remove_from_queue_backlog is not None:
             delete_before = time.time() - self.remove_from_queue_backlog
@@ -576,7 +569,8 @@ class RouteManagerBase(ABC):
             with self._manager_mutex:
                 if self.mode == "iv_mitm":
                     got_location = self._prio_queue is not None and len(self._prio_queue) > 0
-                    if not got_location: time.sleep(1)
+                    if not got_location:
+                        time.sleep(1)
                 else:
                     # normal mode - should always have a route
                     got_location = True
@@ -587,11 +581,10 @@ class RouteManagerBase(ABC):
             # if that is not the case, simply increase the index in route and return the location on route
 
             # determine whether we move to the next location or the prio queue top's item
-            if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio.get(origin, False)
-                                                                  or self.starve_route)
-                                                                 and self._prio_queue and len(
-                        self._prio_queue) > 0
-                                                                 and self._prio_queue[0][0] < time.time())):
+            if self.delay_after_timestamp_prio is not None \
+               and ((not self._last_round_prio.get(origin, False) or self.starve_route) and
+                    self._prio_queue and len(self._prio_queue) > 0 and
+                    self._prio_queue[0][0] < time.time()):
                 next_prio = heapq.heappop(self._prio_queue)
                 next_timestamp = next_prio[0]
                 next_coord = next_prio[1]
@@ -655,7 +648,7 @@ class RouteManagerBase(ABC):
                     len(self._routepool[origin].queue) == 0:
                 # we are done with init, let's calculate a new route
                 self.logger.warning("Init done, it took {}, calculating new route...",
-                                     self._get_round_finished_string())
+                                    self._get_round_finished_string())
                 if self._start_calc:
                     self.logger.info("Another process already calculate the new route")
                     return None
@@ -847,7 +840,7 @@ class RouteManagerBase(ABC):
                                                      workers)
                     if new_subroute_length == 0:
                         return False
-                except Exception as e:
+                except Exception:
                     self.logger.info('Something happens with the worker - breakup')
                     return False
             i: int = 0
@@ -865,7 +858,7 @@ class RouteManagerBase(ABC):
                 sorted_routepools = sorted(reduced_routepools, key=itemgetter(1))
 
                 self.logger.debug("Checking routepools in the following order: {}", sorted_routepools)
-                compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
+                compare = lambda x, y: collections.Counter(x) == collections.Counter(y)  # noqa: E731
                 for origin, time_added in sorted_routepools:
                     if origin not in self._routepool:
                         # TODO probably should restart this job or something
@@ -888,14 +881,14 @@ class RouteManagerBase(ABC):
                     i += 1
                     if len(entry.subroute) == 0:
                         self.logger.debug("{}'s subroute is empty, assuming he has freshly registered and desperately "
-                                         "needs a queue", origin)
+                                          "needs a queue", origin)
                         # worker is freshly registering, pass him his fair share
                         entry.subroute = new_subroute
                         # let's clean the queue just to make sure
                         entry.queue.clear()
                     elif len(new_subroute) == len(entry.subroute):
                         self.logger.debug("{}'s subroute is as long as the old one, we will assume it hasn't changed "
-                                         "(for now)", origin)
+                                          "(for now)", origin)
                         # apparently nothing changed
                         if compare(new_subroute, entry.subroute):
                             self.logger.info("Apparently no changes in subroutes...")
@@ -919,7 +912,7 @@ class RouteManagerBase(ABC):
                             entry.queue.append(location)
                     elif len(entry.subroute) > len(new_subroute) > 0:
                         self.logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
-                                     "added)", origin)
+                                          "added)", origin)
                         # we apparently have added at least a worker...
                         #   1) reduce the start of the current queue to start of new route
                         #   2) append the coords missing (check end of old routelength,
@@ -1085,7 +1078,7 @@ class RouteManagerBase(ABC):
 
     def redo_stop(self, worker, lat, lon):
         route_logger = routelogger_set_origin(self.logger, origin=worker)
-        self.logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
+        route_logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
         if worker in self._routepool:
             self._routepool[worker].has_prio_event = True
             self._routepool[worker].prio_coords = Location(lat, lon)

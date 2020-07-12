@@ -22,6 +22,7 @@ class LoggerEnums(IntEnum):
     utils: int = 12
     storage: int = 13
     package_mgr: int = 14
+    plugin: int = 15
 
 
 # ==================================

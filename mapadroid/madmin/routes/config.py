@@ -3,6 +3,7 @@ import os
 import re
 from flask import (render_template, request, redirect, url_for, Response)
 from flask_caching import Cache
+from mapadroid.data_manager import DataManagerException
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.adb import ADBConnect
@@ -97,7 +98,7 @@ class config(object):
         html_all = kwargs.get('html_all')
         subtab = kwargs.get('subtab')
         section = kwargs.get('section', subtab)
-        var_parser_section = kwargs.get('var_parser_section', section)
+        var_parser_section = kwargs.get('var_parser_section', section)  # noqa:F841
         required_data = kwargs.get('required_data', {})
         mode_required = kwargs.get('mode_required', False)
         passthrough = kwargs.get('passthrough', {})
@@ -113,7 +114,7 @@ class config(object):
             try:
                 req = self._data_manager.get_resource(data_source, identifier=identifier)
                 mode = req.area_type
-            except:
+            except DataManagerException:
                 if identifier:
                     return redirect(redirect_uri, code=302)
                 else:
@@ -281,7 +282,7 @@ class config(object):
         try:
             identifier = request.args.get('id')
             current_mons = self._data_manager.get_resource('monivlist', identifier)['mon_ids_iv']
-        except Exception as err:
+        except Exception:
             current_mons = []
         all_pokemon = self.get_pokemon()
         mondata = all_pokemon['mondata']
@@ -330,7 +331,7 @@ class config(object):
             area = self._data_manager.get_resource('area', identifier=area_id)
             if area['routecalc'] != int(request.args.get('id')):
                 return redirect(url_for('settings_areas'), code=302)
-        except:
+        except DataManagerException:
             return redirect(url_for('settings_areas'), code=302)
         required_data = {
             'identifier': 'id',

@@ -54,7 +54,7 @@ class APIArea(ResourceHandler):
         if self.mode:
             return
         if method in ['GET', 'PATCH']:
-            if identifier != None:
+            if identifier is not None:
                 data = self._data_manager.get_resource(self.component, identifier=identifier)
                 if data:
                     self.mode = data.area_type

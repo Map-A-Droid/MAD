@@ -28,11 +28,11 @@ class Patch(PatchBase):
                 self.issues = True
 
         sql = """CREATE TABLE IF NOT EXISTS `trs_event` (
-                    `id` int(11) NOT NULL AUTO_INCREMENT, 
-                    `event_name` varchar(100), 
-                    `event_start`datetime, 
-                    `event_end` datetime, 
-                    `event_lure_duration` int NOT NULL DEFAULT 30, 
+                    `id` int(11) NOT NULL AUTO_INCREMENT,
+                    `event_name` varchar(100),
+                    `event_start`datetime,
+                    `event_end` datetime,
+                    `event_lure_duration` int NOT NULL DEFAULT 30,
                     PRIMARY KEY (`id`)
                     )"""
         try:

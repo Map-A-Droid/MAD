@@ -12,7 +12,6 @@ class APIResponse(object):
         self.mimetype = self.request.accept
 
     def __call__(self, content, status_code, **kwargs):
-        headers = kwargs.get('', self.headers)
         converted_data = self.convert_to_format(content)
         resp = flask.Response(converted_data, mimetype=self.mimetype)
         resp.status_code = status_code
@@ -30,7 +29,7 @@ class APIResponse(object):
         beautify = self.headers.get('X-Beautify')
         if self.mimetype == 'application/json':
             try:
-                indent=None
+                indent = None
                 if beautify and beautify.isdigit() and int(beautify) == 1:
                     indent = 4
                 return json.dumps(content, indent=indent, cls=MAD_Encoder)

@@ -10,7 +10,7 @@ logger = get_logger(LoggerEnums.utils)
 def getImageHash(image, hashSize=8):
     try:
         image_temp = cv2.imread(image)
-    except Exception as e:
+    except Exception:
         logger.error("Screenshot corrupted")
         return '0'
     if image_temp is None:

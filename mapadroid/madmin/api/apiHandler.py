@@ -33,7 +33,7 @@ class APIHandler(object):
         self.create_routes()
 
     def create_routes(self):
-        """ 
+        """
         Defines all routes required for the objects.  This must be implemented for each endpoint so the API
         can process requests
         """
@@ -76,7 +76,7 @@ class APIHandler(object):
                 return processed_data
             try:
                 resp_args = processed_data[2]
-            except:
+            except IndexError:
                 resp_args = {}
             return apiResponse.APIResponse(self._logger, self.api_req)(response_data, status_code,
                                                                        **resp_args)
