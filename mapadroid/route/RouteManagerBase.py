@@ -219,9 +219,9 @@ class RouteManagerBase(ABC):
                 self.stop_routemanager()
 
     def stop_worker(self):
-        route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         with self._workers_registered_mutex:
             for worker in self._workers_registered:
+                route_logger = routelogger_set_origin(self.logger, origin=worker)
                 route_logger.info("removed from routemanager")
                 self._workers_registered.remove(worker)
                 if worker in self._routepool:

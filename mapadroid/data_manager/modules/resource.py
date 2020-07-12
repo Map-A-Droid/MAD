@@ -411,25 +411,45 @@ class Resource(object):
         sql = "SELECT `%s`\n" \
               "FROM `%s`\n" \
               "WHERE `instance_id` = %%s"
-        args = (res_obj.primary_key, res_obj.table,)
+        args = [res_obj.primary_key, res_obj.table,]
+        param_args = [instance_id]
+        for key, val in kwargs.items():
+            valid = False
+            if key in cls.configuration['fields']:
+                valid = True
+            if key in cls.translations:
+                key = cls.translations[key]
+                valid = True
+            if valid:
+                sql += " AND `%s` LIKE %%s"
+                args.append(key)
+                # TODO - Better handling for this to us .eq, .like, etc
+                param_args.append("%%{}%%".format(val))
         if res_obj.search_field is not None:
             sql += "\nORDER BY `%s` ASC" % (res_obj.search_field)
-        return dbc.autofetch_column(sql % args, args=(instance_id))
+        return dbc.autofetch_column(sql % tuple(args), args=tuple(param_args))
 
     def translate_keys(self, data, operation, translations=None):
-        if translations is None:
-            translations = self.translations
-        if not translations:
-            return data
-        if operation == 'load':
-            translations = dict(map(reversed, translations.items()))
-        translated = {}
-        for key, val in data.items():
-            if key not in translations:
-                translated[key] = val
-                continue
-            translated[translations[key]] = val
-        return translated
+        return translate_frontend_names(self, data, operation, translations=translations)
 
     def validate_custom(self):
         pass
+
+
+def translate_frontend_names(resource, data, operation, translations=None):
+    if translations is None:
+        try:
+            translations = resource.translations
+        except AttributeError:
+            return data
+    if not translations:
+        return data
+    if operation == 'load':
+        translations = dict(map(reversed, translations.items()))
+    translated = {}
+    for key, val in data.items():
+        try:
+            translated[translations[key]] = val
+        except KeyError:
+            translated[key] = val
+    return translated

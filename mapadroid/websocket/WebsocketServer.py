@@ -278,7 +278,7 @@ class WebsocketServer(object):
                                   "'APPLY SETTINGS'")
             (origin, False)
         elif origin not in self.__mapping_manager.get_all_devicemappings().keys():
-            if(self.__data_manager.search('device', origin=identifier)):
+            if(self.__data_manager.search('device', params={'origin':origin})):
                 origin_logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
             else:
                 origin_logger.warning("Register attempt of unknown origin.  Please create the device in MADmin and "

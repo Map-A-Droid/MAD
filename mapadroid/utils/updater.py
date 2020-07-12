@@ -12,7 +12,7 @@ import requests
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APK_Type, file_generator, lookup_apk_enum, \
-     lookup_arch_enum, APK_Package, APK_Arch, supported_pogo_version
+     lookup_arch_enum, APK_Package, APK_Arch, supported_pogo_version, MAD_Packages
 
 
 logger = get_logger(LoggerEnums.utils)
@@ -518,7 +518,7 @@ class deviceUpdater(object):
                         return False
                 package = getattr(APK_Type, APK_Package(package_raw).name)
                 architecture = lookup_arch_enum(architecture_raw)
-                package_all: Package_Info = self._storage_obj.get_current_package_info(package)
+                package_all: MAD_Packages = self._storage_obj.get_current_package_info(package)
                 if package_all is None:
                         logger.warning('No MAD APK for {} [{}]', package, architecture.name)
                         return False
