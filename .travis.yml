@@ -3,6 +3,12 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+matrix:
+    include:
+      - os: linux
+        dist: xenial
+      - os: linux
+        dist: bionic
 addons:
   mariadb: '10.2'
 before_install:
