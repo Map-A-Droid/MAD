@@ -43,8 +43,8 @@ class S2Helper:
     def coords_of_cell(cell_id):
         cell = s2sphere.Cell(s2sphere.CellId(int(cell_id)))
         coords = []
-        for v in range(0, 4):
-            vertex = s2sphere.LatLng.from_point(cell.get_vertex(v))
+        for value in range(0, 4):
+            vertex = s2sphere.LatLng.from_point(cell.get_vertex(value))
             coords.append([vertex.lat().degrees, vertex.lng().degrees])
         return coords
 
@@ -112,12 +112,11 @@ class S2Helper:
             # origin) to form a star
             star_loc = S2Helper.get_new_coords(center, distance * ring,
                                                90 + 60 * i)
-            for j in range(0, ring):
+            for index in range(0, ring):
                 # Then from each point on the star, create locations
                 # towards the next point of star along the edge of the
                 # current ring
-                loc = S2Helper.get_new_coords(
-                    star_loc, distance * j, 210 + 60 * i)
+                loc = S2Helper.get_new_coords(star_loc, distance * index, 210 + 60 * i)
                 results.append(loc)
         return results
 

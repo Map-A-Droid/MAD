@@ -321,21 +321,21 @@ class MappingManager:
                 'num_procs': 0,
                 'active': active
             }
-            t = Thread(name=routemanager.name,
-                       target=routemanager.recalc_route_adhoc,
-                       args=args,
-                       kwargs=kwargs)
-            t.start()
+            recalc_thread = Thread(name=routemanager.name,
+                                   target=routemanager.recalc_route_adhoc,
+                                   args=args,
+                                   kwargs=kwargs)
+            recalc_thread.start()
         except Exception:
             logger.opt(exception=True).error('Unable to start recalculation')
         return successful
 
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
-        for set in poolsettings:
-            inheritsettings[set] = poolsettings[set]
-        for set in devicesettings:
-            inheritsettings[set] = devicesettings[set]
+        for pool_setting in poolsettings:
+            inheritsettings[pool_setting] = poolsettings[pool_setting]
+        for device_setting in devicesettings:
+            inheritsettings[device_setting] = devicesettings[device_setting]
         return inheritsettings
 
     def __get_latest_routemanagers(self) -> Optional[Dict[str, dict]]:

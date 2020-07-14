@@ -275,17 +275,17 @@ class map:
 
         mons_raw = {}
 
-        for i, mon in enumerate(data):
+        for index, mon in enumerate(data):
             try:
-                id = data[i]["mon_id"]
-                if str(id) in mons_raw:
-                    mon_raw = mons_raw[str(id)]
+                mon_id = data[index]["mon_id"]
+                if str(mon_id) in mons_raw:
+                    mon_raw = mons_raw[str(mon_id)]
                 else:
-                    mon_raw = get_mon_name(id)
-                    mons_raw[str(id)] = mon_raw
+                    mon_raw = get_mon_name(mon_id)
+                    mons_raw[str(mon_id)] = mon_raw
 
-                data[i]["encounter_id"] = str(data[i]["encounter_id"])
-                data[i]["name"] = mon_raw
+                data[index]["encounter_id"] = str(data[index]["encounter_id"])
+                data[index]["name"] = mon_raw
             except Exception:
                 pass
 

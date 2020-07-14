@@ -82,8 +82,8 @@ class config(object):
         pokemon = []
         if search or (search and len(search) >= 3):
             all_pokemon = self.get_pokemon()
-            r = re.compile('.*%s.*' % (re.escape(search)), re.IGNORECASE)
-            mon_names = list(filter(r.search, all_pokemon['locale'].keys()))
+            mon_search_compiled = re.compile('.*%s.*' % (re.escape(search)), re.IGNORECASE)
+            mon_names = list(filter(mon_search_compiled.search, all_pokemon['locale'].keys()))
             for name in sorted(mon_names):
                 mon_id = all_pokemon['locale'][name]
                 pokemon.append({"mon_name": name, "mon_id": str(mon_id)})
@@ -134,8 +134,8 @@ class config(object):
             }
             for key, data_section in required_data.items():
                 included_data[key] = self._data_manager.get_root_resource(data_section)
-            for key, val in passthrough.items():
-                included_data[key] = val
+            for key, value in passthrough.items():
+                included_data[key] = value
             if identifier and identifier == 'new':
                 return render_template(html_single,
                                        uri=included_data['base_uri'],

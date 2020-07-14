@@ -55,16 +55,16 @@ class LocalAPI(requests.Session):
         # Try the send until it finishes or we reach our maximum attempts
         while not finished and attempt < self.__retries:
             try:
-                r = super(LocalAPI, self).send(request, **kwargs)
+                response = super(LocalAPI, self).send(request, **kwargs)
                 if self.__logger:
-                    self.__logger.debug("API Call completed in {}", str(r.elapsed))
-                    self.__logger.debug("Status code: {}", str(r.status_code))
+                    self.__logger.debug("API Call completed in {}", str(response.elapsed))
+                    self.__logger.debug("Status code: {}", str(response.status_code))
                 # If we receive Bad Gateway the call is not completed and should be retried
-                if r.status_code == 502:
+                if response.status_code == 502:
                     if self.__logger:
                         self.__logger.debug("Bad Gateway received.")
                 else:
-                    return r
+                    return response
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
                 if self.__logger:
                     self.__logger.warning(err)

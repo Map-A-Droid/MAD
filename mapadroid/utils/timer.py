@@ -8,10 +8,10 @@ logger = get_logger(LoggerEnums.utils)
 
 
 class Timer(object):
-    def __init__(self, switch, id, switchtime='0'):
+    def __init__(self, switch, timer_id, switchtime='0'):
         self._switchmode = False
 
-        self._id = id
+        self._id = timer_id
         self._switch = switch
         self._switchtime = switchtime
         self.__stop_switchtimer = Event()

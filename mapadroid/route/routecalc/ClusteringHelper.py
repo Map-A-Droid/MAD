@@ -186,9 +186,9 @@ class ClusteringHelper:
         final_set = []
 
         while len(relations) > 0:
-            next = self._get_most_west_amongst_relations(relations)
-            middle_event, events_to_be_removed = self._get_circle(
-                next, relations[next], relations, self.max_radius)
+            west_next = self._get_most_west_amongst_relations(relations)
+            middle_event, events_to_be_removed = self._get_circle(west_next, relations[west_next], relations,
+                                                                  self.max_radius)
             final_set.append(middle_event)
             relations = self._remove_coords_from_relations(
                 relations, events_to_be_removed)

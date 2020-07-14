@@ -6,8 +6,8 @@ class Resocalculator(object):
         self._y_offset = 0
         self._x_offset = 0
 
-    def get_x_y_ratio(self, x, y, x_offset=0, y_offset=0):
-        self._xyratio = float(y) / float(x)
+    def get_x_y_ratio(self, size_x, size_y, x_offset=0, y_offset=0):
+        self._xyratio = float(size_y) / float(size_x)
         self._x_offset = x_offset
         self._y_offset = y_offset
         return True
@@ -170,8 +170,7 @@ class Resocalculator(object):
         return x1 + self._x_offset, x2 + self._x_offset, y1 + self._y_offset, y2 + self._y_offset
 
     def get_next_item_coord(self):
-        y = int(self._screen_x) / 2.84
-        return y
+        return int(self._screen_x) / 2.84
 
     def get_confirm_delete_item_coords(self):
         click_x = int(self._screen_x) / 2

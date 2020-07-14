@@ -106,11 +106,11 @@ class DbWrapper:
             "FROM raid "
             "LEFT JOIN gym ON raid.gym_id = gym.gym_id WHERE raid.end > %s AND raid.pokemon_id IS NULL"
         )
-        vals = (
+        sql_args = (
             db_time_to_check,
         )
 
-        res = self.execute(query, vals)
+        res = self.execute(query, sql_args)
         data = []
         for (start, latitude, longitude) in res:
             if latitude is None or longitude is None:
@@ -142,8 +142,8 @@ class DbWrapper:
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified)"
         )
         # TODO: think of a better "unique, real number"
-        vals = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, -1)
-        self.execute(query, vals, commit=True)
+        sql_args = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, -1)
+        self.execute(query, sql_args, commit=True)
 
         return True
 
@@ -388,11 +388,11 @@ class DbWrapper:
             "ORDER BY expire ASC"
         )
 
-        vals = (
+        sql_args = (
             int(min_time_left_seconds),
         )
 
-        results = self.execute(query, vals, commit=False)
+        results = self.execute(query, sql_args, commit=False)
 
         next_to_encounter = []
         for latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, expire in results:
@@ -1056,10 +1056,10 @@ class DbWrapper:
         query = (
             "update settings_device set startcoords_of_walker='%s, %s' where instance_id=%s and name=%s"
         )
-        vals = (
+        insert_values = (
             lat, lng, self.instance_id, origin
         )
-        self.execute(query, vals, commit=True)
+        self.execute(query, insert_values, commit=True)
 
     def insert_usage(self, instance, cpu, mem, garbage, timestamp):
         logger.debug3("dbWrapper::insert_usage")
@@ -1068,10 +1068,10 @@ class DbWrapper:
             "INSERT into trs_usage (instance, cpu, memory, garbage, timestamp) VALUES "
             "(%s, %s, %s, %s, %s)"
         )
-        vals = (
+        insert_values = (
             instance, cpu, mem, garbage, timestamp
         )
-        self.execute(query, vals, commit=True)
+        self.execute(query, insert_values, commit=True)
 
         return
 
@@ -1136,42 +1136,42 @@ class DbWrapper:
         events = self.autofetch_all(sql)
         return events
 
-    def save_event(self, event_name, event_start, event_end, event_lure_duration=30, id=None):
+    def save_event(self, event_name, event_start, event_end, event_lure_duration=30, event_id=None):
         logger.debug3("DbWrapper::save_event called")
-        if id is None:
+        if event_id is None:
             query = (
                 "INSERT INTO trs_event (event_name, event_start, event_end, event_lure_duration) "
                 "VALUES (%s, %s, %s, %s) "
             )
-            vals = (event_name, event_start, event_end, event_lure_duration)
+            sql_args = (event_name, event_start, event_end, event_lure_duration)
         else:
             query = (
                 "UPDATE trs_event set event_name=%s, event_start=%s, event_end=%s, event_lure_duration=%s "
                 "where id=%s"
             )
-            vals = (event_name, event_start, event_end, event_lure_duration, id)
+            sql_args = (event_name, event_start, event_end, event_lure_duration, event_id)
 
-        self.execute(query, vals, commit=True)
+        self.execute(query, sql_args, commit=True)
         return True
 
-    def delete_event(self, id=None):
+    def delete_event(self, event_id=None):
         logger.debug3("DbWrapper::delete_event called")
-        if id is None:
+        if event_id is None:
             return False
         else:
             # delete event
             query = (
                 "DELETE from trs_event where id=%s"
             )
-            vals = (id)
-            self.execute(query, vals, commit=True)
+            sql_args = (event_id)
+            self.execute(query, sql_args, commit=True)
 
             # delete SP with eventid
             query = (
                 "DELETE from trs_spawn where eventid=%s"
             )
-            vals = (id)
-            self.execute(query, vals, commit=True)
+            sql_args = (event_id)
+            self.execute(query, sql_args, commit=True)
         return True
 
     def get_current_event(self):
@@ -1198,8 +1198,8 @@ class DbWrapper:
         sql = "select * " \
               "from trs_event " \
               "where now() between `event_start` and `event_end` and `id`=%s"
-        vals = (eventid)
-        res = self.execute(sql, vals)
+        sql_args = (eventid)
+        res = self.execute(sql, sql_args)
         number_of_rows = len(res)
         if number_of_rows > 0:
             return True
@@ -1235,9 +1235,9 @@ class DbWrapper:
         res = self.execute(query + query_where)
 
         cells = []
-        for (id, level, center_latitude, center_longitude, updated) in res:
+        for (cell_id, level, center_latitude, center_longitude, updated) in res:
             cells.append({
-                "id": id,
+                "cell_id": id,
                 "level": level,
                 "center_latitude": center_latitude,
                 "center_longitude": center_longitude,

@@ -41,11 +41,11 @@ def allowed_file(filename):
 
 def uploaded_files(datetimeformat, jobs):
     files = []
-    for file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
+    for apk_file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
         creationdate = datetime.datetime.fromtimestamp(
-            creation_date(file)).strftime(datetimeformat)
+            creation_date(apk_file)).strftime(datetimeformat)
         upfile = {
-            'jobname': os.path.basename(file),
+            'jobname': os.path.basename(apk_file),
             'creation': creationdate,
             'type': 'jobType.INSTALLATION'
         }

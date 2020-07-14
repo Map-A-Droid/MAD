@@ -249,15 +249,15 @@ class Resource(object):
             del kwargs['append']
         except KeyError:
             append = False
-        for d in list(args) + [kwargs]:
-            for k, v in d.items():
-                if type(v) is dict:
-                    self[k].update(v)
+        for update_elems in list(args) + [kwargs]:
+            for update_key, update_val in update_elems.items():
+                if type(update_val) is dict:
+                    self[update_key].update(update_val)
                 else:
-                    if type(v) is list and append:
-                        self[k] += v
+                    if type(update_val) is list and append:
+                        self[update_key] += update_val
                     else:
-                        self[k] = v
+                        self[update_key] = update_val
 
     def _cleanup_load(self):
         try:
@@ -312,23 +312,23 @@ class Resource(object):
         if not data:
             raise UnknownIdentifier()
         data = self.translate_keys(data, 'load')
-        for field, val in data.items():
+        for field, field_value in data.items():
             if 'settings' in self.configuration and field in self.configuration['settings']:
-                if val is None:
+                if field_value is None:
                     continue
-                self._data['settings'][field] = val
+                self._data['settings'][field] = field_value
             elif field in self.configuration['fields']:
-                self._data['fields'][field] = val
+                self._data['fields'][field] = field_value
 
     def _load_defaults(self):
         sections = ['fields', 'settings']
         for section in sections:
             defaults = {}
             try:
-                for field, val in self.configuration[section].items():
+                for field, default_value in self.configuration[section].items():
                     try:
-                        val['settings']['require'] is True and val['settings']['empty']
-                        defaults[field] = val['settings']['empty']
+                        default_value['settings']['require'] is True and default_value['settings']['empty']
+                        defaults[field] = default_value['settings']['empty']
                     except KeyError:
                         continue
                 self._data[section] = ResourceTracker(copy.deepcopy(self.configuration[section]), self._data_manager,
@@ -344,14 +344,14 @@ class Resource(object):
         issues = {}
         for top_level in top_levels:
             try:
-                for key, val in self._data[top_level].issues.items():
-                    if key in ignore_issues:
+                for issue_section, issue in self._data[top_level].issues.items():
+                    if issue_section in ignore_issues:
                         continue
-                    if not val:
+                    if not issue:
                         continue
-                    if key not in issues:
-                        issues[key] = []
-                    issues[key] += val
+                    if issue_section not in issues:
+                        issues[issue_section] = []
+                    issues[issue_section] += issue
             except KeyError:
                 continue
         custom_issues = self.validate_custom()
@@ -373,8 +373,8 @@ class Resource(object):
         if core_data is None:
             data = self.get_resource(backend=True)
             try:
-                for field, val in data['settings'].items():
-                    data[field] = val
+                for field, field_value in data['settings'].items():
+                    data[field] = field_value
                 for field in data['settings'].removal:
                     data[field] = None
                     del self._data['settings'][field]
@@ -413,18 +413,18 @@ class Resource(object):
               "WHERE `instance_id` = %%s"
         args = [res_obj.primary_key, res_obj.table, ]
         param_args = [instance_id]
-        for key, val in kwargs.items():
+        for search_key, search_value in kwargs.items():
             valid = False
-            if key in cls.configuration['fields']:
+            if search_key in cls.configuration['fields']:
                 valid = True
-            if key in cls.translations:
-                key = cls.translations[key]
+            if search_key in cls.translations:
+                search_key = cls.translations[search_key]
                 valid = True
             if valid:
                 sql += " AND `%s` LIKE %%s"
-                args.append(key)
+                args.append(search_key)
                 # TODO - Better handling for this to us .eq, .like, etc
-                param_args.append("%%{}%%".format(val))
+                param_args.append("%%{}%%".format(search_value))
         if res_obj.search_field is not None:
             sql += "\nORDER BY `%s` ASC" % (res_obj.search_field)
         return dbc.autofetch_column(sql % tuple(args), args=tuple(param_args))
@@ -447,9 +447,9 @@ def translate_frontend_names(resource, data, operation, translations=None):
     if operation == 'load':
         translations = dict(map(reversed, translations.items()))
     translated = {}
-    for key, val in data.items():
+    for elem_name, elem_value in data.items():
         try:
-            translated[translations[key]] = val
+            translated[translations[elem_name]] = elem_value
         except KeyError:
-            translated[key] = val
+            translated[elem_name] = elem_value
     return translated

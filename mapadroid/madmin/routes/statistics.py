@@ -63,7 +63,7 @@ class statistics(object):
     def start_modul(self):
         self.add_route()
 
-    def generate_mon_icon_url(self, id, form=None, costume=None, shiny=False):
+    def generate_mon_icon_url(self, mon_id, form=None, costume=None, shiny=False):
         base_path = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border'
 
         form_str = '_00'
@@ -78,7 +78,7 @@ class statistics(object):
         if shiny:
             shiny_str = '_shiny'
 
-        return "{}/pokemon_icon_{:03d}{}{}{}.png".format(base_path, id, form_str, costume_str, shiny_str)
+        return "{}/pokemon_icon_{:03d}{}{}{}.png".format(base_path, mon_id, form_str, costume_str, shiny_str)
 
     @auth_required
     def statistics(self):
@@ -737,38 +737,38 @@ class statistics(object):
     @auth_required
     @logger.catch()
     def delete_spawn(self):
-        id = request.args.get('id', None)
+        spawn_id = request.args.get('id', None)
         area_id = request.args.get('area_id', None)
         event_id = request.args.get('event_id', None)
         event = request.args.get('event', None)
         if self._db.check_if_event_is_active(event_id):
             flash('Event is still active - cannot delete this spawnpoint now.')
             return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
-        if id is not None:
-            self._db.delete_spawnpoint(id)
+        if spawn_id is not None:
+            self._db.delete_spawnpoint(spawn_id)
         return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
 
     @auth_required
     @logger.catch()
     def convert_spawn(self):
-        id = request.args.get('id', None)
+        spawn_id = request.args.get('id', None)
         area_id = request.args.get('area_id', None)
         event_id = request.args.get('event_id', None)
         event = request.args.get('event', None)
         if self._db.check_if_event_is_active(event_id):
             flash('Event is still active - cannot convert this spawnpoint now.')
             return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
-        if id is not None:
-            self._db.convert_spawnpoint(id)
+        if spawn_id is not None:
+            self._db.convert_spawnpoint(spawn_id)
         return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
 
     @auth_required
     @logger.catch()
-    def get_spawnpoints_from_id(self, id, eventid, todayonly=False, olderthanxdays=None, index=0):
+    def get_spawnpoints_from_id(self, spawn_id, eventid, todayonly=False, olderthanxdays=None, index=0):
         spawns = []
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=id)
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=spawn_id)
         fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager,
-                                              str(list(possible_fences[int(id)]['include'].keys())[int(index)]))
+                                              str(list(possible_fences[int(spawn_id)]['include'].keys())[int(index)]))
 
         data = json.loads(
             self._db.download_spawns(

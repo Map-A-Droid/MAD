@@ -73,9 +73,9 @@ class PogoWindows:
         max_occurrence: int = 0
         most_present: List[int] = [0, 0, 0]
         try:
-            for c in colors:
-                if c[0] > max_occurrence:
-                    (max_occurrence, most_present) = c
+            for color in colors:
+                if color[0] > max_occurrence:
+                    (max_occurrence, most_present) = color
             return most_present
         except TypeError:
             return None
@@ -171,22 +171,20 @@ class PogoWindows:
             # convert the (x, y) coordinates and radius of the circles to integers
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
-            for (x, y, r) in circles:
+            for (pos_x, pos_y, radius) in circles:
 
                 if not xcord:
                     circle += 1
                     if click:
                         origin_logger.debug('__read_circle_count: found Circle - click it')
-                        communicator.click(
-                            width / 2, ((int(height) - int(height / 4.5))) + y)
+                        communicator.click(width / 2, ((int(height) - int(height / 4.5))) + pos_y)
                         time.sleep(2)
                 else:
-                    if x >= (width / 2) - 100 and x <= (width / 2) + 100 and y >= (height - (height / 3)):
+                    if pos_x >= (width / 2) - 100 and pos_x <= (width / 2) + 100 and pos_y >= (height - (height / 3)):
                         circle += 1
                         if click:
                             origin_logger.debug('__read_circle_count: found Circle - click on: it')
-                            communicator.click(
-                                width / 2, ((int(height) - int(height / 4.5))) + y)
+                            communicator.click(width / 2, ((int(height) - int(height / 4.5))) + pos_y)
                             time.sleep(2)
 
             origin_logger.debug("__read_circle_count: Determined screenshot to have {} Circle.", circle)
@@ -235,10 +233,10 @@ class PogoWindows:
             # convert the (x, y) coordinates and radius of the circles to integers
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
-            for (x, y, r) in circles:
+            for (pos_x, pos_y, radius) in circles:
                 origin_logger.debug("__readCircleCords: Found Circle x: {} y: {}", width / 2,
-                                    (int(height) - int(height / 5)) + y)
-                return True, width / 2, (int(height) - int(height / 5)) + y, height, width
+                                    (int(height) - int(height / 5)) + pos_y)
+                return True, width / 2, (int(height) - int(height / 5)) + pos_y, height, width
         else:
             origin_logger.debug("__readCircleCords: Found no Circle")
             return False, 0, 0, 0, 0
@@ -660,14 +658,14 @@ class PogoWindows:
         origin_logger = get_origin_logger(logger, origin=identifier)
         screenshot_read = cv2.imread(filename)
         temp_path_item = self.temp_dir_path + "/" + str(identifier) + "_inventory.png"
-        h = x1 - x2
-        w = y1 - y2
+        height = x1 - x2
+        width = y1 - y2
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
-        gray = gray[int(y2):(int(y2) + int(w)), int(x2):(int(x2) + int(h))]
+        gray = gray[int(y2):(int(y2) + int(width)), int(x2):(int(x2) + int(height))]
         scale_percent = 200  # percent of original size
-        width = int(gray.shape[1] * scale_percent / 100)
-        height = int(gray.shape[0] * scale_percent / 100)
-        dim = (width, height)
+        scaled_width = int(gray.shape[1] * scale_percent / 100)
+        scaled_height = int(gray.shape[0] * scale_percent / 100)
+        dim = (scaled_width, scaled_height)
 
         # resize image
         gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
@@ -720,8 +718,8 @@ class PogoWindows:
                                    maxRadius=radMax)
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
-            for (x, y, r) in circles:
-                if x < width_ - width_ / 3:
+            for (pos_x, pos_y, radius) in circles:
+                if pos_x < width_ - width_ / 3:
                     mainscreen += 1
 
         if mainscreen > 0:
@@ -834,15 +832,15 @@ class PogoWindows:
                     if globaldict is None or 'text' not in globaldict:
                         continue
                     n_boxes = len(globaldict['level'])
-                    for i in range(n_boxes):
+                    for index in range(n_boxes):
                         if returntype != ScreenType.UNDEFINED:
                             break
-                        if len(globaldict['text'][i]) > 3:
-                            for z in self._ScreenType:
-                                heightlimit = 0 if z == 21 else height / 4
-                                if globaldict['top'][i] > heightlimit and globaldict['text'][i] in \
-                                        self._ScreenType[z]:
-                                    returntype = ScreenType(z)
+                        if len(globaldict['text'][index]) > 3:
+                            for screen_elem in self._ScreenType:
+                                heightlimit = 0 if screen_elem == 21 else height / 4
+                                if globaldict['top'][index] > heightlimit and globaldict['text'][index] in \
+                                        self._ScreenType[screen_elem]:
+                                    returntype = ScreenType(screen_elem)
                     if returntype != ScreenType.UNDEFINED:
                         break
 

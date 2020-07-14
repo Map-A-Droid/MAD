@@ -305,8 +305,7 @@ class RouteManagerBase(ABC):
             kwargs = {
                 'num_procs': 0
             }
-            t = Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs)
-            t.start()
+            Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs).start()
         else:
             self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
 
@@ -869,10 +868,10 @@ class RouteManagerBase(ABC):
                     # let's assume a worker has already been removed or added to the dict (keys)...
 
                     new_subroute: List[Location] = []
-                    j: int = 0
+                    subroute_index: int = 0
                     while len(temp_total_round) > 0 and (
-                            j <= new_subroute_length or i == len(self._routepool)):
-                        j += 1
+                            subroute_index <= new_subroute_length or i == len(self._routepool)):
+                        subroute_index += 1
                         new_subroute.append(temp_total_round.popleft())
 
                     self.logger.debug("New Subroute for worker {}: {}", origin, new_subroute)

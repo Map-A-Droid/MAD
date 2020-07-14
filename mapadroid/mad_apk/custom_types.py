@@ -26,9 +26,9 @@ class MAD_Package(object):
     def __init__(self, package: APK_Type, architecture: APK_Arch, **kwargs):
         self.architecture = architecture
         self.package = package
-        for key, val in kwargs.items():
+        for key, value in kwargs.items():
             if hasattr(self, key):
-                setattr(self, key, val)
+                setattr(self, key, value)
 
     def get_package(self, backend: bool = True):
         return {

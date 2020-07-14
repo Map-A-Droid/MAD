@@ -78,10 +78,10 @@ class path(object):
     @auth_required
     def pickworker(self):
         jobname = request.args.get("jobname", None)
-        type = request.args.get("type", None)
+        worker_type = request.args.get("type", None)
         return render_template('workerpicker.html',
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="Select Worker", jobname=jobname, type=type)
+                               title="Select Worker", jobname=jobname, type=worker_type)
 
     @auth_required
     def jobstatus(self):

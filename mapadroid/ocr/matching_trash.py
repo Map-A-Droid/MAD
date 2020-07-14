@@ -11,13 +11,13 @@ from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 logger = get_logger(LoggerEnums.ocr)
 
 
-def get_delete_quest_coords(x):
-    click_x = int(x) / 1.07
+def get_delete_quest_coords(coord_x):
+    click_x = int(coord_x) / 1.07
     return click_x
 
 
-def get_delete_item_coords(x):
-    click_x = int(x) / 1.09
+def get_delete_item_coords(coord_x):
+    click_x = int(coord_x) / 1.09
     return click_x
 
 

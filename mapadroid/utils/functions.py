@@ -74,18 +74,18 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
 
 
 def get_min_period():
-    min = datetime.datetime.utcnow().strftime("%M")
-    if 0 <= int(min) < 10:
+    min_time = datetime.datetime.utcnow().strftime("%M")
+    if 0 <= int(min_time) < 10:
         pos = 0
-    elif 10 <= int(min) < 20:
+    elif 10 <= int(min_time) < 20:
         pos = 10
-    elif 20 <= int(min) < 30:
+    elif 20 <= int(min_time) < 30:
         pos = 20
-    elif 30 <= int(min) < 40:
+    elif 30 <= int(min_time) < 40:
         pos = 30
-    elif 40 <= int(min) < 50:
+    elif 40 <= int(min_time) < 50:
         pos = 40
-    elif 50 <= int(min) < 60:
+    elif 50 <= int(min_time) < 60:
         pos = 50
 
     returndatetime = datetime.datetime.utcnow().replace(

@@ -86,15 +86,15 @@ class RouteCalc(Resource):
                     }
                 invalid_data.append('Line %s does not contain two values' % (line,))
                 continue
-            for val in row_split:
+            for coord in row_split:
                 try:
-                    float(val)
+                    float(coord)
                 except (TypeError, ValueError):
                     if not invalid_data:
                         issues = {
                             'invalid': [('routefile', 'Must be one coord set per line (float,float)')]
                         }
-                    invalid_data.append('Line %s [%s] is not a float / decimal' % (line, val,))
+                    invalid_data.append('Line %s [%s] is not a float / decimal' % (line, coord,))
         if invalid_data:
             logger.error("Invalid routecalc detected for {}: {}", self.identifier, invalid_data)
         return issues

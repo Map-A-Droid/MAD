@@ -85,12 +85,12 @@ class PluginCollection(object):
             if not ispkg:
                 plugin_module = __import__(pluginname, fromlist=['MAD'])
                 clsmembers = inspect.getmembers(plugin_module, inspect.isclass)
-                for (_, c) in clsmembers:
+                for (_, plugin) in clsmembers:
                     # Only add classes that are a sub class of Plugin, but NOT Plugin itself
-                    if issubclass(c, Plugin) & (c is not Plugin):
-                        self._logger.info(f'Found plugin class: {c.__name__}')
-                        self.plugins.append({"plugin": c(self._mad),
-                                             "path": [x for x in imported_package.__path__][0]})
+                    if issubclass(plugin, Plugin) & (plugin is not Plugin):
+                        self._logger.info(f'Found plugin class: {plugin.__name__}')
+                        self.plugins.append({"plugin": plugin(self._mad),
+                                             "path": [package for package in imported_package.__path__][0]})
 
         # Now that we have looked at all the modules in the current package, start looking
         # recursively for additional modules in sub packages
@@ -128,9 +128,9 @@ class PluginCollection(object):
         rootlen = len(folder) + 1
         for base, dirs, files in os.walk(folder):
             if "__pycache__" not in base:
-                for file in files:
-                    if file != "plugin.ini":
-                        fn = os.path.join(base, file)
+                for plugin_file in files:
+                    if plugin_file != "plugin.ini":
+                        fn = os.path.join(base, plugin_file)
                         zipobj.write(fn, fn[rootlen:])
 
         zipobj.close()
@@ -211,13 +211,14 @@ class PluginCollection(object):
             if 'file' not in request.files:
                 flash('No file part')
                 return redirect(url_for('plugins'), code=302)
-            file = request.files['file']
-            if file.filename == '':
+            plugin_file = request.files['file']
+            if plugin_file.filename == '':
                 flash('No file selected for uploading')
                 return redirect(url_for('plugins'), code=302)
-            if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ['mp']:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(self._mad['args'].temp_path, filename))
+            if plugin_file and '.' in plugin_file.filename and \
+                    plugin_file.filename.rsplit('.', 1)[1].lower() in ['mp']:
+                filename = secure_filename(plugin_file.filename)
+                plugin_file.save(os.path.join(self._mad['args'].temp_path, filename))
                 if self.unzip_plugin(os.path.join(self._mad['args'].temp_path, filename)):
                     flash('Plugin uploaded successfully - check plugin.ini and restart MAD now!')
                 else:

@@ -1,27 +1,27 @@
 import numpy as np
 
 
-def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+def isclose(point_a, point_b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(point_a - point_b) <= max(rel_tol * max(abs(point_a), abs(point_b)), abs_tol)
 
 
-def sum_distmat(p, distmat):
+def sum_distmat(polygon, distmat):
     dist = 0
-    num_location = p.shape[0]
-    for i in range(num_location - 1):
-        dist += distmat[p[i]][p[i + 1]]
-    dist += distmat[p[0]][p[num_location - 1]]
+    num_location = polygon.shape[0]
+    for index in range(num_location - 1):
+        dist += distmat[polygon[index]][polygon[index + 1]]
+    dist += distmat[polygon[0]][polygon[num_location - 1]]
     return dist
 
 
-def get_distmat(p):
-    num_location = p.shape[0]
+def get_distmat(polygon):
+    num_location = polygon.shape[0]
     # 1 degree of lat/lon ~ 111km = 111000m in Taiwan
-    p *= 111000
+    polygon *= 111000
     distmat = np.zeros((num_location, num_location))
-    for i in range(num_location):
-        for j in range(i, num_location):
-            distmat[i][j] = distmat[j][i] = np.linalg.norm(p[i] - p[j])
+    for index in range(num_location):
+        for sub_ind in range(index, num_location):
+            distmat[index][sub_ind] = distmat[sub_ind][index] = np.linalg.norm(polygon[index] - polygon[sub_ind])
     return distmat
 
 

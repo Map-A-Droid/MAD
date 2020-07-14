@@ -68,19 +68,19 @@ class GeofenceHelper:
         logger.debug2('Found {} coordinates to geofence.', len(coordinates))
 
         geofenced_coordinates = []
-        for c in coordinates:
+        for coord in coordinates:
             # Coordinate is not valid if in one excluded area.
-            if self._is_excluded(c):
+            if self._is_excluded(coord):
                 continue
 
             # Coordinate is geofenced if in one geofenced area.
             if self.geofenced_areas:
                 for va in self.geofenced_areas:
-                    if self._in_area(c, va):
-                        geofenced_coordinates.append(c)
+                    if self._in_area(coord, va):
+                        geofenced_coordinates.append(coord)
                         break
             else:
-                geofenced_coordinates.append(c)
+                geofenced_coordinates.append(coord)
 
         logger.debug2("Geofenced to {} coordinates", len(geofenced_coordinates))
         return geofenced_coordinates
@@ -145,8 +145,8 @@ class GeofenceHelper:
     def is_point_in_polygon_matplotlib(point, polygon):
         pointTuple = (point['lat'], point['lon'])
         polygonTupleList = []
-        for c in polygon:
-            coordinateTuple = (c['lat'], c['lon'])
+        for coord in polygon:
+            coordinateTuple = (coord['lat'], coord['lon'])
             polygonTupleList.append(coordinateTuple)
 
         polygonTupleList.append(polygonTupleList[0])
@@ -173,9 +173,9 @@ class GeofenceHelper:
 
         inside = False
         lat1, lon1 = polygon[0]['lat'], polygon[0]['lon']
-        N = len(polygon)
-        for n in range(1, N + 1):
-            lat2, lon2 = polygon[n % N]['lat'], polygon[n % N]['lon']
+        poly_sides = len(polygon)
+        for poly_point in range(1, poly_sides + 1):
+            lat2, lon2 = polygon[poly_point % poly_sides]['lat'], polygon[poly_point % poly_sides]['lon']
             if (min(lon1, lon2) < point['lon'] <= max(lon1, lon2) and
                     point['lat'] <= max(lat1, lat2)):
                 if lon1 != lon2:

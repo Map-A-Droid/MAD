@@ -222,15 +222,15 @@ class WorkerBase(AbstractWorker):
         self.loop.run_forever()
 
     def _add_task_to_loop(self, coro):
-        f = functools.partial(self.loop.create_task, coro)
+        create_task = functools.partial(self.loop.create_task, coro)
         if current_thread() == self.loop_tid:
             # We can call directly if we're not going between threads.
-            return f()
+            return create_task()
         else:
             # We're in a non-event loop thread so we use a Future
             # to get the task from the event loop thread once
             # it's ready.
-            return self.loop.call_soon_threadsafe(f)
+            return self.loop.call_soon_threadsafe(create_task)
 
     def start_worker(self):
         # async_result = self.thread_pool.apply_async(self._main_work_thread, ())

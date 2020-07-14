@@ -30,11 +30,11 @@ async def hello(websocket, path):
             if isinstance(message, str):
                 print("Receiving message: {}", str(message.strip()))
                 splitup = message.split(";")
-                id = int(splitup[0])
+                message_id = int(splitup[0])
                 response = splitup[1]
             else:
                 print("Received binary values.")
-                id = int.from_bytes(message[:4], byteorder='big', signed=False)  # noqa: F841
+                message_id = int.from_bytes(message[:4], byteorder='big', signed=False)  # noqa: F841
                 response = message[4:]
 
             if isinstance(response, str):

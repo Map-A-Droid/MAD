@@ -61,8 +61,7 @@ class APKWizard(object):
 
     def apk_all_download(self) -> NoReturn:
         "Download all packages in a non-blocking fashion"
-        t = Thread(target=self.apk_nonblocking_download)
-        t.start()
+        Thread(target=self.apk_nonblocking_download).start()
 
     def apk_all_search(self) -> NoReturn:
         "Search for updates for any required package"
@@ -195,8 +194,8 @@ class APKWizard(object):
                 retries: int = 0
                 successful: bool = False
                 while retries < MAX_RETRIES and not successful:
-                    r = requests.get(latest_data['url'], verify=False, headers=APK_HEADERS)
-                    downloaded_file = io.BytesIO(r.content)
+                    response = requests.get(latest_data['url'], verify=False, headers=APK_HEADERS)
+                    downloaded_file = io.BytesIO(response.content)
                     if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
                         PackageImporter(package, architecture, self.storage, downloaded_file,
                                         'application/vnd.android.package-archive')

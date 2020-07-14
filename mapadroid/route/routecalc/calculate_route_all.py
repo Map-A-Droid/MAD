@@ -15,8 +15,8 @@ def create_data_model(lessCoordinates):
     # ortools requires x,y data to be integers
     # we will scale lat,lng to large numbers so that rounding won't adversely affect the path calculation
     data['locations'] = []
-    for e in lessCoordinates:
-        data['locations'].append((int(float(e[0]) * 1e9), int(float(e[1]) * 1e9)))
+    for coord in lessCoordinates:
+        data['locations'].append((int(float(coord[0]) * 1e9), int(float(coord[1]) * 1e9)))
 
     data['num_vehicles'] = 1  # calculate as if only one walker on route
     data['depot'] = 0  # route will start at the first lat,lng

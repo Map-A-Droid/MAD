@@ -101,13 +101,13 @@ class ResourceCreator():
         return (resource_def['uri'], payload, headers, elem)
 
     def recursive_update(self, payload, elems):
-        for key, val in elems.items():
+        for key, value in elems.items():
             if key == 'headers':
                 continue
-            elif type(val) == dict:
-                payload[key] = self.recursive_update(payload, val)
+            elif type(value) == dict:
+                payload[key] = self.recursive_update(payload, value)
             else:
-                payload[key] = val
+                payload[key] = value
         return payload
 
 

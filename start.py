@@ -103,9 +103,9 @@ def get_system_infos(db_wrapper):
     while not terminate_mad.is_set():
         logger.debug('Starting internal Cleanup')
         logger.debug('Collecting...')
-        n = gc.collect()
+        unreachable_objs = gc.collect()
         logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
-                     str(n), str(gc.garbage), str(active_count()))
+                     str(unreachable_objs), str(gc.garbage), str(active_count()))
 
         for obj in gc.garbage:
             for ref in find_referring_graphs(obj):

@@ -22,9 +22,9 @@ class LoginType(Enum):
 
 
 class WordToScreenMatching(object):
-    def __init__(self, communicator, pogoWindowManager, id, resocalc, mapping_mananger: MappingManager, args):
-        self._id = id
-        self._logger = get_origin_logger(logger, origin=id)
+    def __init__(self, communicator, pogoWindowManager, origin, resocalc, mapping_mananger: MappingManager, args):
+        self._id = origin
+        self._logger = get_origin_logger(logger, origin=origin)
         self._applicationArgs = args
         self._mapping_manager = mapping_mananger
         self._ratio: float = 0.0
@@ -156,7 +156,7 @@ class WordToScreenMatching(object):
 
             screenpath = self.get_screenshot_path()
 
-            result = self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self._id)
+            result = self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self.origin)
             if result is None:
                 self._logger.error("Failed analyzing screen")
                 return ScreenType.ERROR, global_dict, diff
@@ -323,7 +323,7 @@ class WordToScreenMatching(object):
         return screentype
 
     def __check_pogo_screen_ban_or_loading(self, screentype) -> ScreenType:
-        backgroundcolor = self._pogoWindowManager.most_frequent_colour(self.get_screenshot_path(), self._id)
+        backgroundcolor = self._pogoWindowManager.most_frequent_colour(self.get_screenshot_path(), self.origin)
         if backgroundcolor is not None and (
                 backgroundcolor[0] == 0 and
                 backgroundcolor[1] == 0 and
@@ -432,7 +432,7 @@ class WordToScreenMatching(object):
 
     def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        self._pogoWindowManager.look_for_button(self._id, self.get_screenshot_path(), 2.20, 3.01, self._communicator,
+        self._pogoWindowManager.look_for_button(self.origin, self.get_screenshot_path(), 2.20, 3.01, self._communicator,
                                                 upper=True)
         time.sleep(2)
 
@@ -466,7 +466,7 @@ class WordToScreenMatching(object):
         if screenpath is None or len(screenpath) == 0:
             self._logger.error("Invalid screen path: {}", screenpath)
             return ScreenType.ERROR
-        globaldict = self._pogoWindowManager.get_screen_text(screenpath, self._id)
+        globaldict = self._pogoWindowManager.get_screen_text(screenpath, self.origin)
 
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         if not globaldict:
@@ -542,12 +542,12 @@ class WordToScreenMatching(object):
         return False
 
     def set_devicesettings_value(self, key: str, value) -> None:
-        self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
+        self._mapping_manager.set_devicesetting_value_of(self.origin, key, value)
 
     def get_devicesettings_value(self, key: str, default_value: object = None):
         self._logger.debug2("Fetching devicemappings")
         try:
-            devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
+            devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self.origin)
         except (EOFError, FileNotFoundError) as e:
             self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
             return None
@@ -562,16 +562,16 @@ class WordToScreenMatching(object):
         # GGL - make sure we have @ there.
         # If not it could be wrong match, so returning original
         if '@' in emailaddress:
-            d = emailaddress.split("@", 1)
+            user, domain = emailaddress.split("@", 1)
             # long local-part, censor middle part only
-            if len(d[0]) > 6:
-                return (d[0][0:2] + "***" + d[0][-2:] + "@" + d[1])
+            if len(user) > 6:
+                return (user[0:2] + "***" + user[-2:] + "@" + domain)
             # domain only, just return
-            elif len(d[0]) == 0:
+            elif len(user) == 0:
                 return (emailaddress)
             # local-part is short, asterix for each char
             else:
-                return ("*" * len(d[0]) + "@" + d[1])
+                return ("*" * len(user) + "@" + domain)
         return emailaddress
 
     def get_screenshot_path(self, fileaddon: bool = False) -> str:
@@ -583,7 +583,7 @@ class WordToScreenMatching(object):
         if fileaddon:
             addon: str = "_" + str(time.time())
 
-        screenshot_filename = "screenshot_{}{}{}".format(str(self._id), str(addon), screenshot_ending)
+        screenshot_filename = "screenshot_{}{}{}".format(str(self.origin), str(addon), screenshot_ending)
 
         if fileaddon:
             self._logger.info("Creating debugscreen: {}", screenshot_filename)

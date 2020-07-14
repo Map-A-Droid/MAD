@@ -38,11 +38,11 @@ class TokenDispenser(requests.Session):
             kwargs["timeout"] = self.timeout
         while not finished and attempt < self.retries:
             try:
-                r = super().send(request, **kwargs)
-                if r.status_code == expected_code:
-                    return r
+                req_result = super().send(request, **kwargs)
+                if req_result.status_code == expected_code:
+                    return req_result
                 else:
-                    logger.debug('Invalid status code returned: {}', r.status_code)
+                    logger.debug('Invalid status code returned: {}', req_result.status_code)
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
                 logger.warning(err)
                 last_err = err

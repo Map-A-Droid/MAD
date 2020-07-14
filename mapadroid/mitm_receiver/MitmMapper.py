@@ -198,11 +198,11 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).stats_collector()
 
-    def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, type,
+    def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, positiontype,
                                rec_timestamp: float, walker, transporttype):
         if self.__playerstats.get(origin, None) is not None and location is not None:
             self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp,
-                                                                       type,
+                                                                       positiontype,
                                                                        rec_timestamp, walker, transporttype)
 
     def get_playerlevel(self, origin: str):

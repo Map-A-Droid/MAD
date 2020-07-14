@@ -22,10 +22,10 @@ logger = get_logger(LoggerEnums.worker)
 
 
 class WorkerMITM(MITMBase):
-    def __init__(self, args, dev_id, id, last_known_state, communicator: AbstractCommunicator,
+    def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager, area_id: int, routemanager_name: str, mitm_mapper: MitmMapper,
                  db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker, event):
-        MITMBase.__init__(self, args, dev_id, id, last_known_state, communicator,
+        MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_name=routemanager_name,
                           db_wrapper=db_wrapper, NoOcr=True,

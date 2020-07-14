@@ -164,9 +164,9 @@ class MITMReceiver(Process):
             for i in range(self.__application_args.mitmreceiver_data_workers):
                 self._data_queue.put(None)
         logger.info("Trying to join workers...")
-        for t in self.worker_threads:
-            t.terminate()
-            t.join()
+        for worker_thread in self.worker_threads:
+            worker_thread.terminate()
+            worker_thread.join()
         self._data_queue.close()
         logger.info("Workers stopped...")
 
@@ -206,8 +206,8 @@ class MITMReceiver(Process):
 
     def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
         origin_logger = get_origin_logger(logger, origin=origin)
-        type = data.get("type", None)
-        if type is None or type == 0:
+        proto_type = data.get("type", None)
+        if proto_type is None or proto_type == 0:
             origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
@@ -218,7 +218,7 @@ class MITMReceiver(Process):
             origin_logger.warning("Received invalid location in data: {}", location_of_data)
             location_of_data: Location = Location(0, 0)
         self.__mitm_mapper.update_latest(origin, timestamp_received_raw=timestamp,
-                                         timestamp_received_receiver=time.time(), key=type, values_dict=data,
+                                         timestamp_received_receiver=time.time(), key=proto_type, values_dict=data,
                                          location=location_of_data)
         origin_logger.debug2("Placing data received to data_queue")
         self._data_queue.put((timestamp, data, origin))

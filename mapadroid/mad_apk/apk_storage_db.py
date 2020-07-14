@@ -111,9 +111,9 @@ class APKStorageDatabase(AbstractAPKStorage):
             }
             self.dbc.autoexec_insert('mad_apks', insert_data, optype='ON DUPLICATE')
             logger.info('Starting upload of APK')
-            n = global_variables.CHUNK_MAX_SIZE
-            for chunked_data in [data.getbuffer()[i * n:(i + 1) * n] for i in
-                                 range((len(data.getbuffer()) + n - 1) // n)]:
+            chunk_size = global_variables.CHUNK_MAX_SIZE
+            for chunked_data in [data.getbuffer()[i * chunk_size:(i + 1) * chunk_size] for i in
+                                 range((len(data.getbuffer()) + chunk_size - 1) // chunk_size)]:
                 insert_data = {
                     'filestore_id': new_id,
                     'size': len(chunked_data),

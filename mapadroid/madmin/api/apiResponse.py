@@ -15,12 +15,12 @@ class APIResponse(object):
         converted_data = self.convert_to_format(content)
         resp = flask.Response(converted_data, mimetype=self.mimetype)
         resp.status_code = status_code
-        for key, val in kwargs.items():
+        for key, value in kwargs.items():
             if key == 'headers':
-                for header_key, header_val in val.items():
+                for header_key, header_val in value.items():
                     resp.headers.add(header_key, header_val)
             else:
-                setattr(resp, key, val)
+                setattr(resp, key, value)
         self.logger.debug4('Return Data: {}', converted_data)
         self.logger.debug4('Return Headers: {}', resp.headers)
         return resp

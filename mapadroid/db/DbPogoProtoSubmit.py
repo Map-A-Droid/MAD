@@ -163,7 +163,7 @@ class DbPogoProtoSubmit:
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
             "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id)"
         )
-        vals = (
+        insert_values = (
             encounter_id,
             spawnid,
             mon_id,
@@ -188,7 +188,7 @@ class DbPogoProtoSubmit:
             form
         )
 
-        self._db_exec.execute(query, vals, commit=True)
+        self._db_exec.execute(query, insert_values, commit=True)
         origin_logger.debug3("Done updating mon in DB")
         return True
 
@@ -380,13 +380,13 @@ class DbPogoProtoSubmit:
             "quest_pokemon_form_id=VALUES(quest_pokemon_form_id), "
             "quest_pokemon_costume_id=VALUES(quest_pokemon_costume_id)"
         )
-        vals = (
+        insert_values = (
             fort_id, quest_type, time.time(), stardust, pokemon_id, form_id, costume_id, reward_type,
             item_item, item_amount, target,
             json_condition, json.dumps(rewards), task, quest_template
         )
         origin_logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
-        self._db_exec.execute(query_quests, vals, commit=True)
+        self._db_exec.execute(query_quests, insert_values, commit=True)
 
         return True
 
@@ -476,25 +476,25 @@ class DbPogoProtoSubmit:
         url = map_proto["url"]
 
         set_keys = []
-        vals = []
+        insert_values = []
 
         if name is not None and name != "":
             set_keys.append("name=%s")
-            vals.append(name)
+            insert_values.append(name)
         if description is not None and description != "":
             set_keys.append("description=%s")
-            vals.append(description)
+            insert_values.append(description)
         if url is not None and url != "":
             set_keys.append("url=%s")
-            vals.append(url)
+            insert_values.append(url)
 
         if len(set_keys) == 0:
             return False
 
         query = "UPDATE gymdetails SET " + ",".join(set_keys) + " WHERE gym_id = %s"
-        vals.append(gym_id)
+        insert_values.append(gym_id)
 
-        self._db_exec.execute((query), tuple(vals), commit=True)
+        self._db_exec.execute((query), tuple(insert_values), commit=True)
 
         return True
 
@@ -771,14 +771,14 @@ class DbPogoProtoSubmit:
         return spawnret
 
     def _get_current_spawndef_pos(self):
-        min = int(datetime.now().strftime("%M"))
-        if min < 15:
+        minute_value = int(datetime.now().strftime("%M"))
+        if minute_value < 15:
             pos = 4
-        elif min < 30:
+        elif minute_value < 30:
             pos = 5
-        elif min < 45:
+        elif minute_value < 45:
             pos = 6
-        elif min < 60:
+        elif minute_value < 60:
             pos = 7
         else:
             pos = None
@@ -786,17 +786,17 @@ class DbPogoProtoSubmit:
 
     def _set_spawn_see_minutesgroup(self, spawndef, pos):
         # b = BitArray([int(digit) for digit in bin(spawndef)[2:]])
-        b = BitArray(uint=spawndef, length=8)
+        minte_group = BitArray(uint=spawndef, length=8)
         if pos == 4:
-            b[0] = 0
-            b[4] = 1
+            minte_group[0] = 0
+            minte_group[4] = 1
         if pos == 5:
-            b[1] = 0
-            b[5] = 1
+            minte_group[1] = 0
+            minte_group[5] = 1
         if pos == 6:
-            b[2] = 0
-            b[6] = 1
+            minte_group[2] = 0
+            minte_group[6] = 1
         if pos == 7:
-            b[3] = 0
-            b[7] = 1
-        return b.uint
+            minte_group[3] = 0
+            minte_group[7] = 1
+        return minte_group.uint

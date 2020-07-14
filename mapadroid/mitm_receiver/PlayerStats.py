@@ -13,8 +13,8 @@ logger = get_logger(LoggerEnums.mitm)
 
 
 class PlayerStats(object):
-    def __init__(self, id, application_args, mitm_mapper_parent: MitmMapper):
-        self._id = id
+    def __init__(self, origin, application_args, mitm_mapper_parent: MitmMapper):
+        self._id = origin
         self._logger = get_logger(LoggerEnums.mitm, name=self._id)
         self.__application_args = application_args
         self._level: int = 0
@@ -188,7 +188,7 @@ class PlayerStats(object):
             else:
                 self.__stats_collected[106]['quest'][stop_id] += 1
 
-    def stats_collect_location_data(self, location, datarec, start_timestamp, type, rec_timestamp, walker,
+    def stats_collect_location_data(self, location, datarec, start_timestamp, positiontype, rec_timestamp, walker,
                                     transporttype):
         if not self._generate_stats:
             return
@@ -201,7 +201,7 @@ class PlayerStats(object):
                         location.lat,
                         location.lng,
                         rec_timestamp,
-                        type,
+                        positiontype,
                         walker,
                         datarec,
                         int(floor(time.time())),

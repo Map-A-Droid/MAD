@@ -64,7 +64,7 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
-    def click(self, x: int, y: int) -> bool:
+    def click(self, click_x: int, click_y: int) -> bool:
         pass
 
     @abstractmethod

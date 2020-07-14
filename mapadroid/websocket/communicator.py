@@ -101,9 +101,9 @@ class Communicator(AbstractCommunicator):
     def turn_screen_on(self) -> bool:
         return self.__runAndOk("more screen on\r\n", self.__command_timeout)
 
-    def click(self, x: int, y: int) -> bool:
-        self.logger.debug('Clicking {}/{}', x, y)
-        return self.__runAndOk("screen click {} {}\r\n".format(str(int(round(x))), str(int(round(y)))),
+    def click(self, click_x: int, click_y: int) -> bool:
+        self.logger.debug('Click {} / {}', click_x, click_y)
+        return self.__runAndOk("screen click {} {}\r\n".format(str(int(round(click_x))), str(int(round(click_y)))),
                                self.__command_timeout)
 
     def swipe(self, x1: int, y1: int, x2: int, y2: int) -> Optional[MessageTyping]:

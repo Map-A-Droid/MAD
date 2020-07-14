@@ -22,9 +22,9 @@ class Event(object):
 
     def start_event_checker(self):
         if not self.args.no_event_checker:
-            t = Thread(name='system', target=self.event_checker)
-            t.daemon = True
-            t.start()
+            event_thread = Thread(name='system', target=self.event_checker)
+            event_thread.daemon = True
+            event_thread.start()
 
     def get_current_event_id(self):
         return self._event_id

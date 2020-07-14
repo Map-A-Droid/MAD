@@ -29,12 +29,12 @@ class Area(Resource):
         mode_query = "SELECT * FROM `%s` WHERE `area_id` = %%s" % (self.area_table,)
         mode_data = self._dbc.autofetch_row(mode_query, args=(self.identifier))
         mode_data = self.translate_keys(mode_data, 'load')
-        for field, val in mode_data.items():
+        for field, db_value in mode_data.items():
             if field in self.configuration['fields']:
-                self._data['fields'][field] = val
+                self._data['fields'][field] = db_value
             elif 'settings' in self.configuration and field in self.configuration[
-                 'settings'] and val is not None:
-                self._data['settings'][field] = val
+                 'settings'] and db_value is not None:
+                self._data['settings'][field] = db_value
             else:
                 continue
         # get route-calc status

@@ -64,15 +64,15 @@ class WebsocketServer(object):
         self.__internal_worker_join_thread.daemon = True
 
     def _add_task_to_loop(self, coro: Coroutine):
-        f = functools.partial(self.__loop.create_task, coro)
+        create_task = functools.partial(self.__loop.create_task, coro)
         if current_thread() == self.__loop_tid:
             # We can call directly if we're not going between threads.
-            return f()
+            return create_task()
         else:
             # We're in a non-event loop thread so we use a Future
             # to get the task from the event loop thread once
             # it's ready.
-            return self.__loop.call_soon_threadsafe(f)
+            return self.__loop.call_soon_threadsafe(create_task)
 
     async def __setup_first_loop(self):
         self.__current_users_mutex: asyncio.Lock = asyncio.Lock()

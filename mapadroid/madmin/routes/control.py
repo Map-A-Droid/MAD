@@ -429,13 +429,13 @@ class control(object):
             if 'file' not in request.files:
                 flash('No file part')
                 return redirect(url_for('upload'), code=302)
-            file = request.files['file']
-            if file.filename == '':
+            uploaded_file = request.files['file']
+            if uploaded_file.filename == '':
                 flash('No file selected for uploading')
                 return redirect(url_for('upload'), code=302)
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(self._args.upload_path, filename))
+            if uploaded_file and allowed_file(uploaded_file.filename):
+                filename = secure_filename(uploaded_file.filename)
+                uploaded_file.save(os.path.join(self._args.upload_path, filename))
                 flash('File uploaded successfully')
                 return redirect(url_for('uploaded_files'), code=302)
             else:
@@ -554,9 +554,9 @@ class control(object):
     @auth_required
     @logger.catch()
     def restart_job(self):
-        id: int = request.args.get('id', None)
-        if id is not None:
-            self._device_updater.restart_job(id)
+        job_id: int = request.args.get('id', None)
+        if job_id is not None:
+            self._device_updater.restart_job(job_id)
             flash('Job requeued')
             return redirect(url_for('install_status'), code=302)
 
