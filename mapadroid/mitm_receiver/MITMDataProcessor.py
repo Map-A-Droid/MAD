@@ -89,7 +89,7 @@ class MitmDataProcessor(Process):
                     self.__db_submit.mon_iv(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                     origin_logger.debug2("Done processing encounter")
                 else:
-                    origin_logger.debug('Playerlevel lower than 30 - not processing encounter Data')
+                    origin_logger.warning('Playerlevel lower than 30 - not processing encounter Data')
             elif data_type == 101:
                 origin_logger.debug2("Processing proto 101")
                 self.__db_submit.quest(origin, data["payload"], self.__mitm_mapper)
