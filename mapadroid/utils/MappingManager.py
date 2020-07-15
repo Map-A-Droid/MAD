@@ -384,9 +384,7 @@ class MappingManager:
 
             # grab coords
             # first check if init is false, if so, grab the coords from DB
-            # coords = np.loadtxt(area["coords"], delimiter=',')
-            geofence_helper = GeofenceHelper(
-                geofence_included, geofence_excluded)
+            geofence_helper = GeofenceHelper(geofence_included, geofence_excluded)
             mode = area_true.area_type
             # build routemanagers
 

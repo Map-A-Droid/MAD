@@ -828,8 +828,6 @@ class WorkerQuests(MITMBase):
                     self.logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
                                         self._mitm_mapper.get_poke_stop_visits(self._origin))
 
-                # self._close_gym(self._delay_add)
-
                 self._turn_map(self._delay_add)
                 time.sleep(1)
                 self._stop_process_time = math.floor(time.time())

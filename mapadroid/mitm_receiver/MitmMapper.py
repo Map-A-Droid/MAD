@@ -104,7 +104,6 @@ class MitmMapper(object):
         self.__playerstats_db_update_stop.set()
         self.__playerstats_db_update_consumer.join()
         self.__playerstats_db_update_queue.close()
-        # self.__playerstats_db_update_queue.join()
 
     def get_mon_ids_iv(self, origin):
         devicemapping_of_origin = self.__mapping_manager.get_devicemappings_of(origin)

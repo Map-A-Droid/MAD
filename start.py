@@ -330,7 +330,6 @@ if __name__ == "__main__":
             # now cleanup all threads...
             # TODO: check against args or init variables to None...
             if mitm_receiver_process is not None:
-                # mitm_receiver_thread.kill()
                 logger.info("Trying to stop receiver")
                 mitm_receiver_process.shutdown()
                 logger.debug("MITM child threads successfully shutdown.  Terminating parent thread")

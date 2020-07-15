@@ -284,8 +284,6 @@ class PlayerStats(object):
     def stats_detection_raw_parser(client_id: str, data, period):
         origin_logger = get_origin_logger(logger, client_id)
         data_location_raw = []
-        # elf.__stats_collected[106]['mon'][encounter_id]
-
         if 106 in data:
             if 'mon' in data[106]:
                 for mon_id in data[106]['mon']:

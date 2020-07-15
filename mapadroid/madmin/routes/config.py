@@ -184,10 +184,6 @@ class MADminConfig(object):
     @auth_required
     def settings_areas(self):
         fences = {}
-        # geofence_file_path = self._args.geofence_file_path
-        # existing_fences = sorted(glob.glob(os.path.join(geofence_file_path, '*.txt')))
-        # for geofence_temp in existing_fences:
-        #     fences[geofence_temp] = os.path.basename(geofence_temp)
         raw_fences = self._data_manager.get_root_resource('geofence')
         for fence_id, fence_data in raw_fences.items():
             fences[fence_id] = fence_data['name']

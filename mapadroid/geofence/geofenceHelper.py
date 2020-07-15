@@ -42,22 +42,17 @@ class GeofenceHelper:
         return min_lat, min_lon, max_lat, max_lon
 
     def is_coord_inside_include_geofence(self, coordinate):
-        # logger.debug("Checking if coord {} is inside fences", str(coordinate))
         # Coordinate is not valid if in one excluded area.
         if self._is_excluded(coordinate):
-            # logger.debug("Coord {} is inside EXCLUDED fences", str(coordinate))
             return False
 
         # Coordinate is geofenced if in one geofenced area.
         if self.geofenced_areas:
             for va in self.geofenced_areas:
                 if self._in_area(coordinate, va):
-                    # logger.debug("Coord {} is inside fences", str(coordinate))
                     return True
         else:
-            # logger.debug("No fences present, adding the coord")
             return True
-        # logger.debug("Coord {} is not inside fences", str(coordinate))
         return False
 
     def get_geofenced_coordinates(self, coordinates):

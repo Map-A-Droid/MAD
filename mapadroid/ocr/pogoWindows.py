@@ -22,7 +22,6 @@ Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
 class PogoWindows:
     def __init__(self, temp_dir_path, thread_count: int):
-        # self.communicator = communicator
         if not os.path.exists(temp_dir_path):
             os.makedirs(temp_dir_path)
             logger.info('PogoWindows: Temp directory created')
@@ -306,7 +305,6 @@ class PogoWindows:
         origin_logger.debug("lookForButton: Determined screenshot scale: {} x {}", height, width)
 
         # resize for better line quality
-        # gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
         height, width = gray.shape
         factor = width / _widthold
 
@@ -320,7 +318,6 @@ class PogoWindows:
         origin_logger.debug("lookForButton: MinLineLength: {}", min_line_length)
 
         kernel = np.ones((2, 2), np.uint8)
-        # kernel = np.zeros(shape=(2, 2), dtype=np.uint8)
         edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
 
         num_lines = 0

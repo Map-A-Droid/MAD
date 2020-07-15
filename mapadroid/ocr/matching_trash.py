@@ -25,7 +25,6 @@ def trash_image_matching(origin, screen_img, full_screen):
     origin_logger = get_origin_logger(logger, origin=origin)
     clicklist: List[Trash] = []
     screen = cv2.imread(screen_img)
-    # print (screen.shape[:2])
     screen = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
 
     if screen is None:
@@ -86,18 +85,12 @@ def trash_image_matching(origin, screen_img, full_screen):
                                 (_quest_x - 50 < x_coord < _quest_x + 50):
                             clicklist.append(Trash(x_coord, y_coord))
                             last_y_coord = y_coord
-                            # cv2.rectangle(screen, pt, (pt[0] + tW, pt[1] + tH), (128, 128, 128), 2)
                 else:
                     if (_inventory_x - 50 < x_coord < _inventory_x + 50) or \
                             (_quest_x - 50 < x_coord < _quest_x + 50):
                         clicklist.append(Trash(x_coord, y_coord))
                         last_y_coord = y_coord
-                        # cv2.rectangle(screen, pt, (pt[0] + tW, pt[1] + tH), (128, 128, 128), 2)
                 boxcount += 1
-
-        # cv2.namedWindow("output", cv2.WINDOW_KEEPRATIO)
-        # cv2.imshow("output", screen)
-        # cv2.waitKey(0)
 
         if boxcount >= 1:
             break

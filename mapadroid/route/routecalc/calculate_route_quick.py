@@ -184,8 +184,6 @@ def find_eulerian_tour(matched_min_span_tree):
         neighbours[edge[0]].append(edge[1])
         neighbours[edge[1]].append(edge[0])
 
-    # print("Neighbours: ", neighbours)
-
     # finds the hamiltonian circuit
     start_vertex = matched_min_span_tree[0][0]
     ep = [neighbours[start_vertex][0]]

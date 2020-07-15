@@ -162,7 +162,6 @@ class DeviceUpdater(object):
             try:
                 jobstatus = JobReturn.UNKNOWN
                 try:
-                    # item = self._update_queue.get()
                     item = self._update_queue.get_nowait()
                 except Empty:
                     time.sleep(1)

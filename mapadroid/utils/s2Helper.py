@@ -3,8 +3,6 @@ import multiprocessing
 from typing import List
 import gpxdata
 import s2sphere
-# from utils.collections import Location
-# from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import (
@@ -64,7 +62,6 @@ class S2Helper:
             position = S2Helper.get_position_from_cell(
                 int(split_cell_id[1], 16))
             centers_in_area.append([position[0], position[1]])
-            # calc_route_data.append(str(position[0]) + ', ' + str(position[1]))
 
         return centers_in_area
 
@@ -155,20 +152,6 @@ class S2Helper:
 
         results = [item for sublist in temp for item in sublist]
         results.append(Location(center.lat, center.lng))
-
-        # for ring in range(1, step_limit):
-        #     for i in range(0, 6):
-        #         # Star_locs will contain the locations of the 6 vertices of
-        #         # the current ring (90,150,210,270,330 and 30 degrees from
-        #         # origin) to form a star
-        #         star_loc = S2Helper.get_new_coords(center, distance * ring,
-        #                                            90 + 60 * i)
-        #         for j in range(0, ring):
-        #             # Then from each point on the star, create locations
-        #             # towards the next point of star along the edge of the
-        #             # current ring
-        #             loc = S2Helper.get_new_coords(star_loc, distance * j, 210 + 60 * i)
-        #             results.append(loc)
 
         logger.info("Filtering positions for init scan")
         # Geofence results.

@@ -75,7 +75,7 @@ class DbPogoProtoSubmit:
                     (
                         encounter_id, spawnid, mon_id, lat, lon,
                         despawn_time,
-                        # TODO: consider .get("XXX", None)
+                        # TODO: consider .get("XXX", None)  # noqa: E800
                         None, None, None, None, None, None, None, None, None,
                         wild_mon["pokemon_data"]["display"]["gender_value"],
                         None, None, None, None, None,
@@ -602,7 +602,6 @@ class DbPogoProtoSubmit:
 
         list_of_weather_args = []
         for client_weather in map_proto["client_weather"]:
-            # lat, lng, alt = S2Helper.get_position_from_cell(weather_extract["cell_id"])
             time_of_day = map_proto.get("time_of_day_value", 0)
             list_of_weather_args.append(
                 self._extract_args_single_weather(
@@ -727,7 +726,7 @@ class DbPogoProtoSubmit:
             display_weather_data.get("fog_level", 0),
             display_weather_data.get("wind_direction", 0),
             gameplay_weather,
-            # TODO: alerts
+            #  noqa: E800 TODO: alerts
             0, 0,
             time_of_day, now
         )
@@ -763,7 +762,6 @@ class DbPogoProtoSubmit:
             "SELECT spawnpoint, spawndef "
             "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
         )
-        # vals = (spawn_id,)
 
         res = self._db_exec.execute(query)
         for row in res:
@@ -785,7 +783,6 @@ class DbPogoProtoSubmit:
         return pos
 
     def _set_spawn_see_minutesgroup(self, spawndef, pos):
-        # b = BitArray([int(digit) for digit in bin(spawndef)[2:]])
         minte_group = BitArray(uint=spawndef, length=8)
         if pos == 4:
             minte_group[0] = 0

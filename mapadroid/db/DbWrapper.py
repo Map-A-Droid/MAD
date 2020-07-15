@@ -972,10 +972,6 @@ class DbWrapper:
             timestamp = time.mktime(temp_date.timetuple()) - spawn_duration_minutes * 60
             # check if we calculated a time in the past, if so, add an hour to it...
             timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
-            # TODO: consider the following since I am not sure if the prio Q clustering handles stuff properly yet
-            # if timestamp >= current_time + 600:
-            #     # let's skip monspawns that are more than 10minutes in the future
-            #     continue
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
 

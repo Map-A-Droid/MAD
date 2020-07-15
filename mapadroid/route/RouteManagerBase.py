@@ -350,7 +350,6 @@ class RouteManagerBase(ABC):
             return
         while not self._stop_update_thread.is_set():
             # retrieve the latest hatches from DB
-            # newQueue = self._db_wrapper.get_next_raid_hatches(self._delayAfterHatch, self._geofenceHelper)
             new_queue = self._retrieve_latest_priority_queue()
             self._merge_priority_queue(new_queue)
             redocounter = 0
@@ -389,7 +388,6 @@ class RouteManagerBase(ABC):
     def dhms_from_seconds(self, seconds):
         minutes, seconds = divmod(seconds, 60)
         hours, minutes = divmod(minutes, 60)
-        # days, hours = divmod(hours, 24)
         return hours, minutes, seconds
 
     def _get_round_finished_string(self):
@@ -489,7 +487,6 @@ class RouteManagerBase(ABC):
         _cluster_priority_queue_criteria
         :return:
         """
-        # timedelta_seconds = self._cluster_priority_queue_criteria()
         if self.mode == "iv_mitm":
             # exclude IV prioQ to also pass encounterIDs since we do not pass additional information through when
             # clustering

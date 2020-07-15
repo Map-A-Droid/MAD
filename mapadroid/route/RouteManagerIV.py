@@ -54,7 +54,6 @@ class RouteManagerIV(RouteManagerBase):
         self._prio_queue = latest_priorities
         self._manager_mutex.release()
         return None
-        # return latest_priorities
 
     def get_encounter_ids_left(self) -> List[int]:
         return self.encounter_ids_left

@@ -87,7 +87,6 @@ class WorkerMITM(MITMBase):
                 elif distance > 2500:
                     delay_used = 8
                 self.logger.debug("Need more sleep after Teleport: {} seconds!", delay_used)
-                # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
                 # TODO: actually use to_walk for distance

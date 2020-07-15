@@ -232,7 +232,6 @@ class WorkerBase(AbstractWorker):
             return self.loop.call_soon_threadsafe(create_task)
 
     def start_worker(self):
-        # async_result = self.thread_pool.apply_async(self._main_work_thread, ())
         t_main_work = Thread(name=self._origin,
                              target=self._main_work_thread)
         t_main_work.daemon = True
@@ -245,7 +244,6 @@ class WorkerBase(AbstractWorker):
             time.sleep(1)
             t_main_work.join()
         self.logger.info("Worker stopped gracefully")
-        # async_result.get()
         return self._last_known_state
 
     def stop_worker(self):
@@ -328,8 +326,6 @@ class WorkerBase(AbstractWorker):
             # Restart pogo every now and then...
             restart_pogo_setting = self.get_devicesettings_value("restart_pogo", 0)
             if restart_pogo_setting > 0:
-                # self.logger.debug("main: Current time - lastPogoRestart: {}", str(curTime - lastPogoRestart))
-                # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
                 if self._location_count > restart_pogo_setting:
                     self.logger.info("scanned {} locations, restarting game", restart_pogo_setting)
                     pogo_started = self._restart_pogo()
@@ -790,11 +786,6 @@ class WorkerBase(AbstractWorker):
             self._communicator.turn_screen_on()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
-        # Disable vibration
-        # This only needs to be done once per boot
-        # So, we'll just do it when pogo actually needs starting
-        # self._communicator.passthrough("su -c chmod 444 /sys/devices/virtual/timed_output/vibrator/enable")
-
         cur_time = time.time()
         start_result = False
         while not pogo_topmost:
@@ -1012,11 +1003,6 @@ class WorkerBase(AbstractWorker):
             return False
 
         if not self._take_screenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
-            # TODO: again?
-            # if again:
-            #     self.logger.error("checkPogoButton: failed getting a screenshot again")
-            #     return False
-            # TODO: throw?
             self.logger.debug("checkPogoButton: Failed getting screenshot")
             return False
         if os.path.isdir(self.get_screenshot_path()):
