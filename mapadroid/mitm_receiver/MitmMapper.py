@@ -105,13 +105,6 @@ class MitmMapper(object):
         self.__playerstats_db_update_consumer.join()
         self.__playerstats_db_update_queue.close()
 
-    def get_mon_ids_iv(self, origin):
-        devicemapping_of_origin = self.__mapping_manager.get_devicemappings_of(origin)
-        if devicemapping_of_origin is None:
-            return []
-        else:
-            return devicemapping_of_origin.get("mon_ids_iv", [])
-
     def get_levelmode(self, origin):
         device_routemananger = self.__mapping_manager.get_routemanager_name_from_device(origin)
         if device_routemananger is None:

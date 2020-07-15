@@ -42,7 +42,6 @@ class MITMBase(WorkerBase):
                             pogo_win_manager=pogo_win_manager, walker=walker, event=event)
         self._reboot_count = 0
         self._restart_count = 0
-        self._screendetection_count = 0
         self._rec_data_time = ""
         self._mitm_mapper = mitm_mapper
         self._latest_encounter_update = 0
@@ -75,7 +74,7 @@ class MITMBase(WorkerBase):
                     cell_id = cell["id"]
                     if cell_id < 0:
                         cell_id = cell_id + 2 ** 64
-                    lat, lng, alt = S2Helper.get_position_from_cell(cell_id)
+                    lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
                     counter += 1
                     lat_sum += lat
                     lng_sum += lng
@@ -414,12 +413,3 @@ class MITMBase(WorkerBase):
         # won't work if PogoDroid is repackaged!
         self._communicator.passthrough("am startservice com.mad.pogodroid/.services.HookReceiverService")
         return start_result
-
-    def _restart_pogodroid(self):
-        successful_stop = self._worker_specific_setup_stop()
-        time.sleep(1)
-        self.logger.debug("restartPogoDroid: stop PogoDroid resulted in {}", successful_stop)
-        if successful_stop:
-            return self._worker_specific_setup_start()
-        else:
-            return False

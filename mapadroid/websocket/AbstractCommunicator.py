@@ -120,14 +120,6 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
-    def enter_button(self) -> bool:
-        """
-        Keyevent 61
-        :return:
-        """
-        pass
-
-    @abstractmethod
     def enter_text(self, text: str) -> bool:
         pass
 

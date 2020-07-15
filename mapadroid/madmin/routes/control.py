@@ -15,7 +15,7 @@ from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.collections import Location
 from mapadroid.utils.functions import (creation_date, generate_phones, image_resize, generate_path)
 from mapadroid.utils.madGlobals import ScreenshotType
-from mapadroid.utils.updater import jobType
+from mapadroid.utils.updater import JobType
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
@@ -489,7 +489,7 @@ class MADminControl(object):
                                                 type=type_)
                 flash('File successfully queued --> See Job Status')
 
-        elif type_ != jobType.INSTALLATION:
+        elif type_ != JobType.INSTALLATION:
             self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
                                             type=type_)
             flash('Job successfully queued --> See Job Status')

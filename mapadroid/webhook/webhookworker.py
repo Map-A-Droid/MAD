@@ -35,10 +35,6 @@ class WebhookWorker:
         if self.__args.webhook_start_time != 0:
             self.__last_check = int(self.__args.webhook_start_time)
 
-    def update_settings(self, mapping_manager: MappingManager):
-        self.__build_ivmon_list(mapping_manager)
-        self.__build_excluded_areas(mapping_manager)
-
     def __payload_type_count(self, payload):
         count = {}
 

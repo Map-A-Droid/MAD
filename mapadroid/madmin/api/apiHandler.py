@@ -26,7 +26,6 @@ class APIHandler(object):
         self.dbc = self._data_manager.dbc
         self._mapping_manager = mapping_manager
         self._ws_server = ws_server
-        self._instance = self._data_manager.instance_id
         self._config_mode = config_mode
         self.api_req = None
         self.storage_obj = storage_obj

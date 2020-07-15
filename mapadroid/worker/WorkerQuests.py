@@ -52,9 +52,6 @@ class WorkerQuests(MITMBase):
     def similar(self, elem_a, elem_b):
         return SequenceMatcher(None, elem_a, elem_b).ratio()
 
-    def _valid_modes(self):
-        return ["pokestops"]
-
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper: DbWrapper,
@@ -74,7 +71,6 @@ class WorkerQuests(MITMBase):
         self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
         self._stop_process_time = 0
         self._clear_quest_counter = 0
-        self._rocket: bool = False
         self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
         self._ignore_spinned_stops = self._mapping_manager.routemanager_get_settings(self._routemanager_name) \
             .get("ignore_spinned_stops", True)
@@ -456,7 +452,7 @@ class WorkerQuests(MITMBase):
         x, y = self._resocalc.get_item_menu_coords(self)
         self._communicator.click(int(x), int(y))
         time.sleep(2 + int(delayadd))
-        text_x1, text_x2, text_y1, text_y2 = self._resocalc.get_delete_item_text(self)
+        text_x1, text_x2, _, _ = self._resocalc.get_delete_item_text(self)
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)
@@ -638,17 +634,6 @@ class WorkerQuests(MITMBase):
                     self._db_wrapper.delete_stop(latitude, longitude)
                     self.logger.warning("Tried to open a stop but found a gym instead!")
                     return False, True
-
-                rocket_incident_diff_ms = 0
-                if len(fort.get('pokestop_displays', [])) > 0:
-                    # Rocket lenghts above 1 hour are probably not grunts and should be safe to spin.
-                    rocket_incident_diff_ms = fort.get('pokestop_displays')[0].get('incident_expiration_ms', 0) - \
-                        fort.get('pokestop_displays')[0].get('incident_start_ms', 0)
-                if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0 or \
-                        (0 < rocket_incident_diff_ms <= 3600000):
-                    self._rocket = True
-                else:
-                    self._rocket = False
 
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
@@ -922,17 +907,3 @@ class WorkerQuests(MITMBase):
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
         return LatestReceivedType.UNDEFINED
-
-    def process_rocket(self):
-        self.logger.debug('Closing Rocket Dialog')
-        self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(4)
-        self._checkPogoClose()

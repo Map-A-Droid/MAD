@@ -24,7 +24,6 @@ class DbWrapper:
         self._db_exec = db_exec
         self.application_args = args
         self._event_id: int = 1
-        self._event_lure_duration: int = 30
 
         self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
         self.sanity_check.check_all()
@@ -45,8 +44,6 @@ class DbWrapper:
     def set_event_id(self, eventid: int):
         self._event_id = eventid
 
-    def set_event_lure_duration(self, lureduration: int):
-        self._event_lure_duration = lureduration
 
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)
@@ -127,7 +124,7 @@ class DbWrapper:
         logger.debug4("Latest Q: {}", data)
         return data
 
-    def set_scanned_location(self, lat, lng, capture_time):
+    def set_scanned_location(self, lat, lng):
         """
         Update scannedlocation (in RM) of a given lat/lng
         """
@@ -395,7 +392,7 @@ class DbWrapper:
         results = self.execute(query, sql_args, commit=False)
 
         next_to_encounter = []
-        for latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, expire in results:
+        for latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, _ in results:
             if pokemon_id not in eligible_mon_ids:
                 continue
             elif latitude is None or longitude is None:
@@ -642,8 +639,7 @@ class DbWrapper:
         return mons
 
     def get_stops_in_rectangle(self, ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat=None, o_ne_lon=None, o_sw_lat=None,
-                               o_sw_lon=None,
-                               timestamp=None, check_quests=False):
+                               o_sw_lon=None, timestamp=None):
         args = []
         conversions = ['ps.`last_modified`', 'ps.`lure_expiration`', 'ps.`last_updated`',
                        'ps.`incident_start`',

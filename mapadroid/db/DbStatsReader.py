@@ -362,26 +362,6 @@ class DbStatsReader:
         res = self._db_exec.execute(query)
         return res
 
-    def check_stop_quest_level(self, worker, latitude, longitude):
-        tmp_logger = get_origin_logger(logger, origin=worker)
-        tmp_logger.debug3("DbWrapper::check_stop_quest_level called")
-        query = (
-            "SELECT trs_stats_detect_fort_raw.guid "
-            "FROM trs_stats_detect_fort_raw "
-            "INNER JOIN pokestop ON pokestop.pokestop_id = trs_stats_detect_fort_raw.guid "
-            "WHERE pokestop.latitude=%s AND pokestop.longitude=%s AND trs_stats_detect_fort_raw.worker=%s LIMIT 1"
-        )
-        data = (latitude, longitude, worker)
-
-        res = self._db_exec.execute(query, data)
-        number_of_rows = len(res)
-        if number_of_rows > 0:
-            logger.debug('Pokestop already visited')
-            return True
-        else:
-            logger.debug('Pokestop not visited till now')
-            return False
-
     def get_all_spawnpoints_count(self):
         logger.debug4("dbWrapper::get_all_spawnpoints_count")
         query = (

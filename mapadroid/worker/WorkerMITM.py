@@ -31,11 +31,7 @@ class WorkerMITM(MITMBase):
                           db_wrapper=db_wrapper,
                           mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker, event=event)
         # TODO: own InjectionSettings class
-        self._injection_settings = {}
         self.__update_injection_settings()
-
-    def _valid_modes(self):
-        return ["iv_mitm", "raids_mitm", "mon_mitm"]
 
     def _health_check(self):
         self.logger.debug4("_health_check: called")

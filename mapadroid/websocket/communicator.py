@@ -16,7 +16,6 @@ logger = get_logger(LoggerEnums.websocket)
 
 
 class Communicator(AbstractCommunicator):
-    UPDATE_INTERVAL = 0.4
 
     def __init__(self, websocket_client_entry: WebsocketConnectedClientEntry, worker_id: str,
                  worker_instance_ref: Optional[AbstractWorker],
@@ -24,7 +23,6 @@ class Communicator(AbstractCommunicator):
         # Throws ValueError if unable to connect!
         # catch in code using this class
         self.logger = get_origin_logger(get_logger(LoggerEnums.websocket), origin=worker_id)
-        self.worker_id: str = worker_id
         self.worker_instance_ref: Optional[AbstractWorker] = worker_instance_ref
         self.websocket_client_entry = websocket_client_entry
         self.__command_timeout: float = command_timeout
@@ -155,12 +153,6 @@ class Communicator(AbstractCommunicator):
 
     def home_button(self) -> bool:
         return self.__run_and_ok("touch keyevent 3", self.__command_timeout)
-
-    def enter_button(self) -> bool:
-        return self.__run_and_ok("touch keyevent 61", self.__command_timeout)
-
-    def ok_button(self) -> bool:
-        return self.__run_and_ok("touch keyevent 66", self.__command_timeout)
 
     def enter_text(self, text: str) -> bool:
         return self.__run_and_ok("touch text " + str(text), self.__command_timeout)

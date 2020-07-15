@@ -160,17 +160,6 @@ def minimum_weight_matching(min_span_tree, graph, odd_vert):
         odd_vert.remove(closest)
 
 
-def get_index_array_numpy_compary(arr_orig, arr_new):
-    indices = []
-    length_arr = len(arr_orig)
-    for i in range(length_arr):  # or range(len(theta))
-        if np.array_equal(arr_new[i], arr_orig[i]):
-            continue
-        else:
-            indices.append(i)
-    return indices
-
-
 def find_eulerian_tour(matched_min_span_tree):
     # find neigbours
     neighbours = {}

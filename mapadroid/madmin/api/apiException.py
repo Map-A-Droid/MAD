@@ -7,9 +7,6 @@ class APIException(Exception):
         self.reason = reason
         super(APIException, self).__init__(status_code, reason)
 
-    def get_headers(self):
-        return {}
-
 
 class AcceptException(APIException):
     def __repr__(self):

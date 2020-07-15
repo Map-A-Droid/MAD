@@ -79,17 +79,6 @@ def generate_quest(quest):
     return quest_raw
 
 
-def extractForm(quest_reward_json):
-    quest_reward = json.loads(quest_reward_json)
-
-    if len(quest_reward) == 0:
-        return 0
-
-    if "pokemon_encounter" in quest_reward[0]:
-        encounter = quest_reward[0]["pokemon_encounter"]
-        return encounter["pokemon_display"]["form_value"]
-
-
 def questreward(quest_reward_type):
     type = {
         2: _("Item"),

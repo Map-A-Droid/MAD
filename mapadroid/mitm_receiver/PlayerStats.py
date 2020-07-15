@@ -18,12 +18,9 @@ class PlayerStats(object):
         self._logger = get_logger(LoggerEnums.mitm, name=self._id)
         self.__application_args = application_args
         self._level: int = 0
-        self._last_action_time = 0
-        self._last_period = 0
         self.__stats_collected: dict = {}
         self._stats_collector_start = True
         self._last_processed_timestamp = 0
-        self._stats_period = 0
         self._generate_stats = application_args.game_stats
         self.__mapping_mutex = Lock()
         self.__mitm_mapper_parent: MitmMapper = mitm_mapper_parent

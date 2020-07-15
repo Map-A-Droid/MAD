@@ -105,8 +105,6 @@ class RouteManagerBase(ABC):
                                                              in_memory=False)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
-        self._current_index_of_route = 0
-        self._init_mode_rounds = 0
 
         if self.settings is not None:
             self.delay_after_timestamp_prio = self.settings.get(
@@ -231,9 +229,6 @@ class RouteManagerBase(ABC):
                 self.logger.info("Routemanager does not have any subscribing workers anymore, calling stop")
                 self.stop_routemanager()
 
-    def _check_started(self):
-        return self._is_started
-
     def _start_priority_queue(self):
         if (self.delay_after_timestamp_prio is not None or self.mode == "iv_mitm") and not self.mode == "pokestops":
             if self._stop_update_thread.is_set():
@@ -290,9 +285,6 @@ class RouteManagerBase(ABC):
             return new_route
         return []
 
-    def empty_routequeue(self):
-        return len(self._current_route_round_coords) > 0
-
     def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                             delete_old_route: bool = False):
         if not self._route_resource['routefile']:
@@ -321,7 +313,6 @@ class RouteManagerBase(ABC):
             for coord in new_route:
                 self._route.append(Location(coord["lat"], coord["lng"]))
             self._current_route_round_coords = self._route.copy()
-            self._current_index_of_route = 0
         return new_route
 
     def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
@@ -656,7 +647,7 @@ class RouteManagerBase(ABC):
                 self.logger.debug("Route being calculated")
                 self._recalc_route_workertype()
                 self.init = False
-                self._change_init_mapping(self.name)
+                self._change_init_mapping()
                 self._start_calc = False
                 self.logger.debug("Initroute is finished - restart worker")
                 return None
@@ -1027,7 +1018,7 @@ class RouteManagerBase(ABC):
             #   the new route, remove the old rest of it (or just fetch the first coord of the next subroute and
             #   remove the coords of that coord onward)
 
-    def _change_init_mapping(self, name_area: str):
+    def _change_init_mapping(self):
         area = self._data_manager.get_resource('area', self.area_id)
         area['init'] = False
         area.save()
@@ -1080,15 +1071,6 @@ class RouteManagerBase(ABC):
             self._routepool[worker].prio_coords = Location(lat, lon)
             return True
         return False
-
-    def get_coords_from_workers(self):
-        coordlist: List[Location] = []
-        self.logger.info('Getting all coords from workers')
-        for origin in self._routepool:
-            [coordlist.append(i) for i in self._routepool[origin].queue]
-
-        self.logger.debug('Open Coords from workers: {}', coordlist)
-        return coordlist
 
     def set_worker_startposition(self, worker, lat, lon):
         route_logger = routelogger_set_origin(self.logger, origin=worker)

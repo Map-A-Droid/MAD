@@ -46,9 +46,6 @@ class WorkerConfigmode(AbstractWorker):
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
 
-    def get_communicator(self):
-        return self._communicator
-
     def start_worker(self):
         self.logger.info("Worker started in configmode")
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
@@ -253,7 +250,3 @@ class WorkerConfigmode(AbstractWorker):
                 raise InternalStopWorkerException
             time.sleep(1)
             delay_count += 1
-
-    def trigger_check_research(self):
-        # not on configmode
-        return

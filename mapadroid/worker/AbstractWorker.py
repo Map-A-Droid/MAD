@@ -43,7 +43,3 @@ class AbstractWorker(ABC):
     @origin.setter
     def origin(self, value: str) -> None:
         raise RuntimeError("Replacing origin is not supported")
-
-    @abstractmethod
-    def trigger_check_research(self) -> None:
-        pass

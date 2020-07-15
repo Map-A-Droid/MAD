@@ -5,7 +5,7 @@ from .apk_storage_db import APKStorageDatabase  # noqa: F401
 from .apk_storage_fs import APKStorageFilesystem  # noqa: F401
 from .custom_types import *  # noqa: F401 F403
 from .utils import *  # noqa: F401 F403
-from .wizard import APKWizard, PackageImporter, InvalidVersion, InvalidFile, WizardError  # noqa: F401
+from .wizard import APKWizard, PackageImporter, InvalidFile, WizardError  # noqa: F401
 
 
 class StorageSyncManager(SyncManager):

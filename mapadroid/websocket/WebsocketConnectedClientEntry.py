@@ -1,6 +1,5 @@
 import asyncio
 import math
-import queue
 import time
 from threading import Thread
 from typing import Optional, Dict
@@ -29,7 +28,6 @@ class WebsocketConnectedClientEntry:
         self.websocket_client_connection: Optional[websockets.WebSocketClientProtocol] = websocket_client_connection
         self.loop_running: asyncio.AbstractEventLoop = loop_running
         self.fail_counter: int = 0
-        self.send_queue: queue.Queue = queue.Queue()
         self.received_messages: Dict[int, ReceivedMessageEntry] = {}
         self.received_mutex: asyncio.Lock = asyncio.Lock()
         self.message_id_counter: int = 0

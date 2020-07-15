@@ -8,25 +8,8 @@ class DependencyError(DataManagerException):
         super().__init__(dependencies)
 
 
-class DeviceIsDisabled(DataManagerException):
-    pass
-
-
-class IdentifierNotSpecified(DataManagerException):
-    pass
-
-
 class InvalidArea(DataManagerException):
     pass
-
-
-class InvalidDataFormat(DataManagerException):
-    def __init__(self, key, data, expected):
-        super().__init__()
-        self.key = key
-        self.data = data
-        self.expected = expected
-        self.received = type(data)
 
 
 class InvalidSection(DataManagerException):

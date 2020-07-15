@@ -100,10 +100,6 @@ class MADmin(object):
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
 
-    def get_routepath(self):
-        routepath = self._app.root_path
-        return routepath
-
     def register_plugin(self, pluginname):
         self._app.register_blueprint(pluginname)
 

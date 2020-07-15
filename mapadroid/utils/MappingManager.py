@@ -91,9 +91,7 @@ class MappingManager:
         self._monlists: Optional[dict] = None
         self.__shutdown_event: Event = Event()
         self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
-        self.__raw_json: Optional[dict] = None
         self.__mappings_mutex: Lock = Lock()
-        self._known_woorker: dict = {}
 
         self.update(full_lock=True)
 
@@ -182,11 +180,6 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         if routemanager is not None:
             routemanager.join_threads()
-
-    def routemanager_stop(self, routemanager_name: str):
-        routemanager = self.__fetch_routemanager(routemanager_name)
-        if routemanager is not None:
-            routemanager.stop_routemanager()
 
     def get_routemanager_name_from_device(self, device_name: str) -> Optional[str]:
         routemanagers = self.get_all_routemanager_names()
@@ -544,7 +537,7 @@ class MappingManager:
             return None
 
         auths = {}
-        for auth_id, auth in raw_auths.items():
+        for _, auth in raw_auths.items():
             auths[auth["username"]] = auth["password"]
         return auths
 

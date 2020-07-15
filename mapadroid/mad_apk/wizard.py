@@ -30,10 +30,6 @@ class InvalidFile(WizardError):
     pass
 
 
-class InvalidVersion(WizardError):
-    pass
-
-
 class APKWizard(object):
     """ The wizard will allow for simplified APK management for the required packages
 

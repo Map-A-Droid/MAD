@@ -116,7 +116,6 @@ class GetStorage(object):
     db_wrapper = None
     db_pool_manager = None
     storage_elem = None
-    storage_mgr = None
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
     def __enter__(self):

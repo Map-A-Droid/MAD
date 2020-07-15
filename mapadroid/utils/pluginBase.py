@@ -126,7 +126,7 @@ class PluginCollection(object):
 
         zipobj = zipfile.ZipFile(plugin_file_temp, 'w', zipfile.ZIP_DEFLATED)
         rootlen = len(folder) + 1
-        for base, dirs, files in os.walk(folder):
+        for base, _, files in os.walk(folder):
             if "__pycache__" not in base:
                 for plugin_file in files:
                     if plugin_file != "plugin.ini":

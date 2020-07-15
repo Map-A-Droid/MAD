@@ -43,12 +43,6 @@ class Resocalculator(object):
         click_x2 = int(self._screen_x) - int(click_x1)
         return click_x1 + self._x_offset, click_x2 + self._x_offset, click_y + self._y_offset
 
-    def get_ggl_account_coords(self):
-        temp_offset = int(self._screen_y) / 24.61
-        click_x = int(self._screen_x) / 2
-        click_y = (int(self._screen_y) / 2) + int(temp_offset)
-        return click_x, click_y
-
     def get_close_main_button_coords(self):
         click_x = int(self._screen_x) / 2
         click_y = int(self._screen_y) - (int(self._screen_x) / 7.57)
@@ -183,18 +177,3 @@ class Resocalculator(object):
         elif float(self._xyratio) < 1.7:
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.7)
         return click_x, click_y
-
-    def get_leave_mon_coords(self):
-        click_x = int(self._screen_x) / 11.25
-        click_y = int(self._screen_x) / 6.82
-        return click_x + self._x_offset, click_y + self._y_offset
-
-    def get_weather_popup_coords(self):
-        click_x = int(self._screen_x) / 2
-        click_y = int(self._screen_y) - (int(self._screen_x) / 12)
-        return click_x + self._x_offset, click_y + self._y_offset
-
-    def get_weather_warn_popup_coords(self):
-        click_x = int(self._screen_x) / 2
-        click_y = int(self._screen_y) - (int(self._screen_x) / 4)
-        return click_x + self._x_offset, click_y + self._y_offset

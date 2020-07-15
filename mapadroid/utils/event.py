@@ -28,6 +28,3 @@ class Event(object):
 
     def get_current_event_id(self):
         return self._event_id
-
-    def get_current_lure_duration(self):
-        return self._lure_duration

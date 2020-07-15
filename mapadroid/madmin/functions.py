@@ -46,12 +46,12 @@ def uploaded_files(datetimeformat, jobs):
         upfile = {
             'jobname': os.path.basename(apk_file),
             'creation': creationdate,
-            'type': 'jobType.INSTALLATION'
+            'type': 'JobType.INSTALLATION'
         }
         files.append((upfile))
 
     for command in jobs:
-        files.append({'jobname': command, 'creation': '', 'type': 'jobType.CHAIN'})
+        files.append({'jobname': command, 'creation': '', 'type': 'JobType.CHAIN'})
 
     return files
 

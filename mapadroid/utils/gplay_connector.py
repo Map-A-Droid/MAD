@@ -30,7 +30,6 @@ class GPlayConnector(object):
         except ValueError:
             logger.critical('Device architecture not defined')
             raise
-        self.tmp_folder: str = args.temp_path
         self.api: GooglePlayAPI = GooglePlayAPI(device_codename=device_codename)
         if args.gmail_user:
             self.connect_gmail(args.gmail_user, args.gmail_passwd)
@@ -109,14 +108,6 @@ class GPlayConnector(object):
             return result['details']['appDetails']['versionString']
         except (KeyError, TypeError):
             return None
-
-    def token_login(self, token: str) -> bool:
-        try:
-            self.api.login(gsfId=int(self.gsfid), authSubToken=token)
-            self.valid = True
-        except Exception as err:
-            logger.debug('Unable to login, {}', err)
-        return self.valid
 
     # =============================
     # ====== Token Functions ======

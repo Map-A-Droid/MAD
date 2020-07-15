@@ -24,8 +24,7 @@ class S2Helper:
         region_cover.max_cells = 1
         p1 = s2sphere.LatLng.from_degrees(lat, lng)
         p2 = s2sphere.LatLng.from_degrees(lat, lng)
-        covering = region_cover.get_covering(
-            s2sphere.LatLngRect.from_point_pair(p1, p2))
+        covering = region_cover.get_covering(s2sphere.LatLngRect.from_point_pair(p1, p2))
         # we will only get our desired cell ;)
         return covering[0].id()
 
@@ -47,58 +46,9 @@ class S2Helper:
         return coords
 
     @staticmethod
-    def calc_s2_cells(north, south, west, east, cell_size=16):
-        centers_in_area = []
-        region = s2sphere.RegionCoverer()
-        region.min_level = cell_size
-        region.max_level = cell_size
-        p1 = s2sphere.LatLng.from_degrees(north, west)
-        p2 = s2sphere.LatLng.from_degrees(south, east)
-        cell_ids = region.get_covering(
-            s2sphere.LatLngRect.from_point_pair(p1, p2))
-        logger.debug('Detecting {} L{} Cells in Area', len(cell_ids), cell_size)
-        for cell_id in cell_ids:
-            split_cell_id = str(cell_id).split(' ')
-            position = S2Helper.get_position_from_cell(
-                int(split_cell_id[1], 16))
-            centers_in_area.append([position[0], position[1]])
-
-        return centers_in_area
-
-    @staticmethod
     def get_position_from_cell(cell_id):
         cell = s2sphere.CellId(id_=int(cell_id)).to_lat_lng()
         return s2sphere.math.degrees(cell.lat().radians), s2sphere.math.degrees(cell.lng().radians), 0
-
-    @staticmethod
-    def get_s2_cells_from_fence(geofence, cell_size=16):
-        _geofence = geofence
-        logger.warning("Calculating corners of fences")
-        south, east, north, west = _geofence.get_polygon_from_fence()
-        calc_route_data = []
-        region = s2sphere.RegionCoverer()
-        region.min_level = cell_size
-        region.max_level = cell_size
-        p1 = s2sphere.LatLng.from_degrees(north, west)
-        p2 = s2sphere.LatLng.from_degrees(south, east)
-        logger.warning("Calculating coverage of region")
-        cell_ids = region.get_covering(
-            s2sphere.LatLngRect.from_point_pair(p1, p2))
-
-        logger.warning("Iterating cell_ids")
-        for cell_id in cell_ids:
-            split_cell_id = str(cell_id).split(' ')
-            position = S2Helper.middle_of_cell(int(split_cell_id[1], 16))
-            calc_route_data.append([position[0], position[1]])
-        logger.debug('Detecting {} L{} Cells in Area', len(calc_route_data), cell_size)
-
-        return calc_route_data
-
-    @staticmethod
-    def get_cellid_from_latlng(lat, lng, level=20):
-        ll = s2sphere.LatLng.from_degrees(lat, lng)
-        cell = s2sphere.CellId().from_lat_lng(ll)
-        return cell.parent(level).to_token()
 
     @staticmethod
     def _generate_star_locs(center, distance, ring):
@@ -225,18 +175,6 @@ class S2Helper:
         if row is None or len(row) == 0:
             return []
         return sorted(row, key=lambda x: x.lng)
-
-    @staticmethod
-    def get_most_west(location_list):
-        if location_list is None or len(location_list) == 0:
-            return []
-
-        most_west = location_list[0]
-        for location in location_list:
-            if location.lng < most_west.lng:
-                most_west = location
-
-        return most_west
 
     @staticmethod
     # Returns destination coords given origin coords, distance (Kms) and bearing.
