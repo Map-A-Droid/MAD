@@ -30,6 +30,10 @@ app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 app.secret_key = "8bc96865945be733f3973ba21d3c5949"
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+log = logging.getLogger('werkzeug')
+handler = InterceptHandler(log_section=LoggerEnums.madmin)
+log.addHandler(handler)
+
 
 @app.after_request
 def after_request(response):
@@ -90,9 +94,6 @@ class madmin(object):
             self.apk_manager.start_modul()
             self.event.start_modul()
             self.control.start_modul()
-            log = logging.getLogger('werkzeug')
-            handler = InterceptHandler(log_section=LoggerEnums.madmin)
-            log.addHandler(handler)
             self._app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)
         except:
             logger.opt(exception=True).critical('Unable to load MADmin component')
