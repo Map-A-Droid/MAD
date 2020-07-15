@@ -1,6 +1,5 @@
 import datetime
 import glob
-import json
 import os
 from functools import update_wrapper, wraps
 from math import floor
@@ -9,9 +8,9 @@ from flask import (make_response, request)
 
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.functions import creation_date
-from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.walkerArgs import parse_args
 
-mapping_args = parseArgs()
+mapping_args = parse_args()
 
 
 def auth_required(func):
@@ -23,7 +22,7 @@ def auth_required(func):
 
         if not username:
             return func(*args, **kwargs)
-        if quests_pub_enabled and func.__name__ in ['get_quests', 'quest_pub', 'pushAssets']:
+        if quests_pub_enabled and func.__name__ in ['get_quests', 'quest_pub', 'pushassets']:
             return func(*args, **kwargs)
         if request.authorization:
             if (request.authorization.username == username) and (
@@ -35,8 +34,8 @@ def auth_required(func):
 
 
 def allowed_file(filename):
-    ALLOWED_EXTENSIONS = set(['apk', 'txt'])
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    allowed_extensions = set(['apk', 'txt'])
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 
 def uploaded_files(datetimeformat, jobs):
@@ -71,40 +70,25 @@ def nocache(view):
     return update_wrapper(no_cache, view)
 
 
-def getBoundParameter(request):
-    neLat = request.args.get('neLat')
-    neLon = request.args.get('neLon')
-    swLat = request.args.get('swLat')
-    swLon = request.args.get('swLon')
-    oNeLat = request.args.get('oNeLat', None)
-    oNeLon = request.args.get('oNeLon', None)
-    oSwLat = request.args.get('oSwLat', None)
-    oSwLon = request.args.get('oSwLon', None)
+def get_bound_params(request):
+    ne_lat = request.args.get('neLat')
+    ne_lon = request.args.get('neLon')
+    sw_lat = request.args.get('swLat')
+    sw_lon = request.args.get('swLon')
+    o_ne_lat = request.args.get('oNeLat', None)
+    o_ne_lon = request.args.get('oNeLon', None)
+    o_sw_lat = request.args.get('oSwLat', None)
+    o_sw_lon = request.args.get('oSwLon', None)
 
     # reset old bounds to None if they're equal
     # this will tell the query to only fetch new/updated elements
-    if neLat == oNeLat and neLon == oNeLon and swLat == oSwLat and swLon == oSwLon:
-        oNeLat = oNeLon = oSwLat = oSwLon = None
+    if ne_lat == o_ne_lat and ne_lon == o_ne_lon and sw_lat == o_sw_lat and sw_lon == o_sw_lon:
+        o_ne_lat = o_ne_lon = o_sw_lat = o_sw_lon = None
 
-    return neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon
-
-
-def decodeHashJson(hashJson):
-    data = json.loads(hashJson)
-    raidGym = data['gym']
-    raidLvl = data["lvl"]
-    raidMon = data["mon"]
-
-    return raidGym, raidLvl, raidMon
+    return ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon
 
 
-def encodeHashJson(gym, lvl, mon):
-    hashJson = json.dumps(
-        {'gym': gym, 'lvl': lvl, 'mon': mon}, separators=(',', ':'))
-    return hashJson
-
-
-def getCoordFloat(coordinate):
+def get_coord_float(coordinate):
     return floor(float(coordinate) * (10 ** 5)) / float(10 ** 5)
 
 
@@ -140,17 +124,11 @@ def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=No
         for fences in area_geofences.geofenced_areas:
             include[fences['name']] = []
             for fence in fences['polygon']:
-                include[fences['name']].append([
-                    getCoordFloat(fence['lat']),
-                    getCoordFloat(fence['lon'])
-                ])
+                include[fences['name']].append([get_coord_float(fence['lat']), get_coord_float(fence['lon'])])
         for fences in area_geofences.excluded_areas:
             exclude[fences['name']] = []
             for fence in fences['polygon']:
-                exclude[fences['name']].append([
-                    getCoordFloat(fence['lat']),
-                    getCoordFloat(fence['lon'])
-                ])
+                exclude[fences['name']].append([get_coord_float(fence['lat']), get_coord_float(fence['lon'])])
         geofences[area_id] = {
             'include': include,
             'exclude': exclude,

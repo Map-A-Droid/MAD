@@ -14,7 +14,7 @@ from mapadroid.utils.logging import get_logger, LoggerEnums
 logger = get_logger(LoggerEnums.madmin)
 
 
-class statistics(object):
+class MADminStatistics(object):
     def __init__(self, db: DbWrapper, args, app, mapping_manager, data_manager):
         self._db: DbWrapper = db
         self._db_stats_reader: DbStatsReader = db.stats_reader
@@ -226,15 +226,15 @@ class statistics(object):
         data = self._db_stats_reader.get_best_pokemon_spawns()
         if data is not None:
             for dat in data:
-                monPic = self.generate_mon_icon_url(dat[1], dat[8], dat[9])
-                monName = get_mon_name(dat[1])
+                mon_img = self.generate_mon_icon_url(dat[1], dat[8], dat[9])
+                mon_name = get_mon_name(dat[1])
                 if self._args.db_method == "rm":
                     lvl = calculate_mon_level(dat[6])
                 else:
                     lvl = dat[6]
                 good_spawns.append({'id': dat[1], 'iv': round(calculate_iv(dat[3], dat[4], dat[5]), 0),
-                                    'lvl': lvl, 'cp': dat[7], 'img': monPic,
-                                    'name': monName,
+                                    'lvl': lvl, 'cp': dat[7], 'img': mon_img,
+                                    'name': mon_name,
                                     'periode': datetime.datetime.fromtimestamp
                                     (self.utc2local(dat[2])).strftime(self._datetimeformat)})
 
@@ -269,9 +269,8 @@ class statistics(object):
         for dat in data:
             form_suffix = "%02d" % form_mapper(dat[2], dat[5])
             mon = "%03d" % dat[2]
-            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-            monPic = self.generate_mon_icon_url(dat[2], dat[8], dat[9])
-            monName = get_mon_name(dat[2])
+            mon_img = self.generate_mon_icon_url(dat[2], dat[8], dat[9])
+            mon_name = get_mon_name(dat[2])
             diff: int = dat[0]
             if diff == 0:
                 logger.warning('No deeper pokemon stats are possible - not enough data (check config.ini // '
@@ -294,7 +293,7 @@ class statistics(object):
             shiny_avg[dat[2]][dat[5]]['total_nonshiny'].append(diff)
 
             shiny_stats.append(
-                {'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio,
+                {'sum': dat[0], 'shiny': dat[1], 'img': mon_img, 'name': mon_name, 'ratio': ratio,
                  'worker': dat[3], 'encounterid': dat[4],
                  'periode': datetime.datetime.fromtimestamp
                  (dat[6]).strftime(self._datetimeformat)})
@@ -304,15 +303,15 @@ class statistics(object):
             for form_dat in shiny_avg[dat]:
                 form_suffix = "%02d" % form_mapper(dat, form_dat)
                 mon = "%03d" % dat
-                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-                monName = get_mon_name(dat)
+                mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+                mon_name = get_mon_name(dat)
 
                 total_shiny_encounters = sum(shiny_avg[dat][form_dat]['total_shiny'])
                 total_nonshiny_encounters = sum(shiny_avg[dat][form_dat]['total_nonshiny'])
                 shiny_avg_click = round(total_nonshiny_encounters / total_shiny_encounters, 0)
 
                 shiny_stats_avg.append(
-                    {'name': monName, 'img': monPic, 'total_shiny_encounters': total_shiny_encounters,
+                    {'name': mon_name, 'img': mon_img, 'total_shiny_encounters': total_shiny_encounters,
                      'total_nonshiny_encounters': total_nonshiny_encounters,
                      'click_for_shiny': shiny_avg_click})
 
@@ -352,9 +351,9 @@ class statistics(object):
         for dat in data:
             form_suffix = "%02d" % form_mapper(dat[0], dat[1])
             mon = "%03d" % dat[0]
-            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-            monName = get_mon_name(dat[0])
-            mon_names[dat[0]] = monName
+            mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+            mon_name = get_mon_name(dat[0])
+            mon_names[dat[0]] = mon_name
             found_shiny_mon_id.append(
                 mon)  # append everything now, we will set() it later to remove duplicates
             if dat[8] not in tmp_perworker_v2:
@@ -375,7 +374,7 @@ class statistics(object):
             else:
                 tmp_perhour_v2[timestamp.hour] = 1
 
-            shiny_stats_v2.append({'img': monPic, 'name': monName, 'worker': dat[8], 'lat': dat[2],
+            shiny_stats_v2.append({'img': mon_img, 'name': mon_name, 'worker': dat[8], 'lat': dat[2],
                                    'lat_5': "{:.5f}".format(dat[2]), 'lng_5': "{:.5f}".format(dat[3]),
                                    'lng': dat[3], 'timestamp': timestamp.strftime(self._datetimeformat),
                                    'form': dat[1], 'mon_id': dat[0], 'encounter_id': str(dat[9])})
@@ -388,8 +387,8 @@ class statistics(object):
                 odds = round(dat[0] / shiny_count[dat[1]][dat[2]], 0)
                 form_suffix = "%02d" % form_mapper(dat[1], dat[2])
                 mon = "%03d" % dat[1]
-                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-                global_shiny_stats_v2.append({'name': mon_names[dat[1]], 'count': dat[0], 'img': monPic,
+                mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+                global_shiny_stats_v2.append({'name': mon_names[dat[1]], 'count': dat[0], 'img': mon_img,
                                               'shiny': shiny_count[dat[1]][dat[2]], 'odds': odds,
                                               'mon_id': dat[1], 'form': dat[2], 'gender': dat[3],
                                               'costume': dat[4]})

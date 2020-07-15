@@ -7,7 +7,7 @@ from mapadroid.utils.logging import get_logger, LoggerEnums
 logger = get_logger(LoggerEnums.utils)
 
 
-def getImageHash(image, hashSize=8):
+def get_image_hash(image, hash_size=8):
     try:
         image_temp = cv2.imread(image)
     except Exception:
@@ -17,6 +17,5 @@ def getImageHash(image, hashSize=8):
         logger.error("Screenshot corrupted")
         return '0'
 
-    with Image.open(image) as hashPic:
-        imageHash = dhash(hashPic, hashSize)
-        return imageHash
+    with Image.open(image) as image_contents:
+        return dhash(image_contents, hash_size)

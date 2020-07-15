@@ -7,7 +7,7 @@ except Exception:
     pass
 
 
-def create_data_model(lessCoordinates):
+def create_data_model(less_coordinates):
     """Stores the data for the problem."""
 
     data = {}
@@ -15,7 +15,7 @@ def create_data_model(lessCoordinates):
     # ortools requires x,y data to be integers
     # we will scale lat,lng to large numbers so that rounding won't adversely affect the path calculation
     data['locations'] = []
-    for coord in lessCoordinates:
+    for coord in less_coordinates:
         data['locations'].append((int(float(coord[0]) * 1e9), int(float(coord[1]) * 1e9)))
 
     data['num_vehicles'] = 1  # calculate as if only one walker on route
@@ -49,9 +49,9 @@ def format_solution(manager, routing, solution):
     return route_through_nodes
 
 
-def route_calc_ortools(lessCoordinates, route_name):
+def route_calc_ortools(less_coordinates, route_name):
     route_logger = get_origin_logger(logger, origin=route_name)
-    data = create_data_model(lessCoordinates)
+    data = create_data_model(less_coordinates)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(len(data['locations']),
@@ -87,7 +87,7 @@ def route_calc_ortools(lessCoordinates, route_name):
     return format_solution(manager, routing, solution)
 
 
-def route_calc_all(lessCoordinates, route_name, num_processes, algorithm):
+def route_calc_all(less_coordinates, route_name, num_processes, algorithm):
     route_logger = get_origin_logger(logger, origin=route_name)
     # check to see if we can use OR-Tools to perform our routecalc
     import platform
@@ -100,8 +100,8 @@ def route_calc_all(lessCoordinates, route_name, num_processes, algorithm):
             route_logger.debug("OR-Tools not available, using MAD routecalc")
         else:
             route_logger.debug("Using OR-Tools for routecalc")
-            return route_calc_ortools(lessCoordinates, route_name)
+            return route_calc_ortools(less_coordinates, route_name)
 
     route_logger.debug("Using MAD quick routecalc")
     from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
-    return route_calc_impl(lessCoordinates, route_name, num_processes)
+    return route_calc_impl(less_coordinates, route_name, num_processes)

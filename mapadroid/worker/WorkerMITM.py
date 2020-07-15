@@ -28,7 +28,7 @@ class WorkerMITM(MITMBase):
         MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_name=routemanager_name,
-                          db_wrapper=db_wrapper, NoOcr=True,
+                          db_wrapper=db_wrapper,
                           mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker, event=event)
         # TODO: own InjectionSettings class
         self._injection_settings = {}
@@ -230,12 +230,12 @@ class WorkerMITM(MITMBase):
                 elif mode in ["mon_mitm", "iv_mitm"]:
                     # check if the GMO contains mons
                     for data_extract in latest_data['payload']['cells']:
-                        for WP in data_extract['wild_pokemon']:
+                        for pokemon in data_extract['wild_pokemon']:
                             # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                             # if there's location in latest, the distance has
                             # already been checked in MITMBase
-                            if WP['spawnpoint_id'] and (latest.get("location", None) or
-                                                        self._check_data_distance(latest_data['payload']['cells'])):
+                            valid_distance = self._check_data_distance(latest_data['payload']['cells'])
+                            if pokemon['spawnpoint_id'] and (latest.get("location", None) or valid_distance):
                                 data_requested = latest_data
                                 break
                         if data_requested != LatestReceivedType.UNDEFINED:

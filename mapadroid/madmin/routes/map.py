@@ -5,7 +5,7 @@ from flask_caching import Cache
 from mapadroid.data_manager import DataManagerException
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import (
-    auth_required, getCoordFloat, getBoundParameter, get_geofences, generate_coords_from_geofence
+    auth_required, get_coord_float, get_bound_params, get_geofences, generate_coords_from_geofence
 )
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
@@ -20,7 +20,7 @@ logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
-class map:
+class MADminMap:
     def __init__(self, db: DbWrapper, args, mapping_manager: MappingManager, app, data_manager):
         self._db: DbWrapper = db
         self._args = args
@@ -73,8 +73,8 @@ class map:
 
             worker = {
                 "name": str(name),
-                "lat": getCoordFloat(lat),
-                "lon": getCoordFloat(lon)
+                "lat": get_coord_float(lat),
+                "lon": get_coord_float(lon)
             }
             positions.append(worker)
 
@@ -134,8 +134,8 @@ class map:
             for location in route:
                 route_serialized.append({
                     "timestamp": location[0],
-                    "latitude": getCoordFloat(location[1].lat),
-                    "longitude": getCoordFloat(location[1].lng)
+                    "latitude": get_coord_float(location[1].lat),
+                    "longitude": get_coord_float(location[1].lng)
                 })
 
             routeexport.append({
@@ -148,20 +148,20 @@ class map:
 
     @auth_required
     def get_spawns(self):
-        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         coords = {}
         data = json.loads(
             self._db.download_spawns(
-                neLat,
-                neLon,
-                swLat,
-                swLon,
-                oNeLat=oNeLat,
-                oNeLon=oNeLon,
-                oSwLat=oSwLat,
-                oSwLon=oSwLon,
+                ne_lat,
+                ne_lon,
+                sw_lat,
+                sw_lon,
+                o_ne_lat=o_ne_lat,
+                o_ne_lon=o_ne_lon,
+                o_sw_lat=o_sw_lat,
+                o_sw_lon=o_sw_lon,
                 timestamp=timestamp
             )
         )
@@ -190,20 +190,20 @@ class map:
 
     @auth_required
     def get_gymcoords(self):
-        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         coords = []
 
         data = self._db.get_gyms_in_rectangle(
-            neLat,
-            neLon,
-            swLat,
-            swLon,
-            oNeLat=oNeLat,
-            oNeLon=oNeLon,
-            oSwLat=oSwLat,
-            oSwLon=oSwLon,
+            ne_lat,
+            ne_lon,
+            sw_lat,
+            sw_lon,
+            o_ne_lat=o_ne_lat,
+            o_ne_lon=o_ne_lon,
+            o_sw_lat=o_sw_lat,
+            o_sw_lon=o_sw_lon,
             timestamp=timestamp
         )
 
@@ -234,18 +234,18 @@ class map:
         else:
             fence = None
 
-        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         data = self._db.quests_from_db(
-            neLat=neLat,
-            neLon=neLon,
-            swLat=swLat,
-            swLon=swLon,
-            oNeLat=oNeLat,
-            oNeLon=oNeLon,
-            oSwLat=oSwLat,
-            oSwLon=oSwLon,
+            ne_lat=ne_lat,
+            ne_lon=ne_lon,
+            sw_lat=sw_lat,
+            sw_lon=sw_lon,
+            o_ne_lat=o_ne_lat,
+            o_ne_lon=o_ne_lon,
+            o_sw_lat=o_sw_lat,
+            o_sw_lon=o_sw_lon,
             timestamp=timestamp,
             fence=fence
         )
@@ -258,18 +258,18 @@ class map:
 
     @auth_required
     def get_map_mons(self):
-        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         data = self._db.get_mons_in_rectangle(
-            neLat=neLat,
-            neLon=neLon,
-            swLat=swLat,
-            swLon=swLon,
-            oNeLat=oNeLat,
-            oNeLon=oNeLon,
-            oSwLat=oSwLat,
-            oSwLon=oSwLon,
+            neLat=ne_lat,
+            neLon=ne_lon,
+            swLat=sw_lat,
+            swLon=sw_lon,
+            o_ne_lat=o_ne_lat,
+            o_ne_lon=o_ne_lon,
+            o_sw_lat=o_sw_lat,
+            o_sw_lon=o_sw_lon,
             timestamp=timestamp
         )
 
@@ -293,18 +293,18 @@ class map:
 
     @auth_required
     def get_cells(self):
-        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         data = self._db.get_cells_in_rectangle(
-            neLat=neLat,
-            neLon=neLon,
-            swLat=swLat,
-            swLon=swLon,
-            oNeLat=oNeLat,
-            oNeLon=oNeLon,
-            oSwLat=oSwLat,
-            oSwLon=oSwLon,
+            neLat=ne_lat,
+            neLon=ne_lon,
+            swLat=sw_lat,
+            swLon=sw_lon,
+            o_ne_lat=o_ne_lat,
+            o_ne_lon=o_ne_lon,
+            o_sw_lat=o_sw_lat,
+            o_sw_lon=o_sw_lon,
             timestamp=timestamp
         )
 
@@ -320,16 +320,16 @@ class map:
 
     @auth_required
     def get_stops(self):
-        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
         data = self._db.get_stops_in_rectangle(
-            neLat,
-            neLon,
-            swLat,
-            swLon,
-            oNeLat=oNeLat,
-            oNeLon=oNeLon,
-            oSwLat=oSwLat,
-            oSwLon=oSwLon,
+            ne_lat,
+            ne_lon,
+            sw_lat,
+            sw_lon,
+            o_ne_lat=o_ne_lat,
+            o_ne_lon=o_ne_lon,
+            o_sw_lat=o_sw_lat,
+            o_sw_lon=o_sw_lon,
             timestamp=request.args.get("timestamp", None)
         )
         return jsonify(data)
@@ -376,7 +376,5 @@ def get_routepool_coords(coord_list, mode):
     if isinstance(coord_list, RoutePoolEntry):
         prepared_coords = coord_list.subroute
     for location in prepared_coords:
-        route_serialized.append([
-            getCoordFloat(location.lat), getCoordFloat(location.lng)
-        ])
+        route_serialized.append([get_coord_float(location.lat), get_coord_float(location.lng)])
     return (route_serialized)

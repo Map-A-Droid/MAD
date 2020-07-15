@@ -17,13 +17,13 @@ from mapadroid.data_manager import DataManager
 from mapadroid.data_manager.modules.geofence import GeoFence
 from mapadroid.data_manager.modules.routecalc import RouteCalc
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.utils.logging import get_logger, LoggerEnums, routelogger_set_origin
 
 
 logger = get_logger(LoggerEnums.routemanager)
-args = parseArgs()
+args = parse_args()
 
 Relation = collections.namedtuple(
     'Relation', ['other_event', 'distance', 'timedelta'])
@@ -50,15 +50,15 @@ class RouteManagerBase(ABC):
                  path_to_exclude_geofence: GeoFence,
                  routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown",
                  settings: dict = None,
-                 level: bool = False, calctype: str = "route", useS2: bool = False, S2level: int = 15,
+                 level: bool = False, calctype: str = "route", use_s2: bool = False, s2_level: int = 15,
                  joinqueue=None):
         self.logger = get_logger(LoggerEnums.routemanager, name=str(name))
         self.db_wrapper: DbWrapper = db_wrapper
         self.init: bool = init
         self.name: str = name
         self._data_manager = dbm
-        self.useS2: bool = useS2
-        self.S2level: int = S2level
+        self.useS2: bool = use_s2
+        self.S2level: int = s2_level
         self.area_id = area_id
 
         self._coords_unstructured: List[Location] = coords
@@ -99,10 +99,10 @@ class RouteManagerBase(ABC):
             else:
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
-            new_coords = self._route_resource.getJsonRoute(fenced_coords, int(max_radius),
-                                                           max_coords_within_radius,
-                                                           algorithm=calctype, route_name=self.name,
-                                                           in_memory=False)
+            new_coords = self._route_resource.get_json_route(fenced_coords, int(max_radius),
+                                                             max_coords_within_radius,
+                                                             algorithm=calctype, route_name=self.name,
+                                                             in_memory=False)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
@@ -587,7 +587,7 @@ class RouteManagerBase(ABC):
                 next_prio = heapq.heappop(self._prio_queue)
                 next_timestamp = next_prio[0]
                 next_coord = next_prio[1]
-                next_readableTime = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                next_readable_time = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
                 # TODO: Consider if we want to have the following functionality for other modes, too
                 # Problem: delete_seconds_passed = 0 makes sense in _filter_priority_queue_internal,
                 # because it will remove past events only at the moment of prioQ calculation,
@@ -600,18 +600,18 @@ class RouteManagerBase(ABC):
                     if next_timestamp < delete_before:
                         route_logger.warning("Prio event surpassed the maximum backlog time and will be skipped. Make "
                                              "sure you run enough workers or reduce the size of the area! (event was "
-                                             "scheduled for {})", next_readableTime)
+                                             "scheduled for {})", next_readable_time)
                         return self.get_next_location(origin)
                 if self._other_worker_closer_to_prioq(next_coord, origin):
                     self._last_round_prio[origin] = True
                     self._positiontyp[origin] = 1
-                    route_logger.info("Prio event scheduled for {} passed to a closer worker.", next_readableTime)
+                    route_logger.info("Prio event scheduled for {} passed to a closer worker.", next_readable_time)
                     # Let's recurse and find another location
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
                 route_logger.info("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
-                                  next_coord.lng, next_readableTime)
+                                  next_coord.lng, next_readable_time)
                 next_coord = self._check_coord_and_maybe_del(next_coord, origin)
                 if next_coord is None:
                     # Coord was not ok, lets recurse

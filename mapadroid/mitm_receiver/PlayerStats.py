@@ -89,7 +89,7 @@ class PlayerStats(object):
             self.set_level(0)
             return False
 
-    def compare_hour(selfs, timestamp):
+    def compare_hour(self, timestamp):
         if datetime.datetime.fromtimestamp(int(time.time())).strftime('%H') != \
                 datetime.datetime.fromtimestamp(int(timestamp)).strftime('%H'):
             return True

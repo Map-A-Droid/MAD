@@ -11,14 +11,14 @@ def get_lat_lng_offsets_by_distance(distance):
     return lat_offset, lng_offset
 
 
-def get_distance_of_two_points_in_meters(startLat, startLng, destLat, destLng):
+def get_distance_of_two_points_in_meters(start_lat, start_lon, dest_lat, dest_lon):
     # approximate radius of earth in km
     earth_radius = 6373.0
 
-    lat1 = math.radians(startLat)
-    lon1 = math.radians(startLng)
-    lat2 = math.radians(destLat)
-    lon2 = math.radians(destLng)
+    lat1 = math.radians(start_lat)
+    lon1 = math.radians(start_lon)
+    lat2 = math.radians(dest_lat)
+    lon2 = math.radians(dest_lon)
 
     dlon = lon2 - lon1
     dlat = lat2 - lat1
@@ -28,8 +28,7 @@ def get_distance_of_two_points_in_meters(startLat, startLng, destLat, destLng):
 
     distance = earth_radius * circ
 
-    distanceInMeters = distance * 1000
-    return distanceInMeters
+    return distance * 1000
 
 
 def get_middle_of_coord_list(list_of_coords):

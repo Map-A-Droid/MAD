@@ -109,20 +109,20 @@ class PogoWindows:
 
         width, height, _ = col.shape
 
-        gpsError = col[0:int(math.floor(height / 7)), 0:width]
+        gps_error = col[0:int(math.floor(height / 7)), 0:width]
 
-        tempPathColoured = self.temp_dir_path + "/" + str(identifier) + "_gpsError.png"
-        cv2.imwrite(tempPathColoured, gpsError)
+        gps_error_file = self.temp_dir_path + "/" + str(identifier) + "_gpsError.png"
+        cv2.imwrite(gps_error_file, gps_error)
 
         try:
-            with Image.open(tempPathColoured) as col:
+            with Image.open(gps_error_file) as col:
                 width, height = col.size
         except (FileNotFoundError, ValueError) as e:
-            origin_logger.error("Failed opening image {} with exception {}", tempPathColoured, e)
+            origin_logger.error("Failed opening image {} with exception {}", gps_error_file, e)
             return None
         # check for the colour of the GPS error
         with origin_logger.contextualize():
-            return self.__most_present_colour(tempPathColoured, width * height) == (240, 75, 95)
+            return self.__most_present_colour(gps_error_file, width * height) == (240, 75, 95)
 
     def __read_circle_count(self, filename, identifier, ratio, communicator, xcord=False, crop=False,
                             click=False,
@@ -152,19 +152,19 @@ class PogoWindows:
         # detect circles in the image
 
         if not secondratio:
-            radMin = int((width / float(ratio) - 3) / 2)
-            radMax = int((width / float(ratio) + 3) / 2)
+            radius_min = int((width / float(ratio) - 3) / 2)
+            radius_max = int((width / float(ratio) + 3) / 2)
         else:
-            radMin = int((width / float(ratio) - 3) / 2)
-            radMax = int((width / float(secondratio) + 3) / 2)
+            radius_min = int((width / float(ratio) - 3) / 2)
+            radius_max = int((width / float(secondratio) + 3) / 2)
         if canny:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
 
-        origin_logger.debug("__read_circle_count: Detect radius of circle: Min {} / Max {}", radMin, radMax)
+        origin_logger.debug("__read_circle_count: Detect radius of circle: Min {} / Max {}", radius_min, radius_max)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
-                                   minRadius=radMin,
-                                   maxRadius=radMax)
+                                   minRadius=radius_min,
+                                   maxRadius=radius_max)
         circle = 0
         # ensure at least some circles were found
         if circles is not None:
@@ -217,17 +217,17 @@ class PogoWindows:
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
-        radMin = int((width / float(ratio) - 3) / 2)
-        radMax = int((width / float(ratio) + 3) / 2)
+        radius_min = int((width / float(ratio) - 3) / 2)
+        radius_max = int((width / float(ratio) + 3) / 2)
 
         if canny:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
 
-        origin_logger.debug("__readCircleCords: Detect radius of circle: Min {} Max {}", radMin, radMax)
+        origin_logger.debug("__readCircleCords: Detect radius of circle: Min {} Max {}", radius_min, radius_max)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
-                                   minRadius=radMin,
-                                   maxRadius=radMax)
+                                   minRadius=radius_min,
+                                   maxRadius=radius_max)
         # ensure at least some circles were found
         if circles is not None:
             # convert the (x, y) coordinates and radius of the circles to integers
@@ -289,7 +289,7 @@ class PogoWindows:
     def __internal_look_for_button(self, origin, filename, ratiomin, ratiomax, communicator, upper):
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug("lookForButton: Reading lines")
-        disToMiddleMin = None
+        min_distance_to_middle = None
         try:
             screenshot_read = cv2.imread(filename)
             gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
@@ -314,18 +314,18 @@ class PogoWindows:
         edges = cv2.Canny(gray, 50, 200, apertureSize=3)
         # checking for all possible button lines
 
-        maxLineLength = (width / ratiomin) + (width * 0.18)
-        origin_logger.debug("lookForButton: MaxLineLength: {}", maxLineLength)
-        minLineLength = (width / ratiomax) - (width * 0.02)
-        origin_logger.debug("lookForButton: MinLineLength: {}", minLineLength)
+        max_line_length = (width / ratiomin) + (width * 0.18)
+        origin_logger.debug("lookForButton: MaxLineLength: {}", max_line_length)
+        min_line_length = (width / ratiomax) - (width * 0.02)
+        origin_logger.debug("lookForButton: MinLineLength: {}", min_line_length)
 
         kernel = np.ones((2, 2), np.uint8)
         # kernel = np.zeros(shape=(2, 2), dtype=np.uint8)
         edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
 
-        lineCount = 0
+        num_lines = 0
         lines = []
-        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=min_line_length,
                                 maxLineGap=5)
         if lines is None:
             return False
@@ -337,21 +337,21 @@ class PogoWindows:
             line = [line]
             for x1, y1, x2, y2 in line:
 
-                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength \
+                if y1 == y2 and x2 - x1 <= max_line_length and x2 - x1 >= min_line_length \
                         and y1 > height / 3 \
                         and (x2 - x1) / 2 + x1 < width / 2 + 50 and (x2 - x1) / 2 + x1 > width / 2 - 50:
 
-                    lineCount += 1
-                    disToMiddleMin_temp = y1 - (height / 2)
+                    num_lines += 1
+                    min_distance_to_middle_tmp = y1 - (height / 2)
                     if upper:
-                        if disToMiddleMin is None:
-                            disToMiddleMin = disToMiddleMin_temp
+                        if min_distance_to_middle is None:
+                            min_distance_to_middle = min_distance_to_middle_tmp
                             click_y = y1 + 50
                             _last_y = y1
                             _x1 = x1
                             _x2 = x2
                         else:
-                            if disToMiddleMin_temp < disToMiddleMin:
+                            if min_distance_to_middle_tmp < min_distance_to_middle:
                                 click_y = _last_y + ((y1 - _last_y) / 2)
                                 _last_y = y1
                                 _x1 = x1
@@ -363,9 +363,9 @@ class PogoWindows:
                         _x1 = x1
                         _x2 = x2
                     origin_logger.debug("lookForButton: Found Buttonline Nr. {} - Line lenght: {}px Coords - X: {} {} "
-                                        "Y: {} {}", lineCount, x2 - x1, x1, x2, y1, y1)
+                                        "Y: {} {}", num_lines, x2 - x1, x1, x2, y1, y1)
 
-        if 1 < lineCount <= 6:
+        if 1 < num_lines <= 6:
             # recalculate click area for real resolution
             click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) /
                           round(factor, 2))
@@ -375,7 +375,7 @@ class PogoWindows:
             time.sleep(4)
             return True
 
-        elif lineCount > 6:
+        elif num_lines > 6:
             origin_logger.debug('lookForButton: found to much Buttons :) - close it')
             communicator.click(int(width - (width / 7.2)),
                                int(height - (height / 12.19)))
@@ -410,10 +410,10 @@ class PogoWindows:
 
         return np.asarray(sort_lines, dtype=np.int32)
 
-    def __check_raid_line(self, filename, identifier, communicator, leftSide=False, clickinvers=False):
+    def __check_raid_line(self, filename, identifier, communicator, left_side=False, clickinvers=False):
         origin_logger = get_origin_logger(logger, origin=identifier)
         origin_logger.debug("__check_raid_line: Reading lines")
-        if leftSide:
+        if left_side:
             origin_logger.debug("__check_raid_line: Check nearby open ")
         try:
             screenshot_read = cv2.imread(filename)
@@ -438,36 +438,36 @@ class PogoWindows:
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         origin_logger.debug("__check_raid_line: Determined screenshot scale: {} x {}", height, width)
         edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-        maxLineLength = width / 3.30 + width * 0.03
-        origin_logger.debug("__check_raid_line: MaxLineLength: {}", maxLineLength)
-        minLineLength = width / 6.35 - width * 0.03
-        origin_logger.debug("__check_raid_line: MinLineLength: {}", minLineLength)
-        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
+        max_line_length = width / 3.30 + width * 0.03
+        origin_logger.debug("__check_raid_line: MaxLineLength: {}", max_line_length)
+        min_line_length = width / 6.35 - width * 0.03
+        origin_logger.debug("__check_raid_line: MinLineLength: {}", min_line_length)
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=min_line_length,
                                 maxLineGap=2)
         if lines is None:
             return False
         for line in lines:
             for x1, y1, x2, y2 in line:
-                if not leftSide:
-                    if y1 == y2 and (x2 - x1 <= maxLineLength) and (
-                            x2 - x1 >= minLineLength) and x1 > width / 2 and x2 > width / 2 and y1 < (
+                if not left_side:
+                    if y1 == y2 and (x2 - x1 <= max_line_length) and (
+                            x2 - x1 >= min_line_length) and x1 > width / 2 and x2 > width / 2 and y1 < (
                             height / 2):
                         origin_logger.debug("__check_raid_line: Raid-tab is active - Line length: {}px "
                                             "Coords - x: {} {} Y: {} {}", x2 - x1, x1, x2, y1, y2)
                         return True
                 else:
-                    if y1 == y2 and (x2 - x1 <= maxLineLength) and (
-                            x2 - x1 >= minLineLength) and (
+                    if y1 == y2 and (x2 - x1 <= max_line_length) and (
+                            x2 - x1 >= min_line_length) and (
                             (x1 < width / 2 and x2 < width / 2) or (
                             x1 < width / 2 and x2 > width / 2)) and y1 < (
                             height / 2):
                         origin_logger.debug("__check_raid_line: Nearby is active - but not Raid-Tab")
                         if clickinvers:
-                            xRaidTab = int(width - (x2 - x1))
-                            yRaidTab = int(
+                            raidtab_x = int(width - (x2 - x1))
+                            raidtab_y = int(
                                 (int(height / 2) - int(height / 3) + y1) * 0.9)
                             origin_logger.debug('__check_raid_line: open Raid-Tab')
-                            communicator.click(xRaidTab, yRaidTab)
+                            communicator.click(raidtab_x, raidtab_y)
                             time.sleep(3)
                         return True
         origin_logger.debug("__check_raid_line: Not active")
@@ -555,7 +555,7 @@ class PogoWindows:
             origin_logger.info('Nearby already open')
             return True
 
-        if self.__check_raid_line(filename, identifier, communicator, leftSide=True, clickinvers=True):
+        if self.__check_raid_line(filename, identifier, communicator, left_side=True, clickinvers=True):
             origin_logger.info('Raidscreen not running but nearby open')
             return False
 
@@ -567,7 +567,7 @@ class PogoWindows:
         time.sleep(4)
         return False
 
-    def __check_close_present(self, filename, identifier, communicator, radiusratio=12, Xcord=True):
+    def __check_close_present(self, filename, identifier, communicator, radiusratio=12, x_coord=True):
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
             origin_logger.warning("__check_close_present: {} does not exist", filename)
@@ -709,13 +709,13 @@ class PogoWindows:
         gray = screenshot_read[int(height) - int(round(height / 5)):int(height),
                                0: int(int(width) / 4)]
         height_, width_, _ = gray.shape
-        radMin = int((width / float(6.8) - 3) / 2)
-        radMax = int((width / float(6) + 3) / 2)
+        radius_min = int((width / float(6.8) - 3) / 2)
+        radius_max = int((width / float(6) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
         gray = cv2.Canny(gray, 200, 50, apertureSize=3)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
-                                   minRadius=radMin,
-                                   maxRadius=radMax)
+                                   minRadius=radius_min,
+                                   maxRadius=radius_max)
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (pos_x, pos_y, radius) in circles:

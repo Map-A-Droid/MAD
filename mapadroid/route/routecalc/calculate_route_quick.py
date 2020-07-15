@@ -114,7 +114,7 @@ class UnionFind:
 def minimum_spanning_tree(graph):
     tree = []
     subtrees = UnionFind()
-    for W, u, v in sorted((graph[u][v], u, v) for u in graph for v in graph[u]):  # noqa: VNE001
+    for W, u, v in sorted((graph[u][v], u, v) for u in graph for v in graph[u]):  # noqa: VNE001 N806
         if subtrees[u] != subtrees[v]:
             tree.append((u, v, W))
             subtrees.union(u, v)

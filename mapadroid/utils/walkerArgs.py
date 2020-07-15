@@ -21,7 +21,7 @@ def memoize(function):
 
 
 @memoize
-def parseArgs():
+def parse_args():
     defaultconfigfiles = []
     default_tokenfile = None
     if '-cf' not in sys.argv and '--config' not in sys.argv:

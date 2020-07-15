@@ -1,10 +1,10 @@
 import copy
 import time
 import requests
-from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.walkerArgs import parse_args
 
 
-mapping_args = parseArgs()
+mapping_args = parse_args()
 
 
 class LocalAPI(requests.Session):

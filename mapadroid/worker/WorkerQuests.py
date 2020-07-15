@@ -63,8 +63,8 @@ class WorkerQuests(MITMBase):
         MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                           mapping_manager=mapping_manager, routemanager_name=routemanager_name,
                           area_id=area_id,
-                          db_wrapper=db_wrapper, NoOcr=False,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker,
+                          db_wrapper=db_wrapper,
+                          mitm_mapper=mitm_mapper, pogo_win_manager=pogo_window_manager, walker=walker,
                           event=event)
         self.clear_thread = None
         # 0 => None
@@ -390,8 +390,8 @@ class WorkerQuests(MITMBase):
             if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
                 self.logger.info("Processing Stop / Quest...")
 
-                reachedMainMenu = self._check_pogo_main_screen(10, False)
-                if not reachedMainMenu:
+                on_main_menu = self._check_pogo_main_screen(10, False)
+                if not on_main_menu:
                     self._restart_pogo(mitm_mapper=self._mitm_mapper)
 
                 self.logger.info('Open Stop')
@@ -549,8 +549,8 @@ class WorkerQuests(MITMBase):
                                 stop_screen_clear.set()
                                 delete_allowed = True
                         else:
-                            self.logger.error('Deletion not confirmed within {}s for item: {}',
-                                              str(deletion_timeout), item_text)
+                            self.logger.error('Deletion not confirmed within {}s for item: {}', deletion_timeout,
+                                              item_text)
                             stop_screen_clear.set()
                             stop_inventory_clear.set()
                 except UnicodeEncodeError:
@@ -717,8 +717,8 @@ class WorkerQuests(MITMBase):
                 time.sleep(1)
             elif data_received == LatestReceivedType.UNDEFINED:
                 self.logger.info('Getting timeout - or other unknown error. Try again')
-                if not self._checkPogoButton():
-                    self._checkPogoClose(takescreen=True)
+                if not self._check_pogo_button():
+                    self._check_pogo_close(takescreen=True)
 
             to += 1
             if to > 2:
@@ -795,8 +795,8 @@ class WorkerQuests(MITMBase):
             elif (data_received == FortSearchResultTypes.TIME or data_received ==
                   FortSearchResultTypes.OUT_OF_RANGE):
                 self.logger.warning('Softban - return to main screen and open again...')
-                reachedMainMenu = self._check_pogo_main_screen(10, False)
-                if not reachedMainMenu:
+                on_main_menu = self._check_pogo_main_screen(10, False)
+                if not on_main_menu:
                     self._restart_pogo(mitm_mapper=self._mitm_mapper)
                 self._stop_process_time = math.floor(time.time())
                 if self._open_pokestop(self._stop_process_time) is None:

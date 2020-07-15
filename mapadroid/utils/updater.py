@@ -9,14 +9,14 @@ from multiprocessing import Queue, Event
 from queue import Empty
 from threading import RLock, Thread
 from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APK_Type, file_generator, lookup_arch_enum, \
-    APK_Package, APK_Arch, supported_pogo_version, MAD_Packages
+from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APKType, file_generator, lookup_arch_enum, \
+    APKPackage, APKArch, supported_pogo_version, MADPackages
 
 
 logger = get_logger(LoggerEnums.utils)
 
 
-class jobType(Enum):
+class JobType(Enum):
     INSTALLATION = 0
     REBOOT = 1
     RESTART = 2
@@ -27,7 +27,7 @@ class jobType(Enum):
     CHAIN = 99
 
 
-class jobReturn(Enum):
+class JobReturn(Enum):
     UNKNOWN = 0
     SUCCESS = 1
     NOCONNECT = 2
@@ -37,10 +37,10 @@ class jobReturn(Enum):
     NOT_SUPPORTED = 6
 
 
-SUCCESS_STATES = [jobReturn.SUCCESS, jobReturn.NOT_REQUIRED, jobReturn.NOT_SUPPORTED]
+SUCCESS_STATES = [JobReturn.SUCCESS, JobReturn.NOT_REQUIRED, JobReturn.NOT_SUPPORTED]
 
 
-class deviceUpdater(object):
+class DeviceUpdater(object):
     def __init__(self, websocket, args, returning, db, storage_obj: AbstractAPKStorage):
         self._websocket = websocket
         self._update_queue = Queue()
@@ -160,7 +160,7 @@ class deviceUpdater(object):
         time.sleep(10)
         while not self._stop_updater_threads.is_set():
             try:
-                jobstatus = jobReturn.UNKNOWN
+                jobstatus = JobReturn.UNKNOWN
                 try:
                     # item = self._update_queue.get()
                     item = self._update_queue.get_nowait()
@@ -205,7 +205,7 @@ class deviceUpdater(object):
                     logger.error("Breakup job {} on device {} - File/Job: {} - previous job in chain was broken "
                                  "(ID: {})", jobtype, origin, file_, job_id)
                     self.write_status_log(str(job_id), field='status', value='terminated')
-                    self.send_webhook(job_id=job_id, status=jobReturn.TERMINATED)
+                    self.send_webhook(job_id=job_id, status=JobReturn.TERMINATED)
                     self._current_job_device.remove(origin)
 
                     continue
@@ -299,7 +299,7 @@ class deviceUpdater(object):
                             self._globaljoblog[globalid]['laststatus'] = 'not connected'
                             self.write_status_log(str(job_id), field='laststatus', value='not connected')
                             self._globaljoblog[globalid]['lastjobid'] = job_id
-                            jobstatus = jobReturn.NOCONNECT
+                            jobstatus = JobReturn.NOCONNECT
                             time.sleep(5)
 
                         else:
@@ -311,12 +311,12 @@ class deviceUpdater(object):
                                     logger.info('Job {} executed successfully - Device {} - File/Job {} (ID: {})',
                                                 jobtype, origin, file_, job_id)
                                     if self._log[str(job_id)]['status'] == 'not required':
-                                        jobstatus = jobReturn.NOT_REQUIRED
+                                        jobstatus = JobReturn.NOT_REQUIRED
                                     elif self._log[str(job_id)]['status'] == 'not supported':
-                                        jobstatus = jobReturn.NOT_SUPPORTED
+                                        jobstatus = JobReturn.NOT_SUPPORTED
                                     else:
                                         self.write_status_log(str(job_id), field='status', value='success')
-                                        jobstatus = jobReturn.SUCCESS
+                                        jobstatus = JobReturn.SUCCESS
                                     self._globaljoblog[globalid]['laststatus'] = 'success'
                                     self._globaljoblog[globalid]['lastjobid'] = job_id
                                 else:
@@ -326,7 +326,7 @@ class deviceUpdater(object):
                                     self._globaljoblog[globalid]['laststatus'] = 'failure'
                                     self.write_status_log(str(job_id), field='laststatus', value='failure')
                                     self._globaljoblog[globalid]['lastjobid'] = job_id
-                                    jobstatus = jobReturn.FAILURE
+                                    jobstatus = JobReturn.FAILURE
 
                                 # start worker
                                 self._websocket.set_job_deactivated(origin)
@@ -338,11 +338,11 @@ class deviceUpdater(object):
                                 self._globaljoblog[globalid]['laststatus'] = 'interrupted'
                                 self.write_status_log(str(job_id), field='status', value='interrupted')
                                 self._globaljoblog[globalid]['lastjobid'] = job_id
-                                jobstatus = jobReturn.FAILURE
+                                jobstatus = JobReturn.FAILURE
 
                     # check jobstatus and readd if possible
                     if jobstatus not in SUCCESS_STATES and \
-                            (jobstatus == jobReturn.NOCONNECT and self._args.job_restart_notconnect == 0):
+                            (jobstatus == JobReturn.NOCONNECT and self._args.job_restart_notconnect == 0):
                         logger.error("Job for {} (File/Job: {} - Type {}) failed 3 times in row - aborting (ID: {})",
                                      origin, file_, jobtype, job_id)
                         self._globaljoblog[globalid]['laststatus'] = 'faulty'
@@ -360,7 +360,7 @@ class deviceUpdater(object):
                                     file_, jobtype, job_id)
                         self.restart_job(job_id=job_id)
 
-                    elif jobstatus == jobReturn.NOCONNECT and self._args.job_restart_notconnect > 0:
+                    elif jobstatus == JobReturn.NOCONNECT and self._args.job_restart_notconnect > 0:
                         logger.error("Job for {} (File/Job: {} - Type {}) failed 3 times in row - requeued it (ID: {})",
                                      origin, file_, jobtype, job_id)
                         processtime = datetime.timestamp(
@@ -400,7 +400,7 @@ class deviceUpdater(object):
         self._globaljoblog[globalid]['laststatus'] = None
         self._globaljoblog[globalid]['lastjobend'] = None
 
-        if jobType[job_type.split('.')[1]] == jobType.CHAIN:
+        if JobType[job_type.split('.')[1]] == JobType.CHAIN:
 
             for subjob in self._commands[job]:
                 logger.debug2(subjob)
@@ -478,8 +478,8 @@ class deviceUpdater(object):
     @logger.catch()
     def start_job_type(self, item, jobtype, ws_conn):
         try:
-            jobtype = jobType[jobtype.split('.')[1]]
-            if jobtype == jobType.INSTALLATION:
+            jobtype = JobType[jobtype.split('.')[1]]
+            if jobtype == JobType.INSTALLATION:
                 file_ = self._log[str(item)]['file']
                 if str(file_).lower().endswith(".apk"):
                     returning = ws_conn.install_apk(300, filepath=os.path.join(self._args.upload_path, file_))
@@ -509,23 +509,23 @@ class deviceUpdater(object):
                         logger.warning('Unable to determine version for {}: {}', self._log[str(item)]['file'],
                                        package_ver_job)
                         return False
-                package = getattr(APK_Type, APK_Package(package_raw).name)
+                package = getattr(APKType, APKPackage(package_raw).name)
                 architecture = lookup_arch_enum(architecture_raw)
-                package_all: MAD_Packages = self._storage_obj.get_current_package_info(package)
+                package_all: MADPackages = self._storage_obj.get_current_package_info(package)
                 if package_all is None:
                     logger.warning('No MAD APK for {} [{}]', package, architecture.name)
                     return False
                 try:
                     mad_apk = package_all[architecture]
                 except KeyError:
-                    architecture = APK_Arch.noarch
+                    architecture = APKArch.noarch
                     mad_apk = package_all[architecture.noarch]
 
                 if mad_apk.filename is None:
                     logger.warning('No MAD APK for {} [{}]', package, architecture.name)
                     return False
                 # Validate it is supported
-                if package == APK_Type.pogo:
+                if package == APKType.pogo:
                     if not supported_pogo_version(architecture, mad_apk.version):
                         self.write_status_log(str(item), field='status', value='not supported')
                         return True
@@ -545,15 +545,15 @@ class deviceUpdater(object):
                         returning = ws_conn.install_apk(300, data=apk_file)
                     return returning if not 'RemoteGpsController'.lower() in str(
                         self._log[str(item)]['file']).lower() else True
-            elif jobtype == jobType.REBOOT:
+            elif jobtype == JobType.REBOOT:
                 return ws_conn.reboot()
-            elif jobtype == jobType.RESTART:
+            elif jobtype == JobType.RESTART:
                 return ws_conn.restart_app("com.nianticlabs.pokemongo")
-            elif jobtype == jobType.STOP:
+            elif jobtype == JobType.STOP:
                 return ws_conn.stop_app("com.nianticlabs.pokemongo")
-            elif jobtype == jobType.START:
+            elif jobtype == JobType.START:
                 return ws_conn.start_app("com.nianticlabs.pokemongo")
-            elif jobtype == jobType.PASSTHROUGH:
+            elif jobtype == JobType.PASSTHROUGH:
                 command = self._log[str(item)]['file']
                 returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
                 self.write_status_log(str(item), field='returning', value=returning)
@@ -583,7 +583,7 @@ class deviceUpdater(object):
             return
 
         try:
-            if jobReturn(status).name not in self._args.job_dt_send_type.split(
+            if JobReturn(status).name not in self._args.job_dt_send_type.split(
                     '|') or not self._args.job_dt_wh:
                 return
 
@@ -602,7 +602,7 @@ class deviceUpdater(object):
             embed.add_embed_field(name='Origin', value=origin)
             embed.add_embed_field(name='Jobname', value=file_)
             embed.add_embed_field(name='Retuning', value=returning)
-            embed.add_embed_field(name='Status', value=jobReturn(status).name)
+            embed.add_embed_field(name='Status', value=JobReturn(status).name)
             embed.add_embed_field(name='Next run',
                                   value=str(datetime.fromtimestamp(
                                       processtime) if processtime is not None else "-"))
@@ -643,7 +643,7 @@ class deviceUpdater(object):
                     self._globaljoblog[globalid]['redoonerror'] = autocommand.get('redoonerror', False)
 
                     self.preadd_job(origin=origin, job=job, job_id=int(time.time()),
-                                    type=str(jobType.CHAIN))
+                                    type=str(JobType.CHAIN))
                     # get a unique id !
                     time.sleep(1)
         else:

@@ -541,15 +541,15 @@ class DbPogoProtoSubmit:
                         gender = None
                         costume = None
 
-                    raidendSec = int(gym["gym_details"]["raid_info"]["raid_end"] / 1000)
-                    raidspawnSec = int(gym["gym_details"]["raid_info"]["raid_spawn"] / 1000)
-                    raidbattleSec = int(gym["gym_details"]["raid_info"]["raid_battle"] / 1000)
+                    raid_end_sec = int(gym["gym_details"]["raid_info"]["raid_end"] / 1000)
+                    raid_spawn_sec = int(gym["gym_details"]["raid_info"]["raid_spawn"] / 1000)
+                    raid_battle_sec = int(gym["gym_details"]["raid_info"]["raid_battle"] / 1000)
 
                     raidend_date = datetime.utcfromtimestamp(
-                        float(raidendSec)).strftime("%Y-%m-%d %H:%M:%S")
-                    raidspawn_date = datetime.utcfromtimestamp(float(raidspawnSec)).strftime(
+                        float(raid_end_sec)).strftime("%Y-%m-%d %H:%M:%S")
+                    raidspawn_date = datetime.utcfromtimestamp(float(raid_spawn_sec)).strftime(
                         "%Y-%m-%d %H:%M:%S")
-                    raidstart_date = datetime.utcfromtimestamp(float(raidbattleSec)).strftime(
+                    raidstart_date = datetime.utcfromtimestamp(float(raid_battle_sec)).strftime(
                         "%Y-%m-%d %H:%M:%S")
 
                     is_exclusive = gym["gym_details"]["raid_info"]["is_exclusive"]

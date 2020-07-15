@@ -23,9 +23,9 @@ from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 logger = get_logger(LoggerEnums.madmin)
 
 
-class control(object):
+class MADminControl(object):
     def __init__(self, db_wrapper: DbWrapper, args, mapping_manager: MappingManager, websocket: WebsocketServer, logger,
-                 app, deviceUpdater):
+                 app, device_updater):
         self._db: DbWrapper = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
@@ -33,7 +33,7 @@ class control(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self._adb_connect = ADBConnect(self._args)
-        self._device_updater = deviceUpdater
+        self._device_updater = device_updater
 
         self._mapping_manager: MappingManager = mapping_manager
 

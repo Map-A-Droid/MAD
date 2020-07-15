@@ -61,7 +61,7 @@ def trash_image_matching(origin, screen_img, full_screen):
 
         resized = imutils.resize(
             trash, width=int(trash.shape[1] * scale))
-        (tH, tW) = resized.shape[:2]
+        (trash_heigh, trash_width) = resized.shape[:2]
 
         last_y_coord = 0
         res = cv2.matchTemplate(screen, resized, cv2.TM_CCOEFF_NORMED)
@@ -73,8 +73,8 @@ def trash_image_matching(origin, screen_img, full_screen):
             if full_screen:
                 screen_height_max = height
             if pt[0] > width / 4 * 3 and pt[1] < screen_height_max:
-                x_coord = int(pt[0] + tW / 2)
-                y_coord = int(pt[1] + tH / 2)
+                x_coord = int(pt[0] + trash_width / 2)
+                y_coord = int(pt[1] + trash_heigh / 2)
 
                 if last_y_coord > 0:
                     if last_y_coord + 100 > y_coord or last_y_coord - 100 > y_coord:

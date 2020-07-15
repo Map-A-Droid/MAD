@@ -1,19 +1,19 @@
 from flask import render_template, Response
 import json
-from mapadroid.mad_apk import (AbstractAPKStorage, get_apk_status, is_newer_version, MAD_APKS, APK_Type, APK_Arch,
+from mapadroid.mad_apk import (AbstractAPKStorage, get_apk_status, is_newer_version, MADapks, APKType, APKArch,
                                lookup_arch_enum, lookup_apk_enum)
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import MappingManager
 from mapadroid.utils import global_variables
 
 
-class apk_manager(object):
-    def __init__(self, db, args, app, mapping_manager: MappingManager, deviceUpdater, storage_obj: AbstractAPKStorage):
+class APKManager(object):
+    def __init__(self, db, args, app, mapping_manager: MappingManager, device_updater, storage_obj: AbstractAPKStorage):
         self._db = db
         self._args = args
         self._app = app
         self._mapping_manager = mapping_manager
-        self._deviceUpdater = deviceUpdater
+        self._device_updater = device_updater
         self.storage_obj = storage_obj
 
     def add_route(self):
@@ -41,9 +41,9 @@ class apk_manager(object):
         sql = "SELECT `usage`, `arch`, `version`, `download_status`, `last_checked`\n" \
               "FROM `mad_apk_autosearch`"
         autosearch_data = self._db.autofetch_all(sql)
-        apk_info: MAD_APKS = get_apk_status(self.storage_obj)
-        package: APK_Type = None
-        arch: APK_Arch = None
+        apk_info: MADapks = get_apk_status(self.storage_obj)
+        package: APKType = None
+        arch: APKArch = None
         for row in autosearch_data:
             arch = lookup_arch_enum(row['arch'])
             package = lookup_apk_enum(row['usage'])
@@ -55,7 +55,7 @@ class apk_manager(object):
                 curr_info = apk_info[package][arch]
             except KeyError:
                 curr_info = None
-            if package == APK_Type.pogo:
+            if package == APKType.pogo:
                 if not curr_info or is_newer_version(row['version'], curr_info.version):
                     update_info[composite_key]['update'] = 1
             else:

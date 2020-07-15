@@ -16,8 +16,8 @@ class RouteManagerFactory:
                          mode: WorkerType = WorkerType.UNDEFINED,
                          init: bool = False, name: str = "unknown", settings=None,
                          coords_spawns_known: bool = False,
-                         level: bool = False, calctype: str = "route", useS2: bool = False,
-                         S2level: int = 15, joinqueue=None, include_event_id=None):
+                         level: bool = False, calctype: str = "route", use_s2: bool = False,
+                         s2_level: int = 15, joinqueue=None, include_event_id=None):
 
         if mode == WorkerType.RAID_MITM.value:
             route_manager = RouteManagerRaids(db_wrapper, dbm, area_id, coords, max_radius,
@@ -25,7 +25,7 @@ class RouteManagerFactory:
                                               path_to_include_geofence, path_to_exclude_geofence, routefile,
                                               mode=mode, settings=settings, init=init, name=name,
                                               joinqueue=joinqueue,
-                                              useS2=useS2, S2level=S2level
+                                              use_s2=use_s2, s2_level=s2_level
                                               )
         elif mode == WorkerType.MON_MITM.value:
             route_manager = RouteManagerMon(db_wrapper, dbm, area_id, coords, max_radius,

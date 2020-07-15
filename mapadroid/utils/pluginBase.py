@@ -135,14 +135,14 @@ class PluginCollection(object):
 
         zipobj.close()
 
-        with open(plugin_file_temp, mode='rb') as tmpFile:
-            fileContent = tmpFile.read()
+        with open(plugin_file_temp, mode='rb') as plugin_zip:
+            plugin_contents = plugin_zip.read()
 
-        plugin_dict = {"plugin_name": plugin_name, "plugin_content": base64.b64encode(fileContent).decode('utf-8'),
+        plugin_dict = {"plugin_name": plugin_name, "plugin_content": base64.b64encode(plugin_contents).decode('utf-8'),
                        "plugin_version": version}
 
-        with open(plugin_file, 'w') as exportFile:
-            exportFile.write(json.dumps(plugin_dict))
+        with open(plugin_file, 'w') as plugin_export:
+            plugin_export.write(json.dumps(plugin_dict))
 
         os.remove(plugin_file_temp)
 

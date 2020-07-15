@@ -61,11 +61,3 @@ def transpose(sol_new):
     sol_new[n1: n1 + n3 - n2 + 1] = sol_new[n2: n3 + 1].copy()
     sol_new[n3 - n2 + 1 + n1: n3 + 1] = tmplist.copy()
     return sol_new
-
-
-def accept(cost_new, cost_current, T):
-    # If new cost better than current, accept it
-    # If new cost not better than current, accept it by probability P(dE)
-    # P(dE) = exp(dE/(kT)), defined by Metropolis
-    return (cost_new <= cost_current or
-            np.random.rand() <= np.exp(-(cost_new - cost_current) / T))

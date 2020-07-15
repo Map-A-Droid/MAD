@@ -95,8 +95,3 @@ def get_min_period():
 
 def get_now_timestamp():
     return datetime.datetime.now().timestamp()
-
-
-def ConvertDateTimeToLocal(timestampValue):
-    offset = datetime.datetime.now() - datetime.datetime.utcnow()
-    return datetime.datetime.fromtimestamp(timestampValue) + offset + datetime.timedelta(seconds=1)

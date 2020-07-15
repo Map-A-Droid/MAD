@@ -8,12 +8,12 @@ from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
 
 logger = get_logger(LoggerEnums.mitm)
-args = parseArgs()
+args = parse_args()
 
 
 class MitmMapperManager(SyncManager):

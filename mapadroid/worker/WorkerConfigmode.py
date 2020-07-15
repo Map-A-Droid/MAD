@@ -169,15 +169,15 @@ class WorkerConfigmode(AbstractWorker):
     def _stop_pogo(self):
         attempts = 0
         stop_result = self._communicator.stop_app("com.nianticlabs.pokemongo")
-        pogoTopmost = self._communicator.is_pogo_topmost()
-        while pogoTopmost:
+        pogo_topmost = self._communicator.is_pogo_topmost()
+        while pogo_topmost:
             attempts += 1
             if attempts > 10:
                 return False
             stop_result = self._communicator.stop_app(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
-            pogoTopmost = self._communicator.is_pogo_topmost()
+            pogo_topmost = self._communicator.is_pogo_topmost()
         return stop_result
 
     def _start_pogo(self):

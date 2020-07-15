@@ -3,7 +3,7 @@ import flask
 import io
 from threading import Thread
 from .apkHandler import APKHandler
-from mapadroid.mad_apk import APK_Arch, APK_Type, stream_package, APKWizard, get_apk_status, MAD_APKS, \
+from mapadroid.mad_apk import APKArch, APKType, stream_package, APKWizard, get_apk_status, MADapks, \
     PackageImporter, WizardError
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
@@ -20,12 +20,12 @@ class APIMadAPK(APKHandler):
             1].lower() in global_variables.MAD_APK_ALLOWED_EXTENSIONS
 
     @auth_required
-    def get(self, apk_type: APK_Type, apk_arch: APK_Arch):
+    def get(self, apk_type: APKType, apk_arch: APKArch):
         if flask.request.url.split('/')[-1] == 'download':
             return stream_package(self.dbc, self.storage_obj, apk_type, apk_arch)
         else:
             data = get_apk_status(self.storage_obj)
-            if apk_type is None and apk_arch is APK_Arch.noarch:
+            if apk_type is None and apk_arch is APKArch.noarch:
                 return (get_apk_status(self.storage_obj), 200)
             else:
                 try:
@@ -34,7 +34,7 @@ class APIMadAPK(APKHandler):
                     return (data[apk_type], 200)
 
     @auth_required
-    def post(self, apk_type: APK_Type, apk_arch: APK_Arch):
+    def post(self, apk_type: APKType, apk_arch: APKArch):
         is_upload: bool = False
         apk: io.BytesIO = None
         filename: str = None
@@ -52,7 +52,7 @@ class APIMadAPK(APKHandler):
         if is_upload:
             if filename is None:
                 return ('filename must be specified', 406)
-            elems: MAD_APKS = get_apk_status(self.storage_obj)
+            elems: MADapks = get_apk_status(self.storage_obj)
             try:
                 elems[apk_type][apk_arch]
             except KeyError:
@@ -105,7 +105,7 @@ class APIMadAPK(APKHandler):
         return (None, 500)
 
     @auth_required
-    def delete(self, apk_type: APK_Type, apk_arch: APK_Arch):
+    def delete(self, apk_type: APKType, apk_arch: APKArch):
         if apk_type is None:
             return (None, 404)
         resp = self.storage_obj.delete_file(apk_type, apk_arch)

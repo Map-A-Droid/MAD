@@ -1,13 +1,13 @@
 from typing import Dict, Optional
-from .apk_enums import APK_Arch, APK_Type
+from .apk_enums import APKArch, APKType
 
 
-class MAD_Package(object):
+class MADPackage(object):
     """ Package definition for MAD
 
     Args:
-        package (APK_Type): Package
-        architecture (APK_Arch): Architecture of the package
+        package (APKType): Package
+        architecture (APKArch): Architecture of the package
 
     Attributes:
         file_id (int): ID from filestore_meta if saved to the database
@@ -23,7 +23,7 @@ class MAD_Package(object):
     size: Optional[int] = None
     version: Optional[str] = None
 
-    def __init__(self, package: APK_Type, architecture: APK_Arch, **kwargs):
+    def __init__(self, package: APKType, architecture: APKArch, **kwargs):
         self.architecture = architecture
         self.package = package
         for key, value in kwargs.items():
@@ -45,9 +45,9 @@ class MAD_Package(object):
         return str(self.get_package(backend=False))
 
 
-class MAD_Packages(Dict[APK_Arch, MAD_Package]):
+class MADPackages(Dict[APKArch, MADPackage]):
     pass
 
 
-class MAD_APKS(Dict[APK_Type, MAD_Packages]):
+class MADapks(Dict[APKType, MADPackages]):
     pass

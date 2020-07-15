@@ -9,13 +9,13 @@ from mapadroid.utils.s2Helper import S2Helper
 
 
 class ClusteringHelper:
-    def __init__(self, max_radius, max_count_per_circle, max_timedelta_seconds, useS2: bool = False,
-                 S2level: int = 30):
+    def __init__(self, max_radius, max_count_per_circle, max_timedelta_seconds, use_s2: bool = False,
+                 s2_level: int = 30):
         self.max_radius = max_radius
         self.max_count_per_circle = max_count_per_circle
         self.max_timedelta_seconds = max_timedelta_seconds
-        self.useS2 = useS2
-        self.S2level = S2level
+        self.useS2 = use_s2
+        self.S2level = s2_level
 
     def _get_relations_in_range_within_time(self, queue, max_radius):
         relations = {}
@@ -70,7 +70,7 @@ class ClusteringHelper:
         highest_timedelta = 0
         if self.useS2:
             region = s2sphere.CellUnion(
-                S2Helper.get_S2cells_from_circle(middle.lat, middle.lng, self.max_radius, self.S2level))
+                S2Helper.get_s2cells_from_circle(middle.lat, middle.lng, self.max_radius, self.S2level))
 
         for event_relations in relations:
             # exclude previously clustered events...

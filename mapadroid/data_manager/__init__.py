@@ -66,7 +66,7 @@ class DataManager(object):
 
     def get_resource(self, section: str, identifier: Optional[int] = None, **kwargs) -> Resource:
         if section == 'area':
-            return modules.AreaFactory(self, identifier=identifier)
+            return modules.area_factory(self, identifier=identifier)
         try:
             return modules.MAPPINGS[section](self, identifier=identifier)
         except KeyError:
@@ -92,7 +92,7 @@ class DataManager(object):
         table = None
         primary_key = None
         if section == 'area':
-            resource_class = modules.AreaFactory
+            resource_class = modules.area_factory
             table = modules.Area.table
             primary_key = modules.Area.primary_key
             default_sort = 'name'

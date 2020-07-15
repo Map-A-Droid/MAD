@@ -1,7 +1,7 @@
 import os
 import re
 import time
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa: N817
 from enum import Enum
 from typing import Optional, List, Tuple
 import numpy as np
@@ -22,7 +22,7 @@ class LoginType(Enum):
 
 
 class WordToScreenMatching(object):
-    def __init__(self, communicator, pogoWindowManager, origin, resocalc, mapping_mananger: MappingManager, args):
+    def __init__(self, communicator, pogo_win_manager, origin, resocalc, mapping_mananger: MappingManager, args):
         self._id = origin
         self._logger = get_origin_logger(logger, origin=origin)
         self._applicationArgs = args
@@ -37,7 +37,7 @@ class WordToScreenMatching(object):
         self._screenshot_y_offset: int = self.get_devicesettings_value('screenshot_y_offset', 0)
         self._nextscreen: ScreenType = ScreenType.UNDEFINED
 
-        self._pogoWindowManager = pogoWindowManager
+        self._pogoWindowManager = pogo_win_manager
         self._communicator = communicator
         self._resocalc = resocalc
         self._logger.info("Starting Screendetector")
@@ -93,7 +93,7 @@ class WordToScreenMatching(object):
 
         if self._logintype == LoginType.ptc:
             self._logger.info('Using PTC Account: {}',
-                              self.censor_account(self._PTC_accounts[self._accountindex - 1].username, isPTC=True))
+                              self.censor_account(self._PTC_accounts[self._accountindex - 1].username, is_ptc=True))
             return self._PTC_accounts[self._accountindex - 1]
         else:
             self._logger.info('Using GGL Account: {}',
@@ -149,8 +149,8 @@ class WordToScreenMatching(object):
             self._logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:
-            if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                        delayAfter=2):
+            if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                         delay_after=2):
                 self._logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR, global_dict, diff
 
@@ -462,7 +462,7 @@ class WordToScreenMatching(object):
         self._logger.info("Processing Screen: {}", str(ScreenType(screentype)))
         return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
-    def checkQuest(self, screenpath: str) -> ScreenType:
+    def check_quest(self, screenpath: str) -> ScreenType:
         if screenpath is None or len(screenpath) == 0:
             self._logger.error("Invalid screen path: {}", screenpath)
             return ScreenType.ERROR
@@ -555,9 +555,9 @@ class WordToScreenMatching(object):
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
 
-    def censor_account(self, emailaddress, isPTC=False):
+    def censor_account(self, emailaddress, is_ptc=False):
         # PTC account
-        if isPTC:
+        if is_ptc:
             return (emailaddress[0:2] + "***" + emailaddress[-2:])
         # GGL - make sure we have @ there.
         # If not it could be wrong match, so returning original
@@ -591,9 +591,9 @@ class WordToScreenMatching(object):
         return os.path.join(
             self._applicationArgs.temp_path, screenshot_filename)
 
-    def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0, errorscreen: bool = False):
+    def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
         self._logger.debug("Taking screenshot...")
-        time.sleep(delayBefore)
+        time.sleep(delay_before)
 
         # TODO: area settings for jpg/png and quality?
         screenshot_type: ScreenshotType = ScreenshotType.JPEG
@@ -612,5 +612,5 @@ class WordToScreenMatching(object):
         else:
             self._logger.debug("Success retrieving screenshot")
             self._lastScreenshotTaken = time.time()
-            time.sleep(delayAfter)
+            time.sleep(delay_after)
             return True

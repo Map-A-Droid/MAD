@@ -19,7 +19,7 @@ logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
-class config(object):
+class MADminConfig(object):
     def __init__(self, db, args, logger, app, mapping_manager: MappingManager, data_manager):
         self._db = db
         self._args = args

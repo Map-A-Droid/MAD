@@ -60,8 +60,8 @@ class WebhookWorker:
 
         return False
 
-    def __send_webhook(self, payload):
-        if len(payload) == 0:
+    def __send_webhook(self, payloads):
+        if len(payloads) == 0:
             logger.debug2("Payload empty. Skip sending to webhook.")
             return
 
@@ -72,30 +72,30 @@ class WebhookWorker:
         current_wh_num = 1
 
         for webhook in webhooks:
-            payloadToSend = []
-            subTypes = "all"
+            payload_to_send = []
+            sub_types = "all"
             url = webhook.strip()
 
             if url.startswith("["):
-                endIndex = webhook.rindex("]")
-                endIndex += 1
-                subTypes = webhook[:endIndex]
-                url = url[endIndex:]
+                end_index = webhook.rindex("]")
+                end_index += 1
+                sub_types = webhook[:end_index]
+                url = url[end_index:]
 
-                for payloadData in payload:
-                    if payloadData["type"] in subTypes:
-                        payloadToSend.append(payloadData)
+                for payload in payloads:
+                    if payload["type"] in sub_types:
+                        payload_to_send.append(payload)
             else:
-                payloadToSend = payload
+                payload_to_send = payloads
 
-            if len(payloadToSend) == 0:
-                logger.debug2("Payload empty. Skip sending to: {} (Filter: {})", url, subTypes)
+            if len(payload_to_send) == 0:
+                logger.debug2("Payload empty. Skip sending to: {} (Filter: {})", url, sub_types)
                 continue
             else:
-                logger.debug2("Sending to webhook url: {} (Filter: {})", url, subTypes)
+                logger.debug2("Sending to webhook url: {} (Filter: {})", url, sub_types)
 
             payload_list = self.__payload_chunk(
-                payloadToSend, self.__args.webhook_max_payload_size
+                payload_to_send, self.__args.webhook_max_payload_size
             )
 
             current_pl_num = 1

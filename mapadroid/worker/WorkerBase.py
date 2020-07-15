@@ -33,8 +33,7 @@ logger = get_logger(LoggerEnums.worker)
 class WorkerBase(AbstractWorker):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
-                 area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogoWindowManager: PogoWindows,
-                 NoOcr: bool = True,
+                 area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogo_win_manager: PogoWindows,
                  walker=None, event=None):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._mapping_manager: MappingManager = mapping_manager
@@ -65,7 +64,7 @@ class WorkerBase(AbstractWorker):
         self._screen_y = 0
         self._lastStart = ""
         self._geofix_sleeptime = 0
-        self._pogoWindowManager = pogoWindowManager
+        self._pogoWindowManager = pogo_win_manager
         self._waittime_without_delays = 0
         self._transporttype = 0
         self._not_injected_count: int = 0
@@ -732,13 +731,13 @@ class WorkerBase(AbstractWorker):
         self._communicator.click(int(x), int(y))
         time.sleep(10)
         returncode: ScreenType = ScreenType.UNDEFINED
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                    delayAfter=2):
+        if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                     delay_after=2):
             self.logger.error("_check_windows: Failed getting screenshot")
             return ScreenType.ERROR
 
         while not returncode == ScreenType.POGO and not self._stop_worker_event.isSet():
-            returncode = self._WordToScreenMatching.checkQuest(self.get_screenshot_path())
+            returncode = self._WordToScreenMatching.check_quest(self.get_screenshot_path())
 
             if returncode == ScreenType.QUEST:
                 questcounter += 1
@@ -765,8 +764,8 @@ class WorkerBase(AbstractWorker):
                     self._resocalc.get_coords_quest_menu(self)[1])
             self._communicator.click(int(x), int(y))
             time.sleep(3)
-            self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                 delayAfter=2)
+            self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                  delay_after=2)
             if questloop > 5:
                 self.logger.warning("Give up - maybe research screen is there...")
                 return ScreenType.POGO
@@ -817,15 +816,15 @@ class WorkerBase(AbstractWorker):
     def _stop_pogo(self):
         attempts = 0
         stop_result = self._communicator.stop_app("com.nianticlabs.pokemongo")
-        pogoTopmost = self._communicator.is_pogo_topmost()
-        while pogoTopmost:
+        pogo_topmost = self._communicator.is_pogo_topmost()
+        while pogo_topmost:
             attempts += 1
             if attempts > 10:
                 return False
             stop_result = self._communicator.stop_app(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
-            pogoTopmost = self._communicator.is_pogo_topmost()
+            pogo_topmost = self._communicator.is_pogo_topmost()
         return stop_result
 
     def _reboot(self, mitm_mapper: Optional[MitmMapper] = None):
@@ -864,23 +863,9 @@ class WorkerBase(AbstractWorker):
         else:
             return False
 
-    def _reopenRaidTab(self):
-        self.logger.debug4("Attempting to retrieve screenshot before checking raidtab")
-        if not self._takeScreenshot():
-            self.logger.error("reopenRaidTab: Failed retrieving screenshot before checking for closebutton")
-            return
-        self.logger.debug2("Checking close except nearby...")
-        pathToPass = self.get_screenshot_path()
-        self.logger.debug2("Path: {}", str(pathToPass))
-        self._pogoWindowManager.check_close_except_nearby_button(
-            pathToPass, self._origin, self._communicator, 'True')
-        self.logger.debug2("Getting to raidscreen...")
-        self._getToRaidscreen(3)
-        time.sleep(1)
-
     def _get_trash_positions(self, full_screen=False):
         self.logger.debug2("_get_trash_positions: Get_trash_position.")
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+        if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1)):
             self.logger.debug("_get_trash_positions: Failed getting screenshot")
             return None
 
@@ -894,10 +879,10 @@ class WorkerBase(AbstractWorker):
 
         return trashes
 
-    def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0, errorscreen: bool = False):
+    def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
         self.logger.debug2("Taking screenshot...")
-        time.sleep(delayBefore)
-        compareToTime = time.time() - self._lastScreenshotTaken
+        time.sleep(delay_before)
+        time_since_last_screenshot = time.time() - self._lastScreenshotTaken
         self.logger.debug4("Last screenshot taken: {}", str(self._lastScreenshotTaken))
 
         # TODO: area settings for jpg/png and quality?
@@ -910,7 +895,7 @@ class WorkerBase(AbstractWorker):
         take_screenshot = self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
                                                             screenshot_quality, screenshot_type)
 
-        if self._lastScreenshotTaken and compareToTime < 0.5:
+        if self._lastScreenshotTaken and time_since_last_screenshot < 0.5:
             self.logger.error("screenshot taken recently, returning immediately")
             return True
 
@@ -920,19 +905,19 @@ class WorkerBase(AbstractWorker):
         else:
             self.logger.debug("Success retrieving screenshot")
             self._lastScreenshotTaken = time.time()
-            time.sleep(delayAfter)
+            time.sleep(delay_after)
             return True
 
-    def _checkPogoFreeze(self):
+    def _check_pogo_freeze(self):
         self.logger.debug("Checking if pogo froze")
-        if not self._takeScreenshot():
+        if not self._take_screenshot():
             self.logger.debug("failed retrieving screenshot")
             return
-        from mapadroid.utils.image_utils import getImageHash
-        screenHash = getImageHash(os.path.join(self.get_screenshot_path()))
+        from mapadroid.utils.image_utils import get_image_hash
+        screen_hash = get_image_hash(os.path.join(self.get_screenshot_path()))
         self.logger.debug4("Old Hash: {}", self._lastScreenHash)
-        self.logger.debug4("New Hash: {}", screenHash)
-        if hamming_distance(str(self._lastScreenHash), str(screenHash)) < 4 and str(
+        self.logger.debug4("New Hash: {}", screen_hash)
+        if hamming_distance(str(self._lastScreenHash), str(screen_hash)) < 4 and str(
                 self._lastScreenHash) != '0':
             self.logger.debug("New and old Screenshoot are the same - no processing")
             self._lastScreenHashCount += 1
@@ -941,19 +926,19 @@ class WorkerBase(AbstractWorker):
                 self._lastScreenHashCount = 0
                 self._restart_pogo()
         else:
-            self._lastScreenHash = screenHash
+            self._lastScreenHash = screen_hash
             self._lastScreenHashCount = 0
 
-            self.logger.debug("_checkPogoFreeze: done")
+            self.logger.debug("_check_pogo_freeze: done")
 
-    def _check_pogo_main_screen(self, maxAttempts, again=False):
+    def _check_pogo_main_screen(self, max_attempts, again=False):
         self.logger.debug("_check_pogo_main_screen: Trying to get to the Mainscreen with {} max attempts...",
-                          maxAttempts)
-        pogoTopmost = self._communicator.is_pogo_topmost()
-        if not pogoTopmost:
+                          max_attempts)
+        pogo_topmost = self._communicator.is_pogo_topmost()
+        if not pogo_topmost:
             return False
 
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+        if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1)):
             if again:
                 self.logger.error("_check_pogo_main_screen: failed getting a screenshot again")
                 return False
@@ -967,10 +952,10 @@ class WorkerBase(AbstractWorker):
         self.logger.debug("_check_pogo_main_screen: checking mainscreen")
         while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._origin):
             self.logger.warning("_check_pogo_main_screen: not on Mainscreen...")
-            if attempts == maxAttempts:
-                # could not reach raidtab in given maxAttempts
+            if attempts == max_attempts:
+                # could not reach raidtab in given max_attempts
                 self.logger.error("_check_pogo_main_screen: Could not get to Mainscreen within {} attempts",
-                                  maxAttempts)
+                                  max_attempts)
                 return False
 
             found = self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path(),
@@ -993,7 +978,7 @@ class WorkerBase(AbstractWorker):
 
             self.logger.debug("_check_pogo_main_screen: Previous checks found pop ups: {}", found)
 
-            self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1))
+            self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1))
 
             attempts += 1
         self.logger.debug("_check_pogo_main_screen: done")
@@ -1001,11 +986,11 @@ class WorkerBase(AbstractWorker):
 
     def _check_pogo_main_screen_tr(self):
         self.logger.debug("_check_pogo_main_screen_tr: Trying to get to the Main screen")
-        pogoTopmost = self._communicator.is_pogo_topmost()
-        if not pogoTopmost:
+        pogo_topmost = self._communicator.is_pogo_topmost()
+        if not pogo_topmost:
             return False
 
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+        if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1)):
             return False
 
         screenshot_path = self.get_screenshot_path()
@@ -1020,13 +1005,13 @@ class WorkerBase(AbstractWorker):
         self.logger.debug("_check_pogo_main_screen_tr: done")
         return True
 
-    def _checkPogoButton(self):
+    def _check_pogo_button(self):
         self.logger.debug("checkPogoButton: Trying to find buttons")
-        pogoTopmost = self._communicator.is_pogo_topmost()
-        if not pogoTopmost:
+        pogo_topmost = self._communicator.is_pogo_topmost()
+        if not pogo_topmost:
             return False
 
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+        if not self._take_screenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
             # TODO: again?
             # if again:
             #     self.logger.error("checkPogoButton: failed getting a screenshot again")
@@ -1066,14 +1051,14 @@ class WorkerBase(AbstractWorker):
             time.sleep(1)
             delay_count += 1
 
-    def _checkPogoClose(self, takescreen=True):
+    def _check_pogo_close(self, takescreen=True):
         self.logger.debug("checkPogoClose: Trying to find closeX")
-        pogoTopmost = self._communicator.is_pogo_topmost()
-        if not pogoTopmost:
+        pogo_topmost = self._communicator.is_pogo_topmost()
+        if not pogo_topmost:
             return False
 
         if takescreen:
-            if not self._takeScreenshot(
+            if not self._take_screenshot(
                     delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
                 self.logger.debug("checkPogoClose: Could not get screenshot")
                 return False
@@ -1093,82 +1078,6 @@ class WorkerBase(AbstractWorker):
             return True
         self.logger.debug("checkPogoClose: done")
         return False
-
-    def _getToRaidscreen(self, maxAttempts, again=False):
-        # check for any popups (including post login OK)
-        self.logger.debug(
-            "getToRaidscreen: Trying to get to the raidscreen with {} max attempts...", maxAttempts)
-        pogoTopmost = self._communicator.is_pogo_topmost()
-        if not pogoTopmost:
-            return False
-
-        self._checkPogoFreeze()
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
-            if again:
-                self.logger.error("getToRaidscreen: failed getting a screenshot again")
-                return False
-            self._getToRaidscreen(maxAttempts, True)
-            self.logger.debug("getToRaidscreen: Got screenshot, checking GPS")
-        attempts = 0
-
-        if os.path.isdir(self.get_screenshot_path()):
-            self.logger.error("getToRaidscreen: screenshot.png is not a file/corrupted")
-            return False
-
-        # TODO: replace self._origin with device ID
-        while self._pogoWindowManager.is_gps_signal_lost(self.get_screenshot_path(), self._origin):
-            self.logger.debug("getToRaidscreen: GPS signal lost")
-            time.sleep(1)
-            self._takeScreenshot()
-            self.logger.warning("getToRaidscreen: GPS signal error")
-            self._redErrorCount += 1
-            if self._redErrorCount > 3:
-                self.logger.error("getToRaidscreen: Red error multiple times in a row, restarting")
-                self._redErrorCount = 0
-                self._restart_pogo()
-                return False
-        self._redErrorCount = 0
-        self.logger.debug("getToRaidscreen: checking raidscreen")
-        while not self._pogoWindowManager.check_raidscreen(self.get_screenshot_path(), self._origin,
-                                                           self._communicator):
-            self.logger.debug("getToRaidscreen: not on raidscreen...")
-            if attempts > maxAttempts:
-                # could not reach raidtab in given maxAttempts
-                self.logger.error("getToRaidscreen: Could not get to raidtab within {} attempts", maxAttempts)
-                return False
-            self._checkPogoFreeze()
-            # not using continue since we need to get a screen before the next round...
-            found = self._pogoWindowManager.look_for_button(self._origin, self.get_screenshot_path(), 2.20, 3.01,
-                                                            self._communicator)
-            if found:
-                self.logger.debug("getToRaidscreen: Found button (small)")
-
-            if not found and self._pogoWindowManager.check_close_except_nearby_button(
-                    self.get_screenshot_path(),
-                    self._origin, self._communicator):
-                self.logger.debug("getToRaidscreen: Found (X) button (except nearby)")
-                found = True
-
-            if not found and self._pogoWindowManager.look_for_button(self._origin, self.get_screenshot_path(), 1.05,
-                                                                     2.20, self._communicator):
-                self.logger.debug("getToRaidscreen: Found button (big)")
-                found = True
-
-            self.logger.debug("getToRaidscreen: Previous checks found popups: {}", found)
-            if not found:
-                self.logger.debug("getToRaidscreen: Previous checks found nothing. Checking nearby open")
-                if self._pogoWindowManager.check_nearby(self.get_screenshot_path(), self._origin,
-                                                        self._communicator):
-                    return self._takeScreenshot(
-                        delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1))
-
-            if not self._takeScreenshot(
-                    delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
-                return False
-
-            attempts += 1
-        self.logger.debug("getToRaidscreen: done")
-        return True
 
     def _get_screen_size(self):
         if self._stop_worker_event.is_set():
