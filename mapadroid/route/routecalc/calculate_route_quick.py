@@ -1,4 +1,3 @@
-import numpy as np
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
 

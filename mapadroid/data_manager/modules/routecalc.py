@@ -117,7 +117,7 @@ class RouteCalc(Resource):
                 self.save()
         new_route = self.get_json_route(coords, max_radius, max_coords_within_radius, in_memory,
                                         num_processes=num_procs,
-                                        algorithm=calc_type, use_s2=use_s2, S2level=s2_level,
+                                        algorithm=calc_type, use_s2=use_s2, s2_level=s2_level,
                                         route_name=route_name)
         self.set_recalc_status(False)
         return new_route

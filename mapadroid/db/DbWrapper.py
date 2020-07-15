@@ -44,7 +44,6 @@ class DbWrapper:
     def set_event_id(self, eventid: int):
         self._event_id = eventid
 
-
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)
 

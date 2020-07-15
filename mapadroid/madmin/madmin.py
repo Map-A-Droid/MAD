@@ -88,7 +88,7 @@ class MADmin(object):
             self.map.start_modul()
             self.statistics.start_modul()
             self.config.start_modul()
-            self.APKManager.start_modul()
+            self.apk_manager.start_modul()
             self.event.start_modul()
             self.control.start_modul()
             self._app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)

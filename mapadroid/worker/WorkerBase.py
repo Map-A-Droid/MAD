@@ -32,7 +32,7 @@ logger = get_logger(LoggerEnums.worker)
 class WorkerBase(AbstractWorker):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
-                 area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogo_win_manager: PogoWindows,
+                 area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows,
                  walker=None, event=None):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._mapping_manager: MappingManager = mapping_manager
@@ -59,7 +59,7 @@ class WorkerBase(AbstractWorker):
         self._screen_x = 0
         self._screen_y = 0
         self._geofix_sleeptime = 0
-        self._pogoWindowManager = pogo_win_manager
+        self._pogoWindowManager = pogo_window_manager
         self._waittime_without_delays = 0
         self._transporttype = 0
         self._not_injected_count: int = 0
@@ -872,7 +872,7 @@ class WorkerBase(AbstractWorker):
         if not pogo_topmost:
             return False
 
-        if not self._take_screenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+        if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1)):
             self.logger.debug("checkPogoButton: Failed getting screenshot")
             return False
         if os.path.isdir(self.get_screenshot_path()):
@@ -914,8 +914,7 @@ class WorkerBase(AbstractWorker):
             return False
 
         if takescreen:
-            if not self._take_screenshot(
-                    delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+            if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1)):
                 self.logger.debug("checkPogoClose: Could not get screenshot")
                 return False
 

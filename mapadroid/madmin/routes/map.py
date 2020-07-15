@@ -262,10 +262,10 @@ class MADminMap:
         timestamp = request.args.get("timestamp", None)
 
         data = self._db.get_mons_in_rectangle(
-            neLat=ne_lat,
-            neLon=ne_lon,
-            swLat=sw_lat,
-            swLon=sw_lon,
+            ne_lat=ne_lat,
+            ne_lon=ne_lon,
+            sw_lat=sw_lat,
+            sw_lon=sw_lon,
             o_ne_lat=o_ne_lat,
             o_ne_lon=o_ne_lon,
             o_sw_lat=o_sw_lat,

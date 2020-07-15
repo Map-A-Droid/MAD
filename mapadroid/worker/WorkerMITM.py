@@ -29,7 +29,7 @@ class WorkerMITM(MITMBase):
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_name=routemanager_name,
                           db_wrapper=db_wrapper,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker, event=event)
+                          mitm_mapper=mitm_mapper, pogo_window_manager=pogo_window_manager, walker=walker, event=event)
         # TODO: own InjectionSettings class
         self.__update_injection_settings()
 

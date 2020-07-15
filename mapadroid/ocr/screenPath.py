@@ -23,7 +23,7 @@ class LoginType(Enum):
 
 class WordToScreenMatching(object):
     def __init__(self, communicator, pogo_win_manager, origin, resocalc, mapping_mananger: MappingManager, args):
-        self._id = origin
+        self.origin = origin
         self._logger = get_origin_logger(logger, origin=origin)
         self._applicationArgs = args
         self._mapping_manager = mapping_mananger

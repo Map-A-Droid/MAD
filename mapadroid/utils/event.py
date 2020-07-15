@@ -17,7 +17,6 @@ class Event(object):
         while True:
             self._event_id, self._lure_duration = self._dbwrapper.get_current_event()
             self._dbwrapper.set_event_id(self._event_id)
-            self._dbwrapper.set_event_lure_duration(self._lure_duration)
             time.sleep(60)
 
     def start_event_checker(self):

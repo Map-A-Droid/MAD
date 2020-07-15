@@ -1,4 +1,3 @@
-import collections
 import math
 import os
 import os.path
@@ -132,7 +131,6 @@ class PogoWindows:
             return None
 
         return self.__thread_pool.apply_async(trash_image_matching, (origin, filename, full_screen,)).get()
-
 
     def look_for_button(self, origin, filename, ratiomin, ratiomax, communicator, upper: bool = False):
         origin_logger = get_origin_logger(logger, origin=origin)

@@ -31,9 +31,9 @@ class LoggerEnums(IntEnum):
 
 def init_logging(args):
     global logger
-    log_level_label, log_level_config = log_level(args.log_level, args.verbose)
+    log_level_label, log_level_val = log_level(args.log_level, args.verbose)
     _, log_file_level = log_level(args.log_file_level, args.verbose)
-    log_trace = log_level_config <= 10
+    log_trace = log_level_val <= 10
     log_file_trace = log_file_level <= 10
     colorize = not args.no_log_colors
 
@@ -68,7 +68,7 @@ def init_logging(args):
                 "sink": sys.stdout,
                 "format": log_format_console,
                 "colorize": colorize,
-                "level": log_level,
+                "level": log_level_val,
                 "enqueue": True,
                 "filter": filter_errors
             },
@@ -107,7 +107,7 @@ def init_logging(args):
     except ValueError:
         logger.error("Logging parameters/configuration is invalid.")
         sys.exit(1)
-    logger.info("Setting log level to {} ({}).", str(log_level), log_level_label)
+    logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
 
 
 def log_level(arg_log_level, arg_debug_level):
@@ -300,7 +300,7 @@ class InterceptHandler(logging.Handler):
 class LogLevelChanger:
     logger = get_logger(LoggerEnums.mitm)
 
-    def log(self, level, msg):
+    def log(level, msg):  # noqa: N805
         if level >= 40:
             LogLevelChanger.logger.log(level, msg)
         else:
