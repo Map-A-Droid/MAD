@@ -32,7 +32,6 @@ handler = InterceptHandler(log_section=LoggerEnums.madmin)
 log.addHandler(handler)
 
 
-
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
