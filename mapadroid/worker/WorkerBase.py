@@ -871,7 +871,6 @@ class WorkerBase(AbstractWorker):
         pogo_topmost = self._communicator.is_pogo_topmost()
         if not pogo_topmost:
             return False
-
         if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1)):
             self.logger.debug("checkPogoButton: Failed getting screenshot")
             return False

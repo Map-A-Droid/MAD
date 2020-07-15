@@ -533,8 +533,8 @@ class WorkerQuests(MITMBase):
                         self._communicator.click(int(delx), int(dely))
 
                         deletion_timeout = 35
-                        data_received = self._wait_for_data(
-                            timestamp=cur_time, proto_to_wait_for=4, timeout=deletion_timeout)
+                        data_received = self._wait_for_data(timestamp=cur_time, proto_to_wait_for=4,
+                                                            timeout=deletion_timeout)
 
                         if data_received != LatestReceivedType.UNDEFINED:
                             if data_received == LatestReceivedType.CLEAR:
