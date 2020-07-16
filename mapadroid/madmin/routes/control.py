@@ -544,8 +544,7 @@ class MADminControl(object):
 
         devices = self._mapping_manager.get_all_devices()
         for device in devices:
-            self._device_updater.preadd_job(origin=device, job=jobname, id_=int(time.time()),
-                                            type=type_)
+            self._device_updater.preadd_job(device, jobname, int(time.time()), type)
             time.sleep(1)
 
         flash('Job successfully queued')
