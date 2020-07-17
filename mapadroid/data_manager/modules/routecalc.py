@@ -196,7 +196,7 @@ class RouteCalc(Resource):
             )
 
         clustering_helper = ClusteringHelper(max_radius=max_radius, max_count_per_circle=max_coords_within_radius,
-                                             max_timedelta_seconds=0, use_s2=use_s2, S2level=s2_level)
+                                             max_timedelta_seconds=0, use_s2=use_s2, s2_level=s2_level)
         clustered_events = clustering_helper.get_clustered(coordinates)
         coords_cleaned_up = []
         for event in clustered_events:
