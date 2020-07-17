@@ -350,3 +350,6 @@ class Device(Resource):
 
     def _load(self) -> None:
         super()._load()
+        self.state = 0
+        if self._data_manager.is_device_active(self['origin']):
+            self.state = 1
