@@ -61,7 +61,7 @@ class WorkerQuests(MITMBase):
                           mapping_manager=mapping_manager, routemanager_name=routemanager_name,
                           area_id=area_id,
                           db_wrapper=db_wrapper,
-                          mitm_mapper=mitm_mapper, pogo_win_manager=pogo_window_manager, walker=walker,
+                          mitm_mapper=mitm_mapper, pogo_window_manager=pogo_window_manager, walker=walker,
                           event=event)
         self.clear_thread = None
         # 0 => None
