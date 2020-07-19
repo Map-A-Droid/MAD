@@ -8,7 +8,7 @@ logger = get_logger(LoggerEnums.database)
 
 
 class DbSanityCheck:
-    blacklisted_modes = "NO_ZERO_DATE NO_ZERO_IN_DATE ONLY_FULL_GROUP_BY"
+    blacklisted_modes = "NO_ZERO_DATE NO_ZERO_IN_DATE"
 
     def __init__(self, db_exec: PooledQueryExecutor):
         self._db_exec: PooledQueryExecutor = db_exec
