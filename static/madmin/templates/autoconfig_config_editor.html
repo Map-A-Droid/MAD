@@ -1,0 +1,75 @@
+{% extends "autoconfig_root.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script>
+$(document).ready(function () {
+    $("#submit").click(function() {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        save_data = get_save_data();
+        if(isEmptyObj(save_data) != false) {
+            alert('No changes have been made');
+            window.location.replace('{{ redirect }}');
+        } else {
+            process_api_request("{{ uri }}", "POST", "{{ redirect }}");
+        }
+    });
+});
+</script>
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row">
+  <div class="col">
+    <div class="alert alert-primary">
+      Configure the default file to be used with auto-configuration.  Updating the template will not push the changes into the box
+    </div>
+  </div>
+</div>
+<h1 class="display-4">{{ config_name }} Configuration</h1>
+
+<div class="row">
+  <div class="col-sm">
+  {% for sect_name, sect_info in config_element.sections.items() %}
+    <h2>{{ sect_name }}</h2>
+    {% for key, field in sect_info.items() %}
+      {% if not field.hidden %}
+        <div class="form-group">
+          <label for="{{ key }}">{{ field.title }}</label>
+          {% if field.type == "option" %}
+          <select class="form-control" name="{{ key }}" data-default="{{ config_element.contents[key] }}">
+            {% for option in field["values"] %}
+            <option value="{{ option }}" {{ 'selected="selected"' if option|tojson == config_element.contents[key]|tojson }} >{{ option|lower }}</option>
+            {% endfor %}
+          </select>
+          {% elif field.type == "bool" %}
+          <br><input type="checkbox" name="{{ key }}" class="form-control" id="{{ key }}" data-toggle="toggle" data-default="{{ config_element.contents[key]|tojson }}" {{ "checked" if config_element.contents[key]|tojson == "true" }}>
+          {% elif field.type == "authselect" %}
+          <select class="form-control" name="{{ key }}" data-default="{{ config_element.contents[key] }}">
+            {% if not auths %}
+              <option value=''>None</option>
+            {% endif %}
+            {% for auth_id, auth in auths.items() %}
+            <option value="{{ auth_id }}" {{ 'selected="selected"' if auth_id|tojson == config_element.contents[key]|tojson }} >{{ auth.username }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input type="{{ field.type }}" name="{{ key }}" class="form-control" id="{{ key }}" value="{{ config_element.contents[key] }}" data-default="{{ config_element.contents[key] }}">
+          {% endif %}
+          <small class="form-text text-muted">{{ field.summary if field.summary != none }}</small>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+  <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<nav class="nav nav-pills nav-fill mt-3 mb-3 flex-column flex-sm-row">
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_dev" }}" href="{{ url_for('autoconfig_pending') }}">Pending Devices</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_google" }}" href="{{ url_for('autoconf_google') }}">Google Accounts</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_pd"}}" href="{{ url_for('autoconf_pd') }}">PogoDroid Configuration</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_rgc" }}" href="{{ url_for('autoconf_rgc') }}">RemoteGPSController Configuration</a>
+</nav>
+{% endblock %}

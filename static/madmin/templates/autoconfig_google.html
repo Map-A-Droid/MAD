@@ -1,0 +1,123 @@
+{% extends "autoconfig_root.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript">
+function bulk_status_update(uri, data) {
+  $.ajax({
+      url : uri,
+      data : JSON.stringify(data),
+      type : 'POST',
+      contentType : 'application/json'
+  });
+}
+$(document).ready(function () {
+    $("#selectAll").change(function() {
+      sel = this.checked
+      $(".bulk_sel").each(function() {
+        $(this).prop('checked', sel);
+      });
+    });
+
+    $(".bulk_update").change(function() {
+      var selected_uri = $(this).children("option:selected").val();
+      var devices = $('.bulk_sel:checkbox:checked');
+      if(devices.length > 0 && confirm('Are you sure you want to bulk set to '+ $(".bulk_update").val() +'?')) {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Bulk Updating</h2>' });
+        var status = $(".bulk_update").val() == 'Accept';
+        $.each($('.bulk_sel:checkbox:checked'), function() {
+          uri = '{{ url_for('api_autoconf') }}/' + $(this).data('identifier');
+          bulk_status_update(uri, status);
+        });
+      }
+    });
+
+    $(".delete_acc").click(function() {
+        var identifier = $(this).data('identifier');
+        if(confirm('Are you sure you want to delete this account?')) {
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting account...</h2>' });
+            $.ajax({
+                url : '{{ url_for('api_autoconf_google') }}/'+ identifier,
+                type : 'DELETE',
+                success: function(data, status, xhr) {
+                    if(xhr.status == 200) {
+                      alert('Successfully delete the account');
+                      location.reload();
+                    }
+                },
+                error: function(data, status, xhr) {
+                    alert('Unable to delete account.  Please look at server logs');
+                }
+            });
+            $.unblockUI();
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row">
+  <div class="col">
+    <div class="alert alert-primary">
+      This contains all google logins known to MAD and what device they are assigned with.<br>
+      If a device was not configured through AutoConfiguration we will not have a link<br>
+    </div>
+  </div>
+</div>
+<div class="row mt-3">
+  <div class="col">
+    <table class="table table-striped table-hover table-sm">
+      <thead>
+        <tr>
+          <th style="width: 5%" class="align-middle"><input type="checkbox" id="selectAll"></th>
+          <th style="width: 50%" class="align-middle">Google Account</th>
+          <th style="width: 30%" class="align-middle d-none d-lg-table-cell">Assigned Device</th>
+          <th style="width: 15%" class="align-middle"><a href='{{ url_for('autoconf_google_single', email_id='0') }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+        </tr>
+      </thead>
+      {% if pending is none %}
+        <div id='no-configured-elements' class="alert alert-info">No pending devices</div>
+      {% else %}
+      <tbody>
+        {% for account in accounts %}
+        <tr>
+          <td><input type="checkbox" class="bulk_sel" data-identifier="{{ account.email_id }}"></td>
+          <td class="align-middle">
+            <a href="{{ url_for('autoconf_google_single', email_id=account.email_id) }}">{{ account.email }}</a>
+          </td>
+          <td class="align-middle">
+          {% if account.device_id is not none %}
+            <a href="{{ url_for('settings_devices', id=account.device_id) }}">{{ account.name }}</a>
+          {% else %}
+            Not Assigned
+          {% endif %}
+          </td>
+          <td class="text-right align-middle">
+            <button data-identifier='{{ account.email_id }}' type="button" class="delete_acc btn btn-danger btn-sm" data-toggle="tooltip" title="Delete Google Account"><i class="fas fa-trash-alt"></i></button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+  </div>
+</div>
+<!-- <div>
+  <div class="col">
+    Bulk Actions
+    <select class='bulk_update'>
+      <option value="None">None</option>
+      {% if is_ready %}
+        <option value='unassign'>Unassign</option>
+      {% endif %}
+      <option value='delete'>delete</option>
+    </select>
+  </div>
+</div> -->
+{% endblock %}

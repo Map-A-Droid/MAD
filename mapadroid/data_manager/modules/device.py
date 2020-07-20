@@ -57,7 +57,15 @@ class Device(Resource):
                     "description": "ADB devicename",
                     "expected": str
                 }
-            }
+            },
+            "mac_address": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "MAC address of the device",
+                    "expected": str
+                }
+            },
         },
         "settings": {
             "post_walk_delay": {
@@ -342,6 +350,17 @@ class Device(Resource):
             }
         }
     }
+
+    def delete(self):
+        super().delete()
+        update = {
+            'device_id': None
+        }
+        where = {
+            'device_id': self.identifier,
+            'instance_id': self.instance_id
+        }
+        self._dbc.autoexec_update('autoconfig_google', update, where_keyvals=where)
 
     def flush_level(self) -> None:
         origin_logger = get_origin_logger(logger, origin=self['origin'])

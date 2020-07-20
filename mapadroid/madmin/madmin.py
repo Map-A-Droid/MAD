@@ -13,6 +13,7 @@ from mapadroid.madmin.routes.map import MADminMap
 from mapadroid.madmin.routes.path import MADminPath
 from mapadroid.madmin.routes.statistics import MADminStatistics
 from mapadroid.madmin.routes.event import MADminEvent
+from mapadroid.madmin.routes.autoconf import AutoConfigManager
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, get_logger, LoggerEnums
 from mapadroid.websocket.WebsocketServer import WebsocketServer
@@ -68,13 +69,14 @@ class MADmin(object):
         self.control = MADminControl(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
                                      self._app, self._device_updater)
         self.APIEntry = APIEntry(logger, self._app, self._data_manager, self._mapping_manager, self._ws_server,
-                                 self._args.config_mode, self._storage_obj)
+                                 self._args.config_mode, self._storage_obj, self._args)
         self.config = MADminConfig(self._db_wrapper, self._args, logger, self._app, self._mapping_manager,
                                    self._data_manager)
         self.apk_manager = APKManager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
                                       self._storage_obj)
         self.event = MADminEvent(self._db_wrapper, self._args, logger, self._app, self._mapping_manager,
                                  self._data_manager)
+        self.autoconf = AutoConfigManager(self._db_wrapper, self._app, self._data_manager, self._args)
 
     @logger.catch()
     def madmin_start(self):
@@ -90,6 +92,7 @@ class MADmin(object):
             self.apk_manager.start_modul()
             self.event.start_modul()
             self.control.start_modul()
+            self.autoconf.start_modul()
             self._app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)
         except:  # noqa: E722
             logger.opt(exception=True).critical('Unable to load MADmin component')

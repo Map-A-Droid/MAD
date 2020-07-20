@@ -385,6 +385,8 @@ CREATE TABLE `settings_device` (
     `injection_thresh_reboot` int(11) DEFAULT NULL,
     `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
     `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
+    `mac_address` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
+    `last_mac` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
     PRIMARY KEY (`device_id`),
     KEY `settings_device_ibfk_1` (`walker_id`),
     KEY `settings_device_ibfk_2` (`pool_id`),
@@ -426,6 +428,8 @@ CREATE TABLE `settings_devicepool` (
     `route_calc_algorithm` enum('route','routefree') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `startcoords_of_walker` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `injection_thresh_reboot` int(11) DEFAULT NULL,
+    `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
+    `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
     `screendetection` tinyint(1) DEFAULT NULL,
     `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
     `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
@@ -743,3 +747,48 @@ CREATE VIEW `v_trs_status` AS
     FROM `trs_status` trs
     INNER JOIN `settings_device` dev ON dev.`device_id` = trs.`device_id`
     LEFT JOIN `settings_area` sa ON sa.`area_id` = trs.`area_id`;
+
+CREATE TABLE `autoconfig_registration` (
+    `instance_id` int(10) unsigned NOT NULL,
+    `session_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `device_id` int(10) unsigned NULL,
+    `ip` varchar(39) NOT NULL,
+    `name` varchar(128) COLLATE utf8mb4_unicode_ci NULL,
+    `walker_id` int(10) unsigned NULL,
+    `pool_id` int(10) unsigned NULL,
+    `status` int(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `locked` tinyint(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (`session_id`),
+    CONSTRAINT `fk_ac_r_instance` FOREIGN KEY (`instance_id`)
+        REFERENCES `madmin_instance` (`instance_id`)
+        ON DELETE CASCADE,
+    CONSTRAINT `fk_ac_r_device` FOREIGN KEY (`device_id`)
+            REFERENCES `settings_device` (`device_id`)
+            ON DELETE CASCADE,
+    CONSTRAINT `fk_ac_r_walker` FOREIGN KEY (`walker_id`)
+        REFERENCES `settings_walker` (`walker_id`),
+    CONSTRAINT `fk_ac_r_pool` FOREIGN KEY (`pool_id`)
+        REFERENCES `settings_devicepool` (`pool_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `autoconfig_file` (
+    `instance_id` int(10) unsigned NOT NULL,
+    `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `data` longblob NOT NULL,
+    PRIMARY KEY (`instance_id`, `name`),
+    CONSTRAINT `fk_ac_f_instance` FOREIGN KEY (`instance_id`)
+        REFERENCES `madmin_instance` (`instance_id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `autoconfig_google` (
+    `instance_id` int(10) unsigned NOT NULL,
+    `email_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `email` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `pwd` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `device_id` int(10) unsigned NULL,
+    PRIMARY KEY (`email_id`),
+    CONSTRAINT `fk_ac_g_instance` FOREIGN KEY (`instance_id`)
+        REFERENCES `madmin_instance` (`instance_id`)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

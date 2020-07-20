@@ -531,7 +531,7 @@ class WorkerQuests(MITMBase):
                         delx, dely = self._resocalc.get_confirm_delete_item_coords(self)
                         cur_time = time.time()
                         self._communicator.click(int(delx), int(dely))
-
+                        cur_time = time.time()
                         deletion_timeout = 35
                         data_received = self._wait_for_data(timestamp=cur_time, proto_to_wait_for=4,
                                                             timeout=deletion_timeout)

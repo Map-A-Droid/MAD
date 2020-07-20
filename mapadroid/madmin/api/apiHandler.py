@@ -18,7 +18,7 @@ class APIHandler(object):
     """
 
     def __init__(self, logger, app, api_base, data_manager, mapping_manager, ws_server, config_mode,
-                 storage_obj: AbstractAPKStorage):
+                 storage_obj: AbstractAPKStorage, args):
         self._logger = logger
         self._app = app
         self._base = api_base
@@ -29,6 +29,7 @@ class APIHandler(object):
         self._config_mode = config_mode
         self.api_req = None
         self.storage_obj = storage_obj
+        self._args = args
         self.create_routes()
 
     def create_routes(self):

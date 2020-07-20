@@ -1,0 +1,48 @@
+{% extends "autoconfig_root.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script>
+$(document).ready(function () {
+    $("#submit").click(function() {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        save_data = get_save_data();
+        if(isEmptyObj(save_data) != false) {
+            alert('No changes have been made');
+            window.location.replace('{{ redirect }}');
+        } else {
+            process_api_request("{{ uri }}", "{{ method }}", "{{ redirect }}");
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row">
+  <div class="col">
+    <div class="alert alert-primary">
+      Configure an account to be used by an ATV
+    </div>
+  </div>
+</div>
+<div class="row">
+    <div class="col-sm">
+      <div class="form-group">
+        <label for='email'>Email Address</label><br>
+        <small class="form-text text-muted"></small>
+        <input type="text" class= "form-control" name="email" value="{{ element.email }}" data-default="{{ element.email }}">
+      </div>
+      <div class="form-group">
+        <label for='pwd'>Password</label><br>
+        <small class="form-text text-muted"></small>
+        <input type="text" class= "form-control" name="pwd" value="{{ element.pwd }}" data-default="{{ element.pwd }}">
+      </div>
+      <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+    </div>
+</div>
+{% endblock %}

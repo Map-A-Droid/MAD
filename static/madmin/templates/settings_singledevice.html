@@ -126,6 +126,11 @@ $(document).ready(function () {
       <input type="input" class="form-control" id="adbname" name="adbname" value="{{ element.adbname if element.adbname else '' }}" data-default="{{ element.adbname }}">
       <small class="form-text text-muted">ADB device name</small>
     </div>
+    <div class="form-group">
+      <label for="mac_address">mac</label>
+      <input type="input" class="form-control" id="mac_address" name="mac_address" value="{{ element.mac_address if element.mac_address else '' }}" data-default="{{ element.mac_address }}">
+      <small class="form-text text-muted">MAC address of the device</small>
+    </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
     <button type="button" id="clearLevelup" class="btn btn-danger btn-lg btn-block">Clear levelup data</button>
   </div>

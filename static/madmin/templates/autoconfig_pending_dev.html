@@ -1,0 +1,131 @@
+{% extends "autoconfig_root.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function () {
+    $("#submit").click(function() {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        save_data = {
+            'status': 1,
+            'walker_id': $("select[name=walker_id]").val(),
+            'email_id': $("select[google_accts=walker_id]").val(),
+        }
+        dev_id = $("select[name=device_id]").val();
+        hopper = $("input[name=origin_hopper]").val();
+        pool_id = $("select[name=pool_id]").val();
+        email_id = $("select[name=google_accts]").val()
+        if(dev_id != 'None') {
+            save_data['device_id'] = dev_id;
+        }
+        if(hopper != '') {
+            save_data['origin_hopper'] = hopper;
+        }
+        if(pool_id != 'None') {
+            save_data['pool_id'] = pool_id;
+        }
+        $.ajax({
+            url: "{{ uri }}",
+            data: JSON.stringify(save_data),
+            type: "{{ method }}",
+            contentType: 'application/json',
+            success: function (data, status, xhr) {
+                if (xhr.status < 400)
+                    window.location.replace("{{ redirect }}");
+            },
+            error: function (data, status, xhr) {
+                $("label[for]").removeClass('btn-danger');
+                if (data['responseJSON'] != undefined) {
+                    // $.each(data['responseJSON']['missing'], function () {
+                    //     var elem = $("label[for=" + this + "]");
+                    //     elem[0].innerHTML = elem.attr('for') + ' - Required Field';
+                    //     elem.addClass('btn-danger');
+                    // });
+                    // $.each(data['responseJSON']['invalid'], function () {
+                    //     var field = this[0];
+                    //     var expected = this[1];
+                    //     var elem = $("label[for=" + field + "]");
+                    //     elem[0].innerHTML = elem.attr('for') + ' - Expected ' + expected;
+                    //     elem.addClass('btn-danger');
+                    // });
+                    $.unblockUI();
+                    alert(data['responseJSON']);
+                } else {
+                    $.unblockUI();
+                    alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row">
+  <div class="col">
+    <div class="alert alert-primary">
+        {% if element.status == 0 %}
+          Customize how the device will be accepted into MAD.
+          <br>Selecting 'None' for the device will use the origin hopper to create a new origin
+          <br>Any accounts will be registered with the device and signed-in during ATV configuration
+        {% else %}
+          Device Registration is not in an editable state.  You can only review information
+        {% endif %}
+    </div>
+  </div>
+</div>
+<div class="row">
+    <div class="col-sm">
+      <div class="form-group">
+        <label for='device_id'>Origin</label><br>
+        <select class="form-control device_id" name="device_id" {{ disabled }} data-default="{{ element.device_id }}">
+        <option value='None'>None</option>
+        {% if devices is not none %}
+        {% for device_id, device in devices.items() %}
+         <option value="{{ url_for('api_device') + '/'+ device.identifier|string }}" {{ 'selected=selected' if element.device_id == device_id else "" }}>{{ device.origin }}</option>
+        {% endfor %}
+        {% endif %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for='origin_hopper'>Origin Hopper</label><br>
+        <small class="form-text text-muted">If no device is selected this will be used for the prefix.  Default: atv</small>
+        <input type="text" class="form-control" name="origin_hopper" value="{{ element.origin }}" data-default="{{ element.origin }}" {{ disabled }}>
+      </div>
+      <div class="form-group">
+        <label for='walker_id'>Walker</label><br>
+        <select class="form-control walker_id" name="walker_id" {{ disabled }} data-default="{{ element.walker_id }}">
+        {% for walker_id, walker in walkers.items() %}
+         <option value="{{ url_for('api_walker') + '/'+ walker.identifier|string }}" {{ 'selected=selected' if element.walker_id == walker_id else "" }}>{{ walker.walkername }}</option>
+        {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for='pool_id'>Device Pool</label><br>
+        <select class="form-control pool_id" name="pool_id" {{ disabled }} data-default="None">
+        <option value='None'>None</option>
+        {% if devpools is not none %}
+        {% for pool_id, pool in devpools.items() %}
+         <option value="{{ url_for('api_devicepool') + '/'+ pool.identifier|string }}" {{ 'selected=selected' if element.pool_id == pool_id else "" }}>{{ pool.devicepool }}</option>
+        {% endfor %}
+        {% endif %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for='google_accts'>Google Account</label><br>
+        <select class="form-control google_accts" name="google_accts" {{ disabled }} data-default="None">
+        {% if accounts is not none %}
+        {% for account in accounts %}
+         <option value="{{ account.email_id }}" {{ 'selected=selected' if element.google_accts == account.email_id else "" }}>{{ account.email }}</option>
+        {% endfor %}
+        {% endif %}
+        </select>
+      </div>
+      <button type="button" id="submit" class="btn btn-success btn-lg btn-block" {{ disabled }}>Save</button>
+    </div>
+</div>
+{% endblock %}
