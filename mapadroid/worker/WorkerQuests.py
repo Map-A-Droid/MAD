@@ -547,8 +547,9 @@ class WorkerQuests(MITMBase):
                         curTime = time.time()
                         self._communicator.click(int(delx), int(dely))
 
+                        deletion_timeout = 35
                         data_received = self._wait_for_data(
-                            timestamp=curTime, proto_to_wait_for=4, timeout=35)
+                            timestamp=curTime, proto_to_wait_for=4, timeout=deletion_timeout)
 
                         if data_received != LatestReceivedType.UNDEFINED:
                             if data_received == LatestReceivedType.CLEAR:
@@ -559,7 +560,8 @@ class WorkerQuests(MITMBase):
                                 stop_screen_clear.set()
                                 delete_allowed = True
                         else:
-                            self.logger.error('Unknown error while deleting item: {}', item_text)
+                            self.logger.error('Deletion not confirmed within {}s for item: {}',
+                                              str(deletion_timeout), item_text)
                             stop_screen_clear.set()
                             stop_inventory_clear.set()
                 except UnicodeEncodeError:
