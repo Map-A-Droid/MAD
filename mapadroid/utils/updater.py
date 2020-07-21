@@ -130,15 +130,12 @@ class DeviceUpdater(object):
                 processtime = datetime.timestamp(datetime.now() + timedelta(minutes=algo))
 
                 self.write_status_log(str(job_id), field='processingdate', value=processtime)
-                self.add_job(globalid=globalid, origin=origin, file=file_, job_id=job_id, type=jobtype,
-                             counter=0,
-                             status='future', waittime=waittime, processtime=processtime, redo=redo,
-                             jobname=jobname)
+                self.add_job(globalid, origin, file_, job_id=job_id, type=jobtype, counter=0, status='future',
+                             waittime=waittime, processtime=processtime, redo=redo, jobname=jobname)
 
             else:
                 self.write_status_log(str(job_id), field='processingdate', delete=True)
-                self.add_job(globalid=globalid, origin=origin, file=file_, job_id=job_id, type=jobtype,
-                             status='requeued',
+                self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, status='requeued',
                              jobname=jobname)
 
         return True
@@ -222,8 +219,7 @@ class DeviceUpdater(object):
                     self._globaljoblog[globalid]['lastjobid'] = job_id
                     self._globaljoblog[globalid]['laststatus'] = 'future'
 
-                    self.add_job(globalid=globalid, origin=origin, file=file_, job_id=job_id, type=jobtype,
-                                 counter=counter,
+                    self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=counter,
                                  status='future', waittime=waittime, processtime=processtime, redo=redo)
 
                     self._current_job_device.remove(origin)
@@ -241,8 +237,7 @@ class DeviceUpdater(object):
                     self._globaljoblog[globalid]['lastjobid'] = job_id
                     self._globaljoblog[globalid]['laststatus'] = 'success'
 
-                    self.add_job(globalid=globalid, origin=origin, file=file_, job_id=job_id, type=jobtype,
-                                 counter=counter,
+                    self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=counter,
                                  status='future', waittime=waittime, processtime=processtime, redo=redo)
 
                     self._current_job_device.remove(origin)
@@ -255,8 +250,7 @@ class DeviceUpdater(object):
                     logger.debug('Job {} on device {} - File/Job: {} - queued because last job in jobchain '
                                  'is not processed till now (ID: {})', jobtype, origin, file_, job_id)
                     # skipping because last job in jobchain is not processed till now
-                    self.add_job(globalid=globalid, origin=origin, file=file_, job_id=job_id, type=jobtype,
-                                 counter=counter,
+                    self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=counter,
                                  status='future', waittime=waittime, processtime=processtime, redo=redo)
 
                     self._current_job_device.remove(origin)
@@ -267,8 +261,7 @@ class DeviceUpdater(object):
                     time.sleep(1)
                     logger.debug('Job {} on device {} - File/Job: {} - queued of processtime in future (ID: {})',
                                  str(jobtype), str(origin), str(file_), str(job_id))
-                    self.add_job(globalid=globalid, origin=origin, file=file_, job_id=job_id, type=jobtype,
-                                 counter=counter,
+                    self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=counter,
                                  status='future', waittime=waittime, processtime=processtime, redo=redo)
 
                     self._current_job_device.remove(origin)
@@ -369,8 +362,7 @@ class DeviceUpdater(object):
                         self._globaljoblog[globalid]['lastjobid'] = job_id
                         self._globaljoblog[globalid]['laststatus'] = 'future'
 
-                        self.add_job(globalid=globalid, origin=origin, file=file_, job_id=job_id, type=jobtype,
-                                     counter=counter,
+                        self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=counter,
                                      status='future', waittime=waittime, processtime=processtime, redo=redo)
 
                     self.send_webhook(job_id=job_id, status=jobstatus)
@@ -403,13 +395,13 @@ class DeviceUpdater(object):
 
             for subjob in self._commands[job]:
                 logger.debug2(subjob)
-                self.add_job(globalid=globalid, origin=origin, file=subjob['SYNTAX'], job_id=int(time.time()),
+                self.add_job(globalid, origin, subjob['SYNTAX'], job_id=int(time.time()),
                              job_type=subjob['TYPE'], waittime=subjob.get('WAITTIME', 0),
                              redo=self._globaljoblog[globalid].get('redo', False),
                              fieldname=subjob.get('FIELDNAME', 'unknown'), jobname=job)
                 time.sleep(1)
         else:
-            self.add_job(globalid=globalid, origin=origin, file=job, job_id=int(job_id), job_type=job_type)
+            self.add_job(globalid, origin, job, job_id=int(job_id), job_type=job_type)
 
     @logger.catch()
     def add_job(self, globalid, origin, job, job_id: int, job_type, counter=0, status='pending', waittime=0,
@@ -642,7 +634,7 @@ class DeviceUpdater(object):
                     self._globaljoblog[globalid]['redoonerror'] = autocommand.get('redoonerror', False)
 
                     self.preadd_job(origin=origin, job=job, job_id=int(time.time()),
-                                    type=str(JobType.CHAIN))
+                                    job_type=str(JobType.CHAIN))
                     # get a unique id !
                     time.sleep(1)
         else:

@@ -537,14 +537,14 @@ class MADminControl(object):
     @logger.catch()
     def install_file_all_devices(self):
         jobname = request.args.get('jobname', None)
-        type_ = request.args.get('type', None)
-        if jobname is None or type_ is None:
+        job_type = request.args.get('type', None)
+        if jobname is None or job_type is None:
             flash('No File or Type selected')
             return redirect(url_for('install_status'), code=302)
 
         devices = self._mapping_manager.get_all_devices()
         for device in devices:
-            self._device_updater.preadd_job(device, jobname, int(time.time()), type)
+            self._device_updater.preadd_job(device, jobname, int(time.time()), job_type)
             time.sleep(1)
 
         flash('Job successfully queued')
@@ -581,11 +581,10 @@ class MADminControl(object):
     @auth_required
     def job_for_worker(self):
         jobname = request.args.get('jobname', None)
-        type_ = request.args.get('type', None)
+        job_type = request.args.get('type', None)
         devices = request.args.getlist('device[]')
         for device in devices:
-            self._device_updater.preadd_job(origin=device, job=jobname, id_=int(time.time()),
-                                            type=type_)
+            self._device_updater.preadd_job(device, jobname, int(time.time()), job_type)
             time.sleep(1)
 
         flash('Job successfully queued')
