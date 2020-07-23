@@ -161,7 +161,8 @@ class AutoConfigCreator:
                             invalid.append(key)
                     self.contents[key] = check_func(user_vals[key])
                 except KeyError:
-                    self.contents[key] = elem['default']
+                    if key not in self.contents:
+                        self.contents[key] = elem['default']
                 except (TypeError, ValueError):
                     invalid.append(key)
         unknown = set(list(user_vals.keys())) - set(processed)
@@ -433,11 +434,11 @@ class PDConfig(AutoConfigCreator):
                 "required": False
             },
             "switch_gzip_post_data": {
-                "title": "Send selected set of serialized data (json)",
+                "title": "GZIP the serialized data that is to be posted.",
                 "type": "bool",
                 "expected": bool,
                 "default": True,
-                "summary": "GZIP the serialized data that is to be posted.",
+                "summary": "",
                 "required": False
             },
             "post_destination": {
