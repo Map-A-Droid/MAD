@@ -423,7 +423,14 @@ class MITMReceiver(Process):
             return Response(status=404)
         if request.method == 'GET':
             try:
-                return Response(status=200, response=device['mac_address'])
+                macs = [
+                    device.get('mac_address', ''),
+                    device.get('wifi_mac_address', ''),
+                ]
+                for ind, mac in enumerate(macs):
+                    if mac is None:
+                        macs[ind] = ''
+                return Response(status=200, response='\n'.join(macs))
             except KeyError:
                 return Response(status=200, response="")
         elif request.method == 'POST':

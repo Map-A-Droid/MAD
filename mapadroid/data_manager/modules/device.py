@@ -1,3 +1,5 @@
+import re
+from typing import Optional
 from .resource import Resource
 from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
@@ -63,6 +65,14 @@ class Device(Resource):
                     "type": "text",
                     "require": False,
                     "description": "MAC address of the device",
+                    "expected": str
+                }
+            },
+            "wifi_mac_address": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "WiFi MAC address of the device",
                     "expected": str
                 }
             },
@@ -366,6 +376,22 @@ class Device(Resource):
         origin_logger = get_origin_logger(logger, origin=self['origin'])
         origin_logger.info('Removing visitation status')
         self._dbc.flush_levelinfo(self['origin'])
+
+    def validate_custom(self) -> Optional[dict]:
+        data = self.get_resource(backend=True)
+        bad_macs = []
+        mac_fields = ['mac_address', 'wifi_mac_address']
+        for field in mac_fields:
+            if field not in data:
+                continue
+            if data[field] is None:
+                continue
+            if not re.match("[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", data[field].lower()):
+                bad_macs.append((field, 'Invalid MAC address'))
+        if bad_macs:
+            return {
+                'invalid': bad_macs
+            }
 
     def _load(self) -> None:
         super()._load()
