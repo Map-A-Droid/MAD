@@ -597,11 +597,11 @@ class PDConfig(AutoConfigCreator):
                 "required": False
             },
             "boot_delay": {
-                "title": "Start RGC delayed by X seconds",
+                "title": "Start Pogodroid with a delay (seconds)",
                 "type": int,
                 "expected": int,
                 "default": 100,
-                "summary": "Start Pogodroid with a delay (seconds)",
+                "summary": "",
                 "required": False
             },
             "switch_enable_oomadj": {
