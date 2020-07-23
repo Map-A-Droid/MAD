@@ -62,7 +62,7 @@ $(document).ready(function () {
             {% endfor %}
           </select>
           {% else %}
-          <input type="{{ field.type }}" name="{{ key }}" class="form-control" id="{{ key }}" value="{{ config_element.contents[key] }}" data-default="{{ config_element.contents[key] }}">
+          <input type="{{ field.type }}" name="{{ key }}" class="form-control" id="{{ key }}" value="{{ config_element.contents[key] if config_element.contents[key] != "None" else "" }}" data-default="{{ config_element.contents[key] if config_element.contents[key] != "None" else "" }}">
           {% endif %}
           <small class="form-text text-muted">{{ field.summary if field.summary != none }}</small>
         </div>

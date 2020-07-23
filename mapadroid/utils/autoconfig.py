@@ -153,7 +153,7 @@ class AutoConfigCreator:
                 if elem['required'] and user_vals[key] in [None, ""]:
                     if key not in self.contents:
                         missing.append(key)
-                    continue
+                        continue
                 try:
                     check_func = elem['expected']
                     if elem['expected'] == 'bool':
@@ -332,8 +332,8 @@ class RGCConfig(AutoConfigCreator):
             },
             "autostart_services": {
                 "title": "Start services on appstart",
-                "type": int,
-                "expected": str,
+                "type": "bool",
+                "expected": bool,
                 "default": False,
                 "summary": "Automatically start the services when the app is opened",
                 "required": False
@@ -547,7 +547,6 @@ class PDConfig(AutoConfigCreator):
         },
         "App": {
             "preference_inject_after_seconds": {
-                "hidden": True,
                 "title": "Injection delay",
                 "type": int,
                 "expected": int,
