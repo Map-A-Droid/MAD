@@ -156,6 +156,7 @@ class EndpointAction(object):
                 self.response = Response(status=500, headers={})
         return self.response
 
+
 class MITMReceiver(Process):
     def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager: MappingManager,
                  db_wrapper, data_manager, storage_obj, name=None, enable_configmode: Optional[bool] = False):
@@ -249,7 +250,8 @@ class MITMReceiver(Process):
             logger.error("Invalid REST method specified")
             sys.exit(1)
         self.app.add_url_rule(endpoint, endpoint_name,
-                              EndpointAction(handler, self.__application_args, self.__mapping_manager, self.__data_manager),
+                              EndpointAction(handler, self.__application_args, self.__mapping_manager,
+                                             self.__data_manager),
                               methods=methods_passed)
 
     def proto_endpoint(self, origin: str, data: Union[dict, list]):
