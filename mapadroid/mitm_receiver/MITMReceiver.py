@@ -65,11 +65,12 @@ def validate_session(func) -> Any:
 
 class EndpointAction(object):
 
-    def __init__(self, action, application_args, mapping_manager: MappingManager):
+    def __init__(self, action, application_args, mapping_manager: MappingManager, data_manager):
         self.action = action
         self.response = Response(status=200, headers={})
         self.application_args = application_args
         self.mapping_manager: MappingManager = mapping_manager
+        self.__data_manager = data_manager
 
     def __call__(self, *args, **kwargs):
         logger.debug2("HTTP Request from {}", request.remote_addr)
@@ -84,7 +85,7 @@ class EndpointAction(object):
                 abort = True
             else:
                 abort = False
-        elif 'autoconfig/' in request.url is not None and str(request.url_rule):
+        elif 'autoconfig/' in request.url and str(request.url_rule):
             auth = request.headers.get('Authorization', None)
             if auth is None or not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
@@ -96,6 +97,17 @@ class EndpointAction(object):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                 self.response = Response(status=403, headers={})
                 abort = True
+        elif request.url and ('download' in request.url or 'mymac' in request.url):
+            auth = request.headers.get('Authorization', None)
+            if auth is None or not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
+                origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
+                self.response = Response(status=403, headers={})
+                abort = True
+            devs = self.__data_manager.search('device', params={'origin': origin})
+            if not devs:
+                abort = False
+                origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
+                self.response = Response(status=403, headers={})
         else:
             if origin is None:
                 origin_logger.warning("Missing Origin header in request")
@@ -143,7 +155,6 @@ class EndpointAction(object):
                 origin_logger.warning("Could not get JSON data from request: {}", e)
                 self.response = Response(status=500, headers={})
         return self.response
-
 
 class MITMReceiver(Process):
     def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager: MappingManager,
@@ -238,7 +249,7 @@ class MITMReceiver(Process):
             logger.error("Invalid REST method specified")
             sys.exit(1)
         self.app.add_url_rule(endpoint, endpoint_name,
-                              EndpointAction(handler, self.__application_args, self.__mapping_manager),
+                              EndpointAction(handler, self.__application_args, self.__mapping_manager, self.__data_manager),
                               methods=methods_passed)
 
     def proto_endpoint(self, origin: str, data: Union[dict, list]):
@@ -371,12 +382,12 @@ class MITMReceiver(Process):
         session_id: Optional[int] = kwargs.get('session_id', None)
         operation: Optional[str] = kwargs.get('operation', None)
         try:
+            sql = "SELECT sd.`name`\n"\
+                  "FROM `settings_device` sd\n"\
+                  "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
+                  "WHERE ar.`session_id` = %s AND ar.`instance_id` = %s"
+            origin = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
             if operation in ['pd', 'rgc']:
-                sql = "SELECT sd.`name`\n"\
-                      "FROM `settings_device` sd\n"\
-                      "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
-                      "WHERE ar.`session_id` = %s AND ar.`instance_id` = %s"
-                origin = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
                 if operation == 'pd':
                     config = PDConfig(self._db_wrapper, self.__application_args, self.__data_manager)
                 else:
@@ -384,12 +395,14 @@ class MITMReceiver(Process):
                 return send_file(config.generate_config(origin), as_attachment=True, attachment_filename='conf.xml',
                                  mimetype='application/xml')
             elif operation in ['google']:
-                sql = "SELECT CONCAT(ag.`email`, ',', ag.`pwd`)\n"\
+                sql = "SELECT ag.`email`, ag.`pwd`\n"\
                       "FROM `autoconfig_google` ag\n"\
                       "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n"\
                       "WHERE ar.`session_id` = %s and ag.`instance_id` = %s"
-                logins = self._db_wrapper.autofetch_column(sql, (session_id, self._db_wrapper.instance_id))
-                return Response(status=200, response='\n'.join(logins))
+                login = self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id))
+                return Response(status=200, response='\n'.join([login['email'], login['pwd']]))
+            elif operation == 'origin':
+                return Response(status=200, response=origin)
         except Exception:
             logger.opt(exception=True).critical('Unable to process autoconfig')
             return Response(status=406)
@@ -412,7 +425,7 @@ class MITMReceiver(Process):
             except KeyError:
                 return Response(status=200, response="")
         elif request.method == 'POST':
-            data = request.get_data()
+            data = request.data
             if not data:
                 return Response(status=400, response='No MAC provided')
             device['mac_address'] = data
@@ -428,7 +441,7 @@ class MITMReceiver(Process):
         if request.method == 'GET':
             if operation == 'status':
                 return self.autoconfig_status(*args, **kwargs)
-            elif operation in ['pd', 'rgc', 'google']:
+            elif operation in ['pd', 'rgc', 'google', 'origin']:
                 return self.autoconfig_get_config(*args, **kwargs)
         elif request.method == 'DELETE':
             if operation == 'complete':

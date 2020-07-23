@@ -75,7 +75,7 @@ class APIAutoConf(AutoConfHandler):
     def autoconf_set_status(self, session_id: int):
         status = 2
         try:
-            if self.api_req.data['status'] is True:
+            if self.api_req.data['status']:
                 status = 1
         except KeyError:
             return (None, 400)
@@ -94,8 +94,9 @@ class APIAutoConf(AutoConfHandler):
                     update['device_id'] = dev_id
                 except UnknownIdentifier:
                     return ('Unknown device ID', 400)
-                update['device_id'] = dev_id
             except KeyError:
+                import traceback
+                traceback.print_exc()
                 try:
                     hopper_name = self.api_req.data['origin_hopper']
                 except KeyError:
@@ -146,13 +147,19 @@ class APIAutoConf(AutoConfHandler):
                 if in_use is not None:
                     return ('Email in-use', 400)
             except KeyError:
-                # Auto-assign a google account as one was not specified
+                # Check to see if its been assigned already
                 sql = "SELECT `email_id`\n"\
                       "FROM `autoconfig_google`\n"\
-                      "WHERE `device_id` IS NULL AND `instance_id` = %s"
-                email_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id))
+                      "WHERE `device_id` = %s AND `instance_id` = %s"
+                email_id = self.dbc.autofetch_value(sql, (update['device_id'], self.dbc.instance_id))
                 if email_id is None:
-                    return ('No configured emails', 400)
+                    # Auto-assign a google account as one was not specified
+                    sql = "SELECT `email_id`\n"\
+                          "FROM `autoconfig_google`\n"\
+                          "WHERE `device_id` IS NULL AND `instance_id` = %s"
+                    email_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id))
+                    if email_id is None:
+                        return ('No configured emails', 400)
             finally:
                 update_info = {
                     'device_id': update['device_id']
