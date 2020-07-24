@@ -38,7 +38,6 @@ class Patch(PatchBase):
                   " `email_id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n"\
                   " `email` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
                   " `pwd` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
-                  " `device_id` int(10) unsigned NULL,\n"\
                   " PRIMARY KEY (`email_id`),\n"\
                   " CONSTRAINT `fk_ac_g_instance` FOREIGN KEY (`instance_id`)\n"\
                   "  REFERENCES `madmin_instance` (`instance_id`)\n"\

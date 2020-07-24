@@ -803,7 +803,6 @@ CREATE TABLE `autoconfig_google` (
     `email_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `email` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
     `pwd` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `device_id` int(10) unsigned NULL,
     PRIMARY KEY (`email_id`),
         CONSTRAINT `fk_ac_g_instance` FOREIGN KEY (`instance_id`)
         REFERENCES `madmin_instance` (`instance_id`)
