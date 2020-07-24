@@ -1,3 +1,5 @@
+import importlib
+import sys
 from ._patch_base import PatchBase
 
 
@@ -5,6 +7,19 @@ class Patch(PatchBase):
     name = 'Implement MADROM Auto-configuration'
 
     def _execute(self):
+        # This is odd and it shouldnt occur.  Some fields were missing in
+        # master sql so we need to re-run that patch that applied them
+        patch_base = importlib.import_module('mapadroid.patcher.patch_30')
+        try:
+            patch = patch_base.Patch(self._logger, self._db, self._data_manager, self._application_args)
+            if patch.completed and not patch.issues:
+                self._logger.success('Validating / Installed patch_30 was applied')
+            else:
+                self._logger.error('patch_30 was unsuccessful.  Please use your help channel for assistance')
+                sys.exit(1)
+        except Exception:
+            self._logger.opt(exception=True).error('Patch was unsuccessful.  Exiting')
+            sys.exit(1)
         try:
             sql = "CREATE TABLE IF NOT EXISTS `autoconfig_registration` (\n"\
                   " `instance_id` int(10) unsigned NOT NULL,\n"\
