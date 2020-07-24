@@ -59,20 +59,20 @@ class Patch(PatchBase):
             self._db.execute(sql, commit=True, raise_exc=True)
 
             if not self._schema_updater.check_column_exists('settings_device', 'mac_address'):
-                  sql = "ALTER TABLE `settings_device`\n"\
-                        "     ADD `mac_address` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL\n"\
-                        "     AFTER `enhanced_mode_quest_safe_items`;"
-                  self._db.execute(sql, commit=True, raise_exec=True)
+                sql = "ALTER TABLE `settings_device`\n"\
+                      " ADD `mac_address` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL\n"\
+                      " AFTER `enhanced_mode_quest_safe_items`;"
+                self._db.execute(sql, commit=True, raise_exec=True)
             if not self._schema_updater.check_column_exists('settings_device', 'interface_type'):
-                  sql = "ALTER TABLE `settings_device`\n"\
-                        "     ADD `interface_type` enum('lan','wlan') COLLATE utf8mb4_unicode_ci DEFAULT 'lan'\n"\
-                        "     AFTER `mac_address`;"
-                  self._db.execute(sql, commit=True, raise_exec=True)
+                sql = "ALTER TABLE `settings_device`\n"\
+                      " ADD `interface_type` enum('lan','wlan') COLLATE utf8mb4_unicode_ci DEFAULT 'lan'\n"\
+                      " AFTER `mac_address`;"
+                self._db.execute(sql, commit=True, raise_exec=True)
             if not self._schema_updater.check_column_exists('settings_device', 'email_id'):
-                  sql = "ALTER TABLE `settings_device`\n"\
-                        "     ADD `email_id` int(10) unsigned NULL\n"\
-                        "     AFTER `interface_type`;"
-                  self._db.execute(sql, commit=True, raise_exec=True)
+                sql = "ALTER TABLE `settings_device`\n"\
+                      "     ADD `email_id` int(10) unsigned NULL\n"\
+                      "     AFTER `interface_type`;"
+                self._db.execute(sql, commit=True, raise_exec=True)
             sql = "ALTER TABLE `settings_device`\n"\
                   "     ADD CONSTRAINT `settings_device_ibfk_3`\n"\
                   "     FOREIGN KEY (`email_id`)\n"\

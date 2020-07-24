@@ -87,7 +87,6 @@ class APIAutoConf(AutoConfHandler):
         update = {
             'status': status
         }
-        has_updates: bool = False
         device = None
         if status == 1:
             # Set the device id.  If it was not requested use the origin hopper to create one

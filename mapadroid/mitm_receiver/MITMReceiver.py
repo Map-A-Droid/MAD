@@ -428,7 +428,7 @@ class MITMReceiver(Process):
                 mac_addr = device.get('mac_address', '')
                 if mac_addr is None:
                     mac_addr = ''
-                return Response(status=200, response='\n'.join([mac_type,mac_addr]))
+                return Response(status=200, response='\n'.join([mac_type, mac_addr]))
             except KeyError:
                 return Response(status=200, response="")
         elif request.method == 'POST':
