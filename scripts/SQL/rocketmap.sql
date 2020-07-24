@@ -384,6 +384,7 @@ CREATE TABLE `settings_device` (
     `rotate_on_lvl_30` tinyint(1) DEFAULT NULL,
     `injection_thresh_reboot` int(11) DEFAULT NULL,
     `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
+    `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
     PRIMARY KEY (`device_id`),
     KEY `settings_device_ibfk_1` (`walker_id`),
     KEY `settings_device_ibfk_2` (`pool_id`),
@@ -425,8 +426,9 @@ CREATE TABLE `settings_devicepool` (
     `route_calc_algorithm` enum('route','routefree') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `startcoords_of_walker` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `injection_thresh_reboot` int(11) DEFAULT NULL,
-    `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
     `screendetection` tinyint(1) DEFAULT NULL,
+    `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
+    `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
     PRIMARY KEY (`pool_id`),
     KEY `fk_sds_instance` (`instance_id`),
     CONSTRAINT `fk_sds_instance` FOREIGN KEY (`instance_id`)
