@@ -788,7 +788,7 @@ CREATE TABLE `autoconfig_logs` (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `autoconfig_log` (
+CREATE TABLE `autoconfig_google` (
     `instance_id` int(10) unsigned NOT NULL,
     `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
     `data` longblob NOT NULL,
