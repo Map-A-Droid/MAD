@@ -14,17 +14,9 @@ $(document).ready(function () {
             'email_id': $("select[google_accts=walker_id]").val(),
         }
         dev_id = $("select[name=device_id]").val();
-        hopper = $("input[name=origin_hopper]").val();
-        pool_id = $("select[name=pool_id]").val();
         email_id = $("select[name=google_accts]").val()
         if(dev_id != 'None') {
             save_data['device_id'] = dev_id;
-        }
-        if(hopper != '') {
-            save_data['origin_hopper'] = hopper;
-        }
-        if(pool_id != 'None') {
-            save_data['pool_id'] = pool_id;
         }
         $.ajax({
             url: "{{ uri }}",
@@ -82,45 +74,11 @@ $(document).ready(function () {
     <div class="col-sm">
       <div class="form-group">
         <label for='device_id'>Origin</label><br>
-        <select class="form-control device_id" name="device_id" {{ disabled }} data-default="{{ element.device_id }}">
+        <select class="form-control device_id" name="device_id" data-default="{{ element.device_id }}">
         <option value='None'>None</option>
         {% if devices is not none %}
         {% for device_id, device in devices.items() %}
          <option value="{{ url_for('api_device') + '/'+ device.identifier|string }}" {{ 'selected=selected' if element.device_id == device_id else "" }}>{{ device.origin }}</option>
-        {% endfor %}
-        {% endif %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for='origin_hopper'>Origin Hopper</label><br>
-        <small class="form-text text-muted">If no device is selected this will be used for the prefix.  Default: atv</small>
-        <input type="text" class="form-control" name="origin_hopper" value="{{ element.origin }}" data-default="{{ element.origin }}" {{ disabled }}>
-      </div>
-      <div class="form-group">
-        <label for='walker_id'>Walker</label><br>
-        <select class="form-control walker_id" name="walker_id" {{ disabled }} data-default="{{ element.walker_id }}">
-        {% for walker_id, walker in walkers.items() %}
-         <option value="{{ url_for('api_walker') + '/'+ walker.identifier|string }}" {{ 'selected=selected' if element.walker_id == walker_id else "" }}>{{ walker.walkername }}</option>
-        {% endfor %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for='pool_id'>Device Pool</label><br>
-        <select class="form-control pool_id" name="pool_id" {{ disabled }} data-default="None">
-        <option value='None'>None</option>
-        {% if devpools is not none %}
-        {% for pool_id, pool in devpools.items() %}
-         <option value="{{ url_for('api_devicepool') + '/'+ pool.identifier|string }}" {{ 'selected=selected' if element.pool_id == pool_id else "" }}>{{ pool.devicepool }}</option>
-        {% endfor %}
-        {% endif %}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for='google_accts'>Google Account</label><br>
-        <select class="form-control google_accts" name="google_accts" {{ disabled }} data-default="None">
-        {% if accounts is not none %}
-        {% for account in accounts %}
-         <option value="{{ account.email_id }}" {{ 'selected=selected' if element.google_accts == account.email_id else "" }}>{{ account.email }}</option>
         {% endfor %}
         {% endif %}
         </select>

@@ -399,7 +399,8 @@ class MITMReceiver(Process):
             elif operation in ['google']:
                 sql = "SELECT ag.`email`, ag.`pwd`\n"\
                       "FROM `autoconfig_google` ag\n"\
-                      "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n"\
+                      "INNER JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
+                      "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
                       "WHERE ar.`session_id` = %s and ag.`instance_id` = %s"
                 login = self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id))
                 return Response(status=200, response='\n'.join([login['email'], login['pwd']]))
@@ -423,14 +424,11 @@ class MITMReceiver(Process):
             return Response(status=404)
         if request.method == 'GET':
             try:
-                macs = [
-                    device.get('mac_address', ''),
-                    device.get('wifi_mac_address', ''),
-                ]
-                for ind, mac in enumerate(macs):
-                    if mac is None:
-                        macs[ind] = ''
-                return Response(status=200, response='\n'.join(macs))
+                mac_type = device.get('interface_type', 'lan')
+                mac_addr = device.get('mac_address', '')
+                if mac_addr is None:
+                    mac_addr = ''
+                return Response(status=200, response='\n'.join([mac_type,mac_addr]))
             except KeyError:
                 return Response(status=200, response="")
         elif request.method == 'POST':
@@ -459,25 +457,11 @@ class MITMReceiver(Process):
 
     def autoconf_register(self, *args, **kwargs) -> Response:
         """ Device attempts to register with MAD.  Returns a session id for tracking future calls """
-        origin: Optional[str] = kwargs.get('Origin', None)
-        walker_id: Optional[int] = kwargs.get('walker_id', None)
-        walkers: dict[int, dict] = self.__data_manager.get_root_resource('walker')
-        # Validate its a valid walker (If any)
-        if walker_id is not None:
-            try:
-                walker_id = int(walker_id)
-                walkers[walker_id]
-            except KeyError:
-                return Response(404, response='Walker ID not found')
-            except ValueError:
-                return Response(status=404, response='Walker must be an integer')
         status = 0
         #  TODO - auto-accept list
         if False:
             status = 1
         register_data = {
-            'name': origin,
-            'walker_id': walker_id,
             'status': status,
             'ip': get_actual_ip(request),
             'instance_id': self._db_wrapper.instance_id
@@ -496,7 +480,7 @@ class MITMReceiver(Process):
             'instance_id': self._db_wrapper.instance_id
         }
         self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
-        return Response(status=201)
+        return Response(status=200)
 
 
 def get_actual_ip(request):

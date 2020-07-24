@@ -60,6 +60,24 @@ class Device(Resource):
                     "expected": str
                 }
             },
+            "email_id": {
+                "settings": {
+                    "type": "emailselect",
+                    "require": False,
+                    "empty": None,
+                    "description": "Assigned email address",
+                    "expected": int
+                }
+            },
+            "interface_type": {
+                "settings": {
+                    "type": "option",
+                    "values": ["lan", "wlan"],
+                    "require": False,
+                    "description": "Interface type to use",
+                    "expected": str
+                }
+            },
             "mac_address": {
                 "settings": {
                     "type": "text",
@@ -67,15 +85,7 @@ class Device(Resource):
                     "description": "MAC address of the device",
                     "expected": str
                 }
-            },
-            "wifi_mac_address": {
-                "settings": {
-                    "type": "text",
-                    "require": False,
-                    "description": "WiFi MAC address of the device",
-                    "expected": str
-                }
-            },
+            }
         },
         "settings": {
             "post_walk_delay": {
@@ -360,17 +370,6 @@ class Device(Resource):
             }
         }
     }
-
-    def delete(self):
-        super().delete()
-        update = {
-            'device_id': None
-        }
-        where = {
-            'device_id': self.identifier,
-            'instance_id': self.instance_id
-        }
-        self._dbc.autoexec_update('autoconfig_google', update, where_keyvals=where)
 
     def flush_level(self) -> None:
         origin_logger = get_origin_logger(logger, origin=self['origin'])

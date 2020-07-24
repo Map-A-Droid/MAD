@@ -36,16 +36,21 @@ class APIAutoConf(AutoConfHandler):
     def autoconf_google(self, method: str, email_id: int):
         if method == 'POST':
             try:
-                data = {
-                    'email': self.api_req.data['email'],
-                    'pwd': self.api_req.data['pwd'],
-                    'instance_id': self.dbc.instance_id
-                }
-                status_code = 201
-                if email_id:
-                    data['email_id'] = email_id
+                if email_id is not None:
                     status_code = 200
-                res = self.dbc.autoexec_insert('autoconfig_google', data, optype="ON DUPLICATE")
+                    where = {
+                        'email_id': email_id,
+                        'instance_id': self.dbc.instance_id
+                    }
+                    res = self.dbc.autoexec_update('autoconfig_google', self.api_req.data, where_keyvals=where)
+                else:
+                    status_code = 201
+                    data = {
+                        'email': self.api_req.data['email'],
+                        'pwd': self.api_req.data['pwd'],
+                        'instance_id': self.dbc.instance_id
+                    }
+                    res = self.dbc.autoexec_insert('autoconfig_google', data)
                 return (res, status_code)
             except KeyError:
                 return (None, 400)
@@ -80,8 +85,7 @@ class APIAutoConf(AutoConfHandler):
         except KeyError:
             return (None, 400)
         update = {
-            'status': status,
-            'locked': 1
+            'status': status
         }
         has_updates: bool = False
         device = None
@@ -94,81 +98,25 @@ class APIAutoConf(AutoConfHandler):
                     update['device_id'] = dev_id
                 except UnknownIdentifier:
                     return ('Unknown device ID', 400)
-            except KeyError:
-                import traceback
-                traceback.print_exc()
-                try:
-                    hopper_name = self.api_req.data['origin_hopper']
-                except KeyError:
-                    hopper_name = 'atv'
-                update['name'] = hopper_name
+            except (AttributeError, KeyError):
+                hopper_name = 'madrom'
                 hopper_response = origin_generator(self._data_manager, self.dbc, OriginBase=hopper_name)
                 if type(hopper_response) != tuple:
                     return hopper_response
                 else:
                     update['device_id'] = hopper_response[1]
             device = self._data_manager.get_resource('device', update['device_id'])
-            # Set the walker for the device
-            try:
-                walker_id = self.api_req.data['walker_id'].split('/')[-1]
-                if walker_id is not None:
-                    try:
-                        self._data_manager.get_resource('walker', walker_id)
-                        update['walker_id'] = walker_id
-                        device['walker'] = walker_id
-                        has_updates = True
-                    except UnknownIdentifier:
-                        return ('Unknown walker ID', 400)
-            except KeyError:
-                pass
-            # Set the pool for the device
-            try:
-                pool_id = self.api_req.data['pool_id'].split('/')[-1]
-                if pool_id is not None:
-                    try:
-                        self._data_manager.get_resource('devicepool', pool_id)
-                        update['pool_id'] = pool_id
-                        device['pool'] = pool_id
-                        has_updates = True
-                    except UnknownIdentifier:
-                        return ('Unknown pool ID', 400)
-            except KeyError:
-                pass
-            # Changes to the device occurred during this workflow so save the device with the new information
-            if has_updates and device:
-                device.save()
-            # Assign a google account to the box
-            try:
-                email_id = self.api_req.data['email_id']
-                sql = "SELECT `device_id`\n"\
-                      "FROM `autoconfig_google`\n"\
-                      "WHERE `email_id` = %s AND `instance_id` = %s"
-                in_use = self.dbc.autofetch_value(sql, (email_id, self.dbc.instance_id))
-                if in_use is not None:
-                    return ('Email in-use', 400)
-            except KeyError:
-                # Check to see if its been assigned already
-                sql = "SELECT `email_id`\n"\
-                      "FROM `autoconfig_google`\n"\
-                      "WHERE `device_id` = %s AND `instance_id` = %s"
-                email_id = self.dbc.autofetch_value(sql, (update['device_id'], self.dbc.instance_id))
+            if device['email_id'] is None:
+                # Auto-assign a google account as one was not specified
+                sql = "SELECT ag.`email_id`\n"\
+                      "FROM `autoconfig_google` ag\n"\
+                      "LEFT JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
+                      "WHERE sd.`device_id` IS NULL AND ag.`instance_id` = %s"
+                email_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id))
                 if email_id is None:
-                    # Auto-assign a google account as one was not specified
-                    sql = "SELECT `email_id`\n"\
-                          "FROM `autoconfig_google`\n"\
-                          "WHERE `device_id` IS NULL AND `instance_id` = %s"
-                    email_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id))
-                    if email_id is None:
-                        return ('No configured emails', 400)
-            finally:
-                update_info = {
-                    'device_id': update['device_id']
-                }
-                where = {
-                    'email_id': email_id,
-                    'instance_id': self.dbc.instance_id
-                }
-                self.dbc.autoexec_update('autoconfig_google', update_info, where_keyvals=where)
+                    return ('No configured emails', 400)
+                device['email_id'] = email_id
+                device.save()
         where = {
             'session_id': session_id,
             'instance_id': self.dbc.instance_id

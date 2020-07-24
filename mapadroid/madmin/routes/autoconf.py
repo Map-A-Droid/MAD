@@ -35,7 +35,7 @@ class AutoConfigManager(object):
     def autoconf_google(self):
         sql = "SELECT ag.`email_id`, ag.`email`, sd.`device_id`, sd.`name`\n"\
               "FROM `autoconfig_google` ag\n"\
-              "LEFT JOIN `settings_device` sd ON sd.`device_id` = ag.`device_id`\n"\
+              "LEFT JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
               "WHERE ag.`instance_id` = %s"
         accounts = self._db.autofetch_all(sql, (self._db.instance_id))
         return render_template('autoconfig_google.html',
@@ -82,15 +82,14 @@ class AutoConfigManager(object):
     def autoconfig_pending(self):
         is_ready = validate_hopper_ready(self._data_manager)
         sql = "SELECT count(*)\n"\
-              "FROM `autoconfig_google`\n"\
-              "WHERE `instance_id` = %s AND `device_id` IS NULL"
+              "FROM `autoconfig_google` ag\n"\
+              "LEFT JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
+              "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
         has_logins = self._db.autofetch_value(sql, (self._db.instance_id)) > 0
         pending = {}
-        sql = "SELECT ar.`session_id`, ar.`ip`, ar.`device_id`, ar.`name` AS 'origin', ar.`walker_id`, ar.`status`,"\
-              " sd.`name` AS 'device_name', ar.`walker_id`, sw.`name` AS 'walker_name'\n"\
+        sql = "SELECT ar.`session_id`, ar.`ip`, sd.`device_id`, sd.`name` AS 'origin', ar.`status`"\
               "FROM `autoconfig_registration` ar\n"\
               "LEFT JOIN `settings_device` sd ON sd.`device_id` = ar.`device_id`\n"\
-              "LEFT JOIN `settings_walker` sw ON sw.`walker_id` = ar.`walker_id`\n"\
               "WHERE ar.`instance_id` = %s"
         data = self._db.autofetch_all(sql, (self._db.instance_id))
         for row in data:
@@ -114,28 +113,21 @@ class AutoConfigManager(object):
               "FROM `autoconfig_registration`\n"\
               "WHERE `session_id` = %s AND `instance_id` = %s"
         session = self._db.autofetch_row(sql, (session_id, self._db.instance_id))
-        disabled = ""
-        if session['locked']:
-            disabled = "disabled"
         if not session:
             return redirect(url_for('autoconfig_pending'), code=302)
-        sql = "SELECT `email_id`, `email`\n"\
-              "FROM `autoconfig_google`\n"\
-              "WHERE `instance_id` = %s AND `device_id` IS NULL OR `device_id` = %s"
+        sql = "SELECT ag.`email_id`, ag.`email`\n"\
+              "FROM `autoconfig_google` ag\n"\
+              "LEFT JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
+              "WHERE ag.`instance_id` = %s AND (sd.`device_id` IS NULL OR sd.`device_id` = %s)"
         google_addresses = self._db.autofetch_all(sql, (self._db.instance_id, session['device_id']))
         devices = self._data_manager.get_root_resource('device')
-        walkers = self._data_manager.get_root_resource('walker')
-        devpools = self._data_manager.get_root_resource('devicepool')
         uri = "{}/{}".format(url_for('api_autoconf'), session_id)
         redir_uri = url_for('autoconfig_pending')
         return render_template('autoconfig_pending_dev.html',
                                subtab="autoconf_dev",
                                element=session,
                                devices=devices,
-                               walkers=walkers,
-                               devpools=devpools,
                                accounts=google_addresses,
-                               disabled=disabled,
                                uri=uri,
                                redirect=redir_uri,
                                method='POST'

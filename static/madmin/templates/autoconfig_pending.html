@@ -99,8 +99,8 @@ $(document).ready(function () {
   <div class="col">
     <div class="alert alert-primary">
       This is a list of all devices that are waiting to be auto-registered from MADrom.<br>
-      Defaults will be the first created walker and origin hopper (default atv)<br>
-      Clicking on the device will allow you to customize origin, walker, and device pool
+      Defaults will be the first created walker and origin hopper (default madrom)<br>
+      Clicking on the device will allow you to select a specific origin
       {% if not is_ready %}
         <br><h3>Origin hopper needs at least one walker.  Registration is disabled until one exists</h3>
       {% endif %}
@@ -117,9 +117,8 @@ $(document).ready(function () {
         <tr>
           <th style="width: 5%" class="align-middle"><input type="checkbox" id="selectAll"></th>
           <th style="width: 15%" class="align-middle">IP</th>
-          <th style="width: 30%" class="align-middle d-none d-lg-table-cell">Requested / Assigned Origin</th>
-          <th style="width: 30%" class="align-middle">Requested Walker</th>
-          <th style="width: 20%" class="text-right align-middle">Status</th>
+          <th style="width: 50%" class="align-middle d-none d-lg-table-cell">Assigned Origin</th>
+          <th style="width: 30%" class="text-right align-middle">Status</th>
         </tr>
       </thead>
       {% if pending is none %}
@@ -134,16 +133,9 @@ $(document).ready(function () {
           </td>
           <td class="align-middle">
           {% if session.device_id is not none %}
-            <a href="{{ url_for('settings_devices', id=session.device_id) }}">{{ session.device_name }}</a>
+            <a href="{{ url_for('settings_devices', id=session.device_id) }}">{{ session.origin }}</a>
           {% else %}
             {{ session.origin if session.origin is not none else '' }}
-          {% endif %}
-          </td>
-          <td class="align-middle">
-          {% if session.walker_id is not none %}
-            <a href="{{ url_for('settings_walkers', id=session.walker_id) }}">{{ session.walker_name }}</a>
-          {% else %}
-            {{ session.walker_name if session.walker_name is not none else '' }}
           {% endif %}
           </td>
           <td class="text-right align-middle">{{ session.status_hr }}

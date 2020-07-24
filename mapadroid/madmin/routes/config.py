@@ -237,6 +237,20 @@ class MADminConfig(object):
     @logger.catch
     @auth_required
     def settings_devices(self):
+        sql = "SELECT ag.`email_id`, ag.`email`\n"\
+              "FROM `autoconfig_google` ag\n"\
+              "LEFT JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
+              "WHERE ag.`instance_id` = %%s AND (%s)"
+        where = ["sd.`device_id` IS NULL"]
+        args = [self._db.instance_id]
+        try:
+            identifier = request.args.get('id')
+            int(identifier)
+            where.append("sd.`device_id` = %s")
+            args.append(identifier)
+        except (TypeError, ValueError):
+            pass
+        accounts = self._db.autofetch_all(sql % ' OR '.join(where), tuple(args))
         required_data = {
             'identifier': 'id',
             'base_uri': 'api_device',
@@ -249,6 +263,9 @@ class MADminConfig(object):
                 'walkers': 'walker',
                 'pools': 'devicepool'
             },
+            'passthrough': {
+                'accounts': accounts
+            }
         }
         return self.process_element(**required_data)
 

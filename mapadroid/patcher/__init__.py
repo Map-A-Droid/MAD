@@ -40,7 +40,6 @@ MAD_UPDATES = OrderedDict([
     (33, 'routecalc_rename'),
     (34, 'trs_stats_detect_raw_split'),
     (35, 'madrom_autoconfig'),
-    (36, 'madrom_autoconfig_wifi')
 ])
 
 

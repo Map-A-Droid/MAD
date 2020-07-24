@@ -127,14 +127,28 @@ $(document).ready(function () {
       <small class="form-text text-muted">ADB device name</small>
     </div>
     <div class="form-group">
+      <label for="email_id">Assigned email address</label>
+      <select class="form-control" name="email_id" data-default="{{ element.email_id if element.email_id else 'None' }}">
+        <option value='None'>None</option>
+        {% if accounts is not none %}
+        {% for account in accounts %}
+         <option value="{{ account.email_id }}" {{ 'selected=selected' if element.email_id == account.email_id else "" }}>{{ account.email }}</option>
+        {% endfor %}
+        {% endif %}
+      </select>
+      <small class="form-text text-muted">Aligned email for auto-configuration</small>
+    </div>
+    <div class="form-group">
+      <label for="interface_type">Active Interface</label>
+      <select class="form-control" name="interface_type" data-default="{{ element.interface_type if element.interface_type else 'lan' }}">
+        <option value="lan" {{ 'selected=selected' if element.interface_type == 'lan' else "" }}>LAN</option>
+        <option value="wlan" {{ 'selected=selected' if element.interface_type == 'wlan' else "" }}>WLAN</option>
+      </select>
+    </div>
+    <div class="form-group">
       <label for="mac_address">mac</label>
       <input type="input" class="form-control" id="mac_address" name="mac_address" value="{{ element.mac_address if element.mac_address else '' }}" data-default="{{ element.mac_address }}">
       <small class="form-text text-muted">MAC address of the device</small>
-    </div>
-    <div class="form-group">
-      <label for="wifi_mac_address">wifi mac</label>
-      <input type="input" class="form-control" id="wifi_mac_address" name="wifi_mac_address" value="{{ element.wifi_mac_address if element.wifi_mac_address else '' }}" data-default="{{ element.wifi_mac_address }}">
-      <small class="form-text text-muted">WiFi MAC address of the device</small>
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
     <button type="button" id="clearLevelup" class="btn btn-danger btn-lg btn-block">Clear levelup data</button>

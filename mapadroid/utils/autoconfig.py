@@ -162,7 +162,7 @@ class AutoConfigCreator:
                     self.contents[key] = check_func(user_vals[key])
                 except KeyError:
                     if key not in self.contents:
-                        self.contents[key] = elem['default']
+                        self.contents[key] = elem['default'] if elem['default'] not in ['None', None] else ""
                 except (TypeError, ValueError):
                     invalid.append(key)
         unknown = set(list(user_vals.keys())) - set(processed)
