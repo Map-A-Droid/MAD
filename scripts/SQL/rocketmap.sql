@@ -780,6 +780,8 @@ CREATE TABLE `autoconfig_logs` (
     `log_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `instance_id` int(10) unsigned NOT NULL,
     `session_id` int(10) unsigned NOT NULL,
+    `log_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `level` int(10) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 2,
     `msg` varchar(1024) COLLATE utf8mb4_unicode_ci NOT NULL,
     PRIMARY KEY (`log_id`),
     KEY `k_acl` (`instance_id`, `session_id`),

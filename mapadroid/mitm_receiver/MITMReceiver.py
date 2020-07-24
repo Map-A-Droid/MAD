@@ -207,7 +207,7 @@ class MITMReceiver(Process):
         self.add_endpoint(endpoint='/autoconfig/<int:session_id>/<string:operation>',
                           endpoint_name='autoconfig/status/operation',
                           handler=self.autoconfig_operation,
-                          methods_passed=['GET', 'DELETE'])
+                          methods_passed=['GET', 'DELETE', 'POST'])
         if not enable_configmode:
             self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
                               methods_passed=['POST'])
@@ -369,6 +369,13 @@ class MITMReceiver(Process):
     def autoconfig_complete(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
         try:
+            sql = "SELECT MAX(`level`)\n"\
+                  "FROM `autoconfig_logs`\n"\
+                  "WHERE `session_id` = %s AND `instance_id` = %s"
+            max_msg = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
+            if max_msg and max_msg == 4:
+                logger.warning('Unable to clear session due to a failure.  Manual deletion required')
+                return Response(status=400)
             info = {
                 'session_id': session_id,
                 'instance_id': self._db_wrapper.instance_id
@@ -410,6 +417,18 @@ class MITMReceiver(Process):
             logger.opt(exception=True).critical('Unable to process autoconfig')
             return Response(status=406)
 
+    def autoconfig_log(self, *args, **kwargs) -> Response:
+        session_id: Optional[int] = kwargs.get('session_id', None)
+        level, msg = str(request.data, 'utf-8').split(',', 1)
+        info = {
+            'session_id': session_id,
+            'instance_id': self._db_wrapper.instance_id,
+            'level': int(level),
+            'msg': msg
+        }
+        self._db_wrapper.autoexec_insert('autoconfig_logs', info)
+        return Response(status=201)
+
     def autoconf_mymac(self, *args, **kwargs) -> Response:
         origin = request.headers.get('Origin')
         if origin is None:
@@ -441,6 +460,7 @@ class MITMReceiver(Process):
         else:
             return Response(status=405)
 
+    @validate_session
     def autoconfig_operation(self, *args, **kwargs) -> Response:
         operation: Optional[str] = kwargs.get('operation', None)
         if operation is None:
@@ -453,6 +473,9 @@ class MITMReceiver(Process):
         elif request.method == 'DELETE':
             if operation == 'complete':
                 return self.autoconfig_complete(*args, **kwargs)
+        elif request.method == 'POST':
+            if operation == 'log':
+                return self.autoconfig_log(*args, **kwargs)
         return Response(status=404)
 
     def autoconf_register(self, *args, **kwargs) -> Response:

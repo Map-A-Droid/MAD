@@ -64,6 +64,8 @@ class Patch(PatchBase):
                   " `log_id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n"\
                   " `instance_id` int(10) unsigned NOT NULL,\n"\
                   " `session_id` int(10) unsigned NOT NULL,\n"\
+                  " `log_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"\
+                  " `level` int(10) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 2,\n"\
                   " `msg` varchar(1024) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
                   " PRIMARY KEY (`log_id`),\n"\
                   " KEY `k_acl` (`instance_id`, `session_id`),\n"\
