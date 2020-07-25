@@ -152,8 +152,6 @@ class EndpointAction(object):
                     self.response = Response(status=200, headers={"Content-Type": "application/json"})
                     self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
-                import traceback
-                traceback.print_exc()
                 origin_logger.warning("Could not get JSON data from request: {}", e)
                 self.response = Response(status=500, headers={})
         return self.response
@@ -371,17 +369,25 @@ class MITMReceiver(Process):
     def autoconfig_complete(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
         try:
+            info = {
+                'session_id': session_id,
+                'instance_id': self._db_wrapper.instance_id
+            }
             sql = "SELECT MAX(`level`)\n"\
                   "FROM `autoconfig_logs`\n"\
                   "WHERE `session_id` = %s AND `instance_id` = %s"
             max_msg = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
             if max_msg and max_msg == 4:
                 logger.warning('Unable to clear session due to a failure.  Manual deletion required')
+                update_data = {
+                    'status': 4
+                }
+                where = {
+                    'session_id': session_id,
+                    'instance_id': self._db_wrapper.instance_id
+                }
+                self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
                 return Response(status=400, response="")
-            info = {
-                'session_id': session_id,
-                'instance_id': self._db_wrapper.instance_id
-            }
             self._db_wrapper.autoexec_delete('autoconfig_registration', info)
             return Response(status=200, response="")
         except Exception:
@@ -429,6 +435,19 @@ class MITMReceiver(Process):
             'msg': msg
         }
         self._db_wrapper.autoexec_insert('autoconfig_logs', info)
+        sql = "SELECT `status`\n"\
+              "FROM `autoconfig_registration`\n"\
+              "WHERE `instance_id` = %s AND `session_id` = %s"
+        status = self._db_wrapper.autofetch_value(sql, (self._db_wrapper.instance_id, session_id))
+        if int(level) == 4 and status == 1:
+            update_data = {
+                'status': 3
+            }
+            where = {
+                'session_id': session_id,
+                'instance_id': self._db_wrapper.instance_id
+            }
+            self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
         return Response(status=201)
 
     def autoconf_mymac(self, *args, **kwargs) -> Response:

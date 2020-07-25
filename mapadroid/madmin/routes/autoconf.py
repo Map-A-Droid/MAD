@@ -97,6 +97,10 @@ class AutoConfigManager(object):
                 row['status_hr'] = 'Pending'
             elif row['status'] == 1:
                 row['status_hr'] = 'Accepted'
+            elif row['status'] == 2:
+                row['status_hr'] = 'In-Progress with errors'
+            elif row['status'] == 3:
+                row['status_hr'] = 'Completed with errors'
             else:
                 row['status_hr'] = 'Rejected'
             pending[row['session_id']] = row
