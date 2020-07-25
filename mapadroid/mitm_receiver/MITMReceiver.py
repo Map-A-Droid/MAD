@@ -36,12 +36,12 @@ def validate_accepted(func) -> Any:
                   "WHERE `session_id` = %s AND `instance_id` = %s"
             accepted = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
             if accepted is None:
-                return Response(status=404, msg="")
+                return Response(status=404, response="")
             if accepted == 0:
-                return Response(status=406, msg="")
+                return Response(status=406, response="")
             return func(self, *args, **kwargs)
         except (TypeError, ValueError):
-            return Response(status=404, msg="")
+            return Response(status=404, response="")
     return decorated
 
 
@@ -56,10 +56,10 @@ def validate_session(func) -> Any:
                   "WHERE `session_id` = %s AND `instance_id` = %s"
             exists = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
             if exists is None:
-                return Response(status=404, msg="")
+                return Response(status=404, response="")
             return func(self, *args, **kwargs)
         except (TypeError, ValueError):
-            return Response(status=404, msg="")
+            return Response(status=404, response="")
     return decorated
 
 
@@ -152,6 +152,8 @@ class EndpointAction(object):
                     self.response = Response(status=200, headers={"Content-Type": "application/json"})
                     self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
+                import traceback
+                traceback.print_exc()
                 origin_logger.warning("Could not get JSON data from request: {}", e)
                 self.response = Response(status=500, headers={})
         return self.response
@@ -375,16 +377,16 @@ class MITMReceiver(Process):
             max_msg = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
             if max_msg and max_msg == 4:
                 logger.warning('Unable to clear session due to a failure.  Manual deletion required')
-                return Response(status=400, msg="")
+                return Response(status=400, response="")
             info = {
                 'session_id': session_id,
                 'instance_id': self._db_wrapper.instance_id
             }
             self._db_wrapper.autoexec_delete('autoconfig_registration', info)
-            return Response(status=200, msg="")
+            return Response(status=200, response="")
         except Exception:
             logger.opt(exception=True).error('Unable to delete session')
-            return Response(status=404, msg="")
+            return Response(status=404, response="")
 
     @validate_accepted
     def autoconfig_get_config(self, *args, **kwargs) -> Response:
@@ -415,7 +417,7 @@ class MITMReceiver(Process):
                 return Response(status=200, response=origin)
         except Exception:
             logger.opt(exception=True).critical('Unable to process autoconfig')
-            return Response(status=406, msg="")
+            return Response(status=406, response="")
 
     def autoconfig_log(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
@@ -440,7 +442,7 @@ class MITMReceiver(Process):
                 device = dev
                 break
         if not device:
-            return Response(status=404, msg="")
+            return Response(status=404, response="")
         if request.method == 'GET':
             try:
                 mac_type = device.get('interface_type', 'lan')
@@ -451,7 +453,7 @@ class MITMReceiver(Process):
             except KeyError:
                 return Response(status=200, response="")
         elif request.method == 'POST':
-            data = request.data
+            data = str(request.data, 'utf-8')
             if not data:
                 return Response(status=400, response='No MAC provided')
             device['mac_address'] = data
@@ -464,7 +466,7 @@ class MITMReceiver(Process):
     def autoconfig_operation(self, *args, **kwargs) -> Response:
         operation: Optional[str] = kwargs.get('operation', None)
         if operation is None:
-            return Response(status=404, msg="")
+            return Response(status=404, response="")
         if request.method == 'GET':
             if operation == 'status':
                 return self.autoconfig_status(*args, **kwargs)
@@ -476,7 +478,7 @@ class MITMReceiver(Process):
         elif request.method == 'POST':
             if operation == 'log':
                 return self.autoconfig_log(*args, **kwargs)
-        return Response(status=404, msg="")
+        return Response(status=404, response="")
 
     def autoconf_register(self, *args, **kwargs) -> Response:
         """ Device attempts to register with MAD.  Returns a session id for tracking future calls """
