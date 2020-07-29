@@ -57,6 +57,11 @@ $(document).ready(function () {
         }
     });
 
+    $(".sess_logs").click(function() {
+        var session_id = $(this).data('identifier');
+        window.location.replace('{{ url_for('autoconfig_root') }}/logs/'+ session_id);
+    });
+
     $(".reg_status").click(function() {
         var accepted = false;
         var msg = 'reject';
@@ -145,6 +150,7 @@ $(document).ready(function () {
               {% endif %}
               <button data-identifier='{{ session_id }}' type="button" class="reg_status delete btn btn-danger btn-sm" data-toggle="tooltip" title="Reject"><i class="fa fa-ban"></i>
             {% endif %}
+            <button data-identifier='{{ session_id }}' type="button" class="sess_logs btn btn-info btn-sm" data-toggle="tooltip" title="View session logs"><i class="fas fa-history"></i></button>
             <button data-identifier='{{ session_id }}' type="button" class="delete_sess btn btn-danger btn-sm" data-toggle="tooltip" title="Delete session"><i class="fas fa-trash-alt"></i></button>
         </td>
         </tr>
