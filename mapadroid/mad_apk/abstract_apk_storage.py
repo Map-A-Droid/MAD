@@ -38,6 +38,9 @@ class AbstractAPKStorage(ABC):
     def get_storage_type(self) -> str:
         pass
 
+    def reload(self) -> NoReturn:
+        pass
+
     @abstractmethod
     def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
