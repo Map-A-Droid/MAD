@@ -39,6 +39,10 @@ class AbstractAPKStorage(ABC):
         pass
 
     @abstractmethod
+    def reload(self) -> NoReturn:
+        pass
+
+    @abstractmethod
     def save_file(self, package: APK_Type, architecture: APK_Arch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
         """ Save the package to the storage interface.  Remove the old version if it existed

@@ -14,6 +14,26 @@
         }
     });
 
+    $(".reload_wiz").click(function() {
+        url = '{{ url_for('api_madapk') }}/reload';
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success:function(data, status, xhr){
+                if(xhr.status == 200) {
+                    $.unblockUI();
+                    alert('Wizard re-caching complete');
+                    location.reload();
+                }
+                $.unblockUI();
+            },
+            error:function(data, status, xhr) {
+                alert('Something bad happened.  Check server logs');
+                $.unblockUI();
+            }
+        });
+    });
+
     $('#file-input').on('change', function () {
         url = '{{ url_for('api_madapk') }}/'+ $("#apk_type").val() + '/'+ $("#apk_arch").val();
         var fd = new FormData();
@@ -233,7 +253,8 @@
     </ul>
   {% endif %}
 {% endwith %}
-{% block body %}{% endblock %}
+<button type="button" class="btn btn-success btn-sm nav-link text-uppercase font-weight-bold reload_wiz" style="float: right;">Reload / Refresh wizard</button>
+<div style="clear: both;"></div>
 <div class="row mt-3">
     <div class="col">
         <table class="table table-striped table-hover table-sm">

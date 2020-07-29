@@ -78,6 +78,9 @@ class APKStorageDatabase(AbstractAPKStorage):
     def get_storage_type(self) -> str:
         return 'db'
 
+    def reload(self) -> NoReturn:
+        pass
+
     def save_file(self, package: APK_Type, architecture: APK_Arch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
         """ Save the package to the database.  Remove the old version if it existed
