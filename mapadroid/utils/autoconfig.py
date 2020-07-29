@@ -543,7 +543,7 @@ class PDConfig(AutoConfigCreator):
                 "expected": int,
                 "default": None,
                 "summary": "Authentication credentials to use when performing basic auth",
-                "require": False,
+                "required": False,
             },
         },
         "App": {
