@@ -427,7 +427,11 @@ class MITMReceiver(Process):
 
     def autoconfig_log(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
-        level, msg = str(request.data, 'utf-8').split(',', 1)
+        try:
+            level = kwargs.get('level')
+            msg = kwargs.get('msg')
+        except KeyError:
+            level, msg = str(request.data, 'utf-8').split(',', 1)
         info = {
             'session_id': session_id,
             'instance_id': self._db_wrapper.instance_id,
@@ -462,18 +466,44 @@ class MITMReceiver(Process):
                 break
         if not device:
             return Response(status=404, response="")
+        sql = "SELECT `session_id`\n"\
+              "FROM `autoconfig_registration`\n"\
+              "WHERE `device_id` = %s"
+        session_id = self._db_wrapper.autofetch_value(sql, (device.identifier))
+        log_data = {}
+        if session_id is not None:
+            log_data = {
+                'session_id': session_id,
+                'instance_id': self._db_wrapper.instance_id,
+                'level': 2
+            }
         if request.method == 'GET':
+            if log_data:
+                log_data['msg'] = 'Getting assigned MAC device'
+                self.autoconfig_log(**log_data)
             try:
                 mac_type = device.get('interface_type', 'lan')
                 mac_addr = device.get('mac_address', '')
                 if mac_addr is None:
                     mac_addr = ''
+                if log_data:
+                    log_data['msg'] = "Assigned MAC Address: '{}'".format(mac_addr)
+                    self.autoconfig_log(**log_data)
                 return Response(status=200, response='\n'.join([mac_type, mac_addr]))
             except KeyError:
+                if log_data:
+                    log_data['msg'] = 'No assigned MAC address.  Device will generate a new one'
+                    self.autoconfig_log(**log_data)
                 return Response(status=200, response="")
         elif request.method == 'POST':
             data = str(request.data, 'utf-8')
+            if log_data:
+                log_data['msg'] = 'Device is requesting a new MAC address be set, {}'.format(data)
+                self.autoconfig_log(**log_data)
             if not data:
+                if log_data:
+                    log_data['msg'] = 'No MAC provided during MAC assignment'
+                    self.autoconfig_log(**log_data)
                 return Response(status=400, response='No MAC provided')
             device['mac_address'] = data
             device.save()
@@ -484,15 +514,30 @@ class MITMReceiver(Process):
     @validate_session
     def autoconfig_operation(self, *args, **kwargs) -> Response:
         operation: Optional[str] = kwargs.get('operation', None)
+        session_id: Optional[int] = kwargs.get('session_id', None)
         if operation is None:
             return Response(status=404, response="")
+        log_data = {
+            'session_id': session_id,
+            'instance_id': self._db_wrapper.instance_id,
+            'level': 2
+        }
         if request.method == 'GET':
             if operation == 'status':
+                if log_data:
+                    log_data['msg'] = 'Device is checking status of the session'
+                    self.autoconfig_log(**log_data)
                 return self.autoconfig_status(*args, **kwargs)
             elif operation in ['pd', 'rgc', 'google', 'origin']:
+                if log_data:
+                    log_data['msg'] = 'Device is attempting to pull a config endpoint, {}'.format(operation)
+                    self.autoconfig_log(**log_data)
                 return self.autoconfig_get_config(*args, **kwargs)
         elif request.method == 'DELETE':
             if operation == 'complete':
+                if log_data:
+                    log_data['msg'] = 'Device ihas requested the completion of the auto-configuration session'
+                    self.autoconfig_log(**log_data)
                 return self.autoconfig_complete(*args, **kwargs)
         elif request.method == 'POST':
             if operation == 'log':
@@ -511,6 +556,13 @@ class MITMReceiver(Process):
             'instance_id': self._db_wrapper.instance_id
         }
         session_id = self._db_wrapper.autoexec_insert('autoconfig_registration', register_data)
+        log_data = {
+            'session_id': session_id,
+            'instance_id': self._db_wrapper.instance_id,
+            'level': 2,
+            'msg': 'Registration request from {}'.format(get_actual_ip(request))
+        }
+        self.autoconfig_log(**log_data)
         return Response(status=201, response=str(session_id))
 
     @validate_accepted
