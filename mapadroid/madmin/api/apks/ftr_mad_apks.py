@@ -23,6 +23,9 @@ class APIMadAPK(APKHandler):
     def get(self, apk_type: APK_Type, apk_arch: APK_Arch):
         if flask.request.url.split('/')[-1] == 'download':
             return stream_package(self.dbc, self.storage_obj, apk_type, apk_arch)
+        elif flask.request.url.split('/')[-1] == 'reload':
+            self.storage_obj.reload()
+            return (None, 200)
         else:
             data = get_apk_status(self.storage_obj)
             if apk_type is None and apk_arch is APK_Arch.noarch:

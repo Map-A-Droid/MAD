@@ -26,6 +26,9 @@ class APKHandler(apiHandler.APIHandler):
         self._app.route('/api/mad_apk/<string:apk_type>/download',
                         methods=['GET'],
                         endpoint='api_madapk_apk_download_noarch')(self.entrypoint)
+        self._app.route('/api/mad_apk/reload',
+                        methods=['GET'],
+                        endpoint='api_madapk_reload')(self.entrypoint)
 
     # =====================================
     # ========= API Functionality =========

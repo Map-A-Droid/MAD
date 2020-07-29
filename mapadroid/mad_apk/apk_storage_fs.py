@@ -205,6 +205,11 @@ class APKStorageFilesystem(AbstractAPKStorage):
     def get_storage_type(self) -> str:
         return 'fs'
 
+    def reload(self) -> NoReturn:
+        with self.file_lock:
+            self.create_structure()
+            self.create_config(delete_config=True)
+
     def save_configuration(self) -> NoReturn:
         "Save the current configuration to the filesystem with human-readable indentation"
         with self.file_lock:
