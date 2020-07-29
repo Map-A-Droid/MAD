@@ -107,9 +107,7 @@ class PooledQueryExecutor:
                     return res
         except mysql.connector.Error as err:
             if not suppress_log:
-                logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
-            logger.debug3(sql)
-            logger.debug3(args)
+                logger.error("Failed executing query: {} ({}), error: {}", sql, args, err)
             if raise_exc:
                 raise err
             return None
