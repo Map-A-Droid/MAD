@@ -418,7 +418,10 @@ class MITMReceiver(Process):
                       "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
                       "WHERE ar.`session_id` = %s and ag.`instance_id` = %s"
                 login = self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id))
-                return Response(status=200, response='\n'.join([login['email'], login['pwd']]))
+                if login:
+                    return Response(status=200, response='\n'.join([login['email'], login['pwd']]))
+                else:
+                    return Response(status=404, response='')
             elif operation == 'origin':
                 return Response(status=200, response=origin)
         except Exception:
