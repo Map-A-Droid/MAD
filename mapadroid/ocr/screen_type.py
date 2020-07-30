@@ -23,7 +23,7 @@ class ScreenType(Enum):
     QUEST = 20  # research menu / quest listing (pogo)
     GPS = 21  # GPS signal not found error message (pogo)
     CREDENTIALS = 22  # new GrantCredentials dialog
-    NOGGL = 23 # loginselect, but without the google button (probably failed to set a correct birthdate)
+    NOGGL = 23  # loginselect, but without the google button (probably failed to set a correct birthdate)
     POGO = 99  # uhm, whatever... At least pogo is topmost, no idea where we are yet tho (in the process of switching)
     ERROR = 100  # some issue occurred while handling screentypes or not able to determine screen
     BLACK = 110  # screen is black, likely loading up game

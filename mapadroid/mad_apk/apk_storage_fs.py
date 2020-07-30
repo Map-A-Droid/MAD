@@ -7,10 +7,10 @@ import os
 import re
 from typing import Any, ClassVar, NamedTuple, NoReturn, Optional
 from .abstract_apk_storage import AbstractAPKStorage
-from .apk_enums import APK_Arch, APK_Type
+from .apk_enums import APKArch, APKType
 from .utils import lookup_apk_enum, lookup_arch_enum, generate_filename
-from .custom_types import MAD_APKS, MAD_Package, MAD_Packages
-from mapadroid.utils.json_encoder import MAD_Encoder
+from .custom_types import MADapks, MADPackage, MADPackages
+from mapadroid.utils.json_encoder import MADEncoder
 from threading import RLock
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
@@ -59,13 +59,13 @@ class APKStorageFilesystem(AbstractAPKStorage):
         application_args (NamedTuple): Arguments used at startup
 
     Attributes:
-        apks (MAD_APKS): All APKs known to the storage system
+        apks (MADapks): All APKs known to the storage system
         config_apk_dir (str): Root storage directory for packages
         config_filepath (str): Path to the configuration file
         file_lock (RLock): RLock to allow updates to be thread-safe
     """
     config_apks: ClassVar[str] = 'mad_apk'
-    apks: MAD_APKS
+    apks: MADapks
     config_apk_dir: str
     config_filepath: str
     file_lock: RLock
@@ -75,7 +75,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         self.file_lock: RLock = RLock()
         self.config_apk_dir: str = application_args.temp_path + '/' + APKStorageFilesystem.config_apks
         self.config_filepath: str = '{}/config.json'.format(self.config_apk_dir)
-        self.apks = MAD_APKS()
+        self.apks = MADapks()
         with self.file_lock:
             self.create_structure()
             self.create_config(delete_config=True)
@@ -119,8 +119,8 @@ class APKStorageFilesystem(AbstractAPKStorage):
                             'size': os.stat(fullpath).st_size,
                         }
                         if apk_family not in self.apks:
-                            self.apks[apk_family] = MAD_Packages()
-                        self.apks[apk_family][arch] = MAD_Package(apk_family, arch, **package)
+                            self.apks[apk_family] = MADPackages()
+                        self.apks[apk_family][arch] = MADPackage(apk_family, arch, **package)
                     except ValueError:
                         continue
                 self.save_configuration()
@@ -135,8 +135,8 @@ class APKStorageFilesystem(AbstractAPKStorage):
                                 updated = True
                             else:
                                 if apk_family not in self.apks:
-                                    self.apks[apk_family] = MAD_Packages()
-                                self.apks[apk_family][arch]: MAD_Package(apk_family, arch, **apk_info)
+                                    self.apks[apk_family] = MADPackages()
+                                self.apks[apk_family][arch]: MADPackage(apk_family, arch, **apk_info)
                 if updated:
                     self.save_configuration()
 
@@ -149,14 +149,14 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     @ensure_config_file
     @ensure_exists
-    def delete_file(self, package: APK_Type, architecture: APK_Arch) -> bool:
+    def delete_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Remove the package and update the configuration
 
         Args:
-            package (APK_Type): Package to lookup
-            architecture (APK_Arch): Architecture of the package to lookup
+            package (APKType): Package to lookup
+            architecture (APKArch): Architecture of the package to lookup
         """
-        apk_info: MAD_Package = self.apks[package][architecture]
+        apk_info: MADPackage = self.apks[package][architecture]
         os.unlink(self.get_package_path(apk_info.filename))
         del self.apks[package][architecture]
         self.save_configuration()
@@ -168,22 +168,22 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     @ensure_config_file
     @ensure_exists
-    def get_current_version(self, package: APK_Type, architecture: APK_Arch) -> Optional[str]:
+    def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
         "Get the currently installed version of the package / architecture"
-        apk_info: MAD_Package = self.apks[package][architecture]
+        apk_info: MADPackage = self.apks[package][architecture]
         version = apk_info.version
         return version
 
     @ensure_config_file
-    def get_current_package_info(self, package: APK_Type) -> Optional[MAD_Packages]:
+    def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
         """ Get the current information for a given package.  If the package exists in the configuration but not the
             filesystem it will be removed from the configuration
 
         Args:
-            package (APK_Type): Package to lookup
+            package (APKType): Package to lookup
 
         Returns:
-            None if no package is found.  MAD_Packages if the package lookup is successful
+            None if no package is found.  MADPackages if the package lookup is successful
         """
         data = None
         with self.file_lock:
@@ -209,7 +209,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         "Save the current configuration to the filesystem with human-readable indentation"
         with self.file_lock:
             with open(self.config_filepath, 'w+') as fh:
-                json.dump(self.apks, fh, indent=2, cls=MAD_Encoder)
+                json.dump(self.apks, fh, indent=2, cls=MADEncoder)
 
     @ensure_config_file
     def shutdown(self) -> NoReturn:
@@ -217,13 +217,13 @@ class APKStorageFilesystem(AbstractAPKStorage):
         self.save_configuration()
 
     @ensure_config_file
-    def save_file(self, package: APK_Type, architecture: APK_Arch, version: str, mimetype: str, data: BytesIO,
+    def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
         """ Save the package to the filesystem.  Remove the old version if it existed
 
         Args:
-            package (APK_Type): Package to save
-            architecture (APK_Arch): Architecture of the package to save
+            package (APKType): Package to save
+            architecture (APKArch): Architecture of the package to save
             version (str): Version of the package
             mimetype (str): Mimetype of the package
             data (io.BytesIO): binary contents to be saved
@@ -260,8 +260,8 @@ class APKStorageFilesystem(AbstractAPKStorage):
                         'size': os.stat(self.get_package_path(filename)).st_size,
                     }
                     if package not in self.apks:
-                        self.apks[package] = MAD_Packages()
-                    self.apks[package][architecture] = MAD_Package(package, architecture, **info)
+                        self.apks[package] = MADPackages()
+                    self.apks[package][architecture] = MADPackage(package, architecture, **info)
                     self.save_configuration()
                     logger.info('Successfully saved {} to the disk', filename)
                     return True
@@ -269,18 +269,18 @@ class APKStorageFilesystem(AbstractAPKStorage):
             logger.opt(exception=True).critical('Unable to upload APK')
         return False
 
-    def validate_file(self, package: APK_Type, architecture: APK_Arch) -> bool:
+    def validate_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Validate that the file exists on the filesystem.  Remove from the config if it does not exist
 
         Args:
-            package (APK_Type): Package to save
-            architecture (APK_Arch): Architecture of the package to save
+            package (APKType): Package to save
+            architecture (APKArch): Architecture of the package to save
 
         Return (bool):
             Package / Architecture is value
         """
         try:
-            apk_info: MAD_Package = self.apks[package][architecture]
+            apk_info: MADPackage = self.apks[package][architecture]
             package_path = self.get_package_path(apk_info.filename)
             if not os.path.isfile(package_path):
                 del self.apks[package][architecture]

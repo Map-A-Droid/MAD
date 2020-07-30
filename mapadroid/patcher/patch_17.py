@@ -166,7 +166,6 @@ class Patch(PatchBase):
                         del elem['settings']
                     # Update any IDs that have been converted.  There are no required updates for monivlist, auth,
                     # or devicesettings as they are not dependent on other resources
-                    # ['monivlist', 'auth', 'devicesettings', 'areas', 'walkerarea', 'walker', 'devices']
                     if dm_section == 'area':
                         try:
                             monlist = elem['settings']['mon_ids_iv']

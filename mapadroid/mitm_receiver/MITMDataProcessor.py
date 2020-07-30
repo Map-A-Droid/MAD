@@ -39,7 +39,7 @@ class MitmDataProcessor(Process):
                     break
                 self.process_data(item[0], item[1], item[2])
                 self.__queue.task_done()
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 logger.info("MITMDataProcessor received keyboard interrupt, stopping")
                 break
 

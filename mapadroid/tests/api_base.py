@@ -65,8 +65,8 @@ class APITestBase(TestCase, object):
         params['fetch_all'] = 1
         response = self.api.get(self.uri, params=params)
         self.assertEqual(response.status_code, 200)
-        for key, val in response.json().items():
-            self.assertTrue(type(val) is dict)
+        for key, value in response.json().items():
+            self.assertTrue(type(value) is dict)
 
     def invalid_uri(self):
         path = '%s/%s' % (self.uri, '-1')

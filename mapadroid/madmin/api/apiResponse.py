@@ -1,7 +1,7 @@
 import flask
 import json
 from . import apiException
-from mapadroid.utils.json_encoder import MAD_Encoder
+from mapadroid.utils.json_encoder import MADEncoder
 
 
 class APIResponse(object):
@@ -12,16 +12,15 @@ class APIResponse(object):
         self.mimetype = self.request.accept
 
     def __call__(self, content, status_code, **kwargs):
-        headers = kwargs.get('', self.headers)
         converted_data = self.convert_to_format(content)
         resp = flask.Response(converted_data, mimetype=self.mimetype)
         resp.status_code = status_code
-        for key, val in kwargs.items():
+        for key, value in kwargs.items():
             if key == 'headers':
-                for header_key, header_val in val.items():
+                for header_key, header_val in value.items():
                     resp.headers.add(header_key, header_val)
             else:
-                setattr(resp, key, val)
+                setattr(resp, key, value)
         self.logger.debug4('Return Data: {}', converted_data)
         self.logger.debug4('Return Headers: {}', resp.headers)
         return resp
@@ -30,9 +29,9 @@ class APIResponse(object):
         beautify = self.headers.get('X-Beautify')
         if self.mimetype == 'application/json':
             try:
-                indent=None
+                indent = None
                 if beautify and beautify.isdigit() and int(beautify) == 1:
                     indent = 4
-                return json.dumps(content, indent=indent, cls=MAD_Encoder)
+                return json.dumps(content, indent=indent, cls=MADEncoder)
             except Exception as err:
                 raise apiException.FormattingError(500, err)

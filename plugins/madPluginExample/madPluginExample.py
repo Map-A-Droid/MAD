@@ -42,7 +42,7 @@ class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
                 self._plugin.add_url_rule(route, route.replace("/", ""), view_func=view_func)
 
             for name, link, description in self._hotlink:
-                self._mad['madmin'].add_plugin_hotlink(name, self._plugin.name+"."+link.replace("/", ""),
+                self._mad['madmin'].add_plugin_hotlink(name, self._plugin.name + "." + link.replace("/", ""),
                                                        self.pluginname, self.description, self.author, self.url,
                                                        description, self.version)
 

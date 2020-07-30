@@ -1,4 +1,3 @@
-import time
 from typing import List
 import numpy as np
 from mapadroid.db.DbWrapper import DbWrapper
@@ -46,7 +45,8 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                                                                                   lat=current_worker_pos.lat,
                                                                                   lon=current_worker_pos.lng,
                                                                                   limit=30,
-                                                                                  ignore_spinned=self.settings.get("ignore_spinned_stops", True),
+                                                                                  ignore_spinned=self.settings.get(
+                                                                                      "ignore_spinned_stops", True),
                                                                                   maxdistance=5)
                 if len(unvisited_stops) == 0:
                     self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
@@ -146,7 +146,6 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None
                 self.starve_route = False
-                self._first_round_finished = False
                 self._start_check_routepools()
 
                 return True
@@ -171,7 +170,8 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         if self._is_started:
             self._is_started = False
             self._round_started_time = None
-            if self.init: self._first_started = False
+            if self.init:
+                self._first_started = False
             self._shutdown_route = False
 
         # clear not processed stops

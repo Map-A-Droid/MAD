@@ -41,8 +41,8 @@ class RouteManagerIV(RouteManagerBase):
         latest_priorities = self.db_wrapper.get_to_be_encountered(geofence_helper=self.geofence_helper,
                                                                   min_time_left_seconds=self.settings.get(
                                                                       "min_time_left_seconds", None),
-                                                                  eligible_mon_ids=
-                                                                  self.settings.get("mon_ids_iv_raw", None))
+                                                                  eligible_mon_ids=self.settings.get(
+                                                                      "mon_ids_iv_raw", None))
         # extract the encounterIDs and set them in the routeManager...
         new_list = []
         for prio in latest_priorities:
@@ -54,7 +54,6 @@ class RouteManagerIV(RouteManagerBase):
         self._prio_queue = latest_priorities
         self._manager_mutex.release()
         return None
-        # return latest_priorities
 
     def get_encounter_ids_left(self) -> List[int]:
         return self.encounter_ids_left

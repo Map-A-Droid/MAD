@@ -64,7 +64,7 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
-    def click(self, x: int, y: int) -> bool:
+    def click(self, click_x: int, click_y: int) -> bool:
         pass
 
     @abstractmethod
@@ -115,14 +115,6 @@ class AbstractCommunicator(ABC):
     def home_button(self) -> bool:
         """
         Keyevent 3
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    def enter_button(self) -> bool:
-        """
-        Keyevent 61
         :return:
         """
         pass

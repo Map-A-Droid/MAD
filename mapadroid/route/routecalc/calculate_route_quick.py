@@ -1,5 +1,3 @@
-import numpy as np
-from .util import *
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
@@ -47,13 +45,13 @@ def tsp(data):
     length = 0
 
     logger.info("Visiting each node in our eulerian tour and making a route")
-    for v in eulerian_tour[1:]:
-        if not visited[v]:
-            path.append(v)
-            visited[v] = True
+    for node in eulerian_tour[1:]:
+        if not visited[node]:
+            path.append(node)
+            visited[node] = True
 
-            length += graph_data[current][v]
-            current = v
+            length += graph_data[current][node]
+            current = node
 
     logger.info("Done making a route!")
     return length, path
@@ -106,16 +104,16 @@ class UnionFind:
     def union(self, *objects):
         roots = [self[x] for x in objects]
         heaviest = max([(self.weights[r], r) for r in roots])[1]
-        for r in roots:
-            if r != heaviest:
-                self.weights[heaviest] += self.weights[r]
-                self.parents[r] = heaviest
+        for root in roots:
+            if root != heaviest:
+                self.weights[heaviest] += self.weights[root]
+                self.parents[root] = heaviest
 
 
 def minimum_spanning_tree(graph):
     tree = []
     subtrees = UnionFind()
-    for W, u, v in sorted((graph[u][v], u, v) for u in graph for v in graph[u]):
+    for W, u, v in sorted((graph[u][v], u, v) for u in graph for v in graph[u]):  # noqa: VNE001 N806
         if subtrees[u] != subtrees[v]:
             tree.append((u, v, W))
             subtrees.union(u, v)
@@ -148,28 +146,17 @@ def minimum_weight_matching(min_span_tree, graph, odd_vert):
     random.shuffle(odd_vert)
 
     while odd_vert:
-        v = odd_vert.pop()
+        vertex = odd_vert.pop()
         length = float("inf")
-        u = 1
+        index = 1
         closest = 0
-        for u in odd_vert:
-            if v != u and graph[v][u] < length:
-                length = graph[v][u]
-                closest = u
+        for index in odd_vert:
+            if vertex != index and graph[vertex][index] < length:
+                length = graph[vertex][index]
+                closest = index
 
-        min_span_tree.append((v, closest, length))
+        min_span_tree.append((vertex, closest, length))
         odd_vert.remove(closest)
-
-
-def get_index_array_numpy_compary(arr_orig, arr_new):
-    indices = []
-    length_arr = len(arr_orig)
-    for i in range(length_arr):  # or range(len(theta))
-        if np.array_equal(arr_new[i], arr_orig[i]):
-            continue
-        else:
-            indices.append(i)
-    return indices
 
 
 def find_eulerian_tour(matched_min_span_tree):
@@ -185,19 +172,17 @@ def find_eulerian_tour(matched_min_span_tree):
         neighbours[edge[0]].append(edge[1])
         neighbours[edge[1]].append(edge[0])
 
-    # print("Neighbours: ", neighbours)
-
     # finds the hamiltonian circuit
     start_vertex = matched_min_span_tree[0][0]
     ep = [neighbours[start_vertex][0]]
 
     while len(matched_min_span_tree) > 0:
-        for i, v in enumerate(ep):
+        for i, v in enumerate(ep):  # noqa: VNE001
             if len(neighbours[v]) > 0:
                 break
 
         while len(neighbours[v]) > 0:
-            w = neighbours[v][0]
+            w = neighbours[v][0]  # noqa: VNE001
 
             remove_edge_from_matched_mst(matched_min_span_tree, v, w)
 
@@ -207,7 +192,7 @@ def find_eulerian_tour(matched_min_span_tree):
             i += 1
             ep.insert(i, w)
 
-            v = w
+            v = w  # noqa: VNE001
 
     return ep
 

@@ -1,5 +1,5 @@
 from .resource import Resource
-from mapadroid.utils.logging import  get_logger, LoggerEnums, get_origin_logger
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
 
 logger = get_logger(LoggerEnums.data_manager)

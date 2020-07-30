@@ -3,6 +3,7 @@ import os
 import re
 from flask import (render_template, request, redirect, url_for, Response)
 from flask_caching import Cache
+from mapadroid.data_manager import DataManagerException
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.adb import ADBConnect
@@ -18,7 +19,7 @@ logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
-class config(object):
+class MADminConfig(object):
     def __init__(self, db, args, logger, app, mapping_manager: MappingManager, data_manager):
         self._db = db
         self._args = args
@@ -81,8 +82,8 @@ class config(object):
         pokemon = []
         if search or (search and len(search) >= 3):
             all_pokemon = self.get_pokemon()
-            r = re.compile('.*%s.*' % (re.escape(search)), re.IGNORECASE)
-            mon_names = list(filter(r.search, all_pokemon['locale'].keys()))
+            mon_search_compiled = re.compile('.*%s.*' % (re.escape(search)), re.IGNORECASE)
+            mon_names = list(filter(mon_search_compiled.search, all_pokemon['locale'].keys()))
             for name in sorted(mon_names):
                 mon_id = all_pokemon['locale'][name]
                 pokemon.append({"mon_name": name, "mon_id": str(mon_id)})
@@ -97,7 +98,7 @@ class config(object):
         html_all = kwargs.get('html_all')
         subtab = kwargs.get('subtab')
         section = kwargs.get('section', subtab)
-        var_parser_section = kwargs.get('var_parser_section', section)
+        var_parser_section = kwargs.get('var_parser_section', section)  # noqa:F841
         required_data = kwargs.get('required_data', {})
         mode_required = kwargs.get('mode_required', False)
         passthrough = kwargs.get('passthrough', {})
@@ -113,7 +114,7 @@ class config(object):
             try:
                 req = self._data_manager.get_resource(data_source, identifier=identifier)
                 mode = req.area_type
-            except:
+            except DataManagerException:
                 if identifier:
                     return redirect(redirect_uri, code=302)
                 else:
@@ -133,8 +134,8 @@ class config(object):
             }
             for key, data_section in required_data.items():
                 included_data[key] = self._data_manager.get_root_resource(data_section)
-            for key, val in passthrough.items():
-                included_data[key] = val
+            for key, value in passthrough.items():
+                included_data[key] = value
             if identifier and identifier == 'new':
                 return render_template(html_single,
                                        uri=included_data['base_uri'],
@@ -163,12 +164,6 @@ class config(object):
                                        **included_data
                                        )
 
-    def process_settings_vars(self, config, mode=None):
-        try:
-            return config[mode]
-        except KeyError:
-            return config
-
     @logger.catch
     @auth_required
     def recalc_status(self):
@@ -183,10 +178,6 @@ class config(object):
     @auth_required
     def settings_areas(self):
         fences = {}
-        # geofence_file_path = self._args.geofence_file_path
-        # existing_fences = sorted(glob.glob(os.path.join(geofence_file_path, '*.txt')))
-        # for geofence_temp in existing_fences:
-        #     fences[geofence_temp] = os.path.basename(geofence_temp)
         raw_fences = self._data_manager.get_root_resource('geofence')
         for fence_id, fence_data in raw_fences.items():
             fences[fence_id] = fence_data['name']
@@ -281,7 +272,7 @@ class config(object):
         try:
             identifier = request.args.get('id')
             current_mons = self._data_manager.get_resource('monivlist', identifier)['mon_ids_iv']
-        except Exception as err:
+        except Exception:
             current_mons = []
         all_pokemon = self.get_pokemon()
         mondata = all_pokemon['mondata']
@@ -330,7 +321,7 @@ class config(object):
             area = self._data_manager.get_resource('area', identifier=area_id)
             if area['routecalc'] != int(request.args.get('id')):
                 return redirect(url_for('settings_areas'), code=302)
-        except:
+        except DataManagerException:
             return redirect(url_for('settings_areas'), code=302)
         required_data = {
             'identifier': 'id',

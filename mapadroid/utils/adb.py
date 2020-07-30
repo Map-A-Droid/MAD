@@ -15,13 +15,12 @@ class ADBConnect(object):
         self._client = None
         if self._useadb:
             try:
-                from adb.client import Client as AdbClient
-            except ImportError:
-                pass
-            try:
                 from ppadb.client import Client as AdbClient
             except ImportError:
-                pass
+                try:
+                    from adb.client import Client as AdbClient
+                except ImportError:
+                    pass
             self.check_adblib = 'adb.client' in sys.modules or 'ppadb.client' in sys.modules
             if not self.check_adblib:
                 logger.warning("Could not find pure-python-adb library.  If you are not using ADB you can ignore this")
@@ -37,7 +36,7 @@ class ADBConnect(object):
             if self._client.device(adb) is not None:
                 self._client.device(adb).shell('echo checkadb')
                 return True
-        except RuntimeError as e:
+        except RuntimeError:
             logger.exception('MADmin: Exception occurred while checking adb status ({}).', adb)
         return None
 
@@ -79,27 +78,27 @@ class ADBConnect(object):
             origin_logger.exception('MADmin: Exception occurred while making screenshot: {}.', e)
         return False
 
-    def make_screenclick(self, adb, origin, x, y):
+    def make_screenclick(self, adb, origin, position_x, position_y):
         origin_logger = get_origin_logger(logger, origin=origin)
         try:
             device = self._client.device(adb)
             if device is not None:
-                device.shell("input tap " + str(x) + " " + str(y))
-                origin_logger.info('MADMin ADB Click x:{} y:{}', x, y)
+                device.shell("input tap " + str(position_x) + " " + str(position_y))
+                origin_logger.info('MADMin ADB Click x:{} y:{}', position_x, position_y)
                 time.sleep(1)
                 return True
         except Exception as e:
             origin_logger.exception('MADmin: Exception occurred while making screenclick: {}.', e)
         return False
 
-    def make_screenswipe(self, adb, origin, x, y, xe, ye):
+    def make_screenswipe(self, adb, origin, position_x, position_y, swipe_x, swipe_y):
         origin_logger = get_origin_logger(logger, origin=origin)
         try:
             device = self._client.device(adb)
             if device is not None:
-                device.shell("input swipe " + str(x) + " " +
-                             str(y) + " " + str(xe) + " " + str(ye) + " 100")
-                origin_logger.info('MADMin ADB Swipe x:{} y:{} xe:{} ye:{}', x, y, xe, ye)
+                device.shell("input swipe " + str(position_x) + " " +
+                             str(position_y) + " " + str(swipe_x) + " " + str(swipe_y) + " 100")
+                origin_logger.info('MADMin ADB Swipe x:{} y:{} xe:{} ye:{}', position_x, position_y, swipe_x, swipe_y)
                 time.sleep(1)
                 return True
         except Exception as e:

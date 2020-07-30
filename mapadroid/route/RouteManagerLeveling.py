@@ -169,7 +169,6 @@ class RouteManagerLeveling(RouteManagerQuests):
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None
                 self.starve_route = False
-                self._first_round_finished = False
                 self._start_check_routepools()
 
                 if not self._first_started:
@@ -227,7 +226,8 @@ class RouteManagerLeveling(RouteManagerQuests):
         if self._is_started:
             self._is_started = False
             self._round_started_time = None
-            if self.init: self._first_started = False
+            if self.init:
+                self._first_started = False
             self._restore_original_route()
             self._shutdown_route = False
 

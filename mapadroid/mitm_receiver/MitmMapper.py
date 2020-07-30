@@ -8,12 +8,12 @@ from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
 
 logger = get_logger(LoggerEnums.mitm)
-args = parseArgs()
+args = parse_args()
 
 
 class MitmMapperManager(SyncManager):
@@ -104,14 +104,6 @@ class MitmMapper(object):
         self.__playerstats_db_update_stop.set()
         self.__playerstats_db_update_consumer.join()
         self.__playerstats_db_update_queue.close()
-        # self.__playerstats_db_update_queue.join()
-
-    def get_mon_ids_iv(self, origin):
-        devicemapping_of_origin = self.__mapping_manager.get_devicemappings_of(origin)
-        if devicemapping_of_origin is None:
-            return []
-        else:
-            return devicemapping_of_origin.get("mon_ids_iv", [])
 
     def get_levelmode(self, origin):
         device_routemananger = self.__mapping_manager.get_routemanager_name_from_device(origin)
@@ -198,11 +190,11 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).stats_collector()
 
-    def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, type,
+    def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, positiontype,
                                rec_timestamp: float, walker, transporttype):
         if self.__playerstats.get(origin, None) is not None and location is not None:
             self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp,
-                                                                       type,
+                                                                       positiontype,
                                                                        rec_timestamp, walker, transporttype)
 
     def get_playerlevel(self, origin: str):

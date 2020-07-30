@@ -18,17 +18,17 @@ class Patch(PatchBase):
 
     def __convert_to_id(self, data):
         regex = re.compile(r'/api/.*/\d+')
-        for key, val in data.items():
-            if type(val) is dict:
-                data[key] = self.__convert_to_id(val)
-            elif type(val) is list:
+        for key, value in data.items():
+            if type(value) is dict:
+                data[key] = self.__convert_to_id(value)
+            elif type(value) is list:
                 valid = []
-                for elem in val:
+                for elem in value:
                     if type(elem) is str:
                         valid.append(elem[elem.rfind('/') + 1:])
                     else:
                         valid.append(elem)
                 data[key] = valid
-            elif type(val) is str and regex.search(val):
-                data[key] = val[val.rfind('/') + 1:]
+            elif type(value) is str and regex.search(value):
+                data[key] = value[value.rfind('/') + 1:]
         return data

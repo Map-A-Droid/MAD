@@ -16,7 +16,6 @@ logger = get_logger(LoggerEnums.websocket)
 
 
 class Communicator(AbstractCommunicator):
-    UPDATE_INTERVAL = 0.4
 
     def __init__(self, websocket_client_entry: WebsocketConnectedClientEntry, worker_id: str,
                  worker_instance_ref: Optional[AbstractWorker],
@@ -24,7 +23,6 @@ class Communicator(AbstractCommunicator):
         # Throws ValueError if unable to connect!
         # catch in code using this class
         self.logger = get_origin_logger(get_logger(LoggerEnums.websocket), origin=worker_id)
-        self.worker_id: str = worker_id
         self.worker_instance_ref: Optional[AbstractWorker] = worker_instance_ref
         self.websocket_client_entry = websocket_client_entry
         self.__command_timeout: float = command_timeout
@@ -37,7 +35,7 @@ class Communicator(AbstractCommunicator):
         except (WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException):
             self.logger.info("Communicator-cleanup resulted in timeout or connection has already been closed")
 
-    def __runAndOk(self, command, timeout) -> bool:
+    def __run_and_ok(self, command, timeout) -> bool:
         return self.__run_and_ok_bytes(command, timeout)
 
     def __run_get_gesponse(self, message: MessageTyping, timeout: float = None) -> Optional[MessageTyping]:
@@ -65,10 +63,10 @@ class Communicator(AbstractCommunicator):
         return self.__run_and_ok_bytes(message=data, timeout=timeout, byte_command=2)
 
     def start_app(self, package_name: str) -> bool:
-        return self.__runAndOk("more start {}\r\n".format(package_name), self.__command_timeout)
+        return self.__run_and_ok("more start {}\r\n".format(package_name), self.__command_timeout)
 
     def stop_app(self, package_name: str) -> bool:
-        if not self.__runAndOk("more stop {}\r\n".format(package_name), self.__command_timeout):
+        if not self.__run_and_ok("more stop {}\r\n".format(package_name), self.__command_timeout):
             self.logger.error("Failed stopping {}, please check if SU has been granted", package_name)
             return False
         else:
@@ -81,16 +79,16 @@ class Communicator(AbstractCommunicator):
         return response
 
     def reboot(self) -> bool:
-        return self.__runAndOk("more reboot now\r\n", self.__command_timeout)
+        return self.__run_and_ok("more reboot now\r\n", self.__command_timeout)
 
     def restart_app(self, package_name: str) -> bool:
-        return self.__runAndOk("more restart {}\r\n".format(package_name), self.__command_timeout)
+        return self.__run_and_ok("more restart {}\r\n".format(package_name), self.__command_timeout)
 
     def reset_app_data(self, package_name: str) -> bool:
-        return self.__runAndOk("more reset {}\r\n".format(package_name), self.__command_timeout)
+        return self.__run_and_ok("more reset {}\r\n".format(package_name), self.__command_timeout)
 
     def clear_app_cache(self, package_name: str) -> bool:
-        return self.__runAndOk("more cache {}\r\n".format(package_name), self.__command_timeout)
+        return self.__run_and_ok("more cache {}\r\n".format(package_name), self.__command_timeout)
 
     def magisk_off(self) -> None:
         self.passthrough("su -c magiskhide --disable")
@@ -99,25 +97,21 @@ class Communicator(AbstractCommunicator):
         self.passthrough("su -c magiskhide --enable")
 
     def turn_screen_on(self) -> bool:
-        return self.__runAndOk("more screen on\r\n", self.__command_timeout)
+        return self.__run_and_ok("more screen on\r\n", self.__command_timeout)
 
-    def click(self, x: int, y: int) -> bool:
-        self.logger.debug('Clicking {}/{}', x, y)
-        return self.__runAndOk("screen click {} {}\r\n".format(str(int(round(x))), str(int(round(y)))),
-                               self.__command_timeout)
+    def click(self, click_x: int, click_y: int) -> bool:
+        self.logger.debug('Click {} / {}', click_x, click_y)
+        return self.__run_and_ok("screen click {} {}\r\n".format(str(int(round(click_x))), str(int(round(click_y)))),
+                                 self.__command_timeout)
 
     def swipe(self, x1: int, y1: int, x2: int, y2: int) -> Optional[MessageTyping]:
-        self.logger.debug('Swiping from {}/{} to {}/{}', x1, y1, x2, y2)
-        return self.__run_get_gesponse("touch swipe {} {} {} {}\r\n".format(
-            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2))))
-        )
+        return self.__run_get_gesponse("touch swipe {} {} {} {}\r\n".format(str(int(round(x1))), str(int(round(y1))),
+                                                                            str(int(round(x2))), str(int(round(y2)))))
 
     def touch_and_hold(self, x1: int, y1: int, x2: int, y2: int, duration: int = 3000) -> bool:
-        self.logger.debug('Touch and holding from {}/{} to {}/{} for {}ms', x1, y1, x2, y2, duration)
-        return self.__runAndOk("touch swipe {} {} {} {} {}".format(
-            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2))),
-            str(int(duration))), self.__command_timeout
-        )
+        return self.__run_and_ok("touch swipe {} {} {} {} {}".format(str(int(round(x1))), str(int(round(y1))),
+                                                                     str(int(round(x2))), str(int(round(y2))),
+                                                                     str(int(duration))), self.__command_timeout)
 
     def get_screensize(self) -> Optional[MessageTyping]:
         return self.__run_get_gesponse("screen size")
@@ -155,19 +149,13 @@ class Communicator(AbstractCommunicator):
             return True
 
     def back_button(self) -> bool:
-        return self.__runAndOk("screen back\r\n", self.__command_timeout)
+        return self.__run_and_ok("screen back\r\n", self.__command_timeout)
 
     def home_button(self) -> bool:
-        return self.__runAndOk("touch keyevent 3", self.__command_timeout)
-
-    def enter_button(self) -> bool:
-        return self.__runAndOk("touch keyevent 61", self.__command_timeout)
-
-    def ok_button(self) -> bool:
-        return self.__runAndOk("touch keyevent 66", self.__command_timeout)
+        return self.__run_and_ok("touch keyevent 3", self.__command_timeout)
 
     def enter_text(self, text: str) -> bool:
-        return self.__runAndOk("touch text " + str(text), self.__command_timeout)
+        return self.__run_and_ok("touch text " + str(text), self.__command_timeout)
 
     def is_screen_on(self) -> bool:
         state = self.__run_get_gesponse("more state screen\r\n")
@@ -192,7 +180,7 @@ class Communicator(AbstractCommunicator):
 
     def terminate_connection(self) -> bool:
         try:
-            return self.__runAndOk("exit\r\n", timeout=5)
+            return self.__run_and_ok("exit\r\n", timeout=5)
         except WebsocketWorkerConnectionClosedException:
             self.logger.info("Cannot gracefully terminate connection, it's already been closed")
             return True

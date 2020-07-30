@@ -7,10 +7,9 @@ from typing import List
 import warnings
 import zipfile
 from gpapi.googleplay import GooglePlayAPI, LoginError
-from mapadroid.mad_apk import APK_Arch, Device_Codename
-from mapadroid.utils import global_variables
+from mapadroid.mad_apk import APKArch, DeviceCodename
 from mapadroid.utils.token_dispenser import TokenDispenser
-from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
@@ -18,20 +17,19 @@ logger = get_logger(LoggerEnums.utils)
 
 
 class GPlayConnector(object):
-    def __init__(self, architecture: APK_Arch):
+    def __init__(self, architecture: APKArch):
         logger.debug('Creating new Google Play API connection')
-        args = parseArgs()
+        args = parse_args()
         self.token_list = []
         self.token = None
         self.gsfid = None
         self.email = None
         self.valid = False
         try:
-            device_codename = getattr(Device_Codename, architecture.name).value
+            device_codename = getattr(DeviceCodename, architecture.name).value
         except ValueError:
             logger.critical('Device architecture not defined')
             raise
-        self.tmp_folder: str = args.temp_path
         self.api: GooglePlayAPI = GooglePlayAPI(device_codename=device_codename)
         if args.gmail_user:
             self.connect_gmail(args.gmail_user, args.gmail_passwd)
@@ -110,14 +108,6 @@ class GPlayConnector(object):
             return result['details']['appDetails']['versionString']
         except (KeyError, TypeError):
             return None
-
-    def token_login(self, token: str) -> bool:
-        try:
-            self.api.login(gsfId=int(self.gsfid), authSubToken=token)
-            self.valid = True
-        except Exception as err:
-            logger.debug('Unable to login, {}', err)
-        return self.valid
 
     # =============================
     # ====== Token Functions ======

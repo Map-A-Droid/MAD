@@ -13,17 +13,14 @@ logger = get_logger(LoggerEnums.mitm)
 
 
 class PlayerStats(object):
-    def __init__(self, id, application_args, mitm_mapper_parent: MitmMapper):
-        self._id = id
+    def __init__(self, origin, application_args, mitm_mapper_parent: MitmMapper):
+        self._id = origin
         self._logger = get_logger(LoggerEnums.mitm, name=self._id)
         self.__application_args = application_args
         self._level: int = 0
-        self._last_action_time = 0
-        self._last_period = 0
         self.__stats_collected: dict = {}
         self._stats_collector_start = True
         self._last_processed_timestamp = 0
-        self._stats_period = 0
         self._generate_stats = application_args.game_stats
         self.__mapping_mutex = Lock()
         self.__mitm_mapper_parent: MitmMapper = mitm_mapper_parent
@@ -89,7 +86,7 @@ class PlayerStats(object):
             self.set_level(0)
             return False
 
-    def compare_hour(selfs, timestamp):
+    def compare_hour(self, timestamp):
         if datetime.datetime.fromtimestamp(int(time.time())).strftime('%H') != \
                 datetime.datetime.fromtimestamp(int(timestamp)).strftime('%H'):
             return True
@@ -188,7 +185,7 @@ class PlayerStats(object):
             else:
                 self.__stats_collected[106]['quest'][stop_id] += 1
 
-    def stats_collect_location_data(self, location, datarec, start_timestamp, type, rec_timestamp, walker,
+    def stats_collect_location_data(self, location, datarec, start_timestamp, positiontype, rec_timestamp, walker,
                                     transporttype):
         if not self._generate_stats:
             return
@@ -201,7 +198,7 @@ class PlayerStats(object):
                         location.lat,
                         location.lng,
                         rec_timestamp,
-                        type,
+                        positiontype,
                         walker,
                         datarec,
                         int(floor(time.time())),
@@ -284,8 +281,6 @@ class PlayerStats(object):
     def stats_detection_raw_parser(client_id: str, data, period):
         origin_logger = get_origin_logger(logger, client_id)
         data_location_raw = []
-        # elf.__stats_collected[106]['mon'][encounter_id]
-
         if 106 in data:
             if 'mon' in data[106]:
                 for mon_id in data[106]['mon']:

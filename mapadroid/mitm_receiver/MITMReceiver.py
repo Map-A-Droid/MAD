@@ -6,7 +6,7 @@ import io
 from multiprocessing import JoinableQueue, Process
 from typing import Union, Optional
 
-from flask import Flask, Response, request, stream_with_context
+from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
 
 from mapadroid.mitm_receiver.MITMDataProcessor import MitmDataProcessor
@@ -14,8 +14,8 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LogLevelChanger, logger, get_logger, LoggerEnums, get_origin_logger
-from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version, APK_Type
+from mapadroid.utils.logging import LogLevelChanger, get_logger, LoggerEnums, get_origin_logger
+from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version, APKType
 from threading import RLock
 import mapadroid.data_manager
 
@@ -53,12 +53,12 @@ class EndpointAction(object):
                 self.response = Response(status=403, headers={})
                 abort = True
         else:
-            if not origin:
+            if origin is None:
                 origin_logger.warning("Missing Origin header in request")
                 self.response = Response(status=500, headers={})
                 abort = True
-            elif (self.mapping_manager.get_all_devicemappings().keys() is not None
-                  and (origin is None or origin not in self.mapping_manager.get_all_devicemappings().keys())):
+            elif self.mapping_manager.get_all_devicemappings().keys() is not None and \
+                    origin not in self.mapping_manager.get_all_devicemappings().keys():
                 origin_logger.warning("MITMReceiver request without Origin or disallowed Origin")
                 self.response = Response(status=403, headers={})
                 abort = True
@@ -149,7 +149,7 @@ class MITMReceiver(Process):
                               handler=self.get_latest,
                               methods_passed=['GET'])
             self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
-                                      methods_passed=['GET'])
+                              methods_passed=['GET'])
             for i in range(self.__application_args.mitmreceiver_data_workers):
                 data_processor: MitmDataProcessor = MitmDataProcessor(self._data_queue, self.__application_args,
                                                                       self.__mitm_mapper, db_wrapper,
@@ -164,9 +164,9 @@ class MITMReceiver(Process):
             for i in range(self.__application_args.mitmreceiver_data_workers):
                 self._data_queue.put(None)
         logger.info("Trying to join workers...")
-        for t in self.worker_threads:
-            t.terminate()
-            t.join()
+        for worker_thread in self.worker_threads:
+            worker_thread.terminate()
+            worker_thread.join()
         self._data_queue.close()
         logger.info("Workers stopped...")
 
@@ -179,8 +179,7 @@ class MITMReceiver(Process):
             httpsrv.close()
             logger.info("Received STOP signal in MITMReceiver")
 
-    def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None,
-                     methods_passed=None):
+    def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, methods_passed=None):
         if methods_passed is None:
             logger.error("Invalid REST method specified")
             sys.exit(1)
@@ -206,19 +205,19 @@ class MITMReceiver(Process):
 
     def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
         origin_logger = get_origin_logger(logger, origin=origin)
-        type = data.get("type", None)
-        if type is None or type == 0:
+        proto_type = data.get("type", None)
+        if proto_type is None or proto_type == 0:
             origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
         timestamp: float = data.get("timestamp", int(time.time()))
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
-        if (location_of_data.lat > 90 or location_of_data.lat < -90
-                or location_of_data.lng > 180 or location_of_data.lng < -180):
+        if (location_of_data.lat > 90 or location_of_data.lat < -90 or
+                location_of_data.lng > 180 or location_of_data.lng < -180):
             origin_logger.warning("Received invalid location in data: {}", location_of_data)
             location_of_data: Location = Location(0, 0)
         self.__mitm_mapper.update_latest(origin, timestamp_received_raw=timestamp,
-                                         timestamp_received_receiver=time.time(), key=type, values_dict=data,
+                                         timestamp_received_receiver=time.time(), key=proto_type, values_dict=data,
                                          location=location_of_data)
         origin_logger.debug2("Placing data received to data_queue")
         self._data_queue.put((timestamp, data, origin))
@@ -287,7 +286,7 @@ class MITMReceiver(Process):
         apk_type, apk_arch = parsed
         (msg, status_code) = lookup_package_info(self.__storage_obj, apk_type, apk_arch)
         if msg:
-            if apk_type == APK_Type.pogo and not supported_pogo_version(apk_arch, msg.version):
+            if apk_type == APKType.pogo and not supported_pogo_version(apk_arch, msg.version):
                 return Response(status=406, response='Supported version not installed')
             return Response(status=status_code, response=msg.version)
         else:
@@ -307,7 +306,7 @@ class MITMReceiver(Process):
                 last_id = 0
             walkers = self.__data_manager.get_root_resource('walker')
             if len(walkers) == 0:
-                    return Response(status=400, response='No walkers configured')
+                return Response(status=400, response='No walkers configured')
             if walker_id is not None:
                 try:
                     walker_id = int(walker_id)

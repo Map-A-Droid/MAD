@@ -2,15 +2,15 @@ import copy
 import io
 from typing import List, NoReturn
 from mapadroid.db.DbFactory import DbFactory
-from mapadroid.mad_apk import APK_Arch, APK_Type, get_storage_obj, PackageImporter
+from mapadroid.mad_apk import APKArch, APKType, get_storage_obj, PackageImporter
 from mapadroid.tests.local_api import LocalAPI
 import mapadroid.tests.test_variables as global_variables
-from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.walkerArgs import parse_args
 
 
 filepath_rgc = 'APK/RemoteGpsController.apk'
 mimetype = 'application/vnd.android.package-archive'
-args = parseArgs()
+args = parse_args()
 
 
 class ResourceCreator():
@@ -101,22 +101,21 @@ class ResourceCreator():
         return (resource_def['uri'], payload, headers, elem)
 
     def recursive_update(self, payload, elems):
-        for key, val in elems.items():
+        for key, value in elems.items():
             if key == 'headers':
                 continue
-            elif type(val) == dict:
-                payload[key] = self.recursive_update(payload, val)
+            elif type(value) == dict:
+                payload[key] = self.recursive_update(payload, value)
             else:
-                payload[key] = val
+                payload[key] = value
         return payload
 
 
-class get_storage(object):
+class GetStorage(object):
     cleanup_tables = ['mad_apk_autosearch', 'mad_apks']
     db_wrapper = None
     db_pool_manager = None
     storage_elem = None
-    storage_mgr = None
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
     def __enter__(self):
@@ -131,7 +130,7 @@ class get_storage(object):
         self.db_pool_manager.shutdown()
 
     def db_purge(self):
-        for table in get_storage.cleanup_tables:
+        for table in GetStorage.cleanup_tables:
             self.db_wrapper.execute('DELETE FROM `%s`' % (table,), commit=True)
 
 
@@ -171,9 +170,9 @@ def get_rgc_bytes() -> io.BytesIO:
     return data
 
 
-def upload_rgc(storage_elem, version: str = None, apk_type: APK_Type = APK_Type.rgc) -> NoReturn:
+def upload_rgc(storage_elem, version: str = None, apk_type: APKType = APKType.rgc) -> NoReturn:
     data = get_rgc_bytes()
     if version is None:
-        PackageImporter(apk_type, APK_Arch.noarch, storage_elem, data, mimetype)
+        PackageImporter(apk_type, APKArch.noarch, storage_elem, data, mimetype)
     else:
-        storage_elem.save_file(apk_type, APK_Arch.noarch, version, mimetype, data)
+        storage_elem.save_file(apk_type, APKArch.noarch, version, mimetype, data)

@@ -46,9 +46,6 @@ class WorkerConfigmode(AbstractWorker):
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
 
-    def get_communicator(self):
-        return self._communicator
-
     def start_worker(self):
         self.logger.info("Worker started in configmode")
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
@@ -98,7 +95,8 @@ class WorkerConfigmode(AbstractWorker):
         if self._walker is None:
             return True
         walkereventid = self._walker.get('eventid', None)
-        if walkereventid is None: walkereventid = 1
+        if walkereventid is None:
+            walkereventid = 1
         if walkereventid != self._event.get_current_event_id():
             self.logger.warning("A other Event has started - leaving now")
             return False
@@ -168,15 +166,15 @@ class WorkerConfigmode(AbstractWorker):
     def _stop_pogo(self):
         attempts = 0
         stop_result = self._communicator.stop_app("com.nianticlabs.pokemongo")
-        pogoTopmost = self._communicator.is_pogo_topmost()
-        while pogoTopmost:
+        pogo_topmost = self._communicator.is_pogo_topmost()
+        while pogo_topmost:
             attempts += 1
             if attempts > 10:
                 return False
             stop_result = self._communicator.stop_app(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
-            pogoTopmost = self._communicator.is_pogo_topmost()
+            pogo_topmost = self._communicator.is_pogo_topmost()
         return stop_result
 
     def _start_pogo(self):
@@ -190,13 +188,11 @@ class WorkerConfigmode(AbstractWorker):
             self._communicator.turn_screen_on()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
-        start_result = False
         while not pogo_topmost:
             self._mitm_mapper.set_injection_status(self._origin, False)
-            start_result = self._communicator.start_app(
-                "com.nianticlabs.pokemongo")
+            self._communicator.start_app("com.nianticlabs.pokemongo")
             time.sleep(1)
-            pogo_topmost = self._communicator.is_pogo_topmost()
+            self._communicator.is_pogo_topmost()
 
         reached_raidtab = False
         self._wait_pogo_start_delay()
@@ -254,7 +250,3 @@ class WorkerConfigmode(AbstractWorker):
                 raise InternalStopWorkerException
             time.sleep(1)
             delay_count += 1
-
-    def trigger_check_research(self):
-        # not on configmode
-        return

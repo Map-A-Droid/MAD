@@ -13,7 +13,7 @@ from .walkerarea import WalkerArea
 from ..dm_exceptions import InvalidArea, ModeNotSpecified, ModeUnknown, UnknownIdentifier
 
 
-def AreaFactory(data_manager, identifier: Optional[int] = None, mode: Optional[str] = None) -> Resource:
+def area_factory(data_manager, identifier: Optional[int] = None, mode: Optional[str] = None) -> Resource:
     if identifier is None and mode is None:
         raise InvalidArea(mode)
     elif identifier is not None:
@@ -30,7 +30,7 @@ def AreaFactory(data_manager, identifier: Optional[int] = None, mode: Optional[s
 
 
 MAPPINGS = {
-    'area': AreaFactory,
+    'area': area_factory,
     'area_nomode': Area,
     'auth': Auth,
     'device': Device,

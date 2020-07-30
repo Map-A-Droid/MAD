@@ -5,7 +5,7 @@ import shutil
 import sys
 from mapadroid.db import DbSchemaUpdater
 import mysql.connector
-from mapadroid.utils.logging import  get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
 logger = get_logger(LoggerEnums.patcher)

@@ -34,10 +34,9 @@ class Rarity(object):
 
     def start_dynamic_rarity(self):
 
-        t = Thread(name='system',
-                   target=self.dynamic_rarity_refresher)
-        t.daemon = True
-        t.start()
+        rarity_thread = Thread(name='system', target=self.dynamic_rarity_refresher)
+        rarity_thread.daemon = True
+        rarity_thread.start()
 
     def dynamic_rarity_refresher(self):
 

@@ -1,20 +1,20 @@
 import datetime
 import json
 import time
-from flask import (jsonify, render_template, request, redirect, url_for, flash, Response)
+from flask import (jsonify, render_template, request, redirect, url_for, flash)
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import auth_required, generate_coords_from_geofence, get_geofences
 from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv, form_mapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.language import i8ln, get_mon_name
-from mapadroid.utils.logging import  get_logger, LoggerEnums
+from mapadroid.utils.language import get_mon_name
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
 logger = get_logger(LoggerEnums.madmin)
 
 
-class statistics(object):
+class MADminStatistics(object):
     def __init__(self, db: DbWrapper, args, app, mapping_manager, data_manager):
         self._db: DbWrapper = db
         self._db_stats_reader: DbStatsReader = db.stats_reader
@@ -63,7 +63,7 @@ class statistics(object):
     def start_modul(self):
         self.add_route()
 
-    def generate_mon_icon_url(self, id, form=None, costume=None, shiny=False):
+    def generate_mon_icon_url(self, mon_id, form=None, costume=None, shiny=False):
         base_path = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border'
 
         form_str = '_00'
@@ -78,7 +78,7 @@ class statistics(object):
         if shiny:
             shiny_str = '_shiny'
 
-        return "{}/pokemon_icon_{:03d}{}{}{}.png".format(base_path, id, form_str, costume_str, shiny_str)
+        return "{}/pokemon_icon_{:03d}{}{}{}.png".format(base_path, mon_id, form_str, costume_str, shiny_str)
 
     @auth_required
     def statistics(self):
@@ -226,15 +226,15 @@ class statistics(object):
         data = self._db_stats_reader.get_best_pokemon_spawns()
         if data is not None:
             for dat in data:
-                monPic = self.generate_mon_icon_url(dat[1], dat[8], dat[9])
-                monName = get_mon_name(dat[1])
+                mon_img = self.generate_mon_icon_url(dat[1], dat[8], dat[9])
+                mon_name = get_mon_name(dat[1])
                 if self._args.db_method == "rm":
                     lvl = calculate_mon_level(dat[6])
                 else:
                     lvl = dat[6]
                 good_spawns.append({'id': dat[1], 'iv': round(calculate_iv(dat[3], dat[4], dat[5]), 0),
-                                    'lvl': lvl, 'cp': dat[7], 'img': monPic,
-                                    'name': monName,
+                                    'lvl': lvl, 'cp': dat[7], 'img': mon_img,
+                                    'name': mon_name,
                                     'periode': datetime.datetime.fromtimestamp
                                     (self.utc2local(dat[2])).strftime(self._datetimeformat)})
 
@@ -254,7 +254,8 @@ class statistics(object):
                 shiny_hour_temp[dat[1]] = dat[0]
 
         for dat in shiny_hour_temp:
-            if shiny_hour_temp[dat] not in shiny_hour_calc: shiny_hour_calc[shiny_hour_temp[dat]] = 0
+            if shiny_hour_temp[dat] not in shiny_hour_calc:
+                shiny_hour_calc[shiny_hour_temp[dat]] = 0
             shiny_hour_calc[shiny_hour_temp[dat]] += 1
 
         for dat in sorted(shiny_hour_calc):
@@ -268,9 +269,8 @@ class statistics(object):
         for dat in data:
             form_suffix = "%02d" % form_mapper(dat[2], dat[5])
             mon = "%03d" % dat[2]
-            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-            monPic = self.generate_mon_icon_url(dat[2], dat[8], dat[9])
-            monName = get_mon_name(dat[2])
+            mon_img = self.generate_mon_icon_url(dat[2], dat[8], dat[9])
+            mon_name = get_mon_name(dat[2])
             diff: int = dat[0]
             if diff == 0:
                 logger.warning('No deeper pokemon stats are possible - not enough data (check config.ini // '
@@ -278,10 +278,12 @@ class statistics(object):
                 diff = 1
 
             ratio = round(dat[1] * 100 / diff, 2)
-            if dat[3] not in shiny_worker: shiny_worker[dat[3]] = 0
+            if dat[3] not in shiny_worker:
+                shiny_worker[dat[3]] = 0
             shiny_worker[dat[3]] += dat[1]
 
-            if dat[2] not in shiny_avg: shiny_avg[dat[2]] = {}
+            if dat[2] not in shiny_avg:
+                shiny_avg[dat[2]] = {}
             if dat[5] not in shiny_avg[dat[2]]:
                 shiny_avg[dat[2]][dat[5]] = {}
                 shiny_avg[dat[2]][dat[5]]['total_shiny'] = []
@@ -291,7 +293,7 @@ class statistics(object):
             shiny_avg[dat[2]][dat[5]]['total_nonshiny'].append(diff)
 
             shiny_stats.append(
-                {'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio,
+                {'sum': dat[0], 'shiny': dat[1], 'img': mon_img, 'name': mon_name, 'ratio': ratio,
                  'worker': dat[3], 'encounterid': dat[4],
                  'periode': datetime.datetime.fromtimestamp
                  (dat[6]).strftime(self._datetimeformat)})
@@ -301,15 +303,15 @@ class statistics(object):
             for form_dat in shiny_avg[dat]:
                 form_suffix = "%02d" % form_mapper(dat, form_dat)
                 mon = "%03d" % dat
-                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-                monName = get_mon_name(dat)
+                mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+                mon_name = get_mon_name(dat)
 
                 total_shiny_encounters = sum(shiny_avg[dat][form_dat]['total_shiny'])
                 total_nonshiny_encounters = sum(shiny_avg[dat][form_dat]['total_nonshiny'])
                 shiny_avg_click = round(total_nonshiny_encounters / total_shiny_encounters, 0)
 
                 shiny_stats_avg.append(
-                    {'name': monName, 'img': monPic, 'total_shiny_encounters': total_shiny_encounters,
+                    {'name': mon_name, 'img': mon_img, 'total_shiny_encounters': total_shiny_encounters,
                      'total_nonshiny_encounters': total_nonshiny_encounters,
                      'click_for_shiny': shiny_avg_click})
 
@@ -337,22 +339,21 @@ class statistics(object):
 
         tmp_perworker_v2 = {}
         data = self._db_stats_reader.get_shiny_stats_v2(timestamp_from, timestamp_to)
-        # SELECT pokemon.pokemon_id, pokemon.form, pokemon.latitude, pokemon.longitude, pokemon.gender, pokemon.costume, tr.count, tr.timestamp_scan, tr.worker, pokemon.encounter_id
         found_shiny_mon_id = []
         shiny_count = {}
         mon_names = {}
         tmp_perhour_v2 = {}
 
         if data is None or len(data) == 0:
-            return jsonify({'empty': True});
+            return jsonify({'empty': True})
 
         shiny_stats_v2 = []
         for dat in data:
             form_suffix = "%02d" % form_mapper(dat[0], dat[1])
             mon = "%03d" % dat[0]
-            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-            monName = get_mon_name(dat[0])
-            mon_names[dat[0]] = monName
+            mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+            mon_name = get_mon_name(dat[0])
+            mon_names[dat[0]] = mon_name
             found_shiny_mon_id.append(
                 mon)  # append everything now, we will set() it later to remove duplicates
             if dat[8] not in tmp_perworker_v2:
@@ -373,7 +374,7 @@ class statistics(object):
             else:
                 tmp_perhour_v2[timestamp.hour] = 1
 
-            shiny_stats_v2.append({'img': monPic, 'name': monName, 'worker': dat[8], 'lat': dat[2],
+            shiny_stats_v2.append({'img': mon_img, 'name': mon_name, 'worker': dat[8], 'lat': dat[2],
                                    'lat_5': "{:.5f}".format(dat[2]), 'lng_5': "{:.5f}".format(dat[3]),
                                    'lng': dat[3], 'timestamp': timestamp.strftime(self._datetimeformat),
                                    'form': dat[1], 'mon_id': dat[0], 'encounter_id': str(dat[9])})
@@ -386,8 +387,8 @@ class statistics(object):
                 odds = round(dat[0] / shiny_count[dat[1]][dat[2]], 0)
                 form_suffix = "%02d" % form_mapper(dat[1], dat[2])
                 mon = "%03d" % dat[1]
-                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-                global_shiny_stats_v2.append({'name': mon_names[dat[1]], 'count': dat[0], 'img': monPic,
+                mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+                global_shiny_stats_v2.append({'name': mon_names[dat[1]], 'count': dat[0], 'img': mon_img,
                                               'shiny': shiny_count[dat[1]][dat[2]], 'odds': odds,
                                               'mon_id': dat[1], 'form': dat[2], 'gender': dat[3],
                                               'costume': dat[4]})
@@ -581,8 +582,10 @@ class statistics(object):
                 for spawnid in data:
                     eventname: str = data[str(spawnid)]["event"]
                     eventid: str = data[str(spawnid)]["eventid"]
-                    if not eventname in known: known[eventname] = []
-                    if not eventname in unknown: unknown[eventname] = []
+                    if eventname not in known:
+                        known[eventname] = []
+                    if eventname not in unknown:
+                        unknown[eventname] = []
                     if eventname not in events:
                         events.append(eventname)
                         eventidhelper[eventname] = eventid
@@ -597,13 +600,12 @@ class statistics(object):
                     outdate: int = 0
 
                     if event == "DEFAULT":
-                        outdate = self.get_spawn_details_helper\
-                            (areaid=area_id, eventid=eventidhelper[event], olderthanxdays=self.outdatedays,
-                             sumonly=True, index=subfenceindex)
+                        outdate = self.get_spawn_details_helper(areaid=area_id, eventid=eventidhelper[event],
+                                                                olderthanxdays=self.outdatedays, sumonly=True,
+                                                                index=subfenceindex)
                     else:
-                        today = self.get_spawn_details_helper\
-                            (areaid=area_id, eventid=eventidhelper[event], todayonly=True,
-                             sumonly=True, index=subfenceindex)
+                        today = self.get_spawn_details_helper(areaid=area_id, eventid=eventidhelper[event],
+                                                              todayonly=True, sumonly=True, index=subfenceindex)
 
                     coords.append({'fence': subfence, 'known': len(known[event]), 'unknown': len(unknown[event]),
                                    'sum': len(known[event]) + len(unknown[event]), 'event': event, 'mode': mode,
@@ -627,8 +629,6 @@ class statistics(object):
         if self._args.quest_stats_fences != "":
             wanted_fences = [item.lower().replace(" ", "") for item in self._args.quest_stats_fences.split(",")]
         for possible_fence in possible_fences:
-            mode = possible_fences[possible_fence]['mode']
-            area_id = possible_fences[possible_fence]['area_id']
             subfenceindex: int = 0
 
             for subfence in possible_fences[possible_fence]['include']:
@@ -642,19 +642,19 @@ class statistics(object):
                 processed_fences.append(subfence)
                 fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
 
-                stops = len(self._db.stops_from_db(
-                        fence=fence
-                    ))
-                quests = len(self._db.quests_from_db(
-                        fence=fence
-                    ))
+                stops = len(self._db.stops_from_db(fence=fence))
+                quests = len(self._db.quests_from_db(fence=fence))
 
                 processed: int = 0
                 if int(stops) > 0:
                     processed: int = int(quests) * 100 / int(stops)
-
-                stats_process.append({"fence": str(subfence), 'stops': int(stops), 'quests': int(quests),
-                              'processed': str(int(processed)) + " %"})
+                info = {
+                    "fence": str(subfence),
+                    'stops': int(stops),
+                    'quests': int(quests),
+                    'processed': str(int(processed)) + " %"
+                }
+                stats_process.append(info)
 
                 subfenceindex += 1
 
@@ -736,38 +736,38 @@ class statistics(object):
     @auth_required
     @logger.catch()
     def delete_spawn(self):
-        id = request.args.get('id', None)
+        spawn_id = request.args.get('id', None)
         area_id = request.args.get('area_id', None)
         event_id = request.args.get('event_id', None)
         event = request.args.get('event', None)
         if self._db.check_if_event_is_active(event_id):
             flash('Event is still active - cannot delete this spawnpoint now.')
             return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
-        if id is not None:
-            self._db.delete_spawnpoint(id)
+        if spawn_id is not None:
+            self._db.delete_spawnpoint(spawn_id)
         return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
 
     @auth_required
     @logger.catch()
     def convert_spawn(self):
-        id = request.args.get('id', None)
+        spawn_id = request.args.get('id', None)
         area_id = request.args.get('area_id', None)
         event_id = request.args.get('event_id', None)
         event = request.args.get('event', None)
         if self._db.check_if_event_is_active(event_id):
             flash('Event is still active - cannot convert this spawnpoint now.')
             return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
-        if id is not None:
-            self._db.convert_spawnpoint(id)
+        if spawn_id is not None:
+            self._db.convert_spawnpoint(spawn_id)
         return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
 
     @auth_required
     @logger.catch()
-    def get_spawnpoints_from_id(self, id, eventid, todayonly=False, olderthanxdays=None, index=0):
+    def get_spawnpoints_from_id(self, spawn_id, eventid, todayonly=False, olderthanxdays=None, index=0):
         spawns = []
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=id)
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=spawn_id)
         fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager,
-                                              str(list(possible_fences[int(id)]['include'].keys())[int(index)]))
+                                              str(list(possible_fences[int(spawn_id)]['include'].keys())[int(index)]))
 
         data = json.loads(
             self._db.download_spawns(
@@ -804,7 +804,7 @@ class statistics(object):
             olderthanxdays = None
             todayonly = False
         else:
-            todayonly=True
+            todayonly = True
 
         return jsonify(self.get_spawn_details_helper(areaid=area_id, eventid=event_id, olderthanxdays=olderthanxdays,
                                                      todayonly=todayonly, index=index))

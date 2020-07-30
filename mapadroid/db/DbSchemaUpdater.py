@@ -277,8 +277,7 @@ class DbSchemaUpdater:
     def create_column(self, column_mod: dict):
         alter_query = (
             "ALTER TABLE {} "
-            "ADD COLUMN {} {}"
-                .format(column_mod["table"], column_mod["column"], column_mod["ctype"])
+            "ADD COLUMN {} {}".format(column_mod["table"], column_mod["column"], column_mod["ctype"])
         )
         if "modify_key" in column_mod:
             alter_query = alter_query + ", " + column_mod["modify_key"]
@@ -292,12 +291,12 @@ class DbSchemaUpdater:
             "AND column_name = %s "
             "AND table_schema = %s"
         )
-        vals = (
+        insert_values = (
             table,
             column,
             self._database,
         )
-        return int(self._db_exec.execute(query, vals)[0][0]) == 1
+        return int(self._db_exec.execute(query, insert_values)[0][0]) == 1
 
     def check_index_exists(self, table: str, index: str) -> bool:
         query = (
@@ -307,12 +306,12 @@ class DbSchemaUpdater:
             "AND index_name = %s "
             "AND table_schema = %s"
         )
-        vals = (
+        insert_values = (
             table,
             index,
             self._database,
         )
-        return int(self._db_exec.execute(query, vals)[0][0]) >= 1
+        return int(self._db_exec.execute(query, insert_values)[0][0]) >= 1
 
     def create_madmin_databases_if_not_exists(self):
         for table in madmin_conversion.TABLES:

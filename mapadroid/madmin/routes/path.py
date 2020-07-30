@@ -9,7 +9,7 @@ from mapadroid.utils.logging import get_logger, LoggerEnums
 logger = get_logger(LoggerEnums.madmin)
 
 
-class path(object):
+class MADminPath(object):
     def __init__(self, db, args, app, mapping_manager: MappingManager, jobstatus, data_manager, plugin_hotlink):
         self._db = db
         self._args = args
@@ -27,7 +27,7 @@ class path(object):
         routes = [
             ("/screenshot/<path:path>", self.pushscreens),
             ("/static/<path:path>", self.pushstatic),
-            ("/asset/<path:path>", self.pushAssets),
+            ("/asset/<path:path>", self.pushassets),
             ("/", self.root),
             ("/quests", self.quest),
             ("/quests_pub", self.quest_pub),
@@ -51,7 +51,7 @@ class path(object):
         return send_from_directory(generate_path('madmin/static'), path)
 
     @auth_required
-    def pushAssets(self, path):
+    def pushassets(self, path):
         return send_from_directory(self._args.pogoasset, path)
 
     @auth_required
@@ -78,10 +78,10 @@ class path(object):
     @auth_required
     def pickworker(self):
         jobname = request.args.get("jobname", None)
-        type = request.args.get("type", None)
+        worker_type = request.args.get("type", None)
         return render_template('workerpicker.html',
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="Select Worker", jobname=jobname, type=type)
+                               title="Select Worker", jobname=jobname, type=worker_type)
 
     @auth_required
     def jobstatus(self):

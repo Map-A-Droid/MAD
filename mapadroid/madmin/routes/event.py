@@ -1,4 +1,4 @@
-from flask import (render_template, request, redirect, url_for, Response, jsonify, flash)
+from flask import (render_template, request, redirect, url_for, jsonify, flash)
 from flask_caching import Cache
 from datetime import datetime
 from mapadroid.madmin.functions import auth_required
@@ -8,7 +8,7 @@ from mapadroid.utils.MappingManager import MappingManager
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
-class event(object):
+class MADminEvent(object):
     def __init__(self, db, args, logger, app, mapping_manager: MappingManager, data_manager):
         self._db = db
         self._args = args
@@ -42,9 +42,14 @@ class event(object):
         data = self._db.get_events()
         events = []
         for dat in data:
-            events.append({'id': str(dat['id']), 'event_name': str(dat['event_name']),
-                           'event_start': str(dat['event_start']),  'event_end': str(dat['event_end']),
-                            'event_lure_duration': str(dat['event_lure_duration']), 'locked': str(dat['locked'])})
+            events.append({
+                'id': str(dat['id']),
+                'event_name': str(dat['event_name']),
+                'event_start': str(dat['event_start']),
+                'event_end': str(dat['event_end']),
+                'event_lure_duration': str(dat['event_lure_duration']),
+                'locked': str(dat['locked'])
+            })
 
         return jsonify(events)
 
@@ -57,17 +62,17 @@ class event(object):
     @auth_required
     def edit_event(self):
 
-        id = request.args.get("id", None)
+        event_id = request.args.get("id", None)
         event_name: str = ""
         event_start_date: str = ""
         event_start_time: str = ""
         event_end_date: str = ""
         event_end_time: str = ""
         event_lure_duration: int = ""
-        if id is not None:
-            data = self._db.get_events(event_id=id)
+        if event_id is not None:
+            data = self._db.get_events(event_id=event_id)
             event_name = data[0]['event_name']
-            event_lure_duration  = data[0]['event_lure_duration']
+            event_lure_duration = data[0]['event_lure_duration']
             event_start_date = datetime.strftime(data[0]['event_start'], '%Y-%m-%d')
             event_start_time = datetime.strftime(data[0]['event_start'], '%H:%M')
             event_end_date = datetime.strftime(data[0]['event_end'], '%Y-%m-%d')
@@ -81,11 +86,11 @@ class event(object):
                                event_end_date=event_end_date,
                                event_end_time=event_end_time,
                                event_lure_duration=event_lure_duration,
-                               id=id)
+                               id=event_id)
 
     @auth_required
     def save_event(self):
-        id = request.form.get("id", None)
+        event_id = request.form.get("id", None)
         event_name = request.form.get("event_name", None)
         event_start_date = request.form.get("event_start_date", None)
         event_start_time = request.form.get("event_start_time", None)
@@ -93,14 +98,15 @@ class event(object):
         event_end_time = request.form.get("event_end_time", None)
         event_lure_duration = request.form.get("event_lure_duration", None)
         # default lure duration = 30 (min)
-        if event_lure_duration == "": event_lure_duration = 30
+        if event_lure_duration == "":
+            event_lure_duration = 30
         if event_name == "" or event_start_date == "" or event_start_time == "" or event_end_date == "" \
-            or event_end_time == "":
+           or event_end_time == "":
             flash('Error while adding this event')
             return redirect(url_for('events'), code=302)
 
         self._db.save_event(event_name, event_start_date + " " + event_start_time,
-                            event_end_date + " " + event_end_time, event_lure_duration=event_lure_duration, id=id)
+                            event_end_date + " " + event_end_time, event_lure_duration=event_lure_duration, id=event_id)
 
         flash('Successfully added this event')
 
@@ -108,9 +114,9 @@ class event(object):
 
     @auth_required
     def del_event(self):
-        id = request.args.get("id", None)
-        if id is not None:
-            if self._db.delete_event(id=id):
+        event_id = request.args.get("id", None)
+        if event_id is not None:
+            if self._db.delete_event(id=event_id):
                 flash('Successfully deleted this event')
                 return redirect(url_for('events'), code=302)
             else:

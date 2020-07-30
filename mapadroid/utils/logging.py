@@ -22,17 +22,18 @@ class LoggerEnums(IntEnum):
     utils: int = 12
     storage: int = 13
     package_mgr: int = 14
+    plugin: int = 15
 
 
 # ==================================
 # ========== Core Logging ==========
 # ==================================
 
-def initLogging(args):
+def init_logging(args):
     global logger
-    log_level_label, log_level = logLevel(args.log_level, args.verbose)
-    _, log_file_level = logLevel(args.log_file_level, args.verbose)
-    log_trace = log_level <= 10
+    log_level_label, log_level_val = log_level(args.log_level, args.verbose)
+    _, log_file_level = log_level(args.log_file_level, args.verbose)
+    log_trace = log_level_val <= 10
     log_file_trace = log_file_level <= 10
     colorize = not args.no_log_colors
 
@@ -67,7 +68,7 @@ def initLogging(args):
                 "sink": sys.stdout,
                 "format": log_format_console,
                 "colorize": colorize,
-                "level": log_level,
+                "level": log_level_val,
                 "enqueue": True,
                 "filter": filter_errors
             },
@@ -106,10 +107,10 @@ def initLogging(args):
     except ValueError:
         logger.error("Logging parameters/configuration is invalid.")
         sys.exit(1)
-    logger.info("Setting log level to {} ({}).", str(log_level), log_level_label)
+    logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
 
 
-def logLevel(arg_log_level, arg_debug_level):
+def log_level(arg_log_level, arg_debug_level):
     # List has an order, dict doesn't. We need the guaranteed order to
     # determine debug level based on arg_debug_level.
     verbosity_levels = [
@@ -150,11 +151,11 @@ def logLevel(arg_log_level, arg_debug_level):
     if arg_debug_level < 0 or arg_debug_level > debug_levels_length:
         # Only show the message once per startup. This method is currently called once
         # for console logging, once for file logging.
-        if not hasattr(logLevel, 'bounds_exceeded'):
+        if not hasattr(log_level, 'bounds_exceeded'):
             logger.debug("Verbosity -v={} is outside of the bounds [0, {}]. Changed to nearest limit.",
                          str(arg_debug_level),
                          str(debug_levels_length))
-            logLevel.bounds_exceeded = True
+            log_level.bounds_exceeded = True
 
         arg_debug_level = min(arg_debug_level, debug_levels_length)
         arg_debug_level = max(arg_debug_level, 0)
@@ -299,7 +300,7 @@ class InterceptHandler(logging.Handler):
 class LogLevelChanger:
     logger = get_logger(LoggerEnums.mitm)
 
-    def log(level, msg):
+    def log(level, msg):  # noqa: N805
         if level >= 40:
             LogLevelChanger.logger.log(level, msg)
         else:

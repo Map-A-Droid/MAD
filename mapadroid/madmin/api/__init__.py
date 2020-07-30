@@ -3,8 +3,9 @@ import collections
 import flask
 
 from . import apiRequest, apiResponse
-from .apks import *
-from .resources import *
+from .apks import ftr_mad_apks
+from .resources import (ftr_area, ftr_auth, ftr_device, ftr_devicesetting, ftr_geofence, ftr_monlist, ftr_routecalc,
+                        ftr_walker, ftr_walkerarea)
 
 BASE_URI = '/api'
 valid_resources = {
@@ -40,7 +41,7 @@ class APIEntry(object):
         self._app = app
         self._resources = {}
         self._app.route(BASE_URI, methods=['GET'])(self.process_request)
-        for mod_name, module in valid_resources.items():
+        for _, module in valid_resources.items():
             tmp = module(logger, app, BASE_URI, data_manager, mapping_manager, ws_server, config_mode, storage_obj)
             self._resources[tmp.uri_base] = tmp.description
 

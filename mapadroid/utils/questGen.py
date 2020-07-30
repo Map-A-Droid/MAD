@@ -79,17 +79,6 @@ def generate_quest(quest):
     return quest_raw
 
 
-def extractForm(quest_reward_json):
-    quest_reward = json.loads(quest_reward_json)
-
-    if len(quest_reward) == 0:
-        return 0
-
-    if "pokemon_encounter" in quest_reward[0]:
-        encounter = quest_reward[0]["pokemon_encounter"]
-        return encounter["pokemon_display"]["form_value"]
-
-
 def questreward(quest_reward_type):
     type = {
         2: _("Item"),
@@ -288,7 +277,7 @@ def questtask(typeid, condition, target, quest_template):
                 # PVP against team leader.
                 text = _('Battle a Team Leader {0} times')
             elif con.get('type') == 23:
-                gotta_win = con.get('with_pvp_combat', {}).get('requires_win') == True
+                gotta_win = con.get('with_pvp_combat', {}).get('requires_win') is True
 
                 if gotta_win:
                     text = _('Win a battle against another Trainer {0} times')

@@ -22,20 +22,16 @@ logger = get_logger(LoggerEnums.worker)
 
 
 class WorkerMITM(MITMBase):
-    def __init__(self, args, dev_id, id, last_known_state, communicator: AbstractCommunicator, mapping_manager: MappingManager,
-                 area_id: int, routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
-                 pogo_window_manager: PogoWindows, walker, event):
-        MITMBase.__init__(self, args, dev_id, id, last_known_state, communicator,
+    def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
+                 mapping_manager: MappingManager, area_id: int, routemanager_name: str, mitm_mapper: MitmMapper,
+                 db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker, event):
+        MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_name=routemanager_name,
-                          db_wrapper=db_wrapper, NoOcr=True,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker, event=event)
+                          db_wrapper=db_wrapper,
+                          mitm_mapper=mitm_mapper, pogo_window_manager=pogo_window_manager, walker=walker, event=event)
         # TODO: own InjectionSettings class
-        self._injection_settings = {}
         self.__update_injection_settings()
-
-    def _valid_modes(self):
-        return ["iv_mitm", "raids_mitm", "mon_mitm"]
 
     def _health_check(self):
         self.logger.debug4("_health_check: called")
@@ -68,8 +64,8 @@ class WorkerMITM(MITMBase):
             max_distance = int(200)
 
         if (speed == 0 or
-                (max_distance and 0 < max_distance < distance)
-                or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
+                (max_distance and 0 < max_distance < distance) or
+                (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self.logger.debug("main: Teleporting...")
             self._transporttype = 0
             self._communicator.set_location(
@@ -87,7 +83,6 @@ class WorkerMITM(MITMBase):
                 elif distance > 2500:
                     delay_used = 8
                 self.logger.debug("Need more sleep after Teleport: {} seconds!", delay_used)
-                # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
                 # TODO: actually use to_walk for distance
@@ -230,12 +225,13 @@ class WorkerMITM(MITMBase):
                 elif mode in ["mon_mitm", "iv_mitm"]:
                     # check if the GMO contains mons
                     for data_extract in latest_data['payload']['cells']:
-                        for WP in data_extract['wild_pokemon']:
+                        for pokemon in data_extract['wild_pokemon']:
                             # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                             # if there's location in latest, the distance has
                             # already been checked in MITMBase
-                            if WP['spawnpoint_id'] and (latest.get("location", None) or
-                                                        self._check_data_distance(latest_data['payload']['cells'])):
+                            if pokemon['spawnpoint_id'] and (latest.get("location", None) or
+                                                             self._check_data_distance(
+                                                                 latest_data['payload']['cells'])):
                                 data_requested = latest_data
                                 break
                         if data_requested != LatestReceivedType.UNDEFINED:
