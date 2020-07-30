@@ -5,7 +5,7 @@ import re
 def check_auth(logger, auth_header, args, auths):
     valid = False
     if auths is None:
-        return False
+        return True
     try:
         auth_code = re.match(r'^Basic (\S+)$', auth_header)
         decoded = base64.b64decode(auth_code.group(1)).decode('utf-8')

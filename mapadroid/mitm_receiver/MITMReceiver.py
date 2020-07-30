@@ -86,29 +86,30 @@ class EndpointAction(object):
                 abort = True
             else:
                 abort = False
-        elif 'autoconfig/' in request.url and str(request.url_rule):
+        elif 'autoconfig/' in str(request.url):
             auth = request.headers.get('Authorization', None)
             if auth is None or not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                 self.response = Response(status=403, headers={})
                 abort = True
-        elif request.url is not None and str(request.url_rule) == '/origin_generator':
+            if 'mymac' in str(request.url):
+                devs = self.__data_manager.search('device', params={'origin': origin})
+                if not devs:
+                    abort = False
+                    origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
+                    self.response = Response(status=403, headers={})
+        elif str(request.url_rule) == '/origin_generator':
             auth = request.headers.get('Authorization', None)
             if auth is None or not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                 self.response = Response(status=403, headers={})
                 abort = True
-        elif request.url and ('download' in request.url or 'mymac' in request.url):
+        elif 'download' in request.url:
             auth = request.headers.get('Authorization', None)
-            if auth is None or not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
+            if not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                 self.response = Response(status=403, headers={})
                 abort = True
-            devs = self.__data_manager.search('device', params={'origin': origin})
-            if not devs:
-                abort = False
-                origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
-                self.response = Response(status=403, headers={})
         else:
             if origin is None:
                 origin_logger.warning("Missing Origin header in request")

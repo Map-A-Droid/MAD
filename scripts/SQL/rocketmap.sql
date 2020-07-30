@@ -431,8 +431,6 @@ CREATE TABLE `settings_devicepool` (
     `route_calc_algorithm` enum('route','routefree') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `startcoords_of_walker` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `injection_thresh_reboot` int(11) DEFAULT NULL,
-    `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
-    `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
     `screendetection` tinyint(1) DEFAULT NULL,
     `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
     `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
@@ -787,16 +785,6 @@ CREATE TABLE `autoconfig_logs` (
     KEY `k_acl` (`instance_id`, `session_id`),
     CONSTRAINT `fk_ac_l_instance` FOREIGN KEY (`session_id`)
         REFERENCES `autoconfig_registration` (`session_id`)
-        ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `autoconfig_google` (
-    `instance_id` int(10) unsigned NOT NULL,
-    `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `data` longblob NOT NULL,
-    PRIMARY KEY (`instance_id`, `name`),
-    CONSTRAINT `fk_ac_f_instance` FOREIGN KEY (`instance_id`)
-        REFERENCES `madmin_instance` (`instance_id`)
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
