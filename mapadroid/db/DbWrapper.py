@@ -1228,7 +1228,7 @@ class DbWrapper:
         cells = []
         for (cell_id, level, center_latitude, center_longitude, updated) in res:
             cells.append({
-                "cell_id": id,
+                "cell_id": cell_id,
                 "level": level,
                 "center_latitude": center_latitude,
                 "center_longitude": center_longitude,
