@@ -1,6 +1,7 @@
 from functools import wraps
 import gzip
 import json
+import socket
 import sys
 import time
 import io
@@ -583,7 +584,21 @@ class MITMReceiver(Process):
 
 
 def get_actual_ip(request):
+    # Determine the IP address from the request.  If we have multiple IP addresses, prioritize IPv4.  If no IPv4 is
+    # present use first IPv6 address.  We are not using `request.remote_addr` as we want to prioritize IPv4
+    ip_addrs = None
     if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
-        return request.environ['REMOTE_ADDR']
+        ip_addrs = request.environ['REMOTE_ADDR'].split(',')
+    elif request.environ.get('HTTP_X_REAL_IP') is not None:
+        ip_addrs = request.environ['HTTP_X_REAL_IP'].split(',')
     else:
-        return request.environ['HTTP_X_FORWARDED_FOR']
+        # Forwarded for typically uses main, proxy1, proxy2, ... proxyn
+        ip_addrs = request.environ['HTTP_X_FORWARDED_FOR'].split(',')[0].split(',')
+    for ip in ip_addrs:
+        try:
+            socket.inet_aton(ip)
+            return ip
+        except socket.error:
+            pass
+    # No IPv4 address found.  Return the first value
+    return ip_addrs[0]
