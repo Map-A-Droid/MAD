@@ -229,8 +229,9 @@ class WorkerMITM(MITMBase):
                             # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                             # if there's location in latest, the distance has
                             # already been checked in MITMBase
-                            valid_distance = self._check_data_distance(latest_data['payload']['cells'])
-                            if pokemon['spawnpoint_id'] and (latest.get("location", None) or valid_distance):
+                            if pokemon['spawnpoint_id'] and (latest.get("location", None) or
+                                                             self._check_data_distance(
+                                                                 latest_data['payload']['cells'])):
                                 data_requested = latest_data
                                 break
                         if data_requested != LatestReceivedType.UNDEFINED:
