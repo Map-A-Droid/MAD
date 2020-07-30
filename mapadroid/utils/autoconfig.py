@@ -3,6 +3,7 @@ import copy
 import json
 from io import BytesIO
 from typing import Any, List, NoReturn
+from xml.sax.saxutils import escape
 from mapadroid.data_manager.modules import MAPPINGS
 
 
@@ -87,13 +88,14 @@ class AutoConfigCreator:
                 if key not in origin_config:
                     continue
                 elem_type = "string"
+                value = escape(str(origin_config[key]))
                 if elem['expected'] == bool:
                     elem_type = "boolean"
                 xml_elem = "<{} name=\"{}\"".format(elem_type, key)
                 if elem['expected'] == bool:
-                    xml_elem += " value=\"{}\" />".format(str(origin_config[key]).lower())
+                    xml_elem += " value=\"{}\" />".format(value)
                 else:
-                    xml_elem += ">{}</{}>".format(origin_config[key], elem_type)
+                    xml_elem += ">{}</{}>".format(value, elem_type)
                 conv_xml.append('    {}'.format(xml_elem))
         conv_xml.append('</map>')
         return BytesIO('\n'.join(conv_xml).encode('utf-8'))
