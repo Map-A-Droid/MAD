@@ -433,16 +433,20 @@ class MITMReceiver(Process):
     def autoconfig_log(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
         try:
-            level = kwargs.get('level')
-            msg = kwargs.get('msg')
+            level = kwargs['level']
+            msg = kwargs['msg']
         except KeyError:
             level, msg = str(request.data, 'utf-8').split(',', 1)
         info = {
             'session_id': session_id,
             'instance_id': self._db_wrapper.instance_id,
-            'level': int(level),
             'msg': msg
         }
+        try:
+            info['level'] = int(level)
+        except TypeError:
+            info['level'] = 0
+            logger.warning('Unable to parse level for autoconfig log')
         self._db_wrapper.autoexec_insert('autoconfig_logs', info)
         sql = "SELECT `status`\n"\
               "FROM `autoconfig_registration`\n"\
