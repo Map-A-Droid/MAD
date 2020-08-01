@@ -1,4 +1,6 @@
+import copy
 from unittest import TestCase
+import mapadroid.tests.test_variables as global_variables
 from mapadroid.tests.test_utils import get_connection_api, get_connection_mitm, ResourceCreator
 
 
@@ -16,7 +18,7 @@ class MITMAutoConf(TestCase):
         auths = self.api.get('/api/auth').json()
         for auth_id, _ in auths.items():
             self.api.delete('/api/auth/{}'.format(auth_id))
-        res = self.mitm.get('/autoconfig/1/status')
+        res = self.mitm.get('/autoconfig/0/status')
         self.assertTrue(res.status_code == 404)
         res = self.mitm.post('/autoconfig/register')
         self.assertTrue(res.status_code == 201)
@@ -26,7 +28,6 @@ class MITMAutoConf(TestCase):
 
     def test_workflow_assigned_device(self):
         api_creator = ResourceCreator(self.api)
-        (dev_info, _) = api_creator.create_valid_resource('device')
         gacct = None
         session_id = None
         try:
@@ -44,6 +45,9 @@ class MITMAutoConf(TestCase):
             res = self.api.post('/api/pogoauth', json=gacc)
             gacct = res.headers['X-URI']
             self.assertTrue(res.status_code == 201)
+            dev_payload = copy.copy(global_variables.DEFAULT_OBJECTS['device']['payload'])
+            dev_payload['account_id'] = gacct
+            (dev_info, _) = api_creator.create_valid_resource('device', payload=dev_payload)
             accept_info = {
                 'status': 1,
                 'device_id': dev_info['uri']

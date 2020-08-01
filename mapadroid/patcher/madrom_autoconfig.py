@@ -95,7 +95,7 @@ class Patch(PatchBase):
             sql = "ALTER TABLE `settings_device`\n"\
                   "     ADD CONSTRAINT `settings_device_ibfk_3`\n"\
                   "     FOREIGN KEY (`account_id`)\n"\
-                  "           REFERENCES `autoconfig_google` (`account_id`);"
+                  "           REFERENCES `settings_pogoauth` (`account_id`);"
             self._db.execute(sql, commit=True, raise_exec=False)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)

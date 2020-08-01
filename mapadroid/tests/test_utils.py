@@ -1,5 +1,6 @@
 import copy
 import io
+import time
 from typing import List, NoReturn
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import APKArch, APKType, get_storage_obj, PackageImporter
@@ -15,7 +16,7 @@ args = parse_args()
 
 class ResourceCreator():
     generated_uris: List[str] = []
-    index: int = 0
+    index: int = int(time.time())
     prefix: str = 'ResourceCreator'
 
     def __init__(self, api, prefix=prefix):

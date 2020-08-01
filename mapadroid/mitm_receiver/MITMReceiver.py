@@ -88,7 +88,7 @@ class EndpointAction(object):
                 abort = False
         elif 'autoconfig/' in str(request.url):
             auth = request.headers.get('Authorization', None)
-            if auth is None or not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
+            if not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                 self.response = Response(status=403, headers={})
                 abort = True
@@ -100,7 +100,7 @@ class EndpointAction(object):
                     self.response = Response(status=403, headers={})
         elif str(request.url_rule) == '/origin_generator':
             auth = request.headers.get('Authorization', None)
-            if auth is None or not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
+            if not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                 self.response = Response(status=403, headers={})
                 abort = True
