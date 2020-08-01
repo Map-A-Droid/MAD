@@ -10,6 +10,7 @@ from .monivlist import MonIVList
 from .routecalc import RouteCalc
 from .walker import Walker
 from .walkerarea import WalkerArea
+from .pogoauth import PogoAuth
 from ..dm_exceptions import InvalidArea, ModeNotSpecified, ModeUnknown, UnknownIdentifier
 
 
@@ -37,6 +38,7 @@ MAPPINGS = {
     'devicepool': DevicePool,
     'geofence': GeoFence,
     'monivlist': MonIVList,
+    'pogoauth': PogoAuth,
     'routecalc': RouteCalc,
     'walker': Walker,
     'walkerarea': WalkerArea

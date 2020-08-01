@@ -6,7 +6,7 @@ from . import apiRequest, apiResponse
 from .autoconf import ftr_autoconf
 from .apks import ftr_mad_apks
 from .resources import (ftr_area, ftr_auth, ftr_device, ftr_devicesetting, ftr_geofence, ftr_monlist, ftr_routecalc,
-                        ftr_walker, ftr_walkerarea)
+                        ftr_walker, ftr_walkerarea, ftr_pogoauth)
 
 BASE_URI = '/api'
 valid_resources = {
@@ -16,6 +16,7 @@ valid_resources = {
     'devicesetting': ftr_devicesetting.APIDeviceSetting,
     'geofence': ftr_geofence.APIGeofence,
     'monivlist': ftr_monlist.APIMonList,
+    'pogoauth': ftr_pogoauth.PoGoAuth,
     'routecalc': ftr_routecalc.APIRouteCalc,
     'walker': ftr_walker.APIWalker,
     'walkerarea': ftr_walkerarea.APIWalkerArea,

@@ -17,12 +17,6 @@ class AutoConfHandler(apiHandler.APIHandler):
         self._app.route('/api/autoconf/<string:session_id>',
                         methods=['GET', 'POST', 'DELETE'],
                         endpoint='api_autoconf_status')(self.entrypoint)
-        self._app.route('/api/autoconf/google',
-                        methods=['POST', 'DELETE'],
-                        endpoint='api_autoconf_google')(self.entrypoint)
-        self._app.route('/api/autoconf/google/<int:email_id>',
-                        methods=['POST', 'DELETE'],
-                        endpoint='api_autoconf_google_single')(self.entrypoint)
         self._app.route('/api/autoconf/rgc',
                         methods=['POST'],
                         endpoint='api_autoconf_rgc')(self.entrypoint)
@@ -45,9 +39,6 @@ class AutoConfHandler(apiHandler.APIHandler):
         if self.api_req._request.endpoint == 'api_autoconf':
             if self.api_req._request.method == 'GET':
                 return self.autoconf_status()
-        elif self.api_req._request.endpoint in ['api_autoconf_google', 'api_autoconf_google_single']:
-            if self.api_req._request.method in ['POST', 'DELETE']:
-                return self.autoconf_google(self.api_req._request.method, email_id)
         elif self.api_req._request.endpoint == 'api_autoconf_status':
             if self.api_req._request.method == 'GET':
                 return self.autoconf_status(session_id=session_id)

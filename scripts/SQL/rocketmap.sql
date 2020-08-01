@@ -387,7 +387,7 @@ CREATE TABLE `settings_device` (
     `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
     `mac_address` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
     `interface_type` enum('lan','wlan') COLLATE utf8mb4_unicode_ci DEFAULT 'lan',
-    `email_id` int(10) unsigned NULL,
+    `account_id` int(10) unsigned NULL,
     PRIMARY KEY (`device_id`),
     KEY `settings_device_ibfk_1` (`walker_id`),
     KEY `settings_device_ibfk_2` (`pool_id`),
@@ -399,8 +399,8 @@ CREATE TABLE `settings_device` (
         REFERENCES `settings_walker` (`walker_id`),
     CONSTRAINT `settings_device_ibfk_2` FOREIGN KEY (`pool_id`)
         REFERENCES `settings_devicepool` (`pool_id`),
-    CONSTRAINT `settings_device_ibfk_3` FOREIGN KEY (`email_id`)
-        REFERENCES `autoconfig_google` (`email_id`)
+    CONSTRAINT `settings_device_ibfk_3` FOREIGN KEY (`account_id`)
+        REFERENCES `settings_pogoauth` (`account_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `settings_devicepool` (
@@ -788,13 +788,15 @@ CREATE TABLE `autoconfig_logs` (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `autoconfig_google` (
+CREATE TABLE `settings_pogoauth` (
     `instance_id` int(10) unsigned NOT NULL,
-    `email_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-    `email` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `pwd` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
-    PRIMARY KEY (`email_id`),
-        CONSTRAINT `fk_ac_g_instance` FOREIGN KEY (`instance_id`)
+    `account_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `login_type` enum('google','ptc') COLLATE utf8mb4_unicode_ci NOT NULL,
+    `username` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `password` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+    PRIMARY KEY (`account_id`),
+    CONSTRAINT `fk_ac_g_instance` FOREIGN KEY (`instance_id`)
         REFERENCES `madmin_instance` (`instance_id`)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT `settings_pogoauth_u1` UNIQUE (`login_type`, `username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

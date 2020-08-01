@@ -58,6 +58,14 @@ DEFAULT_OBJECTS = {
             'mon_ids_iv': []
         }
     },
+    'pogoauth': {
+        'uri': '/api/pogoauth',
+        'payload': {
+            'login_type': 'google',
+            'username': '%s username - %s',
+            'password': 'pass'
+        }
+    },
     'routecalc': {
         'uri': '/api/routecalc',
         'payload': {

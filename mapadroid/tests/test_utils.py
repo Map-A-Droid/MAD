@@ -88,6 +88,8 @@ class ResourceCreator():
             name_elem = 'name'
         elif resource == 'monivlist':
             name_elem = 'monlist'
+        elif resource == 'pogoauth':
+            name_elem = 'username'
         elif resource == 'walker':
             elem['resources']['walkerarea'] = self.create_valid_resource('walkerarea')[0]
             payload['setup'] = [elem['resources']['walkerarea']['uri']]

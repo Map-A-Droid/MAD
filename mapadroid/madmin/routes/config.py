@@ -44,6 +44,7 @@ class MADminConfig(object):
             ("/settings/devices", self.settings_devices),
             ("/settings/geofence", self.settings_geofence),
             ("/settings/ivlists", self.settings_ivlists),
+            ("/settings/pogoauth", self.settings_pogoauth),
             ("/settings/monsearch", self.monsearch),
             ("/settings/shared", self.settings_pools),
             ("/settings/routecalc", self.settings_routecalc),
@@ -237,12 +238,12 @@ class MADminConfig(object):
     @logger.catch
     @auth_required
     def settings_devices(self):
-        sql = "SELECT ag.`email_id`, ag.`email`\n"\
-              "FROM `autoconfig_google` ag\n"\
-              "LEFT JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
-              "WHERE ag.`instance_id` = %%s AND (%s)"
+        sql = "SELECT ag.`account_id`, ag.`username`\n"\
+              "FROM `settings_pogoauth` ag\n"\
+              "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
+              "WHERE ag.`instance_id` = %%s AND ag.`login_type` = %%s AND (%s)"
         where = ["sd.`device_id` IS NULL"]
-        args = [self._db.instance_id]
+        args = [self._db.instance_id, 'google']
         try:
             identifier = request.args.get('id')
             int(identifier)
@@ -311,6 +312,20 @@ class MADminConfig(object):
             'passthrough': {
                 'current_mons_list': current_mons_list
             }
+        }
+        return self.process_element(**required_data)
+
+    @logger.catch
+    @auth_required
+    def settings_pogoauth(self):
+        required_data = {
+            'identifier': 'id',
+            'base_uri': 'api_pogoauth',
+            'data_source': 'pogoauth',
+            'redirect': 'settings_pogoauth',
+            'html_single': 'settings_singlepogoauth.html',
+            'html_all': 'settings_pogoauth.html',
+            'subtab': 'pogoauth',
         }
         return self.process_element(**required_data)
 

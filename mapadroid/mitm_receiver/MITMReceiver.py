@@ -414,14 +414,14 @@ class MITMReceiver(Process):
                 return send_file(config.generate_config(origin), as_attachment=True, attachment_filename='conf.xml',
                                  mimetype='application/xml')
             elif operation in ['google']:
-                sql = "SELECT ag.`email`, ag.`pwd`\n"\
-                      "FROM `autoconfig_google` ag\n"\
-                      "INNER JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
+                sql = "SELECT ag.`username`, ag.`password`\n"\
+                      "FROM `settings_pogoauth` ag\n"\
+                      "INNER JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
                       "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
                       "WHERE ar.`session_id` = %s and ag.`instance_id` = %s"
                 login = self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id))
                 if login:
-                    return Response(status=200, response='\n'.join([login['email'], login['pwd']]))
+                    return Response(status=200, response='\n'.join([login['username'], login['password']]))
                 else:
                     return Response(status=404, response='')
             elif operation == 'origin':

@@ -19,8 +19,6 @@ class AutoConfigManager(object):
             ("/autoconfig/logs/<int:session_id>/update", self.autoconf_logs_get),
             ("/autoconfig/rgc", self.autoconf_rgc),
             ("/autoconfig/pd", self.autoconf_pd),
-            ("/autoconfig/google", self.autoconf_google),
-            ("/autoconfig/google/<int:email_id>", self.autoconf_google_single)
         ]
         for route_def in routes:
             if len(route_def) == 2:

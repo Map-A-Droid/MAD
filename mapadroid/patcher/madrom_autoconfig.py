@@ -48,15 +48,17 @@ class Patch(PatchBase):
                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             self._db.execute(sql, commit=True, raise_exc=True)
 
-            sql = "CREATE TABLE IF NOT EXISTS `autoconfig_google` (\n"\
+            sql = "CREATE TABLE IF NOT EXISTS `settings_pogoauth` (\n"\
                   " `instance_id` int(10) unsigned NOT NULL,\n"\
-                  " `email_id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n"\
-                  " `email` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
-                  " `pwd` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
-                  " PRIMARY KEY (`email_id`),\n"\
+                  " `account_id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n"\
+                  " `login_type` enum('google','ptc') COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
+                  " `username` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
+                  " `password` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
+                  " PRIMARY KEY (`account_id`),\n"\
                   " CONSTRAINT `fk_ac_g_instance` FOREIGN KEY (`instance_id`)\n"\
                   "  REFERENCES `madmin_instance` (`instance_id`)\n"\
-                  "  ON DELETE CASCADE\n"\
+                  "  ON DELETE CASCADE,\n"\
+                  " CONSTRAINT `settings_pogoauth_u1` UNIQUE (`login_type`, `username`)\n"\
                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
             self._db.execute(sql, commit=True, raise_exc=True)
 
@@ -85,15 +87,15 @@ class Patch(PatchBase):
                       " ADD `interface_type` enum('lan','wlan') COLLATE utf8mb4_unicode_ci DEFAULT 'lan'\n"\
                       " AFTER `mac_address`;"
                 self._db.execute(sql, commit=True, raise_exec=True)
-            if not self._schema_updater.check_column_exists('settings_device', 'email_id'):
+            if not self._schema_updater.check_column_exists('settings_device', 'account_id'):
                 sql = "ALTER TABLE `settings_device`\n"\
-                      "     ADD `email_id` int(10) unsigned NULL\n"\
+                      "     ADD `account_id` int(10) unsigned NULL\n"\
                       "     AFTER `interface_type`;"
                 self._db.execute(sql, commit=True, raise_exec=True)
             sql = "ALTER TABLE `settings_device`\n"\
                   "     ADD CONSTRAINT `settings_device_ibfk_3`\n"\
-                  "     FOREIGN KEY (`email_id`)\n"\
-                  "           REFERENCES `autoconfig_google` (`email_id`);"
+                  "     FOREIGN KEY (`account_id`)\n"\
+                  "           REFERENCES `autoconfig_google` (`account_id`);"
             self._db.execute(sql, commit=True, raise_exec=False)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)

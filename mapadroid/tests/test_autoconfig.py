@@ -37,11 +37,12 @@ class MITMAutoConf(TestCase):
             self.assertTrue(res.status_code == 406)
             # Create Google Account
             gacc = {
-                "email":"Unit",
-                "pwd":"Test"
+                "login_type": "google",
+                "username":"Unit",
+                "password":"Test"
             }
-            res = self.api.post('/api/autoconf/google', json=gacc)
-            gacct = res.content.decode('utf-8')
+            res = self.api.post('/api/pogoauth', json=gacc)
+            gacct = res.headers['X-URI']
             self.assertTrue(res.status_code == 201)
             accept_info = {
                 'status': 1,
@@ -60,13 +61,14 @@ class MITMAutoConf(TestCase):
             self.assertTrue(res.status_code == 200)
             res = self.mitm.get('/autoconfig/{}/google'.format(session_id))
             self.assertTrue(res.status_code == 200)
+            self.assertTrue(res.content == b'Unit\nTest')
             res = self.mitm.delete('/autoconfig/{}/complete'.format(session_id))
             self.assertTrue(res.status_code == 200)
         except Exception:
             raise
         finally:
+            api_creator.remove_resources()
             if gacct is not None:
-                self.api.delete('/api/autoconf/google/7{}'.format(gacct))
+                res = self.api.delete(gacct)
             if session_id is not None:
                 self.mitm.delete('/autoconfig/{}/complete'.format(session_id))
-            api_creator.remove_resources()

@@ -60,13 +60,16 @@ class Device(Resource):
                     "expected": str
                 }
             },
-            "email_id": {
+            "account_id": {
                 "settings": {
-                    "type": "emailselect",
+                    "type": "emailselect_google",
                     "require": False,
                     "empty": None,
-                    "description": "Assigned email address",
-                    "expected": int
+                    "description": "Assigned Google address",
+                    "expected": int,
+                    "uri": True,
+                    "data_source": "pogoauth",
+                    "uri_source": "api_pogoauth"
                 }
             },
             "interface_type": {

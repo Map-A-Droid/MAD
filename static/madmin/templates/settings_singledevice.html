@@ -127,12 +127,12 @@ $(document).ready(function () {
       <small class="form-text text-muted">ADB device name</small>
     </div>
     <div class="form-group">
-      <label for="email_id">Assigned email address</label>
-      <select class="form-control" name="email_id" data-default="{{ element.email_id if element.email_id else 'None' }}">
+      <label for="account_id">Assigned email address</label>
+      <select class="form-control" name="account_id" data-default="{{ element.account_id if element.account_id else 'None' }}">
         <option value='None'>None</option>
         {% if accounts is not none %}
         {% for account in accounts %}
-         <option value="{{ account.email_id }}" {{ 'selected=selected' if element.email_id == account.email_id else "" }}>{{ account.email }}</option>
+         <option value="{{ account.account_id }}" {{ 'selected=selected' if element.account_id == account.account_id else "" }}>{{ account.username }}</option>
         {% endfor %}
         {% endif %}
       </select>

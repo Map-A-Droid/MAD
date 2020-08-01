@@ -33,35 +33,6 @@ class APIAutoConf(AutoConfHandler):
         self.dbc.autoexec_delete('autoconfig_registration', del_info)
         return (None, 200)
 
-    def autoconf_google(self, method: str, email_id: int):
-        if method == 'POST':
-            try:
-                if email_id is not None:
-                    status_code = 200
-                    where = {
-                        'email_id': email_id,
-                        'instance_id': self.dbc.instance_id
-                    }
-                    res = self.dbc.autoexec_update('autoconfig_google', self.api_req.data, where_keyvals=where)
-                else:
-                    status_code = 201
-                    data = {
-                        'email': self.api_req.data['email'],
-                        'pwd': self.api_req.data['pwd'],
-                        'instance_id': self.dbc.instance_id
-                    }
-                    res = self.dbc.autoexec_insert('autoconfig_google', data)
-                return (res, status_code)
-            except KeyError:
-                return (None, 400)
-        elif method == 'DELETE':
-            del_info = {
-                'email_id': email_id,
-                'instance_id': self.dbc.instance_id
-            }
-            self.dbc.autoexec_delete('autoconfig_google', del_info)
-            return (None, 200)
-
     def autoconf_status(self, session_id: int = None):
         sql = "SELECT *\n"\
               "FROM `autoconfig_registration`\n"\
@@ -105,16 +76,16 @@ class APIAutoConf(AutoConfHandler):
                 else:
                     update['device_id'] = hopper_response[1]
             device = self._data_manager.get_resource('device', update['device_id'])
-            if device['email_id'] is None:
+            if device['account_id'] is None:
                 # Auto-assign a google account as one was not specified
-                sql = "SELECT ag.`email_id`\n"\
-                      "FROM `autoconfig_google` ag\n"\
-                      "LEFT JOIN `settings_device` sd ON sd.`email_id` = ag.`email_id`\n"\
-                      "WHERE sd.`device_id` IS NULL AND ag.`instance_id` = %s"
-                email_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id))
-                if email_id is None:
+                sql = "SELECT ag.`account_id`\n"\
+                      "FROM `settings_pogoauth` ag\n"\
+                      "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
+                      "WHERE sd.`device_id` IS NULL AND ag.`instance_id` = %s AND ag.`login_type` = %s"
+                account_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id, 'google'))
+                if account_id is None:
                     return ('No configured emails', 400)
-                device['email_id'] = email_id
+                device['account_id'] = account_id
                 device.save()
         where = {
             'session_id': session_id,
