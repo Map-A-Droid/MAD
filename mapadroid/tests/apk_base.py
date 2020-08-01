@@ -1,4 +1,3 @@
-import time
 from unittest import TestCase
 from mapadroid.tests.test_utils import get_connection_api, get_connection_mitm
 
@@ -11,4 +10,3 @@ class APKTestBase(TestCase):
     def tearDown(self):
         self.api.close()
         self.mitm.close()
-        time.sleep(1.5)
