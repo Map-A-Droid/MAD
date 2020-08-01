@@ -35,7 +35,6 @@ class AutoConfHandler(apiHandler.APIHandler):
         """
         # Begin processing the _request
         session_id = kwargs.get('session_id', None)
-        email_id = kwargs.get('email_id', None)
         if self.api_req._request.endpoint == 'api_autoconf':
             if self.api_req._request.method == 'GET':
                 return self.autoconf_status()

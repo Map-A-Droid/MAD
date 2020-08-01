@@ -69,7 +69,7 @@ class APIPogoAuth(api_base.APITestBase):
         pogoauth_obj = super().create_valid_resource('pogoauth')
         dev_payload = copy.copy(global_variables.DEFAULT_OBJECTS['device']['payload'])
         dev_payload['account_id'] = pogoauth_obj['uri']
-        device_obj = super().create_valid_resource('device', payload=dev_payload)
+        super().create_valid_resource('device', payload=dev_payload)
         response = self.api.delete(pogoauth_obj['uri'])
         self.assertEqual(response.status_code, 412)
         self.remove_resources()

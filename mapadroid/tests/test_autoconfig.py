@@ -38,8 +38,8 @@ class MITMAutoConf(TestCase):
             # Create Google Account
             gacc = {
                 "login_type": "google",
-                "username":"Unit",
-                "password":"Test"
+                "username": "Unit",
+                "password": "Test"
             }
             res = self.api.post('/api/pogoauth', json=gacc)
             gacct = res.headers['X-URI']
