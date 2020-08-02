@@ -318,6 +318,11 @@ class MADminConfig(object):
     @logger.catch
     @auth_required
     def settings_pogoauth(self):
+        device_links = {}
+        for device_id, device in self._data_manager.get_root_resource('device').items():
+            if device['account_id'] is None:
+                continue
+            device_links[device['account_id']] = device
         required_data = {
             'identifier': 'id',
             'base_uri': 'api_pogoauth',
@@ -326,6 +331,9 @@ class MADminConfig(object):
             'html_single': 'settings_singlepogoauth.html',
             'html_all': 'settings_pogoauth.html',
             'subtab': 'pogoauth',
+            'passthrough': {
+                'device_links': device_links
+            },
         }
         return self.process_element(**required_data)
 
