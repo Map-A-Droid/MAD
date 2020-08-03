@@ -106,7 +106,7 @@ class MADminEvent(object):
             return redirect(url_for('events'), code=302)
 
         self._db.save_event(event_name, event_start_date + " " + event_start_time,
-                            event_end_date + " " + event_end_time, event_lure_duration=event_lure_duration, 
+                            event_end_date + " " + event_end_time, event_lure_duration=event_lure_duration,
                             event_id=event_id)
 
         flash('Successfully added this event')
