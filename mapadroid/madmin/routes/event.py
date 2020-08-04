@@ -117,7 +117,7 @@ class MADminEvent(object):
     def del_event(self):
         event_id = request.args.get("id", None)
         if event_id is not None:
-            if self._db.delete_event(id=event_id):
+            if self._db.delete_event(event_id=event_id):
                 flash('Successfully deleted this event')
                 return redirect(url_for('events'), code=302)
             else:
