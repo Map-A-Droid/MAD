@@ -128,9 +128,9 @@ class PluginCollection(object):
         rootlen = len(folder) + 1
         for base, _, files in os.walk(folder):
             if "__pycache__" not in base:
-                for file in files:
-                    if file != "plugin.ini":
-                        fn = os.path.join(base, file)
+                for file_to_zip in files:
+                    if file_to_zip != "plugin.ini":
+                        fn = os.path.join(base, file_to_zip)
                         zipobj.write(fn, fn[rootlen:])
 
         zipobj.close()
