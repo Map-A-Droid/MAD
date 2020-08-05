@@ -76,7 +76,11 @@ class APIAutoConf(AutoConfHandler):
                 else:
                     update['device_id'] = hopper_response[1]
             device = self._data_manager.get_resource('device', update['device_id'])
-            if device['account_id'] is None:
+            try:
+                has_ptc = device['settings']['ptc_login']
+            except KeyError:
+                has_ptc = False
+            if device['account_id'] is None and not has_ptc:
                 # Auto-assign a google account as one was not specified
                 sql = "SELECT ag.`account_id`\n"\
                       "FROM `settings_pogoauth` ag\n"\
