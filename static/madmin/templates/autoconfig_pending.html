@@ -65,12 +65,14 @@ $(document).ready(function () {
     $(".reg_status").click(function() {
         var accepted = false;
         var msg = 'reject';
+        var additional = "";
         var session_id = $(this).data('identifier');
         if($(this).hasClass('accept')) {
             accepted = true;
             msg = 'accept';
+            additional = "This will create a new device instead of using an existing device.  To use an existing device click on the registration IP address."
         }
-        if(confirm('Are you sure you want to '+ msg +' this session?')) {
+        if(confirm('Are you sure you want to '+ msg +' this session?  '+ additional)) {
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Updating registration...</h2>' });
             $.ajax({
                 url : '{{ url_for('api_autoconf') }}/'+ session_id,
