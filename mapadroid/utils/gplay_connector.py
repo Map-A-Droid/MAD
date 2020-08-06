@@ -7,6 +7,7 @@ from typing import List
 import warnings
 import zipfile
 from gpapi.googleplay import GooglePlayAPI, LoginError
+from google.protobuf.message import DecodeError
 from mapadroid.mad_apk import APKArch, DeviceCodename
 from mapadroid.utils.token_dispenser import TokenDispenser
 from mapadroid.utils.walkerArgs import parse_args
@@ -52,7 +53,7 @@ class GPlayConnector(object):
         details = self.api.details(packagename)
         inmem_zip = io.BytesIO()
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning)
+            warnings.simplefilter('ignore', RuntimeWarning, DecodeError)
             if details['offer'][0]['checkoutFlowRequired']:
                 method = self.api.delivery
             else:
