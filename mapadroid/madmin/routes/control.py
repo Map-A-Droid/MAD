@@ -485,13 +485,11 @@ class MADminControl(object):
                 else:
                     flash('File could not be installed successfully :(')
             else:
-                self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
-                                                type=type_)
+                self._device_updater.preadd_job(origin, jobname, int(time.time()), type_)
                 flash('File successfully queued --> See Job Status')
 
         elif type_ != JobType.INSTALLATION:
-            self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
-                                            type=type_)
+            self._device_updater.preadd_job(origin, jobname, int(time.time()), type_)
             flash('Job successfully queued --> See Job Status')
 
         return redirect(url_for('uploaded_files', origin=str(origin), adb=useadb), code=302)
