@@ -84,8 +84,8 @@ class APIHandler(object):
             headers = {
                 'X-Status': 'Support Content-Types: %s' % (sorted(global_variables.SUPPORTED_FORMATS))
             }
-            self._logger.debug2('Invalid content-type recieved: {}', flask.request.headers.get('Content-Type'))
-            return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
+            self._logger.debug2('Invalid content-type received: {}', flask.request.headers.get('Content-Type'))
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 415, headers=headers)
         except apiException.FormattingError as err:
             headers = {
                 'X-Status': err.reason
