@@ -115,7 +115,7 @@ class GPlayConnector(object):
     def cache_get_name(self, host):
         return 'cache.{}'.format(base64.b64encode(host.encode()).decode("utf-8"))
 
-    def check_cached_tokens(self, args):
+    def check_cached_tokens(self, args) -> bool:
         for host in self.token_list:
             parsed_name = self.cache_get_name(host)
             cache_filepath = '{}/{}'.format(args.temp_path, parsed_name)
@@ -125,7 +125,9 @@ class GPlayConnector(object):
                 logger.debug('Unable to login with the token.')
                 os.unlink(cache_filepath)
             else:
-                logger.debug('Successfully logged in via token')
+                logger.info(f"Successfully logged in via token @ {host}")
+                return True
+        return False
 
     def connect_token(self):
         try:
@@ -154,7 +156,8 @@ class GPlayConnector(object):
             os.unlink(cache_filepath)
         return token, gsfid, email
 
-    def generate_new_tokens(self, args):
+    def generate_new_tokens(self, args) -> bool:
+        """ Iterate over the available dispensers and cache the first successful connection"""
         for host in self.token_list:
             dispenser = TokenDispenser(host)
             if dispenser.email is None:
@@ -164,33 +167,29 @@ class GPlayConnector(object):
             self.email = dispenser.email
             self.gsfid = self.api.checkin(self.email, self.token)
             if not self.connect_token():
-                logger.debug('Unable to login.  Skipping {}', host)
+                logger.warning(f"Unable to login.  Skipping {host}")
                 continue
+            logger.debug(f"Successfully logged into {host}")
             self.write_cached_token(args, host, self.token, self.gsfid, self.email)
+            return True
+        return False
 
     def generate_token_list(self, args) -> List[str]:
         token_list = []
-        if args.token_dispenser_user:
+        token_files = [args.token_dispenser_user, args.token_dispenser]
+        for token_file in token_files:
+            if token_file is None:
+                continue
             try:
-                with open(args.token_dispenser_user, 'rb') as fh:
-                    for host in fh:
+                with open(token_file, 'r') as fh:
+                    for host in fh.readlines():
                         if not host.strip():
                             continue
                         if host.strip() not in fh:
                             token_list.append(host.strip())
             except FileNotFoundError:
-                logger.error('Unable to find token file {}', args.token_dispenser_user)
-        if args.token_dispenser:
-            try:
-                with open(args.token_dispenser, 'r') as fh:
-                    for host in fh:
-                        if not host.strip():
-                            continue
-                        if host.strip() not in fh:
-                            token_list.append(host.strip())
-            except FileNotFoundError:
-                logger.error('Unable to find token file {}', args.token_dispenser)
-        logger.debug('Token Dispensers: {}', token_list)
+                logger.debug(f"Unable to find token file {token_file}")
+        logger.debug(f"Token Dispensers: {token_list}")
         return token_list
 
     def retrieve_token(self, host, args, force_new=False):
