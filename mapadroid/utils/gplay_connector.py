@@ -3,7 +3,7 @@ import io
 import json
 import os
 import re
-from typing import List
+from typing import Callable, List
 import warnings
 import zipfile
 from gpapi.googleplay import GooglePlayAPI, LoginError
@@ -49,23 +49,27 @@ class GPlayConnector(object):
             logger.warning('Unable to login to GPlay: {}', err)
             raise
 
-    def download(self, packagename: str) -> io.BytesIO:
+    def download(self, packagename: str, method: Callable = None) -> io.BytesIO:
         details = self.api.details(packagename)
         inmem_zip = io.BytesIO()
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning, DecodeError)
-            if details['offer'][0]['checkoutFlowRequired']:
-                method = self.api.delivery
-            else:
-                method = self.api.download
+            warnings.simplefilter('ignore', RuntimeWarning)
+            if not method:
+                if details['offer'][0]['checkoutFlowRequired']:
+                    method = self.api.delivery
+                else:
+                    method = self.api.download
             logger.info('Starting download for {}', packagename)
             try:
                 data_iter = method(packagename, expansion_files=True)
             except IndexError:
                 logger.error("Unable to find the package.  Maybe it no longer a supported device?")
                 return False
+            except DecodeError:
+                # RPi have an issue where they seem to only support delivery and not download
+                return self.download(packagename, method=self.api.delivery)
             except Exception as exc:
-                logger.error("Error while downloading {} : {}", packagename, exc)
+                logger.opt(exception=True).error("Error while downloading {} : {}", packagename, exc)
                 return False
         additional_data = data_iter['additionalData']
         splits = data_iter['splits']
