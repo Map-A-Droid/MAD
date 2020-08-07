@@ -633,8 +633,7 @@ class DeviceUpdater(object):
                     self._globaljoblog[globalid]['autojob'] = True
                     self._globaljoblog[globalid]['redoonerror'] = autocommand.get('redoonerror', False)
 
-                    self.preadd_job(origin=origin, job=job, job_id=int(time.time()),
-                                    job_type=str(JobType.CHAIN))
+                    self.preadd_job(origin, job, int(time.time()), str(JobType.CHAIN))
                     # get a unique id !
                     time.sleep(1)
         else:
