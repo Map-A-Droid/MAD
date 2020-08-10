@@ -255,7 +255,7 @@ class testimage(object):
         lineCount = 0
         _x = 0
         _y = height
-        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=90, minLineLength=minLineLength,
                                 maxLineGap=5)
         if lines is None:
             return False

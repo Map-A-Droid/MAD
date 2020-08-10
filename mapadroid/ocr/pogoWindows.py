@@ -178,7 +178,7 @@ class PogoWindows:
 
         num_lines = 0
         lines = []
-        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=min_line_length,
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=90, minLineLength=min_line_length,
                                 maxLineGap=5)
         if lines is None:
             return False
