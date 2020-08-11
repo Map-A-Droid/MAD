@@ -80,6 +80,18 @@ class PooledQueryExecutor:
         get_dict = kwargs.get('get_dict', False)
         raise_exc = kwargs.get('raise_exc', False)
         suppress_log = kwargs.get('suppress_log', False)
+        # We do not want to display binary data
+        has_binary = False
+        disp_args = []
+        if args and type(args) is tuple:
+            for value in args:
+                if isinstance(value, bytes):
+                    disp_args.append(value[:10])
+                    has_binary = True
+                else:
+                    disp_args.append(value)
+        else:
+            disp_args = (args)
         try:
             multi = False
             if type(args) != tuple and args is not None:
@@ -90,7 +102,11 @@ class PooledQueryExecutor:
                     pass
             else:
                 cursor.execute(sql, args)
-            logger.debug3(cursor.statement)
+            if not has_binary:
+                logger.debug3(cursor.statement)
+            else:
+                logger.debug3("SQL: {}", sql)
+                logger.debug3("Args: {}", disp_args)
             if commit is True:
                 conn.commit()
                 if not multi:
@@ -107,9 +123,7 @@ class PooledQueryExecutor:
                     return res
         except mysql.connector.Error as err:
             if not suppress_log:
-                logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
-            logger.debug3(sql)
-            logger.debug3(args)
+                logger.error("Failed executing query: {} ({}), error: {}", sql, disp_args, err)
             if raise_exc:
                 raise err
             return None

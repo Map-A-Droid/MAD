@@ -301,20 +301,26 @@ if __name__ == "__main__":
                 device_creator = ResourceCreator(api, prefix='MADCore')
                 res = device_creator.create_valid_resource('device')[0]
                 mapping_manager.update()
-            while not api_ready:
+            max_attempts = 30
+            attempt = 0
+            while not api_ready and attempt < max_attempts:
                 try:
                     api.get('/api')
                     api_ready = True
                     logger.info('API is ready for unit testing')
                 except Exception:
+                    attempt += 1
                     time.sleep(1)
-            loader = unittest.TestLoader()
-            start_dir = 'mapadroid/tests/'
-            suite = loader.discover(start_dir)
-            runner = unittest.TextTestRunner()
-            result = runner.run(suite)
-            exit_code = 0 if result.wasSuccessful() else 1
-            raise KeyboardInterrupt
+            if api_ready:
+                loader = unittest.TestLoader()
+                start_dir = 'mapadroid/tests/'
+                suite = loader.discover(start_dir)
+                runner = unittest.TextTestRunner()
+                result = runner.run(suite)
+                exit_code = 0 if result.wasSuccessful() else 1
+                raise KeyboardInterrupt
+            else:
+                exit_code = 1
         else:
             while True:
                 time.sleep(10)

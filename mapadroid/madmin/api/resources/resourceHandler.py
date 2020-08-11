@@ -9,7 +9,8 @@ from mapadroid.data_manager.dm_exceptions import (
     ModeUnknown,
     UpdateIssue,
     DependencyError,
-    SaveIssue
+    SaveIssue,
+    InvalidSection
 )
 from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
 from mapadroid.data_manager.modules import MAPPINGS
@@ -270,12 +271,18 @@ class ResourceHandler(apiHandler.APIHandler):
             errors = []
             for section, identifier in err.dependencies:
                 # TODO - Fix TBD if name is not present
-                resource = self._data_manager.get_resource(section, identifier)
-                name = resource.get(resource.name_field, 'TBD')
-                errors.append({
-                    'name': name,
-                    'uri': '%s/%s' % (flask.url_for('api_%s' % (section,)), identifier,)
-                })
+                try:
+                    resource = self._data_manager.get_resource(section, identifier)
+                    name = resource.get(resource.name_field, 'TBD')
+                    errors.append({
+                        'name': name,
+                        'uri': '%s/%s' % (flask.url_for('api_%s' % (section,)), identifier,)
+                    })
+                except InvalidSection:
+                    errors.append({
+                        'name': section,
+                        'identifier': identifier
+                    })
             return (errors, 412)
         else:
             headers = {

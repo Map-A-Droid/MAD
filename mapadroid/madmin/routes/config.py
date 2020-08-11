@@ -44,6 +44,7 @@ class MADminConfig(object):
             ("/settings/devices", self.settings_devices),
             ("/settings/geofence", self.settings_geofence),
             ("/settings/ivlists", self.settings_ivlists),
+            ("/settings/pogoauth", self.settings_pogoauth),
             ("/settings/monsearch", self.monsearch),
             ("/settings/shared", self.settings_pools),
             ("/settings/routecalc", self.settings_routecalc),
@@ -237,6 +238,20 @@ class MADminConfig(object):
     @logger.catch
     @auth_required
     def settings_devices(self):
+        sql = "SELECT ag.`account_id`, ag.`username`\n"\
+              "FROM `settings_pogoauth` ag\n"\
+              "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
+              "WHERE ag.`instance_id` = %%s AND ag.`login_type` = %%s AND (%s)"
+        where = ["sd.`device_id` IS NULL"]
+        args = [self._db.instance_id, 'google']
+        try:
+            identifier = request.args.get('id')
+            int(identifier)
+            where.append("sd.`device_id` = %s")
+            args.append(identifier)
+        except (TypeError, ValueError):
+            pass
+        accounts = self._db.autofetch_all(sql % ' OR '.join(where), tuple(args))
         required_data = {
             'identifier': 'id',
             'base_uri': 'api_device',
@@ -249,6 +264,9 @@ class MADminConfig(object):
                 'walkers': 'walker',
                 'pools': 'devicepool'
             },
+            'passthrough': {
+                'accounts': accounts
+            }
         }
         return self.process_element(**required_data)
 
@@ -294,6 +312,28 @@ class MADminConfig(object):
             'passthrough': {
                 'current_mons_list': current_mons_list
             }
+        }
+        return self.process_element(**required_data)
+
+    @logger.catch
+    @auth_required
+    def settings_pogoauth(self):
+        device_links = {}
+        for device_id, device in self._data_manager.get_root_resource('device').items():
+            if device['account_id'] is None:
+                continue
+            device_links[device['account_id']] = device
+        required_data = {
+            'identifier': 'id',
+            'base_uri': 'api_pogoauth',
+            'data_source': 'pogoauth',
+            'redirect': 'settings_pogoauth',
+            'html_single': 'settings_singlepogoauth.html',
+            'html_all': 'settings_pogoauth.html',
+            'subtab': 'pogoauth',
+            'passthrough': {
+                'device_links': device_links
+            },
         }
         return self.process_element(**required_data)
 

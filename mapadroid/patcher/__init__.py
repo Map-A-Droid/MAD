@@ -38,7 +38,8 @@ MAD_UPDATES = OrderedDict([
     (31, 'trs_status_lastProtoDateTime_fix'),
     (32, 'reset_routecalc_algo'),
     (33, 'routecalc_rename'),
-    (34, 'trs_stats_detect_raw_split')
+    (34, 'trs_stats_detect_raw_split'),
+    (35, 'madrom_autoconfig'),
 ])
 
 
@@ -191,14 +192,14 @@ class MADPatcher(object):
                 for table in tables:
                     install_cmd = '%s;%s;%s'
                     args = ('SET FOREIGN_KEY_CHECKS=0', 'SET NAMES utf8mb4', table)
-                    self.dbwrapper.execute(install_cmd % args, commit=True, suppress_log=True)
+                    self.dbwrapper.execute(install_cmd % args, commit=True)
             self.__set_installed_ver(self._madver)
             logger.success('Successfully installed MAD version {} to the database', self._installed_ver)
             self.__add_default_event()
             self.__reload_instance_id()
         except Exception:
-            logger.critical('Unable to install default MAD schema.  Please install the schema from '
-                            'scripts/SQL/rocketmap.sql')
+            logger.opt(exception=True).critical('Unable to install default MAD schema.  Please install the schema from '
+                                                'scripts/SQL/rocketmap.sql')
             sys.exit(1)
 
     def __reload_instance_id(self):

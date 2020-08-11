@@ -7,5 +7,6 @@ __all__ = [
     'ftr_monlist',
     'ftr_routecalc',
     'ftr_walker',
-    'ftr_walkerarea'
+    'ftr_walkerarea',
+    'ftr_pogoauth'
 ]

@@ -147,6 +147,7 @@ function get_save_data() {
     $(".form-control").each(function () {
         var obj = $(this);
         var name = obj.attr('name');
+        var default_val = obj.data('default');
         value = null;
         if (obj.data('skip')) {
             return;
@@ -162,11 +163,15 @@ function get_save_data() {
                 value = null;
             }
         } else if (obj.is('input')) {
+          if(obj.prop('type') == 'checkbox') {
+            value = !obj.parent().hasClass('off');
+            default_val = $(obj.parent().children()[0]).data('default');
+          } else {
             value = obj.val();
+          }
         }
         if (value != null && value.length == 0)
             value = null;
-        default_val = obj.data('default');
         if ((default_val == 'None' || default_val.length == 0) && value == null) {
             return;
         }
