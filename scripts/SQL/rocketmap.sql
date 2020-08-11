@@ -388,6 +388,7 @@ CREATE TABLE `settings_device` (
     `mac_address` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
     `interface_type` enum('lan','wlan') COLLATE utf8mb4_unicode_ci DEFAULT 'lan',
     `account_id` int(10) unsigned NULL,
+    `pd_auth_override` VARCHAR(128) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
     PRIMARY KEY (`device_id`),
     KEY `settings_device_ibfk_1` (`walker_id`),
     KEY `settings_device_ibfk_2` (`pool_id`),
@@ -434,6 +435,7 @@ CREATE TABLE `settings_devicepool` (
     `screendetection` tinyint(1) DEFAULT NULL,
     `enhanced_mode_quest` tinyint(1) DEFAULT NULL,
     `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
+    `pd_auth_override` VARCHAR(128) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
     PRIMARY KEY (`pool_id`),
     KEY `fk_sds_instance` (`instance_id`),
     CONSTRAINT `fk_sds_instance` FOREIGN KEY (`instance_id`)

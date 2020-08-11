@@ -401,17 +401,19 @@ class MITMReceiver(Process):
         session_id: Optional[int] = kwargs.get('session_id', None)
         operation: Optional[str] = kwargs.get('operation', None)
         try:
-            sql = "SELECT sd.`name`\n"\
+            sql = "SELECT sd.`name`, sd.`device_id`\n"\
                   "FROM `settings_device` sd\n"\
                   "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
                   "WHERE ar.`session_id` = %s AND ar.`instance_id` = %s"
-            origin = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
+            session_info = self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id))
             if operation in ['pd', 'rgc']:
                 if operation == 'pd':
                     config = PDConfig(self._db_wrapper, self.__application_args, self.__data_manager)
                 else:
                     config = RGCConfig(self._db_wrapper, self.__application_args, self.__data_manager)
-                return send_file(config.generate_config(origin), as_attachment=True, attachment_filename='conf.xml',
+                return send_file(config.generate_config(session_info['device_id']),
+                                 as_attachment=True,
+                                 attachment_filename='conf.xml',
                                  mimetype='application/xml')
             elif operation in ['google']:
                 sql = "SELECT ag.`username`, ag.`password`\n"\
@@ -425,7 +427,7 @@ class MITMReceiver(Process):
                 else:
                     return Response(status=404, response='')
             elif operation == 'origin':
-                return Response(status=200, response=origin)
+                return Response(status=200, response=session_info['origin'])
         except Exception:
             logger.opt(exception=True).critical('Unable to process autoconfig')
             return Response(status=406, response="")

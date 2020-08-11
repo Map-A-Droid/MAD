@@ -238,6 +238,14 @@ class DevicePool(Resource):
                                    "1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301)",
                     "expected": str
                 }
+            },
+            "pd_auth_override": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "PogoDroid authentication password override for auto-configuration",
+                    "expected": str
+                }
             }
         }
     }

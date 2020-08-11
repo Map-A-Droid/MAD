@@ -79,9 +79,22 @@ class AutoConfigCreator:
         self.contents: dict[str, Any] = {}
         self.load_config()
 
-    def generate_config(self, origin: str) -> str:
+    def generate_config(self, device_id: int) -> str:
+        device = self._data_manager.get_resource('device', device_id)
         origin_config = self.get_config()
-        origin_config[self.origin_field] = origin
+        origin_config[self.origin_field] = device['origin']
+        # Lookup device for device pd override
+        override_pwd = None
+        try:
+            override_pwd = device['settings']['pd_auth_override']
+        except KeyError:
+            try:
+                pool = self._data_manager.get_resource('devicepool', device['pool'])
+                override_pwd = pool['settings']['pd_auth_override']
+            except KeyError:
+                pass
+        if override_pwd:
+            origin_config['auth_token'] = override_pwd
         conv_xml = ["<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?>", "<map>"]
         for _, sect_conf in self.sections.items():
             for key, elem in sect_conf.items():
