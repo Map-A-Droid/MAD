@@ -111,7 +111,7 @@ $(document).ready(function () {
       {% if not is_ready %}
         <br><h3>Origin hopper needs at least one walker.  Registration is disabled until one exists</h3>
       {% endif %}
-      {% if not has_logins %}
+      {% if not has_logins and requires_auth %}
         <br><h3>No google logins are present.  Cannot auto-assign and login during the ATV registration process</h3>
       {% endif %}
     </div>

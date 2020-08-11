@@ -80,7 +80,7 @@ class APIAutoConf(AutoConfHandler):
                 has_ptc = device['settings']['ptc_login']
             except KeyError:
                 has_ptc = False
-            if device['account_id'] is None and not has_ptc:
+            if not self._args.autoconfig_no_auth and (device['account_id'] is None and not has_ptc):
                 # Auto-assign a google account as one was not specified
                 sql = "SELECT ag.`account_id`\n"\
                       "FROM `settings_pogoauth` ag\n"\

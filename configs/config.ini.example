@@ -140,3 +140,13 @@
                              #  at 12:00' or a maximum file size like '100 MB' or '0.5 GB'. Set to '0' to disable completely. (Default: 50 MB)
 #log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs.
                              #  Custom log levels like DEBUG[1-5] can be used too
+# MADAPKs
+######################
+#token_dispenser:           # Path to token dispenser config (MAD-provided)
+#token_dispenser_user:      # Path to token dispenser config (User-provided)
+#gmail_user:                # Email address if not using a token dispenser
+#gmail_passwd:              # Google Mail Password for interacting with the Google Play Store.  Must be an app password or 2fa will be triggered (this should be enabled on your account anyways')
+
+# Auto-Config
+######################
+#autoconfig_no_auth          # MAD PoGo auth is not required during autoconfiguration

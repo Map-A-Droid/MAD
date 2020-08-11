@@ -81,6 +81,7 @@ class AutoConfigManager(object):
               "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
               "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
         has_logins = self._db.autofetch_value(sql, (self._db.instance_id)) > 0
+        requires_auth = not self._args.autoconfig_no_auth
         pending = {}
         sql = "SELECT ar.`session_id`, ar.`ip`, sd.`device_id`, sd.`name` AS 'origin', ar.`status`"\
               "FROM `autoconfig_registration` ar\n"\
@@ -104,6 +105,7 @@ class AutoConfigManager(object):
                                pending=pending,
                                is_ready=is_ready,
                                has_logins=has_logins,
+                               requires_auth=requires_auth
                                )
 
     @auth_required

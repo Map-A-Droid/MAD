@@ -367,6 +367,11 @@ def parse_args():
                         help='Google Mail Password for interacting with the Google Play Store.  Must be an app'
                         ' password or 2fa will be triggered (this should be enabled on your account anyways')
 
+    # Auto-Configuration
+    parser.add_argument('-acna', '--autoconfig_no_auth', action='store_true', default=False,
+                        help='MAD PoGo auth is not required during autoconfiguration',
+                        dest='autoconfig_no_auth')
+
     args = parser.parse_args()
 
     # Allow status name and date formatting in log filename.
