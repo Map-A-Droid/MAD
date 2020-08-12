@@ -590,7 +590,7 @@ class PogoWindows:
                     origin_logger.debug("Screentext: {}", globaldict)
                     if globaldict is None or 'text' not in globaldict:
                         continue
-                    n_boxes = len(globaldict['level'])
+                    n_boxes = len(globaldict['text'])
                     for index in range(n_boxes):
                         if returntype != ScreenType.UNDEFINED:
                             break
