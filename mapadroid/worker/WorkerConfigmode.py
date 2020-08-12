@@ -47,7 +47,9 @@ class WorkerConfigmode(AbstractWorker):
         return devicemappings.get("settings", {}).get(key, default_value)
 
     def start_worker(self):
-        self.logger.info("Worker started in configmode")
+        self.logger.warning("Worker started in configmode! This is special, configuration only mode - do not expect"
+                            " scans or avatar moving. After you are done with initial configuration remove -cm flag"
+                            " and make sure you have with_madmin uncommented in config.ini")
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
         self.logger.debug("Setting device to idle for routemanager")
         self._db_wrapper.save_idle_status(self._dev_id, True)
