@@ -2,7 +2,7 @@ from flask import Response
 import copy
 import json
 from io import BytesIO
-from typing import Any, List, NoReturn
+from typing import Any, List, NoReturn, Optional
 from xml.sax.saxutils import escape
 from mapadroid.data_manager.modules import MAPPINGS
 
@@ -81,18 +81,12 @@ class AutoConfigCreator:
 
     def generate_config(self, device_id: int) -> str:
         device = self._data_manager.get_resource('device', device_id)
-        origin_config = self.get_config()
+        # Find override values
+        override_pwd = self.get_override(device, 'pd_token_override')
+        override_auth = self.get_override(device, 'basic_auth_override')
+        # Generate config
+        origin_config = self.get_config(override_auth)
         origin_config[self.origin_field] = device['origin']
-        # Lookup device for device pd override
-        override_pwd = None
-        try:
-            override_pwd = device['settings']['pd_auth_override']
-        except KeyError:
-            try:
-                pool = self._data_manager.get_resource('devicepool', device['pool'])
-                override_pwd = pool['settings']['pd_auth_override']
-            except KeyError:
-                pass
         if override_pwd:
             origin_config['auth_token'] = override_pwd
         conv_xml = ["<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?>", "<map>"]
@@ -113,10 +107,11 @@ class AutoConfigCreator:
         conv_xml.append('</map>')
         return BytesIO('\n'.join(conv_xml).encode('utf-8'))
 
-    def get_config(self) -> dict:
+    def get_config(self, auth_override: Optional[int]) -> dict:
         tmp_config: dict = copy.copy(self.contents)
         try:
-            auth = self._data_manager.get_resource('auth', tmp_config['mad_auth'])
+            auth_id = auth_override if auth_override else tmp_config['mad_auth']
+            auth = self._data_manager.get_resource('auth', auth_id)
             del tmp_config['mad_auth']
             tmp_config['auth_username'] = auth['username']
             tmp_config['auth_password'] = auth['password']
@@ -126,6 +121,13 @@ class AutoConfigCreator:
             tmp_config['auth_username'] = ""
             tmp_config['auth_password'] = ""
         return tmp_config
+
+    def get_override(self, device, key):
+        override: Any = device[key]
+        if override is None:
+            pool = self._data_manager.get_resource('devicepool', device['pool'])
+            override = pool[key]
+        return override if override is not None else None
 
     def load_config(self) -> NoReturn:
         sql = "SELECT `data`\n"\

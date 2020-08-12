@@ -47,7 +47,7 @@ $(document).ready(function () {
 <h1 class="display-4">{{ element.devicepool }}</h1>
 
 <div class="row">
-  <div class="col-sm-8">
+  <div class="col-sm">
     <div class="form-group">
       <label for="devicepool">devicepool</label>
       <input type="input" class="form-control" id="devicepool" name="devicepool" value="{{ element.devicepool }}" data-default="{{ element.devicepool }}">
@@ -71,6 +71,25 @@ $(document).ready(function () {
     </div>
     {% endfor %}
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+  </div>
+  <div class="col-sm">
+    <div class="form-group">
+      <label for="basic_auth_override">Basic Auth Override</label>
+      <select class="form-control" name="basic_auth_override" data-default="{{ url_for('api_auth') + '/'+ element.basic_auth_override|string if element.basic_auth_override else '' }}">
+        <option value='None'>None</option>
+        {% if auths is not none %}
+        {% for auth_id, auth in auths.items() %}
+         <option value="{{ url_for('api_auth') + '/'+ auth_id|string }}" {{ 'selected=selected' if element.basic_auth_override == auth_id else "" }}>{{ auth.username }}</option>
+        {% endfor %}
+        {% endif %}
+      </select>
+      <small class="form-text text-muted">Basic authentication override for PD / RGC</small>
+    </div>
+    <div class="form-group">
+      <label for="pd_token_override">PogoDroid Token Override</label>
+      <input type="input" class="form-control" id="pd_token_override" name="pd_token_override" value="{{ element.pd_token_override if element.pd_token_override else '' }}" data-default="{{ element.pd_token_override }}">
+      <small class="form-text text-muted">PogoDroid token password override for auto-configuration</small>
+    </div>
   </div>
 </div>
 {% endblock %}

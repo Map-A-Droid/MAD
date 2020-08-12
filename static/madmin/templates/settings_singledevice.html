@@ -139,6 +139,23 @@ $(document).ready(function () {
       <small class="form-text text-muted">Aligned email for auto-configuration</small>
     </div>
     <div class="form-group">
+      <label for="basic_auth_override">Basic Auth Override</label>
+      <select class="form-control" name="basic_auth_override" data-default="{{ url_for('api_auth') + '/'+ element.basic_auth_override|string if element.basic_auth_override else '' }}">
+        <option value='None'>None</option>
+        {% if auths is not none %}
+        {% for auth_id, auth in auths.items() %}
+         <option value="{{ url_for('api_auth') + '/'+ auth_id|string }}" {{ 'selected=selected' if element.basic_auth_override == auth_id else "" }}>{{ auth.username }}</option>
+        {% endfor %}
+        {% endif %}
+      </select>
+      <small class="form-text text-muted">Basic authentication override for PD / RGC</small>
+    </div>
+    <div class="form-group">
+      <label for="pd_token_override">PogoDroid Token Override</label>
+      <input type="input" class="form-control" id="pd_token_override" name="pd_token_override" value="{{ element.pd_token_override if element.pd_token_override else '' }}" data-default="{{ element.pd_token_override }}">
+      <small class="form-text text-muted">PogoDroid token password override for auto-configuration</small>
+    </div>
+    <div class="form-group">
       <label for="interface_type">Active Interface</label>
       <select class="form-control" name="interface_type" data-default="{{ element.interface_type if element.interface_type else 'lan' }}">
         <option value="lan" {{ 'selected=selected' if element.interface_type == 'lan' else "" }}>LAN</option>

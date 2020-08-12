@@ -8,7 +8,8 @@ class DevicePool(Resource):
     primary_key = 'pool_id'
     search_field = 'name'
     translations = {
-        'devicepool': 'name'
+        'devicepool': 'name',
+        'basic_auth_override': 'auth_id'
     }
     configuration = {
         "fields": {
@@ -18,6 +19,25 @@ class DevicePool(Resource):
                     "require": True,
                     "description": "Name for the global device settings",
                     "expected": str
+                }
+            },
+            "pd_token_override": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "PogoDroid authentication token override for auto-configuration",
+                    "expected": str
+                }
+            },
+            "basic_auth_override": {
+                "settings": {
+                    "type": "authselect",
+                    "require": False,
+                    "description": "Basic authentication override for PD / RGC",
+                    "expected": int,
+                    "uri": True,
+                    "data_source": "auth",
+                    "uri_source": "api_auth"
                 }
             }
         },
@@ -236,14 +256,6 @@ class DevicePool(Resource):
                     "require": False,
                     "description": "Undeletable items for enhanced quest mode (Default: 1301, 1401,1402, "
                                    "1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301)",
-                    "expected": str
-                }
-            },
-            "pd_auth_override": {
-                "settings": {
-                    "type": "text",
-                    "require": False,
-                    "description": "PogoDroid authentication password override for auto-configuration",
                     "expected": str
                 }
             }

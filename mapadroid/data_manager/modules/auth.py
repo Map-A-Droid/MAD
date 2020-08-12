@@ -42,4 +42,10 @@ class Auth(Resource):
             if data['mad_auth'] != self.identifier:
                 continue
             dependencies.append((f"Used in {row['name']} configuration", 'auth in use'))
+        sql = "SELECT `name` FROM `settings_device` WHERE `auth_id` = %s"
+        for device in self._dbc.autofetch_column(sql, (self.identifier)):
+            dependencies.append((f"Used as override for device {device}", 'auth in use'))
+        sql = "SELECT `name` FROM `settings_devicepool` WHERE `auth_id` = %s"
+        for pool in self._dbc.autofetch_column(sql, (self.identifier)):
+            dependencies.append((f"Used as override for pool {pool}", 'auth in use'))
         return dependencies

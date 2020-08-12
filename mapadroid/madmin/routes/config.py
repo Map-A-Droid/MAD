@@ -262,7 +262,8 @@ class MADminConfig(object):
             'subtab': 'device',
             'required_data': {
                 'walkers': 'walker',
-                'pools': 'devicepool'
+                'pools': 'devicepool',
+                'auths': 'auth'
             },
             'passthrough': {
                 'accounts': accounts
@@ -349,7 +350,9 @@ class MADminConfig(object):
             'html_all': 'settings_sharedsettings.html',
             'subtab': 'devicepool',
             'var_parser_section': 'devices',
-            'required_data': {},
+            'required_data': {
+                'auths': 'auth'
+            },
         }
         return self.process_element(**required_data)
 
