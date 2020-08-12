@@ -199,7 +199,7 @@ class RGCConfig(AutoConfigCreator):
                 "expected": int,
                 "default": None,
                 "summary": "Authentication credentials to use when performing basic auth",
-                "require": False,
+                "required": False,
             },
             "websocket_origin": {
                 "hidden": True,
