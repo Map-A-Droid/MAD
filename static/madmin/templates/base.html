@@ -103,6 +103,13 @@
         </div>
     </nav>
     {% endif %}
+    {% if app_config_mode %}
+    <div class="alert alert-danger">
+        <center>
+            <i class="fas fa-exclamation-triangle"></i> MAD is running in config mode and will not move the workers.  Please restart without config mode enabled to begin mapping <i class="fas fa-exclamation-triangle"></i>
+        </center>
+    </div>
+    {% endif %}
     <div class="container" role="main">
         {% block content %}{% endblock %}
     </div>

@@ -164,6 +164,8 @@ class WebsocketServer(object):
             return
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.info("New connection from {}", websocket_client_connection.remote_address)
+        if self.__enable_configmode:
+            origin_logger.warning('Connected in ConfigMode.  No mapping will occur in the current mode')
         async with self.__users_connecting_mutex:
             if origin in self.__users_connecting:
                 origin_logger.info("Client is already connecting")
