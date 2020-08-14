@@ -805,4 +805,4 @@ CREATE TABLE `origin_hopper` (
     `origin` VARCHAR(128) NOT NULL,
     `last_id` int UNSIGNED NOT NULL,
     PRIMARY KEY (`origin`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
