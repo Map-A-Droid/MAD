@@ -14,11 +14,13 @@ addons:
 before_install:
   - mysql -u root -e "CREATE DATABASE mad;"
   - mysql -u root -e "CREATE USER 'mad'@'localhost' IDENTIFIED BY 'mad';"
-  - mysql -u root -e "GRANT ALL ON mad.* TO 'mad'@'localhost';"
+  - mysql -u root -e "GRANT ALL ON *.* TO 'mad'@'localhost';"
 install:
   - pip3 install -r requirements.txt
   - pip3 install flake8 flake8-variables-names flake8-logging-format pep8-naming flake8-eradicate
 script:
   - python3 -m flake8
   - python3 start.py -ut -wm -cm -cf configs/config.ini.travis -mf configs/mappings.travis.json
+  - mysql -u root -e "DROP DATABASE mad;"
+  - mysql -u root -e "CREATE DATABASE mad;"
   - python3 start.py -ut -wm -cf configs/config.ini.travis -mf configs/mappings.travis.json
