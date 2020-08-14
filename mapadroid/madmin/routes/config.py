@@ -265,7 +265,8 @@ class MADminConfig(object):
                 'pools': 'devicepool'
             },
             'passthrough': {
-                'accounts': accounts
+                'accounts': accounts,
+                'requires_auth': not self._args.autoconfig_no_auth
             }
         }
         return self.process_element(**required_data)
