@@ -60,9 +60,9 @@ class APIAutoConf(AutoConfHandler):
         }
         device = None
         if status == 1:
-            (_, issues_critical) = generate_autoconf_issues(self.dbc, self._data_manager, self._args)
-            if issues_critical:
-                return (None, 406)
+            autoconf_issues = generate_autoconf_issues(self.dbc, self._data_manager, self._args)
+            if autoconf_issues[1]:
+                return (autoconf_issues, 406)
             # Set the device id.  If it was not requested use the origin hopper to create one
             try:
                 dev_id = self.api_req.data['device_id'].split('/')[-1]
