@@ -1,10 +1,36 @@
-from flask import Response
+from flask import Response, url_for
 import copy
 import json
 from io import BytesIO
-from typing import Any, List, NoReturn
+from typing import Any, List, NoReturn, Tuple
 from xml.sax.saxutils import escape
 from mapadroid.data_manager.modules import MAPPINGS
+
+
+def generate_autoconf_issues(db, data_manager, args) -> Tuple[List[str], List[str]]:
+    issues_warning = []
+    issues_critical = []
+    sql = "SELECT count(*)\n" \
+          "FROM `settings_pogoauth` ag\n" \
+          "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n" \
+          "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
+    if db.autofetch_value(sql, (db.instance_id)) == 0 and not args.autoconfig_no_auth:
+        link = url_for('settings_pogoauth')
+        anchor = f"Settings -> <a href=\"{link}\">PogoAuth</a>"
+        issues_warning.append(f"No available Google logins for auto creation of devices.  Configure through {anchor}")
+    if not validate_hopper_ready(data_manager):
+        link = url_for('settings_walkers')
+        anchor = f"Settings -> <a href=\"{link}\">Walker</a>"
+        issues_critical.append(f"No walkers configured.  Configure through {anchor}")
+    if not PDConfig(db, args, data_manager).configured:
+        link = url_for('autoconf_pd')
+        anchor = f"Auto-Config -> <a href=\"{link}\">PogoDroid Configuration</a>"
+        issues_critical.append(f"PogoDroid is not configured.  Configure through {anchor}")
+    if not RGCConfig(db, args, data_manager).configured:
+        link = url_for('autoconf_rgc')
+        anchor = f"Auto-Config -> <a href=\"{link}\">RemoteGPSController Configuration</a>"
+        issues_critical.append(f"RGC is not configured.  Configure through {anchor}")
+    return (issues_warning, issues_critical)
 
 
 def validate_hopper_ready(data_manager):
@@ -77,6 +103,7 @@ class AutoConfigCreator:
         self._args = args
         self._data_manager = data_manager
         self.contents: dict[str, Any] = {}
+        self.configured: bool = False
         self.load_config()
 
     def generate_config(self, origin: str) -> str:
@@ -122,6 +149,7 @@ class AutoConfigCreator:
             db_conf = self._db.autofetch_value(sql, (self.source, self._db.instance_id))
             if db_conf:
                 self.contents = json.loads(db_conf)
+                self.configured = True
             else:
                 self.contents = {}
         except json.decoder.JSONDecodeError:

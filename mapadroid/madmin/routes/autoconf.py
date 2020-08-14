@@ -1,6 +1,6 @@
 from flask import jsonify, render_template, redirect, url_for
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils.autoconfig import validate_hopper_ready, RGCConfig, PDConfig
+from mapadroid.utils.autoconfig import generate_autoconf_issues, RGCConfig, PDConfig
 
 
 class AutoConfigManager(object):
@@ -75,13 +75,11 @@ class AutoConfigManager(object):
 
     @auth_required
     def autoconfig_pending(self):
-        is_ready = validate_hopper_ready(self._data_manager)
         sql = "SELECT count(*)\n"\
               "FROM `settings_pogoauth` ag\n"\
               "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
               "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
-        has_logins = self._db.autofetch_value(sql, (self._db.instance_id)) > 0
-        requires_auth = not self._args.autoconfig_no_auth
+        (issues_warning, issues_critical) = generate_autoconf_issues(self._db, self._data_manager, self._args)
         pending = {}
         sql = "SELECT ar.`session_id`, ar.`ip`, sd.`device_id`, sd.`name` AS 'origin', ar.`status`"\
               "FROM `autoconfig_registration` ar\n"\
@@ -103,9 +101,8 @@ class AutoConfigManager(object):
         return render_template('autoconfig_pending.html',
                                subtab="autoconf_dev",
                                pending=pending,
-                               is_ready=is_ready,
-                               has_logins=has_logins,
-                               requires_auth=requires_auth
+                               issues_warning=issues_warning,
+                               issues_critical=issues_critical
                                )
 
     @auth_required
@@ -120,6 +117,9 @@ class AutoConfigManager(object):
               "FROM `settings_pogoauth` ag\n"\
               "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
               "WHERE ag.`instance_id` = %s AND (sd.`device_id` IS NULL OR sd.`device_id` = %s)"
+        (_, issues_critical) = generate_autoconf_issues(self._db, self._data_manager, self._args)
+        if issues_critical:
+            redirect(url_for('autoconfig_pending'), code=302)
         google_addresses = self._db.autofetch_all(sql, (self._db.instance_id, session['device_id']))
         devices = self._data_manager.get_root_resource('device')
         uri = "{}/{}".format(url_for('api_autoconf'), session_id)

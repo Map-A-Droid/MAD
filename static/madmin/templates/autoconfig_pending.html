@@ -106,15 +106,29 @@ $(document).ready(function () {
   <div class="col">
     <div class="alert alert-primary">
       This is a list of all devices that are waiting to be auto-registered from MADrom.<br>
-      Defaults will be the first created walker and origin hopper (default madrom)<br>
+      Defaults will be the first created walker and origin hopper (default MADrom)<br>
       Clicking on the device will allow you to select a specific origin
-      {% if not is_ready %}
-        <br><h3>Origin hopper needs at least one walker.  Registration is disabled until one exists</h3>
-      {% endif %}
-      {% if not has_logins and requires_auth %}
-        <br><h3>No google logins are present.  Cannot auto-assign and login during the ATV registration process</h3>
-      {% endif %}
     </div>
+    {% if issues_warning %}
+        <div class="alert alert-warning">
+        {% for issue in issues_warning %}
+            {% if loop.index != 1 %}
+            <br>
+            {% endif %}
+            {{ issue|safe }}
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% if issues_critical %}
+        <div class="alert alert-danger">
+        {% for issue in issues_critical %}
+            {% if loop.index != 1 %}
+            <br>
+            {% endif %}
+            {{ issue|safe }}
+        {% endfor %}
+        </div>
+    {% endif %}
   </div>
 </div>
 <div class="row mt-3">
@@ -136,7 +150,11 @@ $(document).ready(function () {
         <tr>
           <td><input type="checkbox" class="bulk_sel" data-identifier="{{ session_id }}"></td>
           <td class="align-middle">
-            <a href="{{ url_for('autoconfig_pending_dev', session_id=session_id) }}">{{ session.ip }}</a>
+            {% if not issues_critical %}
+              <a href="{{ url_for('autoconfig_pending_dev', session_id=session_id) }}">{{ session.ip }}</a>
+            {% else %}
+              {{ session.ip }}
+            {% endif %}
           </td>
           <td class="align-middle">
           {% if session.device_id is not none %}
@@ -147,7 +165,7 @@ $(document).ready(function () {
           </td>
           <td class="text-right align-middle">{{ session.status_hr }}
             {% if session.status == 0 %}
-              {% if is_ready %}
+              {% if not issues_warning %}
                   <button data-identifier='{{ session_id }}' type="button" class="reg_status accept btn btn-success btn-sm" data-toggle="tooltip" title="Accept"><i class="fa fa-check-circle"></i>
               {% endif %}
               <button data-identifier='{{ session_id }}' type="button" class="reg_status delete btn btn-danger btn-sm" data-toggle="tooltip" title="Reject"><i class="fa fa-ban"></i>
