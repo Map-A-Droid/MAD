@@ -357,8 +357,8 @@ class DbWrapper:
             query_where = ' where disappear_time > \'%s\' ' % str(hours)
 
         query = (
-                "SELECT pokemon_id, COUNT(pokemon_id) FROM pokemon %s GROUP BY pokemon_id" % str(
-            query_where)
+            "SELECT pokemon_id, COUNT(pokemon_id) FROM pokemon %s GROUP BY pokemon_id" % str(
+                query_where)
         )
 
         res = self.execute(query)
