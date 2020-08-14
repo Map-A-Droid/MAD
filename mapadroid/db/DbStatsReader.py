@@ -16,14 +16,14 @@ class DbStatsReader:
     def get_shiny_stats(self):
         logger.debug3('Fetching shiny pokemon stats from db')
         query = (
-            "SELECT (select count(DISTINCT pokemon.encounter_id) from pokemon inner join trs_stats_detect_mon_raw on "
-            "trs_stats_detect_mon_raw.encounter_id=pokemon.encounter_id where pokemon.pokemon_id=a.pokemon_id and "
-            "trs_stats_detect_mon_raw.worker=b.worker and pokemon.form=a.form), count(DISTINCT a.encounter_id), "
+            "SELECT (select count(DISTINCT pokemon.encounter_id) FROM pokemon INNER JOIN trs_stats_detect_mon_raw ON "
+            "trs_stats_detect_mon_raw.encounter_id=pokemon.encounter_id WHERE pokemon.pokemon_id=a.pokemon_id AND "
+            "trs_stats_detect_mon_raw.worker=b.worker AND pokemon.form=a.form), COUNT(DISTINCT a.encounter_id), "
             "a.pokemon_id, b.worker, GROUP_CONCAT(DISTINCT a.encounter_id "
             "ORDER BY a.encounter_id DESC SEPARATOR '<br>'), a.form, b.timestamp_scan "
-            "FROM pokemon a left join trs_stats_detect_mon_raw b on a.encounter_id=b.encounter_id "
-            "WHERE b.is_shiny=1 group by "
-            "b.is_shiny, a.pokemon_id, a.form, b.worker order by b.timestamp_scan DESC "
+            "FROM pokemon a LEFT JOIN trs_stats_detect_mon_raw b ON a.encounter_id=b.encounter_id "
+            "WHERE b.is_shiny=1 GROUP BY "
+            "b.is_shiny, a.pokemon_id, a.form, b.worker ORDER BY b.timestamp_scan DESC "
         )
         res = self._db_exec.execute(query)
         return res
@@ -79,9 +79,9 @@ class DbStatsReader:
         if worker and not minutes:
             worker_where = ' where worker = \'%s\' ' % str(worker)
         if grouped:
-            grouped_query = ", day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan))"
+            grouped_query = ", day(FROM_UNIXTIME(MIN(timestamp_scan))), hour(FROM_UNIXTIME(MIN(timestamp_scan)))"
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(timestamp_scan), '%y-%m-%d %k:00:00'))"
+        query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(MIN(timestamp_scan)), '%y-%m-%d %k:00:00'))"
         if minutes:
             minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
@@ -202,7 +202,7 @@ class DbStatsReader:
             "SELECT count(b.id) as Count, b.lat, b.lng, GROUP_CONCAT(DISTINCT b.worker order by worker asc "
             "SEPARATOR ', '), if(b.type=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
             "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) as successcount from "
-            "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 and successcount=0 "
+            "trs_stats_location_raw b where success=0 group by lat, lng, type HAVING Count > 5 and successcount=0 "
             "ORDER BY count(id) DESC"
         )
         res = self._db_exec.execute(query)
@@ -278,7 +278,7 @@ class DbStatsReader:
     def get_pokemon_count(self, minutes):
         logger.debug3('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "UNIX_TIMESTAMP(DATE_FORMAT(last_modified, '%y-%m-%d %k:00:00')) as timestamp"
+        query_date = "UNIX_TIMESTAMP(DATE_FORMAT(MIN(last_modified), '%y-%m-%d %k:00:00')) as timestamp"
         if minutes:
             minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
@@ -310,7 +310,7 @@ class DbStatsReader:
     def get_gym_count(self):
         logger.debug3('Fetching gym count from db')
         query = (
-            "SELECT If(team_id=0, 'WHITE', if(team_id=1, 'BLUE', if (team_id=2, 'RED', 'YELLOW'))) "
+            "SELECT IF(team_id=0, 'WHITE', if(team_id=1, 'BLUE', if (team_id=2, 'RED', 'YELLOW'))) "
             "AS Color, count(team_id) AS Count "
             "FROM `gym` "
             "GROUP BY team_id"
@@ -322,8 +322,8 @@ class DbStatsReader:
         logger.debug3('Fetching gym count from db')
         query = (
             "SELECT "
-            "If(FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d') IS NULL, 'NO QUEST', "
-            "FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')) AS Quest, "
+            "IF(FROM_UNIXTIME(MIN(trs_quest.quest_timestamp), '%y-%m-%d') IS NULL, 'NO QUEST', "
+            "FROM_UNIXTIME(MIN(trs_quest.quest_timestamp), '%y-%m-%d')) AS Quest, "
             "count(pokestop.pokestop_id) AS Count "
             "FROM pokestop LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "GROUP BY FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')"
@@ -334,7 +334,7 @@ class DbStatsReader:
     def get_quests_count(self, days):
         logger.debug3('Fetching quests count from db')
         query_where = ""
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(quest_timestamp), '%y-%m-%d %k:00:00'))"
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(MIN(quest_timestamp)), '%y-%m-%d %k:00:00'))"
         if days:
             days = datetime.utcnow() - timedelta(days=days)
             query_where = "WHERE FROM_UNIXTIME(quest_timestamp) > '%s' " % str(days)

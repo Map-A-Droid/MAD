@@ -356,7 +356,10 @@ class DbWrapper:
             hours = datetime.utcnow() - timedelta(hours=hours)
             query_where = ' where disappear_time > \'%s\' ' % str(hours)
 
-        query = "SELECT pokemon_id, count(pokemon_id) from pokemon %s group by pokemon_id" % str(query_where)
+        query = (
+            "SELECT pokemon_id, COUNT(pokemon_id) FROM pokemon %s GROUP BY pokemon_id" % str(
+                query_where)
+        )
 
         res = self.execute(query)
 
