@@ -335,7 +335,7 @@ class ResourceHandler(apiHandler.APIHandler):
             converted = self.translate_data_for_response(resource)
             return (converted, 201, {'headers': headers})
         else:
-            raise (flask.request.method, 405)
+            return (flask.request.method, 405)
 
     def put(self, identifier, data, resource_def, resource_info, *args, **kwargs):
         """ API call to replace an object """
