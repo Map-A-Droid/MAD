@@ -204,7 +204,11 @@ def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
     Returns:
         Tuple containing (Package or Packages info, status code)
     """
-    package_info: MADPackages = storage_obj.get_current_package_info(package)
+    package_info: MADPackages = None
+    try:
+        package_info = storage_obj.get_current_package_info(package)
+    except AttributeError:
+        pass
     if package_info is None:
         return (None, 404)
     if architecture is None:
