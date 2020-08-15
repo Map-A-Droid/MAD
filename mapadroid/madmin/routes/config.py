@@ -320,9 +320,17 @@ class MADminConfig(object):
     @auth_required
     def settings_pogoauth(self):
         device_links = {}
+        available_devices = {}
         for device_id, device in self._data_manager.get_root_resource('device').items():
             if device['account_id'] is None:
+                available_devices[device_id] = device
                 continue
+            try:
+                current_id = request.args.get('id', None)
+                if current_id is not None and int(current_id) == device['account_id']:
+                    available_devices[device_id] = device
+            except ValueError:
+                pass
             device_links[device['account_id']] = device
         required_data = {
             'identifier': 'id',
@@ -333,6 +341,7 @@ class MADminConfig(object):
             'html_all': 'settings_pogoauth.html',
             'subtab': 'pogoauth',
             'passthrough': {
+                'devices': available_devices,
                 'device_links': device_links
             },
         }
