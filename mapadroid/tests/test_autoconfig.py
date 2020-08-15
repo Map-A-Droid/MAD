@@ -109,7 +109,9 @@ class MITMAutoConf(TestCase):
                 expected_issues = [
                     [
                         'No available Google logins for auto creation of devices.  Configure through Settings -> '
-                        '<a href="/settings/pogoauth">PogoAuth</a>'
+                        '<a href="/settings/pogoauth">PogoAuth</a>',
+                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        '<a href="/settings/auth">Auth</a>'
                     ],
                     [
                         'PogoDroid is not configured.  Configure through Auto-Config -> '
@@ -142,7 +144,9 @@ class MITMAutoConf(TestCase):
                 expected_issues = [
                     [
                         'No available Google logins for auto creation of devices.  Configure through Settings -> '
-                        '<a href="/settings/pogoauth">PogoAuth</a>'
+                        '<a href="/settings/pogoauth">PogoAuth</a>',
+                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        '<a href="/settings/auth">Auth</a>'
                     ],
                     [
                         'PogoDroid is not configured.  Configure through Auto-Config -> '
@@ -160,7 +164,9 @@ class MITMAutoConf(TestCase):
                 expected_issues = [
                     [
                         'No available Google logins for auto creation of devices.  Configure through Settings -> '
-                        '<a href="/settings/pogoauth">PogoAuth</a>'
+                        '<a href="/settings/pogoauth">PogoAuth</a>',
+                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        '<a href="/settings/auth">Auth</a>'
                     ],
                     [
                         'PogoDroid is not configured.  Configure through Auto-Config -> '
@@ -178,7 +184,9 @@ class MITMAutoConf(TestCase):
                 expected_issues = [
                     [
                         'No available Google logins for auto creation of devices.  Configure through Settings -> '
-                        '<a href="/settings/pogoauth">PogoAuth</a>'
+                        '<a href="/settings/pogoauth">PogoAuth</a>',
+                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        '<a href="/settings/auth">Auth</a>'
                     ],
                     [
                         'PogoDroid is not configured.  Configure through Auto-Config -> '
@@ -196,7 +204,9 @@ class MITMAutoConf(TestCase):
                 expected_issues = [
                     [
                         'No available Google logins for auto creation of devices.  Configure through Settings -> '
-                        '<a href="/settings/pogoauth">PogoAuth</a>'
+                        '<a href="/settings/pogoauth">PogoAuth</a>',
+                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        '<a href="/settings/auth">Auth</a>'
                     ],
                     [
                         'PogoDroid is not configured.  Configure through Auto-Config -> '

@@ -23,6 +23,10 @@ def generate_autoconf_issues(db, data_manager, args, storage_obj) -> Tuple[List[
         link = url_for('settings_walkers')
         anchor = f"Settings -> <a href=\"{link}\">Walker</a>"
         issues_critical.append(f"No walkers configured.  Configure through {anchor}")
+    if not data_manager.get_root_resource('auth'):
+        link = url_for('settings_auth')
+        anchor = f"Settings -> <a href=\"{link}\">Auth</a>"
+        issues_warning.append(f"No auth configured which is a potential security risk.  Configure through {anchor}")
     if not PDConfig(db, args, data_manager).configured:
         link = url_for('autoconf_pd')
         anchor = f"Auto-Config -> <a href=\"{link}\">PogoDroid Configuration</a>"
