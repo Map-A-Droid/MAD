@@ -1,4 +1,4 @@
-from flask import jsonify, render_template, redirect, url_for
+from flask import jsonify, render_template, redirect, url_for, Response
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.autoconfig import generate_autoconf_issues, RGCConfig, PDConfig
 
@@ -53,7 +53,7 @@ class AutoConfigManager(object):
               "WHERE `session_id` = %s AND `instance_id` = %s"
         session = self._db.autofetch_row(sql, (session_id, self._db.instance_id))
         if not session:
-            return redirect(url_for('autoconfig_pending'), code=302)
+            return Response('', status=302)
         sql = "SELECT UNIX_TIMESTAMP(`log_time`) as 'log_time', `level`, `msg`\n"\
               "FROM `autoconfig_logs`\n"\
               "WHERE `instance_id` = %s AND `session_id` = %s\n"\
