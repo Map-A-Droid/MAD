@@ -77,7 +77,8 @@ class MADmin(object):
                                       self._storage_obj)
         self.event = MADminEvent(self._db_wrapper, self._args, logger, self._app, self._mapping_manager,
                                  self._data_manager)
-        self.autoconf = AutoConfigManager(self._db_wrapper, self._app, self._data_manager, self._args)
+        self.autoconf = AutoConfigManager(self._db_wrapper, self._app, self._data_manager, self._args,
+                                          self._storage_obj)
 
     @logger.catch()
     def madmin_start(self):

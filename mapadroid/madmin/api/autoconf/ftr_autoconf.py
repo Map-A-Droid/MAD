@@ -60,7 +60,7 @@ class APIAutoConf(AutoConfHandler):
         }
         device = None
         if status == 1:
-            autoconf_issues = generate_autoconf_issues(self.dbc, self._data_manager, self._args)
+            autoconf_issues = generate_autoconf_issues(self.dbc, self._data_manager, self._args, self.storage_obj)
             if autoconf_issues[1]:
                 return (autoconf_issues, 406)
             # Set the device id.  If it was not requested use the origin hopper to create one

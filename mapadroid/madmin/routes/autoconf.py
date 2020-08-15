@@ -4,11 +4,12 @@ from mapadroid.utils.autoconfig import generate_autoconf_issues, RGCConfig, PDCo
 
 
 class AutoConfigManager(object):
-    def __init__(self, db, app, data_manager, args):
+    def __init__(self, db, app, data_manager, args, storage_obj):
         self._db = db
         self._app = app
         self._args = args
         self._data_manager = data_manager
+        self._storage_obj = storage_obj
 
     def add_route(self):
         routes = [
@@ -79,7 +80,8 @@ class AutoConfigManager(object):
               "FROM `settings_pogoauth` ag\n"\
               "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
               "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
-        (issues_warning, issues_critical) = generate_autoconf_issues(self._db, self._data_manager, self._args)
+        (issues_warning, issues_critical) = generate_autoconf_issues(self._db, self._data_manager, self._args,
+                                                                     self._storage_obj)
         pending = {}
         sql = "SELECT ar.`session_id`, ar.`ip`, sd.`device_id`, sd.`name` AS 'origin', ar.`status`"\
               "FROM `autoconfig_registration` ar\n"\
@@ -117,7 +119,7 @@ class AutoConfigManager(object):
               "FROM `settings_pogoauth` ag\n"\
               "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
               "WHERE ag.`instance_id` = %s AND (sd.`device_id` IS NULL OR sd.`device_id` = %s)"
-        (_, issues_critical) = generate_autoconf_issues(self._db, self._data_manager, self._args)
+        (_, issues_critical) = generate_autoconf_issues(self._db, self._data_manager, self._args, self._storage_obj)
         if issues_critical:
             redirect(url_for('autoconfig_pending'), code=302)
         google_addresses = self._db.autofetch_all(sql, (self._db.instance_id, session['device_id']))

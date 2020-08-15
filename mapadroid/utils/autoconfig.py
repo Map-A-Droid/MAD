@@ -5,9 +5,9 @@ from io import BytesIO
 from typing import Any, List, NoReturn, Tuple
 from xml.sax.saxutils import escape
 from mapadroid.data_manager.modules import MAPPINGS
+from mapadroid.mad_apk import get_apk_status
 
-
-def generate_autoconf_issues(db, data_manager, args) -> Tuple[List[str], List[str]]:
+def generate_autoconf_issues(db, data_manager, args, storage_obj) -> Tuple[List[str], List[str]]:
     issues_warning = []
     issues_critical = []
     sql = "SELECT count(*)\n" \
@@ -30,6 +30,16 @@ def generate_autoconf_issues(db, data_manager, args) -> Tuple[List[str], List[st
         link = url_for('autoconf_rgc')
         anchor = f"Auto-Config -> <a href=\"{link}\">RemoteGPSController Configuration</a>"
         issues_critical.append(f"RGC is not configured.  Configure through {anchor}")
+    packages = get_apk_status(storage_obj)
+    missing_packages = []
+    for _, apkpackages in get_apk_status(storage_obj).items():
+        for _, package in apkpackages.items():
+            if package.version is None:
+                missing_packages.append(package)
+    if missing_packages:
+        link = url_for('autoconfig_root')
+        anchor = f"System -> <a href=\"{link}\">MADmin Packages</a>"
+        issues_critical.append(f"Missing one or more required packages.  Configure through {anchor}")
     return (issues_warning, issues_critical)
 
 
