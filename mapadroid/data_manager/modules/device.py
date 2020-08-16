@@ -381,6 +381,7 @@ class Device(Resource):
 
     def validate_custom(self) -> Optional[dict]:
         data = self.get_resource(backend=True)
+        issues = {}
         bad_macs = []
         mac_fields = ['mac_address', 'wifi_mac_address']
         for field in mac_fields:
@@ -391,9 +392,17 @@ class Device(Resource):
             if not re.match("[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", data[field].lower()):
                 bad_macs.append((field, 'Invalid MAC address'))
         if bad_macs:
-            return {
-                'invalid': bad_macs
-            }
+            issues['issues'] = bad_macs
+        if 'account_id' in self._data['fields'] and self._data['fields']['account_id'] is not None:
+            sql = "SELECT COUNT(*)\n" \
+                  "FROM `settings_device`\n" \
+                  "WHERE `account_id` = %s AND `device_id` != %s"
+            if self._dbc.autofetch_value(sql, (self._data['fields']['account_id'], self.identifier)) > 0:
+                if 'invalid' not in issues:
+                    issues['invalid'] = []
+                issues['invalid'].append(('account_id', 'Account already in use'))
+        if issues:
+            return issues
 
     def _load(self) -> None:
         super()._load()

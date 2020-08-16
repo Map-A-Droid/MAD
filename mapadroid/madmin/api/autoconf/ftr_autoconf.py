@@ -14,7 +14,7 @@ class APIAutoConf(AutoConfHandler):
         try:
             conf.save_config(self.api_req.data)
         except AutoConfIssue as err:
-            return (None, 400, {"headers": {'X-Issues': err.issues}})
+            return (err.issues, 400)
         return (None, 200)
 
     def autoconf_config_rgc(self):
@@ -22,7 +22,15 @@ class APIAutoConf(AutoConfHandler):
         try:
             conf.save_config(self.api_req.data)
         except AutoConfIssue as err:
-            return (None, 400, {"headers": {'X-Issues': err.issues}})
+            return (err.issues, 400)
+        return (None, 200)
+
+    def autoconf_delete_pd(self):
+        PDConfig(self.dbc, self._args, self._data_manager).delete()
+        return (None, 200)
+
+    def autoconf_delete_rgc(self):
+        RGCConfig(self.dbc, self._args, self._data_manager).delete()
         return (None, 200)
 
     def autoconf_delete_session(self, session_id: int):
@@ -60,7 +68,7 @@ class APIAutoConf(AutoConfHandler):
         }
         device = None
         if status == 1:
-            autoconf_issues = generate_autoconf_issues(self.dbc, self._data_manager, self._args)
+            autoconf_issues = generate_autoconf_issues(self.dbc, self._data_manager, self._args, self.storage_obj)
             if autoconf_issues[1]:
                 return (autoconf_issues, 406)
             # Set the device id.  If it was not requested use the origin hopper to create one

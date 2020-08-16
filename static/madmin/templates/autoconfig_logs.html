@@ -22,13 +22,17 @@
                         return data;
                 },
                 "error": function (xhr, error, code) {
-                        errorCount++;
-                        console.log(xhr);
-                        console.log(error);
-                        console.log(code);
-                        if (errorCount == 5) {
-                                alert("Could not get updates from MAD five times in a row. More logs in browser developer console. Is MAD running?");
-                        }
+                    if(xhr.status == 302) {
+                        alert('Session has completed or has been deleted.  Returning to pending page');
+                        location.href = '{{ url_for('autoconfig_root') }}';
+                    }
+                    console.log(xhr);
+                    console.log(error);
+                    console.log(code);
+                    errorCount++;
+                    if (errorCount == 5) {
+                            alert("Could not get updates from MAD five times in a row. More logs in browser developer console. Is MAD running?");
+                    }
                 }
             },
             "columns": [

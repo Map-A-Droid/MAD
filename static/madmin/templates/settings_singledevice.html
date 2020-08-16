@@ -68,6 +68,9 @@ $(document).ready(function () {
 
 {% block content %}
 {{ super() }}
+{% if requires_auth and element.origin and (not element.ptc_login and not element.account_id) %}
+    <div class="alert alert-warning">No Pogo Auth (Google or PTC) selected for the device.  During auto-configuration the device will not be able to automatically sign-in.</div>
+{% endif %}
 
 <h1 class="display-4">{{ element.origin }}</h1>
 

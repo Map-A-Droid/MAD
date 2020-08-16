@@ -57,6 +57,10 @@ $(document).ready(function () {
         }
     });
 
+    $(".download_config").click(function() {
+        window.location.href = "{{ url_for('autoconfig_download_file') }}";
+    });
+
     $(".sess_logs").click(function() {
         var session_id = $(this).data('identifier');
         window.location.replace('{{ url_for('autoconfig_root') }}/logs/'+ session_id);
@@ -180,8 +184,8 @@ $(document).ready(function () {
     </table>
   </div>
 </div>
-<div>
-  <div class="col">
+<div class="row">
+  <div class="col-sm">
     Bulk Actions
     <select class='bulk_update'>
       <option value="None">None</option>
@@ -192,5 +196,13 @@ $(document).ready(function () {
       <!-- <option value='Reject'>Delete</option> -->
     </select>
   </div>
+  <div class="col-sm">
+        <div class="btn-group-vertical float-right">
+        {% if issues_critical %}
+        Clear all blocking issues to get USB Configuration file
+        {% else %}
+        <button class="btn btn-info btn-sm nav-link text-uppercase font-weight-bold download_config align-items-center mb-1"><i class="fas fa-3x fa-cog align-middle"></i> Download Configuration</button>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
