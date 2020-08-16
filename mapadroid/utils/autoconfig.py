@@ -6,6 +6,7 @@ from typing import Any, List, NoReturn, Tuple
 from xml.sax.saxutils import escape
 from mapadroid.data_manager.modules import MAPPINGS
 from mapadroid.mad_apk import get_apk_status
+from mapadroid.data_manager.modules.resource import USER_READABLE_ERRORS
 
 
 def generate_autoconf_issues(db, data_manager, args, storage_obj) -> Tuple[List[str], List[str]]:
@@ -209,14 +210,21 @@ class AutoConfigCreator:
                     check_func = elem['expected']
                     if elem['expected'] == 'bool':
                         if user_vals[key] not in [True, False]:
-                            invalid.append(key)
+                            invalid.append((key, USER_READABLE_ERRORS[bool]))
                     self.contents[key] = check_func(user_vals[key])
                 except KeyError:
                     if key not in self.contents:
                         self.contents[key] = elem['default'] if elem['default'] not in ['None', None] else ""
                 except (TypeError, ValueError):
-                    invalid.append(key)
+                    invalid.append((key, USER_READABLE_ERRORS[check_func]))
         unknown = set(list(user_vals.keys())) - set(processed)
+        try:
+            invalid_dest = ['127.0.0.1', '0.0.0.0']
+            for dest in invalid_dest:
+                if dest in self.contents[self.host_field]:
+                    invalid.append((self.host_field, "Routable address from outside the server"))
+        except KeyError:
+            pass
         issues = {}
         if missing:
             issues['missing'] = missing
@@ -230,6 +238,7 @@ class AutoConfigCreator:
 
 
 class RGCConfig(AutoConfigCreator):
+    host_field = "websocket_uri"
     origin_field = "websocket_origin"
     source = "rgc"
     sections = {
@@ -403,6 +412,7 @@ class RGCConfig(AutoConfigCreator):
 
 
 class PDConfig(AutoConfigCreator):
+    host_field = "post_destination"
     origin_field = "post_origin"
     source = "pd"
     sections = {

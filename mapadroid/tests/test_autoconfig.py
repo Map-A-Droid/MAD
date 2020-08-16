@@ -10,6 +10,31 @@ from mapadroid.utils.walkerArgs import parse_args
 args = parse_args()
 email_base: str = "UnitTest@UnitTest.com"
 pwd_base: str = "base"
+pd_host = 'http://1.1.1.69:8000'
+pd_conf = {
+    'post_destination': pd_host
+}
+rgc_host = 'ws://192.168.1.69:8080'
+rgc_conf = {
+    'websocket_uri': rgc_host
+}
+
+
+def create_valid_configs(test_obj, api_creator, auth: bool = True, pd_conf: dict = pd_conf, rgc_conf: dict = rgc_conf):
+    conf_pd = copy.deepcopy(pd_conf)
+    conf_rgc = copy.deepcopy(rgc_conf)
+    if auth:
+        payload = {
+            'username': email_base,
+            'password': pwd_base
+        }
+        (auth_shared, _) = api_creator.create_valid_resource('auth', payload=payload)
+        conf_pd['mad_auth'] = auth_shared['uri'].split('/')[-1]
+        conf_rgc['mad_auth'] = auth_shared['uri'].split('/')[-1]
+    res = test_obj.api.post('/api/autoconf/pd', json=conf_pd)
+    test_obj.assertTrue(res.status_code == 200)
+    res = test_obj.api.post('/api/autoconf/rgc', json=conf_rgc)
+    test_obj.assertTrue(res.status_code == 200)
 
 
 def basic_autoconf(func) -> Any:
@@ -21,22 +46,10 @@ def basic_autoconf(func) -> Any:
         with GetStorage(self.api) as storage:
             try:
                 storage.upload_all()
+                create_valid_configs(self, api_creator)
                 res = self.mitm.post('/autoconfig/register')
                 self.assertTrue(res.status_code == 201)
                 session_id = res.content.decode('utf-8')
-                # Setup basic PD Auth
-                payload = {
-                    'username': email_base,
-                    'password': pwd_base
-                }
-                (auth_shared, _) = api_creator.create_valid_resource('auth', payload=payload)
-                auth = {
-                    'mad_auth': auth_shared['uri'].split('/')[-1]
-                }
-                res = self.api.post('/api/autoconf/pd', json=auth)
-                self.assertTrue(res.status_code == 200)
-                res = self.api.post('/api/autoconf/rgc', json=auth)
-                self.assertTrue(res.status_code == 200)
                 # Create Google Account
                 gacc = {
                     "login_type": "google",
@@ -233,42 +246,25 @@ class MITMAutoConf(TestCase):
                 res = self.api.get('/autoconfig/download')
                 self.assertTrue(res.status_code == 406)
                 # Setup default env without anything defined
-                res = self.api.post('/api/autoconf/pd', json={})
-                self.assertTrue(res.status_code == 200)
-                res = self.api.post('/api/autoconf/rgc', json={})
-                self.assertTrue(res.status_code == 200)
+                create_valid_configs(self, api_creator, auth=False)
                 storage.upload_all()
                 res = self.api.get('/autoconfig/download')
                 self.assertTrue(res.status_code == 200)
-                expected = f"http://{args.mitmreceiver_ip}:{args.mitmreceiver_port}"
-                self.assertTrue((expected == res.content.decode('utf-8')))
-                # Create auth and test
-                payload = {
-                    'username': email_base,
-                    'password': pwd_base
-                }
-                (auth_shared, _) = api_creator.create_valid_resource('auth', payload=payload)
-                auth = {
-                    'mad_auth': auth_shared['uri'].split('/')[-1]
-                }
-                res = self.api.post('/api/autoconf/pd', json=auth)
-                self.assertTrue(res.status_code == 200)
-                res = self.api.post('/api/autoconf/rgc', json=auth)
-                self.assertTrue(res.status_code == 200)
+                self.assertTrue(pd_host == res.content.decode('utf-8'))
+                create_valid_configs(self, api_creator)
                 res = self.api.get('/autoconfig/download')
                 self.assertTrue(res.status_code == 200)
-                host = f"http://{args.mitmreceiver_ip}:{args.mitmreceiver_port}"
                 auth = f"{email_base}:{pwd_base}"
-                expected = f"{host}\r\n{auth}"
-                self.assertTrue((expected == res.content.decode('utf-8')))
+                expected = f"{pd_host}\r\n{auth}"
+                self.assertTrue(expected == res.content.decode('utf-8'))
             except Exception:
                 raise
             finally:
                 rgc_delete = self.api.delete('/api/autoconf/rgc')
-                pd_autodelete = self.api.delete('/api/autoconf/pd')
+                pd_delete = self.api.delete('/api/autoconf/pd')
                 api_creator.remove_resources()
                 self.assertTrue(rgc_delete.status_code == 200)
-                self.assertTrue(pd_autodelete.status_code == 200)
+                self.assertTrue(pd_delete.status_code == 200)
 
     @basic_autoconf
     def test_workflow_assigned_device(self, session_id, dev_info, ss_info, api_creator):
