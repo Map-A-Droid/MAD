@@ -14,7 +14,7 @@ class APIAutoConf(AutoConfHandler):
         try:
             conf.save_config(self.api_req.data)
         except AutoConfIssue as err:
-            return (None, 400, {"headers": {'X-Issues': err.issues}})
+            return (err.issues, 400)
         return (None, 200)
 
     def autoconf_config_rgc(self):
@@ -22,7 +22,7 @@ class APIAutoConf(AutoConfHandler):
         try:
             conf.save_config(self.api_req.data)
         except AutoConfIssue as err:
-            return (None, 400, {"headers": {'X-Issues': err.issues}})
+            return (err.issues, 400)
         return (None, 200)
 
     def autoconf_delete_pd(self):
