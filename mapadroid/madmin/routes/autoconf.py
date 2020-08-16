@@ -1,4 +1,5 @@
-from flask import jsonify, render_template, redirect, url_for, Response
+from io import BytesIO
+from flask import jsonify, render_template, redirect, url_for, Response, send_file
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.autoconfig import generate_autoconf_issues, RGCConfig, PDConfig
 
@@ -20,6 +21,7 @@ class AutoConfigManager(object):
             ("/autoconfig/logs/<int:session_id>/update", self.autoconf_logs_get),
             ("/autoconfig/rgc", self.autoconf_rgc),
             ("/autoconfig/pd", self.autoconf_pd),
+            ("/autoconfig/download", self.autoconfig_download_file)
         ]
         for route_def in routes:
             if len(route_def) == 2:
@@ -31,6 +33,26 @@ class AutoConfigManager(object):
 
     def start_modul(self):
         self.add_route()
+
+    @auth_required
+    def autoconfig_download_file(self):
+        (_, issues_critical) = generate_autoconf_issues(self._db, self._data_manager, self._args, self._storage_obj)
+        if issues_critical:
+            return Response('Basic requirements not met', status=406)
+        rgc_conf = RGCConfig(self._db, self._args, self._data_manager)
+        config_file = BytesIO()
+        info = [rgc_conf.contents['websocket_uri']]
+        try:
+            if rgc_conf.contents['mad_auth'] is not None:
+                auth = self._data_manager.get_resource('auth', rgc_conf.contents['mad_auth'])
+                info.append(f"{auth['username']}:{auth['password']}")
+        except KeyError:
+            # No auth defined for RGC so theres probably no auth for the system
+            pass
+        config_file.write('\r\n'.join(info).encode('utf-8'))
+        config_file.seek(0, 0)
+        return send_file(config_file, as_attachment=True, attachment_filename='mad_autoconf.txt',
+                         mimetype='text/plain')
 
     @auth_required
     def autoconf_logs(self, session_id):

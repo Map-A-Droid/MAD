@@ -25,6 +25,14 @@ class APIAutoConf(AutoConfHandler):
             return (None, 400, {"headers": {'X-Issues': err.issues}})
         return (None, 200)
 
+    def autoconf_delete_pd(self):
+        PDConfig(self.dbc, self._args, self._data_manager).delete()
+        return (None, 200)
+
+    def autoconf_delete_rgc(self):
+        RGCConfig(self.dbc, self._args, self._data_manager).delete()
+        return (None, 200)
+
     def autoconf_delete_session(self, session_id: int):
         del_info = {
             'session_id': session_id,

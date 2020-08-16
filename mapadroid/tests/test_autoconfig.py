@@ -4,8 +4,10 @@ from typing import Any
 from unittest import TestCase
 import mapadroid.tests.test_variables as global_variables
 from mapadroid.tests.test_utils import get_connection_api, get_connection_mitm, ResourceCreator, GetStorage
+from mapadroid.utils.walkerArgs import parse_args
 
 
+args = parse_args()
 email_base: str = "UnitTest@UnitTest.com"
 pwd_base: str = "base"
 
@@ -60,6 +62,8 @@ def basic_autoconf(func) -> Any:
             except Exception:
                 raise
             finally:
+                self.api.delete('/api/autoconf/rgc')
+                self.api.delete('/api/autoconf/pd')
                 api_creator.remove_resources()
                 if session_id is not None:
                     self.mitm.delete('/autoconfig/{}/complete'.format(session_id))
@@ -220,6 +224,52 @@ class MITMAutoConf(TestCase):
             api_creator.remove_resources()
             if session_id is not None:
                 self.mitm.delete('/autoconfig/{}/complete'.format(session_id))
+
+    def test_autoconfig_file_download(self):
+        api_creator = ResourceCreator(self.api)
+        with GetStorage(self.api) as storage:
+            try:
+                # this really isnt an api call but whatever
+                res = self.api.get('/autoconfig/download')
+                self.assertTrue(res.status_code == 406)
+                # Setup default env without anything defined
+                res = self.api.post('/api/autoconf/pd', json={})
+                self.assertTrue(res.status_code == 200)
+                res = self.api.post('/api/autoconf/rgc', json={})
+                self.assertTrue(res.status_code == 200)
+                storage.upload_all()
+                res = self.api.get('/autoconfig/download')
+                self.assertTrue(res.status_code == 200)
+                host = f"ws://{args.ws_ip}:{args.ws_port}"
+                expected = f"{host}"
+                self.assertTrue((expected == res.content.decode('utf-8')))
+                # Create auth and test
+                payload = {
+                    'username': email_base,
+                    'password': pwd_base
+                }
+                (auth_shared, _) = api_creator.create_valid_resource('auth', payload=payload)
+                auth = {
+                    'mad_auth': auth_shared['uri'].split('/')[-1]
+                }
+                res = self.api.post('/api/autoconf/pd', json=auth)
+                self.assertTrue(res.status_code == 200)
+                res = self.api.post('/api/autoconf/rgc', json=auth)
+                self.assertTrue(res.status_code == 200)
+                res = self.api.get('/autoconfig/download')
+                self.assertTrue(res.status_code == 200)
+                host = f"ws://{args.ws_ip}:{args.ws_port}"
+                auth = f"{email_base}:{pwd_base}"
+                expected = f"{host}\r\n{auth}"
+                self.assertTrue((expected == res.content.decode('utf-8')))
+            except Exception:
+                raise
+            finally:
+                rgc_delete = self.api.delete('/api/autoconf/rgc')
+                pd_autodelete = self.api.delete('/api/autoconf/pd')
+                api_creator.remove_resources()
+                self.assertTrue(rgc_delete.status_code == 200)
+                self.assertTrue(pd_autodelete.status_code == 200)
 
     @basic_autoconf
     def test_workflow_assigned_device(self, session_id, dev_info, ss_info, api_creator):

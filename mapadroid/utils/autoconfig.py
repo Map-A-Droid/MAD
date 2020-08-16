@@ -120,6 +120,13 @@ class AutoConfigCreator:
         self.configured: bool = False
         self.load_config()
 
+    def delete(self):
+        del_info = {
+            "name": self.source,
+            "instance_id": self._db.instance_id
+        }
+        self._db.autoexec_delete('autoconfig_file', del_info)
+
     def generate_config(self, origin: str) -> str:
         origin_config = self.get_config()
         origin_config[self.origin_field] = origin
