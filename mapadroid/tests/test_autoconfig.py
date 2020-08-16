@@ -240,8 +240,7 @@ class MITMAutoConf(TestCase):
                 storage.upload_all()
                 res = self.api.get('/autoconfig/download')
                 self.assertTrue(res.status_code == 200)
-                host = f"ws://{args.ws_ip}:{args.ws_port}"
-                expected = f"{host}"
+                expected = f"http://{args.mitmreceiver_ip}:{args.mitmreceiver_port}"
                 self.assertTrue((expected == res.content.decode('utf-8')))
                 # Create auth and test
                 payload = {
@@ -258,7 +257,7 @@ class MITMAutoConf(TestCase):
                 self.assertTrue(res.status_code == 200)
                 res = self.api.get('/autoconfig/download')
                 self.assertTrue(res.status_code == 200)
-                host = f"ws://{args.ws_ip}:{args.ws_port}"
+                host = f"http://{args.mitmreceiver_ip}:{args.mitmreceiver_port}"
                 auth = f"{email_base}:{pwd_base}"
                 expected = f"{host}\r\n{auth}"
                 self.assertTrue((expected == res.content.decode('utf-8')))

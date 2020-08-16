@@ -39,12 +39,12 @@ class AutoConfigManager(object):
         (_, issues_critical) = generate_autoconf_issues(self._db, self._data_manager, self._args, self._storage_obj)
         if issues_critical:
             return Response('Basic requirements not met', status=406)
-        rgc_conf = RGCConfig(self._db, self._args, self._data_manager)
+        pd_conf = PDConfig(self._db, self._args, self._data_manager)
         config_file = BytesIO()
-        info = [rgc_conf.contents['websocket_uri']]
+        info = [pd_conf.contents['post_destination']]
         try:
-            if rgc_conf.contents['mad_auth'] is not None:
-                auth = self._data_manager.get_resource('auth', rgc_conf.contents['mad_auth'])
+            if pd_conf.contents['mad_auth'] is not None:
+                auth = self._data_manager.get_resource('auth', pd_conf.contents['mad_auth'])
                 info.append(f"{auth['username']}:{auth['password']}")
         except KeyError:
             # No auth defined for RGC so theres probably no auth for the system
