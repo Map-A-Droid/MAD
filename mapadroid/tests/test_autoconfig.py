@@ -190,7 +190,7 @@ class MITMAutoConf(TestCase):
                         '<a href="/autoconfig/pd">PogoDroid Configuration</a>',
                         'RGC is not configured. Configure through '
                         '<a href="/autoconfig/rgc">RemoteGPSController Configuration</a>',
-                        'Missing one or more required packages.  Configure '
+                        'Missing one or more required packages. Configure '
                         '<a href="/apk">MADmin Packages</a>'
                     ]
                 ]
