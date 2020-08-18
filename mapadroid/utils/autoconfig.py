@@ -18,24 +18,24 @@ def generate_autoconf_issues(db, data_manager, args, storage_obj) -> Tuple[List[
           "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
     if db.autofetch_value(sql, (db.instance_id)) == 0 and not args.autoconfig_no_auth:
         link = url_for('settings_pogoauth')
-        anchor = f"Settings -> <a href=\"{link}\">PogoAuth</a>"
-        issues_warning.append(f"No available Google logins for auto creation of devices.  Configure through {anchor}")
+        anchor = f"<a href=\"{link}\">PogoAuth</a>"
+        issues_warning.append(f"No available Google logins for auto creation of devices. Configure through {anchor}")
     if not validate_hopper_ready(data_manager):
         link = url_for('settings_walkers')
-        anchor = f"Settings -> <a href=\"{link}\">Walker</a>"
-        issues_critical.append(f"No walkers configured.  Configure through {anchor}")
+        anchor = f"<a href=\"{link}\">Walker</a>"
+        issues_critical.append(f"No walkers configured. Configure through {anchor}")
     if not data_manager.get_root_resource('auth'):
         link = url_for('settings_auth')
-        anchor = f"Settings -> <a href=\"{link}\">Auth</a>"
-        issues_warning.append(f"No auth configured which is a potential security risk.  Configure through {anchor}")
+        anchor = f"<a href=\"{link}\">Auth</a>"
+        issues_warning.append(f"No auth configured which is a potential security risk. Configure through {anchor}")
     if not PDConfig(db, args, data_manager).configured:
         link = url_for('autoconf_pd')
-        anchor = f"Auto-Config -> <a href=\"{link}\">PogoDroid Configuration</a>"
-        issues_critical.append(f"PogoDroid is not configured.  Configure through {anchor}")
+        anchor = f"<a href=\"{link}\">PogoDroid Configuration</a>"
+        issues_critical.append(f"PogoDroid is not configured. Configure through {anchor}")
     if not RGCConfig(db, args, data_manager).configured:
         link = url_for('autoconf_rgc')
-        anchor = f"Auto-Config -> <a href=\"{link}\">RemoteGPSController Configuration</a>"
-        issues_critical.append(f"RGC is not configured.  Configure through {anchor}")
+        anchor = f"<a href=\"{link}\">RemoteGPSController Configuration</a>"
+        issues_critical.append(f"RGC is not configured. Configure through {anchor}")
     missing_packages = []
     for _, apkpackages in get_apk_status(storage_obj).items():
         for _, package in apkpackages.items():
@@ -43,8 +43,8 @@ def generate_autoconf_issues(db, data_manager, args, storage_obj) -> Tuple[List[
                 missing_packages.append(package)
     if missing_packages:
         link = url_for('mad_apks')
-        anchor = f"System -> <a href=\"{link}\">MADmin Packages</a>"
-        issues_critical.append(f"Missing one or more required packages.  Configure through {anchor}")
+        anchor = f"<a href=\"{link}\">MADmin Packages</a>"
+        issues_critical.append(f"Missing one or more required packages. Configure through {anchor}")
     return (issues_warning, issues_critical)
 
 
