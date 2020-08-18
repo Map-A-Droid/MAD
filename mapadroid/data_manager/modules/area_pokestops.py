@@ -54,7 +54,7 @@ class AreaPokestops(Area):
                     "require": True,
                     "values": [False, True],
                     "empty": False,
-                    "description": "Set this open True, if you scan the area for gyms / spawnpoints the first time",
+                    "description": "Set this option to True, if you scan the area for stops for the first time",
                     "expected": bool
                 }
             },
