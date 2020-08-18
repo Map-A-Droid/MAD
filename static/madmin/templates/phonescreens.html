@@ -52,87 +52,122 @@
     border-color: lightgray;
   }
 
+ .screen {
+    float: left;
+    width: 30%;
+    border: black 1px;
+    border-style: solid;
+    margin: 10px;
+    max-width: 350px;
+  }
 
-   .screen {
-        float: left;
-        width: 30%;
-        max-width: max-content;
-        border: black 2px;
-        border-style: solid;
-        margin: 10px;
-    }
+  img.screenshot {
+    width: 100%;
+  }
 
-    img.screenshot {
-        width: 100%;
-    }
+ .phonename {
+    font-size: large;
+    text-align: center;
+    background-color: #000;
+    width: 100%;
+    color: #FFF;
+    font-weight: bold;
+  }
 
-   .phonename {
-        font-size: larger;
-        text-align: center;
-        background-color: lightgray;
-        width: 100%;
-    }
+  .infobar {
+    background: #FFF;
+    border-bottom: 1px solid #CCC;
+    text-align: center;
+    font-size: small;
+  }
 
-    div#button {
-        width: 100%;
-        text-align: center;
-        background-color: lightgray;
-        color: white;
-        font-size: x-large;
-    }
+  .softbar .col,
+  .controlButtons .col-md {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
 
-    div#softbar {
-        width: 100%;
-        float: left;
-    }
+  .controlButtons .col-md {
+    border-right: 1px solid #CCC;
+    border-bottom: 1px solid #CCC;
+  }
 
-    div#softbutton {
-        width: 20%;
-        float: left;
-        text-align: center;
-    }
-  
-    .dialog-on-top { z-index: 2001 !important; }
+  .controlButtons .col-md:last-child {
+    border-right: none;
+  }
 
-    @media only screen and (max-width: 600px) {
+  .controlButtons a {
+    text-align: center;
+    display: block;
+    text-decoration: none;
+    color: #333;
+    padding: 3px;
+  }
+
+  .softbar a {
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    padding: 3px;
+    color: #333;
+  }
+
+  .softbar a:hover,
+  .controlButtons a:hover {
+    text-decoration: none;
+    background-color: #007bff;
+    color: #FFF;
+  }
+
+  .dialog-on-top {
+    z-index: 2001 !important;
+  }
+
+  @media only screen and (max-width: 600px) {
     .screen {
-        width: 90%;
-        border: black 2px;
-        border-style: solid;
-        margin: 10px;
+      width: 90%;
     }
-
-    }
-
-}
+  }
 </style>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
- $(document).ready(function() {
+  // hack to prevent jQuery UI's tooltips to appear
+  var _tooltip = jQuery.fn.tooltip;
+</script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>jQuery.fn.tooltip = _tooltip;</script>
+<script>
+$(document).ready(function() {
 
- $('body').Aplus();
- $('dialog-confirm').dialog();
+$('body').Aplus();
+$('dialog-confirm').dialog();
 
-$("a#screenshot").bind("click", function(event) {
+  $('.date').each(function() {
+    var screendate = $(this).text();
+    $(this).text(moment(screendate).fromNow());
+  })
+
+  $(".action_screenshot").bind("click", function(event) {
        event.preventDefault();
        var origin = $(this).attr("origin");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+    $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><strong>Load...</strong>' });
        $.ajax({
        type: "GET",
        url: url,
        success: function(data){
-           $('#date' + origin).text(data);
+           $('#date' + origin + ' span.date').attr('data-original-title', data).tooltip('hide');
+           $('#date' + origin + ' span.date').text(moment(data).fromNow());
            $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
    });
 
-$("a#quit").bind("click", function(event) {
+  $(".action_quit").bind("click", function(event) {
     event.preventDefault();
     var origin = $(this).attr("origin");
     var url = $(this).attr("href");
@@ -151,7 +186,7 @@ $("a#quit").bind("click", function(event) {
                 icon: "ui-icon-power",
                 click: function() {
                      $(this).dialog("close");
-                     $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+                  $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><strong>Load...</strong>' });
                      $.ajax({
                          type: "GET",
                          url: url,
@@ -169,7 +204,7 @@ $("a#quit").bind("click", function(event) {
                 click: function() {
                     $(this).dialog("close");
                     url = url + "&restart=1"
-                    $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+                    $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><strong>Load...</strong>' });
                     $.ajax({
                         type: "GET",
                         url: url,
@@ -189,15 +224,15 @@ $("a#quit").bind("click", function(event) {
             }
         ]
     });
-});
+  });
 
 
-$(".backbutton").bind("click", function(event) {
+  $(".backbutton").bind("click", function(event) {
        event.preventDefault();
        var origin = $(this).attr("origin");
        var adb = $(this).attr("adb");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><strong>Load...</strong>' });
        $.ajax({
        type: "GET",
        url: 'send_command?origin=' + origin + '&command=back&adb=' + adb,
@@ -209,12 +244,12 @@ $(".backbutton").bind("click", function(event) {
      });
    });
 
-$(".homebutton").bind("click", function(event) {
+  $(".homebutton").bind("click", function(event) {
        event.preventDefault();
        var origin = $(this).attr("origin");
        var adb = $(this).attr("adb");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><strong>Load...</strong>' });
        $.ajax({
        type: "GET",
        url: 'send_command?origin=' + origin + '&command=home&adb=' + adb,
@@ -226,9 +261,9 @@ $(".homebutton").bind("click", function(event) {
      });
    });
 
-$(".gpsbutton").bind("click", function(event) {
+  $(".gpsbutton").bind("click", function(event) {
        event.preventDefault();
-       var coords = prompt("Please enter the new coords:", "0.0,0.0");
+       var coords = prompt("Enter the coordinates you want to send your device to. The device will continue its normal route afterwards:", "0.0,0.0");
 
        if (coords != null) {
            var sleeptime = prompt("Additional sleeptime after geofix (in seconds)?", "0");
@@ -236,7 +271,7 @@ $(".gpsbutton").bind("click", function(event) {
            var origin = $(this).attr("origin");
            var adb = $(this).attr("adb");
            var url = $(this).attr("href");
-           $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+           $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><strong>Load...</strong>' });
            $.ajax({
                type: "GET",
                url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb + '&sleeptime=' + sleeptime,
@@ -249,14 +284,14 @@ $(".gpsbutton").bind("click", function(event) {
        };
    });
 
-$(".keyboardbutton").bind("click", function(event) {
+  $(".keyboardbutton").bind("click", function(event) {
        event.preventDefault();
        var text = prompt("Please enter text:", "");
        if (text != null) {
            var origin = $(this).attr("origin");
            var adb = $(this).attr("adb");
            var url = $(this).attr("href");
-           $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+           $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><strong>Load...</strong>' });
            $.ajax({
                type: "GET",
                url: 'send_text?origin=' + origin + '&text=' + text + '&adb=' + adb,
@@ -269,21 +304,20 @@ $(".keyboardbutton").bind("click", function(event) {
        };
    });
 
-$(".downloadbutton").bind("click", function(event) {
+  $(".downloadbutton").bind("click", function(event) {
        event.preventDefault();
        var origin = $(this).attr("origin");
        var img = $('img#' + origin).attr("src").replace("/madmin", "");
        window.open(img, '_blank');
-});
+  });
 
 
 $(".screenshot").mousedown(function(e){
-e.preventDefault();
+  e.preventDefault();
 
     $(this).data("tracking",true);
     $(this).data("start",{x:e.offsetX,y:e.offsetY,
                           xe:e.offsetX,ye:e.offsetY});
-
 }).mousemove(function(e){
     if($(this).data("tracking")){
         var start = $(this).data("start");
@@ -331,7 +365,7 @@ e.preventDefault();
 {% block content %}
 
 <h2>{{header | safe }}</h2>
-<h4>Full click and swipe control your devices.</h4>
+<div class="alert alert-info">You can control your devices from here. Clicks and swipes will be sent to the device. After each action, a screenshot will be taken.</div>
 <div id="devicegrid">
   {% for item in editform %}
   {{item | safe }}

@@ -118,9 +118,9 @@
 <div class="alert alert-warning">Couldn't find any area configurations. Please <a href="{{ url_for('settings_areas') }}">create</a> one first.</div>
 {% else %}
 {% if element %}
-  <h1 class="display-4">Edit {{ walker.walkername }} ({{ areas[element.walkerarea].name }}) </h1>
+  <h1 class="display-5">Edit {{ walker.walkername }} ({{ areas[element.walkerarea].name }}) </h1>
 {% else %}
-  <h1 class="display-4">New WalkerArea for {{ walker.walkername }} </h1>
+  <h1 class="display-5">New WalkerArea for {{ walker.walkername }} </h1>
 {% endif %}
 <div class="row">
   <div class="col-sm-8">

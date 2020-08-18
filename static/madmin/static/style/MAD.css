@@ -243,8 +243,9 @@ input[type="search"] {
 .card.border-secondary { margin-top: 10px; }
 body { visibility: hidden; }
 
-
-
+div.container[role="main"] {
+  margin-bottom: 40px;
+}
 
 /*
  * Data tables header icons

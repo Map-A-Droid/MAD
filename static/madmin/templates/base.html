@@ -60,15 +60,15 @@
                         Statistics
                     </a>
                       <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
-                      <a href="{{ url_for('statistics') }}" class="dropdown-item">Global Stats</a>
-                      <a href="{{ url_for('statistics_stop_quest') }}" class="dropdown-item">Quest/Stop Stats</a>
-                      <a href="{{ url_for('statistics_mon') }}" class="dropdown-item">Mon Stats</a>
-                      <a href="{{ url_for('statistics_shiny') }}" class="dropdown-item">Shiny Stats</a>
-                      <a href="{{ url_for('statistics_spawns') }}" class="dropdown-item">Spawnpoint Stats</a>
+                      <a href="{{ url_for('statistics') }}" class="dropdown-item">Global stats</a>
+                      <a href="{{ url_for('statistics_stop_quest') }}" class="dropdown-item">Quest/Stop stats</a>
+                      <a href="{{ url_for('statistics_mon') }}" class="dropdown-item">Mon stats</a>
+                      <a href="{{ url_for('statistics_shiny') }}" class="dropdown-item">Shiny stats</a>
+                      <a href="{{ url_for('statistics_spawns') }}" class="dropdown-item">Spawnpoint stats</a>
                     </div>
                   </li>
                   <li class="nav-item">
-                    <a href="{{ url_for('get_phonescreens') }}" class="nav-link">Devicecontrol</a>
+                    <a href="{{ url_for('get_phonescreens') }}" class="nav-link">Device control</a>
                   </li>
                   <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="uploaded_files" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -76,10 +76,10 @@
                     </a>
                       <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
                       <a href="{{ url_for('uploaded_files') }}" class="dropdown-item">Jobs</a>
-                      <a href="{{ url_for('install_status') }}" class="dropdown-item">Job Status</a>
-                      <a href="{{ url_for('install_status', withautojobs='true') }}" class="dropdown-item">Auto Job Status</a>
+                      <a href="{{ url_for('install_status') }}" class="dropdown-item">Job status</a>
+                      <a href="{{ url_for('install_status', withautojobs='true') }}" class="dropdown-item">Auto-job status</a>
                       <a href="{{ url_for('upload') }}" class="dropdown-item">Create APK install job</a>
-                      <a href="{{ url_for('reload_jobs') }}" class="dropdown-item">Reload existing Jobs</a>
+                      <a href="{{ url_for('reload_jobs') }}" class="dropdown-item">Reload jobs</a>
                     </div>
                   </li>
                   <li class="nav-item dropdown">

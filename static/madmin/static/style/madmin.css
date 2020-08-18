@@ -5,6 +5,7 @@ html, body, div[role="main"], #app {
 div.container[role="main"] {
     max-width: 100%;
     padding: 0px !important;
+    margin-bottom: 40px;
 }
 
 .navbar {
