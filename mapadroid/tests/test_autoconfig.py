@@ -125,15 +125,15 @@ class MITMAutoConf(TestCase):
                 self.assertTrue(res.status_code == 406)
                 expected_issues = [
                     [
-                        'No available Google logins for auto creation of devices.  Configure through Settings -> '
+                        'No available Google logins for auto creation of devices. Configure through '
                         '<a href="/settings/pogoauth">PogoAuth</a>',
-                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        'No auth configured which is a potential security risk. Configure through '
                         '<a href="/settings/auth">Auth</a>'
                     ],
                     [
-                        'PogoDroid is not configured.  Configure through Auto-Config -> '
+                        'PogoDroid is not configured. Configure through '
                         '<a href="/autoconfig/pd">PogoDroid Configuration</a>',
-                        'RGC is not configured.  Configure through Auto-Config -> '
+                        'RGC is not configured. Configure through '
                         '<a href="/autoconfig/rgc">RemoteGPSController Configuration</a>',
                     ]
                 ]
@@ -160,17 +160,17 @@ class MITMAutoConf(TestCase):
                 self.assertTrue(res.status_code == 406)
                 expected_issues = [
                     [
-                        'No available Google logins for auto creation of devices.  Configure through Settings -> '
+                        'No available Google logins for auto creation of devices. Configure through '
                         '<a href="/settings/pogoauth">PogoAuth</a>',
-                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        'No auth configured which is a potential security risk. Configure through '
                         '<a href="/settings/auth">Auth</a>'
                     ],
                     [
-                        'PogoDroid is not configured.  Configure through Auto-Config -> '
+                        'PogoDroid is not configured. Configure through '
                         '<a href="/autoconfig/pd">PogoDroid Configuration</a>',
-                        'RGC is not configured.  Configure through Auto-Config -> '
+                        'RGC is not configured. Configure through '
                         '<a href="/autoconfig/rgc">RemoteGPSController Configuration</a>',
-                        'Missing one or more required packages.  Configure through System -> '
+                        'Missing one or more required packages. Configure through '
                         '<a href="/apk">MADmin Packages</a>'
                     ]
                 ]
@@ -180,17 +180,17 @@ class MITMAutoConf(TestCase):
                 self.assertTrue(res.status_code == 406)
                 expected_issues = [
                     [
-                        'No available Google logins for auto creation of devices.  Configure through Settings -> '
+                        'No available Google logins for auto creation of devices. Configure through '
                         '<a href="/settings/pogoauth">PogoAuth</a>',
-                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        'No auth configured which is a potential security risk. Configure through '
                         '<a href="/settings/auth">Auth</a>'
                     ],
                     [
-                        'PogoDroid is not configured.  Configure through Auto-Config -> '
+                        'PogoDroid is not configured. Configure through '
                         '<a href="/autoconfig/pd">PogoDroid Configuration</a>',
-                        'RGC is not configured.  Configure through Auto-Config -> '
+                        'RGC is not configured. Configure through '
                         '<a href="/autoconfig/rgc">RemoteGPSController Configuration</a>',
-                        'Missing one or more required packages.  Configure through System -> '
+                        'Missing one or more required packages.  Configure '
                         '<a href="/apk">MADmin Packages</a>'
                     ]
                 ]
@@ -200,17 +200,17 @@ class MITMAutoConf(TestCase):
                 self.assertTrue(res.status_code == 406)
                 expected_issues = [
                     [
-                        'No available Google logins for auto creation of devices.  Configure through Settings -> '
+                        'No available Google logins for auto creation of devices. Configure through '
                         '<a href="/settings/pogoauth">PogoAuth</a>',
-                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        'No auth configured which is a potential security risk. Configure through '
                         '<a href="/settings/auth">Auth</a>'
                     ],
                     [
-                        'PogoDroid is not configured.  Configure through Auto-Config -> '
+                        'PogoDroid is not configured. Configure through '
                         '<a href="/autoconfig/pd">PogoDroid Configuration</a>',
-                        'RGC is not configured.  Configure through Auto-Config -> '
+                        'RGC is not configured. Configure through '
                         '<a href="/autoconfig/rgc">RemoteGPSController Configuration</a>',
-                        'Missing one or more required packages.  Configure through System -> '
+                        'Missing one or more required packages.  Configure through '
                         '<a href="/apk">MADmin Packages</a>'
                     ]
                 ]
@@ -220,15 +220,15 @@ class MITMAutoConf(TestCase):
                 self.assertTrue(res.status_code == 406)
                 expected_issues = [
                     [
-                        'No available Google logins for auto creation of devices.  Configure through Settings -> '
+                        'No available Google logins for auto creation of devices. Configure through '
                         '<a href="/settings/pogoauth">PogoAuth</a>',
-                        'No auth configured which is a potential security risk.  Configure through Settings -> '
+                        'No auth configured which is a potential security risk. Configure through '
                         '<a href="/settings/auth">Auth</a>'
                     ],
                     [
-                        'PogoDroid is not configured.  Configure through Auto-Config -> '
+                        'PogoDroid is not configured. Configure through '
                         '<a href="/autoconfig/pd">PogoDroid Configuration</a>',
-                        'RGC is not configured.  Configure through Auto-Config -> '
+                        'RGC is not configured. Configure through '
                         '<a href="/autoconfig/rgc">RemoteGPSController Configuration</a>'
                     ]
                 ]
