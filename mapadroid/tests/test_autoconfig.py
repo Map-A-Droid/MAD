@@ -255,7 +255,7 @@ class MITMAutoConf(TestCase):
                 res = self.api.get('/autoconfig/download')
                 self.assertTrue(res.status_code == 200)
                 auth = f"{email_base}:{pwd_base}"
-                expected = f"{pd_host}\r\n{auth}"
+                expected = f"{pd_host}\n{auth}"
                 self.assertTrue(expected == res.content.decode('utf-8'))
             except Exception:
                 raise

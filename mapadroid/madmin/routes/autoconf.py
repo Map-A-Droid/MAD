@@ -49,7 +49,7 @@ class AutoConfigManager(object):
         except KeyError:
             # No auth defined for RGC so theres probably no auth for the system
             pass
-        config_file.write('\r\n'.join(info).encode('utf-8'))
+        config_file.write('\n'.join(info).encode('utf-8'))
         config_file.seek(0, 0)
         return send_file(config_file, as_attachment=True, attachment_filename='mad_autoconf.txt',
                          mimetype='text/plain')
