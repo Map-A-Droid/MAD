@@ -11,8 +11,8 @@ from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
-
 logger = get_logger(LoggerEnums.mitm)
+
 
 class MitmMapperManager(SyncManager):
     pass

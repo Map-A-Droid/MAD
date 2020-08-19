@@ -5,7 +5,7 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
     print("MAD requires at least python 3.6! Your version: {}.{}"
           .format(py_version.major, py_version.minor))
     sys.exit(1)
-from multiprocessing import JoinableQueue, Process
+from multiprocessing import Process
 from typing import Optional
 import calendar
 import datetime

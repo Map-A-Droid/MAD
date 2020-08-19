@@ -40,5 +40,3 @@ class MitmDataProcessorManager():
 
         if self._mitm_data_queue is not None:
             self._mitm_data_queue.close()
-
-
