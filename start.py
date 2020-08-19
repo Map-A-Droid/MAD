@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
     mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                          mitm_mapper, args, mapping_manager, db_wrapper,
-                                         data_manager, storage_elem, 
+                                         data_manager, storage_elem,
                                          mitm_data_processor_manager.get_queue(),
                                          enable_configmode=args.config_mode)
     mitm_receiver_process.start()
@@ -283,6 +283,7 @@ if __name__ == "__main__":
         'storage_elem': storage_elem,
         'webhook_worker': webhook_worker,
         'ws_server': ws_server,
+        'mitm_data_processor_manager': mitm_data_processor_manager
     }
     mad_plugins = PluginCollection('plugins', plugin_parts)
     mad_plugins.apply_all_plugins_on_value()
