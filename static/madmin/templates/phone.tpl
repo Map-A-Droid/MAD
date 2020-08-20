@@ -25,7 +25,7 @@
     </div>
   </div>
 
-  <div class="infobar" id="date<<phonename>>">Last screen: <span class="date" title="<<creationdate>>" data-toggle="tooltip"><<creationdate>></span></div>
+  <div class="infobar" id="date<<phonename>>">Last refresh: <span class="date" title="<<creationdate>>" data-toggle="tooltip"><<creationdate>></span></div>
 
   <div class="container-fluid controlButtons">
     <div class="row">
