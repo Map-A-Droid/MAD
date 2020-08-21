@@ -1535,7 +1535,7 @@ new Vue({
                   </div>
                   <div class="map-popup-group-save hidden">
                     <button type="button" class="btn btn-sm btn-outline-primary map-popup-button-save"><i class="fas fa-save"></i> Save</button>
-                    <button type="button" class="btn btn-sm btn-outline-danger map-popup-button-cancel"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger map-popup-button-cancel"><i class="fas fa-times"></i> <span>Reset</span></button>
                   </div>
                 </div>
               </div>
@@ -1581,7 +1581,17 @@ new Vue({
                 enableEdit();
             });
 
-            $(".map-popup-button-cancel", popupContainer).on("click", function () {
+            const cancelButton = $(".map-popup-button-cancel", popupContainer);
+
+            cancelButton.on("click", function () {
+                const message = id === null
+                    ? "Do you really want to delete this newly created geofence?"
+                    : "Do you really want to stop editing and reset all changes made to this geofence?";
+
+                if (!window.confirm(message)) {
+                    return;
+                }
+
                 disableEdit();
                 layer.closePopup();
 
@@ -1665,6 +1675,7 @@ new Vue({
             }.bind(this));
 
             if (id === null) {
+                $("span", cancelButton).text("Delete");
                 enableEdit();
             }
 
