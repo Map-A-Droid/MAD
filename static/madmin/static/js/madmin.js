@@ -924,7 +924,7 @@ new Vue({
                     leaflet_data.areas[name] = polygon;
 
                     const settings = {
-                        show: this.getStoredSetting("layers-dyn-geofences-" + name, false)
+                        show: this.getStoredSetting("layers-dyn-areas-" + name, false)
                     };
                     this.$set(this.layers.dyn.areas, name, settings);
 
