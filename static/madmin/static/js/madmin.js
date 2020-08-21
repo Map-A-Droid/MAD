@@ -1621,8 +1621,9 @@ new Vue({
 
                 buildCoords(layer.getLatLngs());
 
+                const name = $(".name input", popupContainer).val();
                 const json = {
-                    name: $(".name input", popupContainer).val(),
+                    name: name,
                     fence_type: "polygon",
                     fence_data: coords
                 }
@@ -1652,6 +1653,7 @@ new Vue({
                         else {
                             hideGroup("saving");
                             showGroup("edit");
+                            $(".name span", popupContainer).text(name);
                         }
                     }.bind(this),
                     function () {
