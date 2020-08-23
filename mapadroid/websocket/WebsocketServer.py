@@ -246,7 +246,6 @@ class WebsocketServer(object):
         origin_logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 
     async def __add_worker_and_thread_to_entry(self, entry, origin, use_configmode: bool = None) -> bool:
-        origin_logger = get_origin_logger(logger, origin=origin)
         communicator: AbstractCommunicator = Communicator(
             entry, origin, None, self.__args.websocket_command_timeout)
         use_configmode: bool = use_configmode if use_configmode is not None else self.__enable_configmode
