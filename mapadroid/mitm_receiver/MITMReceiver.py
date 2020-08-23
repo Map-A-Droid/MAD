@@ -220,9 +220,8 @@ class MITMReceiver(Process):
 
     def shutdown(self):
         logger.info("MITMReceiver stop called...")
-        if self._data_queue:
-            for i in range(self.__application_args.mitmreceiver_data_workers):
-                self._data_queue.put(None)
+        for i in range(self.__application_args.mitmreceiver_data_workers):
+            self._add_to_queue(None)
 
     def run(self):
         httpsrv = WSGIServer((self.__listen_ip, int(
@@ -275,7 +274,11 @@ class MITMReceiver(Process):
                                          timestamp_received_receiver=time.time(), key=proto_type, values_dict=data,
                                          location=location_of_data)
         origin_logger.debug2("Placing data received to data_queue")
-        self._data_queue.put((timestamp, data, origin))
+        self._add_to_queue((timestamp, data, origin))
+
+    def _add_to_queue(self, data):
+        if self._data_queue:
+            self._data_queue.put(data)
 
     def get_latest(self, origin, data):
         injected_settings = self.__mitm_mapper.request_latest(

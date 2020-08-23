@@ -21,12 +21,6 @@ class SerializedMitmDataProcessor(Process):
         logger.info("Starting serialized MITM data processor")
         while True:
             try:
-                items_left = self.__queue.qsize()
-                if items_left > 50:
-                    logger.warning("MITM data processors are falling behind! Queue length: {}", items_left)
-                else:
-                    logger.debug("MITM data processor retrieved data. Queue length: {}", items_left)
-
                 item = self.__queue.get()
                 if item is None:
                     logger.info("Received signal to stop MITM data processor")
