@@ -60,8 +60,6 @@ class MitmDataProcessorManager():
 
     def shutdown(self):
         self._stop_queue_check_thread = True
-        if self._queue_check_thread is not None:
-            self._queue_check_thread.terminate()
 
         logger.info("Stopping {} MITM data processors", len(self._worker_threads))
         for worker_thread in self._worker_threads:
