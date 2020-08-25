@@ -7,3 +7,4 @@ URL_RGC_APK = 'https://raw.githubusercontent.com/Map-A-Droid/MAD/master/APK/Remo
 URL_PD_APK = 'https://www.maddev.de/apk/PogoDroid.apk'
 
 ADDRESSES_GITHUB = 'https://raw.githubusercontent.com/Map-A-Droid/MAD/master/configs/addresses.json'
+VERSIONCODES_GITHUB = 'https://raw.githubusercontent.com/Map-A-Droid/MAD/master/configs/version_codes.json'

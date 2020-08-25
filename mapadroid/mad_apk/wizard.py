@@ -1,8 +1,7 @@
 import apkutils
 from apkutils.apkfile import BadZipFile, LargeZipFile
-from bs4 import BeautifulSoup
+import json
 import io
-import re
 import requests
 import zipfile
 from threading import Thread
@@ -316,24 +315,40 @@ class APKWizard(object):
                 versions[named_arch] = version
         return versions
 
-    def get_version_code(self, latest_supported: Dict[APKArch, str], arch: APKArch) -> Optional[str]:
+    def get_version_code(self, latest_supported: Dict[APKArch, str], arch: APKArch) -> Optional[int]:
         pogo_vc_sess = requests.session()
         pogo_vc_sess.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
         })
-        arch_name = arch.name.replace("_", "-")
-        url = "https://www.apkmirror.com/apk/niantic-inc/pokemon-go/variant-{\"arches_slug\":[\"%s\"]}/" % (arch_name)
-        resp = pogo_vc_sess.get(url)
-        soup = BeautifulSoup(resp.content, features="lxml")
-        versions = soup.find_all("span", {"class": "infoslide-value"})
-        latest_supported_ver = latest_supported[arch]
-        for version in versions:
-            if latest_supported_ver not in str(version):
-                continue
-            matches = re.search(r'[\d+\.]\((\d+)\)', str(version))
-            version_code = matches.group(1)
-            logger.debug(f"Version code for {latest_supported_ver}: {version_code}")
-            return version_code
+        # attempt to pull the information locally
+        try:
+            with open('config/version_codes.json', 'r') as fh:
+                data = json.load(fh)
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            pass
+        else:
+            version_code = self.parse_version_code(latest_supported, arch, data)
+            if version_code is not None:
+                return version_code
+        # match not found locally.  Try GitHub
+        try:
+            data = pogo_vc_sess.get(global_variables.VERSIONCODES_GITHUB).json()
+        except Exception:
+            pass
+        else:
+            version_code = self.parse_version_code(latest_supported, arch, data)
+            if version_code is not None:
+                return version_code
+        return None
+
+    def parse_version_code(self, latest_supported: Dict[APKArch, str], arch: APKArch, data: Dict) -> Optional[int]:
+        named_arch = '32' if arch == APKArch.armeabi_v7a else '64'
+        latest_version = f"{latest_supported[arch]}_{named_arch}"
+        if data:
+            try:
+                return data[latest_version]
+            except KeyError:
+                pass
         return None
 
     def set_last_searched(self, package: APKType, architecture: APKArch, version: str = None,
