@@ -53,7 +53,6 @@ class APKWizard(object):
 
     def apk_all_actions(self) -> NoReturn:
         "Search and download all required packages"
-        self.apk_all_search()
         self.apk_all_download()
 
     def apk_all_download(self) -> NoReturn:
@@ -256,7 +255,7 @@ class APKWizard(object):
         latest = None
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
         try:
-            download_url = None
+            version_code = None
             latest_pogo_version = self.get_latest_version()
             if latest_pogo_version[architecture] is None:
                 return latest
@@ -264,16 +263,16 @@ class APKWizard(object):
             current_version = self.storage.get_current_version(APKType.pogo, architecture)
             if type(current_version) is not str:
                 current_version = None
-            if current_version is None or is_newer_version(latest, current_version):
+            # do some sanity checking until this is fixed properly
+            tmp_latest = self.get_latest(APKType.pogo, architecture)
+            if current_version is None or is_newer_version(latest, current_version) or (
+                    tmp_latest and tmp_latest['url'] is not None and int(tmp_latest['url']) == 1
+            ):
                 logger.info('Newer version found: {}', latest)
-                version_code: str = self.get_version_code(latest_pogo_version, architecture)
-                if version_code:
-                    download_url = version_code
-                else:
-                    logger.warning('APK has not been uploaded to APKMirror. Unable to determine version code')
+                version_code: int = self.get_version_code(latest_pogo_version, architecture)
             else:
                 logger.info('No newer version found')
-            self.set_last_searched(APKType.pogo, architecture, version=latest, url=download_url)
+            self.set_last_searched(APKType.pogo, architecture, version=latest, url=version_code)
         except Exception as err:
             logger.opt(exception=True).critical(err)
         return latest
