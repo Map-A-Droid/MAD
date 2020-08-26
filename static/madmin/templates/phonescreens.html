@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" crossorigin="anonymous">
 <style>
   div.container[role="main"] {
-    max-width: 85%;
+    max-width: 100%;
   }
 
   #devicegrid {
@@ -75,10 +75,15 @@
   }
 
   .infobar {
+    color: #000;
     background: #FFF;
     border-bottom: 1px solid #CCC;
     text-align: center;
     font-size: small;
+  }
+
+  .controlButtons {
+    background: #FFF;
   }
 
   .softbar .col,
@@ -104,29 +109,55 @@
     padding: 3px;
   }
 
+  .softbar {
+    background: #000;
+  }
+
   .softbar a {
     text-align: center;
     text-decoration: none;
     display: block;
     padding: 3px;
-    color: #333;
+    color: #FFF;
   }
 
-  .softbar a:hover,
+  .softbar a:hover {
+    text-decoration: none;
+    color: #007bff;
+  }
+
   .controlButtons a:hover {
     text-decoration: none;
     background-color: #007bff;
-    color: #FFF;
+    color: #FFF !important;
   }
 
   .dialog-on-top {
     z-index: 2001 !important;
   }
 
-  @media only screen and (max-width: 600px) {
-    .screen {
-      width: 90%;
+  @media (max-width: 767.98px) {
+    .controlButtons .col-md {
+      border-right: none;
     }
+
+    .controlButtons .row:last-child .col-md:first-child {
+    border-bottom: 1px solid #CCC;
+    }
+
+    .controlButtons .row:last-child .col-md:last-child {
+      border-bottom: none;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .screen {
+      width: 100%;
+    }
+  }
+
+  [data-theme="dark"] .screen {
+    border: 1px solid #AAA;
   }
 </style>
 {% endblock %}

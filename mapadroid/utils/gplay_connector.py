@@ -49,7 +49,7 @@ class GPlayConnector(object):
             logger.warning('Unable to login to GPlay: {}', err)
             raise
 
-    def download(self, packagename: str, method: Callable = None) -> io.BytesIO:
+    def download(self, packagename: str, method: Callable = None, version_code=None) -> io.BytesIO:
         details = self.api.details(packagename)
         inmem_zip = io.BytesIO()
         with warnings.catch_warnings():
@@ -61,13 +61,13 @@ class GPlayConnector(object):
                     method = self.api.download
             logger.info('Starting download for {}', packagename)
             try:
-                data_iter = method(packagename, expansion_files=True)
+                data_iter = method(packagename, expansion_files=True, versionCode=version_code)
             except IndexError:
                 logger.error("Unable to find the package.  Maybe it no longer a supported device?")
                 return False
             except DecodeError:
                 # RPi have an issue where they seem to only support delivery and not download
-                return self.download(packagename, method=self.api.delivery)
+                return self.download(packagename, method=self.api.delivery, version_code=version_code)
             except Exception as exc:
                 logger.opt(exception=True).error("Error while downloading {} : {}", packagename, exc)
                 return False

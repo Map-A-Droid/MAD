@@ -38,11 +38,6 @@
     color: #000;
 }
 
-[data-theme="dark"] .phonename {
-    background-color: #506680;
-    color: #000 !important;
-}
-
 [data-theme="dark"] #button {
     background-color: #000 !important;
     color: #bbb !important;
