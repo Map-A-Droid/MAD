@@ -321,7 +321,7 @@ class APKWizard(object):
         })
         # attempt to pull the information locally
         try:
-            with open('config/version_codes.json', 'r') as fh:
+            with open('configs/version_codes.json', 'r') as fh:
                 data = json.load(fh)
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             pass
