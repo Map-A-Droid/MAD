@@ -120,9 +120,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js" integrity="sha256-9wRM03dUw6ABCs+AU69WbK33oktrlXamEXMvxUaF+KU=" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.5/js/dataTables.responsive.min.js" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/dark-mode-switch.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/loading_dialogue.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.Aplus.min.js') }}"></script>
     <script>
+
     $(document).ready(function() {
+        $.fn.center = function () {
+            this.css("position","absolute");
+            this.css("top", ( $(window).height() - this.height() ) / 2+$(window).scrollTop() + "px");
+            this.css("left", ( $(window).width() - this.width() ) / 2+$(window).scrollLeft() + "px");
+            return this;
+        }
+
+
       if (darkSwitch) {
         initTheme();
         darkSwitch.addEventListener('change', () => {
@@ -136,7 +146,9 @@
 
       $("#reload").click(function() {
         if (confirm('Do you really want reload and apply settings?')) {
-          $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br/>Applying...' });
+          $('#navbarNav').removeClass()
+          $("#navbarNav").addClass('navbar-collapse collapse')
+            loadingBlockUI("Applying...")
           $(location).attr('href', '{{ url_for('reload') }}');
         }
       });
