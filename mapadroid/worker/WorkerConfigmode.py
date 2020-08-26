@@ -55,17 +55,7 @@ class WorkerConfigmode(AbstractWorker):
         self._db_wrapper.save_idle_status(self._dev_id, True)
         self.logger.debug("Device set to idle for routemanager")
         while self.check_walker() and not self._stop_worker_event.is_set():
-            if self._args.config_mode:
-                time.sleep(10)
-            else:
-                position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
-                                                                                     self._origin)
-                if position_type is None:
-                    self.logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
-                    self._stop_worker_event.set()
-                    time.sleep(1)
-                else:
-                    time.sleep(10)
+            time.sleep(10)
         self.set_devicesettings_value('finished', True)
         self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._origin)
         try:

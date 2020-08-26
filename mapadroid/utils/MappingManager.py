@@ -323,6 +323,9 @@ class MappingManager:
             logger.opt(exception=True).error('Unable to start recalculation')
         return successful
 
+    def data_manager_is_device_active(self, device_id: int):
+        return self.__data_manager.is_device_active(device_id)
+
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
         for pool_setting in poolsettings:
