@@ -59,8 +59,8 @@ class AutoConfIssueGenerator(object):
         if AutoConfIssues.no_ggl_login in self.warnings:
             link = url_for('settings_pogoauth')
             anchor = f"<a class=\"alert-link\" href=\"{link}\">PogoAuth</a>"
-            issues_warning.append(f"No available Google logins for auto creation of devices. Configure through "
-                                  "{anchor}")
+            issues_warning.append("No available Google logins for auto creation of devices. Configure through "
+                                  f"{anchor}")
         if AutoConfIssues.auth_not_configured in self.warnings:
             link = url_for('settings_auth')
             anchor = f"<a class=\"alert-link\" href=\"{link}\">Auth</a>"
