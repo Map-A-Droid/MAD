@@ -279,6 +279,10 @@ class MITMReceiver(Process):
             origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
+        if proto_type not in (106, 102, 101, 104, 4, 156):
+            # trash protos - ignoring
+            return
+
         timestamp: float = data.get("timestamp", int(time.time()))
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
