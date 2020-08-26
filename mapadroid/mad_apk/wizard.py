@@ -1,10 +1,11 @@
 import apkutils
 from apkutils.apkfile import BadZipFile, LargeZipFile
+import json
 import io
 import requests
 import zipfile
 from threading import Thread
-from typing import NoReturn, Optional
+from typing import Dict, NoReturn, Optional
 import urllib3
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKType, APKPackage
@@ -52,7 +53,6 @@ class APKWizard(object):
 
     def apk_all_actions(self) -> NoReturn:
         "Search and download all required packages"
-        self.apk_all_search()
         self.apk_all_download()
 
     def apk_all_download(self) -> NoReturn:
@@ -131,7 +131,8 @@ class APKWizard(object):
                     successful: bool = False
                     while retries < MAX_RETRIES and not successful:
                         self.gpconn = GPlayConnector(architecture)
-                        downloaded_file = self.gpconn.download(APKPackage.pogo.value)
+                        latest_data = self.get_latest(APKType.pogo, architecture)
+                        downloaded_file = self.gpconn.download(APKPackage.pogo.value, version_code=latest_data['url'])
                         if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
                             PackageImporter(APKType.pogo, architecture, self.storage, downloaded_file,
                                             'application/zip', version=latest_version)
@@ -253,20 +254,25 @@ class APKWizard(object):
         """
         latest = None
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
-        self.gpconn = GPlayConnector(architecture)
         try:
-            download_url = None
-            latest = self.gpconn.get_latest_version(APKPackage.pogo.value)
+            version_code = None
+            latest_pogo_version = self.get_latest_version()
+            if latest_pogo_version[architecture] is None:
+                return latest
+            latest = latest_pogo_version[architecture]
             current_version = self.storage.get_current_version(APKType.pogo, architecture)
             if type(current_version) is not str:
                 current_version = None
-            if current_version is None or is_newer_version(latest, current_version):
-                if supported_pogo_version(architecture, latest):
-                    logger.info('Newer version found on the Play Store: {}', latest)
-                    download_url = True
+            # do some sanity checking until this is fixed properly
+            tmp_latest = self.get_latest(APKType.pogo, architecture)
+            if current_version is None or is_newer_version(latest, current_version) or (
+                    tmp_latest and tmp_latest['url'] is not None and int(tmp_latest['url']) == 1
+            ):
+                logger.info('Newer version found: {}', latest)
+                version_code: int = self.get_version_code(latest_pogo_version, architecture)
             else:
                 logger.info('No newer version found')
-            self.set_last_searched(APKType.pogo, architecture, version=latest, url=download_url)
+            self.set_last_searched(APKType.pogo, architecture, version=latest, url=version_code)
         except Exception as err:
             logger.opt(exception=True).critical(err)
         return latest
@@ -292,6 +298,57 @@ class APKWizard(object):
         """
         sql = "SELECT `version`, `url` FROM `mad_apk_autosearch` WHERE `usage` = %s AND `arch` = %s"
         return self.dbc.autofetch_row(sql, args=(package.value, architecture.value))
+
+    def get_latest_version(self) -> Dict[APKArch, str]:
+        versions: Dict[APKArch, str] = {
+            APKArch.armeabi_v7a: None,
+            APKArch.arm64_v8a: None
+        }
+        gh_resp = requests.get(global_variables.ADDRESSES_GITHUB)
+        for ver_identifier in gh_resp.json().keys():
+            version, arch = ver_identifier.split('_')
+            named_arch = APKArch.armeabi_v7a if arch == '32' else APKArch.arm64_v8a
+            if versions[named_arch] is None:
+                versions[named_arch] = version
+            elif is_newer_version(version, versions[named_arch]):
+                versions[named_arch] = version
+        return versions
+
+    def get_version_code(self, latest_supported: Dict[APKArch, str], arch: APKArch) -> Optional[int]:
+        pogo_vc_sess = requests.session()
+        pogo_vc_sess.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        })
+        # attempt to pull the information locally
+        try:
+            with open('configs/version_codes.json', 'r') as fh:
+                data = json.load(fh)
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            pass
+        else:
+            version_code = self.parse_version_code(latest_supported, arch, data)
+            if version_code is not None:
+                return version_code
+        # match not found locally.  Try GitHub
+        try:
+            data = pogo_vc_sess.get(global_variables.VERSIONCODES_GITHUB).json()
+        except Exception:
+            pass
+        else:
+            version_code = self.parse_version_code(latest_supported, arch, data)
+            if version_code is not None:
+                return version_code
+        return None
+
+    def parse_version_code(self, latest_supported: Dict[APKArch, str], arch: APKArch, data: Dict) -> Optional[int]:
+        named_arch = '32' if arch == APKArch.armeabi_v7a else '64'
+        latest_version = f"{latest_supported[arch]}_{named_arch}"
+        if data:
+            try:
+                return data[latest_version]
+            except KeyError:
+                pass
+        return None
 
     def set_last_searched(self, package: APKType, architecture: APKArch, version: str = None,
                           url: str = None) -> NoReturn:
