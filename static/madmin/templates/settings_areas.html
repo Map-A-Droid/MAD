@@ -11,7 +11,7 @@ $(document).ready(function () {
     $(".delete").click(function() {
         if(confirm('Are you sure you want to delete this resource?')) {
             var elem =  $(this);
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting a {{ subtab }}...</h2>' });
+            loadingBlockUI("Deleting a " + {{ subtab }} )
             $.ajax({
                 url : '{{ base_uri }}/'+ $(this).data('identifier'),
                 type : 'DELETE',
@@ -47,7 +47,7 @@ $(document).ready(function () {
   function recalculate_route() {
     if(confirm('Are you sure you want to recalculate this route?')) {
         var elem = $(this);
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Recalculating routefile...</h2>' });
+        loadingBlockUI("Recalculating routefile")
         rpc_call = {
           'call': 'recalculate'
         }

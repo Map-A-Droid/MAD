@@ -60,7 +60,7 @@
 }
 
 [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    color:# bbb !important;
+    color: #bbb !important;
     border: 1px solid #979797;
     background: #585858 !important;
 }

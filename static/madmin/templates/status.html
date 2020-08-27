@@ -32,12 +32,12 @@
             },
             "columns": [
                 {
-                    data: 'name', title: 'Origin',
+                    responsivePriority: 1, data: 'name', title: 'Origin',
                     "render": function (data, type, oData) {
                         return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
                     }
                 },
-                {data: 'lastProtoDateTime', title: 'Last Update'},
+                {responsivePriority: 2,  data: 'lastProtoDateTime', title: 'Last Update'},
                 {data: 'currentSleepTime', title: 'Next Action'},
                 {
                     data: 'rmname', title: 'Route',
@@ -59,7 +59,7 @@
                 {data: 'globalrebootcount', title: 'Total Reboots'},
                 {data: 'lastPogoReboot', title: 'Last Reboot'},
                 {
-                    data: null, orderable: false, className: "text-nowrap",
+                    responsivePriority: 3,  data: null, orderable: false, className: "text-nowrap",
                     "render": function (data, type, oData) {
                         return "<center><button data-toggle='tooltip' title='Delete worker stats from database' type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' data-toggle='tooltip' title='Reset workers stats' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
                     }
@@ -107,7 +107,12 @@
                 }
             ],
             "order": [[0, "asc"]],
-            "responsive": {{ responsive }},
+            "responsive": {
+                details: {
+                    display: $.fn.dataTable.Responsive.display.childRowImmediate,
+                    type: ''
+                }
+            },
             "autoWidth": false,
             "stateSave": true,
             "stateDuration": 0
