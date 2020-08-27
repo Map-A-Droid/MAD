@@ -50,7 +50,7 @@ $(document).ready(function () {
             {% endfor %}
           </select>
           {% elif field.type == "bool" %}
-          <br><input type="checkbox" name="{{ key }}" id="{{ key }}" data-size="sm" data-toggle="toggle" data-default="{{ config_element.contents[key]|tojson }}" {{ "checked" if config_element.contents[key]|tojson == "true" }}>
+          <br><input type="checkbox" name="{{ key }}" id="{{ key }}" class="form-control" data-size="sm" data-toggle="toggle" data-default="{{ config_element.contents[key]|tojson }}" {{ "checked" if config_element.contents[key]|tojson == "true" }}>
           {% elif field.type == "authselect" %}
           <select class="form-control" name="{{ key }}" data-default="{{ config_element.contents[key] }}">
             {% if not auths %}
