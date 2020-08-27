@@ -148,7 +148,7 @@
         if (confirm('Do you really want reload and apply settings?')) {
           $('#navbarNav').removeClass()
           $("#navbarNav").addClass('navbar-collapse collapse')
-            loadingBlockUI("Applying...")
+            loadingBlockUI("Applying")
           $(location).attr('href', '{{ url_for('reload') }}');
         }
       });
