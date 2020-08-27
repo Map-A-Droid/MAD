@@ -1,51 +1,91 @@
 from flask import Response, url_for
 import copy
+from enum import IntEnum
 import json
 from io import BytesIO
-from typing import Any, List, NoReturn, Tuple
+from typing import Any, Dict, List, NoReturn, Tuple
 from xml.sax.saxutils import escape
 from mapadroid.data_manager.modules import MAPPINGS
 from mapadroid.mad_apk import get_apk_status
 from mapadroid.data_manager.modules.resource import USER_READABLE_ERRORS
 
 
-def generate_autoconf_issues(db, data_manager, args, storage_obj) -> Tuple[List[str], List[str]]:
-    issues_warning = []
-    issues_critical = []
-    sql = "SELECT count(*)\n" \
-          "FROM `settings_pogoauth` ag\n" \
-          "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n" \
-          "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
-    if db.autofetch_value(sql, (db.instance_id)) == 0 and not args.autoconfig_no_auth:
-        link = url_for('settings_pogoauth')
-        anchor = f"<a class=\"alert-link\" href=\"{link}\">PogoAuth</a>"
-        issues_warning.append(f"No available Google logins for auto creation of devices. Configure through {anchor}")
-    if not validate_hopper_ready(data_manager):
-        link = url_for('settings_walkers')
-        anchor = f"<a class=\"alert-link\" href=\"{link}\">Walker</a>"
-        issues_critical.append(f"No walkers configured. Configure through {anchor}")
-    if not data_manager.get_root_resource('auth'):
-        link = url_for('settings_auth')
-        anchor = f"<a class=\"alert-link\" href=\"{link}\">Auth</a>"
-        issues_warning.append(f"No auth configured which is a potential security risk. Configure through {anchor}")
-    if not PDConfig(db, args, data_manager).configured:
-        link = url_for('autoconf_pd')
-        anchor = f"<a class=\"alert-link\" href=\"{link}\">PogoDroid Configuration</a>"
-        issues_critical.append(f"PogoDroid is not configured. Configure through {anchor}")
-    if not RGCConfig(db, args, data_manager).configured:
-        link = url_for('autoconf_rgc')
-        anchor = f"<a class=\"alert-link\" href=\"{link}\">RemoteGPSController Configuration</a>"
-        issues_critical.append(f"RGC is not configured. Configure through {anchor}")
-    missing_packages = []
-    for _, apkpackages in get_apk_status(storage_obj).items():
-        for _, package in apkpackages.items():
-            if package.version is None:
-                missing_packages.append(package)
-    if missing_packages:
-        link = url_for('mad_apks')
-        anchor = f"<a class=\"alert-link\" href=\"{link}\">MADmin Packages</a>"
-        issues_critical.append(f"Missing one or more required packages. Configure through {anchor}")
-    return (issues_warning, issues_critical)
+class AutoConfIssues(IntEnum):
+    no_ggl_login: int = 1
+    origin_hopper_not_ready: int = 2
+    auth_not_configured: int = 3
+    pd_not_configured: int = 4
+    rgc_not_configured: int = 5
+    package_missing: int = 6
+
+
+class AutoConfIssueGenerator(object):
+    def __init__(self, db, data_manager, args, storage_obj):
+        self.warnings: List[AutoConfIssues] = []
+        self.critical: List[AutoConfIssues] = []
+        sql = "SELECT count(*)\n" \
+              "FROM `settings_pogoauth` ag\n" \
+              "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n" \
+              "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
+        if db.autofetch_value(sql, (db.instance_id)) == 0 and not args.autoconfig_no_auth:
+            self.warnings.append(AutoConfIssues.no_ggl_login)
+        if not validate_hopper_ready(data_manager):
+            self.critical.append(AutoConfIssues.origin_hopper_not_ready)
+        if not data_manager.get_root_resource('auth'):
+            self.warnings.append(AutoConfIssues.auth_not_configured)
+        if not PDConfig(db, args, data_manager).configured:
+            self.critical.append(AutoConfIssues.pd_not_configured)
+        if not RGCConfig(db, args, data_manager).configured:
+            self.critical.append(AutoConfIssues.rgc_not_configured)
+        missing_packages = []
+        for _, apkpackages in get_apk_status(storage_obj).items():
+            for _, package in apkpackages.items():
+                if package.version is None:
+                    missing_packages.append(package)
+        if missing_packages:
+            self.critical.append(AutoConfIssues.package_missing)
+
+    def get_headers(self) -> Dict:
+        headers: Dict[str, int] = {
+            'X-Critical': json.dumps([issue.value for issue in self.critical]),
+            'X-Warnings': json.dumps([issue.value for issue in self.warnings])
+        }
+        return headers
+
+    def get_issues(self) -> Tuple[List[str], List[str]]:
+        issues_warning = []
+        issues_critical = []
+        # Warning messages
+        if AutoConfIssues.no_ggl_login in self.warnings:
+            link = url_for('settings_pogoauth')
+            anchor = f"<a class=\"alert-link\" href=\"{link}\">PogoAuth</a>"
+            issues_warning.append("No available Google logins for auto creation of devices. Configure through "
+                                  f"{anchor}")
+        if AutoConfIssues.auth_not_configured in self.warnings:
+            link = url_for('settings_auth')
+            anchor = f"<a class=\"alert-link\" href=\"{link}\">Auth</a>"
+            issues_warning.append(f"No auth configured which is a potential security risk. Configure through {anchor}")
+        # Critical messages
+        if AutoConfIssues.origin_hopper_not_ready in self.critical:
+            link = url_for('settings_walkers')
+            anchor = f"<a class=\"alert-link\" href=\"{link}\">Walker</a>"
+            issues_critical.append(f"No walkers configured. Configure through {anchor}")
+        if AutoConfIssues.pd_not_configured in self.critical:
+            link = url_for('autoconf_pd')
+            anchor = f"<a class=\"alert-link\" href=\"{link}\">PogoDroid Configuration</a>"
+            issues_critical.append(f"PogoDroid is not configured. Configure through {anchor}")
+        if AutoConfIssues.rgc_not_configured in self.critical:
+            link = url_for('autoconf_rgc')
+            anchor = f"<a class=\"alert-link\" href=\"{link}\">RemoteGPSController Configuration</a>"
+            issues_critical.append(f"RGC is not configured. Configure through {anchor}")
+        if AutoConfIssues.package_missing in self.critical:
+            link = url_for('mad_apks')
+            anchor = f"<a class=\"alert-link\" href=\"{link}\">MADmin Packages</a>"
+            issues_critical.append(f"Missing one or more required packages. Configure through {anchor}")
+        return issues_warning, issues_critical
+
+    def has_blockers(self) -> bool:
+        return len(self.critical) > 0
 
 
 def validate_hopper_ready(data_manager):

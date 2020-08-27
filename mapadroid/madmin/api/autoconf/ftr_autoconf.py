@@ -1,5 +1,5 @@
 from .autoconfHandler import AutoConfHandler
-from mapadroid.utils.autoconfig import origin_generator, RGCConfig, PDConfig, AutoConfIssue, generate_autoconf_issues
+from mapadroid.utils.autoconfig import origin_generator, RGCConfig, PDConfig, AutoConfIssue, AutoConfIssueGenerator
 from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
 
 
@@ -68,9 +68,9 @@ class APIAutoConf(AutoConfHandler):
         }
         device = None
         if status == 1:
-            autoconf_issues = generate_autoconf_issues(self.dbc, self._data_manager, self._args, self.storage_obj)
-            if autoconf_issues[1]:
-                return (autoconf_issues, 406)
+            ac_issues = AutoConfIssueGenerator(self.dbc, self._data_manager, self._args, self.storage_obj)
+            if ac_issues.has_blockers():
+                return ac_issues.get_issues(), 406, {"headers": ac_issues.get_headers()}
             # Set the device id.  If it was not requested use the origin hopper to create one
             try:
                 dev_id = self.api_req.data['device_id'].split('/')[-1]
