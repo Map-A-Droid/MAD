@@ -160,6 +160,7 @@ CREATE TABLE `raid` (
     `is_exclusive` tinyint(1) DEFAULT NULL,
     `gender` tinyint(1) DEFAULT NULL,
     `costume` tinyint(1) DEFAULT NULL,
+    `evolution` smallint(6) DEFAULT NULL,
     PRIMARY KEY (`gym_id`),
     KEY `raid_level` (`level`),
     KEY `raid_spawn` (`spawn`),
