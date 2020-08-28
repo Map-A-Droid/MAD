@@ -512,12 +512,12 @@ class DbPogoProtoSubmit:
 
         query_raid = (
             "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, "
-            "is_exclusive, gender, costume) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "is_exclusive, gender, costume, evolution) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
             "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned), is_exclusive=VALUES(is_exclusive), "
-            "form=VALUES(form), gender=VALUES(gender), costume=VALUES(costume)"
+            "form=VALUES(form), gender=VALUES(gender), costume=VALUES(costume), evolution=VALUES(evolution)"
         )
 
         for cell in cells:
@@ -532,6 +532,7 @@ class DbPogoProtoSubmit:
                         form = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["form_value"]
                         gender = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["gender_value"]
                         costume = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["costume_value"]
+                        evolution = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"].get("evolution_value", 0)
                     else:
                         pokemon_id = None
                         cp = 0
@@ -540,6 +541,7 @@ class DbPogoProtoSubmit:
                         form = None
                         gender = None
                         costume = None
+                        evolution = 0
 
                     raid_end_sec = int(gym["gym_details"]["raid_info"]["raid_end"] / 1000)
                     raid_spawn_sec = int(gym["gym_details"]["raid_info"]["raid_spawn"] / 1000)
@@ -572,7 +574,8 @@ class DbPogoProtoSubmit:
                             form,
                             is_exclusive,
                             gender,
-                            costume
+                            costume,
+                            evolution
                         )
                     )
         self._db_exec.executemany(query_raid, raid_args, commit=True)
