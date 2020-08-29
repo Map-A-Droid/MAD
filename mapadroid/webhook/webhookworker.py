@@ -304,6 +304,7 @@ class WebhookWorker:
                 "start": raid["start"],
                 "end": raid["end"],
                 "name": raid["name"],
+                "evolution": raid["evolution"],
             }
 
             if raid["move_1"] is not None:
