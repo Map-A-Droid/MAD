@@ -43,7 +43,7 @@
         if(validate_walker() == false) {
             return;
         }
-        loadingBlockUI("Saving a " + {{ subtab }} );
+        loadingBlockUI('Saving a {{ subtab }}');
         save_data = get_save_data();
         if(isEmptyObj(save_data) != false) {
             alert('No changes have been made');
