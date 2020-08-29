@@ -4,6 +4,7 @@ from flask import (jsonify, render_template, request, redirect, url_for)
 from flask_caching import Cache
 from mapadroid.data_manager import DataManagerException
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.madmin.functions import (
     auth_required, get_coord_float, get_bound_params, get_geofences, generate_coords_from_geofence
 )
@@ -39,7 +40,8 @@ class MADminMap:
         routes = [
             ("/map", self.map),
             ("/get_workers", self.get_workers),
-            ("/get_geofence", self.get_geofence),
+            ("/get_geofences", self.get_geofences),
+            ("/get_areas", self.get_areas),
             ("/get_route", self.get_route),
             ("/get_prioroute", self.get_prioroute),
             ("/get_spawns", self.get_spawns),
@@ -81,7 +83,25 @@ class MADminMap:
         return jsonify(positions)
 
     @auth_required
-    def get_geofence(self):
+    def get_geofences(self):
+        geofences = self._data_manager.get_root_resource("geofence")
+        export = []
+
+        for geofence_id, geofence in geofences.items():
+            geofence_helper = GeofenceHelper(geofence, None, geofence["name"])
+            if len(geofence_helper.geofenced_areas) == 1:
+                geofenced_area = geofence_helper.geofenced_areas[0]
+                if "polygon" in geofenced_area:
+                    export.append({
+                        "id": geofence_id,
+                        "name": geofence["name"],
+                        "coordinates": geofenced_area["polygon"]
+                    })
+
+        return jsonify(export)
+
+    @auth_required
+    def get_areas(self):
         areas = self._mapping_manager.get_areas()
         areas_sorted = sorted(areas, key=lambda x: areas[x]['name'])
         geofences = get_geofences(self._mapping_manager, self._data_manager)
