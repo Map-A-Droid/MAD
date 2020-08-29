@@ -69,7 +69,7 @@ $(document).ready(function () {
     $(".delete").click(function() {
         if(confirm('Are you sure you want to delete this resource?')) {
             var elem =  $(this);
-            loadingBlockUI("Deleting a " + {{ subtab }} )
+            loadingBlockUI('Deleting a  {{ subtab }}' )
             $.ajax({
                 url : '{{ base_uri }}/'+ $(this).data('identifier'),
                 type : 'DELETE',
