@@ -99,11 +99,11 @@ var setlng = {{ setlng }};
         <div class="sidebar-pane-content">
           <ul class="list-group list-group-flush">
             {% raw %}
-            <li v-for="(geofence, id) in layers.dyn.geofences" class="list-group-item layer-item d-flex">
+            <li v-for="geofence in sortedGeofences" v-bind:key="geofence.id" class="list-group-item layer-item d-flex">
               <div class="flex-grow-1">{{ geofence.name }}</div>
               <div class="custom-control custom-switch">
-                <input :id="'layers-dyn-geofences-'+id" type="checkbox" v-model="geofence.show" class="custom-control-input" />
-                <label :for="'layers-dyn-geofences-'+id" class="custom-control-label"></label>
+                <input :id="'layers-dyn-geofences-'+geofence.id" type="checkbox" v-model="geofence.show" class="custom-control-input" />
+                <label :for="'layers-dyn-geofences-'+geofence.id" class="custom-control-label"></label>
               </div>
             </li>
             {% endraw %}

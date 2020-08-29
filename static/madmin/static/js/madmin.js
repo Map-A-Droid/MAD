@@ -247,6 +247,13 @@ new Vue({
             }
         }
     },
+    computed: {
+        sortedGeofences() {
+            return Object.values(this.layers.dyn.geofences).sort(function (x, y) {
+                return x.name.localeCompare(y.name, "en", {sensitivity: "base"});
+            });
+        }
+    },
     watch: {
         "layers.stat.gyms": function (newVal, oldVal) {
             if (newVal && !init) {
@@ -1048,16 +1055,13 @@ new Vue({
             });
 
             polygon.bindPopup(
-                this.build_geofence_popup(geofence.id, geofence.name, polygon),
+                this.build_geofence_popup(geofence.id, geofence.name, polygon, function (name) { geofence.name = name; }),
                 { className: "geofencepopup" });
 
             leaflet_data.geofences[id] = polygon;
 
-            const settings = {
-                name: geofence.name,
-                show: show
-            };
-            this.$set(this.layers.dyn.geofences, id, settings);
+            geofence.show = show;
+            this.$set(this.layers.dyn.geofences, id, geofence);
         },
         mapAddLayer(layer, bringTo) {
             map.addLayer(layer);
@@ -1516,7 +1520,7 @@ new Vue({
 
             return popupContainer[0];
         },
-        build_geofence_popup(id, name, layer) {
+        build_geofence_popup(id, name, layer, onNameChanged) {
             const popupContainer = $(`
               <div>
                 <div class="name">
@@ -1664,6 +1668,9 @@ new Vue({
                             hideGroup("saving");
                             showGroup("edit");
                             $(".name span", popupContainer).text(name);
+                            if (typeof onNameChanged === "function") {
+                                onNameChanged(name);
+                            }
                         }
                     }.bind(this),
                     function () {
