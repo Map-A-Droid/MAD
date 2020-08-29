@@ -16,7 +16,7 @@
 <script type="text/javascript">
     $(document).ready(function () {
         $("#submit").click(function() {
-            loadingBlockUI('Saving a {{ subtab }}');
+            loadingBlockUI('Saving {{ subtab }}');
             save_data = get_save_data();
             if(isEmptyObj(save_data) != false) {
                 alert('No changes have been made');
