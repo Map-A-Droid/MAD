@@ -91,12 +91,19 @@ class APIAutoConf(AutoConfHandler):
                 has_ptc = device['settings']['ptc_login']
             except KeyError:
                 has_ptc = False
-            if not self._args.autoconfig_no_auth and (device['account_id'] is None and not has_ptc):
+            has_ggl = False
+            search = {
+                'login_type': 'google',
+                'device_id': device.identifier
+            }
+            ggl_accounts = self._data_manager.search('pogoauth', params=search)
+            if len(ggl_accounts) != 0:
+                has_ggl = True
+            if not self._args.autoconfig_no_auth and (not has_ggl and not has_ptc):
                 # Auto-assign a google account as one was not specified
                 sql = "SELECT ag.`account_id`\n"\
                       "FROM `settings_pogoauth` ag\n"\
-                      "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
-                      "WHERE sd.`device_id` IS NULL AND ag.`instance_id` = %s AND ag.`login_type` = %s"
+                      "WHERE ag.`device_id` IS NULL AND ag.`instance_id` = %s AND ag.`login_type` = %s"
                 account_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id, 'google'))
                 if account_id is None:
                     return ('No configured emails', 400)

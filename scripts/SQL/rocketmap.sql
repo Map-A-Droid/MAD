@@ -378,7 +378,6 @@ CREATE TABLE `settings_device` (
     `screendetection` tinyint(1) DEFAULT NULL,
     `logintype` enum('google','ptc') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `ggl_login_mail` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    `ptc_login` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `clear_game_data` tinyint(1) DEFAULT NULL,
     `account_rotation` tinyint(1) DEFAULT NULL,
     `rotation_waittime` float DEFAULT NULL,
@@ -388,7 +387,6 @@ CREATE TABLE `settings_device` (
     `enhanced_mode_quest_safe_items` VARCHAR(500) NULL,
     `mac_address` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL,
     `interface_type` enum('lan','wlan') COLLATE utf8mb4_unicode_ci DEFAULT 'lan',
-    `account_id` int(10) unsigned NULL,
     PRIMARY KEY (`device_id`),
     KEY `settings_device_ibfk_1` (`walker_id`),
     KEY `settings_device_ibfk_2` (`pool_id`),
@@ -399,9 +397,7 @@ CREATE TABLE `settings_device` (
     CONSTRAINT `settings_device_ibfk_1` FOREIGN KEY (`walker_id`)
         REFERENCES `settings_walker` (`walker_id`),
     CONSTRAINT `settings_device_ibfk_2` FOREIGN KEY (`pool_id`)
-        REFERENCES `settings_devicepool` (`pool_id`),
-    CONSTRAINT `settings_device_ibfk_3` FOREIGN KEY (`account_id`)
-        REFERENCES `settings_pogoauth` (`account_id`)
+        REFERENCES `settings_devicepool` (`pool_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `settings_devicepool` (
@@ -792,6 +788,7 @@ CREATE TABLE `autoconfig_logs` (
 CREATE TABLE `settings_pogoauth` (
     `instance_id` int(10) unsigned NOT NULL,
     `account_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `device_id` int(10) unsigned NULL,
     `login_type` enum('google','ptc') COLLATE utf8mb4_unicode_ci NOT NULL,
     `username` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
     `password` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -799,7 +796,10 @@ CREATE TABLE `settings_pogoauth` (
     CONSTRAINT `fk_ac_g_instance` FOREIGN KEY (`instance_id`)
         REFERENCES `madmin_instance` (`instance_id`)
         ON DELETE CASCADE,
-    CONSTRAINT `settings_pogoauth_u1` UNIQUE (`login_type`, `username`)
+    CONSTRAINT `settings_pogoauth_u1` UNIQUE (`login_type`, `username`),
+    CONSTRAINT `fk_spa_device_id` FOREIGN KEY (`device_id`)
+            REFERENCES `settings_device` (`device_id`)
+            ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `origin_hopper` (

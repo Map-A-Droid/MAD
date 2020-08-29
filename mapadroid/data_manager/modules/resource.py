@@ -290,6 +290,23 @@ class Resource(object):
         }
         self._dbc.autoexec_delete(self.table, del_data)
 
+    def get_core(self, clear: bool = False):
+        if clear:
+            data = copy.copy(self.get_resource(backend=True))
+        else:
+            data = self.get_resource(backend=True)
+        try:
+            for field, field_value in data['settings'].items():
+                data[field] = field_value
+            for field in data['settings'].removal:
+                data[field] = None
+                del self._data['settings'][field]
+            data['settings'].removal = []
+            del data['settings']
+        except KeyError:
+            pass
+        return data
+
     def get_dependencies(self):
         return []
 
@@ -327,7 +344,6 @@ class Resource(object):
             try:
                 for field, default_value in self.configuration[section].items():
                     try:
-                        default_value['settings']['require'] is True and default_value['settings']['empty']
                         defaults[field] = default_value['settings']['empty']
                     except KeyError:
                         continue
@@ -371,17 +387,7 @@ class Resource(object):
     def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
         self.presave_validation(ignore_issues=ignore_issues)
         if core_data is None:
-            data = self.get_resource(backend=True)
-            try:
-                for field, field_value in data['settings'].items():
-                    data[field] = field_value
-                for field in data['settings'].removal:
-                    data[field] = None
-                    del self._data['settings'][field]
-                data['settings'].removal = []
-                del data['settings']
-            except KeyError:
-                pass
+            data = self.get_core(clear=True)
         else:
             data = core_data
         if self.include_instance_id:

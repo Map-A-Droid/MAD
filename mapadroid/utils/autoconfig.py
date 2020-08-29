@@ -25,8 +25,7 @@ class AutoConfIssueGenerator(object):
         self.critical: List[AutoConfIssues] = []
         sql = "SELECT count(*)\n" \
               "FROM `settings_pogoauth` ag\n" \
-              "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n" \
-              "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
+              "WHERE ag.`instance_id` = %s AND ag.`device_id` IS NULL"
         if db.autofetch_value(sql, (db.instance_id)) == 0 and not args.autoconfig_no_auth:
             self.warnings.append(AutoConfIssues.no_ggl_login)
         if not validate_hopper_ready(data_manager):

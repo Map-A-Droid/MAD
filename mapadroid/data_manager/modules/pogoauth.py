@@ -1,5 +1,7 @@
-from typing import List, Optional, Tuple
+from collections import OrderedDict
+from typing import Dict, List, Optional, Tuple
 from .resource import Resource
+from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
 
 
 class PogoAuth(Resource):
@@ -49,56 +51,64 @@ class PogoAuth(Resource):
         }
     }
 
+    @classmethod
+    def get_avail_accounts(cls, data_manager, auth_type, device_id: int = None) -> Dict[int, Resource]:
+        accounts: Dict[int, Resource] = {}
+        search = {
+            'login_type': auth_type
+        }
+        pogoauths = data_manager.search('pogoauth', params=search)
+        try:
+            identifier = int(device_id)
+        except (ValueError, TypeError, UnknownIdentifier):
+            identifier = None
+        # Find all unassigned accounts
+        for account_id, account in pogoauths.items():
+            if account['device_id'] is not None:
+                if identifier is not None and account['device_id'] != identifier:
+                    continue
+            accounts[account_id] = account
+        return accounts
+
+    @classmethod
+    def get_avail_devices(cls, data_manager, auth_id: int = None) -> Dict[int, Resource]:
+        invalid_devices = []
+        avail_devices: Dict[int, Resource] = {}
+        device_id: int = None
+        pogoauths = data_manager.search('pogoauth')
+        try:
+            identifier = int(auth_id)
+        except (ValueError, TypeError, UnknownIdentifier):
+            pass
+        else:
+            try:
+                device_id = pogoauths[identifier]['device_id']
+            except KeyError:
+                # Auth isn't found. Either it doesnt exist or auth_type mismatch
+                return avail_devices
+        for pauth_id, pauth in pogoauths.items():
+            if pauth['device_id'] is not None and device_id is not None and pauth['device_id'] != device_id:
+                invalid_devices.append(pauth['device_id'])
+        invalid_devices = list(set(invalid_devices))
+        for dev_id, dev in data_manager.get_root_resource('device').items():
+            if dev_id in invalid_devices:
+                continue
+            avail_devices[dev_id] = dev
+        return avail_devices
+
     def get_dependencies(self) -> List[Tuple[str, int]]:
-        sql = 'SELECT `device_id` FROM `settings_device` WHERE `account_id` = %s'
+        sql = 'SELECT `device_id` FROM `settings_pogoauth` WHERE `account_id` = %s AND `device_id` IS NOT NULL'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, device_id in enumerate(dependencies[:]):
             dependencies[ind] = ('device', device_id)
         return dependencies
 
-    def _load(self) -> None:
-        super()._load()
-        sql = "SELECT `device_id`\n" \
-              "FROM `settings_device`\n" \
-              "WHERE `account_id` = %s"
-        self._data['fields']['device_id'] = self._dbc.autofetch_value(sql, args=(self.identifier))
-
-    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
-        self.presave_validation(ignore_issues=ignore_issues)
-        device_id = self._data['fields']['device_id']
-        core_data = {
-            'login_type': self._data['fields']['login_type'],
-            'username': self._data['fields']['username'],
-            'password': self._data['fields']['password'],
-        }
-        super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
-        if device_id is not None:
-            device = self._data_manager.get_resource('device', device_id)
-            device['account_id'] = self.identifier
-            device.save()
-        else:
-            devices = self._data_manager.search('device', params={'account_id': self.identifier})
-            if devices:
-                device = devices[next(iter(devices))]
-                device['account_id'] = None
-                device.save()
-        return self.identifier
-
     def validate_custom(self):
-        issues = {}
-        # One google account per device (for now)
-        login_type = None
-        try:
-            login_type = self._data['fields']['login_type']
-        except KeyError:
-            return issues
-        if login_type == 'google' and \
-                ('device_id' in self._data['fields'] and self._data['fields']['device_id']):
-            sql = "SELECT `account_id`\n"\
-                  "FROM `settings_device`\n"\
-                  "WHERE `device_id` = %s"
-            aligned = self._dbc.autofetch_column(sql, (self._data['fields']['device_id']))
-            if len(aligned) == 1 and any(aligned):
-                if aligned[0] != self.identifier:
-                    issues['invalid'] = [('device_id', 'Device already has a Google login')]
-        return issues
+        issues = []
+        if 'device_id' in self and self['device_id'] is not None:
+            if self['device_id'] not in PogoAuth.get_avail_devices(self._data_manager, auth_id=self.identifier):
+                issues.append(("device_id", "PogoAuth not valid for this device"))
+        if issues:
+            return {
+                'issues': issues
+            }
