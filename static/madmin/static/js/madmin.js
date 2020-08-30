@@ -708,7 +708,6 @@ new Vue({
                             weight: 1,
                             opacity: 0.8,
                             fillOpacity: 0.5,
-                            interactive: false,
                             pmIgnore: true,
                             pane: layerOrders.routes.pane,
                         })
@@ -716,7 +715,7 @@ new Vue({
                         .addTo(group);
 
                         linecoords.push([coord.latitude, coord.longitude]);
-                    });
+                    }, this);
 
                     // add route to layergroup
                     L.polyline(linecoords, {
@@ -725,7 +724,9 @@ new Vue({
                         "opacity": 0.2,
                         "pane": layerOrders.routes.pane,
                         "pmIgnore": true
-                    }).addTo(group);
+                    })
+                    .bindPopup(this.build_prioq_route_popup(route), { className: "routepopup" })
+                    .addTo(group);
 
                     // add layergroup to management object
                     leaflet_data.prioroutes[name] = group;
@@ -1203,8 +1204,24 @@ new Vue({
         </div>`;
         },
         build_prioq_popup(marker) {
-            var time = moment(marker.options.ctimestamp * 1000);
+            const time = moment(marker.options.ctimestamp * 1000);
             return `Due: ${time.format("YYYY-MM-DD HH:mm:ss")} (${marker.options.ctimestamp})`;
+        },
+        build_prioq_route_popup(route) {
+
+            const popupContainer = $(`
+              <div>
+                <div class="name"><i class="fas fa-sort-numeric-up"></i> <strong></strong></div>
+                <div><i class="fas fa-adjust"></i> Mode: <span class="badge badge-secondary"></span></div>
+                <div><i class="fas fa-ruler-horizontal"></i> Length: <strong class="length"></strong></div>
+              </div>
+            `);
+
+            $(".name strong", popupContainer).text(route.name);
+            $(".badge", popupContainer).text(route.mode);
+            $(".length", popupContainer).text(route.coordinates.length);
+
+            return popupContainer[0];
         },
         build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id, quest_pokemon_form_id, quest_pokemon_asset_bundle_id, quest_pokemon_costume_id) {
             switch (quest_reward_type_raw) {
