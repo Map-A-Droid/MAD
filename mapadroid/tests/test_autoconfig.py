@@ -266,3 +266,24 @@ class MITMAutoConf(TestCase):
         self.assertTrue(res.content == b'Unit\nTest')
         res = self.mitm.delete('/autoconfig/{}/complete'.format(session_id))
         self.assertTrue(res.status_code == 200)
+
+    def test_lower_case(self):
+        api_creator = ResourceCreator(self.api)
+        with GetStorage(self.api):
+            try:
+                pd_email = 'UPPERcase'
+                pd_update = {
+                    'user_id': pd_email
+                }
+                create_valid_configs(self, api_creator)
+                res = self.api.patch('/api/autoconf/pd', json=pd_update)
+                self.assertTrue(res.status_code == 200)
+                res = self.api.get('/api/autoconf/pd')
+                self.assertTrue(res.status_code == 200)
+                self.assertTrue(res.json()['user_id'] == pd_email.lower())
+            except Exception:
+                raise
+            finally:
+                self.api.delete('/api/autoconf/rgc')
+                self.api.delete('/api/autoconf/pd')
+                api_creator.remove_resources()

@@ -108,3 +108,13 @@ class APIAutoConf(AutoConfHandler):
         }
         self.dbc.autoexec_update('autoconfig_registration', update, where_keyvals=where)
         return (None, 200)
+
+    def get_config(self, conf_type: str):
+        data: dict = {}
+        if conf_type == 'rgc':
+            data = RGCConfig(self.dbc, self._args, self._data_manager).contents
+        elif conf_type == 'pd':
+            data = PDConfig(self.dbc, self._args, self._data_manager).contents
+        else:
+            return (None, 404)
+        return (data, 200)
