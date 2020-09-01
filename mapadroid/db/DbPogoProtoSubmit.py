@@ -354,8 +354,16 @@ class DbPogoProtoSubmit:
         reward_type = reward.get("type", None)
         item_item = item.get("item", None)
         item_amount = item.get("amount", None)
-        stardust = reward.get("stardust", None)
         pokemon_id = encounter.get("pokemon_id", None)
+
+        if reward_type == 4:
+            item_amount = reward.get('candy', {}).get('amount', 0)
+            pokemon_id = reward.get('candy', {}).get('pokemon_id', 0)
+        elif reward_type == 12:
+            item_amount = reward.get('mega_resource', {}).get('amount', 0)
+            pokemon_id = reward.get('mega_resource', {}).get('pokemon_id', 0)
+
+        stardust = reward.get("stardust", None)
         form_id = encounter.get("pokemon_display", {}).get("form_value", 0)
         costume_id = encounter.get("pokemon_display", {}).get("costume_value", 0)
         target = goal.get("target", None)
