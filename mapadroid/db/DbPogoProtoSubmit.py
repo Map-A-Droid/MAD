@@ -532,7 +532,7 @@ class DbPogoProtoSubmit:
                         form = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["form_value"]
                         gender = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["gender_value"]
                         costume = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["costume_value"]
-                        evolution = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"].get("evolution_value", 0)
+                        evolution = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"].get("pokemon_evolution", 0)
                     else:
                         pokemon_id = None
                         cp = 0
