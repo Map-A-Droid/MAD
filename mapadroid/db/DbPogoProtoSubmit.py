@@ -525,14 +525,16 @@ class DbPogoProtoSubmit:
                 if gym["type"] == 0 and gym["gym_details"]["has_raid"]:
                     gym_has_raid = gym["gym_details"]["raid_info"]["has_pokemon"]
                     if gym_has_raid:
-                        pokemon_id = gym["gym_details"]["raid_info"]["raid_pokemon"]["id"]
-                        cp = gym["gym_details"]["raid_info"]["raid_pokemon"]["cp"]
-                        move_1 = gym["gym_details"]["raid_info"]["raid_pokemon"]["move_1"]
-                        move_2 = gym["gym_details"]["raid_info"]["raid_pokemon"]["move_2"]
-                        form = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["form_value"]
-                        gender = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["gender_value"]
-                        costume = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["costume_value"]
-                        evolution = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"].get("pokemon_evolution", 0)
+                        raid_info = gym["gym_details"]["raid_info"]
+
+                        pokemon_id = raid_info["raid_pokemon"]["id"]
+                        cp = raid_info["raid_pokemon"]["cp"]
+                        move_1 = raid_info["raid_pokemon"]["move_1"]
+                        move_2 = raid_info["raid_pokemon"]["move_2"]
+                        form = raid_info["raid_pokemon"]["display"]["form_value"]
+                        gender = raid_info["raid_pokemon"]["display"]["gender_value"]
+                        costume = raid_info["raid_pokemon"]["display"]["costume_value"]
+                        evolution = raid_info["raid_pokemon"]["display"].get("pokemon_evolution", 0)
                     else:
                         pokemon_id = None
                         cp = 0
