@@ -119,7 +119,7 @@ CREATE TABLE `pokemon` (
     KEY `pokemon_last_modified` (`last_modified`),
     KEY `pokemon_latitude_longitude` (`latitude`,`longitude`),
     KEY `pokemon_disappear_time_pokemon_id` (`disappear_time`,`pokemon_id`),
-    KEY `pokemon_individual_attack` (`individual_attack`)
+    KEY `pokemon_iv` (`individual_attack`, `individual_defense`, `individual_stamina`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `pokestop` (
