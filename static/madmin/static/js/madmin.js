@@ -1228,6 +1228,11 @@ new Vue({
                     var size = [30, 30]
                     var anchor = [30, 30]
                     break;
+                case 12:
+                    var image = `${iconBasePath}/rewards/reward_mega_energy.png`;
+                    var size = [30, 30]
+                    var anchor = [30, 30]                    
+                    break;
             }
 
             var icon = L.icon({
@@ -1262,6 +1267,10 @@ new Vue({
                     var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${quest_pokemon_form_id}${costume}.png`;
                     var rewardtext = quest_pokemon_name;
                     var size = "150%";
+                    break;
+                case 12:
+                    var image = `${iconBasePath}/rewards/reward_mega_energy.png`;
+                    var rewardtext =  `${quest_item_amount} ${quest_item_type} ${quest_pokemon_name}`;
                     break;
             }
 
