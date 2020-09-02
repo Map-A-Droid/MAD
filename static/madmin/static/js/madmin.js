@@ -244,7 +244,15 @@ new Vue({
                     quests: 40,
                     mons: 67
                 }
-            }
+            },
+            cellUpdateTimeout: 50000
+        }
+    },
+    computed: {
+        sortedGeofences() {
+            return Object.values(this.layers.dyn.geofences).sort(function (x, y) {
+                return x.name.localeCompare(y.name, "en", {sensitivity: "base"});
+            });
         }
     },
     computed: {
@@ -340,6 +348,9 @@ new Vue({
             } else {
                 clearInterval(cleanupInterval);
             }
+        },
+        'settings.cellUpdateTimeout': function (newVal) {
+        	this.updateStoredSetting('settings-cellUpdateTimeout', newVal);
         },
         'settings.routes.coordinateRadius': {
             deep: true,
@@ -998,25 +1009,33 @@ new Vue({
                 return;
             }
 
+            var $this = this;
+
             this.mapGuardedFetch("cellupdates", "get_cells" + urlFilter, function (res) {
                 const now = Math.round((new Date()).getTime() / 1000);
 
                 res.data.forEach(function (cell) {
                     const id = cell["id"];
 
+					var noSkip = true;
+                    var notTooOld = true;
                     if (this.cellupdates[id]) {
                         if (this.cellupdates[id]["updated"] === cell["updated"]) {
-                            return;
+                            noSkip = false;
+                        } else {
+                        	map.removeLayer(leaflet_data.cellupdates[id]);
+                        	delete leaflet_data.cellupdates[id];
                         }
-
-                        map.removeLayer(leaflet_data.cellupdates[id]);
-                        delete leaflet_data.cellupdates[id];
+                    }
+                    //  86400
+                    if($this.settings.cellUpdateTimeout > 0 && now - cell.updated > $this.settings.cellUpdateTimeout) {
+                        notTooOld = false;
                     }
 
-                    this.cellupdates[id] = cell;
+                    if (noSkip && notTooOld) {
+                        $this.cellupdates[id] = cell;
 
-                    leaflet_data.cellupdates[id] =
-                        L.polygon(cell["polygon"], {
+                    	leaflet_data.cellupdates[id] = L.polygon(cell["polygon"], {
                             id: id,
                             pane: layerOrders.cells.pane,
                             pmIgnore: true
@@ -1024,7 +1043,8 @@ new Vue({
                         .setStyle(this.getCellStyle(now, cell["updated"]))
                         .bindPopup(this.build_cell_popup, { className: "cellpopup" });
 
-                    this.mapAddLayer(leaflet_data.cellupdates[id], layerOrders.cells.bringTo);
+                    	this.mapAddLayer(leaflet_data.cellupdates[id], layerOrders.cells.bringTo);
+                    }
 
                 }, this);
             });
@@ -1228,6 +1248,11 @@ new Vue({
                     var size = [30, 30]
                     var anchor = [30, 30]
                     break;
+                case 12:
+                    var image = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/rewards/reward_mega_energy.png'
+                    var size = [30, 30]
+                    var anchor = [30, 30]
+                    break;
             }
 
             var icon = L.icon({
@@ -1262,6 +1287,10 @@ new Vue({
                     var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${quest_pokemon_form_id}${costume}.png`;
                     var rewardtext = quest_pokemon_name;
                     var size = "150%";
+                    break;
+                case 12:
+                    var image = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/rewards/reward_mega_energy.png'
+                    var rewardtext =  `${quest_item_amount} ${quest_item_type} ${quest_pokemon_name}`;
                     break;
             }
 
@@ -1916,6 +1945,7 @@ new Vue({
             this.settings.routes.coordinateRadius.raids = this.getStoredSetting("settings-coordinateRadius-raids", 490);
             this.settings.routes.coordinateRadius.quests = this.getStoredSetting("settings-coordinateRadius-quests", 40);
             this.settings.routes.coordinateRadius.mons = this.getStoredSetting("settings-coordinateRadius-mons", 67);
+            this.settings.cellUpdateTimeout = this.getStoredSetting('settings-cellUpdateTimeout', 0);
             for (const index of Object.keys(this.layers.stat)) {
                 this.layers.stat[index] = this.getStoredSetting("layer-stat-" + index, false);
             }
