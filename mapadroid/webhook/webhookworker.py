@@ -201,7 +201,6 @@ class WebhookWorker:
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
 
-
         for a_quest_condition in quest_conditions:
             # Quest condition for special type of pokemon.
             if "with_pokemon_type" in a_quest_condition:
