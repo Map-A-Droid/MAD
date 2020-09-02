@@ -45,7 +45,7 @@ def generate_quest(quest):
         if pokemon_form != '00':
             pokemon_asset_bundle = form_mapper(int(pokemon_id), pokemon_form)
     elif quest_reward_type == _('Energy'):
-        item_type = 'Energy'
+        item_type = 'Mega Energy'
         pokemon_name = i8ln(pokemonname(str(quest['quest_pokemon_id'])))
         pokemon_id = quest['quest_pokemon_id']
         item_amount = quest['quest_item_amount']
