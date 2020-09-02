@@ -1270,7 +1270,7 @@ new Vue({
                     break;
 				case 12:
 		            var image = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/rewards/reward_mega_energy.png'
-		            var rewardtext = quest_pokemon_name + " Energy: " + quest_item_amount;
+		            var rewardtext =  `${quest_item_amount} ${quest_item_type} ${quest_pokemon_name}`;
 		            break;
             }
 
