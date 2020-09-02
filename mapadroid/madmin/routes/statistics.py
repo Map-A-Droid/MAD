@@ -266,7 +266,6 @@ class MADminStatistics(object):
 
         shiny_stats_v2 = []
         for dat in data:
-            form_suffix = "%02d" % form_mapper(dat[0], dat[1])
             mon = "%03d" % dat[0]
             mon_img = self.generate_mon_icon_url(dat[0], dat[1])
             mon_name = get_mon_name(dat[0])
@@ -302,7 +301,6 @@ class MADminStatistics(object):
         for dat in data:
             if dat[1] in shiny_count and dat[2] in shiny_count[dat[1]]:
                 odds = round(dat[0] / shiny_count[dat[1]][dat[2]], 0)
-                form_suffix = "%02d" % form_mapper(dat[1], dat[2])
                 mon = "%03d" % dat[1]
                 mon_img = self.generate_mon_icon_url(dat[1], dat[2])
                 global_shiny_stats_v2.append({'name': mon_names[dat[1]], 'count': dat[0], 'img': mon_img,
