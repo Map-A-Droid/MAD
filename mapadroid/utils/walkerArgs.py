@@ -64,6 +64,8 @@ def parse_args():
                         help='Port to listen on for proto data (MITM data). Default: 8000.')
     parser.add_argument('-mrdw', '--mitmreceiver_data_workers', type=int, default=2,
                         help='Amount of workers to work off the data that queues up. Default: 2.')
+    parser.add_argument('-mipb', '--mitm_ignore_pre_boot', default=False, type=bool,
+                        help='Ignore MITM data having a timestamp pre MAD\'s startup time.')
 
     # WEBSOCKET
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,

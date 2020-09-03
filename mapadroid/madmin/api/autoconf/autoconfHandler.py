@@ -18,10 +18,10 @@ class AutoConfHandler(apiHandler.APIHandler):
                         methods=['GET', 'POST', 'DELETE'],
                         endpoint='api_autoconf_status')(self.entrypoint)
         self._app.route('/api/autoconf/rgc',
-                        methods=['POST', 'DELETE'],
+                        methods=['POST', 'DELETE', 'GET', 'PATCH'],
                         endpoint='api_autoconf_rgc')(self.entrypoint)
         self._app.route('/api/autoconf/pd',
-                        methods=['POST', 'DELETE'],
+                        methods=['POST', 'DELETE', 'GET', 'PATCH'],
                         endpoint='api_autoconf_pd')(self.entrypoint)
 
     # =====================================
@@ -46,14 +46,18 @@ class AutoConfHandler(apiHandler.APIHandler):
             elif self.api_req._request.method == 'DELETE':
                 return self.autoconf_delete_session(session_id)
         elif self.api_req._request.endpoint == 'api_autoconf_rgc':
-            if self.api_req._request.method == 'POST':
+            if self.api_req._request.method in ['POST', 'PATCH']:
                 return self.autoconf_config_rgc()
             elif self.api_req._request.method == 'DELETE':
                 return self.autoconf_delete_rgc()
+            elif self.api_req._request.method == 'GET':
+                return self.get_config('rgc')
         elif self.api_req._request.endpoint == 'api_autoconf_pd':
-            if self.api_req._request.method == 'POST':
+            if self.api_req._request.method in ['POST', 'PATCH']:
                 return self.autoconf_config_pd()
             elif self.api_req._request.method == 'DELETE':
                 return self.autoconf_delete_pd()
+            elif self.api_req._request.method == 'GET':
+                return self.get_config('pd')
         else:
             return Response(status=404)

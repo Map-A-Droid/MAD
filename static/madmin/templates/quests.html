@@ -99,6 +99,9 @@ function build_reward_text(quest_reward_type, quest_item_amount, monname, quest_
         case 7:
             var rewardtext = monname;
             break;
+        case 12:
+            var rewardtext = monname + " " + quest_item_name + '<br>Amount: ' + quest_item_amount;
+            break;
     }
     return rewardtext;
 }
@@ -121,6 +124,11 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, q
             var url = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${quest_pokemon_form_id}${costume}.png`;
             var image = `<img class="mr-3" src="${url}" width="50">`;
             break;
+        case 12:
+            var url = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/rewards/reward_mega_energy.png'
+            var image = `<img class="mr-3" src="${url}" width="50">`;
+            break;
+
     }
     return image;
 }

@@ -354,8 +354,16 @@ class DbPogoProtoSubmit:
         reward_type = reward.get("type", None)
         item_item = item.get("item", None)
         item_amount = item.get("amount", None)
-        stardust = reward.get("stardust", None)
         pokemon_id = encounter.get("pokemon_id", None)
+
+        if reward_type == 4:
+            item_amount = reward.get('candy', {}).get('amount', 0)
+            pokemon_id = reward.get('candy', {}).get('pokemon_id', 0)
+        elif reward_type == 12:
+            item_amount = reward.get('mega_resource', {}).get('amount', 0)
+            pokemon_id = reward.get('mega_resource', {}).get('pokemon_id', 0)
+
+        stardust = reward.get("stardust", None)
         form_id = encounter.get("pokemon_display", {}).get("form_value", 0)
         costume_id = encounter.get("pokemon_display", {}).get("costume_value", 0)
         target = goal.get("target", None)
@@ -525,14 +533,16 @@ class DbPogoProtoSubmit:
                 if gym["type"] == 0 and gym["gym_details"]["has_raid"]:
                     gym_has_raid = gym["gym_details"]["raid_info"]["has_pokemon"]
                     if gym_has_raid:
-                        pokemon_id = gym["gym_details"]["raid_info"]["raid_pokemon"]["id"]
-                        cp = gym["gym_details"]["raid_info"]["raid_pokemon"]["cp"]
-                        move_1 = gym["gym_details"]["raid_info"]["raid_pokemon"]["move_1"]
-                        move_2 = gym["gym_details"]["raid_info"]["raid_pokemon"]["move_2"]
-                        form = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["form_value"]
-                        gender = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["gender_value"]
-                        costume = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["costume_value"]
-                        evolution = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"].get("evolution_value", 0)
+                        raid_info = gym["gym_details"]["raid_info"]
+
+                        pokemon_id = raid_info["raid_pokemon"]["id"]
+                        cp = raid_info["raid_pokemon"]["cp"]
+                        move_1 = raid_info["raid_pokemon"]["move_1"]
+                        move_2 = raid_info["raid_pokemon"]["move_2"]
+                        form = raid_info["raid_pokemon"]["display"]["form_value"]
+                        gender = raid_info["raid_pokemon"]["display"]["gender_value"]
+                        costume = raid_info["raid_pokemon"]["display"]["costume_value"]
+                        evolution = raid_info["raid_pokemon"]["display"].get("pokemon_evolution", 0)
                     else:
                         pokemon_id = None
                         cp = 0

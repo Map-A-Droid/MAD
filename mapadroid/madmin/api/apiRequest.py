@@ -62,7 +62,7 @@ class APIRequest(object):
 
     def process_request(self):
         # Determine the content-type of the request and convert accordingly
-        content_type = self._request.headers.get('Content-type')
+        content_type = self._request.mimetype
         if not content_type:
             content_type = global_variables.DEFAULT_FORMAT.lower()
         else:

@@ -44,6 +44,14 @@ def generate_quest(quest):
         pokemon_costume = quest['quest_pokemon_costume_id']
         if pokemon_form != '00':
             pokemon_asset_bundle = form_mapper(int(pokemon_id), pokemon_form)
+    elif quest_reward_type == _('Energy'):
+        item_type = _('Mega Energy')
+        if quest['quest_pokemon_id'] and int(quest['quest_pokemon_id']) > 0:
+            pokemon_name = i8ln(pokemonname(str(quest['quest_pokemon_id'])))
+            pokemon_id = quest['quest_pokemon_id']
+        else:
+            pokemon_name = ''
+        item_amount = quest['quest_item_amount']
 
     if not quest['task']:
         quest_task = questtask(
@@ -83,7 +91,8 @@ def questreward(quest_reward_type):
     type = {
         2: _("Item"),
         3: _("Stardust"),
-        7: _("Pokemon")
+        7: _("Pokemon"),
+        12: _("Energy")
     }
     return type.get(quest_reward_type, "nothing")
 
@@ -178,6 +187,8 @@ def questtask(typeid, condition, target, quest_template):
                 text = _('Win a level 3 or higher raid')
             if re.search(r'"raid_level": \[2, 3, 4, 5\]', condition) is not None:
                 text = _('Win a level 2 or higher raid')
+            if re.search(r'"raid_level": \[6\]', condition) is not None:
+                text = _('Win a Mega raid')
         else:
             text = _("Battle in {0} Raids")
     elif typeid == 10:
