@@ -113,18 +113,10 @@
         "order": [[0, "asc"]],
         "responsive": {
             details: {
-                // renderer: function (api, rowIdx, columns) {
-                //     var data = $.map(columns, function (col, i) {
-                //         return col.hidden ?
-                //             // col.title + ' ' + col.data
-                //             '<td style="display: inline-block;"><strong>' + col.title + '</strong>:   ' + col.data +  '</td> '
-                //             : '';
-                //     }).join('');
-                //
-                //     return data ?
-                //         $('<table/>').append('<tr data-dt-row="' + 123 + '" data-dt-column="' + 123 + '">' + data + '</tr>') :
-                //         false;
-                // }
+                details: {
+                    display: $.fn.dataTable.Responsive.display.childRowImmediate,
+                    type: ''
+                }
             }
         },
         "autoWidth": false,
