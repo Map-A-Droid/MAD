@@ -8,7 +8,7 @@
 
 $(document).ready(function () {
     $("#submit").click(function() {
-        loadingBlockUI("Saving " + {{ subtab }} )
+        loadingBlockUI('Saving {{ subtab }}')
         save_data = {
             'status': 1,
             'walker_id': $("select[name=walker_id]").val(),
