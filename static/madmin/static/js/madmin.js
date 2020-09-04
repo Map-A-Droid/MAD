@@ -404,10 +404,6 @@ new Vue({
             this.updateBounds(true);
         },
         map_fetch_workers() {
-            if (!this.layers.stat.workers) {
-                return;
-            }
-
             this.mapGuardedFetch("workers", "get_workers", function (res) {
                 res.data.forEach(function (worker) {
                     const name = worker["name"];
