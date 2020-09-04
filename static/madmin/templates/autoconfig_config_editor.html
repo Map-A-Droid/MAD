@@ -7,11 +7,12 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+
 <script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
 <script>
 $(document).ready(function () {
     $("#submit").click(function() {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        loadingBlockUI('Saving {{ subtab }}')
         save_data = get_save_data();
         if(isEmptyObj(save_data) != false) {
             alert('No changes have been made');

@@ -16,7 +16,7 @@ $(document).ready(function () {
         if(!confirm('Do you really wanna delete all information about visited pokestops for device {{ element.origin }}?')) {
           return;
         }
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Clearing ...</h2>' });
+        loadingBlockUI("Clearing");
         rpc_call = {
           'call': 'flush_level'
         }

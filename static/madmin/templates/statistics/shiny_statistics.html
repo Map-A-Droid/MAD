@@ -230,7 +230,7 @@
 
      function loadData(timestamp_from, timestamp_to) {
          console.log("Loading data for from: " + timestamp_from + " to: " + timestamp_to);
-         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Loading...</h2>' });
+        loadingBlockUI("Loading");
          $.ajax({
             "url": "get_game_stats_shiny?from="+timestamp_from+"&to="+timestamp_to,
             "type": "GET",

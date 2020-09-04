@@ -171,7 +171,7 @@
 
 
     $(document).ready(function () {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+        loadingBlockUI("Loading");
         $('body').Aplus();
         $("#navgyms").addClass("active");
         $.ajax({
