@@ -173,8 +173,8 @@ class MITMBase(WorkerBase):
         if data_requested != LatestReceivedType.UNDEFINED:
             self.logger.success('Got the data requested, type = {}',
                                 str(data_requested) if isinstance(data_requested, Enum)
-                                else (str(type(data_requested)) + ' size = ' +
-                                str(len(str(data_requested))) + ' bytes'))
+                                                    else (str(type(data_requested)) + ' size = ' +
+                                                          str(len(str(data_requested))) + ' bytes'))
             self._reboot_count = 0
             self._restart_count = 0
             self._rec_data_time = datetime.now()
