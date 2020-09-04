@@ -46,7 +46,9 @@ const EventForwarder = L.Class.extend({
     },
 
     _onClick: function (event) {
-        this._propagateEvent(event);
+        if (this.isEnabled) {
+            this._propagateEvent(event);
+        }
     },
 
     _onMouseOut: function (event) {
