@@ -207,6 +207,7 @@ class MADminControl(object):
         if useadb == 'True' and self._adb_connect.make_screenclick(adb, origin, real_click_x, real_click_y):
             origin_logger.info('MADMin: ADB screenclick successfully')
         else:
+            origin_logger.info("MADMin: WS Click x:{}, y:{}", real_click_x, real_click_y)
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.click(int(real_click_x), int(real_click_y))
 
