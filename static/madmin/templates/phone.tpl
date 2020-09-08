@@ -30,10 +30,10 @@
   <div class="container-fluid controlButtons">
     <div class="row">
       <div class="col-md">
-        <a class="action_screenshot" origin="<<phonename>>" href="take_screenshot?origin=<<phonename>>&adb=<<adb_option>>">Refresh screen</a>
+        <a href="take_screenshot?origin=<<phonename>>&adb=<<adb_option>>" class="action_screenshot" origin="<<phonename>>">Refresh screen</a>
       </div>
       <div class="col-md">
-        <a href="clear_game_data?origin=<<phonename>>&adb=<<adb_option>>" class="action_resetgamedata" origin="<<phonename>>" class="confirm" title="Do you really want to clear data for the game? This will result in the need to re-login">Reset game</a>
+        <a href="clear_game_data?origin=<<phonename>>&adb=<<adb_option>>" class="confirm" origin="<<phonename>>" class="confirm" title="Do you really want to clear data for the game? This will result in the need to re-login">Reset game</a>
       </div>
     </div>
     <div class="row">
