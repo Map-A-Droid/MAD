@@ -35,7 +35,7 @@
                         }
 
                         if (row.event != "DEFAULT") {
-                          conv = `<button type="button" class="convert delete btn btn-info btn-sm" data-areaid="${row.area_id}" data-index="${row.index}" data-eventid="${row.eventid}" data-toggle="tooltip" title="Convert event spawnpoints"><span class="convert_div"><i class="fa fa-exchange-alt"></i></span></button>`;
+                          conv = `<button type="button" class="convert btn btn-info btn-sm" data-areaid="${row.area_id}" data-index="${row.index}" data-eventid="${row.eventid}" data-toggle="tooltip" title="Convert event spawnpoints"><span class="convert_div"><i class="fa fa-exchange-alt"></i></span></button>`;
                             activetoday = "<button type='button' class='btn btn-success btn-sm' data-toggle='tooltip' title='Has currently active event spawnpoints'><i class='fa fa-minus-circle'></i></button>";
                             if (row.todayspawns > 0) {
                               activetoday = `<button type="button" class="activetoday btn btn-success btn-sm"><a href="spawn_details?id=${row.area_id}&index=${row.index}&eventid=${row.eventid}&event=${row.event}&mode=ACTIVE" data-toggle="tooltip" title="Check still active event spawnpoints (${row.todayspawns})"><i class='fa fa-clock'></i></a></button>`;
@@ -161,7 +161,7 @@
   });
     });
 
-    $( "#show-spawnpoints-stats" ).on( "click", '.convert', function(e) {
+    $( "#show-spawnpoints-stats" ).on( "click", ".convert", function(e) {
         e.stopImmediatePropagation();
         var r = confirm("Do you really want to convert the spawnpoint(s) to normal one(s)?");
         if (r != true) {
@@ -209,7 +209,7 @@
 
      });
 
-     $( "#delete_unfenced_coords" ).on( "click", 'button.delete', function(e) {
+     $( "#delete_unfenced_coords" ).on( "click", "button.delete", function(e) {
         e.stopImmediatePropagation();
         var r = confirm("You really want to delete all unfenced spawnpoints?");
         if (r != true) {
@@ -250,7 +250,7 @@
 
      });
 
-     $( "#show-spawnpoints-stats" ).on( "click", 'delete', function(e) {
+     $( "#show-spawnpoints-stats" ).on( "click", ".delete", function(e) {
         e.stopImmediatePropagation();
         var r = confirm("You really want to delete these spawnpoints?");
         if (r != true) {
