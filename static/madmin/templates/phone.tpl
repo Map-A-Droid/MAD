@@ -49,7 +49,7 @@
         <a href="uploaded_files?origin=<<phonename>>&adb=<<adb_option>>">Run job</a>
       </div>
       <div class="col-md">
-        <a id="logcat" href="download_logcat?origin=<<phonename>>" class="confirm" title="Download logcat? This will take a moment">Get logcat</a>
+        <a href="download_logcat?origin=<<phonename>>" id="logcat" class="confirm" title="Download logcat? This will take a moment">Get logcat</a>
       </div>
     </div>
   </div>
