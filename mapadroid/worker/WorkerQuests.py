@@ -445,7 +445,8 @@ class WorkerQuests(MITMBase):
         not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère', 'Premium',
                      'Raid', 'Teil',
-                     'Élément', 'mystérieux', 'Mysterious', 'Component', 'Mysteriöses')
+                     'Élément', 'mystérieux', 'Mysterious', 'Component', 'Mysteriöses', 'Remote', 'Fern',
+                     'Fern-Raid-Pass', 'Pass', 'Passe', 'distance')
         x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
