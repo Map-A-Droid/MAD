@@ -30,10 +30,10 @@
   <div class="container-fluid controlButtons">
     <div class="row">
       <div class="col-md">
-        <a class="action_screenshot" origin="<<phonename>>" href="take_screenshot?origin=<<phonename>>&adb=<<adb_option>>">Refresh screen</a>
+        <a href="take_screenshot?origin=<<phonename>>&adb=<<adb_option>>" class="action_screenshot" origin="<<phonename>>">Refresh screen</a>
       </div>
       <div class="col-md">
-        <a href="clear_game_data?origin=<<phonename>>&adb=<<adb_option>>" class="action_resetgamedata" origin="<<phonename>>" class="confirm" title="Do you really want to clear data for the game? This will result in the need to re-login">Reset game</a>
+        <a href="clear_game_data?origin=<<phonename>>&adb=<<adb_option>>" class="confirm" origin="<<phonename>>" class="confirm" title="Do you really want to clear data for the game? This will result in the need to re-login">Reset game</a>
       </div>
     </div>
     <div class="row">
@@ -49,7 +49,7 @@
         <a href="uploaded_files?origin=<<phonename>>&adb=<<adb_option>>">Run job</a>
       </div>
       <div class="col-md">
-        <a id="logcat" href="download_logcat?origin=<<phonename>>" class="confirm" title="Download logcat? This will take a moment">Get logcat</a>
+        <a href="download_logcat?origin=<<phonename>>" id="logcat" class="confirm" title="Download logcat? This will take a moment">Get logcat</a>
       </div>
     </div>
   </div>
