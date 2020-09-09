@@ -255,13 +255,6 @@ new Vue({
             });
         }
     },
-    computed: {
-        sortedGeofences() {
-            return Object.values(this.layers.dyn.geofences).sort(function (x, y) {
-                return x.name.localeCompare(y.name, "en", {sensitivity: "base"});
-            });
-        }
-    },
     watch: {
         "layers.stat.gyms": function (newVal, oldVal) {
             if (newVal && !init) {
