@@ -55,7 +55,7 @@ class Patch(PatchBase):
                             'instance_id': self._db.instance_id
                         }
                         try:
-                            account_id = self._db.autoexec_insert('settings_pogoauth', auth_data)
+                            self._db.autoexec_insert('settings_pogoauth', auth_data)
                         except IntegrityError:
                             pass
         # Move Google / Incorrectly assigned PTC
@@ -89,4 +89,3 @@ class Patch(PatchBase):
             sql = "ALTER TABLE settings_device\n" \
                   "DROP COLUMN account_id;"
             self._db.execute(sql, raise_exc=False, suppress_log=True)
-

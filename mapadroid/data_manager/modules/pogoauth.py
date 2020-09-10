@@ -1,5 +1,4 @@
-from collections import OrderedDict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from .resource import Resource
 from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
 

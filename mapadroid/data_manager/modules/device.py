@@ -1,4 +1,3 @@
-from flask import url_for
 import re
 from typing import List, Optional
 from .resource import Resource

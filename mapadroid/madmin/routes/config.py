@@ -1,4 +1,3 @@
-from _collections import OrderedDict
 import json
 import os
 import re
@@ -251,8 +250,8 @@ class MADminConfig(object):
                                                    device_id=identifier)
         ptc_accounts = []
         for account_id, account in PogoAuth.get_avail_accounts(self._data_manager,
-                                                              'ptc',
-                                                              device_id=identifier).items():
+                                                               'ptc',
+                                                               device_id=identifier).items():
             ptc_accounts.append({
                 'text': account['username'],
                 'id': account_id
