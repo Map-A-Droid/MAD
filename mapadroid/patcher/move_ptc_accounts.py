@@ -15,11 +15,12 @@ class Patch(PatchBase):
     def _execute(self):
         # Backup the tables
         # Assume that the user has not been given GRANT FILE permissions so just do a manual export
-        sql = "SELECT `device_id`, `ptc_login`\n"\
-              "FROM `settings_device`\n"\
-              "WHERE `ptc_login` IS NOT NULL"
-        with open(os.path.join(self._application_args.temp_path, 'ptc_backup.json'), 'w+') as fh:
-            json.dump(self._db.autofetch_all(sql), fh)
+        if self._schema_updater.check_column_exists('settings_device', 'ptc_login'):
+            sql = "SELECT `device_id`, `ptc_login`\n"\
+                  "FROM `settings_device`\n"\
+                  "WHERE `ptc_login` IS NOT NULL"
+            with open(os.path.join(self._application_args.temp_path, 'ptc_backup.json'), 'w+') as fh:
+                json.dump(self._db.autofetch_all(sql), fh)
         # Add the device link
         if not self._schema_updater.check_column_exists('settings_pogoauth', 'device_id'):
             sql = "ALTER TABLE `settings_pogoauth`\n" \
