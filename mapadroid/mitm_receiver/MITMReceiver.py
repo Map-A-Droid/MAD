@@ -407,8 +407,8 @@ class MITMReceiver(Process):
                 sql = "SELECT ag.`username`, ag.`password`\n"\
                       "FROM `settings_pogoauth` ag\n"\
                       "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n"\
-                      "WHERE ar.`session_id` = %s and ag.`instance_id` = %s"
-                login = self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id))
+                      "WHERE ar.`session_id` = %s and ag.`instance_id` = %s and ag.`login_type` = %s"
+                login = self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id, 'google'))
                 if login:
                     return Response(status=200, response='\n'.join([login['username'], login['password']]))
                 else:

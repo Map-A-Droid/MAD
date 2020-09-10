@@ -68,6 +68,7 @@ class APIAutoConf(AutoConfHandler):
         }
         device = None
         if status == 1:
+            is_hopper = False
             ac_issues = AutoConfIssueGenerator(self.dbc, self._data_manager, self._args, self.storage_obj)
             if ac_issues.has_blockers():
                 return ac_issues.get_issues(), 406, {"headers": ac_issues.get_headers()}
@@ -86,29 +87,29 @@ class APIAutoConf(AutoConfHandler):
                     return hopper_response
                 else:
                     update['device_id'] = hopper_response[1]
-            device = self._data_manager.get_resource('device', update['device_id'])
-            try:
-                has_ptc = device['settings']['ptc_login']
-            except KeyError:
-                has_ptc = False
-            has_ggl = False
+                    is_hopper = True
             search = {
-                'login_type': 'google',
-                'device_id': device.identifier
+                'device_id': update['device_id']
             }
-            ggl_accounts = self._data_manager.search('pogoauth', params=search)
-            if len(ggl_accounts) != 0:
-                has_ggl = True
-            if not self._args.autoconfig_no_auth and (not has_ggl and not has_ptc):
-                # Auto-assign a google account as one was not specified
+            has_auth = self._data_manager.search('pogoauth', params=search)
+            if not self._args.autoconfig_no_auth and (not has_auth):
+                device = self._data_manager.get_resource('device', update['device_id'])
+                try:
+                    auth_type = device['settings']['logintype']
+                except KeyError:
+                    auth_type = 'google'
+                # Find one that matches authtype
                 sql = "SELECT ag.`account_id`\n"\
                       "FROM `settings_pogoauth` ag\n"\
                       "WHERE ag.`device_id` IS NULL AND ag.`instance_id` = %s AND ag.`login_type` = %s"
-                account_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id, 'google'))
+                account_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id, auth_type))
                 if account_id is None:
                     return ('No configured emails', 400)
-                device['account_id'] = account_id
-                device.save()
+                auth = self._data_manager.get_resource('pogoauth', account_id)
+                auth['device_id'] = device.identifier
+                if is_hopper and auth_type != 'google':
+                    auth['login_type'] = auth_type
+                auth.save()
         where = {
             'session_id': session_id,
             'instance_id': self.dbc.instance_id
