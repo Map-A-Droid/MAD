@@ -22,7 +22,7 @@ class DataManager(object):
     def __init__(self, dbc: DbWrapper, instance_id: int):
         self.dbc = dbc
         self.instance_id = instance_id
-        self.__paused_devices = []
+        self.__paused_devices: List[int] = []
 
     def clear_on_boot(self) -> None:
         # This function should handle any on-boot clearing.  It is not initiated by __init__ on the off-chance that
@@ -149,15 +149,15 @@ class DataManager(object):
             valid_modes = sorted(modules.AREA_MAPPINGS.keys())
         return valid_modes
 
-    def set_device_state(self, dev_name: str, active: int) -> None:
+    def set_device_state(self, device_id: int, active: int) -> None:
         if active == 1:
             try:
-                self.__paused_devices.remove(dev_name)
+                self.__paused_devices.remove(device_id)
             except ValueError:
                 pass
         else:
-            if dev_name not in self.__paused_devices:
-                self.__paused_devices.append(dev_name)
+            if device_id not in self.__paused_devices:
+                self.__paused_devices.append(device_id)
 
-    def is_device_active(self, dev_name: str) -> bool:
-        return dev_name not in self.__paused_devices
+    def is_device_active(self, device_id: int) -> bool:
+        return device_id not in self.__paused_devices

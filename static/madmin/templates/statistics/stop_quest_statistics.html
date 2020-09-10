@@ -11,9 +11,9 @@
 <script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.flash.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.0/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
 <script>
     function setGrid(tableGridHtmlId, gridData, columns, defs) {
@@ -24,6 +24,7 @@
             "columns": columns,
             "ordering": true, "order": [],
             "columnDefs": defs,
+            "deferRender": true,
             "responsive": {{ responsive }},
             "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
             dom: 'Blfrtip',
@@ -171,7 +172,7 @@
 
 
     $(document).ready(function () {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+        loadingBlockUI("Loading");
         $('body').Aplus();
         $("#navgyms").addClass("active");
         $.ajax({

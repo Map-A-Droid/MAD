@@ -11,9 +11,9 @@
 <script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.flash.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.0/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
 <script>
     $(function () {
@@ -99,7 +99,7 @@
           }
       };
 
-      $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+        loadingBlockUI("Loading");
 
       $.ajax({
           "url": "get_game_stats_mon?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
@@ -113,7 +113,7 @@
 
               setGrid('#show-data-good-pokemon', good_spawns, [
                   { data: 'id', title: 'Mon-ID' },
-                  { data: null, title: 'Mon' },
+                  { data: 'name', title: 'Mon' },
                   { data: 'lvl', title: 'Level' },
                   { data: 'cp', title: 'CP' },
                   { data: 'periode', title: 'Scantime' }
@@ -122,7 +122,9 @@
                 {
                   "targets": [1],
                   "render": function (data, type, row) {
-                    return `<div class="media"><img class="mr-3" src="${row.img}" width="50"><div class="media-body">${row.name}</div></div>`
+                      return type === "display"
+                          ? `<div class="media"><img class="mr-3" src="${row.img}" width="48" height="48"><div class="media-body">${row.name}</div></div>`
+                          : data;
                   }
                 }
               ]);
@@ -144,7 +146,7 @@
               $("#flot_spawn").UseTooltip();
             },
             complete: function () {
-                setTimeout($.unblockUI, 100);
+                $.unblockUI();
             }
 
         });
@@ -252,6 +254,7 @@
             "columns": columns,
             "ordering": true, "order": [],
             "columnDefs": defs,
+            "deferRender": true,
             "responsive": {{ responsive }},
             "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
             dom: 'Blfrtip',
@@ -318,6 +321,8 @@
     }
     table.dataTable tr.odd { background-color: #F8F8F8; }
     table.dataTable tr.even { background-color: white; }
+    table.dataTable tr td { vertical-align: middle; }
+    table.dataTable tr td .media-body { margin: auto 0; }
 </style>
 {% endblock %}
 

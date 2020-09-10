@@ -10,7 +10,7 @@
 <script>
 $(document).ready(function () {
     $("#submit").click(function() {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        loadingBlockUI('Saving {{ subtab }}');
         save_data = get_save_data();
         if(isEmptyObj(save_data) != false) {
             alert('No changes have been made');

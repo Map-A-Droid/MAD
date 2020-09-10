@@ -39,7 +39,7 @@
         var fd = new FormData();
         fd.append('file', $('#file-input')[0].files[0]);
         fd.append('filename', $('#file-input')[0].files[0].name);
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Uploading APK...</h2>' });
+        loadingBlockUI("Uploading APK")
         $.ajax({
             url: url,
             type: 'POST',
@@ -65,7 +65,7 @@
 
     $(".search").click(function() {
         if(confirm('Are you sure you want to search for an updated APK?  Currently no locks so dont spam it :)')) {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Starting search...</h2>' });
+            loadingBlockUI("Starting search")
             rpc_call = {
               'call': 'search'
             }
@@ -93,7 +93,7 @@
 
     $(".bulk_update").click(function() {
         if(confirm('Are you sure you want to Update and Download every APK?')) {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Bulk Updating...</h2>' });
+            loadingBlockUI("Bulk Updating")
             rpc_call = {
               'call': 'search_download'
             }
@@ -120,7 +120,7 @@
     $(".delete").click(function() {
         if(confirm('Are you sure you want to delete this APK?')) {
             var elem =  $(this);
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting an APK...</h2>' });
+            loadingBlockUI("Deleting an APK")
             var apk_type = $(this).data('apk_type');
             var apk_arch = $(this).data('apk_arch');
             var url = '{{ url_for('api_madapk') }}/'+ apk_type +'/'+ apk_arch;
@@ -203,7 +203,7 @@
 
     function download_apk(){
         if(confirm('Are you sure you want to download the APK?')) {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Starting download...</h2>' });
+            loadingBlockUI("Starting download")
             rpc_call = {
               'call': 'import'
             }

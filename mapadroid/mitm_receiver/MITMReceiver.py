@@ -218,6 +218,8 @@ class MITMReceiver(Process):
             self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
                               methods_passed=['GET'])
 
+        self.__mitmreceiver_startup_time: float = time.time()
+
     def shutdown(self):
         logger.info("MITMReceiver stop called...")
         for i in range(self.__application_args.mitmreceiver_data_workers):
@@ -245,6 +247,7 @@ class MITMReceiver(Process):
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug2("Receiving proto")
         origin_logger.debug4("Proto data received {}", data)
+
         if isinstance(data, list):
             # list of protos... we hope so at least....
             origin_logger.debug2("Receiving list of protos")
@@ -264,11 +267,17 @@ class MITMReceiver(Process):
             origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
+        if proto_type not in (106, 102, 101, 104, 4, 156):
+            # trash protos - ignoring
+            return
+
         timestamp: float = data.get("timestamp", int(time.time()))
+        if self.__application_args.mitm_ignore_pre_boot is True and timestamp < self.__mitmreceiver_startup_time:
+            return
+
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
                 location_of_data.lng > 180 or location_of_data.lng < -180):
-            origin_logger.warning("Received invalid location in data: {}", location_of_data)
             location_of_data: Location = Location(0, 0)
         self.__mitm_mapper.update_latest(origin, timestamp_received_raw=timestamp,
                                          timestamp_received_receiver=time.time(), key=proto_type, values_dict=data,

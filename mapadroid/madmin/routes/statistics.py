@@ -5,7 +5,7 @@ from flask import (jsonify, render_template, request, redirect, url_for, flash)
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import auth_required, generate_coords_from_geofence, get_geofences
-from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv, form_mapper
+from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.language import get_mon_name
 from mapadroid.utils.logging import get_logger, LoggerEnums
@@ -44,7 +44,6 @@ class MADminStatistics(object):
             ("/get_spawnpoints_stats_summary", self.get_spawnpoints_stats_summary),
             ("/statistics_spawns", self.statistics_spawns),
             ("/shiny_stats", self.statistics_shiny),
-            ("/shiny_stats_data", self.shiny_stats_data),
             ("/delete_spawns", self.delete_spawns),
             ("/convert_spawns", self.convert_spawns),
             ("/spawn_details", self.spawn_details),
@@ -241,88 +240,6 @@ class MADminStatistics(object):
         stats = {'spawn': spawn, 'good_spawns': good_spawns}
         return jsonify(stats)
 
-    @auth_required
-    def shiny_stats_data(self):
-        # shiny hour
-
-        shiny_hour_temp = {}
-        shiny_hour_calc = {}
-        shiny_hour = []
-        data = self._db_stats_reader.get_shiny_stats_hour()
-        for dat in data:
-            if dat[1] not in shiny_hour_temp:
-                shiny_hour_temp[dat[1]] = dat[0]
-
-        for dat in shiny_hour_temp:
-            if shiny_hour_temp[dat] not in shiny_hour_calc:
-                shiny_hour_calc[shiny_hour_temp[dat]] = 0
-            shiny_hour_calc[shiny_hour_temp[dat]] += 1
-
-        for dat in sorted(shiny_hour_calc):
-            sht = ([self.utc2local(dat * 60 * 60) * 1000, shiny_hour_calc[dat]])
-            shiny_hour.append(sht)
-
-        shiny_stats = []
-        shiny_worker = {}
-        shiny_avg = {}
-        data = self._db_stats_reader.get_shiny_stats()
-        for dat in data:
-            form_suffix = "%02d" % form_mapper(dat[2], dat[5])
-            mon = "%03d" % dat[2]
-            mon_img = self.generate_mon_icon_url(dat[2], dat[8], dat[9])
-            mon_name = get_mon_name(dat[2])
-            diff: int = dat[0]
-            if diff == 0:
-                logger.warning('No deeper pokemon stats are possible - not enough data (check config.ini // '
-                               'game_stats_raw)')
-                diff = 1
-
-            ratio = round(dat[1] * 100 / diff, 2)
-            if dat[3] not in shiny_worker:
-                shiny_worker[dat[3]] = 0
-            shiny_worker[dat[3]] += dat[1]
-
-            if dat[2] not in shiny_avg:
-                shiny_avg[dat[2]] = {}
-            if dat[5] not in shiny_avg[dat[2]]:
-                shiny_avg[dat[2]][dat[5]] = {}
-                shiny_avg[dat[2]][dat[5]]['total_shiny'] = []
-                shiny_avg[dat[2]][dat[5]]['total_nonshiny'] = []
-
-            shiny_avg[dat[2]][dat[5]]['total_shiny'].append(dat[1])
-            shiny_avg[dat[2]][dat[5]]['total_nonshiny'].append(diff)
-
-            shiny_stats.append(
-                {'sum': dat[0], 'shiny': dat[1], 'img': mon_img, 'name': mon_name, 'ratio': ratio,
-                 'worker': dat[3], 'encounterid': dat[4],
-                 'periode': datetime.datetime.fromtimestamp
-                 (dat[6]).strftime(self._datetimeformat)})
-
-        shiny_stats_avg = []
-        for dat in shiny_avg:
-            for form_dat in shiny_avg[dat]:
-                form_suffix = "%02d" % form_mapper(dat, form_dat)
-                mon = "%03d" % dat
-                mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-                mon_name = get_mon_name(dat)
-
-                total_shiny_encounters = sum(shiny_avg[dat][form_dat]['total_shiny'])
-                total_nonshiny_encounters = sum(shiny_avg[dat][form_dat]['total_nonshiny'])
-                shiny_avg_click = round(total_nonshiny_encounters / total_shiny_encounters, 0)
-
-                shiny_stats_avg.append(
-                    {'name': mon_name, 'img': mon_img, 'total_shiny_encounters': total_shiny_encounters,
-                     'total_nonshiny_encounters': total_nonshiny_encounters,
-                     'click_for_shiny': shiny_avg_click})
-
-        shiny_stats_worker = []
-        for dat in shiny_worker:
-            shiny_stats_worker.append({'sum': shiny_worker[dat], 'worker': dat})
-
-        stats = {'shiny': shiny_stats, 'shiny_worker': shiny_stats_worker,
-                 'shiny_hour': shiny_hour, 'shiny_stats_avg': shiny_stats_avg}
-        return jsonify(stats)
-
     @logger.catch
     @auth_required
     def game_stats_shiny_v2(self):
@@ -349,9 +266,8 @@ class MADminStatistics(object):
 
         shiny_stats_v2 = []
         for dat in data:
-            form_suffix = "%02d" % form_mapper(dat[0], dat[1])
             mon = "%03d" % dat[0]
-            mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+            mon_img = self.generate_mon_icon_url(dat[0], dat[1])
             mon_name = get_mon_name(dat[0])
             mon_names[dat[0]] = mon_name
             found_shiny_mon_id.append(
@@ -385,9 +301,8 @@ class MADminStatistics(object):
         for dat in data:
             if dat[1] in shiny_count and dat[2] in shiny_count[dat[1]]:
                 odds = round(dat[0] / shiny_count[dat[1]][dat[2]], 0)
-                form_suffix = "%02d" % form_mapper(dat[1], dat[2])
                 mon = "%03d" % dat[1]
-                mon_img = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+                mon_img = self.generate_mon_icon_url(dat[1], dat[2])
                 global_shiny_stats_v2.append({'name': mon_names[dat[1]], 'count': dat[0], 'img': mon_img,
                                               'shiny': shiny_count[dat[1]][dat[2]], 'odds': odds,
                                               'mon_id': dat[1], 'form': dat[2], 'gender': dat[3],

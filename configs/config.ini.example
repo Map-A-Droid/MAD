@@ -31,6 +31,7 @@
 #mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
 #mitmreceiver_port:         # Highly recommended to change. Port to listen on for proto data (MITM data). Default: 8000.
 #mitmreceiver_data_workers: # Amount of workers to work off the data that queues up. Default: 2
+#mitm_ignore_pre_boot       # Ignore data from workers that was found before MAD (re)start. For bigger instances, when MITM data (...) falling behind on (re)start
 
 # Walk Settings
 ######################

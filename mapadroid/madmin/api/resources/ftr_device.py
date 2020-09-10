@@ -15,11 +15,9 @@ class APIDevice(ResourceHandler):
                 args = self.api_req.data.get('args', {})
                 if call == 'device_state':
                     active = args.get('active', 1)
-                    origin = resource['origin']
-                    self._data_manager.set_device_state(origin, active)
-                    if active == 0:
-                        self._mapping_manager.device_set_disabled(origin)
-                        self._ws_server.force_disconnect(origin)
+                    self._data_manager.set_device_state(int(identifier), active)
+                    self._mapping_manager.device_set_disabled(resource['origin'])
+                    self._ws_server.force_disconnect(resource['origin'])
                     return (None, 200)
                 elif call == 'flush_level':
                     resource.flush_level()
