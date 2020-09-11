@@ -12,7 +12,8 @@ function bulk_patch(uri, patch_data) {
       url : uri,
       data : JSON.stringify(patch_data),
       type : 'PATCH',
-      contentType : 'application/json'
+      contentType : 'application/json',
+      async: false
   });
 }
 function flush_level(uri, data) {
