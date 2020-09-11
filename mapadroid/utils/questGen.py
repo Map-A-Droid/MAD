@@ -138,7 +138,6 @@ def questtask(typeid, condition, target, quest_template):
         arr['poke'] = ""
         arr['different'] = ""
         arr['item'] = ""
-        arr['mega'] = ""
 
         text = _("Catch {0}{different} {type}Pokemon{wb}")
         match_object = re.search(r'"pokemon_type": \[([0-9, ]+)\]', condition)
@@ -209,6 +208,7 @@ def questtask(typeid, condition, target, quest_template):
     elif typeid == 14:
         text = _('Power up Pokemon {0} times')
     elif typeid == 15 or typeid == 43:
+        arr['mega'] = ""
         text = _("{mega}Evolve {0} Pokemon")
         if typeid == 43:
             arr['mega'] = _("Mega ")
