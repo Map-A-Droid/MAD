@@ -259,7 +259,7 @@ def form_mapper(mon_id, form_id):
 def is_mon_ditto(logger, pokemon_data):
     logger.debug3('Determining if mon is a ditto')
     logger.debug4(pokemon_data)
-    potential_dittos = [46, 163, 165, 167, 187, 223, 293, 316, 322, 399, 590]
+    potential_dittos = [46, 163, 167, 187, 223, 293, 316, 322, 399, 590]
     weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
     valid_atk = pokemon_data.get("individual_attack") < 4
     valid_def = pokemon_data.get("individual_defense") < 4
