@@ -99,7 +99,10 @@ def questreward(quest_reward_type):
 
 def questtype(quest_type):
     file = open_json_file('types')
-    return (file[str(quest_type)]['text'])
+    if str(quest_type) in file:
+        return file[str(quest_type)]['text']
+
+    return "Unknown quest type placeholder: {0}"
 
 
 def rewarditem(itemid):
@@ -135,6 +138,7 @@ def questtask(typeid, condition, target, quest_template):
         arr['poke'] = ""
         arr['different'] = ""
         arr['item'] = ""
+        arr['mega'] = ""
 
         text = _("Catch {0}{different} {type}Pokemon{wb}")
         match_object = re.search(r'"pokemon_type": \[([0-9, ]+)\]', condition)
@@ -204,19 +208,22 @@ def questtask(typeid, condition, target, quest_template):
                 1)]['name'].replace(_(' Berry'), '') + " "
     elif typeid == 14:
         text = _('Power up Pokemon {0} times')
-    elif typeid == 15:
-        text = _("Evolve {0} Pokemon")
+    elif typeid == 15 or typeid == 43:
+        text = _("{mega}Evolve {0} Pokemon")
+        if typeid == 43:
+            arr['mega'] = _("Mega ")
+
         for con in condition_dict:
             if con.get('type', 0) == 11:
-                text = _("Use an item to evolve {0} Pokemon")
+                text = _("Use an item to {mega}evolve {0} Pokemon")
                 # Try to find the exact evolution item needed
                 # [{"type": 11, "with_item": {"item": 1106}}]
                 with_item = con.get('with_item', {}).get('item', None)
                 if with_item is not None:
-                    text = _('Use {item} to evolve {0} Pokemon')
+                    text = _('Use {item} to {mega}evolve {0} Pokemon')
                     arr['item'] = items[str(with_item)]['name']
             if con.get('type', 0) == 1:
-                text = _("Evolve {0} {type}Pokemon")
+                text = _("{mega}Evolve {0} {type}Pokemon")
                 arr['wb'] = ""
                 arr['type'] = ""
                 arr['poke'] = ""
@@ -233,13 +240,12 @@ def questtask(typeid, condition, target, quest_template):
                             arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (
                                 _('-type ') if last == cur else '-, ')
                             cur += 1
-            if re.search(r'"type": 2', condition) is not None:
+            if con.get('type', 0) == 2:
                 arr['wb'] = ""
                 arr['type'] = ""
                 arr['poke'] = ""
 
-                match_object = re.search(
-                    r'"pokemon_ids": \[([0-9, ]+)\]', condition)
+                match_object = re.search(r'"pokemon_ids": \[([0-9, ]+)\]', condition)
                 if match_object is not None:
                     pt = match_object.group(1).split(', ')
                     last = len(pt)
@@ -251,7 +257,7 @@ def questtask(typeid, condition, target, quest_template):
                             arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + (
                                 '' if last == cur else ', ')
                             cur += 1
-                    text = _('Evolve {0} {poke}')
+                    text = _('{mega}Evolve {0} {poke}')
     elif typeid == 16:
         arr['inrow'] = ""
         arr['curve'] = ""
