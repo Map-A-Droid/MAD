@@ -396,3 +396,16 @@ div.columns div.dataTables_paginate li.next a:after,
 div.columns div.dataTables_paginate li.last a:after {
   top: 0;
 }
+
+select {
+  max-width: 100%
+}
+
+.dropdown:hover>.dropdown-menu {
+  display: block;
+}
+
+.dropdown>.dropdown-toggle:active {
+  /*Without this, clicking will make it sticky*/
+  pointer-events: none;
+}
