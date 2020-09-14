@@ -446,7 +446,8 @@ class WorkerQuests(MITMBase):
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère', 'Premium',
                      'Raid', 'Teil',
                      'Élément', 'mystérieux', 'Mysterious', 'Component', 'Mysteriöses', 'Remote', 'Fern',
-                     'Fern-Raid-Pass', 'Pass', 'Passe', 'distance')
+                     'Fern-Raid-Pass', 'Pass', 'Passe', 'distance', 'Remote Raid', 'Remote Pass',
+                     'Remote Raid Pass', 'Battle Pass', 'Premium Battle Pass', 'Premium Battle')
         x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
