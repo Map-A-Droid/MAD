@@ -49,20 +49,12 @@ class WordToScreenMatching(object):
         self._logintype = LoginType[self.get_devicesettings_value('logintype', 'google')]
         self._logger.info("Set logintype: {}", self._logintype)
         if self._logintype == LoginType.ptc:
-            temp_accounts = self.get_devicesettings_value('ptc_login', False)
+            temp_accounts = self.get_device_value('ptc_login', [])
             if not temp_accounts:
                 self._logger.warning('No PTC Accounts are set - hope we are login and never logout!')
                 self._accountcount = 0
                 return
-
-            temp_accounts = temp_accounts.replace(' ', '').split('|')
-            for account in temp_accounts:
-                ptc_temp = account.split(',')
-                if len(ptc_temp) != 2:
-                    self._logger.warning('Cannot use this account (Wrong format!): {}', account)
-                    continue
-                username = ptc_temp[0]
-                password = ptc_temp[1]
+            for username, password in temp_accounts:
                 self._PTC_accounts.append(Login_PTC(username, password))
             self._accountcount = len(self._PTC_accounts)
         else:
@@ -554,6 +546,17 @@ class WordToScreenMatching(object):
         if devicemappings is None:
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
+
+    def get_device_value(self, key: str, default_value: object = None):
+        self._logger.debug2("Fetching devicemappings")
+        try:
+            devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self.origin)
+        except (EOFError, FileNotFoundError) as e:
+            self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
+            return None
+        if devicemappings is None:
+            return default_value
+        return devicemappings.get(key, default_value)
 
     def censor_account(self, emailaddress, is_ptc=False):
         # PTC account

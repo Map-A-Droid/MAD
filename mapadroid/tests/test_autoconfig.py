@@ -3,7 +3,6 @@ from functools import wraps
 import json
 from typing import Any
 from unittest import TestCase
-import mapadroid.tests.test_variables as global_variables
 from mapadroid.tests.test_utils import get_connection_api, get_connection_mitm, ResourceCreator, GetStorage
 from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.utils.autoconfig import AutoConfIssues
@@ -52,18 +51,18 @@ def basic_autoconf(func) -> Any:
                 res = self.mitm.post('/autoconfig/register')
                 self.assertTrue(res.status_code == 201)
                 session_id = res.content.decode('utf-8')
+                # Create device
+                (dev_info, _) = api_creator.create_valid_resource('device')
                 # Create Google Account
                 gacc = {
                     "login_type": "google",
                     "username": "Unit",
-                    "password": "Test"
+                    "password": "Test",
+                    "device_id": dev_info['uri']
                 }
                 res = self.api.post('/api/pogoauth', json=gacc)
-                gacct = res.headers['X-URI']
                 self.assertTrue(res.status_code == 201)
-                dev_payload = copy.copy(global_variables.DEFAULT_OBJECTS['device']['payload'])
-                dev_payload['account_id'] = gacct
-                (dev_info, _) = api_creator.create_valid_resource('device', payload=dev_payload)
+                gacct = res.headers['X-URI']
                 accept_info = {
                     'status': 1,
                     'device_id': dev_info['uri']

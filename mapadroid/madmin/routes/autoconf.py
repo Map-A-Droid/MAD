@@ -63,7 +63,7 @@ class AutoConfigManager(object):
         if not session:
             return redirect(url_for('autoconfig_pending'), code=302)
         return render_template('autoconfig_logs.html',
-                               subtab="autoconf_logs",
+                               subtab="autoconf_dev",
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                session_id=session_id
                                )
@@ -139,7 +139,7 @@ class AutoConfigManager(object):
             return redirect(url_for('autoconfig_pending'), code=302)
         sql = "SELECT ag.`account_id`, ag.`username`\n"\
               "FROM `settings_pogoauth` ag\n"\
-              "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
+              "LEFT JOIN `settings_device` sd ON sd.`device_id` = ag.`device_id`\n"\
               "WHERE ag.`instance_id` = %s AND (sd.`device_id` IS NULL OR sd.`device_id` = %s)"
         ac_issues = AutoConfIssueGenerator(self._db, self._data_manager, self._args, self._storage_obj)
         _, issues_critical = ac_issues.get_issues()

@@ -40,7 +40,8 @@ MAD_UPDATES = OrderedDict([
     (33, 'routecalc_rename'),
     (34, 'trs_stats_detect_raw_split'),
     (35, 'madrom_autoconfig'),
-    (36, 'pokemon_iv_index')
+    (36, 'pokemon_iv_index'),
+    (37, 'move_ptc_accounts'),
 ])
 
 
