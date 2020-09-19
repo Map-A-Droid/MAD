@@ -264,10 +264,6 @@ class AutoConfigCreator:
                     invalid.append((self.host_field, "Routable address from outside the server"))
         except KeyError:
             pass
-        try:
-            self.contents['user_id'] = self.contents['user_id'].lower()
-        except KeyError:
-            pass
         issues = {}
         if missing:
             issues['missing'] = missing

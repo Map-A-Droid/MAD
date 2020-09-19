@@ -73,3 +73,16 @@ class APIPogoAuth(api_base.APITestBase):
         response = self.api.delete(pogoauth_obj['uri'])
         self.assertEqual(response.status_code, 412)
         self.remove_resources()
+
+    def test_case_sensitivity_google(self):
+        payload = copy.copy(APIPogoAuth.base_payload)
+        payload["username"] = "POGOAUTH@gmail.com"
+        elem, response = self.creator.create_valid_resource("pogoauth", payload=payload)
+        self.assertTrue(response.json()["username"] == payload["username"].lower())
+
+    def test_case_sensitivity_ptc(self):
+        payload = copy.copy(APIPogoAuth.base_payload)
+        payload["username"] = "POGOAUTH"
+        payload["login_type"] = "ptc"
+        elem, response = self.creator.create_valid_resource("pogoauth", payload=payload)
+        self.assertTrue(response.json()["username"] == payload["username"])
