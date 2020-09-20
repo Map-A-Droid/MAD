@@ -401,6 +401,14 @@ class Device(Resource):
                 continue
             if not re.match("[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", data[field].lower()):
                 bad_macs.append((field, 'Invalid MAC address'))
+                continue
+            search = {
+                field: data[field]
+            }
+            in_use = self._data_manager.search('device', params=search)
+            for dev_id, device in in_use.items():
+                if dev_id != self.identifier:
+                    bad_macs.append((field, 'MAC in use'))
         if bad_macs:
             issues['invalid'] += bad_macs
 

@@ -6,6 +6,7 @@ import unittest
 from mapadroid.tests.test_utils import get_connection_api, get_connection_mitm, ResourceCreator, GetStorage
 from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.utils.autoconfig import AutoConfIssues
+from mapadroid.tests import test_variables
 
 
 args = parse_args()
@@ -287,3 +288,16 @@ class MITMAutoConf(unittest.TestCase):
                 self.api.delete('/api/autoconf/rgc')
                 self.api.delete('/api/autoconf/pd')
                 api_creator.remove_resources()
+
+    def test_duplicate_mac_update(self):
+        api_creator = ResourceCreator(self.api)
+        payload = copy.copy(test_variables.DEFAULT_OBJECTS['device']['payload'])
+        payload['mac_address'] = '00:1F:F3:00:1F:F3'
+        api_creator.create_valid_resource('device', payload=payload)
+        (dev_update, _) = api_creator.create_valid_resource('device')
+        dev_info = self.api.get(dev_update['uri']).json()
+        headers = {
+            'Origin': dev_info['origin']
+        }
+        res = self.mitm.post('/autoconfig/mymac', headers=headers, data=payload['mac_address'])
+        self.assertTrue(res.status_code == 422)

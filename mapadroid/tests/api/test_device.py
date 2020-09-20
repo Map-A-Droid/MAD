@@ -86,3 +86,10 @@ class APIDevice(api_base.APITestBase):
         self.assertTrue(res.status_code == 422)
         self.assertTrue('invalid' in res.json())
         self.assertTrue(res.json()['invalid'][0][0] == 'ggl_login')
+
+    def test_duplicate_mac(self):
+        payload = copy.copy(global_variables.DEFAULT_OBJECTS['device']['payload'])
+        payload['mac_address'] = '00:1F:F3:00:1F:F3'
+        super().create_valid_resource('device', payload=payload)
+        res = self.api.post(global_variables.DEFAULT_OBJECTS['device']['uri'], json=payload)
+        self.assertTrue(res.status_code == 422)

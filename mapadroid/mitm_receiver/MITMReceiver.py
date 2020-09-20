@@ -19,6 +19,7 @@ from mapadroid.utils.logging import LogLevelChanger, get_logger, LoggerEnums, ge
 from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version, APKType
 from threading import RLock
 from mapadroid.utils.autoconfig import origin_generator, RGCConfig, PDConfig
+from mapadroid.data_manager.dm_exceptions import UpdateIssue
 
 
 logger = get_logger(LoggerEnums.mitm)
@@ -507,9 +508,12 @@ class MITMReceiver(Process):
                     log_data['msg'] = 'No MAC provided during MAC assignment'
                     self.autoconfig_log(**log_data)
                 return Response(status=400, response='No MAC provided')
-            device['mac_address'] = data
-            device.save()
-            return Response(status=200)
+            try:
+                device['mac_address'] = data
+                device.save()
+                return Response(status=200)
+            except UpdateIssue:
+                return Response(status=422)
         else:
             return Response(status=405)
 
