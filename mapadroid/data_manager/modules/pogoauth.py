@@ -102,6 +102,12 @@ class PogoAuth(Resource):
             dependencies[ind] = ('device', device_id)
         return dependencies
 
+    def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
+        self.presave_validation(ignore_issues=ignore_issues)
+        if self["login_type"] == "google":
+            self["username"] = self["username"].lower()
+        return super().save(force_insert=force_insert, ignore_issues=ignore_issues)
+
     def validate_custom(self):
         issues = []
         if 'device_id' in self and self['device_id'] is not None:
