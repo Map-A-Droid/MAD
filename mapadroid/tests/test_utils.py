@@ -135,7 +135,7 @@ class GetStorage(object):
             APKArch.arm64_v8a: None,
         }
         # determine supported pogo versions
-        with open('configs/addresses.json', 'rb') as fh:
+        with open('configs/version_codes.json', 'rb') as fh:
             data = json.load(fh)
             for version in list(data.keys()):
                 version_info = version.rsplit('_')
