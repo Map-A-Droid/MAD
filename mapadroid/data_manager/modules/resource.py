@@ -2,6 +2,7 @@ import copy
 from collections import UserDict
 import mysql
 from ..dm_exceptions import DependencyError, SaveIssue, UnknownIdentifier, UpdateIssue
+from ..resource_search import get_search, SearchType
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
@@ -421,16 +422,20 @@ class Resource(object):
         param_args = [instance_id]
         for search_key, search_value in kwargs.items():
             valid = False
-            if search_key in cls.configuration['fields']:
+            search_field, search_type = get_search(search_key)
+            if search_field in cls.configuration['fields']:
                 valid = True
-            if search_key in cls.translations:
-                search_key = cls.translations[search_key]
+            if search_field in cls.translations:
+                search_field = cls.translations[search_field]
                 valid = True
             if valid:
-                sql += " AND `%s` LIKE %%s"
-                args.append(search_key)
-                # TODO - Better handling for this to us .eq, .like, etc
-                param_args.append("%%{}%%".format(search_value))
+                if search_type == SearchType.eq:
+                    sql += " AND `%s` = %%s"
+                elif search_type == SearchType.like:
+                    sql += " AND `%s` LIKE %%s"
+                    search_value = "%%{}%%".format(search_value)
+                args.append(search_field)
+                param_args.append(search_value)
         if res_obj.search_field is not None:
             sql += "\nORDER BY `%s` ASC" % (res_obj.search_field)
         return dbc.autofetch_column(sql % tuple(args), args=tuple(param_args))

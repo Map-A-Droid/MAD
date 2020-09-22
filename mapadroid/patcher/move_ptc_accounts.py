@@ -35,7 +35,7 @@ class Patch(PatchBase):
             self._db.execute(sql, raise_exc=True, suppress_log=True, commit=True)
         # Move PTC
         if self._schema_updater.check_column_exists('settings_device', 'ptc_login'):
-            sql = "SELECT `device_id`, `ptc_login`\n"\
+            sql = "SELECT `device_id`, `ptc_login`, `instance_id`\n"\
                   "FROM `settings_device`\n"\
                   "WHERE `ptc_login` IS NOT NULL"
             ptc_logins = self._db.autofetch_all(sql)
@@ -53,7 +53,7 @@ class Patch(PatchBase):
                             'password': password,
                             'device_id': device_id,
                             'login_type': 'ptc',
-                            'instance_id': self._db.instance_id
+                            'instance_id': logins['instance_id']
                         }
                         try:
                             self._db.autoexec_insert('settings_pogoauth', auth_data)
