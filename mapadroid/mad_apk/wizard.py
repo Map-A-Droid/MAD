@@ -304,7 +304,7 @@ class APKWizard(object):
             APKArch.armeabi_v7a: None,
             APKArch.arm64_v8a: None
         }
-        gh_resp = requests.get(global_variables.ADDRESSES_GITHUB)
+        gh_resp = requests.get(global_variables.VERSIONCODES_URL)
         for ver_identifier in gh_resp.json().keys():
             version, arch = ver_identifier.split('_')
             named_arch = APKArch.armeabi_v7a if arch == '32' else APKArch.arm64_v8a
