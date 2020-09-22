@@ -174,9 +174,6 @@ class MITMReceiver(Process):
         self.__storage_obj = storage_obj
         self._data_queue: JoinableQueue = data_queue
         self.app = Flask("MITMReceiver")
-        self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
-                          handler=self.get_addresses,
-                          methods_passed=['GET'])
         self.add_endpoint(endpoint='/mad_apk/<string:apk_type>',
                           endpoint_name='mad_apk/info',
                           handler=self.mad_apk_info,
@@ -308,11 +305,6 @@ class MITMReceiver(Process):
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
                     "lvl_mode": level_mode}
         return json.dumps(response)
-
-    def get_addresses(self, origin, data):
-        with open('configs/addresses.json') as f:
-            address_object = json.load(f)
-        return json.dumps(address_object)
 
     def status(self, origin, data):
         origin_return: dict = {}
