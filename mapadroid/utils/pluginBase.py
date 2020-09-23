@@ -132,9 +132,9 @@ class PluginCollection(object):
         zipobj = zipfile.ZipFile(plugin_file_temp, 'w', zipfile.ZIP_DEFLATED)
         rootlen = len(folder) + 1
         for base, _, files in os.walk(folder):
-            if "__pycache__" not in base:
+            if "__pycache__" not in base and "/." not in base:
                 for file_to_zip in files:
-                    if file_to_zip != "plugin.ini":
+                    if file_to_zip != "plugin.ini" and not file_to_zip.startswith("."):
                         fn = os.path.join(base, file_to_zip)
                         zipobj.write(fn, fn[rootlen:])
 
