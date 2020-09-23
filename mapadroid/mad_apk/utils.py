@@ -6,7 +6,7 @@ from typing import Tuple, Union, Generator
 from .apk_enums import APKArch, APKType, APKPackage
 from .abstract_apk_storage import AbstractAPKStorage
 from .custom_types import MADapks, MADPackage, MADPackages
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, ADDRESSES_GITHUB
+from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
@@ -280,14 +280,14 @@ def supported_pogo_version(architecture: APKArch, version: str) -> bool:
     else:
         bits = '64'
     try:
-        with open('configs/addresses.json') as fh:
+        with open('configs/version_codes.json') as fh:
             address_object = json.load(fh)
             composite_key = '%s_%s' % (version, bits,)
             address_object[composite_key]
             valid = True
     except KeyError:
         try:
-            requests.get(ADDRESSES_GITHUB).json()[composite_key]
+            requests.get(VERSIONCODES_URL).json()[composite_key]
             valid = True
         except KeyError:
             pass

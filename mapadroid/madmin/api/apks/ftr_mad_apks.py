@@ -115,5 +115,9 @@ class APIMadAPK(APKHandler):
         if type(resp) == flask.Response:
             return resp
         if resp:
+            del_where = {
+                "usage": apk_type.value
+            }
+            self.dbc.autoexec_delete("mad_apk_autosearch", del_where)
             return (None, 202)
         return (None, 404)
