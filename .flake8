@@ -1,4 +1,4 @@
 [flake8]
-exclude = venv,.git,mapadroid/utils/questGen.py,scripts
-ignore = E402,W504
+exclude = venv,.git,mapadroid/utils/questGen.py,scripts,configs,APK
+ignore = E402,W504,W503
 max-line-length = 120
