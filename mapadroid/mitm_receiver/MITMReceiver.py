@@ -6,7 +6,7 @@ import sys
 import time
 import io
 from multiprocessing import JoinableQueue, Process
-from typing import Any, Union, Optional
+from typing import Any, Dict, Union, Optional
 
 from flask import Flask, Response, request, send_file
 from gevent.pywsgi import WSGIServer
@@ -174,6 +174,9 @@ class MITMReceiver(Process):
         self.__storage_obj = storage_obj
         self._data_queue: JoinableQueue = data_queue
         self.app = Flask("MITMReceiver")
+        self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
+                          handler=self.get_addresses,
+                          methods_passed=['GET'])
         self.add_endpoint(endpoint='/mad_apk/<string:apk_type>',
                           endpoint_name='mad_apk/info',
                           handler=self.mad_apk_info,
@@ -305,6 +308,15 @@ class MITMReceiver(Process):
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
                     "lvl_mode": level_mode}
         return json.dumps(response)
+
+    # TODO - Deprecate this function as it does not return useful addresses
+    def get_addresses(self, origin, data):
+        supported: Dict[str, Dict] = {}
+        with open('configs/version_codes.json', 'rb') as fh:
+            data = json.load(fh)
+            for key in data.keys():
+                supported[key] = {}
+        return json.dumps(supported)
 
     def status(self, origin, data):
         origin_return: dict = {}
