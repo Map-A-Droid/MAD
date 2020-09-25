@@ -53,6 +53,22 @@ class MADmin(object):
     def __init__(self, args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
                  device_updater, jobstatus, storage_obj):
         app.add_template_global(name='app_config_mode', f=args.config_mode)
+        # Determine if there are duplicate MACs
+        sql = "SELECT count(*) > 0\n"\
+              "FROM `settings_device`\n"\
+              "GROUP BY `mac_address`\n"\
+              "HAVING count(*) > 1 AND `mac_address` IS NOT NULL"
+        dupe_mac = db_wrapper.autofetch_value(sql)
+        if dupe_mac:
+            sql = "SELECT `mac_address`, GROUP_CONCAT(`name`) AS 'origins'\n"\
+                  "FROM `settings_device`\n"\
+                  "GROUP BY `mac_address`\n"\
+                  "HAVING count(*) > 1 AND `mac_address` IS NOT NULL"
+            macs = db_wrapper.autofetch_all(sql)
+            for mac in macs:
+                logger.warning("Duplicate MAC `{}` detected on devices {}", mac["mac_address"], mac["origins"])
+            app.add_template_global(name='app_dupe_macs_devs', f=macs)
+        app.add_template_global(name='app_dupe_macs', f=bool(dupe_mac))
         self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
         self._app = app
