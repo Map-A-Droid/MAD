@@ -138,6 +138,9 @@
     <center>
       <i class="fas fa-exclamation-triangle"></i>Duplicate MAC addresses detected assigned to devices. This will cause
       issues and it will not be apparent whats broken. This is only checked on MAD startup<i class="fas fa-exclamation-triangle"></i>
+      {% for dupe in app_dupe_macs_devs %}
+      <br>{{ dupe.mac_address }}: {{ dupe.origins }}
+      {% endfor %}
     </center>
   </div>
   {% endif %}
