@@ -9,7 +9,7 @@
 
 ![MAD-Banner](https://maddev.eu/wp-content/uploads/2020/01/banner_small_web.png)
 
-Map'A'Droid is a scanner for PoGo based on Android devices.
+Map'A'Droid is a scanner for PoGo based on Android devices .
 
 ## Information
 
