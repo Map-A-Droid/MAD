@@ -323,8 +323,11 @@ class MITMReceiver(Process):
         supported: Dict[str, Dict] = {}
         with open(path, 'rb') as fh:
             data = json.load(fh)
-            for key in data.keys():
-                supported[key] = {}
+            for key, value in data.items():
+                if type(value) is dict:
+                    supported[key] = value
+                else:
+                    supported[key] = {}
         return json.dumps(supported)
 
     def status(self, origin, data):
