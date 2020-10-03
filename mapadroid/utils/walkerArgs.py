@@ -37,7 +37,6 @@ def parse_args():
                         is_config_file=True, help='Set configuration file')
     parser.add_argument('-asi', '--apk_storage_interface', default='fs', help='APK Storage Interface')
 
-
     # MySQL
     # TODO - Depercate this
     parser.add_argument('-dbm', '--db_method', required=False, default="rm",
@@ -55,7 +54,6 @@ def parse_args():
     parser.add_argument('-dbps', '--db_poolsize', type=int, default=2,
                         help='Size of MySQL pool (open connections to DB). Default: 2')
 
-
     # Websocket Settings (RGC receiver)
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,
                         help='IP for websocket to listen on. Default: 0.0.0.0')
@@ -63,7 +61,6 @@ def parse_args():
                         help='Port of the websocket to listen on. Default: 8080')
     parser.add_argument('-wsct', '--websocket_command_timeout', required=False, type=int, default=30,
                         help='The max time to wait for a command to return (in seconds). Default: 30 seconds')
-
 
     # MITM Receiver (PD receiver)
     parser.add_argument('-mrip', '--mitmreceiver_ip', required=False, default="0.0.0.0", type=str,
@@ -77,14 +74,13 @@ def parse_args():
     parser.add_argument('-mspass', '--mitm_status_password', default='',
                         help='Header Authorization password for MITM /status/ page')
 
-
     # Walk Settings
     parser.add_argument('--enable_worker_specific_extra_start_stop_handling', default=False,
-                        help='Option to enable/disable extra handling for the start/stop routine of workers. Default: False')
+                        help='Option to enable/disable extra handling for the start/stop routine of workers. Default: '
+                        'False')
     parser.add_argument('-mvd', '--maximum_valid_distance', required=False, type=int, default=50,
                         help='The maximum distance for a scan of a location to be considered a valid/correct scan of'
                              ' that location in meters. Default: 50m')
-
 
     # Job Processor
     parser.add_argument('-jobdtwh', '--job_dt_wh', action='store_true', default=False,
@@ -99,7 +95,6 @@ def parse_args():
                         help='Restart job if device is not connected (in minutes). Default: 0 (Off)')
     parser.add_argument('-jtc', '--job_thread_count', type=int, default=2,
                         help='Amount of threads to work off the device jobs. Default: 2')
-
 
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=True,
@@ -118,7 +113,6 @@ def parse_args():
     parser.add_argument('-ut', '--unit_tests', action='store_true', default=False,
                         help='Run unit tests then quit', dest='unit_tests')
 
-
     # Path Settings
     parser.add_argument('-tmp', '--temp_path', default='temp',
                         help='Temp Folder for OCR Scanning. Default: temp')
@@ -135,7 +129,6 @@ def parse_args():
                         default=os.getenv('MAD_CONFIG', os.path.join(mapadroid.MAD_ROOT, 'configs/mappings.json')),
                         help='Set mappings file')
 
-
     # other settings
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
@@ -147,7 +140,6 @@ def parse_args():
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
     parser.add_argument('-L', '--language', default='en',
                         help=('Set Language for MadMin / Quests. Default: en'))
-
 
     # MADmin
     parser.add_argument('-wm', '--disable_madmin', action='store_true', default=False,
@@ -176,7 +168,6 @@ def parse_args():
     parser.add_argument('--quest_stats_fences', default="",
                         help="Comma separated list of geofences for stop/quest statistics (Empty: all)")
 
-
     # Statistics
     parser.add_argument('-stat', '--statistic', action='store_true', default=False,
                         help='Activate system statistics (Default: False)')
@@ -184,7 +175,6 @@ def parse_args():
                         help='Store collected objects (garbage collector) (Default: False)')
     parser.add_argument('-stiv', '--statistic_interval', default=60, type=int,
                         help='Store new local stats every N seconds (Default: 60)')
-
 
     # Game Stats
     parser.add_argument('-ggs', '--game_stats', action='store_true', default=False,
@@ -196,7 +186,6 @@ def parse_args():
     parser.add_argument('-rds', '--raw_delete_shiny', default=0,
                         help='Delete shiny mon in raw stats older then x days (0 =  Disable (Default))')
 
-
     # ADB
     parser.add_argument('-adb', '--use_adb', action='store_true', default=False,
                         help='Use ADB for "device control" (Default: False)')
@@ -204,7 +193,6 @@ def parse_args():
                         help='IP address of ADB server (Default: 127.0.0.1)')
     parser.add_argument('-adpservprt', '--adb_server_port', type=int, default=5037,
                         help='Port of ADB server (Default: 5037)')
-
 
     # Webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
@@ -232,20 +220,16 @@ def parse_args():
                         help='Activate quest webhook support')
     parser.add_argument('-qwhf', '--quest_webhook_flavor', choices=['default', 'poracle'], default='default',
                         help='Webhook format for Quests: default or poracle compatible')
-
-
     parser.add_argument('-whst', '--webhook_start_time', default=0,
                         help='Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.')
     parser.add_argument('-whmps', '--webhook_max_payload_size', default=0, type=int,
                         help='Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)')
-
 
     # Dynamic Rarity
     parser.add_argument('-rh', '--rarity_hours', type=int, default=72,
                         help='Set the number of hours for the calculation of pokemon rarity (Default: 72)')
     parser.add_argument('-ruf', '--rarity_update_frequency', type=int, default=60,
                         help='Update frequency for dynamic rarity in minutes (Default: 60)')
-
 
     # Logging
     parser.add_argument('--no_file_logs', action='store_true', default=False,
@@ -282,8 +266,6 @@ def parse_args():
                         help=("Disable colored logs."))
     parser.set_defaults(DEBUG=False)
 
-
-
     # MADAPKs
     parser.add_argument('-td', '--token_dispenser', default=default_tokenfile,
                         help='Token dispenser config (MAD)')
@@ -295,12 +277,10 @@ def parse_args():
                         help='Google Mail Password for interacting with the Google Play Store.  Must be an app'
                         ' password or 2fa will be triggered (this should be enabled on your account anyways')
 
-
     # Auto-Configuration
     parser.add_argument('-acna', '--autoconfig_no_auth', action='store_true', default=False,
                         help='MAD PoGo auth is not required during autoconfiguration',
                         dest='autoconfig_no_auth')
-
 
     args = parser.parse_args()
     # Allow status name and date formatting in log filename.
