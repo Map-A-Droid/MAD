@@ -175,8 +175,6 @@ def parse_args():
                         help='Define when a spawnpoint is out of date (in days). Default: 3.')
     parser.add_argument('--quest_stats_fences', default="",
                         help="Comma separated list of geofences for stop/quest statistics (Empty: all)")
-    parser.add_argument('-advcfg', '--advanced_config', default=True, type=bool,
-                        help='Basically unusued: enables additional information to be modified when working with areas')
 
 
     # Statistics

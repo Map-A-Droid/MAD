@@ -67,7 +67,6 @@
 #mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
 
 
-
 # other settings
 ######################
 #weather                     # Detect weather - if your frontend support this!
@@ -90,8 +89,6 @@
 #quests_public               # Enables MADmin /quests_pub, /get_quests, and pushassets endpoints for public quests overview
 #outdated_spawnpoints:       # Define when a spawnpoint is out of date (in days). Default: 3.
 #quest_stats_fences:         # Comma separated list of geofences names to use for Quest/Stop Stats page (Empty: all)
-#advanced_config             # Enables additional settings when creating and editing areas
-
 
 
 # Statistics
