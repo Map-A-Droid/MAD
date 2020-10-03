@@ -78,7 +78,7 @@
 
 # MADmin
 ######################
-#with_madmin                 # Start Madmin
+#disable_madmin              # Disable Madmin on the instance
 #madmin_base_path            # Base path for madmin
 #madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
 #madmin_port:                # Highly recommended to change. MADmin web port (Default: 5000)

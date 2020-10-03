@@ -150,8 +150,8 @@ def parse_args():
 
 
     # MADmin
-    parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
-                        help='Start madmin as instance.')
+    parser.add_argument('-wm', '--disable_madmin', action='store_true', default=False,
+                        help='Disable Madmin on the instance')
     parser.add_argument('-mmbp', '--madmin_base_path', default='/',
                         help='Base path for madmin')
     parser.add_argument('-mmip', '--madmin_ip', default='0.0.0.0',
