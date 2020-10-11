@@ -26,7 +26,7 @@ class DevicePool(Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after reaching destination with the speed given (Default: 7.0)",
+                    "description": "Delay in seconds after reaching destination with the speed given (Default: 0)",
                     "expected": float
                 }
             },
@@ -34,7 +34,7 @@ class DevicePool(Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after a teleport. (Default: 7.0)",
+                    "description": "Delay in seconds after teleport (Default: 0)",
                     "expected": float
                 }
             },
@@ -206,7 +206,7 @@ class DevicePool(Resource):
             "screendetection": {
                 "settings": {
                     "type": "option",
-                    "values": [None, False, True],
+                    "values": [True, False],
                     "require": False,
                     "description": "Use this argument if there are login/logout problems with this device or you want "
                                    "to levelup accounts  (Default: False)",

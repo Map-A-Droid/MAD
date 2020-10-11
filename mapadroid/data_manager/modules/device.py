@@ -112,7 +112,7 @@ class Device(Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after reaching destination with the speed given (Default: 7.0)",
+                    "description": "Delay in seconds after reaching destination with the speed given (Default: 0)",
                     "expected": float
                 }
             },
@@ -120,7 +120,7 @@ class Device(Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after teleport (Default: 7.0)",
+                    "description": "Delay in seconds after teleport (Default: 0)",
                     "expected": float
                 }
             },
