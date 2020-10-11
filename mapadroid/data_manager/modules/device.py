@@ -204,7 +204,7 @@ class Device(Resource):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [True, False],
+                    "values": [None, True, False],
                     "description": "Reboot device if reboot_thresh is reached (Default: True)",
                     "expected": bool
                 }
@@ -282,7 +282,7 @@ class Device(Resource):
             "screendetection": {
                 "settings": {
                     "type": "option",
-                    "values": [True, False],
+                    "values": [None, True, False],
                     "require": False,
                     "description": "Use this argument if there are login/logout problems with this device or you want "
                                    "to levelup accounts  (Default: True)",
