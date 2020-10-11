@@ -256,11 +256,11 @@ def parse_args():
                         help='Defines directory to save created madmin map geofence files',
                         default='configs/geofences')
 
-    parser.add_argument('-jtc', '--job_thread_count', type=int, default=2,
-                        help='Amount of threads to work off the device jobs. Default: 2.')
+    parser.add_argument('-jtc', '--job_thread_count', type=int, default=1,
+                        help='Amount of threads to work off the device jobs. Default: 1')
 
     parser.add_argument('-ods', '--outdated_spawnpoints', type=int, default=3,
-                        help='Define when a spawnpoint is out of date (in days). Default: 3.')
+                        help='Define when a spawnpoint is out of date (in days). Default: 3')
 
     # etc
 
