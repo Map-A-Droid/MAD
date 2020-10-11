@@ -62,9 +62,9 @@ class AreaMonMITM(Area):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [False, True],
+                    "values": [True, False],
                     "description": "Scan all spawnpoints [true] or just ones with unknown endtimes [false] "
-                                   "(Default: False)",
+                                   "(Default: True)",
                     "expected": bool
                 }
             }

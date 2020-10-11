@@ -405,7 +405,7 @@ class MappingManager:
                                                                  name=area.get("name", "unknown"),
                                                                  level=area.get("level", False),
                                                                  coords_spawns_known=area.get(
-                                                                     "coords_spawns_known", False),
+                                                                     "coords_spawns_known", True),
                                                                  routefile=route_resource,
                                                                  calctype=calc_type,
                                                                  joinqueue=self.join_routes_queue,
@@ -417,7 +417,7 @@ class MappingManager:
             logger.info("Initializing area {}", area["name"])
             if mode not in ("iv_mitm", "idle") and calc_type != "routefree":
                 coords = self.__fetch_coords(mode, geofence_helper,
-                                             coords_spawns_known=area.get("coords_spawns_known", False),
+                                             coords_spawns_known=area.get("coords_spawns_known", True),
                                              init=area.get("init", False),
                                              range_init=mode_mapping.get(mode, {}).get("range_init", 630),
                                              including_stops=area.get("including_stops", False),
@@ -501,7 +501,7 @@ class MappingManager:
             devices[device["origin"]] = device_dict
         return devices
 
-    def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
+    def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = True,
                        init: bool = False, range_init: int = 630, including_stops: bool = False,
                        include_event_id=None) -> List[Location]:
         coords: List[Location] = []
