@@ -166,15 +166,6 @@ class Device(Resource):
                     "expected": int
                 }
             },
-            "delay_after_hatch": {
-                "settings": {
-                    "type": "text",
-                    "require": False,
-                    "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses"
-                                   " do not necessarily appear immediately. (Default: 3.5)",
-                    "expected": float
-                }
-            },
             "inventory_clear_rounds": {
                 "settings": {
                     "type": "text",

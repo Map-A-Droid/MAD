@@ -82,11 +82,6 @@ def parse_args():
                             'round. Default: 0.2'))
     parser.add_argument('--initial_restart', default=True,
                         help='Option to enable/disable the initial Pogo restart when scanner starts')
-    # TODO: move to area mappings
-    parser.add_argument('-dah', '--delay_after_hatch', required=False, type=float, default=3.5,
-                        help=(
-                            'The delay in minutes to wait after an egg has hatched to move to the location of the '
-                            'gym. Default: 3.5'))
     parser.add_argument('--enable_worker_specific_extra_start_stop_handling', default=False,
                         help='Option to enable/disable extra handling for the start/stop routine of workers')
     parser.add_argument('-mvd', '--maximum_valid_distance', required=False, type=int, default=50,

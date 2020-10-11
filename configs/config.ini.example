@@ -36,7 +36,6 @@
 # Walk Settings
 ######################
 #initial_restart:            # Initial Pogo restart when scanner starts. (Default: true)
-#delay_after_hatch:          # Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)
 
 # path settings
 ######################
