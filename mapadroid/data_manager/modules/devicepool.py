@@ -127,9 +127,8 @@ class DevicePool(Resource):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [None, False, True],
-                    "description": "Reboot device if reboot_thresh is reached.  This value is doubled when init is "
-                                   "active (Default: False)",
+                    "values": [True, False],
+                    "description": "Reboot device if reboot_thresh is reached. (Default: True)",
                     "expected": bool
                 }
             },

@@ -213,8 +213,8 @@ class Device(Resource):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [None, False, True],
-                    "description": "Reboot device if reboot_thresh is reached (Default: False)",
+                    "values": [True, False],
+                    "description": "Reboot device if reboot_thresh is reached (Default: True)",
                     "expected": bool
                 }
             },
