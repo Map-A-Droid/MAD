@@ -137,7 +137,7 @@ class WordToScreenMatching(object):
         elif self._nextscreen != ScreenType.UNDEFINED:
             # TODO: how can the nextscreen be known in the current? o.O
             return self._nextscreen, global_dict, diff
-        elif not self.get_devicesettings_value('screendetection', False):
+        elif not self.get_devicesettings_value('screendetection', True):
             self._logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:

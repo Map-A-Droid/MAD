@@ -291,10 +291,10 @@ class Device(Resource):
             "screendetection": {
                 "settings": {
                     "type": "option",
-                    "values": [None, False, True],
+                    "values": [True, False],
                     "require": False,
                     "description": "Use this argument if there are login/logout problems with this device or you want "
-                                   "to levelup accounts  (Default: False)",
+                                   "to levelup accounts  (Default: True)",
                     "expected": bool
                 }
             },
