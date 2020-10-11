@@ -226,10 +226,6 @@ new Vue({
                 name: "OpenStreetMap HOT",
                 url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
             },
-            wikimedia: {
-                name: "Wikimedia",
-                url: "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png"
-            },
             hydda: {
                 name: "Hydda",
                 url: "https://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png"
