@@ -370,3 +370,18 @@ class DbStatsReader:
         )
         count = self._db_exec.autofetch_value(query)
         return count
+    
+     def get_noniv_encounters_count(self, minutes=240):
+        logger.info("Fetching get_noniv_encounters_count")
+        logger.debug3("Fetching get_noniv_encounters_count from db")
+        query_where = 'last_modified > \'%s\' ' % str(datetime.utcnow()-timedelta(minutes=int(minutes)))
+
+        query = (
+            "SELECT count(1) as Count, latitude, longitude "
+            "FROM pokemon "
+            "WHERE cp IS NULL AND %s "
+            "GROUP BY latitude, longitude" % (query_where)
+        )
+        res = self._db_exec.execute(query)
+        logger.info("Done fetching get_noniv_encounters_count")
+        return res
