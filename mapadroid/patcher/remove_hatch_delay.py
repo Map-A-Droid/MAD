@@ -1,8 +1,5 @@
-import json
-import os
 from ._patch_base import PatchBase
 from mapadroid.utils.logging import get_logger, LoggerEnums
-from mysql.connector.errors import IntegrityError
 
 
 logger = get_logger(LoggerEnums.patcher)
