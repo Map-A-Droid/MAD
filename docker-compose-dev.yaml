@@ -21,8 +21,7 @@ services:
       THERAIDMAPPER_DBIP: mariadb
       THERAIDMAPPER_DBUSERNAME: rocketdb
       THERAIDMAPPER_DBNAME: rocketdb
-      THERAIDMAPPER_DBPASSWORD: rocketdb
-      THERAIDMAPPER_WITH_MADMIN: "true"
+      THERAIDMAPPER_DBPASSWORD: rocketdb"
 
   mariadb:
     image: mariadb:10.3
