@@ -119,8 +119,6 @@ def parse_args():
     parser.add_argument('-upload', '--upload_path', default=os.path.join(mapadroid.MAD_ROOT, 'upload'),
                         help='Path for uploaded Files via madmin and for device installation. Default: '
                              '/absolute/path/to/upload')
-    parser.add_argument('-pgasset', '--pogoasset', required=False,
-                        help=('Path to Pogo Asset. See https://github.com/ZeChrales/PogoAssets/'))
     parser.add_argument('--file_path',
                         help='Defines directory to save worker stats- and position files and calculated routes',
                         default='files')
