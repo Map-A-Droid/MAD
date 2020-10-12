@@ -512,7 +512,8 @@ class WebhookWorker:
                         self.__webhook_types.append(vtype)
             else:
                 for vtype in self.__valid_types:
-                    self.__webhook_types.append(vtype)
+                    if vtype not in self.__webhook_types:
+                        self.__webhook_types.append(vtype)
 
             self.__webhook_receivers.append({
                 "url": url,
