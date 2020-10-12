@@ -313,10 +313,21 @@ class MITMReceiver(Process):
     # TODO - Deprecate this function as it does not return useful addresses
     def get_addresses(self, origin, data):
         supported: Dict[str, Dict] = {}
-        with open('configs/version_codes.json', 'rb') as fh:
+        try:
+            supported = self.get_addresses_read("configs/addresses.json")
+        except FileNotFoundError:
+            supported = self.get_addresses_read("configs/version_codes.json")
+        return supported
+
+    def get_addresses_read(self, path):
+        supported: Dict[str, Dict] = {}
+        with open(path, 'rb') as fh:
             data = json.load(fh)
-            for key in data.keys():
-                supported[key] = {}
+            for key, value in data.items():
+                if type(value) is dict:
+                    supported[key] = value
+                else:
+                    supported[key] = {}
         return json.dumps(supported)
 
     def status(self, origin, data):

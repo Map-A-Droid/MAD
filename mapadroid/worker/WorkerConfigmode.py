@@ -192,7 +192,7 @@ class WorkerConfigmode(AbstractWorker):
 
     def _wait_for_injection(self):
         self._not_injected_count = 0
-        reboot = self.get_devicesettings_value('reboot', False)
+        reboot = self.get_devicesettings_value('reboot', True)
         injection_thresh_reboot = 'Unlimited'
         if reboot:
             injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))

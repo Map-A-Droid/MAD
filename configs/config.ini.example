@@ -10,12 +10,12 @@
 # You really need to fill those. Most of the times you want to have frontend (RM/PMSF) already installed before running MAD.
 # You need to have MySQL Database and User/Grants already created!
 # If you just need clean schema take a look at scripts/SQL/rocketmap.sql
-#dbip:                       # IP or hostname of MySql Server
-#dbport:                     # Port of the database (Default: 3306)
-#dbusername:                 # Username for MySQL login
-#dbpassword:                 # Password for MySQL login
-#dbname:                     # Name of MySQL Database
-#db_poolsize:                # Size of MySQL pool (open connections to DB). Default: 2.
+#dbip:                      # IP or hostname of MySql Server
+#dbport:                    # Port of the database (Default: 3306)
+#dbusername:                # Username for MySQL login
+#dbpassword:                # Password for MySQL login
+#dbname:                    # Name of MySQL Database
+#db_poolsize:               # Size of MySQL pool (open connections to DB). Default: 2.
 
 
 # Websocket Settings (RGC receiver)
@@ -35,8 +35,9 @@
 
 
 # Walk Settings
-#enable_worker_specific_extra_start_stop_handling   # Option to enable/disable extra handling for the start/stop routine of workers. Default: False
-#maximum_valid_distance                             # The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 50m
+######################
+#enable_worker_specific_extra_start_stop_handling # Option to enable/disable extra handling for the start/stop routine of workers. Default: False
+#maximum_valid_distance       # The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 50m
 
 
 # Job Processor
@@ -45,7 +46,7 @@
 #job_dt_wh_url:               # Discord Webhook URL for job messages
 #job_dt_send_type:            # Kind of Job Messages to send - separated by pipe | (Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)
 #job_restart_notconnect:      # Restart job if device is not connected (in minutes). Default: 0 (Off)
-#job_thread_count:            # Amount of threads to work off the device jobs. Default: 2
+#job_thread_count:            # Amount of threads to work off the device jobs. Default: 1
 
 
 # Runtypes
@@ -108,9 +109,9 @@
 
 # ADB
 ######################
-#use_adb                      # Use ADB for "device control" (Default: False)
-#adb_server_ip:               # IP address of ADB server (Default: 127.0.0.1)
-#adb_server_port:             # Port of ADB server (Default: 5037)
+#use_adb                     # Use ADB for "device control" (Default: False)
+#adb_server_ip:              # IP address of ADB server (Default: 127.0.0.1)
+#adb_server_port:            # Port of ADB server (Default: 5037)
 
 
 # Webhook

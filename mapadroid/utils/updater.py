@@ -130,7 +130,7 @@ class DeviceUpdater(object):
                 processtime = datetime.timestamp(datetime.now() + timedelta(minutes=algo))
 
                 self.write_status_log(str(job_id), field='processingdate', value=processtime)
-                self.add_job(globalid, origin, file_, job_id=job_id, type=jobtype, counter=0, status='future',
+                self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=0, status='future',
                              waittime=waittime, processtime=processtime, redo=redo, jobname=jobname)
 
             else:

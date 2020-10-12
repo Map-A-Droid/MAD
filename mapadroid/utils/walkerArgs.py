@@ -93,8 +93,8 @@ def parse_args():
                                        '(Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)')
     parser.add_argument('-jobrtnc', '--job_restart_notconnect', required=False, type=int, default=0,
                         help='Restart job if device is not connected (in minutes). Default: 0 (Off)')
-    parser.add_argument('-jtc', '--job_thread_count', type=int, default=2,
-                        help='Amount of threads to work off the device jobs. Default: 2')
+    parser.add_argument('-jtc', '--job_thread_count', type=int, default=1,
+                        help='Amount of threads to work off the device jobs. Default: 1')
 
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=True,
