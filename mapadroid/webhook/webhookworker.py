@@ -549,39 +549,34 @@ class WebhookWorker:
             full_payload += raids
 
             # quests
-            if self.__args.quest_webhook:
-                quest = self.__prepare_quest_data(
-                    self._db_reader.get_quests_changed_since(self.__last_check)
-                )
-                full_payload += quest
+            quest = self.__prepare_quest_data(
+                self._db_reader.get_quests_changed_since(self.__last_check)
+            )
+            full_payload += quest
 
             # weather
-            if self.__args.weather_webhook:
-                weather = self.__prepare_weather_data(
-                    self._db_reader.get_weather_changed_since(self.__last_check)
-                )
-                full_payload += weather
+            weather = self.__prepare_weather_data(
+                self._db_reader.get_weather_changed_since(self.__last_check)
+            )
+            full_payload += weather
 
             # gyms
-            if self.__args.gym_webhook:
-                gyms = self.__prepare_gyms_data(
-                    self._db_reader.get_gyms_changed_since(self.__last_check)
-                )
-                full_payload += gyms
+            gyms = self.__prepare_gyms_data(
+                self._db_reader.get_gyms_changed_since(self.__last_check)
+            )
+            full_payload += gyms
 
             # stops
-            if self.__args.pokestop_webhook:
-                pokestops = self.__prepare_stops_data(
-                    self._db_reader.get_stops_changed_since(self.__last_check)
-                )
-                full_payload += pokestops
+            pokestops = self.__prepare_stops_data(
+                self._db_reader.get_stops_changed_since(self.__last_check)
+            )
+            full_payload += pokestops
 
             # mon
-            if self.__args.pokemon_webhook:
-                mon = self.__prepare_mon_data(
-                    self._db_reader.get_mon_changed_since(self.__last_check)
-                )
-                full_payload += mon
+            mon = self.__prepare_mon_data(
+                self._db_reader.get_mon_changed_since(self.__last_check)
+            )
+            full_payload += mon
         except Exception:
             logger.exception("Error while creating webhook payload")
 
