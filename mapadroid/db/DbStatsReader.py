@@ -374,7 +374,7 @@ class DbStatsReader:
     def get_noniv_encounters_count(self, minutes=240):
         logger.info("Fetching get_noniv_encounters_count")
         logger.debug3("Fetching get_noniv_encounters_count from db")
-        query_where = 'last_modified > \'%s\' ' % str(datetime.utcnow()-timedelta(minutes=int(minutes)))
+        query_where = 'last_modified > \'%s\' ' % str(datetime.utcnow() - timedelta(minutes=int(minutes)))
 
         query = (
             "SELECT count(1) as Count, latitude, longitude "
