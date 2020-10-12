@@ -370,8 +370,8 @@ class DbStatsReader:
         )
         count = self._db_exec.autofetch_value(query)
         return count
-    
-     def get_noniv_encounters_count(self, minutes=240):
+
+    def get_noniv_encounters_count(self, minutes=240):
         logger.info("Fetching get_noniv_encounters_count")
         logger.debug3("Fetching get_noniv_encounters_count from db")
         query_where = 'last_modified > \'%s\' ' % str(datetime.utcnow()-timedelta(minutes=int(minutes)))
