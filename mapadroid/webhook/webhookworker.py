@@ -32,7 +32,7 @@ class WebhookWorker:
         self.__webhook_types = []
         self.__valid_types = ['pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop']
 
-        self.__build_webhook_receivers(mapping_manager)
+        self.__build_webhook_receivers()
         self.__build_ivmon_list(mapping_manager)
         self.__build_excluded_areas(mapping_manager)
 
@@ -494,7 +494,7 @@ class WebhookWorker:
 
         return ret
 
-    def __build_webhook_receivers(self, mapping_manager: MappingManager):
+    def __build_webhook_receivers(self):
         webhooks = self.__args.webhook_url.replace(" ", "").split(",")
 
         for webhook in webhooks:
