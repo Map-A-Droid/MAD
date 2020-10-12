@@ -245,7 +245,7 @@ new Vue({
                     mons: 67
                 }
             },
-            cellUpdateTimeout: 50000
+            cellUpdateTimeout: 168
         }
     },
     computed: {
@@ -1017,8 +1017,8 @@ new Vue({
                         	delete leaflet_data.cellupdates[id];
                         }
                     }
-                    //  86400
-                    if($this.settings.cellUpdateTimeout > 0 && now - cell.updated > $this.settings.cellUpdateTimeout) {
+                    //  cellUpdateTimeout is in hours, so we gotta adjust by 3600 to get seconds
+                    if($this.settings.cellUpdateTimeout > 0 && now - cell.updated > (3600 * $this.settings.cellUpdateTimeout)) {
                         notTooOld = false;
                     }
 
