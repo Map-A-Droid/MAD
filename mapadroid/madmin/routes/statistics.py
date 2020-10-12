@@ -793,7 +793,7 @@ class MADminStatistics(object):
         spawnpoints_total = self._db_stats_reader.get_all_spawnpoints_count()
         stats = {'fences': possible_fences, 'events': events, 'spawnpoints_count': spawnpoints_total}
         return jsonify(stats)
-    
+
     @logger.catch()
     @auth_required
     def get_noniv_encounters_count(self):
@@ -801,4 +801,3 @@ class MADminStatistics(object):
         data = self._db_stats_reader.get_noniv_encounters_count(minutes_spawn)
         stats = {'data': data}
         return jsonify(stats)
-
