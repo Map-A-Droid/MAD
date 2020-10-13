@@ -27,7 +27,6 @@ class MADminPath(object):
         routes = [
             ("/screenshot/<path:path>", self.pushscreens),
             ("/static/<path:path>", self.pushstatic),
-            ("/asset/<path:path>", self.pushassets),
             ("/", self.root),
             ("/quests", self.quest),
             ("/quests_pub", self.quest_pub),
@@ -49,10 +48,6 @@ class MADminPath(object):
     @auth_required
     def pushstatic(self, path):
         return send_from_directory(generate_path('madmin/static'), path)
-
-    @auth_required
-    def pushassets(self, path):
-        return send_from_directory(self._args.pogoasset, path)
 
     @auth_required
     def root(self):
