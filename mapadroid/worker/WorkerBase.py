@@ -705,7 +705,12 @@ class WorkerBase(AbstractWorker):
 
         cur_time = time.time()
         start_result = False
+        attempts = 0
         while not pogo_topmost:
+            attempts += 1
+            if attempts > 10:
+                self.logger.error("_start_pogo failed 10 times")
+                return False
             start_result = self._communicator.start_app(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
