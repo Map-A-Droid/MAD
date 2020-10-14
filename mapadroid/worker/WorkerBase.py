@@ -785,7 +785,7 @@ class WorkerBase(AbstractWorker):
         return trashes
 
     def _check_finished_quest(self, full_screen=False):
-        self.logger.warning("_check_finished_quest: Check finished quest.")
+        self.logger.debug("_check_finished_quest: Check finished quest.")
         if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1)):
             self.logger.debug("_check_finished_quest: Failed getting screenshot")
             return None
