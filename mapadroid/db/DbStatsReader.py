@@ -79,7 +79,7 @@ class DbStatsReader:
         if worker and not minutes:
             worker_where = ' where worker = \'%s\' ' % str(worker)
         if grouped:
-            grouped_query = ", day(FROM_UNIXTIME(MIN(timestamp_scan))), hour(FROM_UNIXTIME(MIN(timestamp_scan)))"
+            grouped_query = ", day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan))"
         query_where = ''
         query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(MIN(timestamp_scan)), '%y-%m-%d %k:00:00'))"
         if minutes:
