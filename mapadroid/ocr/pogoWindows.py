@@ -616,7 +616,7 @@ class PogoWindows:
 
     def __check_finished_quest_internal(self, image, identifier):
         origin_logger = get_origin_logger(logger, origin=identifier)
-        results = dict.fromkeys(["breakthrough", "finished", "blocked"], [])
+        results = {"breakthrough": [], "finished": [], "blocked": []}
         globaldict: Optional[dict] = {}
         diff: int = 1
         origin_logger.debug("__check_finished_quest_interal")
@@ -652,11 +652,11 @@ class PogoWindows:
                         # get rgb values of a close "orange pixel" - the color differs between:
                         # the quest stack, normal finished quests, and quests blocked bc of the breakthrough
                         r, g, b = frame_org.getpixel((globaldict["left"][index], globaldict["top"][index] - 20 / diff))
-                        origin_logger.debug("rgb of this quest: {}/{}/{}", r, g, b)
+                        origin_logger.debug("Quest at {},{} has RGB: {}/{}/{}", left, top, r, g, b)
 
                         # breakthrough reward is in the upper half of the screen
                         if top < height / 2:
-                            origin_logger.debug("Found breakthrough reward  at coords {},{}", left, top)
+                            origin_logger.debug("Found breakthrough reward at coords {},{}", left, top)
                             results["breakthrough"].append({'x': left, 'y': top})
                         # finished quest - can be retrieved
                         elif 250 > r > 228 and b < 90:
