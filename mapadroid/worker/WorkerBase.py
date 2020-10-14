@@ -649,7 +649,10 @@ class WorkerBase(AbstractWorker):
 
             self._last_screen_type = screen_type
         self.logger.info('Checking pogo screen is finished')
-        return True
+        if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
+            return True
+        else:
+            return False
 
     def _restart_pogo_safe(self):
         self.logger.warning("WorkerBase::_restart_pogo_safe restarting pogo the long way")
