@@ -774,7 +774,8 @@ class WorkerBase(AbstractWorker):
                                                    99)
             return self._start_pogo()
         else:
-            return False
+            self.logger.error("Failed restarting PoGo - reboot device")
+            return self._reboot()
 
     def _get_trash_positions(self, full_screen=False):
         self.logger.debug2("_get_trash_positions: Get_trash_position.")
