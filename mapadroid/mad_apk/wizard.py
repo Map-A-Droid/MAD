@@ -110,10 +110,11 @@ class APKWizard(object):
         Args:
             architecture (APKArch): Architecture of the package to download
         """
-        latest_version = self.find_latest_pogo(architecture)
-        if latest_version is None:
+        latest_pogo_info = self.find_latest_pogo(architecture)
+        if latest_pogo_info is None:
             logger.warning('Unable to find latest data for PoGo.  Try again later')
-        elif supported_pogo_version(architecture, latest_version):
+        elif supported_pogo_version(architecture, latest_pogo_info["version"]):
+            latest_version = latest_pogo_info["version"]
             current_version = self.storage.get_current_version(APKType.pogo, architecture)
             if type(current_version) is not str:
                 current_version = None
@@ -253,29 +254,42 @@ class APKWizard(object):
             architecture (APKArch): Architecture of the package to check
         """
         latest = None
+        version_code: int = None
+        version_str: str = None
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
         try:
-            version_code = None
             latest_pogo_version = self.get_latest_version()
             if latest_pogo_version[architecture] is None:
                 return latest
-            latest = latest_pogo_version[architecture]
+            latest_supported = latest_pogo_version[architecture]
             current_version = self.storage.get_current_version(APKType.pogo, architecture)
             if type(current_version) is not str:
                 current_version = None
             # do some sanity checking until this is fixed properly
             tmp_latest = self.get_latest(APKType.pogo, architecture)
-            if current_version is None or is_newer_version(latest, current_version) or (
+            if current_version is None or is_newer_version(latest_supported["version"], current_version) or (
                     tmp_latest and tmp_latest['url'] is not None and int(tmp_latest['url']) == 1
             ):
-                logger.info('Newer version found: {}', latest)
-                version_code: int = self.get_version_code(latest_pogo_version, architecture)
+                # Validate its available via google
+                gpconn = GPlayConnector(architecture)
+                (store_vc, store_vs) = gpconn.get_latest_version(APKPackage.pogo.value)
+                if store_vc < latest_supported["versionCode"]:
+                    logger.info(f"Latest supported is {store_vs}. Unable to find a newer version")
+                    return None
+                elif store_vc > latest_supported["versionCode"]:
+                    logger.info("Version in store is newer than supported version. Using an older version")
+                    version_code = latest_supported["versionCode"]
+                    version_str = latest_supported["version"]
+                else:
+                    logger.info('Newer version found: {}', store_vs)
+                    version_code = store_vc
+                    version_str = store_vs
             else:
                 logger.info('No newer version found')
-            self.set_last_searched(APKType.pogo, architecture, version=latest, url=version_code)
+            self.set_last_searched(APKType.pogo, architecture, version=version_str, url=version_code)
         except Exception as err:
             logger.opt(exception=True).critical(err)
-        return latest
+        return latest_supported
 
     def find_latest_rgc(self, architecture: APKArch) -> Optional[str]:
         """ Determine if the package de.grennith.rgc.remotegpscontroller has an update
@@ -305,13 +319,19 @@ class APKWizard(object):
             APKArch.arm64_v8a: None
         }
         gh_resp = requests.get(global_variables.VERSIONCODES_URL)
-        for ver_identifier in gh_resp.json().keys():
+        for ver_identifier, version_code in gh_resp.json().items():
             version, arch = ver_identifier.split('_')
             named_arch = APKArch.armeabi_v7a if arch == '32' else APKArch.arm64_v8a
             if versions[named_arch] is None:
-                versions[named_arch] = version
-            elif is_newer_version(version, versions[named_arch]):
-                versions[named_arch] = version
+                versions[named_arch] = {
+                    "versionCode": version_code,
+                    "version": version
+                }
+            elif is_newer_version(version, versions[named_arch]["version"]):
+                versions[named_arch] = {
+                    "versionCode": version_code,
+                    "version": version
+                }
         return versions
 
     def get_version_code(self, latest_supported: Dict[APKArch, str], arch: APKArch) -> Optional[int]:
