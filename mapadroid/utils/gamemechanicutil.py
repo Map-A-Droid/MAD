@@ -37,7 +37,7 @@ def gen_despawn_timestamp(known_despawn, timestamp):
         )
     elif datatime.minute > known_despawn.minute:
         despawn = (datatime + timedelta(hours=1) - timedelta(minutes=(datatime.minute - known_despawn.minute),
-                                                        seconds=datatime.second - known_despawn.second))
+                                                             seconds=datatime.second - known_despawn.second))
 
     despawn_uts = int(time.mktime(despawn.timetuple()))
 
