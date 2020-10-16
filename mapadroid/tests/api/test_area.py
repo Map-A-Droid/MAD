@@ -168,7 +168,7 @@ class APIArea(api_base.APITestBase):
         headers = {
             'X-Mode': 'pokestop'
         }
-        area_obj = super().create_valid_resource('area', headers=headers)
+        area_obj, resp = self.creator.create_valid_resource('area', headers=headers)
         patch = {
             'init': True,
             'level': True
