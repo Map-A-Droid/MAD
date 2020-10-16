@@ -105,4 +105,11 @@ class Area(Resource):
                 }
         except KeyError:
             pass
+        try:
+            if self._data['fields']['level'] and self._data['fields']['init']:
+                issues = {
+                    'invalid': [('init', 'You cannot run init and level at the same time. For leveling up init must be false')]
+                }
+        except KeyError:
+            pass
         return issues
