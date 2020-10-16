@@ -165,10 +165,13 @@ class APIArea(api_base.APITestBase):
         self.remove_resources()
 
     def test_invalid_initlevel_settings(self):
+        payload = {
+            "name": "%s - Test Pokestop Area - %s",
+        }
         headers = {
             'X-Mode': 'pokestop'
         }
-        area_obj, resp = self.creator.create_valid_resource('area', headers=headers)
+        area_obj, resp = self.creator.create_valid_resource('area', payload=payload, headers=headers)
         patch = {
             'init': True,
             'level': True
