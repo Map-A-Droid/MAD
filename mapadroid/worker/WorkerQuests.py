@@ -80,6 +80,7 @@ class WorkerQuests(MITMBase):
         self._rotation_waittime = self.get_devicesettings_value('rotation_waittime', 300)
         self._latest_quest = 0
         self._clear_box_failcount = 0
+        self._spinnable_data_failcount = 0
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -607,12 +608,14 @@ class WorkerQuests(MITMBase):
         latest: dict = self._mitm_mapper.request_latest(self._origin)
         if latest is None or PROTO_NUMBER_FOR_GMO not in latest.keys():
             self.logger.warning("Can't spin stop - no GMO data available!")
+            self._spinnable_data_failure()
             return False, False
 
         gmo_cells: list = latest.get(PROTO_NUMBER_FOR_GMO).get("values", {}).get("payload", {}).get("cells",
                                                                                                     None)
         if gmo_cells == list():
             self.logger.warning("Can't spin stop - no map info in GMO!")
+            self._spinnable_data_failure()
             return False, False
         for cell in gmo_cells:
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
@@ -635,12 +638,14 @@ class WorkerQuests(MITMBase):
                 if fort_type == 0:
                     self._db_wrapper.delete_stop(latitude, longitude)
                     self.logger.warning("Tried to open a stop but found a gym instead!")
+                    self._spinnable_data_failcount = 0
                     return False, True
 
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
                     self.logger.info("Level mode: Stop already visited - skipping it")
                     self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
+                    self._spinnable_data_failcount = 0
                     return False, True
 
                 enabled: bool = fort.get("enabled", True)
@@ -652,10 +657,12 @@ class WorkerQuests(MITMBase):
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
                 if not cooldown == 0:
                     self.logger.warning("Can't spin the stop - it has cooldown")
+                self._spinnable_data_failcount = 0
                 return fort_type == 1 and enabled and not closed and cooldown == 0, False
         # by now we should've found the stop in the GMO
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         self.logger.warning("Can't spin stop - couldn't find it closeby!")
+        self._spinnable_data_failure()
         return False, False
 
     def _open_pokestop(self, timestamp: float):
@@ -909,3 +916,13 @@ class WorkerQuests(MITMBase):
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
         return LatestReceivedType.UNDEFINED
+
+    def _spinnable_data_failure(self):
+        if self._spinnable_data_failcount > 9:
+            self._spinnable_data_failcount = 0
+            self.logger.warning("Worker failed spinning stop with GMO/data issues 10+ times - restart pogo")
+            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                # TODO: put in loop, count up for a reboot ;)
+                raise InternalStopWorkerException
+        else:
+            self._spinnable_data_failcount += 1
