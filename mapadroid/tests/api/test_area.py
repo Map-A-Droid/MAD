@@ -169,7 +169,7 @@ class APIArea(api_base.APITestBase):
             "name": "%s - Test Pokestop Area - %s",
         }
         headers = {
-            'X-Mode': 'pokestop'
+            'X-Mode': 'pokestops'
         }
         area_obj, resp = self.creator.create_valid_resource('area', payload=payload, headers=headers)
         patch = {
