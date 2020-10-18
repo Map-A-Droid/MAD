@@ -268,13 +268,13 @@ class APKWizard(object):
             # do some sanity checking until this is fixed properly
             tmp_latest = self.get_latest(APKType.pogo, architecture)
             if current_version is None or is_newer_version(latest_supported["version"], current_version) or (
-                    tmp_latest and tmp_latest['url'] is not None and int(tmp_latest['url']) == 1
-            ):
+                    tmp_latest and tmp_latest['url'] is not None):
                 # Validate its available via google
                 gpconn = GPlayConnector(architecture)
                 (store_vc, store_vs) = gpconn.get_latest_version(APKPackage.pogo.value)
                 if store_vc < latest_supported["versionCode"]:
-                    logger.info(f"Latest supported is {store_vs}. Unable to find a newer version")
+                    logger.info(f"Latest supported is {store_vc} while installed is {latest_supported['versionCode']}. "
+                                 "Unable to find a newer version")
                     return None
                 elif store_vc > latest_supported["versionCode"]:
                     logger.info("Version in store is newer than supported version. Using an older version")
@@ -289,7 +289,10 @@ class APKWizard(object):
             self.set_last_searched(APKType.pogo, architecture, version=version_str, url=version_code)
         except Exception as err:
             logger.opt(exception=True).critical(err)
-        return latest_supported
+        return {
+            "version_code": version_code,
+            "version": version_str
+        }
 
     def find_latest_rgc(self, architecture: APKArch) -> Optional[str]:
         """ Determine if the package de.grennith.rgc.remotegpscontroller has an update
