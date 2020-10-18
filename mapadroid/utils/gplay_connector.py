@@ -110,7 +110,7 @@ class GPlayConnector(object):
     def get_latest_version(self, query: str) -> str:
         result = self.api.details(query)
         try:
-            return result['details']['appDetails']['versionString']
+            return (result['details']['appDetails']['versionCode'], result['details']['appDetails']['versionString'])
         except (KeyError, TypeError):
             return None
 
