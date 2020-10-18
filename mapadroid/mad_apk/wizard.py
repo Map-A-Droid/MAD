@@ -274,7 +274,7 @@ class APKWizard(object):
                 (store_vc, store_vs) = gpconn.get_latest_version(APKPackage.pogo.value)
                 if store_vc < latest_supported["versionCode"]:
                     logger.info(f"Latest supported is {store_vc} while installed is {latest_supported['versionCode']}. "
-                                 "Unable to find a newer version")
+                                "Unable to find a newer version")
                     return None
                 elif store_vc > latest_supported["versionCode"]:
                     logger.info("Version in store is newer than supported version. Using an older version")
