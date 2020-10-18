@@ -4,6 +4,7 @@ from mapadroid.tests.test_utils import GetStorage, get_connection_api
 from unittest.mock import MagicMock
 from mapadroid.utils.gplay_connector import GPlayConnector
 
+
 class WizardTests(StorageBase):
     def test_mistmatched_type(self):
         with self.assertRaises(WizardError):
