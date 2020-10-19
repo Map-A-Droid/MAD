@@ -344,7 +344,7 @@ class PogoWindows:
         if not imwrite_status:
             origin_logger.error("Could not save file: {} - check permissions and path",
                                 os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'))
-            return False                
+            return False
 
         if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'),
                                     identifier,
