@@ -340,11 +340,11 @@ class PogoWindows:
             return False
 
         imwrite_status = cv2.imwrite(os.path.join(self.temp_dir_path,
-                                 str(identifier) + '_exitcircle.jpg'), image)
+                                     str(identifier) + '_exitcircle.jpg'), image)
         if not imwrite_status:
             origin_logger.error("Could not save file: {} - check permissions and path",
-                              os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'))
-            return False                   
+                                os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'))
+            return False                
 
         if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'),
                                     identifier,
