@@ -339,8 +339,12 @@ class PogoWindows:
             origin_logger.error("Screenshot corrupted: {}", e)
             return False
 
-        cv2.imwrite(os.path.join(self.temp_dir_path,
+        imwrite_status = cv2.imwrite(os.path.join(self.temp_dir_path,
                                  str(identifier) + '_exitcircle.jpg'), image)
+        if not imwrite_status:
+            origin_logger.error("Could not save file: {} - check permissions and path",
+                              os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'))
+            return False                   
 
         if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'),
                                     identifier,
@@ -428,7 +432,10 @@ class PogoWindows:
 
         # resize image
         gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
-        cv2.imwrite(temp_path_item, gray)
+        imwrite_status = cv2.imwrite(temp_path_item, gray)
+        if not imwrite_status:
+            logger.error("Could not save file: {} - check permissions and path", temp_path_item)
+            return None
         try:
             with Image.open(temp_path_item) as im:
                 try:
