@@ -21,8 +21,8 @@ class S2Helper:
         # Getting the cell id of a location
         # is as easy as finding the CellId and
         # traversing up the parents to the desired level.
-        ll = LatLng.from_degrees(lat, lng)
-        
+        ll = s2sphere.LatLng.from_degrees(lat, lng)
+
         # Get the CellId of this LatLng
         cid = s2sphere.CellId.from_lat_lng(ll)
         # Travers up to the parent ID and return this
