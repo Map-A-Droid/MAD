@@ -434,7 +434,7 @@ class PogoWindows:
         gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
         imwrite_status = cv2.imwrite(temp_path_item, gray)
         if not imwrite_status:
-            logger.error("Could not save file: {} - check permissions and path", temp_path_item)
+            origin_logger.error("Could not save file: {} - check permissions and path", temp_path_item)
             return None
         try:
             with Image.open(temp_path_item) as im:
