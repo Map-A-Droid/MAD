@@ -43,7 +43,6 @@ import unittest
 from mapadroid.utils.logging import init_logging, get_logger, LoggerEnums
 
 
-
 init_logging(args)
 logger = get_logger(LoggerEnums.system)
 
