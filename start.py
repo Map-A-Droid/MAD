@@ -1,16 +1,22 @@
 import sys
+import os
+from mapadroid.utils.walkerArgs import parse_args
 
 py_version = sys.version_info
 if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
     print("MAD requires at least python 3.6! Your version: {}.{}"
           .format(py_version.major, py_version.minor))
     sys.exit(1)
+
+args = parse_args()
+os.environ['LANGUAGE'] = args.language
+
 from multiprocessing import Process
 from typing import Optional
 import calendar
 import datetime
 import gc
-import os
+
 import pkg_resources
 import time
 from threading import Thread, active_count
@@ -24,7 +30,7 @@ from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.event import Event
 from mapadroid.patcher import MADPatcher
-from mapadroid.utils.walkerArgs import parse_args
+
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.data_manager import DataManager
@@ -37,8 +43,7 @@ import unittest
 from mapadroid.utils.logging import init_logging, get_logger, LoggerEnums
 
 
-args = parse_args()
-os.environ['LANGUAGE'] = args.language
+
 init_logging(args)
 logger = get_logger(LoggerEnums.system)
 
