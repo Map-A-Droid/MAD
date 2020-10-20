@@ -1,5 +1,7 @@
+import apkutils
 from distutils.version import LooseVersion
 from flask import Response, stream_with_context
+import io
 import json
 import requests
 from typing import Tuple, Union, Generator
@@ -138,6 +140,23 @@ def generate_filename(package: APKType, architecture: APKArch, version: str, mim
         ext = 'apk'
     friendlyname = getattr(APKPackage, package.name).value
     return '{}__{}__{}.{}'.format(friendlyname, version, architecture.name, ext)
+
+
+def get_apk_info(downloaded_file: io.BytesIO) -> Tuple[str, str]:
+    package_version: str = None
+    package_name: str = None
+    try:
+        apk = apkutils.APK(downloaded_file)
+    except:  # noqa: E722
+        logger.warning('Unable to parse APK file')
+    else:
+        manifest = apk.get_manifest()
+        try:
+            package_version, package_name = (manifest['@android:versionName'], manifest['@package'])
+        except KeyError as err:
+            logger.warning("Unable to parse the APK file")
+            raise KeyError from err
+    return package_version, package_name
 
 
 def is_newer_version(first_ver: str, second_ver: str) -> bool:
