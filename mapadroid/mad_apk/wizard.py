@@ -144,19 +144,15 @@ class APKWizard(object):
                         latest_data = self.get_latest(APKType.pogo, architecture)
                         downloaded_file = self.gpconn.download(APKPackage.pogo.value, version_code=latest_data['url'])
                         if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
-                            try:
-                                version, _ = get_apk_info(downloaded_file)
-                            except KeyError:
-                                pass
+                            version, _ = get_apk_info(downloaded_file)
+                            if version != latest_version:
+                                msg = f"Playstore returned {version} when requesting {latest_version}"
+                                logger.warning(msg)
+                                raise InvalidDownload(msg)
                             else:
-                                if version != latest_version:
-                                    msg = f"Playstore returned {version} when requesting {latest_version}"
-                                    logger.warning(msg)
-                                    raise InvalidDownload(msg)
-                                else:
-                                    PackageImporter(APKType.pogo, architecture, self.storage, downloaded_file,
-                                                    'application/zip', version=latest_version)
-                                    successful = True
+                                PackageImporter(APKType.pogo, architecture, self.storage, downloaded_file,
+                                                'application/zip', version=latest_version)
+                                successful = True
                         if not successful:
                             logger.info("Issue downloading apk")
                             retries += 1

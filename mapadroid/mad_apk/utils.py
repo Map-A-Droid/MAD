@@ -1,4 +1,6 @@
 import apkutils
+from apkutils.apkfile import BadZipFile, LargeZipFile
+import zipfile
 from distutils.version import LooseVersion
 from flask import Response, stream_with_context
 import io
@@ -153,9 +155,21 @@ def get_apk_info(downloaded_file: io.BytesIO) -> Tuple[str, str]:
         manifest = apk.get_manifest()
         try:
             package_version, package_name = (manifest['@android:versionName'], manifest['@package'])
-        except KeyError as err:
-            logger.warning("Unable to parse the APK file")
-            raise KeyError from err
+        except (TypeError, KeyError):
+            logger.debug("Invalid manifest file. Potentially a split package")
+            with zipfile.ZipFile(downloaded_file) as zip_data:
+                for item in zip_data.infolist():
+                    try:
+                        with zip_data.open(item, 'r') as fh:
+                            apk = apkutils.APK(io.BytesIO(fh.read()))
+                            manifest = apk.get_manifest()
+                            try:
+                                package_version = manifest['@android:versionName']
+                                package_name = manifest['@package']
+                            except KeyError:
+                                pass
+                    except (BadZipFile, LargeZipFile):
+                        continue
     return package_version, package_name
 
 
