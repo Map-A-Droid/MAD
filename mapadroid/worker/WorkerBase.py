@@ -425,11 +425,10 @@ class WorkerBase(AbstractWorker):
             if process_location:
                 self._add_task_to_loop(self._update_position_file())
                 self._location_count += 1
-                if self._applicationArgs.last_scanned:
-                    self.logger.debug("Seting new 'scannedlocation' in Database")
-                    self._add_task_to_loop(self.update_scanned_location(
-                        self.current_location.lat, self.current_location.lng, time_snapshot)
-                    )
+                self.logger.debug("Seting new 'scannedlocation' in Database")
+                self._add_task_to_loop(self.update_scanned_location(
+                    self.current_location.lat, self.current_location.lng, time_snapshot)
+                )
 
                 try:
                     self._post_move_location_routine(time_snapshot)

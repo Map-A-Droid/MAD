@@ -207,7 +207,7 @@ class MITMBase(WorkerBase):
             if self._restart_count > restart_thresh:
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
-                        and self.get_devicesettings_value("reboot", False):
+                        and self.get_devicesettings_value("reboot", True):
                     self.logger.error("Too many timeouts - Rebooting device")
                     self._reboot(mitm_mapper=self._mitm_mapper)
                     raise InternalStopWorkerException
@@ -233,7 +233,7 @@ class MITMBase(WorkerBase):
 
     def _wait_for_injection(self):
         self._not_injected_count = 0
-        reboot = self.get_devicesettings_value('reboot', False)
+        reboot = self.get_devicesettings_value('reboot', True)
         injection_thresh_reboot = 'Unlimited'
         if reboot:
             injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
@@ -369,7 +369,7 @@ class MITMBase(WorkerBase):
         self.logger.debug('Routemanager: {} [{}]', self._routemanager_name, self._area_id)
         self.logger.debug('Restart Counter: {}', self._restart_count)
         self.logger.debug('Reboot Counter: {}', self._reboot_count)
-        self.logger.debug('Reboot Option: {}', self.get_devicesettings_value("reboot", False))
+        self.logger.debug('Reboot Option: {}', self.get_devicesettings_value("reboot", True))
         self.logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
         self.logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
         routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
@@ -392,7 +392,7 @@ class MITMBase(WorkerBase):
             'area_id': self._area_id,
             'rebootCounter': self._reboot_count,
             'init': routemanager_init,
-            'rebootingOption': self.get_devicesettings_value("reboot", False),
+            'rebootingOption': self.get_devicesettings_value("reboot", True),
             'restartCounter': self._restart_count,
             'currentSleepTime': self._current_sleep_time
         }

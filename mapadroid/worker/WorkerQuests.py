@@ -161,12 +161,11 @@ class WorkerQuests(MITMBase):
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
-            delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
+            delay_used = self.get_devicesettings_value('post_teleport_delay', 0)
             speed = 16.67  # Speed can be 60 km/h up to distances of 3km
 
             if self.last_location.lat == 0.0 and self.last_location.lng == 0.0:
                 self.logger.info('Starting fresh round - using lower delay')
-                delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
             else:
                 if distance >= 1335000:
                     speed = 180.43  # Speed can be abt 650 km/h
@@ -264,8 +263,7 @@ class WorkerQuests(MITMBase):
             self._communicator.walk_from_to(self.last_location, self.current_location, speed)
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
-            delay_used = self.get_devicesettings_value('post_walk_delay', 7)
-
+            delay_used = self.get_devicesettings_value('post_walk_delay', 0)
         walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
         if 0 < walk_distance_post_teleport < distance:
             # TODO: actually use to_walk for distance
@@ -310,7 +308,7 @@ class WorkerQuests(MITMBase):
             self.logger.debug("No last action time found - no calculation")
             delay_used = -1
 
-        if self.get_devicesettings_value('screendetection', False) and \
+        if self.get_devicesettings_value('screendetection', True) and \
                 self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
                 and self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
             # Waiting time to long and more then one account - switch! (not level mode!!)

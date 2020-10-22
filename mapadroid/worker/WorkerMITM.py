@@ -73,7 +73,7 @@ class WorkerMITM(MITMBase):
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
-            delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
+            delay_used = self.get_devicesettings_value('post_teleport_delay', 0)
             # Test for cooldown / teleported distance TODO: check this block...
             if self.get_devicesettings_value('cool_down_sleep', False):
                 if distance > 10000:
@@ -116,7 +116,7 @@ class WorkerMITM(MITMBase):
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
             self.logger.debug2("Done walking, fetching time to sleep")
-            delay_used = self.get_devicesettings_value('post_walk_delay', 7)
+            delay_used = self.get_devicesettings_value('post_walk_delay', 0)
         self.logger.debug2("Sleeping for {}s", delay_used)
         time.sleep(float(delay_used))
         self.set_devicesettings_value("last_location", self.current_location)

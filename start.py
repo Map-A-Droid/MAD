@@ -288,7 +288,7 @@ if __name__ == "__main__":
     mad_plugins = PluginCollection('plugins', plugin_parts)
     mad_plugins.apply_all_plugins_on_value()
 
-    if args.with_madmin or args.config_mode:
+    if not args.disable_madmin or args.config_mode:
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin.madmin_start)
         t_madmin.daemon = True
