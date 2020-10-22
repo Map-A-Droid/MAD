@@ -53,7 +53,7 @@ class SerializedMitmDataProcessor(Process):
                 self.__db_submit.raids(origin, data["payload"], self.__mitm_mapper)
 
                 self.__db_submit.spawnpoints(origin, data["payload"], processed_timestamp)
-                self.__db_submit.mons(origin, data["payload"], self.__mitm_mapper)
+                self.__db_submit.mons(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                 self.__db_submit.cells(origin, data["payload"])
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 origin_logger.debug2("Done processing GMO")
