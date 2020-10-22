@@ -163,3 +163,22 @@ class APIArea(api_base.APITestBase):
         self.assertDictEqual(response.json(), expected)
         self.assertEqual(response.status_code, 422)
         self.remove_resources()
+
+    def test_invalid_initlevel_settings(self):
+        payload = {
+            "name": "%s - Test Pokestop Area - %s",
+        }
+        headers = {
+            'X-Mode': 'pokestops'
+        }
+        area_obj, resp = self.creator.create_valid_resource('area', payload=payload, headers=headers)
+        patch = {
+            'init': True,
+            'level': True
+        }
+        response = self.api.patch(area_obj['uri'], json=patch)
+        expected = {'invalid': [['init', 'Cannot have init and level set to True at the same time. '
+                                         'For leveling up init must be set False.']]}
+        self.assertDictEqual(response.json(), expected)
+        self.assertEqual(response.status_code, 422)
+        self.remove_resources()
