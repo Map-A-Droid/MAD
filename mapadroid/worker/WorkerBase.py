@@ -648,7 +648,10 @@ class WorkerBase(AbstractWorker):
 
             self._last_screen_type = screen_type
         self.logger.info('Checking pogo screen is finished')
-        return True
+        if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
+            return True
+        else:
+            return False
 
     def _restart_pogo_safe(self):
         self.logger.warning("WorkerBase::_restart_pogo_safe restarting pogo the long way")
@@ -701,7 +704,12 @@ class WorkerBase(AbstractWorker):
 
         cur_time = time.time()
         start_result = False
+        attempts = 0
         while not pogo_topmost:
+            attempts += 1
+            if attempts > 10:
+                self.logger.error("_start_pogo failed 10 times")
+                return False
             start_result = self._communicator.start_app(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
@@ -765,7 +773,8 @@ class WorkerBase(AbstractWorker):
                                                    99)
             return self._start_pogo()
         else:
-            return False
+            self.logger.error("Failed restarting PoGo - reboot device")
+            return self._reboot()
 
     def _get_trash_positions(self, full_screen=False):
         self.logger.debug2("_get_trash_positions: Get_trash_position.")

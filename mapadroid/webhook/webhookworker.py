@@ -28,7 +28,11 @@ class WebhookWorker:
         self._db_reader = db_webhook_reader
         self.__rarity = rarity
         self.__last_check = int(time.time())
+        self.__webhook_receivers = []
+        self.__webhook_types = []
+        self.__valid_types = ['pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop']
 
+        self.__build_webhook_receivers()
         self.__build_ivmon_list(mapping_manager)
         self.__build_excluded_areas(mapping_manager)
 
@@ -61,23 +65,12 @@ class WebhookWorker:
             logger.debug2("Payload empty. Skip sending to webhook.")
             return
 
-        # get list of urls
-        webhooks = self.__args.webhook_url.replace(" ", "").split(",")
-
-        webhook_count = len(webhooks)
         current_wh_num = 1
-
-        for webhook in webhooks:
+        for webhook in self.__webhook_receivers:
             payload_to_send = []
-            sub_types = "all"
-            url = webhook.strip()
+            sub_types = webhook.get('types')
 
-            if url.startswith("["):
-                end_index = webhook.rindex("]")
-                end_index += 1
-                sub_types = webhook[:end_index]
-                url = url[end_index:]
-
+            if sub_types is not None:
                 for payload in payloads:
                     if payload["type"] in sub_types:
                         payload_to_send.append(payload)
@@ -85,10 +78,10 @@ class WebhookWorker:
                 payload_to_send = payloads
 
             if len(payload_to_send) == 0:
-                logger.debug2("Payload empty. Skip sending to: {} (Filter: {})", url, sub_types)
+                logger.debug2("Payload empty. Skip sending to: {} (Filter: {})", webhook.get('url'), sub_types)
                 continue
             else:
-                logger.debug2("Sending to webhook url: {} (Filter: {})", url, sub_types)
+                logger.debug2("Sending to webhook: {} (Filter: {})", webhook.get('url'), sub_types)
 
             payload_list = self.__payload_chunk(
                 payload_to_send, self.__args.webhook_max_payload_size
@@ -101,7 +94,7 @@ class WebhookWorker:
 
                 try:
                     response = requests.post(
-                        url,
+                        webhook.get('url'),
                         data=json.dumps(payload_chunk),
                         headers={"Content-Type": "application/json"},
                         timeout=5,
@@ -111,8 +104,8 @@ class WebhookWorker:
                         logger.warning("Got status code other than 200 OK from webhook destination: {}",
                                        response.status_code)
                     else:
-                        if webhook_count > 1:
-                            whcount_text = " [wh {}/{}]".format(current_wh_num, webhook_count)
+                        if len(self.__webhook_receivers) > 1:
+                            whcount_text = " [wh {}/{}]".format(current_wh_num, len(self.__webhook_receivers))
                         else:
                             whcount_text = ""
 
@@ -501,6 +494,32 @@ class WebhookWorker:
 
         return ret
 
+    def __build_webhook_receivers(self):
+        webhooks = self.__args.webhook_url.replace(" ", "").split(",")
+
+        for webhook in webhooks:
+            sub_types = None
+            url = webhook.strip()
+
+            if url.startswith("["):
+                end_index = webhook.rindex("]")
+                end_index += 1
+                sub_types = webhook[:end_index]
+                url = url[end_index:]
+
+                for vtype in self.__valid_types:
+                    if vtype not in self.__webhook_types and vtype in sub_types:
+                        self.__webhook_types.append(vtype)
+            else:
+                for vtype in self.__valid_types:
+                    if vtype not in self.__webhook_types:
+                        self.__webhook_types.append(vtype)
+
+            self.__webhook_receivers.append({
+                "url": url,
+                "types": sub_types
+            })
+
     def __build_ivmon_list(self, mapping_manager: MappingManager):
         self.__IV_MON: List[int] = []
 
@@ -543,40 +562,46 @@ class WebhookWorker:
 
         try:
             # raids
-            raids = self.__prepare_raid_data(
-                self._db_reader.get_raids_changed_since(self.__last_check)
-            )
-            full_payload += raids
+            if 'raid' in self.__webhook_types:
+                raids = self.__prepare_raid_data(
+                    self._db_reader.get_raids_changed_since(self.__last_check)
+                )
+                full_payload += raids
 
             # quests
-            quest = self.__prepare_quest_data(
-                self._db_reader.get_quests_changed_since(self.__last_check)
-            )
-            full_payload += quest
+            if 'quest' in self.__webhook_types:
+                quest = self.__prepare_quest_data(
+                    self._db_reader.get_quests_changed_since(self.__last_check)
+                )
+                full_payload += quest
 
             # weather
-            weather = self.__prepare_weather_data(
-                self._db_reader.get_weather_changed_since(self.__last_check)
-            )
-            full_payload += weather
+            if 'weather' in self.__webhook_types:
+                weather = self.__prepare_weather_data(
+                    self._db_reader.get_weather_changed_since(self.__last_check)
+                )
+                full_payload += weather
 
             # gyms
-            gyms = self.__prepare_gyms_data(
-                self._db_reader.get_gyms_changed_since(self.__last_check)
-            )
-            full_payload += gyms
+            if 'gym' in self.__webhook_types:
+                gyms = self.__prepare_gyms_data(
+                    self._db_reader.get_gyms_changed_since(self.__last_check)
+                )
+                full_payload += gyms
 
             # stops
-            pokestops = self.__prepare_stops_data(
-                self._db_reader.get_stops_changed_since(self.__last_check)
-            )
-            full_payload += pokestops
+            if 'pokestop' in self.__webhook_types:
+                pokestops = self.__prepare_stops_data(
+                    self._db_reader.get_stops_changed_since(self.__last_check)
+                )
+                full_payload += pokestops
 
             # mon
-            mon = self.__prepare_mon_data(
-                self._db_reader.get_mon_changed_since(self.__last_check)
-            )
-            full_payload += mon
+            if 'pokemon' in self.__webhook_types:
+                mon = self.__prepare_mon_data(
+                    self._db_reader.get_mon_changed_since(self.__last_check)
+                )
+                full_payload += mon
         except Exception:
             logger.exception("Error while creating webhook payload")
 

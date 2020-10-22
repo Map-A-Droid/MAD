@@ -10,7 +10,7 @@ def calculate_mon_level(cp_multiplier):
     return round(pokemon_level) * 2 / 2
 
 
-def gen_despawn_timestamp(known_despawn):
+def gen_despawn_timestamp(known_despawn, timestamp):
     despawn_time = datetime.now() + timedelta(seconds=300)
     despawn_time = datetime.utcfromtimestamp(
         time.mktime(despawn_time.timetuple())
@@ -29,15 +29,15 @@ def gen_despawn_timestamp(known_despawn):
     known_despawn = datetime.now().replace(
         hour=0, minute=int(hrmi[0]), second=int(hrmi[1]), microsecond=0
     )
-    now = datetime.now()
-    if now.minute <= known_despawn.minute:
-        despawn = now + timedelta(
-            minutes=known_despawn.minute - now.minute,
-            seconds=known_despawn.second - now.second,
+    datatime = datetime.fromtimestamp(timestamp)
+    if datatime.minute <= known_despawn.minute:
+        despawn = datatime + timedelta(
+            minutes=known_despawn.minute - datatime.minute,
+            seconds=known_despawn.second - datatime.second,
         )
-    elif now.minute > known_despawn.minute:
-        despawn = (now + timedelta(hours=1) - timedelta(minutes=(now.minute - known_despawn.minute),
-                                                        seconds=now.second - known_despawn.second))
+    elif datatime.minute > known_despawn.minute:
+        despawn = (datatime + timedelta(hours=1) - timedelta(minutes=(datatime.minute - known_despawn.minute),
+                                                             seconds=datatime.second - known_despawn.second))
 
     despawn_uts = int(time.mktime(despawn.timetuple()))
 

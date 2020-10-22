@@ -18,15 +18,15 @@ logger = get_logger(LoggerEnums.utils)
 class S2Helper:
     @staticmethod
     def lat_lng_to_cell_id(lat, lng, level=10):
-        region_cover = s2sphere.RegionCoverer()
-        region_cover.min_level = level
-        region_cover.max_level = level
-        region_cover.max_cells = 1
-        p1 = s2sphere.LatLng.from_degrees(lat, lng)
-        p2 = s2sphere.LatLng.from_degrees(lat, lng)
-        covering = region_cover.get_covering(s2sphere.LatLngRect.from_point_pair(p1, p2))
-        # we will only get our desired cell ;)
-        return covering[0].id()
+        # Getting the cell id of a location
+        # is as easy as finding the CellId and
+        # traversing up the parents to the desired level.
+        ll = s2sphere.LatLng.from_degrees(lat, lng)
+
+        # Get the CellId of this LatLng
+        cid = s2sphere.CellId.from_lat_lng(ll)
+        # Travers up to the parent ID and return this
+        return cid.parent(level).id()
 
     # RM stores lat, long as well...
     # returns tuple  <lat, lng>
