@@ -140,7 +140,7 @@ def parse_args():
                         help=('Set Language for MadMin / Quests. Default: en'))
 
     # MADmin
-    parser.add_argument('-wm', '--disable_madmin', action='store_true', default=False,
+    parser.add_argument('-dm', '--disable_madmin', action='store_true', default=False,
                         help='Disable Madmin on the instance')
     parser.add_argument('-mmbp', '--madmin_base_path', default='/',
                         help='Base path for madmin')
