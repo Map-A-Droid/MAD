@@ -137,7 +137,7 @@ class DbWrapper:
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified)"
         )
         # TODO: think of a better "unique, real number"
-        sql_args = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, -1)
+        sql_args = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, 0)
         self.execute(query, sql_args, commit=True)
 
         return True
