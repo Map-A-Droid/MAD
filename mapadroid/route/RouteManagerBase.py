@@ -821,20 +821,25 @@ class RouteManagerBase(ABC):
             if workers > len(self._current_route_round_coords):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
+                extra_length_workers = 0
             else:
                 try:
                     new_subroute_length = math.floor(len(self._current_route_round_coords) /
                                                      workers)
                     if new_subroute_length == 0:
                         return False
+                    extra_length_workers = len(self._current_route_round_coords) % workers
                 except Exception:
                     self.logger.info('Something happens with the worker - breakup')
                     return False
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
 
-            self.logger.debug("Workers in route: {}", self._routepool)
-            self.logger.debug("New subroute length: {}", new_subroute_length)
+            self.logger.debug("Workers in route: {}", workers)
+            if extra_length_workers > 0:
+                self.logger.debug("New subroute length: {}-{}", new_subroute_length, new_subroute_length + 1)
+            else:
+                self.logger.debug("New subroute length: {}", new_subroute_length)
 
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
@@ -857,8 +862,10 @@ class RouteManagerBase(ABC):
 
                     new_subroute: List[Location] = []
                     subroute_index: int = 0
-                    while len(temp_total_round) > 0 and (
-                            subroute_index <= new_subroute_length or i == len(self._routepool)):
+                    new_subroute_actual_length = new_subroute_length
+                    if i < extra_length_workers:
+                        new_subroute_actual_length += 1
+                    while len(temp_total_round) > 0 and subroute_index < new_subroute_actual_length:
                         subroute_index += 1
                         new_subroute.append(temp_total_round.popleft())
 
