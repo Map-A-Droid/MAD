@@ -21,7 +21,6 @@ from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.utils.logging import get_logger, LoggerEnums, routelogger_set_origin
 
-
 logger = get_logger(LoggerEnums.routemanager)
 args = parse_args()
 
@@ -44,7 +43,7 @@ class RoutePoolEntry:
 
 
 class RouteManagerBase(ABC):
-    def __init__(self, db_wrapper: DbWrapper, dbm: DataManager, area_id: str, coords: List[Location],
+    def __init__(self, db_wrapper: DbWrapper, dbm: DataManager, area_id: str,
                  max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: GeoFence,
                  path_to_exclude_geofence: GeoFence,
@@ -61,7 +60,7 @@ class RouteManagerBase(ABC):
         self.S2level: int = s2_level
         self.area_id = area_id
 
-        self._coords_unstructured: List[Location] = coords
+        self._coords_unstructured = None
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
             path_to_include_geofence, path_to_exclude_geofence)
         self._route_resource = routefile
@@ -92,19 +91,6 @@ class RouteManagerBase(ABC):
         self._manager_mutex = RLock()
         self._round_started_time = None
         self._route: List[Location] = []
-
-        if coords is not None:
-            if init:
-                fenced_coords = coords
-            else:
-                fenced_coords = self.geofence_helper.get_geofenced_coordinates(
-                    coords)
-            new_coords = self._route_resource.get_json_route(fenced_coords, int(max_radius),
-                                                             max_coords_within_radius,
-                                                             algorithm=calctype, route_name=self.name,
-                                                             in_memory=False)
-            for coord in new_coords:
-                self._route.append(Location(coord["lat"], coord["lng"]))
 
         if self.settings is not None:
             self.delay_after_timestamp_prio = self.settings.get(
@@ -270,16 +256,26 @@ class RouteManagerBase(ABC):
         self.add_coords_numpy(to_be_appended)
 
     def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0,
-                            in_memory=False, calctype=None):
+                            in_memory=False, calctype=None) -> List[Dict[str, float]]:
+        # Fallback for calctype if not set in param
         if calctype is None:
             calctype = self._calctype
+
         if len(coords) > 0:
-            new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
-                                                                 delete_old_route, calctype, self.useS2,
-                                                                 self.S2level,
-                                                                 num_procs=0,
-                                                                 overwrite_calculation=self._overwrite_calculation,
-                                                                 in_memory=in_memory, route_name=self.name)
+            new_route = None
+            if not in_memory:
+                if delete_old_route:
+                    self._route_resource.delete_route()
+                else:
+                    new_route = self._route_resource.get_saved_routefile()
+
+            if new_route is None:
+                new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
+                                                                     calctype, self.useS2,
+                                                                     self.S2level,
+                                                                     num_procs=num_procs,
+                                                                     overwrite_calculation=self._overwrite_calculation,
+                                                                     in_memory=in_memory, route_name=self.name)
             if self._overwrite_calculation:
                 self._overwrite_calculation = False
             return new_route
@@ -287,19 +283,7 @@ class RouteManagerBase(ABC):
 
     def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                             delete_old_route: bool = False):
-        if not self._route_resource['routefile']:
-            self.recalc_route(max_radius, max_coords_within_radius, num_procs,
-                              delete_old_route=delete_old_route,
-                              in_memory=True,
-                              calctype='quick')
-            # Route has not previously been calculated.  Recalculate a quick route then calculate the optimized route
-            args = (self._max_radius, self._max_coords_within_radius)
-            kwargs = {
-                'num_procs': 0
-            }
-            Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs).start()
-        else:
-            self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
+        self.recalc_route(max_radius, max_coords_within_radius, num_procs=num_procs, delete_old_route=delete_old_route)
 
     def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                      delete_old_route: bool = False, in_memory: bool = False, calctype: str = None):
@@ -384,8 +368,8 @@ class RouteManagerBase(ABC):
     def _get_round_finished_string(self):
         round_finish_time = datetime.now()
         round_completed_in = ("%d hours, %d minutes, %d seconds" % (self.dhms_from_seconds(self.date_diff_in_seconds(
-                                                                                           round_finish_time,
-                                                                                           self._round_started_time))))
+            round_finish_time,
+            self._round_started_time))))
         return round_completed_in
 
     def add_coord_to_be_removed(self, lat: float, lon: float):
@@ -569,9 +553,9 @@ class RouteManagerBase(ABC):
 
             # determine whether we move to the next location or the prio queue top's item
             if self.delay_after_timestamp_prio is not None \
-               and ((not self._last_round_prio.get(origin, False) or self.starve_route) and
-                    self._prio_queue and len(self._prio_queue) > 0 and
-                    self._prio_queue[0][0] < time.time()):
+                    and ((not self._last_round_prio.get(origin, False) or self.starve_route) and
+                         self._prio_queue and len(self._prio_queue) > 0 and
+                         self._prio_queue[0][0] < time.time()):
                 next_prio = heapq.heappop(self._prio_queue)
                 next_timestamp = next_prio[0]
                 next_coord = next_prio[1]
@@ -586,9 +570,8 @@ class RouteManagerBase(ABC):
                     else:
                         delete_before = 0
                     if next_timestamp < delete_before:
-                        route_logger.warning("Prio event surpassed the maximum backlog time and will be skipped. Make "
-                                             "sure you run enough workers or reduce the size of the area! (event was "
-                                             "scheduled for {})", next_readable_time)
+                        route_logger.warning("Prio event older than {} seconds! Adjust your setup!!)",
+                                             self.remove_from_queue_backlog)
                         return self.get_next_location(origin)
                 if self._other_worker_closer_to_prioq(next_coord, origin):
                     self._last_round_prio[origin] = True
@@ -598,7 +581,7 @@ class RouteManagerBase(ABC):
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
-                route_logger.info("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
+                route_logger.info("Moving to {:.5f}, {:.5f} for a priority event scheduled for {}", next_coord.lat,
                                   next_coord.lng, next_readable_time)
                 next_coord = self._check_coord_and_maybe_del(next_coord, origin)
                 if next_coord is None:

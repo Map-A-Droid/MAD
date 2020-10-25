@@ -113,6 +113,15 @@ class AreaPokestops(Area):
                     "description": "Cleanup quest inventory after every stop (Default: False)",
                     "expected": bool
                 }
+            },
+            "clear_route_every_time": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [False, True],
+                    "description": "Recalculate route every time",
+                    "expected": bool
+                }
             }
         }
     }

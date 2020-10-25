@@ -1,6 +1,8 @@
 import collections
 import time
 from typing import List
+
+from mapadroid.data_manager.modules import GeoFence, RouteCalc
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.logging import get_logger, LoggerEnums
@@ -11,11 +13,11 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
 class RouteManagerQuests(RouteManagerBase):
-    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
+    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, max_radius: float,
+                 max_coords_within_radius: int, path_to_include_geofence: GeoFence, path_to_exclude_geofence: GeoFence,
+                 routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "route", joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
@@ -30,6 +32,9 @@ class RouteManagerQuests(RouteManagerBase):
         self._shutdown_route: bool = False
         self._routecopy: List[Location] = []
         self._tempinit: bool = False
+        self._clear_route_every_time: bool = False
+        if settings is not None:
+            self._clear_route_every_time = settings.get("clear_route_every_time", False)
 
     def generate_stop_list(self):
         time.sleep(5)
@@ -52,12 +57,8 @@ class RouteManagerQuests(RouteManagerBase):
         return 0
 
     def _recalc_route_workertype(self):
-        if self.init:
-            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                              in_memory=False)
-        else:
-            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                              in_memory=True)
+        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=self.init,
+                          in_memory=(not self.init))
 
         self._init_route_queue()
 
@@ -99,7 +100,11 @@ class RouteManagerQuests(RouteManagerBase):
     def _restore_original_route(self):
         if not self._tempinit:
             self.logger.info("Restoring original route")
-            self._route = self._routecopy.copy()
+            if self._clear_route_every_time:
+                self._route = self.recalc_route(self._max_radius, self._max_coords_within_radius, 0,
+                                                delete_old_route=True, in_memory=False)
+            else:
+                self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
         self._manager_mutex.acquire()

@@ -399,21 +399,18 @@ class MappingManager:
                                                                                                 99999999),
                                                                  geofence_included,
                                                                  path_to_exclude_geofence=geofence_excluded,
-                                                                 mode=mode,
-                                                                 settings=area.get("settings", None),
+                                                                 routefile=route_resource, mode=mode,
                                                                  init=area.get("init", False),
                                                                  name=area.get("name", "unknown"),
-                                                                 level=area.get("level", False),
+                                                                 settings=area.get("settings", None),
                                                                  coords_spawns_known=area.get(
                                                                      "coords_spawns_known", True),
-                                                                 routefile=route_resource,
-                                                                 calctype=calc_type,
-                                                                 joinqueue=self.join_routes_queue,
+                                                                 level=area.get("level", False), calctype=calc_type,
                                                                  s2_level=mode_mapping.get(mode, {}).get(
                                                                      "s2_cell_level", 30),
+                                                                 joinqueue=self.join_routes_queue,
                                                                  include_event_id=area.get(
-                                                                     "settings", {}).get("include_event_id", None)
-                                                                 )
+                                                                     "settings", {}).get("include_event_id", None))
             logger.info("Initializing area {}", area["name"])
             if mode not in ("iv_mitm", "idle") and calc_type != "routefree":
                 coords = self.__fetch_coords(mode, geofence_helper,
@@ -422,15 +419,15 @@ class MappingManager:
                                              range_init=mode_mapping.get(mode, {}).get("range_init", 630),
                                              including_stops=area.get("including_stops", False),
                                              include_event_id=area.get("settings", {}).get("include_event_id", None))
-
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[mode]["range"]
                 max_count_in_radius = mode_mapping[mode]["max_count"]
                 if not area.get("init", False):
-
+                    logger.info("Not init mode, run initial calculation")
+                    clear_route_every_time = area.get("settings", {}).get("clear_route_every_time", False)
                     proc = thread_pool.apply_async(route_manager.initial_calculation,
                                                    args=(max_radius, max_count_in_radius,
-                                                         0, False))
+                                                         0, clear_route_every_time))
                     areas_procs[area_id] = proc
                 else:
                     logger.info("Init mode enabled. Going row-based for {}", area.get("name", "unknown"))

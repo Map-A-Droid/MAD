@@ -11,11 +11,11 @@ logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerLevelingRoutefree(RouteManagerQuests):
-    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
+    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "route", joinqueue=None):
-        RouteManagerQuests.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+        RouteManagerQuests.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id,
                                     max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
                                     path_to_include_geofence=path_to_include_geofence,
                                     path_to_exclude_geofence=path_to_exclude_geofence,
