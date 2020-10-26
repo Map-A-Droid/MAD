@@ -101,8 +101,8 @@ class RouteManagerQuests(RouteManagerBase):
         if not self._tempinit:
             self.logger.info("Restoring original route")
             if self._clear_route_every_time:
-                self._route = self.recalc_route(self._max_radius, self._max_coords_within_radius, 0,
-                                                delete_old_route=True, in_memory=False)
+                self.recalc_route(self._max_radius, self._max_coords_within_radius, 0,
+                                  delete_old_route=True, in_memory=False)
             else:
                 self._route = self._routecopy.copy()
 
