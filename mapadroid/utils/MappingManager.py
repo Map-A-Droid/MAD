@@ -14,7 +14,6 @@ from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
-
 logger = get_logger(LoggerEnums.utils)
 
 mode_mapping = {
@@ -348,14 +347,15 @@ class MappingManager:
         areas_procs = {}
         for area_id, area_true in raw_areas.items():
             area = area_true.get_resource()
-            if area["geofence_included"] is None:
+            geofence_included_ref = area["geofence_included"]
+            if geofence_included_ref is None:
                 raise RuntimeError("Cannot work without geofence_included")
 
             try:
-                geofence_included = self.__data_manager.get_resource('geofence', identifier=area["geofence_included"])
+                geofence_included = self.__data_manager.get_resource('geofence', identifier=geofence_included_ref)
             except Exception:
-                raise RuntimeError("geofence_included for area '{}' is specified but does not exist ('{}').".format(
-                                   area["name"], geofence_included))
+                raise RuntimeError("geofence_included for area '{}' is specified but does not exist.({})".format(
+                    area["name"], geofence_included_ref))
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
             try:
@@ -398,7 +398,7 @@ class MappingManager:
                                                                  mode_mapping.get(mode, {}).get("max_count",
                                                                                                 99999999),
                                                                  geofence_included,
-                                                                 path_to_exclude_geofence=geofence_excluded,
+                                                                 exclude_geofence=geofence_excluded,
                                                                  routefile=route_resource, mode=mode,
                                                                  init=area.get("init", False),
                                                                  name=area.get("name", "unknown"),
@@ -423,7 +423,7 @@ class MappingManager:
                 max_radius = mode_mapping[mode]["range"]
                 max_count_in_radius = mode_mapping[mode]["max_count"]
                 if not area.get("init", False):
-                    logger.info("Not init mode, run initial calculation")
+                    logger.debug("Not init mode, get saved route or generate it if needed")
                     clear_route_every_time = area.get("settings", {}).get("clear_route_every_time", False)
                     proc = thread_pool.apply_async(route_manager.initial_calculation,
                                                    args=(max_radius, max_count_in_radius,
@@ -553,15 +553,14 @@ class MappingManager:
             return areas
 
         for area_id, area in raw_areas.items():
-            area_dict = {}
-            area_dict['routecalc'] = area.get('routecalc', None)
-            area_dict['mode'] = area.area_type
-            area_dict['geofence_included'] = area.get(
-                'geofence_included', None)
-            area_dict['geofence_excluded'] = area.get(
-                'geofence_excluded', None)
-            area_dict['init'] = area.get('init', False)
-            area_dict['name'] = area['name']
+            area_dict = {
+                'routecalc': area.get('routecalc', None),
+                'mode': area.area_type,
+                'geofence_included': area.get('geofence_included', None),
+                'geofence_excluded': area.get('geofence_excluded', None),
+                'init': area.get('init', False),
+                'name': area['name']
+            }
             areas[area_id] = area_dict
         return areas
 

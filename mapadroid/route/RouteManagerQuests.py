@@ -1,27 +1,25 @@
-import collections
 import time
-from typing import List
+from typing import List, Optional
 
 from mapadroid.data_manager.modules import GeoFence, RouteCalc
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
-
 logger = get_logger(LoggerEnums.routemanager)
-Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
 class RouteManagerQuests(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, dbm, area_id, max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: GeoFence, path_to_exclude_geofence: GeoFence,
+                 max_coords_within_radius: int, include_geofence: Optional[GeoFence], exclude_geofence: Optional[GeoFence],
                  routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "route", joinqueue=None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
+                                  include_geofence=include_geofence,
+                                  exclude_geofence=exclude_geofence,
                                   routefile=routefile, init=init,
                                   name=name, settings=settings, mode=mode, level=level, calctype=calctype,
                                   joinqueue=joinqueue
@@ -103,6 +101,7 @@ class RouteManagerQuests(RouteManagerBase):
             if self._clear_route_every_time:
                 self.recalc_route(self._max_radius, self._max_coords_within_radius, 0,
                                   delete_old_route=True, in_memory=False)
+                self._routecopy = self._route.copy()
             else:
                 self._route = self._routecopy.copy()
 

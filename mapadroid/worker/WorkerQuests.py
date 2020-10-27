@@ -276,7 +276,7 @@ class WorkerQuests(MITMBase):
                                                            float(
                                                                self.current_location.lat) + lat_offset,
                                                            float(self.current_location.lng) + lng_offset)
-            self.logger.info("Walking roughly: {:.2f}m", to_walk)
+            self.logger.debug("Walking roughly: {:.2f}m", to_walk)
             time.sleep(0.3)
             self._communicator.walk_from_to(self.current_location,
                                             Location(self.current_location.lat + lat_offset,
@@ -776,7 +776,6 @@ class WorkerQuests(MITMBase):
                                 raise InternalStopWorkerException
                         self.clear_thread_task = ClearThreadTasks.QUEST
                     break
-
             elif (data_received == FortSearchResultTypes.TIME or data_received ==
                   FortSearchResultTypes.OUT_OF_RANGE):
                 self.logger.warning('Softban - return to main screen and open again...')

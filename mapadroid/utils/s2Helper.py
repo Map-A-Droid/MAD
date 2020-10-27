@@ -25,7 +25,8 @@ class S2Helper:
 
         # Get the CellId of this LatLng
         cid = s2sphere.CellId.from_lat_lng(ll)
-        # Travers up to the parent ID and return this
+
+        # Traverse up to the parent ID and return this
         return cid.parent(level).id()
 
     # RM stores lat, long as well...

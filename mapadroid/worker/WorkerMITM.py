@@ -17,7 +17,6 @@ from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
-
 logger = get_logger(LoggerEnums.worker)
 
 
@@ -95,7 +94,7 @@ class WorkerMITM(MITMBase):
                                                                float(
                                                                    self.current_location.lat) + lat_offset,
                                                                float(self.current_location.lng) + lng_offset)
-                self.logger.info("Walking roughly: {:.2f}m", to_walk)
+                self.logger.debug("Walking roughly: {:.2f}m", to_walk)
                 time.sleep(0.3)
                 self._communicator.walk_from_to(self.current_location,
                                                 Location(self.current_location.lat + lat_offset,
@@ -104,7 +103,7 @@ class WorkerMITM(MITMBase):
                 self.logger.debug("Walking back")
                 time.sleep(0.3)
                 self._communicator.walk_from_to(Location(self.current_location.lat + lat_offset,
-                                                self.current_location.lng + lng_offset),
+                                                         self.current_location.lng + lng_offset),
                                                 self.current_location,
                                                 11)
                 self.logger.debug("Done walking")

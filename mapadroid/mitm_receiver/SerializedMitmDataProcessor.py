@@ -47,7 +47,7 @@ class SerializedMitmDataProcessor(Process):
         data_payload = data["payload"]
         if data_type == 106:
             # process GetMapObject
-            origin_logger.info("Processing GMO received. Received at {}", processed_timestamp)
+            origin_logger.info("Processing GMO received {}", processed_timestamp)
 
             self.__db_submit.weather(origin, data_payload, received_timestamp)
 
@@ -63,11 +63,11 @@ class SerializedMitmDataProcessor(Process):
         elif data_type == 102:
             playerlevel = self.__mitm_mapper.get_playerlevel(origin)
             if playerlevel >= 30:
-                origin_logger.debug("Processing encounter received at {}", processed_timestamp)
+                origin_logger.debug("Processing encounter received {}", processed_timestamp)
                 self.__db_submit.mon_iv(origin, received_timestamp, data_payload, self.__mitm_mapper)
                 origin_logger.debug2("Done processing encounter")
             else:
-                origin_logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
+                origin_logger.warning("Playerlevel below 30 - ignoring IVs")
         elif data_type == 101:
             origin_logger.debug2("Processing proto 101")
             self.__db_submit.quest(origin, data_payload, self.__mitm_mapper)

@@ -1,24 +1,24 @@
-from typing import List
 import numpy as np
+
+from mapadroid.data_manager.modules import GeoFence, RouteCalc
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
-
 logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerLevelingRoutefree(RouteManagerQuests):
     def __init__(self, db_wrapper: DbWrapper, dbm, area_id, max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
+                 max_coords_within_radius: int, include_geofence: GeoFence, exclude_geofence: GeoFence,
+                 routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "route", joinqueue=None):
         RouteManagerQuests.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id,
                                     max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
-                                    path_to_include_geofence=path_to_include_geofence,
-                                    path_to_exclude_geofence=path_to_exclude_geofence,
+                                    include_geofence=include_geofence,
+                                    exclude_geofence=exclude_geofence,
                                     routefile=routefile, init=init,
                                     name=name, settings=settings, mode=mode, level=level, calctype=calctype,
                                     joinqueue=joinqueue

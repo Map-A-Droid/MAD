@@ -45,8 +45,8 @@ class RoutePoolEntry:
 class RouteManagerBase(ABC):
     def __init__(self, db_wrapper: DbWrapper, dbm: DataManager, area_id: str,
                  max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: GeoFence,
-                 path_to_exclude_geofence: GeoFence,
+                 max_coords_within_radius: int,
+                 include_geofence: Optional[GeoFence], exclude_geofence: Optional[GeoFence],
                  routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown",
                  settings: dict = None,
                  level: bool = False, calctype: str = "route", use_s2: bool = False, s2_level: int = 15,
@@ -62,7 +62,7 @@ class RouteManagerBase(ABC):
 
         self._coords_unstructured = None
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
-            path_to_include_geofence, path_to_exclude_geofence)
+            include_geofence, exclude_geofence)
         self._route_resource = routefile
         self._max_radius: float = max_radius
         self._max_coords_within_radius: int = max_coords_within_radius
@@ -581,13 +581,14 @@ class RouteManagerBase(ABC):
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
-                route_logger.info("Moving to {:.5f}, {:.5f} for a priority event scheduled for {}", next_coord.lat,
-                                  next_coord.lng, next_readable_time)
                 next_coord = self._check_coord_and_maybe_del(next_coord, origin)
                 if next_coord is None:
                     # Coord was not ok, lets recurse
                     return self.get_next_location(origin)
 
+                route_logger.info("PQ moving to {:.5f}, {:.5f} for event. Aprox {} coords left in queue",
+                                  next_coord.lat,
+                                  next_coord.lng, len(self._prio_queue))
                 # Return the prioQ coordinate.
                 return next_coord
             # End of if block for prioQ handling.
@@ -674,7 +675,7 @@ class RouteManagerBase(ABC):
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
                         and not self.init:
                     self._current_route_round_coords.remove(next_coord)
-                route_logger.info("Moving on with location {}, {} [{} coords left (Workerpool)]", next_coord.lat,
+                route_logger.info("Moving to location {:.5f}, {:.5f} [{} coords in pool]", next_coord.lat,
                                   next_coord.lng, len(self._routepool[origin].queue) + 1)
                 self._last_round_prio[origin] = False
                 self._routepool[origin].last_round_prio_event = False
