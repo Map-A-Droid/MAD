@@ -99,6 +99,9 @@ class RouteManagerQuests(RouteManagerBase):
         if not self._tempinit:
             self.logger.info("Restoring original route")
             if self._clear_route_every_time:
+                self._clear_coords()
+                coords = self._get_coords_post_init()
+                self.add_coords_list(coords)
                 self.recalc_route(self._max_radius, self._max_coords_within_radius, 0,
                                   delete_old_route=True, in_memory=False)
                 self._routecopy = self._route.copy()
@@ -225,6 +228,7 @@ class RouteManagerQuests(RouteManagerBase):
         # clear not processed stops
         self._stops_not_processed.clear()
         self._coords_to_be_ignored.clear()
+        self._restore_original_route()
 
     def _check_coords_before_returning(self, lat, lng, origin):
         if self.init:
