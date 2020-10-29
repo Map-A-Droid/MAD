@@ -277,59 +277,10 @@ class MITMBase(WorkerBase):
             self.logger.debug("_clear_quests Open menu: {}, {}", int(x), int(y))
             time.sleep(6 + int(delayadd))
 
-        if self._enhanced_mode:
-            x, y = self._resocalc.get_close_main_button_coords(self)
-            self._communicator.click(int(x), int(y))
-            return
-
-        x, y = self._resocalc.get_quest_listview(self)
-        self._communicator.click(int(x), int(y))
-        self.logger.debug("_clear_quests Open field: {}, {}", int(x), int(y))
-        time.sleep(4 + int(delayadd))
-
-        trashcancheck = self._get_trash_positions(full_screen=True)
-        self.logger.debug("_clear_quests Found trash: {}", trashcancheck)
-        if trashcancheck is None:
-            self.logger.error('Could not find any trashcan - abort')
-            return
-        if len(trashcancheck) == 0:
-            self._clear_quests_failcount += 1
-            if self._clear_quests_failcount < 3:
-                self.logger.warning("Could not find any trashcan on a valid screenshot {} time(s) in a row!",
-                                    self._clear_quests_failcount)
-            else:
-                self._clear_quests_failcount = 0
-                self.logger.error("Unable to clear quests 3 times in a row. Restart pogo ...")
-                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
-                    # TODO: put in loop, count up for a reboot ;)
-                    raise InternalStopWorkerException
-                return
-        else:
-            self.logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
-        # get confirm box coords
-        x, y = self._resocalc.get_confirm_delete_quest_coords(self)
-
-        for trash in range(len(trashcancheck)):
-            self._clear_quests_failcount = 0
-            self.set_devicesettings_value('last_questclear_time', time.time())
-            self.logger.info("Delete old quest {}", int(trash) + 1)
-            for i in range(3):
-                self.logger.debug("repeated trash click #{}", i + 1)
-                self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
-                time.sleep(0.3 + int(delayadd))
-            self.logger.debug("final trash click ...")
-            self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
-            time.sleep(2.5 + int(delayadd))
-            self._communicator.click(int(x), int(y))
-            time.sleep(1 + int(delayadd))
-
         x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
-
         time.sleep(1.5)
-
         self.logger.debug('{_clear_quests} finished')
-        return
 
     def _open_gym(self, delayadd):
         self.logger.debug('{_open_gym} called')
