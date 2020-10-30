@@ -312,18 +312,17 @@ def supported_pogo_version(architecture: APKArch, version: str) -> bool:
         bits = '32'
     else:
         bits = '64'
+    composite_key = '%s_%s' % (version, bits,)
     try:
         with open('configs/version_codes.json') as fh:
-            address_object = json.load(fh)
-            composite_key = '%s_%s' % (version, bits,)
-            address_object[composite_key]
-            valid = True
+            json.load(fh)[composite_key]
+            return True
     except KeyError:
         try:
             requests.get(VERSIONCODES_URL).json()[composite_key]
-            valid = True
+            return True
         except KeyError:
             pass
     if not valid:
-        logger.info('Current version of POGO [{}] is not supported', composite_key)
+        logger.info('Current version of PoGo [{}] is not supported', composite_key)
     return valid

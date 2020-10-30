@@ -295,6 +295,10 @@ class APKWizard(object):
                     logger.info("Version in store is newer than supported version. Using an older version")
                     version_code = latest_supported["versionCode"]
                     version_str = latest_supported["version"]
+                elif current_version and store_vs == current_version:
+                    logger.info("Latest version [{}] is already installed", store_vc)
+                    version_code = store_vc
+                    version_str = store_vs
                 else:
                     logger.info('Newer version found: {}', store_vs)
                     version_code = store_vc
