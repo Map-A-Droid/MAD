@@ -108,7 +108,9 @@ def questtype(quest_type):
 
 
 def rewarditem(itemid):
-    return items[str(itemid)]['name']
+    if str(itemid) in items:
+        return items[str(itemid)]['name']
+    return "Item " + str(itemid)
 
 
 def pokemonname(id):
