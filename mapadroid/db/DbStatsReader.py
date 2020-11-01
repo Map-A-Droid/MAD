@@ -325,7 +325,7 @@ class DbStatsReader:
             "IF(FROM_UNIXTIME(MIN(trs_quest.quest_timestamp), '%y-%m-%d') IS NULL, 'NO QUEST', "
             "FROM_UNIXTIME(MIN(trs_quest.quest_timestamp), '%y-%m-%d')) AS Quest, "
             "count(pokestop.pokestop_id) AS Count "
-            "FROM pokestop LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
+            "FROM pokestop LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.`pokestop_id` "
             "GROUP BY FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')"
         )
         res = self._db_exec.execute(query)
@@ -339,7 +339,7 @@ class DbStatsReader:
             days = datetime.utcnow() - timedelta(days=days)
             query_where = "WHERE FROM_UNIXTIME(quest_timestamp) > '%s' " % str(days)
         query = (
-            "SELECT %s, count(GUID) as Count FROM trs_quest %s "
+            "SELECT %s, count(`pokestop_id`) as Count FROM trs_quest %s "
             "GROUP BY day(FROM_UNIXTIME(quest_timestamp)), hour(FROM_UNIXTIME(quest_timestamp)) "
             "ORDER BY quest_timestamp" % (str(query_date), str(query_where))
         )

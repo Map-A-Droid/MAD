@@ -535,8 +535,19 @@ CREATE TABLE `trainer` (
     PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `trs_quest_layers` (
+    `layer` int(11) NOT NULL,
+    `descr` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+INSERT INTO `trs_quest_layers` (`layer`, `descr`)
+VALUES
+(1, "Standard quests"), (2, "AR Scanning quests");
+
 CREATE TABLE `trs_quest` (
-    `GUID` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `pokestop_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `layer` int(11) NOT NULL DEFAULT 1,
     `quest_type` tinyint(3) NOT NULL,
     `quest_timestamp` int(11) NOT NULL,
     `quest_stardust` smallint(4) NOT NULL,
@@ -551,8 +562,9 @@ CREATE TABLE `trs_quest` (
     `quest_task` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `quest_pokemon_form_id` smallint(6) NOT NULL DEFAULT '0',
     `quest_pokemon_costume_id` smallint(6) NOT NULL DEFAULT '0',
-    PRIMARY KEY (`GUID`),
-    KEY `quest_type` (`quest_type`)
+    PRIMARY KEY (`pokestop_id`, `layer`),
+    KEY `quest_type` (`quest_type`),
+    KEY `layer` (`layer`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `trs_event` (

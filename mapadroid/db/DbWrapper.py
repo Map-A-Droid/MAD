@@ -147,18 +147,13 @@ class DbWrapper:
         Update scannedlocation (in RM) of a given lat/lng
         """
         logger.debug3("DbWrapper::check_stop_quest called")
-        query = (
-            "SELECT trs_quest.GUID "
-            "from trs_quest inner join pokestop on pokestop.pokestop_id = trs_quest.GUID where "
-            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = "
-            "date_format(DATE_ADD( now() , INTERVAL '-15' MINUTE ), '%Y-%m-%d') "
-            "and pokestop.latitude=%s and pokestop.longitude=%s"
-        )
-        data = (latitude, longitude)
-
-        res = self.execute(query, data)
-        number_of_rows = len(res)
-        if number_of_rows > 0:
+        sql = "SELECT COUNT(*)\n"\
+              "FROM `trs_quest` qu\n"\
+              "INNER JOIN `pokestop` ps ON ps.`pokestop_id` = qu.`pokestop_id`\n"\
+              "WHERE FROM_UNIXTIME(qu.`quest_timestamp`,'%Y-%m-%d') = "\
+              "DATE_FORMAT(DATE_ADD(NOW(), INTERVAL '-15' MINUTE ), '%Y-%m-%d')\n"\
+              "AND ps.`latitude` = %s AND ps.`longitude` = %s"
+        if self.autofetch_value(sql, (latitude, longitude)):
             logger.debug3('Pokestop has already a quest with CURDATE()')
             return True
         else:
@@ -286,63 +281,52 @@ class DbWrapper:
         """
         logger.debug3("DbWrapper::quests_from_db called")
         questinfo = {}
-
-        query = (
-            "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
-            "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_pokemon_form_id, "
-            "trs_quest.quest_pokemon_costume_id, trs_quest.quest_reward_type, "
-            "trs_quest.quest_item_id, trs_quest.quest_item_amount, pokestop.name, pokestop.image, "
-            "trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
-            "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template "
-            "FROM pokestop INNER JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
-            "WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
-        )
-
-        query_where = ""
+        sql = "SELECT ps.`pokestop_id`, ps.`latitude`, ps.`longitude`, qu.`quest_type`, qu.`quest_stardust`,"\
+              "qu.`quest_pokemon_id`, qu.`quest_pokemon_form_id`, qu.`quest_pokemon_costume_id`,"\
+              "qu.`quest_reward_type`, qu.`quest_item_id`, qu.`quest_item_amount`, ps.`name`, ps.`image`,"\
+              "qu.`quest_target`, qu.`quest_condition`, qu.`quest_timestamp`, qu.`quest_task`, qu.`quest_reward`,"\
+              "qu.`quest_template`\n"\
+              "FROM `pokestop` ps\n"\
+              "INNER JOIN `trs_quest` qu ON qu.`pokestop_id`= ps.`pokestop_id`\n"\
+              "WHERE DATE(FROM_UNIXTIME(qu.`quest_timestamp`,'%Y-%m-%d')) = CURDATE()"
+        query_args = []
 
         if ne_lat is not None and ne_lon is not None and sw_lat is not None and sw_lon is not None:
-            oquery_where = (
-                " AND (latitude >= {} AND longitude >= {} "
-                " AND latitude <= {} AND longitude <= {}) "
-            ).format(sw_lat, sw_lon, ne_lat, ne_lon)
-
-            query_where = query_where + oquery_where
-
+            query_args.extend([sw_lat, sw_lon, ne_lat, ne_lon])
+            sql += " AND (ps.`latitude` >= %s AND ps.`longitude` >= %s "\
+                   " AND ps.`latitude` <= %s AND ps.`longitude` <= %s) "
         if o_ne_lat is not None and o_ne_lon is not None and o_sw_lat is not None and o_sw_lon is not None:
-            oquery_where = (
-                " AND NOT (latitude >= {} AND longitude >= {} "
-                " AND latitude <= {} AND longitude <= {}) "
-            ).format(o_sw_lat, o_sw_lon, o_ne_lat, o_ne_lon)
-
-            query_where = query_where + oquery_where
+            query_args.extend([o_sw_lat, o_sw_lon, o_ne_lat, o_ne_lon])
+            sql += " AND NOT (ps.`latitude` >= %s AND ps.`longitude` >= %s "\
+                   " AND ps.`latitude` <= %s AND ps.`longitude` <= %s) "
         elif timestamp is not None:
-            oquery_where = " AND trs_quest.quest_timestamp >= {}".format(timestamp)
-            query_where = query_where + oquery_where
-
+            query_args.append(timestamp)
+            sql += " AND trs_quest.`quest_timestamp` >= %s"
         if fence is not None:
-            query_where = query_where + " and ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
-                                        "POINT(pokestop.latitude, pokestop.longitude))".format(str(fence))
-
-        res = self.execute(query + query_where)
-
-        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id,
-             quest_pokemon_form_id, quest_pokemon_costume_id, quest_reward_type,
-             quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
-             quest_timestamp, quest_task, quest_reward, quest_template) in res:
-            mon = "%03d" % quest_pokemon_id
-            form_id = "%02d" % quest_pokemon_form_id
-            costume_id = "%02d" % quest_pokemon_costume_id
-            questinfo[pokestop_id] = ({
-                'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude,
-                'quest_type': quest_type, 'quest_stardust': quest_stardust,
-                'quest_pokemon_id': mon, 'quest_pokemon_form_id': form_id,
-                'quest_pokemon_costume_id': costume_id,
-                'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id,
-                'quest_item_amount': quest_item_amount, 'name': name, 'image': image,
-                'quest_target': quest_target,
-                'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
-                'task': quest_task, 'quest_reward': quest_reward, 'quest_template': quest_template})
-
+            sql += " AND ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( %s ))'), POINT(ps.`latitude`, ps.`longitude`))"
+            query_args.append(fence)
+        for pokestop in self._db_exec.autofetch_all(sql, tuple(query_args)):
+            questinfo[pokestop["pokestop_id"]] = ({
+                'pokestop_id': pokestop["pokestop_id"],
+                'latitude': pokestop["latitude"],
+                'longitude': pokestop["longitude"],
+                'quest_type': pokestop["quest_type"],
+                'quest_stardust': pokestop["quest_stardust"],
+                'quest_pokemon_id': "%03d" % pokestop["quest_pokemon_id"],
+                'quest_pokemon_form_id': "%02d" % pokestop["quest_pokemon_form_id"],
+                'quest_pokemon_costume_id': "%02d" % pokestop["quest_pokemon_costume_id"],
+                'quest_reward_type': pokestop["quest_reward_type"],
+                'quest_item_id': pokestop["quest_item_id"],
+                'quest_item_amount': pokestop["quest_item_amount"],
+                'name': pokestop["name"],
+                'image': pokestop["image"],
+                'quest_target': pokestop["quest_target"],
+                'quest_condition': pokestop["quest_condition"],
+                'quest_timestamp': pokestop["quest_timestamp"],
+                'task': pokestop["quest_task"],
+                'quest_reward': pokestop["quest_reward"],
+                'quest_template': pokestop["quest_template"]
+            })
         return questinfo
 
     def get_pokemon_spawns(self, hours):
@@ -421,18 +405,14 @@ class DbWrapper:
         logger.debug3("DbWrapper::stop_from_db_without_quests called")
 
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
-
-        query = (
-            "SELECT pokestop.latitude, pokestop.longitude "
-            "FROM pokestop "
-            "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
-            "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
-            "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
-            "AND (DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
-            "OR trs_quest.GUID IS NULL)"
-        ).format(min_lat, min_lon, max_lat, max_lon)
-
-        res = self.execute(query)
+        sql = "SELECT ps.`latitude`, ps.`longitude`\n"\
+              "FROM `pokestop` ps\n"\
+              "LEFT JOIN `trs_quest` qu ON qu.`pokestop_id` = ps.`pokestop_id`\n"\
+              "WHERE (ps.`latitude` >= %s AND ps.`longitude` >= %s AND ps.latitude <= %s "\
+              "AND ps.longitude <= %s) \n"\
+              "AND (DATE(FROM_UNIXTIMESTAMP(qu.`quest_timestamp`,'%Y-%m-%d')) <> CURDATE() OR qu.`pokestop_id` IS NULL)"
+        args = [min_lat, min_lon, max_lat, max_lon]
+        res = self.execute(sql, args=tuple(args))
         list_of_coords: List[Location] = []
 
         for (latitude, longitude) in res:

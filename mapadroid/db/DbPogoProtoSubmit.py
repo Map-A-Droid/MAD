@@ -374,28 +374,29 @@ class DbPogoProtoSubmit:
 
         mitm_mapper.collect_quest_stats(origin, fort_id)
 
-        query_quests = (
-            "INSERT INTO trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "
-            "quest_pokemon_form_id, quest_pokemon_costume_id, "
-            "quest_reward_type, quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, "
-            "quest_task, quest_template) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
-            "quest_stardust=VALUES(quest_stardust), quest_pokemon_id=VALUES(quest_pokemon_id), "
-            "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
-            "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), "
-            "quest_condition=VALUES(quest_condition), quest_reward=VALUES(quest_reward), "
-            "quest_task=VALUES(quest_task), quest_template=VALUES(quest_template), "
-            "quest_pokemon_form_id=VALUES(quest_pokemon_form_id), "
-            "quest_pokemon_costume_id=VALUES(quest_pokemon_costume_id)"
-        )
-        insert_values = (
-            fort_id, quest_type, time.time(), stardust, pokemon_id, form_id, costume_id, reward_type,
-            item_item, item_amount, target,
-            json_condition, json.dumps(rewards), task, quest_template
-        )
-        origin_logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
-        self._db_exec.execute(query_quests, insert_values, commit=True)
+        #  @TODO - Update this when PD supports layering
+        quest_layer = 1
 
+        save_info = {
+            "pokestop_id": fort_id,
+            "layer": quest_layer,
+            "quest_type": quest_type,
+            "quest_timestamp": time.time(),
+            "quest_stardust": stardust,
+            "quest_pokemon_id": pokemon_id,
+            "quest_pokemon_form_id": form_id,
+            "quest_pokemon_costume_id": costume_id,
+            "quest_reward_type": reward_type,
+            "quest_item_id": item_item,
+            "quest_item_amount": item_amount,
+            "quest_target": target,
+            "quest_condition": json_condition,
+            "quest_reward": json.dumps(rewards),
+            "quest_task": task,
+            "quest_template": quest_template
+        }
+        self._db_exec.autoexec_insert("trs_quest", save_info, optype="ON DUPLICATE", literals=["quest_timestamp"])
+        origin_logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
         return True
 
     def gyms(self, origin: str, map_proto: dict):

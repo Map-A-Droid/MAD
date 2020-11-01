@@ -42,7 +42,8 @@ MAD_UPDATES = OrderedDict([
     (35, 'madrom_autoconfig'),
     (36, 'pokemon_iv_index'),
     (37, 'move_ptc_accounts'),
-    (38, 'remove_hatch_delay')
+    (38, 'remove_hatch_delay'),
+    (39, 'ar_scanning_quests')
 ])
 
 
