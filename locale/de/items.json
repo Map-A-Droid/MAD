@@ -1,4 +1,8 @@
 {
+  "0": {
+    "protoname": "ITEM_UNKNOWN",
+    "name": "ITEM_UNKNOWN"
+  },
   "1": {
     "protoname": "ITEM_POKE_BALL",
     "name": "Pokéball"
@@ -17,7 +21,7 @@
   },
   "5": {
     "protoname": "ITEM_PREMIER_BALL",
-    "name": "Premierball"
+    "name": "ITEM_PREMIER_BALL"
   },
   "101": {
     "protoname": "ITEM_POTION",
@@ -53,15 +57,19 @@
   },
   "402": {
     "protoname": "ITEM_INCENSE_SPICY",
-    "name": "Incense Spicy"
+    "name": "ITEM_INCENSE_SPICY"
   },
   "403": {
     "protoname": "ITEM_INCENSE_COOL",
-    "name": "Incense Cool"
+    "name": "ITEM_INCENSE_COOL"
   },
   "404": {
     "protoname": "ITEM_INCENSE_FLORAL",
-    "name": "Incense Floral"
+    "name": "ITEM_INCENSE_FLORAL"
+  },
+  "405": {
+    "protoname": "ITEM_INCENSE_BELUGA_BOX",
+    "name": "Wunderbox"
   },
   "501": {
     "protoname": "ITEM_TROY_DISK",
@@ -81,15 +89,15 @@
   },
   "602": {
     "protoname": "ITEM_X_ATTACK",
-    "name": "X Attack"
+    "name": "X-Angriff"
   },
   "603": {
     "protoname": "ITEM_X_DEFENSE",
-    "name": "X Defense"
+    "name": "X-Verteidigung"
   },
   "604": {
     "protoname": "ITEM_X_MIRACLE",
-    "name": "X Miracle"
+    "name": "Nicht definiert"
   },
   "701": {
     "protoname": "ITEM_RAZZ_BERRY",
@@ -97,7 +105,7 @@
   },
   "702": {
     "protoname": "ITEM_BLUK_BERRY",
-    "name": "Bluk Berry"
+    "name": "Morbbeere"
   },
   "703": {
     "protoname": "ITEM_NANAB_BERRY",
@@ -105,7 +113,7 @@
   },
   "704": {
     "protoname": "ITEM_WEPAR_BERRY",
-    "name": "Wepar Berry"
+    "name": "Nirbebeere"
   },
   "705": {
     "protoname": "ITEM_PINAP_BERRY",
@@ -117,11 +125,15 @@
   },
   "707": {
     "protoname": "ITEM_GOLDEN_NANAB_BERRY",
-    "name": "Goldene Nanabbeere"
+    "name": "ITEM_GOLDEN_NANAB_BERRY"
   },
   "708": {
     "protoname": "ITEM_GOLDEN_PINAP_BERRY",
     "name": "Silberne Sananabeere"
+  },
+  "709": {
+    "protoname": "ITEM_POFFIN",
+    "name": "Knursp"
   },
   "801": {
     "protoname": "ITEM_SPECIAL_CAMERA",
@@ -129,23 +141,23 @@
   },
   "901": {
     "protoname": "ITEM_INCUBATOR_BASIC_UNLIMITED",
-    "name": "Brutmaschine"
+    "name": "Ei-Brutmaschine ∞"
   },
   "902": {
     "protoname": "ITEM_INCUBATOR_BASIC",
-    "name": "Brutmaschine"
+    "name": "Ei-Brutmaschine"
   },
   "903": {
     "protoname": "ITEM_INCUBATOR_SUPER",
-    "name": "Super Brutmaschine"
+    "name": "Super-Brutmaschine"
   },
   "1001": {
     "protoname": "ITEM_POKEMON_STORAGE_UPGRADE",
-    "name": "Pokémon Storage Upgrade"
+    "name": "ITEM_POKEMON_STORAGE_UPGRADE"
   },
   "1002": {
     "protoname": "ITEM_ITEM_STORAGE_UPGRADE",
-    "name": "Item Storage Upgrade"
+    "name": "ITEM_ITEM_STORAGE_UPGRADE"
   },
   "1101": {
     "protoname": "ITEM_SUN_STONE",
@@ -177,11 +189,19 @@
   },
   "1201": {
     "protoname": "ITEM_MOVE_REROLL_FAST_ATTACK",
-    "name": "Sofort TM"
+    "name": "Sofort-TM"
   },
   "1202": {
     "protoname": "ITEM_MOVE_REROLL_SPECIAL_ATTACK",
-    "name": "Lade TM"
+    "name": "Lade-TM"
+  },
+  "1203": {
+    "protoname": "ITEM_MOVE_REROLL_ELITE_FAST_ATTACK",
+    "name": "Top-Sofort-TM"
+  },
+  "1204": {
+    "protoname": "ITEM_MOVE_REROLL_ELITE_SPECIAL_ATTACK",
+    "name": "Top-Lade-TM"
   },
   "1301": {
     "protoname": "ITEM_RARE_CANDY",
@@ -189,15 +209,15 @@
   },
   "1401": {
     "protoname": "ITEM_FREE_RAID_TICKET",
-    "name": "Raid Pass"
+    "name": "Raid-Pass"
   },
   "1402": {
     "protoname": "ITEM_PAID_RAID_TICKET",
-    "name": "Paid Raid Pass"
+    "name": "Premium-Kampf-Pass"
   },
   "1403": {
     "protoname": "ITEM_LEGENDARY_RAID_TICKET",
-    "name": "EX Raid Pass"
+    "name": "EX-Raid-Pass"
   },
   "1404": {
     "protoname": "ITEM_STAR_PIECE",
@@ -206,5 +226,33 @@
   "1405": {
     "protoname": "ITEM_FRIEND_GIFT_BOX",
     "name": "Geschenk"
+  },
+  "1406": {
+    "protoname": "ITEM_TEAM_CHANGE",
+    "name": "Team-Medaillon"
+  },
+  "1408": {
+    "protoname": "ITEM_REMOTE_RAID_TICKET",
+    "name": "Fern-Raid-Pass"
+  },
+  "1501": {
+    "protoname": "ITEM_LEADER_MAP_FRAGMENT",
+    "name": "Mysteriöses Teil"
+  },
+  "1502": {
+    "protoname": "ITEM_LEADER_MAP",
+    "name": "Rocket-Radar"
+  },
+  "1503": {
+    "protoname": "ITEM_GIOVANNI_MAP",
+    "name": "Super-Rocket-Radar"
+  },
+  "1600": {
+    "protoname": "ITEM_GLOBAL_EVENT_TICKET",
+    "name": "Ticket"
+  },
+  "1601": {
+    "protoname": "ITEM_EVENT_TICKET_PINK",
+    "name": "Ticket"
   }
 }
