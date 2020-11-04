@@ -17,17 +17,21 @@ class SerializedMitmDataProcessor(Process):
         self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
         self.__application_args = application_args
         self.__mitm_mapper: MitmMapper = mitm_mapper
+        self.__name = name
 
     def run(self):
         logger.info("Starting serialized MITM data processor")
         while True:
             try:
+                start_time = self.get_time_ms()
                 item = self.__queue.get()
                 if item is None:
                     logger.info("Received signal to stop MITM data processor")
                     break
                 self.process_data(item[0], item[1], item[2])
                 self.__queue.task_done()
+                end_time = self.get_time_ms() - start_time
+                logger.debug2("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
             except KeyboardInterrupt:
                 logger.info("Received keyboard interrupt, stopping MITM data processor")
                 break
