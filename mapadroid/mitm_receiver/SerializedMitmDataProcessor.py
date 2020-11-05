@@ -31,7 +31,7 @@ class SerializedMitmDataProcessor(Process):
                 self.process_data(item[0], item[1], item[2])
                 self.__queue.task_done()
                 end_time = self.get_time_ms() - start_time
-                logger.debug2("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
+                logger.debug("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
             except KeyboardInterrupt:
                 logger.info("Received keyboard interrupt, stopping MITM data processor")
                 break
@@ -40,7 +40,7 @@ class SerializedMitmDataProcessor(Process):
     def process_data(self, received_timestamp, data, origin):
         origin_logger = get_origin_logger(logger, origin=origin)
         data_type = data.get("type", None)
-        origin_logger.debug2("Processing received data")
+        origin_logger.debug("Processing received data")
         processed_timestamp = datetime.fromtimestamp(received_timestamp)
 
         if data_type and not data.get("raw", False):
@@ -85,7 +85,7 @@ class SerializedMitmDataProcessor(Process):
 
                 full_time = self.get_time_ms() - start_time
 
-                origin_logger.debug2("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
+                origin_logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
                                      "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
                                      full_time, weather_time, stops_time, gyms_time, raids_time,
                                      spawnpoints_time, mons_time, cells_time, gmo_loc_time)
@@ -95,29 +95,29 @@ class SerializedMitmDataProcessor(Process):
                     origin_logger.debug("Processing encounter received at {}", processed_timestamp)
                     self.__db_submit.mon_iv(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                     end_time = self.get_time_ms() - start_time
-                    origin_logger.debug2("Done processing encounter in {}ms", end_time)
+                    origin_logger.debug("Done processing encounter in {}ms", end_time)
                 else:
                     origin_logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
             elif data_type == 101:
-                origin_logger.debug2("Processing proto 101 (FORT_SEARCH)")
+                origin_logger.debug("Processing proto 101 (FORT_SEARCH)")
                 self.__db_submit.quest(origin, data["payload"], self.__mitm_mapper)
                 end_time = self.get_time_ms() - start_time
-                origin_logger.debug2("Done processing proto 101 in {}ms", end_time)
+                origin_logger.debug("Done processing proto 101 in {}ms", end_time)
             elif data_type == 104:
-                origin_logger.debug2("Processing proto 104 (FORT_DETAILS)")
+                origin_logger.debug("Processing proto 104 (FORT_DETAILS)")
                 self.__db_submit.stop_details(data["payload"])
                 end_time = self.get_time_ms() - start_time
-                origin_logger.debug2("Done processing proto 104 in {}ms", end_time)
+                origin_logger.debug("Done processing proto 104 in {}ms", end_time)
             elif data_type == 4:
-                origin_logger.debug2("Processing proto 4 (GET_HOLO_INVENTORY)")
+                origin_logger.debug("Processing proto 4 (GET_HOLO_INVENTORY)")
                 self.__mitm_mapper.generate_player_stats(origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
-                origin_logger.debug2("Done processing proto 4 in {}ms", end_time)
+                origin_logger.debug("Done processing proto 4 in {}ms", end_time)
             elif data_type == 156:
-                origin_logger.debug2("Processing proto 156 (GYM_GET_INFO)")
+                origin_logger.debug("Processing proto 156 (GYM_GET_INFO)")
                 self.__db_submit.gym(origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
-                origin_logger.debug2("Done processing proto 156 in {}ms", end_time)
+                origin_logger.debug("Done processing proto 156 in {}ms", end_time)
 
     @staticmethod
     def get_time_ms():
