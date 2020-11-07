@@ -543,7 +543,7 @@ class DbWrapper:
         for (gym_id, latitude, longitude, name, url, team_id, last_updated,
              level, spawn, start, end, mon_id, form, costume, evolution, last_scanned) in res:
 
-            nowts = datetime.utcfromtimestamp(time.time()).timestamp()
+            nowts = datetime.now(tz=timezone.utc).timestamp()
 
             # check if we found a raid and if it's still active
             if end is None or nowts > int(end.replace(tzinfo=timezone.utc).timestamp()):
