@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block header %}
+    <style>
+        pre {
+            white-space: pre-wrap;       /* Since CSS 2.1 */
+            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
+    </style>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        var output = $("#log_stream");
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '{{ url_for('log_stream') }}');
+        xhr.send();
+        setInterval(function() {
+            output.text(xhr.responseText);
+            $(document).scrollTop($(document).height());
+        }, 1000);
+        $("#log_stream").scrollTop($("#log_stream")[0].scrollHeight);
+    </script>
+{% endblock %}
+
+{% block content %}
+    <a href="{{ url_for("log_download") }}">Download current log</a>
+    <pre id="log_stream"></pre>
+{% endblock %}

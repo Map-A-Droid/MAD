@@ -1,9 +1,10 @@
-from flask import send_from_directory, render_template, request, jsonify, redirect, url_for
-
+from flask import send_from_directory, render_template, request, jsonify, redirect, url_for, send_file
+import time
+import os
 from mapadroid.madmin.functions import auth_required, get_quest_areas
 from mapadroid.utils import MappingManager
 from mapadroid.utils.functions import generate_path
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_log_file
 
 
 logger = get_logger(LoggerEnums.madmin)
@@ -33,7 +34,10 @@ class MADminPath(object):
             ("/pick_worker", self.pickworker),
             ("/jobstatus", self.jobstatus),
             ('/robots.txt', self.send_static_file),
-            ("/plugins", self.plugins)
+            ("/plugins", self.plugins),
+            ("/log_viewer", self.log_viewier),
+            ("/log_stream", self.log_stream),
+            ("/log_download", self.log_download),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -106,3 +110,22 @@ class MADminPath(object):
         return render_template('plugins.html',
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="Select Plugin", plugin_hotlinks=plugins)
+
+    @auth_required
+    def log_viewier(self):
+        return render_template("log_viewer.html")
+
+    @auth_required
+    def log_stream(self):
+        def generate():
+            with open(get_log_file()) as f:
+                while True:
+                    yield f.read()
+                    time.sleep(1)
+
+        return self._app.response_class(generate(), mimetype='text/plain')
+
+    @auth_required
+    def log_download(self):
+        log_file = get_log_file()
+        return send_file(get_log_file(), as_attachment=True, attachment_filename=os.path.basename(log_file))

@@ -3,6 +3,7 @@ import os
 import sys
 from enum import IntEnum
 from functools import wraps
+from mapadroid.utils.walkerArgs import parse_args
 
 from loguru import logger
 
@@ -88,7 +89,7 @@ def init_logging(args):
 
     if not args.no_file_logs:
         file_logs = {
-            "sink": os.path.join(args.log_path, args.log_filename),
+            "sink": get_log_file(config=args),
             "format": fs_log_format,
             "level": log_file_level,
             "backtrace": True,
@@ -110,6 +111,11 @@ def init_logging(args):
         sys.exit(1)
     logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
 
+
+def get_log_file(config=None):
+    if config is None:
+        config = parse_args()
+    return os.path.join(os.getcwd(), config.log_path, config.log_filename)
 
 def log_level(arg_log_level, arg_debug_level):
     # List has an order, dict doesn't. We need the guaranteed order to
