@@ -85,7 +85,7 @@ class SerializedMitmDataProcessor(Process):
 
                 full_time = self.get_time_ms() - start_time
 
-                origin_logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
+                origin_logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, "
                                     "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
                                     full_time, weather_time, stops_time, gyms_time, raids_time,
                                     spawnpoints_time, mons_time, cells_time, gmo_loc_time)

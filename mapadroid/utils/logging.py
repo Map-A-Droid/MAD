@@ -117,6 +117,7 @@ def get_log_file(config=None):
         config = parse_args()
     return os.path.join(os.getcwd(), config.log_path, config.log_filename)
 
+
 def log_level(arg_log_level, arg_debug_level):
     # List has an order, dict doesn't. We need the guaranteed order to
     # determine debug level based on arg_debug_level.
