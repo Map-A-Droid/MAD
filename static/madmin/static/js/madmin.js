@@ -553,20 +553,23 @@ new Vue({
 
                     const group = L.layerGroup();
                     const color = this.getRandomColor();
+                    const circleOptions = {
+                        radius: cradius,
+                        color: color,
+                        fillColor: color,
+                        weight: 1,
+                        opacity: 0.4,
+                        fillOpacity: 0.1,
+                        interactive: false,
+                        pane: layerOrders.routes.pane,
+                        pmIgnore: true
+                    };
+
+                    const circles = []
 
                     route.coordinates.forEach(function (coord) {
-                        const circle = L.circle(coord, {
-                            radius: cradius,
-                            color: color,
-                            fillColor: color,
-                            weight: 1,
-                            opacity: 0.4,
-                            fillOpacity: 0.1,
-                            interactive: false,
-                            pane: layerOrders.routes.pane,
-                            pmIgnore: true
-                        });
-
+                        const circle = L.circle(coord, circleOptions);
+                        circles.push(circle);
                         circle.addTo(group);
 
                         if (mode === "raids") {
@@ -628,14 +631,16 @@ new Vue({
                     });
 
                     // add route to layergroup
-                    L.polyline(route.coordinates, {
+                    const polyline = L.polyline(route.coordinates, {
                         color: color,
                         weight: 2,
                         opacity: 0.4,
                         pane: layerOrders.routes.pane
-                    })
-                    .bindPopup(this.build_route_popup(route), { className: "routepopup" })
-                    .addTo(group);
+                    });
+
+                    polyline
+                        .bindPopup(this.build_route_popup(route, polyline, circles, group, circleOptions), { className: "routepopup" })
+                        .addTo(group);
 
                     // add layergroup to management object
                     leaflet_data.routes[name] = group;
@@ -1535,9 +1540,8 @@ new Vue({
         </div>
       `;
         },
-        build_route_popup(route) {
-
-            const popupContainer = $(`
+        build_route_popup(route, polyline, circles, layerGroup, circleOptions) {
+            const mainContent = $(`
               <div>
                 <div class="name"><i class="fa fa-route"></i> <strong></strong></div>
                 <div><i class="fas fa-adjust"></i> Mode: <span class="badge badge-secondary"></span></div>
@@ -1545,14 +1549,87 @@ new Vue({
               </div>
             `);
 
-            $(".name strong", popupContainer).text(route.name);
-            $(".badge", popupContainer).text(route.mode);
-            $(".length", popupContainer).text(route.coordinates.length);
+            $(".name strong", mainContent).text(route.name);
+            $(".badge", mainContent).text(route.mode);
+            $(".length", mainContent).text(route.coordinates.length);
 
-            return popupContainer[0];
+            if (route.mode === "mon_mitm" && typeof route.id === "number") {
+
+                function getCircleIndex(event) {
+                    return event.indexPath[0];
+                }
+
+                function onMarkerDrag(event) {
+                    const circle = event.target.associatedCircle;
+                    if (circle) {
+                        circle.setLatLng(event.latlng);
+                    }
+                }
+
+                function onMarkerDragStart(event) {
+                    const marker = event.markerEvent.target;
+                    marker.associatedCircle = circles[getCircleIndex(event)];
+                    marker.on("drag", onMarkerDrag);
+                }
+
+                function onMarkerDragEnd(event) {
+                    const marker = event.markerEvent.target;
+                    delete marker.associatedCircle;
+                    marker.off("drag", onMarkerDrag);
+                }
+
+                function onVertexAdded(event) {
+                    const circle = L.circle(event.latlng, circleOptions);
+                    circles.splice(getCircleIndex(event), 0, circle);
+                    circle.addTo(layerGroup);
+                }
+
+                function onVertexRemoved(event) {
+                    const index = getCircleIndex(event);
+                    const circle = circles[index]
+                    circle.remove()
+                    circles.splice(index, 1)
+                }
+
+                polyline.on("pm:enable", function () {
+                    polyline.on("pm:markerdragstart", onMarkerDragStart);
+                    polyline.on("pm:markerdragend", onMarkerDragEnd);
+                    polyline.on("pm:vertexadded", onVertexAdded);
+                    polyline.on("pm:vertexremoved", onVertexRemoved);
+                })
+
+                polyline.on("pm:disable", function () {
+                    polyline.off("pm:markerdragstart", onMarkerDragStart);
+                    polyline.off("pm:markerdragend", onMarkerDragEnd);
+                    polyline.off("pm:vertexadded", onVertexAdded);
+                    polyline.off("pm:vertexremoved", onVertexRemoved);
+                })
+
+                return this.build_editable_popup(
+                    mainContent, route.id, polyline, "route", true,
+                    function (coords) {
+                        return axios.patch("api/routecalc/" + route.id, { routefile: coords })
+                    },
+                    null,
+                    function (originalLatLngs) {
+                        circles.forEach(function (circle) { circle.remove() })
+                        circles.splice(0, circles.length)
+
+                        if (Array.isArray(originalLatLngs)) {
+                            originalLatLngs.forEach(function (latLng) {
+                                const circle = L.circle(latLng, circleOptions);
+                                circles.push(circle);
+                                circle.addTo(layerGroup);
+                            })
+                        }
+                    }
+                )
+            }
+
+            return mainContent[0];
         },
         build_geofence_popup(id, name, layer, onNameChanged) {
-            const popupContainer = $(`
+            const mainContent = $(`
               <div>
                 <div class="name">
                   <i class="fa fa-draw-polygon"></i>
@@ -1561,12 +1638,62 @@ new Vue({
                     <input type="text" class="map-popup-group-save hidden" />
                   </strong>
                 </div>
+              </div>`
+            );
+
+            const nameSpan = $(".name span", mainContent);
+            const nameInput = $(".name input", mainContent);
+            nameSpan.text(name);
+            nameInput.val(name);
+
+            return this.build_editable_popup(
+                mainContent, id, layer, "geofence", false,
+                function (coords) {
+                    const json = {
+                        name: nameInput.val(),
+                        fence_type: "polygon",
+                        fence_data: coords
+                    }
+
+                    return id === null
+                        ? axios.post("api/geofence", json)
+                        : axios.patch("api/geofence/" + id, json);
+                },
+                function (result) {
+                    if (id === null) {
+                        // we've added a new geofence, remove the temporary polygon (which is on a top-most pane)
+                        // and add a standard geofence on the correct pane instead
+                        map.removeLayer(layer);
+
+                        const match = /\/(\d+)$/.exec(result.headers["x-uri"]);
+                        if (match !== null) {
+                            this.mapAddGeofence({
+                                id: match[1],
+                                name: nameInput.val(),
+                                coordinates: layer.getLatLngs()
+                            }, true);
+                        }
+                    }
+                    else {
+                        nameSpan.text(nameInput.val());
+                        if (typeof onNameChanged === "function") {
+                            onNameChanged(name);
+                        }
+                    }
+                },
+                null
+            )
+        },
+        build_editable_popup(mainContent, id, layer, typeDisplay, allowSelfIntersection, makeRequest, onSaved, onCancelled) {
+            const popupContainer = $(`
+              <div>
+                <div class="map-popup-group-main"></div>
                 <div class="m-1">
                   <div class="map-popup-group-edit">
                     <button type="button" class="btn btn-sm btn-outline-secondary map-popup-button-edit"><i class="fas fa-edit"></i> Edit</button>
                   </div>
                   <div class="map-popup-group-saving hidden">
-                    <img src="{{ url_for('static', filename='loading.gif') }}" style="height: 3em" /> Saving...
+                    <img src="${loadingImgUrl}" alt="Saving..." style="height: 3em" /> Saving...
                   </div>
                   <div class="map-popup-group-save hidden">
                     <button type="button" class="btn btn-sm btn-outline-primary map-popup-button-save"><i class="fas fa-save"></i> Save</button>
@@ -1576,11 +1703,10 @@ new Vue({
               </div>
             `);
 
+            $(".map-popup-group-main", popupContainer).append(mainContent);
+
             const standardOpacity = layer.options.opacity;
             let originalLatLngs;
-
-            $(".name span", popupContainer).text(name);
-            $(".name input", popupContainer).val(name);
 
             function showGroup(suffix) {
                 $(".map-popup-group-" + suffix, popupContainer).removeClass("hidden");
@@ -1595,7 +1721,7 @@ new Vue({
                 showGroup("save");
 
                 layer.setStyle({ opacity: 1.0 });
-                layer.pm.enable({ snappable: false, allowSelfIntersection: false });
+                layer.pm.enable({ snappable: false, allowSelfIntersection: allowSelfIntersection });
 
                 layer.on("pm:markerdragstart", function() {
                     mouseEventsIgnore.enableIgnore();
@@ -1620,8 +1746,8 @@ new Vue({
 
             cancelButton.on("click", function () {
                 const message = id === null
-                    ? "Do you really want to delete this newly created geofence?"
-                    : "Do you really want to stop editing and reset all changes made to this geofence?";
+                    ? `Do you really want to delete this newly created ${typeDisplay}?`
+                    : `Do you really want to stop editing and reset all changes made to this ${typeDisplay}?`;
 
                 if (!window.confirm(message)) {
                     return;
@@ -1630,19 +1756,22 @@ new Vue({
                 disableEdit();
                 layer.closePopup();
 
+                if (typeof onCancelled === "function") {
+                    onCancelled(originalLatLngs)
+                }
+
                 if (id === null) {
                     map.removeLayer(layer);
                 }
                 else {
                     if (originalLatLngs) {
                         layer.setLatLngs(originalLatLngs);
-                        delete originalLatLngs;
                     }
 
                     hideGroup("save");
                     showGroup("edit");
                 }
-            });
+            }.bind(this));
 
             $(".map-popup-button-save", popupContainer).on("click", function () {
                 disableEdit();
@@ -1665,49 +1794,25 @@ new Vue({
                 }
 
                 buildCoords(layer.getLatLngs());
-
-                const name = $(".name input", popupContainer).val();
-                const json = {
-                    name: name,
-                    fence_type: "polygon",
-                    fence_data: coords
-                }
-
-                const request = id === null
-                    ? axios.post("api/geofence", json)
-                    : axios.patch("api/geofence/" + id, json);
+                const request = makeRequest(coords)
 
                 request.then(
                     function (result) {
                         layer.closePopup();
 
-                        if (id === null) {
-                            // we've added a new geofence, remove the temporary polygon (which is on a top-most pane)
-                            // and add a standard geofence on the correct pane instead
-                            map.removeLayer(layer);
-
-                            const match = /\/(\d+)$/.exec(result.headers["x-uri"]);
-                            if (match !== null) {
-                                this.mapAddGeofence({
-                                    id: match[1],
-                                    name: json.name,
-                                    coordinates: layer.getLatLngs()
-                                }, true);
-                            }
+                        if (typeof onSaved === "function") {
+                            onSaved(result);
                         }
-                        else {
+
+                        if (id !== null) {
                             hideGroup("saving");
                             showGroup("edit");
-                            $(".name span", popupContainer).text(name);
-                            if (typeof onNameChanged === "function") {
-                                onNameChanged(name);
-                            }
                         }
                     }.bind(this),
                     function () {
                         hideGroup("saving");
                         enableEdit();
-                        alert("Unable to save the geofence.");
+                        alert(`Unable to save the ${typeDisplay}.`);
                     }.bind(this)
                 );
             }.bind(this));

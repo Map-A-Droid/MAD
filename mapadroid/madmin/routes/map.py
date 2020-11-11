@@ -51,8 +51,7 @@ class MADminMap:
             ("/get_quests", self.get_quests),
             ("/get_map_mons", self.get_map_mons),
             ("/get_cells", self.get_cells),
-            ("/get_stops", self.get_stops),
-            ("/savefence", self.savefence)
+            ("/get_stops", self.get_stops)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -125,15 +124,16 @@ class MADminMap:
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
             name = self._mapping_manager.routemanager_get_name(routemanager)
+            routecalc_id = self._mapping_manager.routemanager_get_routecalc_id(routemanager)
             (route, workers) = self._mapping_manager.routemanager_get_current_route(routemanager)
 
             if route is None:
                 continue
-            routeexport.append(get_routepool_route(name, mode, route))
+            routeexport.append(get_routepool_route(routecalc_id, name, mode, route))
             if len(workers) > 1:
                 for worker, worker_route in workers.items():
                     disp_name = '%s - %s' % (name, worker,)
-                    routeexport.append(get_routepool_route(disp_name, mode, worker_route))
+                    routeexport.append(get_routepool_route(None, disp_name, mode, worker_route))
 
         return jsonify(routeexport)
 
@@ -356,39 +356,14 @@ class MADminMap:
         )
         return jsonify(data)
 
-    @logger.catch()
-    @auth_required
-    def savefence(self):
-        # TODO - Modify madmin.js to use the API
-        name = request.args.get('name', False)
-        coords = request.args.get('coords', False)
-        if not name and not coords:
-            return redirect(url_for('map'), code=302)
 
-        resource = self._data_manager.get_resource('geofence')
-        # Enforce 128 character limit
-        if len(name) > 128:
-            name = name[len(name) - 128:]
-        update_data = {
-            'name': name,
-            'fence_type': 'polygon',
-            'fence_data': coords.split("|")
-        }
-        resource.update(update_data)
-        try:
-            resource.save()
-        except DataManagerException:
-            # TODO - present the user with an issue.  probably fence-name already exists
-            pass
-        return redirect(url_for('map'), code=302)
-
-
-def get_routepool_route(name, mode, coords):
+def get_routepool_route(routecalc_id, name, mode, coords):
     parsed_coords = get_routepool_coords(coords, mode)
     return {
+        "id": routecalc_id,
         "name": name,
         "mode": mode,
-        "coordinates": parsed_coords,
+        "coordinates": parsed_coords
     }
 
 
