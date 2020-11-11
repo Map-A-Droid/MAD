@@ -748,8 +748,7 @@ class WorkerQuests(MITMBase):
                     if self._db_wrapper.check_stop_quest(self.current_location.lat,
                                                          self.current_location.lng):
                         self.logger.info('Quest is done without us noticing. Getting new Quest...')
-                    if not self._enhanced_mode:
-                        self.clear_thread_task = ClearThreadTasks.QUEST
+                    self.clear_thread_task = ClearThreadTasks.QUEST
                     break
                 elif data_received == FortSearchResultTypes.QUEST:
                     self.logger.info('Received new Quest')
@@ -793,8 +792,7 @@ class WorkerQuests(MITMBase):
                     if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
-                if not self._enhanced_mode:
-                    self.clear_thread_task = ClearThreadTasks.QUEST
+                self.clear_thread_task = ClearThreadTasks.QUEST
                 self._clear_quest_counter = 0
                 break
             else:
