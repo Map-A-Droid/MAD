@@ -4,8 +4,7 @@ export UID ?= $(shell id -u)
 export GID ?= $(shell id -g)
 
 
-clean: clean-tox
-	docker-compose -f docker-compose-dev.yaml down
+clean: clean-tox down
 
 clean-tox:
 	rm -rf .tox
@@ -31,10 +30,18 @@ shell: up
 	docker-compose -f docker-compose-dev.yaml exec -u $(UID) $(CONTAINER_NAME) $(CMD)
 
 
+root-shell: up
+	docker-compose -f docker-compose-dev.yaml exec -u root $(CONTAINER_NAME) $(CMD)
+
+down:
+	docker-compose -f docker-compose-dev.yaml down
+
+test tests:
+	$(MAKE) shell CMD='sh -c "tox"'
+
+
 # Run bash within a defined tox environment
 # Specify a valid tox environment as such:
-#       make shell-py36
-#       make shell-py37
 #       make shell-py37
 # To force a recreation of the envrionment, specify the RECREATE environment variable with any value
 #   make shell-py37 RECREATE=1

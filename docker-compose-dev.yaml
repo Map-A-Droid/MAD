@@ -38,8 +38,5 @@ services:
   mariadb:
     image: mariadb:10.3
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
-    environment:
-      MYSQL_DATABASE: rocketdb
-      MYSQL_USER: rocketdb
-      MYSQL_ROOT_PASSWORD: rocketdb
-      MYSQL_PASSWORD: rocketdb
+    env_file:
+      - .dev.env
