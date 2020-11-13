@@ -193,6 +193,7 @@
 }
 
 [data-theme="dark"] .leaflet-popup-content i.fas, .leaflet-popup-content i.fa { color: #333 !important; }
+[data-theme="dark"] #log_stream { color: #bbb !important; }
 
 .leaflet-draw-toolbar a {
     background-image: url(/static/leaflet.draw.png) !important;
