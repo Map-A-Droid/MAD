@@ -4,10 +4,12 @@ import os
 from mapadroid.madmin.functions import auth_required, get_quest_areas
 from mapadroid.utils import MappingManager
 from mapadroid.utils.functions import generate_path
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_log_file
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_log_file, AjaxSink
 
 
 logger = get_logger(LoggerEnums.madmin)
+
+MAX_LOG_STREAM = 300  # Number of seconds this stream can occur before stopping
 
 
 class MADminPath(object):
@@ -113,15 +115,19 @@ class MADminPath(object):
 
     @auth_required
     def log_viewier(self):
-        return render_template("log_viewer.html")
+        return render_template("log_viewer.html", download_log=not self._args.no_file_logs)
 
     @auth_required
     def log_stream(self):
         def generate():
-            with open(get_log_file()) as f:
-                while True:
-                    yield f.read()
-                    time.sleep(1)
+            try:
+                with AjaxSink() as streamer:
+                    start_time = int(time.time())
+                    while int(time.time()) < start_time + MAX_LOG_STREAM:
+                        yield streamer.get_new_content()
+                        time.sleep(1)
+            except GeneratorExit:
+                pass
 
         return self._app.response_class(generate(), mimetype='text/plain')
 

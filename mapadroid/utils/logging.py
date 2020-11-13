@@ -1,3 +1,4 @@
+from io import StringIO
 import logging
 import os
 import sys
@@ -31,13 +32,23 @@ class LoggerEnums(IntEnum):
 # ========== Core Logging ==========
 # ==================================
 
-def init_logging(args):
-    global logger
+class RotatingStringIO(StringIO):
+    max_size: int = 4 * 1024 * 1024
+    def size_check(self, additional):
+        if self.tell() + len(additional) >= self.max_size:
+            self.flush()
+            self.seek(0)
+
+    def write(self, log):
+        self.size_check(log)
+        super().write(log)
+
+AJAX_INFO: StringIO = RotatingStringIO()
+
+def generate_format(args):
     log_level_label, log_level_val = log_level(args.log_level, args.verbose)
     _, log_file_level = log_level(args.log_file_level, args.verbose)
     log_trace = log_level_val <= 10
-    log_file_trace = log_file_level <= 10
-    colorize = not args.no_log_colors
 
     log_fmt_time_c = "[<cyan>{time:HH:mm:ss.SS}</cyan>]"
     log_fmt_time_fs = "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>]"
@@ -58,6 +69,17 @@ def init_logging(args):
             log_format_c[log_format_c.index(log_fmt_mod_c)] = log_fmt_mod_fs
     fs_log_format = ' '.join(log_format_fs)
     log_format_console = ' '.join(log_format_c)
+    return fs_log_format, log_format_console
+
+def init_logging(args):
+    global logger
+    log_level_label, log_level_val = log_level(args.log_level, args.verbose)
+    _, log_file_level = log_level(args.log_file_level, args.verbose)
+    log_trace = log_level_val <= 10
+    log_file_trace = log_file_level <= 10
+    colorize = not args.no_log_colors
+    fs_log_format, log_format_console = generate_format(args)
+
     logconfig = {
         "levels": [
             {"name": "DEBUG2", "no": 9, "color": "<blue>"},
@@ -82,7 +104,15 @@ def init_logging(args):
                 "diagnose": log_trace,
                 "backtrace": True,
                 "enqueue": True
-            }
+            },
+            {
+                "sink": AJAX_INFO,
+                "format": log_format_console,
+                "colorize": False,
+                "level": log_level_val,
+                "enqueue": True,
+                "filter": filter_errors
+            },
         ],
         "extra": {"name": "Unknown"},
     }
@@ -313,3 +343,34 @@ class LogLevelChanger:
             LogLevelChanger.logger.log(level, msg)
         else:
             LogLevelChanger.logger.opt(depth=6).log("DEBUG5", msg)
+
+
+class AjaxSink:
+    last_read: int
+    sink_id: int
+
+    def __enter__(self):
+        self.last_read = 0
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        AJAX_INFO.flush()
+
+    def get_new_content(self) -> str:
+        AJAX_INFO.seek(self.last_read)
+        data = AJAX_INFO.read()
+        self.last_read = AJAX_INFO.tell()
+        return data
+
+
+class RotatingStringIO(StringIO):
+    max_size: int = 4*1024*1024
+
+    def size_check(self, additional):
+        if self.tell() + len(additional) >= RotatingStringIO.max_size:
+            self.truncate()
+            self.seek(0)
+
+    def write(self, log):
+        self.size_check(log)
+        super().write(log)

@@ -27,6 +27,10 @@
 {% endblock %}
 
 {% block content %}
-    <a href="{{ url_for("log_download") }}">Download current log</a>
     <pre id="log_stream"></pre>
+    {% if download_log %}
+    <div>
+        <a href="{{ url_for("log_download") }}">Download current log</a>
+    </div>
+    {% endif %}
 {% endblock %}
