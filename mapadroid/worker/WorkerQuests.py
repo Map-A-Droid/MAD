@@ -609,6 +609,7 @@ class WorkerQuests(MITMBase):
         if latest.get("timestamp_last_data", 0) < timestamp:
             data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=106)
             if data_received == LatestReceivedType.UNDEFINED:
+                self._spinnable_data_failure()
                 return False, False
             latest: dict = self._mitm_mapper.request_latest(self._origin)
 
