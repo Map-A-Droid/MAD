@@ -604,6 +604,15 @@ class WorkerQuests(MITMBase):
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
         latest: dict = self._mitm_mapper.request_latest(self._origin)
+
+        # ensure data from after the given timestamp
+        if latest.get("timestamp_last_data", 0) < timestamp:
+            data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=106)
+            if data_received == LatestReceivedType.UNDEFINED:
+                return False, False
+            latest: dict = self._mitm_mapper.request_latest(self._origin)
+
+        # TODO: can this still happen with the if-clause above?
         if latest is None or PROTO_NUMBER_FOR_GMO not in latest.keys():
             self.logger.warning("Can't spin stop - no GMO data available!")
             self._spinnable_data_failure()
@@ -613,6 +622,7 @@ class WorkerQuests(MITMBase):
                                                                                                     None)
         pdlocation = latest.get("location", Location(0, 0))
         pdlocation = Location(0, 0) if not pdlocation else pdlocation
+        stop_found = False
 
         if gmo_cells == list():
             self.logger.warning("Can't spin stop - no map info in GMO!")
@@ -633,6 +643,9 @@ class WorkerQuests(MITMBase):
                     continue
                 elif (abs(pdlocation.lat - latitude) > 0.00003 or abs(pdlocation.lng - longitude) > 0.00003):
                     continue
+
+                if latitude == self.current_location.lat and longitude == self.current_location.lng:
+                    stop_found = True
 
                 fort_type: int = fort.get("type", 0)
                 if fort_type == 0:
@@ -661,7 +674,10 @@ class WorkerQuests(MITMBase):
                 return fort_type == 1 and enabled and not closed and cooldown == 0, False
         # by now we should've found the stop in the GMO
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
-        self.logger.warning("Unable to confirm the stop being spinnable - likely not standing exactly on top ...")
+        if stop_found:
+            self.logger.warning("Unable to confirm the stop being spinnable - likely not standing exactly on top ...")
+        else:
+            self.logger.warning("Unable to find the stop closeby!")
         self._spinnable_data_failure()
         return False, False
 
