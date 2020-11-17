@@ -679,9 +679,10 @@ class WorkerQuests(MITMBase):
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         if stop_found:
             self.logger.warning("Unable to confirm the stop being spinnable - likely not standing exactly on top ...")
+            self._spinnable_data_failcount = 0
         else:
             self.logger.warning("Unable to find the stop closeby!")
-        self._spinnable_data_failure()
+            self._spinnable_data_failure()
         return False, False
 
     def _open_pokestop(self, timestamp: float):
