@@ -153,8 +153,8 @@ class WorkerQuests(MITMBase):
         self.logger.debug("Getting time")
         speed = routemanager_settings.get("speed", 0)
         max_distance = routemanager_settings.get("max_distance", None)
-        if (speed == 0 or (max_distance and 0 < max_distance < distance) or
-                (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
+        if (speed == 0 or (max_distance and 0 < max_distance < distance)
+                or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self.logger.debug("main: Teleporting...")
             self._transporttype = 0
             self._communicator.set_location(
@@ -786,8 +786,7 @@ class WorkerQuests(MITMBase):
                         self.clear_thread_task = ClearThreadTasks.QUEST
                     break
 
-            elif (data_received == FortSearchResultTypes.TIME or data_received ==
-                  FortSearchResultTypes.OUT_OF_RANGE):
+            elif (data_received == FortSearchResultTypes.TIME or data_received == FortSearchResultTypes.OUT_OF_RANGE):
                 self.logger.warning('Softban - return to main screen and open again...')
                 on_main_menu = self._check_pogo_main_screen(10, False)
                 if not on_main_menu:
