@@ -207,7 +207,7 @@ class MITMBase(WorkerBase):
             if self._restart_count > restart_thresh:
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
-                        and self.get_devicesettings_value("reboot", False):
+                        and self.get_devicesettings_value("reboot", True):
                     self.logger.error("Too many timeouts - Rebooting device")
                     self._reboot(mitm_mapper=self._mitm_mapper)
                     raise InternalStopWorkerException
@@ -233,7 +233,7 @@ class MITMBase(WorkerBase):
 
     def _wait_for_injection(self):
         self._not_injected_count = 0
-        reboot = self.get_devicesettings_value('reboot', False)
+        reboot = self.get_devicesettings_value('reboot', True)
         injection_thresh_reboot = 'Unlimited'
         if reboot:
             injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
@@ -277,101 +277,52 @@ class MITMBase(WorkerBase):
             self.logger.debug("_clear_quests Open menu: {}, {}", int(x), int(y))
             time.sleep(6 + int(delayadd))
 
-        if self._enhanced_mode:
-            x, y = self._resocalc.get_close_main_button_coords(self)
-            self._communicator.click(int(x), int(y))
-            return
+        cleaned_count: int = 0
+        if looped:
+            self.logger.info("Retry clearing finished quests after retrieving breakthrough reward")
+        else:
+            self.logger.info("Check for finished quests")
 
-        x, y = self._resocalc.get_quest_listview(self)
-        self._communicator.click(int(x), int(y))
-        self.logger.debug("_clear_quests Open field: {}, {}", int(x), int(y))
-        time.sleep(4 + int(delayadd))
-
-        # looping is required for breakthrough cleanup - there should be no trashcans left, thus skip this when looped
-        if not looped:
-            trashcancheck = self._get_trash_positions(full_screen=True)
-            self.logger.debug("_clear_quests Found trash: {}", trashcancheck)
-            if trashcancheck is None:
-                self.logger.error('Could not find any trashcan - abort')
-                return
-            if len(trashcancheck) == 0:
-                self._clear_quests_failcount += 1
-                if self._clear_quests_failcount < 3:
-                    self.logger.warning("Could not find any trashcan on a valid screenshot {} time(s) in a row!",
-                                        self._clear_quests_failcount)
-                else:
-                    self._clear_quests_failcount = 0
-                    self.logger.error("Unable to clear quests 3 times in a row. Restart pogo ...")
-                    if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
-                        # TODO: put in loop, count up for a reboot ;)
-                        raise InternalStopWorkerException
-                    return
-            else:
-                self.logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
-            # get confirm box coords
-            x, y = self._resocalc.get_confirm_delete_quest_coords(self)
-
-            for trash in range(len(trashcancheck)):
-                self._clear_quests_failcount = 0
-                self.set_devicesettings_value('last_questclear_time', time.time())
-                self.logger.info("Delete old quest {}", int(trash) + 1)
-                self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
-                time.sleep(4.5 + int(delayadd))
-                self._communicator.click(int(x), int(y))
-                time.sleep(1 + int(delayadd))
-
-        # check for finished quests if there was not the expected amount of trashcans
-        expected_trashcans = 1 if self._always_cleanup else 3
-        if looped or len(trashcancheck) < expected_trashcans:
-            cleaned_count: int = 0
-            if looped:
-                self.logger.info("Retry clearing finished quests after retrieving breakthrough reward")
-            else:
-                self.logger.info("Less than {} trashcans were found - check for finished quests", expected_trashcans)
-
-            questcheck = self._check_finished_quest(full_screen=True)
-            if questcheck["blocked"]:
-                if not looped:
-                    self.logger.warning("Found a blocked quest - need to try to cleanup breakthrough!")
-                    self._communicator.click(questcheck["breakthrough"][0]['x'], questcheck["breakthrough"][0]['y'])
-                    time.sleep(20)
-                    self._communicator.back_button()
-                    time.sleep(5)
-                    self._clear_quests(delayadd, openmenu=False, looped=True)
-                    return
-                else:
-                    self.logger.error("Unable to clean breakthrough - the reward pokemon needs to be caught!")
-            elif questcheck["breakthrough"]:
-                self.logger.warning("Breakthrough reward found - consider catching it soon!")
-
-            if not questcheck["finished"]:
-                self.logger.info("Unable to find any finished quests.")
-            for quest in questcheck["finished"]:
-                cleaned_count += 1
-                self.logger.info("Retrieving finished quest #{}", cleaned_count)
-                self._communicator.click(quest['x'], quest['y'])
-                time.sleep(15)
+        questcheck = self._check_finished_quest(full_screen=True)
+        if questcheck["blocked"]:
+            if not looped:
+                self.logger.warning("Found a blocked quest - need to try to cleanup breakthrough!")
+                self._communicator.click(questcheck["breakthrough"][0]['x'], questcheck["breakthrough"][0]['y'])
+                time.sleep(20)
                 self._communicator.back_button()
                 time.sleep(5)
+                self._clear_quests(delayadd, openmenu=False, looped=True)
+                return
+            else:
+                self.logger.error("Unable to clean breakthrough - the reward pokemon needs to be caught!")
+        elif questcheck["breakthrough"]:
+            self.logger.warning("Breakthrough reward found - consider catching it soon!")
 
-                # back button throws us to the map, return to the quest menu if more quests to be cleared
-                # otherwise just return without trying to click the close button
-                if len(questcheck["finished"]) > cleaned_count:
-                    x, y = self._resocalc.get_coords_quest_menu(self)
-                    self._communicator.click(int(x), int(y))
-                    self.logger.debug("_clear_quests Open menu again: {}, {}", int(x), int(y))
-                    time.sleep(6 + int(delayadd))
-                else:
-                    self.logger.success("Done clearing finished quests!")
-                    return
+        if not questcheck["finished"]:
+            self.logger.info("Unable to find any finished quests.")
+        for quest in questcheck["finished"]:
+            cleaned_count += 1
+            self.logger.info("Retrieving finished quest #{}", cleaned_count)
+            self._communicator.click(quest['x'], quest['y'])
+            time.sleep(15)
+            self._communicator.back_button()
+            time.sleep(5)
+
+            # back button throws us to the map, return to the quest menu if more quests to be cleared
+            # otherwise just return without trying to click the close button
+            if len(questcheck["finished"]) > cleaned_count:
+                x, y = self._resocalc.get_coords_quest_menu(self)
+                self._communicator.click(int(x), int(y))
+                self.logger.debug("_clear_quests Open menu again: {}, {}", int(x), int(y))
+                time.sleep(6 + int(delayadd))
+            else:
+                self.logger.success("Done clearing finished quests!")
+                return
 
         x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
-
         time.sleep(1.5)
-
         self.logger.debug('{_clear_quests} finished')
-        return
 
     def _open_gym(self, delayadd):
         self.logger.debug('{_open_gym} called')
@@ -411,7 +362,7 @@ class MITMBase(WorkerBase):
         self.logger.debug('Routemanager: {} [{}]', self._routemanager_name, self._area_id)
         self.logger.debug('Restart Counter: {}', self._restart_count)
         self.logger.debug('Reboot Counter: {}', self._reboot_count)
-        self.logger.debug('Reboot Option: {}', self.get_devicesettings_value("reboot", False))
+        self.logger.debug('Reboot Option: {}', self.get_devicesettings_value("reboot", True))
         self.logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
         self.logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
         routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
@@ -434,7 +385,7 @@ class MITMBase(WorkerBase):
             'area_id': self._area_id,
             'rebootCounter': self._reboot_count,
             'init': routemanager_init,
-            'rebootingOption': self.get_devicesettings_value("reboot", False),
+            'rebootingOption': self.get_devicesettings_value("reboot", True),
             'restartCounter': self._restart_count,
             'currentSleepTime': self._current_sleep_time
         }

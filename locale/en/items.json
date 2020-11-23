@@ -1,23 +1,27 @@
 {
+  "0": {
+    "protoname": "ITEM_UNKNOWN",
+    "name": "ITEM_UNKNOWN"
+  },
   "1": {
     "protoname": "ITEM_POKE_BALL",
-    "name": "Pokéball"
+    "name": "Poké Ball"
   },
   "2": {
     "protoname": "ITEM_GREAT_BALL",
-    "name": "Greatball"
+    "name": "Great Ball"
   },
   "3": {
     "protoname": "ITEM_ULTRA_BALL",
-    "name": "Ultraball"
+    "name": "Ultra Ball"
   },
   "4": {
     "protoname": "ITEM_MASTER_BALL",
-    "name": "Masterball"
+    "name": "Master Ball"
   },
   "5": {
     "protoname": "ITEM_PREMIER_BALL",
-    "name": "Premierball"
+    "name": "ITEM_PREMIER_BALL"
   },
   "101": {
     "protoname": "ITEM_POTION",
@@ -53,15 +57,19 @@
   },
   "402": {
     "protoname": "ITEM_INCENSE_SPICY",
-    "name": "Incense Spicy"
+    "name": "ITEM_INCENSE_SPICY"
   },
   "403": {
     "protoname": "ITEM_INCENSE_COOL",
-    "name": "Incense Cool"
+    "name": "ITEM_INCENSE_COOL"
   },
   "404": {
     "protoname": "ITEM_INCENSE_FLORAL",
-    "name": "Incense Floral"
+    "name": "ITEM_INCENSE_FLORAL"
+  },
+  "405": {
+    "protoname": "ITEM_INCENSE_BELUGA_BOX",
+    "name": "Mystery Box"
   },
   "501": {
     "protoname": "ITEM_TROY_DISK",
@@ -89,7 +97,7 @@
   },
   "604": {
     "protoname": "ITEM_X_MIRACLE",
-    "name": "X Miracle"
+    "name": "UNDEFINED"
   },
   "701": {
     "protoname": "ITEM_RAZZ_BERRY",
@@ -105,7 +113,7 @@
   },
   "704": {
     "protoname": "ITEM_WEPAR_BERRY",
-    "name": "Wepar Berry"
+    "name": "Wepear Berry"
   },
   "705": {
     "protoname": "ITEM_PINAP_BERRY",
@@ -113,15 +121,19 @@
   },
   "706": {
     "protoname": "ITEM_GOLDEN_RAZZ_BERRY",
-    "name": "Golden Razz"
+    "name": "Golden Razz Berry"
   },
   "707": {
     "protoname": "ITEM_GOLDEN_NANAB_BERRY",
-    "name": "Golden Pinap"
+    "name": "ITEM_GOLDEN_NANAB_BERRY"
   },
   "708": {
     "protoname": "ITEM_GOLDEN_PINAP_BERRY",
-    "name": "Silver Pinap"
+    "name": "Silver Pinap Berry"
+  },
+  "709": {
+    "protoname": "ITEM_POFFIN",
+    "name": "Poffin"
   },
   "801": {
     "protoname": "ITEM_SPECIAL_CAMERA",
@@ -129,11 +141,11 @@
   },
   "901": {
     "protoname": "ITEM_INCUBATOR_BASIC_UNLIMITED",
-    "name": "Unlimited Incubator"
+    "name": "Egg Incubator ∞"
   },
   "902": {
     "protoname": "ITEM_INCUBATOR_BASIC",
-    "name": "Incubator"
+    "name": "Egg Incubator"
   },
   "903": {
     "protoname": "ITEM_INCUBATOR_SUPER",
@@ -141,11 +153,11 @@
   },
   "1001": {
     "protoname": "ITEM_POKEMON_STORAGE_UPGRADE",
-    "name": "Pokémon Storage Upgrade"
+    "name": "ITEM_POKEMON_STORAGE_UPGRADE"
   },
   "1002": {
     "protoname": "ITEM_ITEM_STORAGE_UPGRADE",
-    "name": "Item Storage Upgrade"
+    "name": "ITEM_ITEM_STORAGE_UPGRADE"
   },
   "1101": {
     "protoname": "ITEM_SUN_STONE",
@@ -153,7 +165,7 @@
   },
   "1102": {
     "protoname": "ITEM_KINGS_ROCK",
-    "name": "Kings Rock"
+    "name": "King's Rock"
   },
   "1103": {
     "protoname": "ITEM_METAL_COAT",
@@ -165,7 +177,7 @@
   },
   "1105": {
     "protoname": "ITEM_UP_GRADE",
-    "name": "Item Upgrade"
+    "name": "Upgrade"
   },
   "1106": {
     "protoname": "ITEM_GEN4_EVOLUTION_STONE",
@@ -181,7 +193,15 @@
   },
   "1202": {
     "protoname": "ITEM_MOVE_REROLL_SPECIAL_ATTACK",
-    "name": "Charge TM"
+    "name": "Charged TM"
+  },
+  "1203": {
+    "protoname": "ITEM_MOVE_REROLL_ELITE_FAST_ATTACK",
+    "name": "Elite Fast TM"
+  },
+  "1204": {
+    "protoname": "ITEM_MOVE_REROLL_ELITE_SPECIAL_ATTACK",
+    "name": "Elite Charged TM"
   },
   "1301": {
     "protoname": "ITEM_RARE_CANDY",
@@ -189,11 +209,11 @@
   },
   "1401": {
     "protoname": "ITEM_FREE_RAID_TICKET",
-    "name": "Free Raid Pass"
+    "name": "Raid Pass"
   },
   "1402": {
     "protoname": "ITEM_PAID_RAID_TICKET",
-    "name": "Paid Raid Pass"
+    "name": "Premium Battle Pass"
   },
   "1403": {
     "protoname": "ITEM_LEGENDARY_RAID_TICKET",
@@ -206,5 +226,33 @@
   "1405": {
     "protoname": "ITEM_FRIEND_GIFT_BOX",
     "name": "Gift"
+  },
+  "1406": {
+    "protoname": "ITEM_TEAM_CHANGE",
+    "name": "Team Medallion"
+  },
+  "1408": {
+    "protoname": "ITEM_REMOTE_RAID_TICKET",
+    "name": "Remote Raid Pass"
+  },
+  "1501": {
+    "protoname": "ITEM_LEADER_MAP_FRAGMENT",
+    "name": "Mysterious Component"
+  },
+  "1502": {
+    "protoname": "ITEM_LEADER_MAP",
+    "name": "Rocket Radar"
+  },
+  "1503": {
+    "protoname": "ITEM_GIOVANNI_MAP",
+    "name": "Super Rocket Radar"
+  },
+  "1600": {
+    "protoname": "ITEM_GLOBAL_EVENT_TICKET",
+    "name": "Ticket"
+  },
+  "1601": {
+    "protoname": "ITEM_EVENT_TICKET_PINK",
+    "name": "Ticket"
   }
 }

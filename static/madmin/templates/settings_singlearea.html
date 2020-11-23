@@ -68,7 +68,6 @@ $(document).ready(function () {
 
 <div class="row">
   {% if settings_vars.settings is defined %}
-  {% if advcfg == True %}
   <div class="col-sm">
     {% for key, field in settings_vars.settings|dictsort %}
     <div class="form-group">
@@ -105,7 +104,6 @@ $(document).ready(function () {
         </select>
       </div>
     </div>
-  {% endif %}
   {% endif %}
   {% if settings_vars.fields is defined %}
   <div class="col-sm">

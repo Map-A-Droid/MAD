@@ -160,9 +160,24 @@
   <script src="https://cdn.datatables.net/responsive/2.2.5/js/dataTables.responsive.min.js"
     crossorigin="anonymous"></script>
   <script src="{{ url_for('static', filename='js/dark-mode-switch.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/loading_dialogue.js') }}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.Aplus.min.js') }}"></script>
   <script>
+    function loadingBlockUI(message) {
+      $.fn.center = function () {
+        this.css("position", "absolute");
+        this.css("top", ($(window).height() - this.height()) / 2 + $(window).scrollTop() + "px");
+        this.css("left", ($(window).width() - this.width()) / 2 + $(window).scrollLeft() + "px");
+        return this;
+      }
+
+      $.blockUI({css: {
+        height: 'auto',
+        textAlign: 'center',
+        width: 'auto'
+      }, message: '<img src="{{ url_for("static", filename="loading.gif") }}" width="100px" /><br/><h2  style="margin-left: 20px;margin-right: 20px;">' + message + '</h2>' })
+
+      $('.blockUI.blockMsg').center();
+    }
 
     $(document).ready(function () {
       $.fn.center = function () {

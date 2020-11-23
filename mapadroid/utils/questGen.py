@@ -107,7 +107,9 @@ def questtype(quest_type):
 
 def rewarditem(itemid):
     file = open_json_file('items')
-    return (file[str(itemid)]['name'])
+    if str(itemid) in file:
+        return (file[str(itemid)]['name'])
+    return "Item " + str(itemid)
 
 
 def pokemonname(id):

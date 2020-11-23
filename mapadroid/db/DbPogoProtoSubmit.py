@@ -23,7 +23,7 @@ class DbPogoProtoSubmit:
     def __init__(self, db_exec: PooledQueryExecutor):
         self._db_exec: PooledQueryExecutor = db_exec
 
-    def mons(self, origin: str, map_proto: dict, mitm_mapper):
+    def mons(self, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
         """
         Update/Insert mons from a map_proto dict
         """
@@ -61,7 +61,7 @@ class DbPogoProtoSubmit:
 
                 # get known spawn end time and feed into despawn time calculation
                 getdetspawntime = self._get_detected_endtime(str(spawnid))
-                despawn_time_unix = gen_despawn_timestamp(getdetspawntime)
+                despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp)
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
                 if getdetspawntime is None:
@@ -104,7 +104,7 @@ class DbPogoProtoSubmit:
         spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
 
         getdetspawntime = self._get_detected_endtime(str(spawnid))
-        despawn_time_unix = gen_despawn_timestamp(getdetspawntime)
+        despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp)
         despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
         latitude = wild_pokemon.get("latitude")

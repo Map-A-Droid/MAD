@@ -131,7 +131,6 @@ class MADminConfig(object):
                 settings_vars = {}
         if request.method == 'GET':
             included_data = {
-                'advcfg': self._args.advanced_config,
                 'base_uri': url_for(base_uri),
                 'identifier': identifier
             }

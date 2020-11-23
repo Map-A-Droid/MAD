@@ -44,7 +44,7 @@ RUN printf "deb http://httpredir.debian.org/debian stretch-backports main non-fr
 COPY . /usr/src/app/
 
 # Set Entrypoint with hard-coded options
-ENTRYPOINT ["python3","start.py", "-wm", "-os"]
+ENTRYPOINT ["python3","start.py"]
 
 # Default ports for PogoDroid, RGC and MAdmin
 EXPOSE 8080 8000 5000

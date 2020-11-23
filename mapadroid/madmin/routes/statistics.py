@@ -55,6 +55,7 @@ class MADminStatistics(object):
             ("/reset_status_entry", self.reset_status_entry),
             ("/get_stop_quest_stats", self.get_stop_quest_stats),
             ("/statistics_stop_quest", self.statistics_stop_quest),
+            ("/get_noniv_encounters_count", self.get_noniv_encounters_count),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -791,4 +792,12 @@ class MADminStatistics(object):
         events = self._db.get_events()
         spawnpoints_total = self._db_stats_reader.get_all_spawnpoints_count()
         stats = {'fences': possible_fences, 'events': events, 'spawnpoints_count': spawnpoints_total}
+        return jsonify(stats)
+
+    @logger.catch()
+    @auth_required
+    def get_noniv_encounters_count(self):
+        minutes_spawn = request.args.get('minutes_spawn', 240)
+        data = self._db_stats_reader.get_noniv_encounters_count(minutes_spawn)
+        stats = {'data': data}
         return jsonify(stats)

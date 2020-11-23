@@ -87,11 +87,11 @@ class DbWrapper:
         unixtime = (dt - datetime(1970, 1, 1)).total_seconds()
         return unixtime
 
-    def get_next_raid_hatches(self, delay_after_hatch, geofence_helper=None):
+    def get_next_raid_hatches(self, geofence_helper=None):
         """
         In order to build a priority queue, we need to be able to check for the next hatches of raid eggs
         The result may not be sorted by priority, to be done at a higher level!
-        :return: unsorted list of next hatches within delay_after_hatch
+        :return: unsorted list of next hatches
         """
         logger.debug3("DbWrapper::get_next_raid_hatches called")
         db_time_to_check = datetime.utcfromtimestamp(
@@ -117,8 +117,7 @@ class DbWrapper:
                               latitude, longitude)
                 continue
             timestamp = self.__db_timestring_to_unix_timestamp(str(start))
-            data.append((timestamp + delay_after_hatch,
-                         Location(latitude, longitude)))
+            data.append((timestamp, Location(latitude, longitude)))
 
         logger.debug4("Latest Q: {}", data)
         return data
@@ -138,7 +137,7 @@ class DbWrapper:
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified)"
         )
         # TODO: think of a better "unique, real number"
-        sql_args = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, -1)
+        sql_args = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, 0)
         self.execute(query, sql_args, commit=True)
 
         return True
@@ -544,7 +543,7 @@ class DbWrapper:
         for (gym_id, latitude, longitude, name, url, team_id, last_updated,
              level, spawn, start, end, mon_id, form, costume, evolution, last_scanned) in res:
 
-            nowts = datetime.utcfromtimestamp(time.time()).timestamp()
+            nowts = datetime.now(tz=timezone.utc).timestamp()
 
             # check if we found a raid and if it's still active
             if end is None or nowts > int(end.replace(tzinfo=timezone.utc).timestamp()):
