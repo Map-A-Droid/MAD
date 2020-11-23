@@ -269,7 +269,7 @@ class MITMBase(WorkerBase):
         """
         pass
 
-    def _clear_quests(self, delayadd, openmenu=True, looped=False):
+    def _clear_quests(self, delayadd, openmenu=True, check_finished=False, looped=False):
         self.logger.debug('{_clear_quests} called')
         if openmenu:
             x, y = self._resocalc.get_coords_quest_menu(self)
@@ -277,47 +277,48 @@ class MITMBase(WorkerBase):
             self.logger.debug("_clear_quests Open menu: {}, {}", int(x), int(y))
             time.sleep(6 + int(delayadd))
 
-        cleaned_count: int = 0
-        if looped:
-            self.logger.info("Retry clearing finished quests after retrieving breakthrough reward")
-        else:
-            self.logger.info("Check for finished quests")
+        if check_finished:
+            cleaned_count: int = 0
+            if looped:
+                self.logger.info("Retry clearing finished quests after retrieving breakthrough reward")
+            else:
+                self.logger.info("Check for finished quests")
 
-        questcheck = self._check_finished_quest(full_screen=True)
-        if questcheck["blocked"]:
-            if not looped:
-                self.logger.warning("Found a blocked quest - need to try to cleanup breakthrough!")
-                self._communicator.click(questcheck["breakthrough"][0]['x'], questcheck["breakthrough"][0]['y'])
-                time.sleep(20)
+            questcheck = self._check_finished_quest(full_screen=True)
+            if questcheck["blocked"]:
+                if not looped:
+                    self.logger.warning("Found a blocked quest - need to try to cleanup breakthrough!")
+                    self._communicator.click(questcheck["breakthrough"][0]['x'], questcheck["breakthrough"][0]['y'])
+                    time.sleep(20)
+                    self._communicator.back_button()
+                    time.sleep(5)
+                    self._clear_quests(delayadd, openmenu=False, check_finished=True, looped=True)
+                    return
+                else:
+                    self.logger.error("Unable to clean breakthrough - the reward pokemon needs to be caught!")
+            elif questcheck["breakthrough"]:
+                self.logger.warning("Breakthrough reward found - consider catching it soon!")
+
+            if not questcheck["finished"]:
+                self.logger.info("Unable to find any finished quests.")
+            for quest in questcheck["finished"]:
+                cleaned_count += 1
+                self.logger.info("Retrieving finished quest #{}", cleaned_count)
+                self._communicator.click(quest['x'], quest['y'])
+                time.sleep(15)
                 self._communicator.back_button()
                 time.sleep(5)
-                self._clear_quests(delayadd, openmenu=False, looped=True)
-                return
-            else:
-                self.logger.error("Unable to clean breakthrough - the reward pokemon needs to be caught!")
-        elif questcheck["breakthrough"]:
-            self.logger.warning("Breakthrough reward found - consider catching it soon!")
 
-        if not questcheck["finished"]:
-            self.logger.info("Unable to find any finished quests.")
-        for quest in questcheck["finished"]:
-            cleaned_count += 1
-            self.logger.info("Retrieving finished quest #{}", cleaned_count)
-            self._communicator.click(quest['x'], quest['y'])
-            time.sleep(15)
-            self._communicator.back_button()
-            time.sleep(5)
-
-            # back button throws us to the map, return to the quest menu if more quests to be cleared
-            # otherwise just return without trying to click the close button
-            if len(questcheck["finished"]) > cleaned_count:
-                x, y = self._resocalc.get_coords_quest_menu(self)
-                self._communicator.click(int(x), int(y))
-                self.logger.debug("_clear_quests Open menu again: {}, {}", int(x), int(y))
-                time.sleep(6 + int(delayadd))
-            else:
-                self.logger.success("Done clearing finished quests!")
-                return
+                # back button throws us to the map, return to the quest menu if more quests to be cleared
+                # otherwise just return without trying to click the close button
+                if len(questcheck["finished"]) > cleaned_count:
+                    x, y = self._resocalc.get_coords_quest_menu(self)
+                    self._communicator.click(int(x), int(y))
+                    self.logger.debug("_clear_quests Open menu again: {}, {}", int(x), int(y))
+                    time.sleep(6 + int(delayadd))
+                else:
+                    self.logger.success("Done clearing finished quests!")
+                    return
 
         x, y = self._resocalc.get_close_main_button_coords(self)
         self._communicator.click(int(x), int(y))
