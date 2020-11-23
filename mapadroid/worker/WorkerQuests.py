@@ -45,6 +45,7 @@ class ClearThreadTasks(Enum):
     IDLE = 0
     BOX = 1
     QUEST = 2
+    QUEST_WITH_FINISHED = 3
 
 
 class WorkerQuests(MITMBase):
@@ -121,7 +122,7 @@ class WorkerQuests(MITMBase):
         else:
             # initial cleanup old quests
             if not self._init:
-                self.clear_thread_task = ClearThreadTasks.QUEST
+                self.clear_thread_task = ClearThreadTasks.QUEST_WITH_FINISHED
 
     def _health_check(self):
         """
@@ -424,6 +425,10 @@ class WorkerQuests(MITMBase):
                 elif self.clear_thread_task == ClearThreadTasks.QUEST and not self._level_mode:
                     self.logger.info("Clearing quest")
                     self._clear_quests(self._delay_add)
+                    self.clear_thread_task = ClearThreadTasks.IDLE
+                elif self.clear_thread_task == ClearThreadTasks.QUEST_WITH_FINISHED and not self._level_mode:
+                    self.logger.info("Clearing quests and checking for finished quests")
+                    self._clear_quests(self._delay_add, check_finished=True)
                     self.clear_thread_task = ClearThreadTasks.IDLE
                 time.sleep(1)
             except (InternalStopWorkerException, WebsocketWorkerRemovedException,
@@ -792,7 +797,7 @@ class WorkerQuests(MITMBase):
                     if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
-                self.clear_thread_task = ClearThreadTasks.QUEST
+                self.clear_thread_task = ClearThreadTasks.QUEST_WITH_FINISHED
                 self._clear_quest_counter = 0
                 break
             else:
