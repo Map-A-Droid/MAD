@@ -64,7 +64,7 @@ def trash_image_matching(origin, screen_img, full_screen):
 
         last_y_coord = 0
         res = cv2.matchTemplate(screen, resized, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.65
+        threshold = 0.5
         loc = np.where(res >= threshold)
         boxcount = 0
         for pt in zip(*loc[::-1]):
