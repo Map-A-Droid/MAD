@@ -623,7 +623,7 @@ class PogoWindows:
 
     def __check_finished_quest_internal(self, image, identifier):
         origin_logger = get_origin_logger(logger, origin=identifier)
-        results = {"breakthrough": [], "finished": [], "blocked": []}
+        results = {"breakthrough": [], "finished": [], "blocked": [], "ar": []}
         globaldict: Optional[dict] = {}
         diff: int = 1
         origin_logger.debug("__check_finished_quest_interal")
@@ -675,6 +675,11 @@ class PogoWindows:
                         else:
                             origin_logger.debug("Found blocked quest at coords {},{}", left, top)
                             results["blocked"].append({'x': left, 'y': top})
+
+                    if globaldict['text'][index] in ["Scan", "scannen"]:
+                        origin_logger.debug("Found AR quest at coords {},{}", left, top)
+                        results["ar"].append({'x': left, 'y': top})
+
         except (FileNotFoundError, ValueError) as e:
             origin_logger.error("Failed opening image {} with exception {}", image, e)
             return results
