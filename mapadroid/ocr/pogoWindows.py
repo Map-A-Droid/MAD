@@ -651,11 +651,11 @@ class PogoWindows:
 
                 n_boxes = len(globaldict['text'])
                 for index in range(n_boxes):
-                    if globaldict['text'][index] in ["REWARD!", "ABHOLEN!"]:
-                        # original screen coordinates
-                        left = globaldict["left"][index] / diff
-                        top = globaldict["top"][index] / diff
+                    # original screen coordinates
+                    left = globaldict["left"][index] / diff
+                    top = globaldict["top"][index] / diff
 
+                    if globaldict['text'][index] in ["REWARD!", "ABHOLEN!"]:
                         # get rgb values of a close "orange pixel" - the color differs between:
                         # the quest stack, normal finished quests, and quests blocked bc of the breakthrough
                         r, g, b = frame_org.getpixel((globaldict["left"][index], globaldict["top"][index] - 20 / diff))
