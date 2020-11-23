@@ -278,6 +278,11 @@ class MITMBase(WorkerBase):
             time.sleep(6 + int(delayadd))
 
         if check_finished:
+            x, y = self._resocalc.get_quest_listview(self)
+            self._communicator.click(int(x), int(y))
+            self.logger.debug("_clear_quests Open field: {}, {}", int(x), int(y))
+            time.sleep(4 + int(delayadd))
+
             cleaned_count: int = 0
             if looped:
                 self.logger.info("Retry clearing finished quests after retrieving breakthrough reward")
