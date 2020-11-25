@@ -271,6 +271,13 @@ class MITMBase(WorkerBase):
 
     def _clear_quests(self, delayadd, openmenu=True, check_finished=False, looped=False):
         self.logger.debug('{_clear_quests} called')
+
+        reached_main_menu = self._check_pogo_main_screen(10, True)
+        if not reached_main_menu:
+            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                # TODO: put in loop, count up for a reboot ;)
+                raise InternalStopWorkerException
+
         if openmenu:
             x, y = self._resocalc.get_coords_quest_menu(self)
             self._communicator.click(int(x), int(y))
