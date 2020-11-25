@@ -291,7 +291,10 @@ class MITMBase(WorkerBase):
 
             questcheck = self._check_finished_quest(full_screen=True)
             if questcheck["blocked"]:
-                if not looped:
+                if not questcheck["breakthrough"] and not looped:
+                    self.logger.warning("Found blocked quest but no breakthrough reward - likely flawed OCR result. "
+                            "This can be ignored if not happening repeatedly.")
+                elif not looped:
                     self.logger.warning("Found a blocked quest - need to try to cleanup breakthrough!")
                     self._communicator.click(questcheck["breakthrough"][0]['x'], questcheck["breakthrough"][0]['y'])
                     time.sleep(20)
