@@ -665,16 +665,17 @@ class PogoWindows:
                         if top < height / 2:
                             origin_logger.debug("Found breakthrough reward at coords {},{}", left, top)
                             results["breakthrough"].append({'x': left, 'y': top})
+                        # blocked quest - breakthrough needs to be retrieved
+                        elif 250 > r > 228 and g < 165 and b < 72:
+                            origin_logger.debug("Found blocked quest at coords {},{}", left, top)
+                            results["blocked"].append({'x': left, 'y': top})
                         # finished quest - can be retrieved
                         elif 250 > r > 228 and b < 90:
                             origin_logger.debug("Found finished quest at coords {},{}", left, top)
                             results["finished"].append({'x': left, 'y': top})
                         # quest stack - to be ignored
-                        elif r > 228 and b < 90:
+                        elif r > 249 and b < 90:
                             origin_logger.debug("Found stacked quest at coords {},{}", left, top)
-                        else:
-                            origin_logger.debug("Found blocked quest at coords {},{}", left, top)
-                            results["blocked"].append({'x': left, 'y': top})
 
                     if globaldict['text'][index] in ["Scan", "scannen"]:
                         origin_logger.debug("Found AR quest at coords {},{}", left, top)
