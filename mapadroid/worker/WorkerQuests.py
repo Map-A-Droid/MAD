@@ -80,6 +80,7 @@ class WorkerQuests(MITMBase):
         self._rotation_waittime = self.get_devicesettings_value('rotation_waittime', 300)
         self._latest_quest = 0
         self._clear_box_failcount = 0
+        self._spinnable_data_failcount = 0
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -152,8 +153,8 @@ class WorkerQuests(MITMBase):
         self.logger.debug("Getting time")
         speed = routemanager_settings.get("speed", 0)
         max_distance = routemanager_settings.get("max_distance", None)
-        if (speed == 0 or (max_distance and 0 < max_distance < distance) or
-                (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
+        if (speed == 0 or (max_distance and 0 < max_distance < distance)
+                or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self.logger.debug("main: Teleporting...")
             self._transporttype = 0
             self._communicator.set_location(
@@ -603,14 +604,30 @@ class WorkerQuests(MITMBase):
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
         latest: dict = self._mitm_mapper.request_latest(self._origin)
+
+        # ensure data from after the given timestamp
+        if latest.get("timestamp_last_data", 0) < timestamp:
+            data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=106)
+            if data_received == LatestReceivedType.UNDEFINED:
+                self._spinnable_data_failure()
+                return False, False
+            latest: dict = self._mitm_mapper.request_latest(self._origin)
+
+        # TODO: can this still happen with the if-clause above?
         if latest is None or PROTO_NUMBER_FOR_GMO not in latest.keys():
             self.logger.warning("Can't spin stop - no GMO data available!")
+            self._spinnable_data_failure()
             return False, False
 
         gmo_cells: list = latest.get(PROTO_NUMBER_FOR_GMO).get("values", {}).get("payload", {}).get("cells",
                                                                                                     None)
+        pdlocation = latest.get("location", Location(0, 0))
+        pdlocation = Location(0, 0) if not pdlocation else pdlocation
+        stop_found = False
+
         if gmo_cells == list():
             self.logger.warning("Can't spin stop - no map info in GMO!")
+            self._spinnable_data_failure()
             return False, False
         for cell in gmo_cells:
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
@@ -625,20 +642,24 @@ class WorkerQuests(MITMBase):
                 longitude: float = fort.get("longitude", 0.0)
                 if latitude == 0.0 or longitude == 0.0:
                     continue
-                elif (abs(self.current_location.lat - latitude) > 0.00003 or
-                      abs(self.current_location.lng - longitude) > 0.00003):
+                elif (abs(pdlocation.lat - latitude) > 0.00003 or abs(pdlocation.lng - longitude) > 0.00003):
                     continue
+
+                if latitude == self.current_location.lat and longitude == self.current_location.lng:
+                    stop_found = True
 
                 fort_type: int = fort.get("type", 0)
                 if fort_type == 0:
                     self._db_wrapper.delete_stop(latitude, longitude)
                     self.logger.warning("Tried to open a stop but found a gym instead!")
+                    self._spinnable_data_failcount = 0
                     return False, True
 
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
                     self.logger.info("Level mode: Stop already visited - skipping it")
                     self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
+                    self._spinnable_data_failcount = 0
                     return False, True
 
                 enabled: bool = fort.get("enabled", True)
@@ -650,10 +671,16 @@ class WorkerQuests(MITMBase):
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
                 if not cooldown == 0:
                     self.logger.warning("Can't spin the stop - it has cooldown")
+                self._spinnable_data_failcount = 0
                 return fort_type == 1 and enabled and not closed and cooldown == 0, False
         # by now we should've found the stop in the GMO
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
-        self.logger.warning("Can't spin stop - couldn't find it closeby!")
+        if stop_found:
+            self.logger.warning("Unable to confirm the stop being spinnable - likely not standing exactly on top ...")
+            self._spinnable_data_failcount = 0
+        else:
+            self.logger.warning("Unable to find the stop closeby!")
+            self._spinnable_data_failure()
         return False, False
 
     def _open_pokestop(self, timestamp: float):
@@ -662,22 +689,23 @@ class WorkerQuests(MITMBase):
 
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         spinnable_stop, skip_recheck = self._current_position_has_spinnable_stop(timestamp)
+
+        recheck_count = 0
+        while not spinnable_stop and not skip_recheck and not recheck_count > 2:
+            recheck_count += 1
+            self.logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
+            data_received = self._wait_for_data(timestamp=time.time(), proto_to_wait_for=106, timeout=35)
+            if data_received != LatestReceivedType.UNDEFINED:
+                spinnable_stop, skip_recheck = self._current_position_has_spinnable_stop(timestamp)
+
         if not spinnable_stop:
-            if not skip_recheck:
-                # wait for GMO in case we moved too far away
-                data_received = self._wait_for_data(
-                    timestamp=timestamp, proto_to_wait_for=106, timeout=35)
-                if data_received != LatestReceivedType.UNDEFINED:
-                    spinnable_stop, _ = self._current_position_has_spinnable_stop(timestamp)
-                    if not spinnable_stop:
-                        self.logger.info("Stop {}, {} considered to be ignored in the next round due to failed "
-                                         "spinnable check", self.current_location.lat, self.current_location.lng)
-                        self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
-                                                                                    self.current_location.lat,
-                                                                                    self.current_location.lng)
-                        return None
-            else:
-                return None
+            self.logger.info("Stop {}, {} considered to be ignored in the next round due to failed "
+                             "spinnable check", self.current_location.lat, self.current_location.lng)
+            self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+                                                                        self.current_location.lat,
+                                                                        self.current_location.lng)
+            return None
+
         while data_received != LatestReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
             self._waittime_without_delays = self._stop_process_time
@@ -776,8 +804,7 @@ class WorkerQuests(MITMBase):
                         self.clear_thread_task = ClearThreadTasks.QUEST
                     break
 
-            elif (data_received == FortSearchResultTypes.TIME or data_received ==
-                  FortSearchResultTypes.OUT_OF_RANGE):
+            elif (data_received == FortSearchResultTypes.TIME or data_received == FortSearchResultTypes.OUT_OF_RANGE):
                 self.logger.warning('Softban - return to main screen and open again...')
                 on_main_menu = self._check_pogo_main_screen(10, False)
                 if not on_main_menu:
@@ -905,3 +932,13 @@ class WorkerQuests(MITMBase):
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
         return LatestReceivedType.UNDEFINED
+
+    def _spinnable_data_failure(self):
+        if self._spinnable_data_failcount > 9:
+            self._spinnable_data_failcount = 0
+            self.logger.warning("Worker failed spinning stop with GMO/data issues 10+ times - restart pogo")
+            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                # TODO: put in loop, count up for a reboot ;)
+                raise InternalStopWorkerException
+        else:
+            self._spinnable_data_failcount += 1
