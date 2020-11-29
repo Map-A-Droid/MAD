@@ -651,13 +651,14 @@ class DbPogoProtoSubmit:
         list_of_weather_args = []
         for client_weather in map_proto["client_weather"]:
             time_of_day = map_proto.get("time_of_day_value", 0)
-            w = self._extract_args_single_weather(client_weather, time_of_day, received_timestamp)
+            weather = self._extract_args_single_weather(client_weather, time_of_day, received_timestamp)
 
-            cache_key = "weather" + w[0] + w[4] + w[5] + w[6] + w[7] + w[8] + [9]
+            cache_key = ("weather" + weather[0] + weather[4] +
+                         weather[5] + weather[6] + weather[7] + weather[8] + weather[9])
             if self._cache.exists(cache_key):
                 continue
 
-            list_of_weather_args.append(w)
+            list_of_weather_args.append(weather)
             self._cache.set(cache_key, 1, ex=900)
         self._db_exec.executemany(query_weather, list_of_weather_args, commit=True)
         return True
