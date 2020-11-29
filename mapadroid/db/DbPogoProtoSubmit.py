@@ -542,7 +542,7 @@ class DbPogoProtoSubmit:
                         form = raid_info["raid_pokemon"]["display"]["form_value"]
                         gender = raid_info["raid_pokemon"]["display"]["gender_value"]
                         costume = raid_info["raid_pokemon"]["display"]["costume_value"]
-                        evolution = raid_info["raid_pokemon"]["display"].get("pokemon_evolution", 0)
+                        evolution = raid_info["raid_pokemon"]["display"].get("current_temp_evolution", 0)
                     else:
                         pokemon_id = None
                         cp = 0
