@@ -621,7 +621,7 @@ class DbPogoProtoSubmit:
                         )
                     )
 
-                    self._cache.set(cache_key, 1, raid_end_sec - int(datetime.utcnow().timestamp()))
+                    self._cache.set(cache_key, 1, ex=900)
 
         self._db_exec.executemany(query_raid, raid_args, commit=True)
         origin_logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
