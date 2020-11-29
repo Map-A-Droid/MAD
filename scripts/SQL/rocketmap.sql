@@ -546,7 +546,7 @@ CREATE TABLE `trs_quest` (
     `quest_item_amount` tinyint(2) NOT NULL,
     `quest_target` tinyint(3) NOT NULL,
     `quest_condition` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-    `quest_reward` varchar(1000) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `quest_reward` varchar(2560) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `quest_template` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `quest_task` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `quest_pokemon_form_id` smallint(6) NOT NULL DEFAULT '0',
