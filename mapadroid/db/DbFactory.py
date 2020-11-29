@@ -10,7 +10,7 @@ logger = get_logger(LoggerEnums.database)
 
 class DbFactory:
     @staticmethod
-    def get_wrapper(args) -> (DbWrapper, SyncManager):
+    def get_wrapper(args, cache) -> (DbWrapper, SyncManager):
         if args.db_method == "monocle":
             logger.error(
                 "MAD has dropped Monocle support. Please consider checking out the "
@@ -27,6 +27,6 @@ class DbFactory:
         db_exec = db_pool_manager.PooledQueryExecutor(host=args.dbip, port=args.dbport,
                                                       username=args.dbusername, password=args.dbpassword,
                                                       database=args.dbname, poolsize=args.db_poolsize)
-        db_wrapper = DbWrapper(db_exec=db_exec, args=args)
+        db_wrapper = DbWrapper(db_exec=db_exec, args=args, cache=cache)
 
         return db_wrapper, db_pool_manager

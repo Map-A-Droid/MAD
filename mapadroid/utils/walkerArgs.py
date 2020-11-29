@@ -270,6 +270,15 @@ def parse_args():
                         help='MAD PoGo auth is not required during autoconfiguration',
                         dest='autoconfig_no_auth')
 
+    # Redis cache
+    parser.add_argument('-ec', '--enable_cache', action='store_true', default=False,
+                        help=('Enable caching for incoming data to prevent re-inserting '
+                              'data to the DB over and over again')
+    parser.add_argument('-ch', '--cache_host', default='localhost',
+                        help=('Redis host used by caching')
+    parser.add_argument('-cp', '--cache_port', default=6379,
+                        help=('Redis port used by caching')
+
     args = parser.parse_args()
     # Allow status name and date formatting in log filename.
     args.log_filename = strftime(args.log_filename)

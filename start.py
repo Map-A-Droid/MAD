@@ -33,6 +33,7 @@ from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.mad_apk import get_storage_obj, StorageSyncManager, AbstractAPKStorage
 from mapadroid.madmin.madmin import MADmin
 from mapadroid.utils.pluginBase import PluginCollection
+from mapadroid.utils.noopcache import NoopCache
 import unittest
 from mapadroid.utils.logging import init_logging, get_logger, LoggerEnums
 
@@ -186,7 +187,20 @@ if __name__ == "__main__":
                      " -or    ---- only calculate routes")
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
-    db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
+    cache = NoopCache()
+    if args.enable_cache:
+        try:
+            import redis
+            cache = redis.Redis(host=args.cache_host, port=args.cache_port, db=0)
+            cache.ping()
+        except ImportError:
+            logger.error("Cache enabled but redis dependency not installed. Continuing without cache")
+        except redis.exceptions.ConnectionError:
+            logger.error("Unable to connect to Redis server. Continouing without cache")
+        except Exception:
+            logger.error("Unknown error while enabling cache. Continuing without cache")
+
+    db_wrapper, db_pool_manager = DbFactory.get_wrapper(args, cache)
     try:
         instance_id = db_wrapper.get_instance_id()
     except Exception:
