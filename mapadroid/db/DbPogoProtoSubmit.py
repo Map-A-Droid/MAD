@@ -318,7 +318,8 @@ class DbPogoProtoSubmit:
             for fort in cell["forts"]:
                 if fort["type"] == 1:
                     stop = self._extract_args_single_stop(fort)
-                    cache_key = "stop" + fort["id"] + fort.get("last_modified_timestamp_ms", time.time() + 900)
+                    alt_modified_time = datetime.utcnow().timestamp - (datetime.utcnow().timestamp() - 900)
+                    cache_key = "stop" + fort["id"] + fort.get("last_modified_timestamp_ms", alt_modified_time)
                     if self._cache.exists(cache_key):
                         continue
                     stops_args.append(stop)
