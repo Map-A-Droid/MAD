@@ -43,7 +43,7 @@ test tests:
 # Run bash within a defined tox environment
 # Specify a valid tox environment as such:
 #       make shell-py37
-# To force a recreation of the envrionment, specify the RECREATE environment variable with any value
+# To force a recreation of the environment, specify the RECREATE environment variable with any value
 #   make shell-py37 RECREATE=1
 shell-%:
 ifdef RECREATE

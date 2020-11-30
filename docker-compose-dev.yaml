@@ -18,20 +18,15 @@ services:
     entrypoint: ""
     volumes:
       - ${PWD}/:/usr/src/app:rw
-      - pre-commit-cache:/gome/${DOCKER_USER}/.cache/pre-commit
+      - pre-commit-cache:/home/dockuser/.cache/pre-commit
     depends_on:
       - mariadb
     ports:
       - "5000:5000"
       - "8000:8000"
       - "8080:8080"
-    environment:
-      THERAIDMAPPER_DBIP: mariadb
-      THERAIDMAPPER_DBUSERNAME: rocketdb
-      THERAIDMAPPER_DBNAME: rocketdb
-      THERAIDMAPPER_DBPASSWORD: rocketdb
     env_file:
-      - .env
+      - .dev.env
     tty: true
     command: ["bash"]
 
