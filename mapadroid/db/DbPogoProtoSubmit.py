@@ -73,7 +73,7 @@ class DbPogoProtoSubmit:
                     origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
                                          despawn_time, spawnid)
 
-                cache_key = "mon" + encounter_id
+                cache_key = "mon{}".format(encounter_id)
                 if self._cache.exists(cache_key):
                     continue
 
@@ -127,7 +127,7 @@ class DbPogoProtoSubmit:
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
-        cache_key = "moniv" + encounter_id + weather_boosted
+        cache_key = "moniv{}{}".format(encounter_id, weather_boosted)
         if self._cache.exists(cache_key):
             return
 
@@ -320,7 +320,7 @@ class DbPogoProtoSubmit:
                 if fort["type"] == 1:
                     stop = self._extract_args_single_stop(fort)
                     alt_modified_time = int(math.ceil(datetime.utcnow().timestamp() / 1000)) * 1000
-                    cache_key = "stop" + fort["id"] + fort.get("last_modified_timestamp_ms", alt_modified_time)
+                    cache_key = "stop{}{}".format(fort["id"], fort.get("last_modified_timestamp_ms", alt_modified_time))
                     if self._cache.exists(cache_key):
                         continue
                     stops_args.append(stop)
@@ -347,8 +347,8 @@ class DbPogoProtoSubmit:
         stop_args = self._extract_args_single_stop_details(stop_proto)
         if stop_args is not None:
             alt_modified_time = int(math.ceil(datetime.utcnow().timestamp() / 1000)) * 1000
-            cache_key = ("stopdetail" + stop_proto["id"] +
-                         stop_proto.get("last_modified_timestamp_ms", alt_modified_time))
+            cache_key = "stopdetail{}{}".format(stop_proto["id"],
+                                                stop_proto.get("last_modified_timestamp_ms", alt_modified_time))
             if self._cache.exists(cache_key):
                 return
             self._db_exec.execute(query_stops, stop_args, commit=True)
@@ -466,7 +466,7 @@ class DbPogoProtoSubmit:
                         last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
 
-                    cache_key = "gym" + gymid + last_modified_ts
+                    cache_key = "gym{}{}".format(gymid, last_modified_ts)
                     if self._cache.exists(cache_key):
                         continue
 
@@ -601,7 +601,7 @@ class DbPogoProtoSubmit:
                     origin_logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, level,
                                          raidend_date)
 
-                    cache_key = "raid" + gymid + pokemon_id + raid_end_sec
+                    cache_key = "raid{}{}".format(gymid, pokemon_id + raid_end_sec)
                     if self._cache.exists(cache_key):
                         continue
 
@@ -653,8 +653,8 @@ class DbPogoProtoSubmit:
             time_of_day = map_proto.get("time_of_day_value", 0)
             weather = self._extract_args_single_weather(client_weather, time_of_day, received_timestamp)
 
-            cache_key = ("weather" + weather[0] + weather[4] +
-                         weather[5] + weather[6] + weather[7] + weather[8] + weather[9])
+            cache_key = "weather{}{}{}{}{}{}{}".format(weather[0], weather[4], weather[5], weather[6],
+                                                       weather[7], weather[8], weather[9])
             if self._cache.exists(cache_key):
                 continue
 
