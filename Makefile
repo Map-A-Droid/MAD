@@ -3,12 +3,19 @@ CONTAINER_NAME ?= mapadroid-dev
 export UID ?= $(shell id -u)
 export GID ?= $(shell id -g)
 
+
 define PRE_COMMIT_ERR
-    Install pre-commit @ https://pre-commit.com/#install .
-    Non-Admin works best.
-    echo 'PATH="$$HOME/bin/pre-commit:$$PATH"' >> ~/.profile
+    Install pre-commit @ https://pre-commit.com/#install then run
     source ~/.profile
 endef
+
+ifeq ($(shell which pip),)
+    export pipbin ?= $(shell which pip)
+else ifeq ($(shell which pip3),)
+    export pipbin ?= $(shell which pip3)
+else
+    $(error, "pip not detected")
+endif
 ifeq (, $(shell which pre-commit))
     $(error $(PRE_COMMIT_ERR))
 endif
@@ -26,7 +33,6 @@ ifeq (, compose_ver < 27)
     $(error "docker-compose too old. Update @ https://docs.docker.com/compose/install/")
 endif
 
-
 clean: clean-tox down
 
 clean-tox:
@@ -39,7 +45,7 @@ rebuild:
 	docker-compose -f docker-compose-dev.yaml build
 
 setup-precommit:
-	pip install --user pre-commit
+	$(pipbin) install --user pre-commit
 	pre-commit install
 	pre-commit install --hook-type commit-msg
 
