@@ -3,6 +3,29 @@ CONTAINER_NAME ?= mapadroid-dev
 export UID ?= $(shell id -u)
 export GID ?= $(shell id -g)
 
+define PRE_COMMIT_ERR
+    Install pre-commit @ https://pre-commit.com/#install .
+    Non-Admin works best.
+    echo 'PATH="$$HOME/bin/pre-commit:$$PATH"' >> ~/.profile
+    source ~/.profile
+endef
+ifeq (, $(shell which pre-commit))
+    $(error $(PRE_COMMIT_ERR))
+endif
+ifeq (, $(shell which docker))
+    $(error "Docker installation is missing or not available. https://docs.docker.com/get-docker/")
+endif
+ifeq (, $(shell which docker-compose))
+    $(error "docker-compose installation is missing or not available. https://docs.docker.com/compose/install/")
+endif
+ifeq (, $(shell which docker-compose))
+    $(error "docker-compose installation is missing or not available. https://docs.docker.com/compose/install/")
+endif
+compose_ver ?= $(shell docker-compose --version | cut -d' ' -f3 | cut -d '.' -f2)
+ifeq (, compose_ver < 27)
+    $(error "docker-compose too old. Update @ https://docs.docker.com/compose/install/")
+endif
+
 
 clean: clean-tox down
 
