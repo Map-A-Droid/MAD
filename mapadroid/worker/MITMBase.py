@@ -60,8 +60,7 @@ class MITMBase(WorkerBase):
         max_radius = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
         if not max_radius:
             return True
-        max_radius: int = self._applicationArgs.maximum_valid_distance \
-            if max_radius < self._applicationArgs.maximum_valid_distance else max_radius
+
         mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
         if mode in ["mon_mitm", "iv_mitm"]:
             data_to_check = "wild_pokemon"
@@ -147,7 +146,7 @@ class MITMBase(WorkerBase):
                                                                         float(self.current_location.lng))
                 max_distance_of_mode = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
                 max_distance_for_worker: int = self._applicationArgs.maximum_valid_distance \
-                    if max_distance_of_mode < self._applicationArgs.maximum_valid_distance else max_distance_of_mode
+                    if 5 < self._applicationArgs.maximum_valid_distance < max_distance_of_mode else max_distance_of_mode
                 self.logger.debug("Distance of worker {} to data location: {}", self._origin, distance_to_data)
                 if max_distance_for_worker and distance_to_data > max_distance_for_worker:
                     self.logger.debug("Real data too far from worker position, waiting, max distance allowed: {}m",
