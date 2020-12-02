@@ -3,7 +3,7 @@ import time
 from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -12,7 +12,7 @@ from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.WorkerBase import WorkerBase
+from mapadroid.worker.WorkerBase import WorkerBase, FortSearchResultTypes
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
@@ -27,6 +27,7 @@ class LatestReceivedType(Enum):
     MON = 3
     CLEAR = 4
     GMO = 5
+    FORT_SEARCH_RESULT = 6
 
 
 class MITMBase(WorkerBase):
@@ -55,7 +56,7 @@ class MITMBase(WorkerBase):
                                                  99)
         self._enhanced_mode = self.get_devicesettings_value('enhanced_mode_quest', False)
 
-    def _check_data_distance(self, data):
+    def _check_data_distance(self, data) -> bool:
         max_radius = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
         if not max_radius:
             return True
@@ -86,7 +87,7 @@ class MITMBase(WorkerBase):
                     lng_sum += element["longitude"]
 
         if counter == 0:
-            return None
+            return False
         avg_lat = lat_sum / counter
         avg_lng = lng_sum / counter
         distance = get_distance_of_two_points_in_meters(float(avg_lat),
@@ -105,43 +106,40 @@ class MITMBase(WorkerBase):
                               avg_lng, self.current_location.lat, self.current_location.lng, distance, max_radius, mode)
             return True
 
-    def _wait_for_data(self, timestamp: float = None, proto_to_wait_for=106, timeout=None):
+    def _wait_for_data(self, timestamp: float = None, proto_to_wait_for=106, timeout=None) \
+            -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
         if timestamp is None:
             timestamp = time.time()
-
         if timeout is None:
             timeout = self.get_devicesettings_value("mitm_wait_timeout", 45)
 
-        # since the GMOs may only contain mons if we are not "too fast" (which is the case when teleporting) after
-        # waiting a certain period of time (usually the 2nd GMO), we will multiply the timeout by 2 for mon-modes
-        mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
-        if mode in ["mon_mitm", "iv_mitm"] or self._mapping_manager.routemanager_get_init(
-                self._routemanager_name):
-            timeout *= 2
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
-        latest = self._mitm_mapper.request_latest(self._origin)
-        timestamp_last_data = latest.get("timestamp_last_data", 0)
-        timestamp_last_received = latest.get("timestamp_receiver", 0)
-
-        # we can now construct the rough estimate of the diff of time of mobile vs time of server, subtract our
-        # timestamp by the diff
-        # TODO: discuss, probably wiser to add to timeout or get the diff of how long it takes for RGC to issue a cmd
-        timestamp = timestamp - (timestamp_last_received - timestamp_last_data)
-
-        self.logger.info('Waiting for data after {}', datetime.fromtimestamp(timestamp))
-        data_requested = LatestReceivedType.UNDEFINED
-
-        failover_timestamp: int = time.time()
-
-        while data_requested == LatestReceivedType.UNDEFINED and \
-                (timestamp + timeout >= int(time.time()) and int(failover_timestamp + timeout) >= int(time.time())) \
+        self.logger.info('Waiting for data after {}',
+                         datetime.fromtimestamp(timestamp))
+        position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
+                                                                             self._origin)
+        type_of_data_returned = LatestReceivedType.UNDEFINED
+        data = None
+        while type_of_data_returned == LatestReceivedType.UNDEFINED and \
+                int(timestamp + timeout) >= int(time.time()) \
                 and not self._stop_worker_event.is_set():
             latest = self._mitm_mapper.request_latest(self._origin)
+
+            if latest is None:
+                self.logger.debug("Nothing received from worker since MAD started")
+                time.sleep(0.5)
+                continue
+            # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
+            # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
             latest_location: Optional[Location] = latest.get("location", None)
             check_data = True
             if (proto_to_wait_for == 106 and latest_location is not None and
-                    latest_location.lat != 0.0 and latest_location.lng != 0.0):
-                self.logger.debug("Checking worker location {} against real data location {}", self.current_location,
+                    latest_location.lat != 0.0 and latest_location.lng != 0.0 and
+                    -90.0 <= latest_location.lat <= 90.0 and
+                    -180.0 <= latest_location.lng <= 180.0):
+                self.logger.debug("Checking GMO location reported by {} at {} against real data location {}",
+                                  self._origin,
+                                  self.current_location,
                                   latest_location)
                 distance_to_data = get_distance_of_two_points_in_meters(float(latest_location.lat),
                                                                         float(latest_location.lng),
@@ -154,24 +152,29 @@ class MITMBase(WorkerBase):
                 if max_distance_for_worker and distance_to_data > max_distance_for_worker:
                     self.logger.debug("Real data too far from worker position, waiting...")
                     check_data = False
+            elif latest_location is not None and latest_location.lat == latest_location.lng == 1000:
+                self.logger.warning("Data may be valid but does not contain a proper location yet.")
+                time.sleep(5)
+                check_data = False
 
             if check_data:
-                data_requested = self._wait_data_worker(
+                type_of_data_returned, data = self._check_for_data_content(
                     latest, proto_to_wait_for, timestamp)
             if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                     or self._stop_worker_event.is_set():
                 self.logger.error("killed while sleeping")
                 raise InternalStopWorkerException
+            if type_of_data_returned == LatestReceivedType.UNDEFINED:
+                # We don't want to sleep if we have received something that may be useful to us...
+                time.sleep(1)
+            position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
+                                                                                 self._origin)
+            if position_type is None:
+                self.logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
+                raise InternalStopWorkerException
 
-            time.sleep(1)
-
-        position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
-                                                                             self._origin)
-        if position_type is None:
-            self.logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
-            raise InternalStopWorkerException
-        if data_requested != LatestReceivedType.UNDEFINED:
-            self.logger.success('Got the data requested')
+        if type_of_data_returned != LatestReceivedType.UNDEFINED:
+            self.logger.success('Received data')
             self._reboot_count = 0
             self._restart_count = 0
             self._rec_data_time = datetime.now()
@@ -181,11 +184,9 @@ class MITMBase(WorkerBase):
                                                      position_type, time.time(),
                                                      self._mapping_manager.routemanager_get_mode(
                                                          self._routemanager_name), self._transporttype)
-
         else:
-            # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
-            # TODO: be more precise (timeout vs empty data)
-            self.logger.warning("Timeout waiting for data")
+            self.logger.warning("Timeout waiting for useful data. Type requested was {}, received {}",
+                                proto_to_wait_for, type_of_data_returned)
 
             self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
                                                      self._waittime_without_delays,
@@ -218,7 +219,7 @@ class MITMBase(WorkerBase):
                 self._restart_pogo(True, self._mitm_mapper)
 
         self.worker_stats()
-        return data_requested
+        return type_of_data_returned, data
 
     def _start_pogo(self) -> bool:
         pogo_topmost = self._communicator.is_pogo_topmost()
@@ -262,7 +263,7 @@ class MITMBase(WorkerBase):
         return True
 
     @abstractmethod
-    def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
+    def _check_for_data_content(self, latest, proto_to_wait_for, timestamp) -> Tuple[LatestReceivedType, Optional[object]]:
         """
         Wait_for_data for each worker
         :return:
