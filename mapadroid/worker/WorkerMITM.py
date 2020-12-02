@@ -119,7 +119,16 @@ class WorkerMITM(MITMBase):
             self._communicator.walk_from_to(self.last_location, self.current_location, speed)
             # We need to roughly estimate when data could have been available, just picking half way for now, distance
             # check should do the rest...
-            timestamp_to_use = math.floor((math.floor(time.time()) + time_before_walk) / 2)
+            timestamp_to_use = math.floor(time.time())
+            if timestamp_to_use - 10 < time_before_walk:
+                # duration of walk was rather short, let's go with that...
+                timestamp_to_use = time_before_walk
+            elif math.floor((math.floor(time.time()) + time_before_walk) / 2) < timestamp_to_use - 10:
+                # half way through the walk was earlier than 10s in the past, just gonna go with magic numbers once more
+                timestamp_to_use -= 10
+            else:
+                # half way through was within the last 10s, we can use that to check for data afterwards
+                timestamp_to_use = math.floor((math.floor(time.time()) + time_before_walk) / 2)
             self.logger.debug2("Done walking, fetching time to sleep")
             delay_used = self.get_devicesettings_value('post_walk_delay', 0)
         self.logger.debug2("Sleeping for {}s", delay_used)
