@@ -148,9 +148,9 @@ class MITMBase(WorkerBase):
                 max_distance_for_worker: int = self._applicationArgs.maximum_valid_distance \
                     if 5 < self._applicationArgs.maximum_valid_distance < max_distance_of_mode else max_distance_of_mode
                 self.logger.debug("Distance of worker {} to data location: {}", self._origin, distance_to_data)
-                if max_distance_for_worker and distance_to_data > max_distance_for_worker:
+                if distance_to_data > max_distance_for_worker:
                     self.logger.debug("Real data too far from worker position, waiting, max distance allowed: {}m",
-                                      max_distance_of_mode)
+                                      max_distance_for_worker)
             elif latest_location is not None and latest_location.lat == latest_location.lng == 1000:
                 self.logger.warning("Data may be valid but does not contain a proper location yet.")
 
