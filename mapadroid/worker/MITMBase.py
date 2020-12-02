@@ -150,23 +150,22 @@ class MITMBase(WorkerBase):
                     if max_distance_of_mode < self._applicationArgs.maximum_valid_distance else max_distance_of_mode
                 self.logger.debug("Distance of worker {} to data location: {}", self._origin, distance_to_data)
                 if max_distance_for_worker and distance_to_data > max_distance_for_worker:
-                    self.logger.debug("Real data too far from worker position, waiting...")
-                    check_data = False
+                    self.logger.debug("Real data too far from worker position, waiting, max distance allowed: {}m",
+                                      max_distance_of_mode)
             elif latest_location is not None and latest_location.lat == latest_location.lng == 1000:
                 self.logger.warning("Data may be valid but does not contain a proper location yet.")
-                time.sleep(5)
-                check_data = False
 
             if check_data:
                 type_of_data_returned, data = self._check_for_data_content(
                     latest, proto_to_wait_for, timestamp)
+
             if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                     or self._stop_worker_event.is_set():
                 self.logger.error("killed while sleeping")
                 raise InternalStopWorkerException
             if type_of_data_returned == LatestReceivedType.UNDEFINED:
                 # We don't want to sleep if we have received something that may be useful to us...
-                time.sleep(1)
+                time.sleep(2)
             position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
                                                                                  self._origin)
             if position_type is None:

@@ -74,7 +74,7 @@ class WorkerMITM(MITMBase):
             self._communicator.set_location(
                 Location(self.current_location.lat, self.current_location.lng), 0)
             # the time we will take as a starting point to wait for data...
-            cur_time = math.floor(time.time())
+            timestamp_to_use = math.floor(time.time())
 
             delay_used = self.get_devicesettings_value('post_teleport_delay', 0)
             # Test for cooldown / teleported distance TODO: check this block...
@@ -115,9 +115,11 @@ class WorkerMITM(MITMBase):
         else:
             self.logger.info("main: Walking...")
             self._transporttype = 1
+            time_before_walk = math.floor(time.time())
             self._communicator.walk_from_to(self.last_location, self.current_location, speed)
-            # the time we will take as a starting point to wait for data...
-            cur_time = math.floor(time.time())
+            # We need to roughly estimate when data could have been available, just picking half way for now, distance
+            # check should do the rest...
+            timestamp_to_use = math.floor((math.floor(time.time()) + time_before_walk) / 2)
             self.logger.debug2("Done walking, fetching time to sleep")
             delay_used = self.get_devicesettings_value('post_walk_delay', 0)
         self.logger.debug2("Sleeping for {}s", delay_used)
@@ -125,7 +127,7 @@ class WorkerMITM(MITMBase):
         self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location
         self._waittime_without_delays = time.time()
-        return cur_time, True
+        return timestamp_to_use, True
 
     def _pre_location_update(self):
         self.__update_injection_settings()
