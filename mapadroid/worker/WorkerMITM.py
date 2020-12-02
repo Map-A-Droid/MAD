@@ -237,13 +237,7 @@ class WorkerMITM(MITMBase):
         latest_proto_data: dict = latest_proto_entry.get("values", None)
         if latest_proto_data is None:
             return LatestReceivedType.UNDEFINED, data_found
-        location_of_proto = latest_proto_data.get("location", None)
         latest_proto = latest_proto_data.get("payload")
-        # check if the location of the proto is close to the worker location... no need to check if a location is
-        # present since that has been checked by MITMBase (mhm, spaghetti)
-        if not location_of_proto and not self._check_data_distance(latest_proto['cells']):
-            self.logger.debug("GMO is out of range (determined by checking the cells contained in the GMO")
-            return type_of_data_found, data_found
         if mode in ["mon_mitm", "iv_mitm"]:
             self.logger.debug("Checking GMO for mons")
             # Now check if there are wild mons...

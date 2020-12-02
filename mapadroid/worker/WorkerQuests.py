@@ -911,7 +911,7 @@ class WorkerQuests(MITMBase):
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GYM if fort_type == 0 else LatestReceivedType.STOP
         elif proto_to_wait_for == 106:
-            if not location_of_proto and not self._check_data_distance(latest_proto['cells']):
+            if location_of_proto is None and not self._check_data_distance(latest_proto['cells']):
                 self.logger.debug("GMO is out of range (determined by checking the cells contained in the GMO")
                 return type_of_data_found, data_found
             amount_of_forts: int = 0
