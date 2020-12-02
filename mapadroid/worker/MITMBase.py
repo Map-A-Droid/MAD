@@ -151,8 +151,13 @@ class MITMBase(WorkerBase):
                 if distance_to_data > max_distance_for_worker:
                     self.logger.debug("Real data too far from worker position, waiting, max distance allowed: {}m",
                                       max_distance_for_worker)
+                    check_data = False
             elif latest_location is not None and latest_location.lat == latest_location.lng == 1000:
                 self.logger.warning("Data may be valid but does not contain a proper location yet.")
+                check_data = False
+            elif proto_to_wait_for == 106 and latest_location is None:
+                # just wait for the next GMO to get a location...
+                check_data = False
 
             if check_data:
                 type_of_data_returned, data = self._check_for_data_content(
