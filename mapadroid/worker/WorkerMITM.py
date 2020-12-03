@@ -244,10 +244,7 @@ class WorkerMITM(MITMBase):
             # TODO: Should we check if there are any spawnpoints? Wild mons could not be present in forests etc...
             amount_of_wild_mons: int = 0
             for cell in latest_proto['cells']:
-                for wild_mon in cell.get("wild_pokemon"):
-                    encounter_id: Optional[int] = wild_mon.get("encounter_id")
-                    if encounter_id and encounter_id > 0:
-                        amount_of_wild_mons += 1
+                amount_of_wild_mons += len(cell['wild_pokemon'])
             if amount_of_wild_mons > 0:
                 data_found = latest_proto
                 type_of_data_found = LatestReceivedType.GMO
@@ -257,12 +254,7 @@ class WorkerMITM(MITMBase):
             self.logger.debug("Checking GMO for forts")
             amount_of_forts: int = 0
             for cell in latest_proto['cells']:
-                for fort in cell['forts']:
-                    # if there's location in latest, the distance has
-                    # already been checked in MITMBase
-                    fort_id: Optional[str] = fort.get("id", None)
-                    if fort_id and fort_id != "0":
-                        amount_of_forts += 1
+                amount_of_forts += len(cell['forts'])
             if amount_of_forts > 0:
                 data_found = latest_proto
                 type_of_data_found = LatestReceivedType.GMO

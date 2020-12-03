@@ -913,12 +913,7 @@ class WorkerQuests(MITMBase):
         elif proto_to_wait_for == 106:
             amount_of_forts: int = 0
             for cell in latest_proto['cells']:
-                for fort in cell['forts']:
-                    # if there's location in latest, the distance has
-                    # already been checked in MITMBase
-                    fort_id: Optional[str] = fort.get("id", None)
-                    if fort_id and fort_id != "0":
-                        amount_of_forts += 1
+                amount_of_forts += len(cell['forts'])
             if amount_of_forts > 0:
                 data_found = latest_proto_data
                 type_of_data_found = LatestReceivedType.GMO
