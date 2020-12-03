@@ -916,8 +916,8 @@ class WorkerQuests(MITMBase):
                 for fort in cell['forts']:
                     # if there's location in latest, the distance has
                     # already been checked in MITMBase
-                    fort_id: Optional[int] = fort.get("id", None)
-                    if fort_id and fort_id > 0:
+                    fort_id: Optional[str] = fort.get("id", None)
+                    if fort_id and fort_id != "0":
                         amount_of_forts += 1
             if amount_of_forts > 0:
                 data_found = latest_proto_data
