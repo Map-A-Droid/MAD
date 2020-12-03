@@ -600,9 +600,6 @@ class WorkerQuests(MITMBase):
         latest_proto = data_received.get("payload")
 
         gmo_cells: list = latest_proto.get("cells", None)
-        location_of_data = data_received.get("location", Location(0, 0))
-        location_of_data = Location(0, 0) if not location_of_data else location_of_data
-        stop_found = False
 
         if len(gmo_cells) == 0:
             self.logger.warning("Can't spin stop - no map info in GMO!")
@@ -612,7 +609,7 @@ class WorkerQuests(MITMBase):
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
             # very very little jitter) and check its properties
             forts: list = cell.get("forts", None)
-            if forts is None:
+            if forts is None or len(forts) == 0:
                 continue
 
             for fort in forts:
@@ -620,15 +617,13 @@ class WorkerQuests(MITMBase):
                 longitude: float = fort.get("longitude", 0.0)
                 if latitude == 0.0 or longitude == 0.0:
                     continue
-                elif (abs(location_of_data.lat - latitude) > 0.00006
-                      or abs(location_of_data.lng - longitude) > 0.00006):
-                    continue
-
-                if (abs(self.current_location.lat - latitude) <= 0.00006
-                        or abs(self.current_location.lng - longitude) <= 0.00006):
-                    # rough check if we are on top of the stop...
+                elif (abs(self.current_location.lat - latitude) <= 0.00006
+                        and abs(self.current_location.lng - longitude) <= 0.00006):
+                    # We are basically on top of a stop
                     self.logger.info("Found stop/gym at current location!")
-                    stop_found = True
+                else:
+                    self.logger.debug2("Found stop nearby but not next to us to be spinned")
+                    continue
 
                 fort_type: int = fort.get("type", 0)
                 if fort_type == 0:
