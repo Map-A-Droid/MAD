@@ -145,8 +145,12 @@ class MITMBase(WorkerBase):
                                                                         float(self.current_location.lat),
                                                                         float(self.current_location.lng))
                 max_distance_of_mode = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
-                max_distance_for_worker: int = self._applicationArgs.maximum_valid_distance \
-                    if 5 < self._applicationArgs.maximum_valid_distance < max_distance_of_mode else max_distance_of_mode
+                max_distance_for_worker = self._applicationArgs.maximum_valid_distance
+                if max_distance_for_worker > max_distance_of_mode > 5:
+                    # some modes may be too strict (e.g. quests with 0.0001m calculations for routes)
+                    # yet, the route may "require" a stricter ruling than max valid distance
+                    max_distance_for_worker = max_distance_of_mode
+
                 self.logger.debug("Distance of worker {} to data location: {}", self._origin, distance_to_data)
                 if distance_to_data > max_distance_for_worker:
                     self.logger.debug("Real data too far from worker position, waiting, max distance allowed: {}m",
