@@ -339,6 +339,7 @@ class DbPogoProtoSubmit:
         :param stop_proto:
         :return:
         """
+        cache = get_cache(self._args)
         logger.debug3("DbPogoProtoSubmit::pokestops_details called")
 
         query_stops = (
