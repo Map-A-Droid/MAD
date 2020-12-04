@@ -20,7 +20,7 @@ logger = get_logger(LoggerEnums.database)
 
 
 class DbWrapper:
-    def __init__(self, db_exec, args, cache):
+    def __init__(self, db_exec, args):
         self._db_exec = db_exec
         self.application_args = args
         self._event_id: int = 1
@@ -30,7 +30,7 @@ class DbWrapper:
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, cache)
+        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec, args)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
