@@ -127,7 +127,8 @@ class MITMBase(WorkerBase):
                     or not (latest_location.lat != 0.0 and latest_location.lng != 0.0 and
                             -90.0 <= latest_location.lat <= 90.0 and
                             -180.0 <= latest_location.lng <= 180.0)):
-                self.logger.warning("Data may be valid but does not contain a proper location yet.")
+                self.logger.warning("Data may be valid but does not contain a proper location yet: {}",
+                                    str(latest_location))
                 check_data = False
             elif proto_to_wait_for == ProtoIdentifier.GMO:
                 check_data = self._is_location_within_allowed_range(latest_location)
