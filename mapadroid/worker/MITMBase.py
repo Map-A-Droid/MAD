@@ -192,7 +192,7 @@ class MITMBase(WorkerBase):
         if distance_to_data > max_distance_for_worker:
             self.logger.debug("Location too far from worker position, max distance allowed: {}m",
                               max_distance_for_worker)
-        return max_distance_for_worker <= distance_to_data
+        return distance_to_data <= max_distance_for_worker
 
     def _start_pogo(self) -> bool:
         pogo_topmost = self._communicator.is_pogo_topmost()
