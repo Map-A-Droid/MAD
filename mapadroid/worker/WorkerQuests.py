@@ -9,6 +9,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import (
     get_distance_of_two_points_in_meters,
@@ -508,9 +509,9 @@ class WorkerQuests(MITMBase):
                         delx, dely = self._resocalc.get_confirm_delete_item_coords(self)
                         cur_time = time.time()
                         self._communicator.click(int(delx), int(dely))
-                        cur_time = time.time()
                         deletion_timeout = 35
-                        type_received, proto_entry = self._wait_for_data(timestamp=cur_time, proto_to_wait_for=4,
+                        type_received, proto_entry = self._wait_for_data(timestamp=cur_time,
+                                                                         proto_to_wait_for=ProtoIdentifier.INVENTORY,
                                                                          timeout=deletion_timeout)
 
                         if type_received != LatestReceivedType.UNDEFINED:
@@ -581,7 +582,7 @@ class WorkerQuests(MITMBase):
         self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
-        type_received, data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=106)
+        type_received, data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=ProtoIdentifier.GMO)
         if type_received != LatestReceivedType.GMO or data_received is None:
             self._spinnable_data_failure()
             return False, False
@@ -656,7 +657,9 @@ class WorkerQuests(MITMBase):
         while not spinnable_stop and not skip_recheck and not recheck_count > 2:
             recheck_count += 1
             self.logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
-            type_received, proto_entry = self._wait_for_data(timestamp=time.time(), proto_to_wait_for=106, timeout=35)
+            type_received, proto_entry = self._wait_for_data(timestamp=time.time(),
+                                                             proto_to_wait_for=ProtoIdentifier.GMO,
+                                                             timeout=35)
             if type_received != LatestReceivedType.UNDEFINED:
                 spinnable_stop, skip_recheck = self._current_position_has_spinnable_stop(timestamp)
 
@@ -674,7 +677,7 @@ class WorkerQuests(MITMBase):
             self._click_pokestop_at_current_location(self._delay_add)
             self.set_devicesettings_value('last_action_time', time.time())
             type_received, proto_entry = self._wait_for_data(
-                timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=15)
+                timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.ENCOUNTER, timeout=15)
             if type_received == LatestReceivedType.GYM:
                 self.logger.info('Clicked GYM')
                 time.sleep(10)
@@ -711,7 +714,7 @@ class WorkerQuests(MITMBase):
         while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
             self.logger.info('Spin Stop')
             type_received, data_received = self._wait_for_data(
-                timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=timeout)
+                timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_SEARCH, timeout=timeout)
 
             if (type_received == LatestReceivedType.FORT_SEARCH_RESULT
                     and data_received == FortSearchResultTypes.INVENTORY):

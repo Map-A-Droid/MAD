@@ -7,6 +7,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import (
     get_distance_of_two_points_in_meters,
@@ -189,11 +190,11 @@ class WorkerMITM(MITMBase):
         self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
         self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
 
-    def _check_for_data_content(self, latest_data, proto_to_wait_for: int, timestamp: float) \
+    def _check_for_data_content(self, latest_data, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
             -> Tuple[LatestReceivedType, Optional[object]]:
         type_of_data_found: LatestReceivedType = LatestReceivedType.UNDEFINED
         data_found: Optional[object] = None
-        latest_proto_entry = latest_data.get(proto_to_wait_for, None)
+        latest_proto_entry = latest_data.get(proto_to_wait_for.value, None)
         if not latest_proto_entry:
             self.logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found

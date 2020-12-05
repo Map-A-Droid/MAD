@@ -9,6 +9,7 @@ from typing import Optional, Tuple, Union
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
@@ -64,7 +65,8 @@ class MITMBase(WorkerBase):
                                                  99)
         self._enhanced_mode = self.get_devicesettings_value('enhanced_mode_quest', False)
 
-    def _wait_for_data(self, timestamp: float = None, proto_to_wait_for=106, timeout=None) \
+    def _wait_for_data(self, timestamp: float = None,
+                       proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \
             -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
         if timestamp is None:
             timestamp = time.time()
@@ -97,7 +99,7 @@ class MITMBase(WorkerBase):
                             -180.0 <= latest_location.lng <= 180.0)):
                 self.logger.warning("Data may be valid but does not contain a proper location yet.")
                 check_data = False
-            elif proto_to_wait_for == 106:
+            elif proto_to_wait_for == ProtoIdentifier.GMO:
                 check_data = self._is_location_within_allowed_range(latest_location)
 
             if check_data:
@@ -117,7 +119,7 @@ class MITMBase(WorkerBase):
         self.worker_stats()
         return type_of_data_returned, data
 
-    def _handle_proto_timeout(self, position_type, proto_to_wait_for, type_of_data_returned):
+    def _handle_proto_timeout(self, position_type, proto_to_wait_for: ProtoIdentifier, type_of_data_returned):
         self.logger.warning("Timeout waiting for useful data. Type requested was {}, received {}",
                             proto_to_wait_for, type_of_data_returned)
         self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
@@ -236,8 +238,8 @@ class MITMBase(WorkerBase):
         return True
 
     @abstractmethod
-    def _check_for_data_content(self, latest, proto_to_wait_for, timestamp) -> Tuple[
-        LatestReceivedType, Optional[object]]:
+    def _check_for_data_content(self, latest, proto_to_wait_for: ProtoIdentifier, timestamp) \
+            -> Tuple[LatestReceivedType, Optional[object]]:
         """
         Wait_for_data for each worker
         :return:
