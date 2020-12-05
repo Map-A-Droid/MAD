@@ -10,7 +10,7 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
-from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerBase import WorkerBase, FortSearchResultTypes
@@ -64,6 +64,36 @@ class MITMBase(WorkerBase):
                                                      self._routemanager_name),
                                                  99)
         self._enhanced_mode = self.get_devicesettings_value('enhanced_mode_quest', False)
+
+    def _walk_after_teleport(self, walk_distance_post_teleport) -> float:
+        """
+        Args:
+            walk_distance_post_teleport:
+
+        Returns:
+            Distance walked in one way
+        """
+        lat_offset, lng_offset = get_lat_lng_offsets_by_distance(walk_distance_post_teleport)
+        to_walk = get_distance_of_two_points_in_meters(float(self.current_location.lat),
+                                                       float(
+                                                           self.current_location.lng),
+                                                       float(
+                                                           self.current_location.lat) + lat_offset,
+                                                       float(self.current_location.lng) + lng_offset)
+        self.logger.info("Walking roughly: {:.2f}m", to_walk)
+        time.sleep(0.3)
+        self._communicator.walk_from_to(self.current_location,
+                                        Location(self.current_location.lat + lat_offset,
+                                                 self.current_location.lng + lng_offset),
+                                        11)
+        self.logger.debug("Walking back")
+        time.sleep(0.3)
+        self._communicator.walk_from_to(Location(self.current_location.lat + lat_offset,
+                                                 self.current_location.lng + lng_offset),
+                                        self.current_location,
+                                        11)
+        self.logger.debug("Done walking")
+        return to_walk
 
     def _wait_for_data(self, timestamp: float = None,
                        proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \

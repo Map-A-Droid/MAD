@@ -160,29 +160,7 @@ class WorkerQuests(MITMBase):
         walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
         if 0 < walk_distance_post_teleport < distance:
             # TODO: actually use to_walk for distance
-            lat_offset, lng_offset = get_lat_lng_offsets_by_distance(
-                walk_distance_post_teleport)
-
-            to_walk = get_distance_of_two_points_in_meters(float(self.current_location.lat),
-                                                           float(
-                                                               self.current_location.lng),
-                                                           float(
-                                                               self.current_location.lat) + lat_offset,
-                                                           float(self.current_location.lng) + lng_offset)
-            self.logger.info("Walking roughly: {:.2f}m", to_walk)
-            time.sleep(0.3)
-            self._communicator.walk_from_to(self.current_location,
-                                            Location(self.current_location.lat + lat_offset,
-                                                     self.current_location.lng + lng_offset),
-                                            11)
-            self.logger.debug("Walking back")
-            time.sleep(0.3)
-            self._communicator.walk_from_to(Location(self.current_location.lat + lat_offset,
-                                                     self.current_location.lng + lng_offset),
-                                            self.current_location,
-                                            11)
-            self.logger.debug("Done walking")
-            time.sleep(1)
+            to_walk = self._walk_after_teleport(walk_distance_post_teleport)
             delay_used -= (to_walk / 3.05) - 1.  # We already waited for a bit because of this walking part
             if delay_used < 0:
                 delay_used = 0
