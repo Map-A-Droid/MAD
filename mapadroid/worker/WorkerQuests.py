@@ -21,7 +21,7 @@ from mapadroid.utils.madGlobals import (
     WebsocketWorkerConnectionClosedException
 )
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType, SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
+from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
 from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.worker.WorkerBase import FortSearchResultTypes
 
@@ -126,21 +126,8 @@ class WorkerQuests(MITMBase):
         self._update_injection_settings()
 
     def _move_to_location(self):
-        if not self._mapping_manager.routemanager_present(self._routemanager_name) \
-                or self._stop_worker_event.is_set():
-            raise InternalStopWorkerException
+        distance, routemanager_settings = self._get_route_manager_settings_and_distance_to_current_location()
 
-        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
-
-        distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
-                                                        float(
-                                                            self.last_location.lng),
-                                                        float(
-                                                            self.current_location.lat),
-                                                        float(self.current_location.lng))
-        self.logger.debug('Moving {} meters to the next position', round(distance, 2))
-
-        delay_used = 0
         self.logger.debug("Getting time")
         speed = routemanager_settings.get("speed", 0)
         max_distance = routemanager_settings.get("max_distance", None)
@@ -251,22 +238,7 @@ class WorkerQuests(MITMBase):
         else:
             delay_used = distance / (speed / 3.6)  # speed is in kmph , delay_used need mps
             self.logger.info("main: Walking {} m, this will take {} seconds", distance, delay_used)
-            self._transporttype = 1
-            time_before_walk = math.floor(time.time())
-            self._communicator.walk_from_to(self.last_location, self.current_location, speed)
-            # We need to roughly estimate when data could have been available, just picking half way for now, distance
-            # check should do the rest...
-            delay_used = math.floor(time.time())
-            if delay_used - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER < time_before_walk:
-                # duration of walk was rather short, let's go with that...
-                delay_used = time_before_walk
-            elif (math.floor((math.floor(time.time()) + time_before_walk) / 2) <
-                  delay_used - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER):
-                # half way through the walk was earlier than 10s in the past, just gonna go with magic numbers once more
-                delay_used -= SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
-            else:
-                # half way through was within the last 10s, we can use that to check for data afterwards
-                timestamp_to_use = math.floor((math.floor(time.time()) + time_before_walk) / 2)
+            cur_time = self._walk_to_location(speed)
 
             delay_used = self.get_devicesettings_value('post_walk_delay', 0)
         walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
@@ -893,7 +865,6 @@ class WorkerQuests(MITMBase):
         self.logger.debug4("Latest data received: {}", latest_proto_data)
         if latest_proto_data is None:
             return type_of_data_found, data_found
-        location_of_proto = latest_proto_data.get("location", None)
         latest_proto = latest_proto_data.get("payload", None)
         if latest_proto is None:
             self.logger.debug("No proto data for {} at {} after {}", proto_to_wait_for,

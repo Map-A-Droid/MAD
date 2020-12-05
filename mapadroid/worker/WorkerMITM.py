@@ -1,7 +1,7 @@
 import math
 import time
 from datetime import datetime
-from typing import Union, Tuple, Optional
+from typing import Tuple, Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -14,7 +14,7 @@ from mapadroid.utils.geo import (
 )
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType, SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
+from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
 logger = get_logger(LoggerEnums.worker)
@@ -48,16 +48,8 @@ class WorkerMITM(MITMBase):
                                 "the next location", self.current_location.lat, self.current_location.lng)
 
     def _move_to_location(self):
-        if not self._mapping_manager.routemanager_present(self._routemanager_name) \
-                or self._stop_worker_event.is_set():
-            raise InternalStopWorkerException
-        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
-        # get the distance from our current position (last) to the next gym (cur)
-        distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
-                                                        float(self.last_location.lng),
-                                                        float(self.current_location.lat),
-                                                        float(self.current_location.lng))
-        self.logger.debug('Moving {} meters to the next position', round(distance, 2))
+        distance, routemanager_settings = self._get_route_manager_settings_and_distance_to_current_location()
+
         if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
             speed = routemanager_settings.get("speed", 0)
             max_distance = routemanager_settings.get("max_distance", None)
@@ -113,23 +105,8 @@ class WorkerMITM(MITMBase):
                 time.sleep(1)
         else:
             self.logger.info("main: Walking...")
-            self._transporttype = 1
-            time_before_walk = math.floor(time.time())
-            self._communicator.walk_from_to(self.last_location, self.current_location, speed)
-            # We need to roughly estimate when data could have been available, just picking half way for now, distance
-            # check should do the rest...
-            timestamp_to_use = math.floor(time.time())
-            if timestamp_to_use - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER < time_before_walk:
-                # duration of walk was rather short, let's go with that...
-                timestamp_to_use = time_before_walk
-            elif (math.floor((math.floor(time.time()) + time_before_walk) / 2) <
-                  timestamp_to_use - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER):
-                # half way through the walk was earlier than 10s in the past, just gonna go with magic numbers once more
-                timestamp_to_use -= SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
-            else:
-                # half way through was within the last 10s, we can use that to check for data afterwards
-                timestamp_to_use = math.floor((math.floor(time.time()) + time_before_walk) / 2)
-            self.logger.debug2("Done walking, fetching time to sleep")
+            timestamp_to_use = self._walk_to_location(speed)
+
             delay_used = self.get_devicesettings_value('post_walk_delay', 0)
         self.logger.debug2("Sleeping for {}s", delay_used)
         time.sleep(float(delay_used))

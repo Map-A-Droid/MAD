@@ -1,4 +1,5 @@
 import collections
+import math
 import time
 from abc import abstractmethod
 from datetime import datetime
@@ -243,6 +244,47 @@ class MITMBase(WorkerBase):
         """
         pass
 
+    def _walk_to_location(self, speed: float) -> int:
+        """
+        Calls the communicator to walk from self.last_location to self.current_location at the speed passed as an arg
+        Args:
+            speed:
+
+        Returns:
+
+        """
+        self._transporttype = 1
+        time_before_walk = math.floor(time.time())
+        self._communicator.walk_from_to(self.last_location, self.current_location, speed)
+        # We need to roughly estimate when data could have been available, just picking half way for now, distance
+        # check should do the rest...
+        delay_used = math.floor(time.time())
+        if delay_used - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER < time_before_walk:
+            # duration of walk was rather short, let's go with that...
+            delay_used = time_before_walk
+        elif (math.floor((math.floor(time.time()) + time_before_walk) / 2) <
+              delay_used - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER):
+            # half way through the walk was earlier than 10s in the past, just gonna go with magic numbers once more
+            delay_used -= SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
+        else:
+            # half way through was within the last 10s, we can use that to check for data afterwards
+            delay_used = math.floor((math.floor(time.time()) + time_before_walk) / 2)
+        return delay_used
+
+    def _get_route_manager_settings_and_distance_to_current_location(self):
+        if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
+        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+        distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
+                                                        float(
+                                                            self.last_location.lng),
+                                                        float(
+                                                            self.current_location.lat),
+                                                        float(self.current_location.lng))
+        self.logger.debug('Moving {} meters to the next position', round(distance, 2))
+        return distance, routemanager_settings
+
     def _clear_quests(self, delayadd, openmenu=True):
         self.logger.debug('{_clear_quests} called')
         if openmenu:
@@ -263,12 +305,6 @@ class MITMBase(WorkerBase):
         self._communicator.click(int(x), int(y))
         time.sleep(.5 + int(delayadd))
         self.logger.debug('{_open_gym} finished')
-        return
-
-    def _spin_wheel(self, delayadd):
-        self.logger.debug('{_spin_wheel} called')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)
-        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         return
 
     def _close_gym(self, delayadd):
