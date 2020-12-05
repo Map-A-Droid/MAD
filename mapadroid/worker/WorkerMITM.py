@@ -14,9 +14,8 @@ from mapadroid.utils.geo import (
 )
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
+from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType, SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
 from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.worker)
 
@@ -120,12 +119,13 @@ class WorkerMITM(MITMBase):
             # We need to roughly estimate when data could have been available, just picking half way for now, distance
             # check should do the rest...
             timestamp_to_use = math.floor(time.time())
-            if timestamp_to_use - 10 < time_before_walk:
+            if timestamp_to_use - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER < time_before_walk:
                 # duration of walk was rather short, let's go with that...
                 timestamp_to_use = time_before_walk
-            elif math.floor((math.floor(time.time()) + time_before_walk) / 2) < timestamp_to_use - 10:
+            elif (math.floor((math.floor(time.time()) + time_before_walk) / 2) <
+                  timestamp_to_use - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER):
                 # half way through the walk was earlier than 10s in the past, just gonna go with magic numbers once more
-                timestamp_to_use -= 10
+                timestamp_to_use -= SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
             else:
                 # half way through was within the last 10s, we can use that to check for data afterwards
                 timestamp_to_use = math.floor((math.floor(time.time()) + time_before_walk) / 2)
@@ -238,30 +238,11 @@ class WorkerMITM(MITMBase):
         if latest_proto_data is None:
             return LatestReceivedType.UNDEFINED, data_found
         latest_proto = latest_proto_data.get("payload")
-        if mode in ["mon_mitm", "iv_mitm"]:
-            self.logger.debug("Checking GMO for mons")
-            # Now check if there are wild mons...
-            # TODO: Should we check if there are any spawnpoints? Wild mons could not be present in forests etc...
-            amount_of_wild_mons: int = 0
-            for cell in latest_proto['cells']:
-                amount_of_wild_mons += len(cell['wild_pokemon'])
-            if amount_of_wild_mons > 0:
-                data_found = latest_proto
-                type_of_data_found = LatestReceivedType.GMO
-            else:
-                self.logger.debug("No wild mons in GMO")
-        elif mode in ["raids_mitm"]:
-            self.logger.debug("Checking GMO for forts")
-            amount_of_forts: int = 0
-            for cell in latest_proto['cells']:
-                amount_of_forts += len(cell['forts'])
-            if amount_of_forts > 0:
-                data_found = latest_proto
-                type_of_data_found = LatestReceivedType.GMO
-            else:
-                self.logger.debug("No forts in GMO")
+        key_to_check: str = "wild_pokemon" if mode in ["mon_mitm", "iv_mitm"] else "forts"
+        if self._gmo_cells_contain_multiple_of_key(latest_proto, key_to_check):
+            data_found = latest_proto
+            type_of_data_found = LatestReceivedType.GMO
         else:
-            self.logger.warning("No mode specified to wait for - this should not even happen...")
-            time.sleep(0.5)
+            self.logger.info("{} not in GMO", key_to_check)
 
         return type_of_data_found, data_found

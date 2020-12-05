@@ -10,11 +10,18 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import InternalStopWorkerException
-from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerBase import WorkerBase, FortSearchResultTypes
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
+# Distance in meters that are to be allowed to consider a GMO as within a valid range
+# Some modes calculate with extremely strict distances (0.0001m for example), thus not allowing
+# direct use of routemanager radius as a distance (which would allow long distances for raid scans as well)
+MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO = 5
+
+# Since GMOs may arrive during walks, we define sort of a buffer to use.
+# That buffer can be subtracted in case a walk was longer than that buffer.
+SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER = 10
 
 logger = get_logger(LoggerEnums.worker)
 Location = collections.namedtuple('Location', ['lat', 'lng'])
@@ -83,101 +90,108 @@ class MITMBase(WorkerBase):
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
             latest_location: Optional[Location] = latest.get("location", None)
             check_data = True
-            if (proto_to_wait_for == 106 and latest_location is not None and
-                    latest_location.lat != 0.0 and latest_location.lng != 0.0 and
-                    -90.0 <= latest_location.lat <= 90.0 and
-                    -180.0 <= latest_location.lng <= 180.0):
-                self.logger.debug("Checking GMO location reported by {} at {} against real data location {}",
-                                  self._origin,
-                                  self.current_location,
-                                  latest_location)
-                distance_to_data = get_distance_of_two_points_in_meters(float(latest_location.lat),
-                                                                        float(latest_location.lng),
-                                                                        float(self.current_location.lat),
-                                                                        float(self.current_location.lng))
-                max_distance_of_mode = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
-                max_distance_for_worker = self._applicationArgs.maximum_valid_distance
-                if max_distance_for_worker > max_distance_of_mode > 5:
-                    # some modes may be too strict (e.g. quests with 0.0001m calculations for routes)
-                    # yet, the route may "require" a stricter ruling than max valid distance
-                    max_distance_for_worker = max_distance_of_mode
-
-                self.logger.debug("Distance of worker {} to data location: {}", self._origin, distance_to_data)
-                if distance_to_data > max_distance_for_worker:
-                    self.logger.debug("Real data too far from worker position, waiting, max distance allowed: {}m",
-                                      max_distance_for_worker)
-                    check_data = False
-            elif latest_location is not None and latest_location.lat == latest_location.lng == 1000:
+            if (latest_location is None or latest_location.lat == latest_location.lng == 1000
+                    or not (latest_location.lat != 0.0 and latest_location.lng != 0.0 and
+                            -90.0 <= latest_location.lat <= 90.0 and
+                            -180.0 <= latest_location.lng <= 180.0)):
                 self.logger.warning("Data may be valid but does not contain a proper location yet.")
                 check_data = False
-            elif proto_to_wait_for == 106 and latest_location is None:
-                # just wait for the next GMO to get a location...
-                check_data = False
+            elif proto_to_wait_for == 106:
+                check_data = self._is_location_within_allowed_range(latest_location)
 
             if check_data:
                 type_of_data_returned, data = self._check_for_data_content(
                     latest, proto_to_wait_for, timestamp)
 
-            if not self._mapping_manager.routemanager_present(self._routemanager_name) \
-                    or self._stop_worker_event.is_set():
-                self.logger.error("killed while sleeping")
-                raise InternalStopWorkerException
+            self.raise_stop_worker_if_applicable()
             if type_of_data_returned == LatestReceivedType.UNDEFINED:
                 # We don't want to sleep if we have received something that may be useful to us...
                 time.sleep(2)
-            position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
-                                                                                 self._origin)
-            if position_type is None:
-                self.logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
-                raise InternalStopWorkerException
 
         if type_of_data_returned != LatestReceivedType.UNDEFINED:
-            self.logger.success('Received data')
-            self._reboot_count = 0
-            self._restart_count = 0
-            self._rec_data_time = datetime.now()
-
-            self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1,
-                                                     self._waittime_without_delays,
-                                                     position_type, time.time(),
-                                                     self._mapping_manager.routemanager_get_mode(
-                                                         self._routemanager_name), self._transporttype)
+            self._reset_restart_count_and_collect_stats(position_type)
         else:
-            self.logger.warning("Timeout waiting for useful data. Type requested was {}, received {}",
-                                proto_to_wait_for, type_of_data_returned)
-
-            self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
-                                                     self._waittime_without_delays,
-                                                     position_type, 0,
-                                                     self._mapping_manager.routemanager_get_mode(
-                                                         self._routemanager_name),
-                                                     self._transporttype)
-
-            self._restart_count += 1
-
-            restart_thresh = self.get_devicesettings_value("restart_thresh", 5)
-            reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3)
-            if self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
-                                                                  self._origin) is not None:
-                if self._init:
-                    restart_thresh = self.get_devicesettings_value("restart_thresh", 5) * 2
-                    reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3) * 2
-
-            if self._restart_count > restart_thresh:
-                self._reboot_count += 1
-                if self._reboot_count > reboot_thresh \
-                        and self.get_devicesettings_value("reboot", True):
-                    self.logger.error("Too many timeouts - Rebooting device")
-                    self._reboot(mitm_mapper=self._mitm_mapper)
-                    raise InternalStopWorkerException
-
-                # self._mitm_mapper.
-                self._restart_count = 0
-                self.logger.error("Too many timeouts - Restarting game")
-                self._restart_pogo(True, self._mitm_mapper)
+            self._handle_proto_timeout(position_type, proto_to_wait_for, type_of_data_returned)
 
         self.worker_stats()
         return type_of_data_returned, data
+
+    def _handle_proto_timeout(self, position_type, proto_to_wait_for, type_of_data_returned):
+        self.logger.warning("Timeout waiting for useful data. Type requested was {}, received {}",
+                            proto_to_wait_for, type_of_data_returned)
+        self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
+                                                 self._waittime_without_delays,
+                                                 position_type, 0,
+                                                 self._mapping_manager.routemanager_get_mode(
+                                                     self._routemanager_name),
+                                                 self._transporttype)
+        self._restart_count += 1
+        restart_thresh = self.get_devicesettings_value("restart_thresh", 5)
+        reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3)
+        if self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
+                                                              self._origin) is not None:
+            if self._init:
+                restart_thresh = self.get_devicesettings_value("restart_thresh", 5) * 2
+                reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3) * 2
+        if self._restart_count > restart_thresh:
+            self._reboot_count += 1
+            if self._reboot_count > reboot_thresh \
+                    and self.get_devicesettings_value("reboot", True):
+                self.logger.error("Too many timeouts - Rebooting device")
+                self._reboot(mitm_mapper=self._mitm_mapper)
+                raise InternalStopWorkerException
+
+            # self._mitm_mapper.
+            self._restart_count = 0
+            self.logger.error("Too many timeouts - Restarting game")
+            self._restart_pogo(True, self._mitm_mapper)
+
+    def _reset_restart_count_and_collect_stats(self, position_type):
+        self.logger.success('Received data')
+        self._reboot_count = 0
+        self._restart_count = 0
+        self._rec_data_time = datetime.now()
+        self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1,
+                                                 self._waittime_without_delays,
+                                                 position_type, time.time(),
+                                                 self._mapping_manager.routemanager_get_mode(
+                                                     self._routemanager_name), self._transporttype)
+
+    def raise_stop_worker_if_applicable(self):
+        """
+        Checks if the worker is supposed to be stopped or the routemanagers/mappings have changed
+        Raises: InternalStopWorkerException
+        """
+        if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                or self._stop_worker_event.is_set():
+            self.logger.error("killed while sleeping")
+            raise InternalStopWorkerException
+        position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
+                                                                             self._origin)
+        if position_type is None:
+            self.logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
+            raise InternalStopWorkerException
+
+    def _is_location_within_allowed_range(self, latest_location):
+        self.logger.debug("Checking (data) location reported by {} at {} against real data location {}",
+                          self._origin,
+                          self.current_location,
+                          latest_location)
+        distance_to_data = get_distance_of_two_points_in_meters(float(latest_location.lat),
+                                                                float(latest_location.lng),
+                                                                float(self.current_location.lat),
+                                                                float(self.current_location.lng))
+        max_distance_of_mode = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
+        max_distance_for_worker = self._applicationArgs.maximum_valid_distance
+        if max_distance_for_worker > max_distance_of_mode > MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO:
+            # some modes may be too strict (e.g. quests with 0.0001m calculations for routes)
+            # yet, the route may "require" a stricter ruling than max valid distance
+            max_distance_for_worker = max_distance_of_mode
+        self.logger.debug("Distance of worker {} to (data) location: {}", self._origin, distance_to_data)
+        if distance_to_data > max_distance_for_worker:
+            self.logger.debug("Location too far from worker position, max distance allowed: {}m",
+                              max_distance_for_worker)
+        return max_distance_for_worker <= distance_to_data
 
     def _start_pogo(self) -> bool:
         pogo_topmost = self._communicator.is_pogo_topmost()
@@ -221,7 +235,8 @@ class MITMBase(WorkerBase):
         return True
 
     @abstractmethod
-    def _check_for_data_content(self, latest, proto_to_wait_for, timestamp) -> Tuple[LatestReceivedType, Optional[object]]:
+    def _check_for_data_content(self, latest, proto_to_wait_for, timestamp) -> Tuple[
+        LatestReceivedType, Optional[object]]:
         """
         Wait_for_data for each worker
         :return:
@@ -241,7 +256,7 @@ class MITMBase(WorkerBase):
         time.sleep(1.5)
         self.logger.debug('{_clear_quests} finished')
 
-    def _open_gym(self, delayadd):
+    def _click_pokestop_at_current_location(self, delayadd):
         self.logger.debug('{_open_gym} called')
         time.sleep(.5)
         x, y = self._resocalc.get_gym_click_coords(self)
@@ -323,3 +338,17 @@ class MITMBase(WorkerBase):
         # won't work if PogoDroid is repackaged!
         self._communicator.passthrough("am startservice com.mad.pogodroid/.services.HookReceiverService")
         return start_result
+
+    @staticmethod
+    def _gmo_cells_contain_multiple_of_key(gmo: dict, key_in_cell: str) -> bool:
+        if not gmo or not key_in_cell or "cells" not in gmo:
+            return False
+        cells = gmo.get("cells", [])
+        if not cells or not isinstance(cells, list):
+            return False
+        amount_of_key: int = 0
+        for cell in cells:
+            value_of_key = cell.get(key_in_cell, None)
+            if value_of_key and isinstance(value_of_key, list):
+                amount_of_key += len(value_of_key)
+        return amount_of_key > 0

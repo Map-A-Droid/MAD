@@ -21,9 +21,12 @@ from mapadroid.utils.madGlobals import (
     WebsocketWorkerConnectionClosedException
 )
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
+from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType, SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
 from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.worker.WorkerBase import FortSearchResultTypes
+
+# The diff to lat/lng values to consider that the worker is standing on top of the stop
+DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP = 0.00006
 
 logger = get_logger(LoggerEnums.worker)
 PROTO_NUMBER_FOR_GMO = 106
@@ -249,9 +252,22 @@ class WorkerQuests(MITMBase):
             delay_used = distance / (speed / 3.6)  # speed is in kmph , delay_used need mps
             self.logger.info("main: Walking {} m, this will take {} seconds", distance, delay_used)
             self._transporttype = 1
+            time_before_walk = math.floor(time.time())
             self._communicator.walk_from_to(self.last_location, self.current_location, speed)
-            # the time we will take as a starting point to wait for data...
-            cur_time = math.floor(time.time())
+            # We need to roughly estimate when data could have been available, just picking half way for now, distance
+            # check should do the rest...
+            delay_used = math.floor(time.time())
+            if delay_used - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER < time_before_walk:
+                # duration of walk was rather short, let's go with that...
+                delay_used = time_before_walk
+            elif (math.floor((math.floor(time.time()) + time_before_walk) / 2) <
+                  delay_used - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER):
+                # half way through the walk was earlier than 10s in the past, just gonna go with magic numbers once more
+                delay_used -= SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
+            else:
+                # half way through was within the last 10s, we can use that to check for data afterwards
+                timestamp_to_use = math.floor((math.floor(time.time()) + time_before_walk) / 2)
+
             delay_used = self.get_devicesettings_value('post_walk_delay', 0)
         walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
         if 0 < walk_distance_post_teleport < distance:
@@ -379,7 +395,7 @@ class WorkerQuests(MITMBase):
 
                 self.logger.info('Open Stop')
                 self._stop_process_time = math.floor(time.time())
-                type_received: LatestReceivedType = self._open_pokestop(self._stop_process_time)
+                type_received: LatestReceivedType = self._try_to_open_pokestop(self._stop_process_time)
                 if type_received is not None and type_received == LatestReceivedType.STOP:
                     self._handle_stop(self._stop_process_time)
 
@@ -594,14 +610,14 @@ class WorkerQuests(MITMBase):
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
         type_received, data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=106)
-        if type_received == LatestReceivedType.UNDEFINED:
+        if type_received != LatestReceivedType.GMO or data_received is None:
             self._spinnable_data_failure()
             return False, False
         latest_proto = data_received.get("payload")
 
         gmo_cells: list = latest_proto.get("cells", None)
 
-        if len(gmo_cells) == 0:
+        if not gmo_cells:
             self.logger.warning("Can't spin stop - no map info in GMO!")
             self._spinnable_data_failure()
             return False, False
@@ -609,7 +625,7 @@ class WorkerQuests(MITMBase):
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
             # very very little jitter) and check its properties
             forts: list = cell.get("forts", None)
-            if forts is None or len(forts) == 0:
+            if not forts:
                 continue
 
             for fort in forts:
@@ -617,8 +633,8 @@ class WorkerQuests(MITMBase):
                 longitude: float = fort.get("longitude", 0.0)
                 if latitude == 0.0 or longitude == 0.0:
                     continue
-                elif (abs(self.current_location.lat - latitude) <= 0.00006
-                        and abs(self.current_location.lng - longitude) <= 0.00006):
+                elif (abs(self.current_location.lat - latitude) <= DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP
+                      and abs(self.current_location.lng - longitude) <= DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP):
                     # We are basically on top of a stop
                     self.logger.info("Found stop/gym at current location!")
                 else:
@@ -654,10 +670,10 @@ class WorkerQuests(MITMBase):
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         self.logger.warning("Unable to confirm the current location yielding a spinnable stop - likely not standing "
                             "exactly on top ...")
-        self._spinnable_data_failcount = 0
+        self._spinnable_data_failure()
         return False, False
 
-    def _open_pokestop(self, timestamp: float) -> LatestReceivedType:
+    def _try_to_open_pokestop(self, timestamp: float) -> LatestReceivedType:
         to = 0
         type_received: LatestReceivedType = LatestReceivedType.UNDEFINED
         proto_entry = None
@@ -683,7 +699,7 @@ class WorkerQuests(MITMBase):
         while type_received != LatestReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
             self._waittime_without_delays = self._stop_process_time
-            self._open_gym(self._delay_add)
+            self._click_pokestop_at_current_location(self._delay_add)
             self.set_devicesettings_value('last_action_time', time.time())
             type_received, proto_entry = self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=15)
@@ -790,7 +806,7 @@ class WorkerQuests(MITMBase):
                 if not on_main_menu:
                     self._restart_pogo(mitm_mapper=self._mitm_mapper)
                 self._stop_process_time = math.floor(time.time())
-                if self._open_pokestop(self._stop_process_time) == LatestReceivedType.UNDEFINED:
+                if self._try_to_open_pokestop(self._stop_process_time) == LatestReceivedType.UNDEFINED:
                     return
             elif (type_received == LatestReceivedType.FORT_SEARCH_RESULT
                     and data_received == FortSearchResultTypes.FULL):
@@ -822,7 +838,7 @@ class WorkerQuests(MITMBase):
                 self._turn_map(self._delay_add)
                 time.sleep(1)
                 self._stop_process_time = math.floor(time.time())
-                if self._open_pokestop(self._stop_process_time) == LatestReceivedType.UNDEFINED:
+                if self._try_to_open_pokestop(self._stop_process_time) == LatestReceivedType.UNDEFINED:
                     return
                 to += 1
                 if to > 3:
