@@ -1,7 +1,7 @@
 ############################
 # MAD
 ############################
-FROM python:3.7-slim
+FROM python:3.7-slim AS mad-core
 # Working directory for the application
 WORKDIR /usr/src/app
 
@@ -48,3 +48,17 @@ ENTRYPOINT ["python3","start.py"]
 
 # Default ports for PogoDroid, RGC and MAdmin
 EXPOSE 8080 8000 5000
+
+# Development env
+FROM mad-core AS dev_test
+RUN pip install tox
+COPY requirements-test.txt /usr/src/app/
+ENTRYPOINT ["bash"]
+# Need to re-add some required dependencies for tox to compile the new envs
+RUN apt-get install -y --no-install-recommends build-essential
+# Map the user to avoid perm conflict
+ARG USER_NAME=dockeruser
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g $GID $USER_NAME; useradd -l -r -m -u $UID -g $GID $USER_NAME
+ENV USER $USER_NAME

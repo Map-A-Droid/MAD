@@ -9,7 +9,7 @@ services:
     image: mapadroid-dev
     build:
       context: .
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile
       target: dev_test
     # Use an empty entrypoint and mount local sources into container so that a simple
     # `docker-compose run --service-ports python3 start.py` can be used to test current
