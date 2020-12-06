@@ -570,7 +570,7 @@ class WorkerQuests(MITMBase):
             self._click_pokestop_at_current_location(self._delay_add)
             self.set_devicesettings_value('last_action_time', time.time())
             type_received, proto_entry = self._wait_for_data(
-                timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.ENCOUNTER, timeout=15)
+                timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_DETAILS, timeout=15)
             if type_received == LatestReceivedType.GYM:
                 self.logger.info('Clicked GYM')
                 time.sleep(10)
