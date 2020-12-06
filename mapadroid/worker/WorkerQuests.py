@@ -12,10 +12,6 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.gamemechanicutil import calculate_cooldown
-from mapadroid.utils.geo import (
-    get_distance_of_two_points_in_meters,
-    get_lat_lng_offsets_by_distance
-)
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException,
     WebsocketWorkerRemovedException,
@@ -504,7 +500,9 @@ class WorkerQuests(MITMBase):
                     # We are basically on top of a stop
                     self.logger.info("Found stop/gym at current location!")
                 else:
-                    self.logger.debug2("Found stop nearby but not next to us to be spinned")
+                    self.logger.debug2("Found stop nearby but not next to us to be spinned. Current lat, lng: {}, {}."
+                                       "Stop at {}, {}", self.current_location.lat, self.current_location.lng,
+                                       latitude, longitude)
                     continue
 
                 fort_type: int = fort.get("type", 0)
