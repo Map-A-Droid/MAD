@@ -984,12 +984,12 @@ class DbWrapper:
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
 
-    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 100) -> Dict[str, Location]:
+    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.3) -> Dict[str, Location]:
         """
         Fetch the IDs and the stops' locations from DB around the given location with a radius of distance passed
         Args:
             location:
-            max_distance: Radius around location to return stops within
+            max_distance: Radius around location to return stops within (in kilometers)
 
         Returns:
 
@@ -999,10 +999,9 @@ class DbWrapper:
             return {}
 
         query = (
-            "SELECT pokestop_id, latitude, longitude AS distance "
+            "SELECT pokestop_id, latitude, longitude "
             "FROM pokestop "
-            "where SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} and "
-            "ORDER BY distance {} "
+            "where SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} "
         ).format(location.lat, location.lng, max_distance, location.lat, location.lng)
 
         res = self.execute(query)
