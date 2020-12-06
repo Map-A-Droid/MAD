@@ -1001,8 +1001,8 @@ class DbWrapper:
         query = (
             "SELECT pokestop_id, latitude, longitude "
             "FROM pokestop "
-            "where SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} "
-        ).format(location.lat, location.lng, max_distance, location.lat, location.lng)
+            "WHERE SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} "
+        ).format(location.lat, location.lng, max_distance)
 
         res = self.execute(query)
 
