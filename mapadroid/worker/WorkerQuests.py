@@ -787,7 +787,7 @@ class WorkerQuests(MITMBase):
     def _check_if_stop_was_nearby_and_update_location(self, gmo_cells):
         stops: Dict[str, Location] = self._db_wrapper.get_stop_ids_and_locations_nearby(self.current_location)
         self.logger.debug("Checking if GMO contains location changes or DB has stops that are already deleted. In DB: "
-                          "{}", str(stops))
+                          "{}. GMO cells: {}", str(stops), gmo_cells)
         # stops may contain multiple stops now. We can check each ID (key of dict) with the IDs in the GMO.
         # Then cross check against the location. If that differs, we need to update/delete the entries in the DB
         for cell in gmo_cells:
