@@ -812,7 +812,7 @@ class WorkerQuests(MITMBase):
 
                 if stop_location_known.lat == latitude and stop_location_known.lng == longitude:
                     # Location of fort has not changed
-                    self.logger.debug2("Fort {} has not moved or more than 100m away", fort_id)
+                    self.logger.debug2("Fort {} has not moved", fort_id)
                     continue
                 else:
                     # now we have a location from DB for the given stop we are currently processing but does not equal
