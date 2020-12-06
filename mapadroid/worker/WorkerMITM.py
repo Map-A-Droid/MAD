@@ -9,10 +9,6 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
-from mapadroid.utils.geo import (
-    get_distance_of_two_points_in_meters,
-    get_lat_lng_offsets_by_distance
-)
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType

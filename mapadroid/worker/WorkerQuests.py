@@ -714,18 +714,20 @@ class WorkerQuests(MITMBase):
 
         self.set_devicesettings_value('last_action_time', time.time())
 
-    def _check_for_data_content(self, latest, proto_to_wait_for: int, timestamp: float) \
+    def _check_for_data_content(self, latest, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
             -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
         type_of_data_found: LatestReceivedType = LatestReceivedType.UNDEFINED
         data_found: Optional[object] = None
         # Check if we have clicked a gym or mon...
-        if 156 in latest and latest[156].get('timestamp', 0) >= timestamp:
+        if ProtoIdentifier.GYM_INFO.value in latest \
+                and latest[ProtoIdentifier.GYM_INFO.value].get('timestamp', 0) >= timestamp:
             type_of_data_found = LatestReceivedType.GYM
             return type_of_data_found, data_found
-        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp:
+        elif ProtoIdentifier.ENCOUNTER.value in latest \
+                and latest[ProtoIdentifier.ENCOUNTER.value].get('timestamp', 0) >= timestamp:
             type_of_data_found = LatestReceivedType.MON
             return type_of_data_found, data_found
-        elif proto_to_wait_for not in latest:
+        elif proto_to_wait_for.value not in latest:
             self.logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found
 
@@ -734,7 +736,7 @@ class WorkerQuests(MITMBase):
         # successful bag clear or last successful quest clear. This eliminates
         # the need to add arbitrary timedeltas for possible small delays,
         # which we don't do in other workers either
-        if proto_to_wait_for in [101, 104]:
+        if proto_to_wait_for in [ProtoIdentifier.FORT_SEARCH, ProtoIdentifier.FORT_DETAILS]:
             potential_replacements = [
                 self._latest_quest,
                 self.get_devicesettings_value('last_cleanup_time', 0),
@@ -747,7 +749,10 @@ class WorkerQuests(MITMBase):
                               proto_to_wait_for)
             timestamp = replacement
         # proto has previously been received, let's check the timestamp...
-        latest_proto_entry = latest.get(proto_to_wait_for, None)
+        latest_proto_entry = latest.get(proto_to_wait_for.value, None)
+        if not latest_proto_entry:
+            self.logger.debug("No data linked to the requested proto since MAD started.")
+            return type_of_data_found, data_found
         timestamp_of_proto = latest_proto_entry.get("timestamp", 0)
         if timestamp_of_proto < timestamp:
             self.logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
@@ -765,7 +770,7 @@ class WorkerQuests(MITMBase):
         if latest_proto is None:
             self.logger.debug("No proto data for {} at {} after {}", proto_to_wait_for,
                               timestamp_of_proto, timestamp)
-        elif proto_to_wait_for == 101:
+        elif proto_to_wait_for == ProtoIdentifier.FORT_SEARCH:
             quest_type: int = latest_proto.get('challenge_quest', {}) \
                                      .get('quest', {}) \
                                      .get('quest_type', False)
@@ -784,20 +789,15 @@ class WorkerQuests(MITMBase):
                 return LatestReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.INVENTORY
             elif result == 5:
                 return LatestReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.LIMIT
-        elif proto_to_wait_for == 104:
+        elif proto_to_wait_for == ProtoIdentifier.FORT_DETAILS:
             fort_type: int = latest_proto.get("type", 0)
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GYM if fort_type == 0 else LatestReceivedType.STOP
-        elif proto_to_wait_for == 106:
-            amount_of_forts: int = 0
-            for cell in latest_proto['cells']:
-                amount_of_forts += len(cell['forts'])
-            if amount_of_forts > 0:
-                data_found = latest_proto_data
-                type_of_data_found = LatestReceivedType.GMO
-            else:
-                self.logger.debug("No forts in GMO")
-        elif proto_to_wait_for == 4 and 'inventory_delta' in latest_proto and \
+        elif proto_to_wait_for == ProtoIdentifier.GMO \
+                and self._gmo_cells_contain_multiple_of_key(latest_proto, "forts"):
+            data_found = latest_proto_data
+            type_of_data_found = LatestReceivedType.GMO
+        elif proto_to_wait_for == ProtoIdentifier.INVENTORY and 'inventory_delta' in latest_proto and \
                 len(latest_proto['inventory_delta']['inventory_items']) > 0:
             type_of_data_found = LatestReceivedType.CLEAR
             data_found = latest_proto
