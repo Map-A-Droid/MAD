@@ -68,6 +68,8 @@ down:
 test tests:
 	$(MAKE) shell CMD='sh -c "tox"'
 
+unittests:
+	$(MAKE) shell CMD='sh -c "tox -e py37"'
 
 # Run bash within a defined tox environment
 # Specify a valid tox environment as such:
