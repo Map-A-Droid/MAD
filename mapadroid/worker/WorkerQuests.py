@@ -12,6 +12,7 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.gamemechanicutil import calculate_cooldown
+from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException,
     WebsocketWorkerRemovedException,
@@ -809,9 +810,14 @@ class WorkerQuests(MITMBase):
                 else:
                     stops.pop(fort_id)
 
-                if stop_location_known.lat == latitude and stop_location_known.lng == longitude:
+                distance_to_location = get_distance_of_two_points_in_meters(float(stop_location_known.lat),
+                                                                            float(stop_location_known.lng),
+                                                                            float(self.current_location.lat),
+                                                                            float(self.current_location.lng))
+                if stop_location_known.lat == latitude and stop_location_known.lng == longitude \
+                        or distance_to_location > 100:
                     # Location of fort has not changed
-                    self.logger.debug2("Fort {} has not moved", fort_id)
+                    self.logger.debug2("Fort {} has not moved or more than 100m away", fort_id)
                     continue
                 else:
                     # now we have a location from DB for the given stop we are currently processing but does not equal
