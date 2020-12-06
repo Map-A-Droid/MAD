@@ -810,12 +810,7 @@ class WorkerQuests(MITMBase):
                 else:
                     stops.pop(fort_id)
 
-                distance_to_location = get_distance_of_two_points_in_meters(float(stop_location_known.lat),
-                                                                            float(stop_location_known.lng),
-                                                                            float(self.current_location.lat),
-                                                                            float(self.current_location.lng))
-                if stop_location_known.lat == latitude and stop_location_known.lng == longitude \
-                        or distance_to_location > 100:
+                if stop_location_known.lat == latitude and stop_location_known.lng == longitude:
                     # Location of fort has not changed
                     self.logger.debug2("Fort {} has not moved or more than 100m away", fort_id)
                     continue
@@ -828,7 +823,15 @@ class WorkerQuests(MITMBase):
                     self._db_wrapper.update_pokestop_location(fort_id, latitude, longitude)
 
         for fort_id in stops.keys():
-            # call delete as those stops have not been found in the GMO anymore...
+            # Call delete of stops that have been not been found within 100m range of current position
             location_of_stop: Location = stops[fort_id]
-            self.logger.warning("Deleting stop {} at {} since it could not be found in the GMO but was present in DB",
-                                fort_id, str(location_of_stop))
+            distance_to_location = get_distance_of_two_points_in_meters(float(location_of_stop.lat),
+                                                                        float(location_of_stop.lng),
+                                                                        float(self.current_location.lat),
+                                                                        float(self.current_location.lng))
+            if distance_to_location < 100:
+                self.logger.warning(
+                    "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and withing "
+                    "100m of worker",
+                    fort_id, str(location_of_stop))
+                self._db_wrapper.delete_stop(location_of_stop.lat, location_of_stop.lng)
