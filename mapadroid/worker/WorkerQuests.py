@@ -433,38 +433,8 @@ class WorkerQuests(MITMBase):
         injected_settings = {}
         scanmode = "quests"
         injected_settings["scanmode"] = scanmode
-        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
         ids_iv: List[int] = []
-        if routemanager_settings is not None:
-            ids_iv = self._mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None),
-                                                       self._routemanager_name)
-        # if iv ids are specified we will sync the workers encountered ids to newest time.
-        if ids_iv is not None:
-            (self._latest_encounter_update, encounter_ids) = self._db_wrapper.update_encounters_from_db(
-                self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name),
-                self._latest_encounter_update)
-            if encounter_ids:
-                self.logger.debug("Found {} new encounter_ids", len(encounter_ids))
-                for encounter_id, disappear in encounter_ids.items():
-                    self.logger.debug("id: {}, despawn: {}", encounter_id, disappear)
-            self._encounter_ids = {**encounter_ids, **self._encounter_ids}
-            # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
-            # apears but it is a fact.
-            max_age = time.time() - 60
-
-            remove = []
-            for key, value in self._encounter_ids.items():
-                if value < max_age:
-                    remove.append(key)
-                    self.logger.debug("removing encounterid: {} mon despawned", key)
-
-            for key in remove:
-                del self._encounter_ids[key]
-
-            self.logger.debug("Encounter list len: {}", len(self._encounter_ids))
-            # TODO: here we have the latest update of encountered mons.
-            # self._encounter_ids contains the complete dict.
-            # encounter_ids only contains the newest update.
+        self._encounter_ids = {}
         self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered", values_dict=self._encounter_ids)
         self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
 
@@ -532,8 +502,8 @@ class WorkerQuests(MITMBase):
                 return fort_type == 1 and enabled and not closed and cooldown == 0, False
         # by now we should've found the stop in the GMO
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
-        self.logger.warning("Unable to confirm the current location yielding a spinnable stop - likely not standing "
-                            "exactly on top ...")
+        self.logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
+                            "- likely not standing exactly on top ...", str(self.current_location))
         self._check_if_stop_was_nearby_and_update_location(gmo_cells)
         self._spinnable_data_failure()
         return False, False
@@ -815,6 +785,8 @@ class WorkerQuests(MITMBase):
 
     def _check_if_stop_was_nearby_and_update_location(self, gmo_cells):
         stops: Dict[str, Location] = self._db_wrapper.get_stop_ids_and_locations_nearby(self.current_location)
+        self.logger.debug("Checking if GMO contains location changes or DB has stops that are already deleted. In DB: "
+                          "{}", str(stops))
         # stops may contain multiple stops now. We can check each ID (key of dict) with the IDs in the GMO.
         # Then cross check against the location. If that differs, we need to update/delete the entries in the DB
         for cell in gmo_cells:
@@ -827,17 +799,19 @@ class WorkerQuests(MITMBase):
                 longitude: float = fort.get("longitude", None)
                 fort_id: str = fort.get("id", None)
                 if not latitude or not longitude or not fort_id:
-                    logger.warning("Cannot process fort without id, lat or lon")
+                    self.logger.warning("Cannot process fort without id, lat or lon")
                     continue
                 stop_location_known: Location = stops.get(fort_id)
                 if stop_location_known is None:
                     # new stop we have not seen before, MITM processors should take care of that
+                    self.logger.debug2("Stop not in DB with ID {} at {}, {}", fort_id, latitude, longitude)
                     continue
                 else:
                     stops.pop(fort_id)
 
                 if stop_location_known.lat == latitude and stop_location_known.lng == longitude:
                     # Location of fort has not changed
+                    self.logger.debug2("Fort {} has not moved", fort_id)
                     continue
                 else:
                     # now we have a location from DB for the given stop we are currently processing but does not equal
