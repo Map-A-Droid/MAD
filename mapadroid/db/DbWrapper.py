@@ -994,8 +994,8 @@ class DbWrapper:
         Returns:
 
         """
-        if max_distance < 1:
-            logger.warning("Cannot search for stops withing less than 1m like that...")
+        if max_distance < 0:
+            logger.warning("Cannot search for stops at negative range...")
             return {}
 
         query = (
@@ -1003,7 +1003,7 @@ class DbWrapper:
             "FROM pokestop "
             "WHERE SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} "
         ).format(location.lat, location.lng, max_distance)
-
+        logger.debug(query)
         res = self.execute(query)
 
         if not res:
