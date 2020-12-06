@@ -835,3 +835,6 @@ class WorkerQuests(MITMBase):
                     "100m of worker",
                     fort_id, str(location_of_stop))
                 self._db_wrapper.delete_stop(location_of_stop.lat, location_of_stop.lng)
+                self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+                                                                            location_of_stop.lat,
+                                                                            location_of_stop.lng)

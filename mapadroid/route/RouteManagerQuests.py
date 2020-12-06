@@ -228,7 +228,7 @@ class RouteManagerQuests(RouteManagerBase):
             return True
         stop = Location(lat, lng)
         self.logger.info('Checking Stop with ID {}', stop)
-        if stop not in self._stoplist:
+        if stop not in self._stoplist and stop not in self._coords_to_be_ignored:
             self.logger.info('Already got this Stop')
             return False
         self.logger.info('Getting new Stop')
