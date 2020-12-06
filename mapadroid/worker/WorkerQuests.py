@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from enum import Enum
 from threading import Event, Thread
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Dict
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -534,6 +534,7 @@ class WorkerQuests(MITMBase):
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         self.logger.warning("Unable to confirm the current location yielding a spinnable stop - likely not standing "
                             "exactly on top ...")
+        self._check_if_stop_was_nearby_and_update_location(gmo_cells)
         self._spinnable_data_failure()
         return False, False
 
@@ -811,3 +812,43 @@ class WorkerQuests(MITMBase):
                 raise InternalStopWorkerException
         else:
             self._spinnable_data_failcount += 1
+
+    def _check_if_stop_was_nearby_and_update_location(self, gmo_cells):
+        stops: Dict[str, Location] = self._db_wrapper.get_stop_ids_and_locations_nearby(self.current_location)
+        # stops may contain multiple stops now. We can check each ID (key of dict) with the IDs in the GMO.
+        # Then cross check against the location. If that differs, we need to update/delete the entries in the DB
+        for cell in gmo_cells:
+            forts: list = cell.get("forts", None)
+            if not forts:
+                continue
+
+            for fort in forts:
+                latitude: float = fort.get("latitude", None)
+                longitude: float = fort.get("longitude", None)
+                fort_id: str = fort.get("id", None)
+                if not latitude or not longitude or not fort_id:
+                    logger.warning("Cannot process fort without id, lat or lon")
+                    continue
+                stop_location_known: Location = stops.get(fort_id)
+                if stop_location_known is None:
+                    # new stop we have not seen before, MITM processors should take care of that
+                    continue
+                else:
+                    stops.pop(fort_id)
+
+                if stop_location_known.lat == latitude and stop_location_known.lng == longitude:
+                    # Location of fort has not changed
+                    continue
+                else:
+                    # now we have a location from DB for the given stop we are currently processing but does not equal
+                    # the one we are currently processing, thus SAME fort_id
+                    # now update the stop
+                    self.logger.warning("Updating fort {} with previous location {} now placed at {}, {}",
+                                        fort_id, str(stop_location_known), latitude, longitude)
+                    self._db_wrapper.update_pokestop_location(fort_id, latitude, longitude)
+
+        for fort_id in stops.keys():
+            # call delete as those stops have not been found in the GMO anymore...
+            location_of_stop: Location = stops[fort_id]
+            self.logger.warning("Deleting stop {} at {} since it could not be found in the GMO but was present in DB",
+                                fort_id, str(location_of_stop))

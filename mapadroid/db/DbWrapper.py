@@ -3,7 +3,7 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
-from typing import List, Optional
+from typing import List, Optional, Dict
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
@@ -696,6 +696,15 @@ class DbWrapper:
             pokestop['has_quest'] = pokestop['pokestop_id'] in quests
         return pokestops
 
+    def update_pokestop_location(self, fort_id: str, latitude: float, longitude: float) -> None:
+        query = (
+            "UPDATE pokestop "
+            "SET latitude = %s, longitude = %s "
+            "WHERE pokestop_id = %s"
+        )
+        update_vars = (latitude, longitude, fort_id)
+        self.execute(query, update_vars, commit=True)
+
     def delete_stop(self, latitude: float, longitude: float):
         logger.debug3('Deleting stop from db')
         query = (
@@ -975,8 +984,41 @@ class DbWrapper:
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
 
+    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 100) -> Dict[str, Location]:
+        """
+        Fetch the IDs and the stops' locations from DB around the given location with a radius of distance passed
+        Args:
+            location:
+            max_distance: Radius around location to return stops within
+
+        Returns:
+
+        """
+        if max_distance < 1:
+            logger.warning("Cannot search for stops withing less than 1m like that...")
+            return {}
+
+        query = (
+            "SELECT pokestop_id, latitude, longitude AS distance "
+            "FROM pokestop "
+            "where SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} and "
+            "ORDER BY distance {} "
+        ).format(location.lat, location.lng, max_distance, location.lat, location.lng)
+
+        res = self.execute(query)
+
+        if not res:
+            logger.warning("No stops found closeby to {} in range of {}m", str(location), max_distance)
+            return {}
+
+        stops: Dict[str, Location] = {}
+        for (pokestop_id, latitude, longitude) in res:
+            stops[pokestop_id] = Location(latitude, longitude)
+
+        return stops
+
     def get_nearest_stops_from_position(self, geofence_helper, origin: str, lat, lon, limit: int = 20,
-                                        ignore_spinned: bool = True, maxdistance: int = 1):
+                                        ignore_spinned: bool = True, maxdistance: int = 1) -> List[Location]:
         """
         Retrieve the nearest stops from lat / lon (optional with limit)
         :return:
