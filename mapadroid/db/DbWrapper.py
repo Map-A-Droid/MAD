@@ -3,7 +3,7 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
@@ -984,7 +984,8 @@ class DbWrapper:
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
 
-    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.5) -> Dict[str, Location]:
+    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.5) \
+            -> Dict[str, Tuple[Location, datetime]]:
         """
         Fetch the IDs and the stops' locations from DB around the given location with a radius of distance passed
         Args:
@@ -999,7 +1000,7 @@ class DbWrapper:
             return {}
 
         query = (
-            "SELECT pokestop_id, latitude, longitude "
+            "SELECT pokestop_id, latitude, longitude, last_updated "
             "FROM pokestop "
             "WHERE SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} "
         ).format(location.lat, location.lng, max_distance)
@@ -1009,9 +1010,9 @@ class DbWrapper:
             logger.warning("No stops found closeby to {} in range of {}m", str(location), max_distance)
             return {}
 
-        stops: Dict[str, Location] = {}
-        for (pokestop_id, latitude, longitude) in res:
-            stops[pokestop_id] = Location(latitude, longitude)
+        stops: Dict[str, Tuple[Location, datetime]] = dict()
+        for (pokestop_id, latitude, longitude, last_updated) in res:
+            stops[pokestop_id] = (Location(latitude, longitude), last_updated)
 
         return stops
 

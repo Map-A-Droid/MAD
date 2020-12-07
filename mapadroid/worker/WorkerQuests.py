@@ -462,7 +462,6 @@ class WorkerQuests(MITMBase):
                                                                                        self.current_location.lng,
                                                                                        35, 15)
         s2cell_ids_valid: List[str] = [s2cell.id() for s2cell in s2cells_valid_around_location]
-        amount_of_forts_in_valid_cells = 0
         for cell in gmo_cells:
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
             # very very little jitter) and check its properties
@@ -471,8 +470,7 @@ class WorkerQuests(MITMBase):
             forts: list = cell.get("forts", None)
             if not forts:
                 continue
-            else:
-                amount_of_forts_in_valid_cells += len(forts)
+
             for fort in forts:
                 latitude: float = fort.get("latitude", 0.0)
                 longitude: float = fort.get("longitude", 0.0)
@@ -516,11 +514,8 @@ class WorkerQuests(MITMBase):
         # by now we should've found the stop in the GMO
         self.logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
                             "- likely not standing exactly on top ...", str(self.current_location))
-        if amount_of_forts_in_valid_cells > 0:
-            # TODO: Somehow run this routine a second time or just have the fort check of nearby cells somewhere right after/within the wait for data... tho then we may not be able to detect stuff...
-            #  could be some remote area with only one (now deleted) stop!
-            self._check_if_stop_was_nearby_and_update_location(gmo_cells)
-            self._spinnable_data_failure()
+        self._check_if_stop_was_nearby_and_update_location(gmo_cells)
+        self._spinnable_data_failure()
         return False, False
 
     def _try_to_open_pokestop(self, timestamp: float) -> LatestReceivedType:
@@ -799,7 +794,9 @@ class WorkerQuests(MITMBase):
             self._spinnable_data_failcount += 1
 
     def _check_if_stop_was_nearby_and_update_location(self, gmo_cells):
-        stops: Dict[str, Location] = self._db_wrapper.get_stop_ids_and_locations_nearby(self.current_location)
+        stops: Dict[str, Tuple[Location, datetime]] = self._db_wrapper.get_stop_ids_and_locations_nearby(
+            self.current_location
+        )
         self.logger.debug("Checking if GMO contains location changes or DB has stops that are already deleted. In DB: "
                           "{}. GMO cells: {}", str(stops), gmo_cells)
         # stops may contain multiple stops now. We can check each ID (key of dict) with the IDs in the GMO.
@@ -816,14 +813,14 @@ class WorkerQuests(MITMBase):
                 if not latitude or not longitude or not fort_id:
                     self.logger.warning("Cannot process fort without id, lat or lon")
                     continue
-                stop_location_known: Location = stops.get(fort_id)
-                if stop_location_known is None:
+                location_last_updated: Tuple[Location, datetime] = stops.get(fort_id)
+                if location_last_updated is None:
                     # new stop we have not seen before, MITM processors should take care of that
                     self.logger.debug2("Stop not in DB with ID {} at {}, {}", fort_id, latitude, longitude)
                     continue
                 else:
                     stops.pop(fort_id)
-
+                stop_location_known, last_updated = location_last_updated
                 if stop_location_known.lat == latitude and stop_location_known.lng == longitude:
                     # Location of fort has not changed
                     self.logger.debug2("Fort {} has not moved", fort_id)
@@ -836,19 +833,23 @@ class WorkerQuests(MITMBase):
                                         fort_id, str(stop_location_known), latitude, longitude)
                     self._db_wrapper.update_pokestop_location(fort_id, latitude, longitude)
 
+        timedelta_to_consider_deletion = timedelta(days=3)
         for fort_id in stops.keys():
             # Call delete of stops that have been not been found within 100m range of current position
-            location_of_stop: Location = stops[fort_id]
-            distance_to_location = get_distance_of_two_points_in_meters(float(location_of_stop.lat),
-                                                                        float(location_of_stop.lng),
+            stop_location_known, last_updated = stops[fort_id]
+
+            if last_updated > datetime.now() - timedelta_to_consider_deletion:
+                continue
+            distance_to_location = get_distance_of_two_points_in_meters(float(stop_location_known.lat),
+                                                                        float(stop_location_known.lng),
                                                                         float(self.current_location.lat),
                                                                         float(self.current_location.lng))
             if distance_to_location < 100:
                 self.logger.warning(
                     "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and within "
-                    "100m of worker ({}m)",
-                    fort_id, str(location_of_stop), distance_to_location)
-                self._db_wrapper.delete_stop(location_of_stop.lat, location_of_stop.lng)
+                    "100m of worker ({}m) and was last updated more than 3 days ago ()",
+                    fort_id, str(stop_location_known), distance_to_location, last_updated)
+                self._db_wrapper.delete_stop(stop_location_known.lat, stop_location_known.lng)
                 self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
-                                                                            location_of_stop.lat,
-                                                                            location_of_stop.lng)
+                                                                            stop_location_known.lat,
+                                                                            stop_location_known.lng)
