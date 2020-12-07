@@ -8,13 +8,17 @@ define PRE_COMMIT_ERR
     Install pre-commit @ https://pre-commit.com/#install then run
     source ~/.profile
 endef
-
-ifeq ($(shell which pip),)
-    export pipbin ?= $(shell which pip)
+ifneq ($(shell which pip), "")
+    pipbin := $(shell which pip)
 else ifeq ($(shell which pip3),)
-    export pipbin ?= $(shell which pip3)
+    pipbin := $(shell which pip3)
 else
-    $(error, "pip not detected")
+    $(error "pip not detected")
+endif
+ifneq ($(VIRTUAL_ENV), )
+    pc_install="$(pipbin) install pre-commit"
+else
+    pc_install="$(pipbin) install --user pre-commit"
 endif
 ifeq (, $(shell which pre-commit))
     $(error $(PRE_COMMIT_ERR))
@@ -45,7 +49,7 @@ rebuild:
 	docker-compose -f docker-compose-dev.yaml build
 
 setup-precommit:
-	$(pipbin) install --user pre-commit
+	@pc_install
 	pre-commit install
 	pre-commit install --hook-type commit-msg
 
