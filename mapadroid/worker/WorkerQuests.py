@@ -5,6 +5,9 @@ from difflib import SequenceMatcher
 from enum import Enum
 from threading import Event, Thread
 from typing import List, Optional, Tuple, Union, Dict
+
+from s2sphere import CellId
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -19,6 +22,7 @@ from mapadroid.utils.madGlobals import (
     WebsocketWorkerTimeoutException,
     WebsocketWorkerConnectionClosedException
 )
+from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
 from mapadroid.utils.logging import get_logger, LoggerEnums
@@ -258,7 +262,7 @@ class WorkerQuests(MITMBase):
 
                 self.logger.info('Open Stop')
                 self._stop_process_time = math.floor(time.time())
-                type_received: LatestReceivedType = self._try_to_open_pokestop(self._stop_process_time)
+                type_received: LatestReceivedType = self._try_to_open_pokestop(timestamp)
                 if type_received is not None and type_received == LatestReceivedType.STOP:
                     self._handle_stop(self._stop_process_time)
 
@@ -447,20 +451,28 @@ class WorkerQuests(MITMBase):
             self._spinnable_data_failure()
             return False, False
         latest_proto = data_received.get("payload")
-
         gmo_cells: list = latest_proto.get("cells", None)
 
         if not gmo_cells:
             self.logger.warning("Can't spin stop - no map info in GMO!")
             self._spinnable_data_failure()
             return False, False
+
+        s2cells_valid_around_location: List[CellId] = S2Helper.get_s2cells_from_circle(self.current_location.lat,
+                                                                                       self.current_location.lng,
+                                                                                       35, 15)
+        s2cell_ids_valid: List[str] = [s2cell.id() for s2cell in s2cells_valid_around_location]
+        amount_of_forts_in_valid_cells = 0
         for cell in gmo_cells:
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
             # very very little jitter) and check its properties
+            if cell["id"] not in s2cell_ids_valid:
+                continue
             forts: list = cell.get("forts", None)
             if not forts:
                 continue
-
+            else:
+                amount_of_forts_in_valid_cells += len(forts)
             for fort in forts:
                 latitude: float = fort.get("latitude", 0.0)
                 longitude: float = fort.get("longitude", 0.0)
@@ -502,11 +514,13 @@ class WorkerQuests(MITMBase):
                 self._spinnable_data_failcount = 0
                 return fort_type == 1 and enabled and not closed and cooldown == 0, False
         # by now we should've found the stop in the GMO
-        # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         self.logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
                             "- likely not standing exactly on top ...", str(self.current_location))
-        self._check_if_stop_was_nearby_and_update_location(gmo_cells)
-        self._spinnable_data_failure()
+        if amount_of_forts_in_valid_cells > 0:
+            # TODO: Somehow run this routine a second time or just have the fort check of nearby cells somewhere right after/within the wait for data... tho then we may not be able to detect stuff...
+            #  could be some remote area with only one (now deleted) stop!
+            self._check_if_stop_was_nearby_and_update_location(gmo_cells)
+            self._spinnable_data_failure()
         return False, False
 
     def _try_to_open_pokestop(self, timestamp: float) -> LatestReceivedType:
@@ -831,9 +845,9 @@ class WorkerQuests(MITMBase):
                                                                         float(self.current_location.lng))
             if distance_to_location < 100:
                 self.logger.warning(
-                    "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and withing "
-                    "100m of worker",
-                    fort_id, str(location_of_stop))
+                    "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and within "
+                    "100m of worker ({}m)",
+                    fort_id, str(location_of_stop), distance_to_location)
                 self._db_wrapper.delete_stop(location_of_stop.lat, location_of_stop.lng)
                 self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
                                                                             location_of_stop.lat,

@@ -110,14 +110,31 @@ class MITMBase(WorkerBase):
                                                                              self._origin)
         type_of_data_returned = LatestReceivedType.UNDEFINED
         data = None
+        latest = self._mitm_mapper.request_latest(self._origin)
+
+        # Any data after timestamp + timeout should be valid!
+        last_time_received = 0
+        if latest is None:
+            self.logger.debug("Nothing received from worker since MAD started")
+        else:
+            latest_proto_entry = latest.get(proto_to_wait_for.value, None)
+            if not latest_proto_entry:
+                self.logger.debug("No data linked to the requested proto since MAD started.")
+            else:
+                last_time_received = latest_proto_entry.get("timestamp", 0)
         while type_of_data_returned == LatestReceivedType.UNDEFINED and \
-                int(timestamp + timeout) >= int(time.time()) \
+                (int(timestamp + timeout) >= int(time.time()) or last_time_received > timestamp) \
                 and not self._stop_worker_event.is_set():
             latest = self._mitm_mapper.request_latest(self._origin)
 
             if latest is None:
                 self.logger.debug("Nothing received from worker since MAD started")
                 time.sleep(0.5)
+                continue
+            latest_proto_entry = latest.get(proto_to_wait_for.value, None)
+            if not latest_proto_entry:
+                self.logger.debug("No data linked to the requested proto since MAD started.")
+                time.sleep(2)
                 continue
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
