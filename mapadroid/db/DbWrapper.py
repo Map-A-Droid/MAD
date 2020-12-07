@@ -984,7 +984,7 @@ class DbWrapper:
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
 
-    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 1) -> Dict[str, Location]:
+    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.5) -> Dict[str, Location]:
         """
         Fetch the IDs and the stops' locations from DB around the given location with a radius of distance passed
         Args:
