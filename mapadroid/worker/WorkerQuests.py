@@ -840,7 +840,7 @@ class WorkerQuests(MITMBase):
             stop_location_known, last_updated = stops[fort_id]
             self.logger.debug("Considering stop {} at {} (last updated {}) for deletion",
                               fort_id, stop_location_known, last_updated)
-            if last_updated > datetime.now() - timedelta_to_consider_deletion:
+            if not last_updated and last_updated > datetime.now() - timedelta_to_consider_deletion:
                 self.logger.info("Stop considered for deletion was last updated recently, not gonna delete it for now.",
                                  last_updated)
                 continue
