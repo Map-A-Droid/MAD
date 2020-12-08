@@ -794,6 +794,7 @@ class WorkerQuests(MITMBase):
             self._spinnable_data_failcount += 1
 
     def _check_if_stop_was_nearby_and_update_location(self, gmo_cells):
+        self.logger.info("Checking stops around current location ({}) for deleted stops.", self.current_location)
         stops: Dict[str, Tuple[Location, datetime]] = self._db_wrapper.get_stop_ids_and_locations_nearby(
             self.current_location
         )
@@ -816,7 +817,7 @@ class WorkerQuests(MITMBase):
                 location_last_updated: Tuple[Location, datetime] = stops.get(fort_id)
                 if location_last_updated is None:
                     # new stop we have not seen before, MITM processors should take care of that
-                    self.logger.debug2("Stop not in DB with ID {} at {}, {}", fort_id, latitude, longitude)
+                    self.logger.debug2("Stop not in DB (in range) with ID {} at {}, {}", fort_id, latitude, longitude)
                     continue
                 else:
                     stops.pop(fort_id)
@@ -837,13 +838,16 @@ class WorkerQuests(MITMBase):
         for fort_id in stops.keys():
             # Call delete of stops that have been not been found within 100m range of current position
             stop_location_known, last_updated = stops[fort_id]
-
+            self.logger.debug("Considering stop {} at {} (last updated {}) for deletion",
+                              fort_id, stop_location_known, last_updated)
             if last_updated > datetime.now() - timedelta_to_consider_deletion:
                 continue
             distance_to_location = get_distance_of_two_points_in_meters(float(stop_location_known.lat),
                                                                         float(stop_location_known.lng),
                                                                         float(self.current_location.lat),
                                                                         float(self.current_location.lng))
+            self.logger.debug("Distance to {} at {} (last updated {})",
+                              fort_id, stop_location_known, last_updated)
             if distance_to_location < 100:
                 self.logger.warning(
                     "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and within "
