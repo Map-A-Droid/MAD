@@ -17,7 +17,7 @@ services:
     # `docker-compose run bash` launch a shell inside the container.
     entrypoint: ""
     volumes:
-      - ${PWD}/:/usr/src/app:rw
+      - ./:/usr/src/app:rw
       - pre-commit-cache:/home/dockuser/.cache/pre-commit
     depends_on:
       - mariadb
