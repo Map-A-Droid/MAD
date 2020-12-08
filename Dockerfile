@@ -87,4 +87,4 @@ RUN for version in $PYTHON_VERSIONS; do \
       pyenv local --unset; \
     done
 RUN echo "pyenv local $PYTHON_VERSIONS" >> ~/.bashrc
-RUN chown -R dockeruser:dockeruser $HOME && pyenv local $PYTHON_VERSIONS
+RUN pyenv local $PYTHON_VERSIONS
