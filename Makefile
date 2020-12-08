@@ -49,12 +49,12 @@ ifdef OS
     UID ?= 1000
     GID ?= 1000
 else
-    ifneq ($(shell $(WHICH) pip), "")
+    ifneq ($(shell which pip),)
         pip := $(shell which pip)
-    else ifeq ($(shell which pip3),)
+    else ifneq ($(shell which pip3),)
         pip := $(shell which pip3)
     else
-        pip := ""
+        $(error $(PIP_MISSING))
     endif
     precommit := $(shell which pre-commit)
     docker := $(shell which docker)
