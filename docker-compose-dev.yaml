@@ -1,16 +1,9 @@
-version: "3.4"
-
-volumes:
-  pre-commit-cache:
-    name: pre-commit-cache
+version: "2.4"
 
 services:
-  mapadroid-dev:
-    image: mapadroid-dev
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: dev_test
+  mad:
+    image: map-a-droid
+    build: .
     # Use an empty entrypoint and mount local sources into container so that a simple
     # `docker-compose run --service-ports python3 start.py` can be used to test current
     # development in a defined environment.
@@ -18,20 +11,23 @@ services:
     entrypoint: ""
     volumes:
       - ./:/usr/src/app:rw
-      - pre-commit-cache:/home/dockuser/.cache/pre-commit
     depends_on:
       - mariadb
     ports:
       - "5000:5000"
       - "8000:8000"
       - "8080:8080"
-    env_file:
-      - .dev.env
-    tty: true
-    command: ["bash"]
+    environment:
+      THERAIDMAPPER_DBIP: mariadb
+      THERAIDMAPPER_DBUSERNAME: rocketdb
+      THERAIDMAPPER_DBNAME: rocketdb
+      THERAIDMAPPER_DBPASSWORD: rocketdb"
 
   mariadb:
     image: mariadb:10.3
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
-    env_file:
-      - .dev.env
+    environment:
+      MYSQL_DATABASE: rocketdb
+      MYSQL_USER: rocketdb
+      MYSQL_ROOT_PASSWORD: rocketdb
+      MYSQL_PASSWORD: rocketdb

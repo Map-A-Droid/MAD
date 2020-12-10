@@ -1,14 +1,12 @@
+from collections import OrderedDict
 import importlib
 import json
-import os
 import shutil
 import sys
-from collections import OrderedDict
-
-import mysql.connector
-
 from mapadroid.db import DbSchemaUpdater
-from mapadroid.utils.logging import LoggerEnums, get_logger
+import mysql.connector
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
 
 logger = get_logger(LoggerEnums.patcher)
 
@@ -170,7 +168,7 @@ class MADPatcher(object):
                     logger.info('New installation detected with a partial schema detected.  Updates will be attempted')
                     self._installed_ver = 0
                     self.__set_installed_ver(self._installed_ver)
-                reload_instance_id(self.data_manager)
+                self.__reload_instance_id()
                 logger.success("Moved internal MAD version to database as version {}", self._installed_ver)
         except Exception:
             logger.opt(exception=True).critical('Unknown exception occurred during getting the MAD DB version.'
@@ -193,8 +191,7 @@ class MADPatcher(object):
 
     def __install_schema(self):
         try:
-            sql_file = ["scripts", "SQL", "rocketmap.sql"]
-            with open(os.path.join(sql_file), "r") as fh:
+            with open('scripts/SQL/rocketmap.sql') as fh:
                 tables = "".join(fh.readlines()).split(";")
                 for table in tables:
                     install_cmd = '%s;%s;%s'
@@ -203,11 +200,15 @@ class MADPatcher(object):
             self.__set_installed_ver(self._madver)
             logger.success('Successfully installed MAD version {} to the database', self._installed_ver)
             self.__add_default_event()
-            reload_instance_id(self.data_manager)
+            self.__reload_instance_id()
         except Exception:
             logger.opt(exception=True).critical('Unable to install default MAD schema.  Please install the schema from '
                                                 'scripts/SQL/rocketmap.sql')
             sys.exit(1)
+
+    def __reload_instance_id(self):
+        self.dbwrapper.get_instance_id()
+        self.data_manager.instance_id = self.dbwrapper.instance_id
 
     def __set_installed_ver(self, version):
         self._installed_ver = version
@@ -283,9 +284,7 @@ class MADPatcher(object):
         except mysql.connector.Error:
             # Version table does not exist.  This is installed with the base install so we can assume the required
             # tables have not been created
-            install_schema(self.dbwrapper)
-            add_default_event(self.dbwrapper)
-            reload_instance_id(self.data_manager)
+            self.__install_schema()
         else:
             for column in columns:
                 if column['Field'] != 'key':
@@ -307,34 +306,3 @@ class MADPatcher(object):
                             logger.success('Successfully de-duplicated versions table and set each key to the '
                                            'maximum value from the table')
                             self.__update_versions_table()
-
-
-def install_schema(dbwrapper):
-    try:
-        sql_file = ["scripts", "SQL", "rocketmap.sql"]
-        with open(os.path.join(*sql_file), "r") as fh:
-            tables = "".join(fh.readlines()).split(";")
-            for table in tables:
-                install_cmd = '%s;%s;%s'
-                args = ('SET FOREIGN_KEY_CHECKS=0', 'SET NAMES utf8mb4', table)
-                dbwrapper.execute(install_cmd % args, commit=True)
-        version = list(MAD_UPDATES.keys())[-1]
-        dbwrapper.update_mad_version(version)
-        logger.success('Successfully installed MAD version {} to the database', version)
-        add_default_event(dbwrapper)
-    except Exception:
-        logger.opt(exception=True).critical('Unable to install default MAD schema.  Please install the schema from '
-                                            'scripts/SQL/rocketmap.sql')
-        sys.exit(1)
-
-
-def add_default_event(dbwrapper):
-    sql = "INSERT IGNORE into `trs_event` " \
-          "(`id`, `event_name`, `event_start`, `event_end`, `event_lure_duration`) values " \
-          "('1', 'DEFAULT', '1970-01-01', '2099-12-31', 30)"
-    dbwrapper.execute(sql, commit=True, suppress_log=True)
-
-
-def reload_instance_id(data_manager):
-    data_manager.dbc.get_instance_id()
-    data_manager.instance_id = data_manager.dbc.instance_id
