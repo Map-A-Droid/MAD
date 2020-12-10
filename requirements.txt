@@ -16,7 +16,6 @@ psutil~=5.6
 pytesseract~=0.3
 requests~=2.22
 s2sphere~=0.2
-watchdog~=0.9
 websockets>=7
 numpy~=1.18.0
 apkutils~=0.6.6
