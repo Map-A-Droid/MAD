@@ -445,6 +445,37 @@ class WorkerQuests(MITMBase):
 
         self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
 
+    def _directly_surrounding_gmo_cells_containing_stops_around_current_position(self, gmo_cells) -> List:
+        """
+        Returns a list of cells containing forts
+        Args:
+            gmo_cells:
+
+        Returns:
+            List of cells that actually contain forts around the current position
+        """
+        cells_with_forts = []
+        if not gmo_cells:
+            return cells_with_forts
+        # 35m radius around current location (thus cells that may be touched by that radius hopefully get included)
+        s2cells_valid_around_location: List[CellId] = S2Helper.get_s2cells_from_circle(self.current_location.lat,
+                                                                                       self.current_location.lng,
+                                                                                       35, 15)
+        s2cell_ids_valid: List[str] = [s2cell.id() for s2cell in s2cells_valid_around_location]
+        for cell in gmo_cells:
+            # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
+            # very very little jitter) and check its properties
+            if cell["id"] not in s2cell_ids_valid:
+                continue
+            forts: list = cell.get("forts", None)
+            if forts:
+                cells_with_forts.append(cell)
+
+        if not cells_with_forts:
+            self.logger.warning("GMO cells around current position ({}) do not contain stops ",
+                                self.current_location)
+        return cells_with_forts
+
     def _current_position_has_spinnable_stop(self, timestamp: float):
         type_received, data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=ProtoIdentifier.GMO)
         if type_received != LatestReceivedType.GMO or data_received is None:
@@ -458,15 +489,8 @@ class WorkerQuests(MITMBase):
             self._spinnable_data_failure()
             return False, False
 
-        s2cells_valid_around_location: List[CellId] = S2Helper.get_s2cells_from_circle(self.current_location.lat,
-                                                                                       self.current_location.lng,
-                                                                                       35, 15)
-        s2cell_ids_valid: List[str] = [s2cell.id() for s2cell in s2cells_valid_around_location]
-        for cell in gmo_cells:
-            # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
-            # very very little jitter) and check its properties
-            if cell["id"] not in s2cell_ids_valid:
-                continue
+        cells_with_stops = self._directly_surrounding_gmo_cells_containing_stops_around_current_position(gmo_cells)
+        for cell in cells_with_stops:
             forts: list = cell.get("forts", None)
             if not forts:
                 continue
@@ -773,7 +797,8 @@ class WorkerQuests(MITMBase):
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GYM if fort_type == 0 else LatestReceivedType.STOP
         elif proto_to_wait_for == ProtoIdentifier.GMO \
-                and self._gmo_cells_contain_multiple_of_key(latest_proto, "forts"):
+                and self._directly_surrounding_gmo_cells_containing_stops_around_current_position(
+                    latest_proto_data.get("cells")):
             data_found = latest_proto_data
             type_of_data_found = LatestReceivedType.GMO
         elif proto_to_wait_for == ProtoIdentifier.INVENTORY and 'inventory_delta' in latest_proto and \
