@@ -122,6 +122,10 @@ class MITMBase(WorkerBase):
                 self.logger.debug("No data linked to the requested proto since MAD started.")
             else:
                 last_time_received = latest_proto_entry.get("timestamp", 0)
+        self.logger.debug("Waitinf for data ({}) after {} with timeout of {}s. "
+                          "Last received timestamp of that type was: {}",
+                          proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout,
+                          datetime.fromtimestamp(timestamp) if last_time_received != 0 else "never")
         while type_of_data_returned == LatestReceivedType.UNDEFINED and \
                 (int(timestamp + timeout) >= int(time.time()) or last_time_received > timestamp) \
                 and not self._stop_worker_event.is_set():
@@ -158,6 +162,9 @@ class MITMBase(WorkerBase):
             if type_of_data_returned == LatestReceivedType.UNDEFINED:
                 # We don't want to sleep if we have received something that may be useful to us...
                 time.sleep(2)
+            # In case last_time_received was set, we reset it after the first
+            # iteration to not run into trouble (endless loop)
+            last_time_received = 0
 
         if type_of_data_returned != LatestReceivedType.UNDEFINED:
             self._reset_restart_count_and_collect_stats(position_type)
