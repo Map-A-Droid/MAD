@@ -1,0 +1,8 @@
+[general]
+ignore=title-trailing-punctuation, title-must-not-contain-word
+
+[title-max-length]
+line-length=120
+
+[body-max-line-length]
+line-length=140
