@@ -353,7 +353,7 @@ class DbPogoProtoSubmit:
         stop_args = self._extract_args_single_stop_details(stop_proto)
         if stop_args is not None:
             alt_modified_time = int(math.ceil(datetime.utcnow().timestamp() / 1000)) * 1000
-            cache_key = "stopdetail{}{}".format(stop_proto["id"],
+            cache_key = "stopdetail{}{}".format(stop_proto["fort_id"],
                                                 stop_proto.get("last_modified_timestamp_ms", alt_modified_time))
             if cache.exists(cache_key):
                 return
