@@ -16,6 +16,10 @@ from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerBase import WorkerBase, FortSearchResultTypes
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
+WALK_AFTER_TELEPORT_SPEED = 11
+FALLBACK_MITM_WAIT_TIMEOUT = 45
+TIMESTAMP_NEVER = 0
+WAIT_FOR_DATA_NEXT_ROUND_SLEEP = 0.5
 # Distance in meters that are to be allowed to consider a GMO as within a valid range
 # Some modes calculate with extremely strict distances (0.0001m for example), thus not allowing
 # direct use of routemanager radius as a distance (which would allow long distances for raid scans as well)
@@ -85,13 +89,13 @@ class MITMBase(WorkerBase):
         self._communicator.walk_from_to(self.current_location,
                                         Location(self.current_location.lat + lat_offset,
                                                  self.current_location.lng + lng_offset),
-                                        11)
+                                        WALK_AFTER_TELEPORT_SPEED)
         self.logger.debug("Walking back")
         time.sleep(0.3)
         self._communicator.walk_from_to(Location(self.current_location.lat + lat_offset,
                                                  self.current_location.lng + lng_offset),
                                         self.current_location,
-                                        11)
+                                        WALK_AFTER_TELEPORT_SPEED)
         self.logger.debug("Done walking")
         return to_walk
 
@@ -101,7 +105,7 @@ class MITMBase(WorkerBase):
         if timestamp is None:
             timestamp = time.time()
         if timeout is None:
-            timeout = self.get_devicesettings_value("mitm_wait_timeout", 45)
+            timeout = self.get_devicesettings_value("mitm_wait_timeout", FALLBACK_MITM_WAIT_TIMEOUT)
 
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         self.logger.info('Waiting for data after {}',
@@ -113,7 +117,7 @@ class MITMBase(WorkerBase):
         latest = self._mitm_mapper.request_latest(self._origin)
 
         # Any data after timestamp + timeout should be valid!
-        last_time_received = 0
+        last_time_received = TIMESTAMP_NEVER
         if latest is None:
             self.logger.debug("Nothing received from worker since MAD started")
         else:
@@ -121,11 +125,11 @@ class MITMBase(WorkerBase):
             if not latest_proto_entry:
                 self.logger.debug("No data linked to the requested proto since MAD started.")
             else:
-                last_time_received = latest_proto_entry.get("timestamp", 0)
+                last_time_received = latest_proto_entry.get("timestamp", TIMESTAMP_NEVER)
         self.logger.debug("Waiting for data ({}) after {} with timeout of {}s. "
                           "Last received timestamp of that type was: {}",
                           proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout,
-                          datetime.fromtimestamp(timestamp) if last_time_received != 0 else "never")
+                          datetime.fromtimestamp(timestamp) if last_time_received != TIMESTAMP_NEVER else "never")
         while type_of_data_returned == LatestReceivedType.UNDEFINED and \
                 (int(timestamp + timeout) >= int(time.time()) or last_time_received >= timestamp) \
                 and not self._stop_worker_event.is_set():
@@ -133,12 +137,12 @@ class MITMBase(WorkerBase):
 
             if latest is None:
                 self.logger.info("Nothing received from worker since MAD started")
-                time.sleep(0.5)
+                time.sleep(WAIT_FOR_DATA_NEXT_ROUND_SLEEP)
                 continue
             latest_proto_entry = latest.get(proto_to_wait_for.value, None)
             if not latest_proto_entry:
                 self.logger.info("No data linked to the requested proto since MAD started.")
-                time.sleep(0.5)
+                time.sleep(WAIT_FOR_DATA_NEXT_ROUND_SLEEP)
                 continue
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
@@ -161,10 +165,10 @@ class MITMBase(WorkerBase):
             self.raise_stop_worker_if_applicable()
             if type_of_data_returned == LatestReceivedType.UNDEFINED:
                 # We don't want to sleep if we have received something that may be useful to us...
-                time.sleep(0.5)
+                time.sleep(WAIT_FOR_DATA_NEXT_ROUND_SLEEP)
             # In case last_time_received was set, we reset it after the first
             # iteration to not run into trouble (endless loop)
-            last_time_received = 0
+            last_time_received = TIMESTAMP_NEVER
 
         if type_of_data_returned != LatestReceivedType.UNDEFINED:
             self._reset_restart_count_and_collect_stats(position_type)

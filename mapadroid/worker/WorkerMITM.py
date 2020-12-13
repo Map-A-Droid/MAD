@@ -76,7 +76,6 @@ class WorkerMITM(MITMBase):
                 self.logger.debug("Need more sleep after Teleport: {} seconds!", delay_used)
             walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
-                # TODO: actually use to_walk for distance
                 self._walk_after_teleport(walk_distance_post_teleport)
         else:
             self.logger.info("main: Walking...")

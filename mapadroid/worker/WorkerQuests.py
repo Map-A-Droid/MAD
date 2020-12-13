@@ -34,7 +34,6 @@ RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN = 35
 DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP = 0.00006
 
 logger = get_logger(LoggerEnums.worker)
-PROTO_NUMBER_FOR_GMO = 106
 
 
 class ClearThreadTasks(Enum):
