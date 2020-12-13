@@ -122,23 +122,23 @@ class MITMBase(WorkerBase):
                 self.logger.debug("No data linked to the requested proto since MAD started.")
             else:
                 last_time_received = latest_proto_entry.get("timestamp", 0)
-        self.logger.debug("Waitinf for data ({}) after {} with timeout of {}s. "
+        self.logger.debug("Waiting for data ({}) after {} with timeout of {}s. "
                           "Last received timestamp of that type was: {}",
                           proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout,
                           datetime.fromtimestamp(timestamp) if last_time_received != 0 else "never")
         while type_of_data_returned == LatestReceivedType.UNDEFINED and \
-                (int(timestamp + timeout) >= int(time.time()) or last_time_received > timestamp) \
+                (int(timestamp + timeout) >= int(time.time()) or last_time_received >= timestamp) \
                 and not self._stop_worker_event.is_set():
             latest = self._mitm_mapper.request_latest(self._origin)
 
             if latest is None:
-                self.logger.debug("Nothing received from worker since MAD started")
+                self.logger.info("Nothing received from worker since MAD started")
                 time.sleep(0.5)
                 continue
             latest_proto_entry = latest.get(proto_to_wait_for.value, None)
             if not latest_proto_entry:
-                self.logger.debug("No data linked to the requested proto since MAD started.")
-                time.sleep(2)
+                self.logger.info("No data linked to the requested proto since MAD started.")
+                time.sleep(0.5)
                 continue
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
@@ -161,7 +161,7 @@ class MITMBase(WorkerBase):
             self.raise_stop_worker_if_applicable()
             if type_of_data_returned == LatestReceivedType.UNDEFINED:
                 # We don't want to sleep if we have received something that may be useful to us...
-                time.sleep(2)
+                time.sleep(0.5)
             # In case last_time_received was set, we reset it after the first
             # iteration to not run into trouble (endless loop)
             last_time_received = 0
@@ -231,10 +231,10 @@ class MITMBase(WorkerBase):
             raise InternalStopWorkerException
 
     def _is_location_within_allowed_range(self, latest_location):
-        self.logger.debug("Checking (data) location reported by {} at {} against real data location {}",
-                          self._origin,
-                          self.current_location,
-                          latest_location)
+        self.logger.debug2("Checking (data) location reported by {} at {} against real data location {}",
+                           self._origin,
+                           self.current_location,
+                           latest_location)
         distance_to_data = get_distance_of_two_points_in_meters(float(latest_location.lat),
                                                                 float(latest_location.lng),
                                                                 float(self.current_location.lat),
@@ -245,7 +245,7 @@ class MITMBase(WorkerBase):
             # some modes may be too strict (e.g. quests with 0.0001m calculations for routes)
             # yet, the route may "require" a stricter ruling than max valid distance
             max_distance_for_worker = max_distance_of_mode
-        self.logger.debug("Distance of worker {} to (data) location: {}", self._origin, distance_to_data)
+        self.logger.debug2("Distance of worker {} to (data) location: {}", self._origin, distance_to_data)
         if distance_to_data > max_distance_for_worker:
             self.logger.debug("Location too far from worker position, max distance allowed: {}m",
                               max_distance_for_worker)

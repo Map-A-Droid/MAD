@@ -29,6 +29,8 @@ from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.worker.WorkerBase import FortSearchResultTypes
 
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
+S2_GMO_CELL_LEVEL = 15
+RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN = 35
 DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP = 0.00006
 
 logger = get_logger(LoggerEnums.worker)
@@ -460,7 +462,8 @@ class WorkerQuests(MITMBase):
         # 35m radius around current location (thus cells that may be touched by that radius hopefully get included)
         s2cells_valid_around_location: List[CellId] = S2Helper.get_s2cells_from_circle(self.current_location.lat,
                                                                                        self.current_location.lng,
-                                                                                       35, 15)
+                                                                                       RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN,
+                                                                                       S2_GMO_CELL_LEVEL)
         s2cell_ids_valid: List[str] = [s2cell.id() for s2cell in s2cells_valid_around_location]
         for cell in gmo_cells:
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
@@ -770,6 +773,7 @@ class WorkerQuests(MITMBase):
         if latest_proto_data is None:
             return type_of_data_found, data_found
         latest_proto = latest_proto_data.get("payload", None)
+        self.logger.debug2("Checking for Quest related data in proto {}", proto_to_wait_for)
         if latest_proto is None:
             self.logger.debug("No proto data for {} at {} after {}", proto_to_wait_for,
                               timestamp_of_proto, timestamp)
