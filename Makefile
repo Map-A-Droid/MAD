@@ -1,5 +1,7 @@
 CMD ?= bash
 CONTAINER_NAME ?= mapadroid-dev
+include docker/.dev.env
+export
 
 define PIP_MISSING
 Pip is missing or not available in PATH. If pip is not installed
@@ -28,14 +30,14 @@ newgrp docker
 endef
 
 define DOCKER_COMPOSE_MISSING
-docker-compose is not installed or not available in PATH. Installation
+docker-compose -f ${COMPOSE_FILE_DEV} is not installed or not available in PATH. Installation
 instructions can be found at https://docs.docker.com/compose/install/
-If docker-compose is installed PATH needs to be corrected to include
+If docker-compose -f ${COMPOSE_FILE_DEV} is installed PATH needs to be corrected to include
 the binary
 endef
 
 define DOCKER_COMPOSE_OLD
-docker-compose is too old. Update docker-compose from the instructions at
+docker-compose -f ${COMPOSE_FILE_DEV} is too old. Update docker-compose -f ${COMPOSE_FILE_DEV} from the instructions at
 https://docs.docker.com/compose/install/
 endef
 
@@ -45,7 +47,7 @@ ifdef OS
     pip := $(shell Get-Command pip | Select-Object -ExpandProperty Source)
     precommit := $(shell Get-Command pre-commit | Select-Object -ExpandProperty Source)
     docker := $(shell Get-Command docker | Select-Object -ExpandProperty Source)
-    docker_compose := $(shell Get-Command docker-compose | Select-Object -ExpandProperty Source)
+    docker_compose := $(shell Get-Command docker-compose -f ${COMPOSE_FILE_DEV} | Select-Object -ExpandProperty Source)
     UID ?= 1000
     GID ?= 1000
 else
@@ -58,7 +60,7 @@ else
     endif
     precommit := $(shell which pre-commit)
     docker := $(shell which docker)
-    docker_compose := $(shell which docker-compose)
+    docker_compose := $(shell which docker-compose -f ${COMPOSE_FILE_DEV})
     UID ?= $(shell id -u)
     GID ?= $(shell id -g)
 endif
@@ -84,7 +86,7 @@ endif
 ifeq (, $(docker_compose))
     $(error $(DOCKER_COMPOSE_MISSING))
 endif
-compose_ver ?= $(shell docker-compose --version | cut -d' ' -f3 | cut -d '.' -f2)
+compose_ver ?= $(shell docker-compose -f ${COMPOSE_FILE_DEV} --version | cut -d' ' -f3 | cut -d '.' -f2)
 ifeq (, compose_ver < 27)
     $(error $(DOCKER_COMPOSE_OLD))
 endif
@@ -95,10 +97,12 @@ clean-tox:
 	rm -rf .tox
 
 build:
-	docker-compose -f docker-compose-dev.yaml build --no-cache
+	docker build --file docker/Dockerfile --tag ${LOCAL_MAD_IMAGE} .
+	docker-compose -f ${COMPOSE_FILE_DEV} build --no-cache
 
 rebuild:
-	docker-compose -f docker-compose-dev.yaml build
+	docker build --file docker/Dockerfile --tag ${LOCAL_MAD_IMAGE} .
+	docker-compose -f ${COMPOSE_FILE_DEV} build
 
 setup-precommit:
 	$(pip_precommit_installation)
@@ -109,22 +113,22 @@ setup: setup-precommit
 	git config commit.template .gitmessage
 
 up:
-	docker-compose -f docker-compose-dev.yaml up --detach
+	docker-compose -f ${COMPOSE_FILE_DEV} up --detach
 
 shell: up
-	docker-compose -f docker-compose-dev.yaml exec -u $(UID) $(CONTAINER_NAME) $(CMD)
+	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) $(CONTAINER_NAME) $(CMD)
 
 root-shell: up
-	docker-compose -f docker-compose-dev.yaml exec -u root $(CONTAINER_NAME) $(CMD)
+	docker-compose -f ${COMPOSE_FILE_DEV} exec -u root $(CONTAINER_NAME) $(CMD)
 
 down:
-	docker-compose -f docker-compose-dev.yaml down
+	docker-compose -f ${COMPOSE_FILE_DEV} down
 
 tests: up
-	docker-compose -f docker-compose-dev.yaml exec -u $(UID) mapadroid-dev tox
+	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) mapadroid-dev tox
 
 unittests: up
-	docker-compose -f docker-compose-dev.yaml exec -u $(UID) mapadroid-dev tox -e py37
+	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) mapadroid-dev tox -e py37
 
 # Run bash within a defined tox environment
 # Specify a valid tox environment as such:
@@ -133,9 +137,9 @@ unittests: up
 #   make shell-py37 RECREATE=1
 shell-%: up
 ifdef RECREATE
-	docker-compose -f docker-compose-dev.yaml exec -u $(UID) mapadroid-dev tox -e $* --recreate -- bash
+	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) mapadroid-dev tox -e $* --recreate -- bash
 else
-	docker-compose -f docker-compose-dev.yaml exec -u $(UID) mapadroid-dev tox -e $* -- bash
+	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) mapadroid-dev tox -e $* -- bash
 endif
 
 versions:
