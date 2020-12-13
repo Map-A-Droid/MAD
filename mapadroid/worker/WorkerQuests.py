@@ -458,6 +458,7 @@ class WorkerQuests(MITMBase):
         """
         cells_with_forts = []
         if not gmo_cells:
+            self.logger.debug("No GMO cells passed for surrounding cell check")
             return cells_with_forts
         # 35m radius around current location (thus cells that may be touched by that radius hopefully get included)
         s2cells_valid_around_location: List[CellId] = S2Helper.get_s2cells_from_circle(self.current_location.lat,
@@ -802,7 +803,7 @@ class WorkerQuests(MITMBase):
             type_of_data_found = LatestReceivedType.GYM if fort_type == 0 else LatestReceivedType.STOP
         elif proto_to_wait_for == ProtoIdentifier.GMO \
                 and self._directly_surrounding_gmo_cells_containing_stops_around_current_position(
-                    latest_proto_data.get("cells")):
+                    latest_proto.get("cells")):
             data_found = latest_proto_data
             type_of_data_found = LatestReceivedType.GMO
         elif proto_to_wait_for == ProtoIdentifier.INVENTORY and 'inventory_delta' in latest_proto and \
