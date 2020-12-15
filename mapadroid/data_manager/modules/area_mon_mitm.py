@@ -166,6 +166,16 @@ class AreaMonMITM(Area):
                     "description": "Including event (ID) spawns for route calculation",
                     "expected": int
                 }
+            },
+            "encounter_all": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [False, True],
+                    "description": "Stay at every location until the device had the chance to encounter all present "
+                                   "Pokemon species to reach a near 100% IV-rate. This will slow down route progress!",
+                    "expected": bool
+                }
             }
         }
     }
