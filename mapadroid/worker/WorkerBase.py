@@ -453,8 +453,9 @@ class WorkerBase(AbstractWorker):
                                             not_encountered.append(monid)
                                 # PD encounters 3 species per GMO
                                 self._wait_again = math.ceil(len(set(not_encountered)) / 3)
-                                self.logger.info("Found {} unique mon IDs - need {} GMOs to get all encounter data",
-                                                    len(set(not_encountered)), self._wait_again)
+                                self.logger.debug("Found {} unique un-encountered mon IDs: {} - requires {} GMOs to "
+                                                  "get all encounter data", len(set(not_encountered)),
+                                                  set(not_encountered), self._wait_again)
                                 # Do not calculate again on subsequent runs of the while loop
                                 calculate_waits = False
                             except Exception:
