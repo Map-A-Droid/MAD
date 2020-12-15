@@ -305,9 +305,15 @@ class MITMReceiver(Process):
             origin, "ids_encountered")
         if ids_encountered is not None:
             ids_encountered = ids_encountered.get("values", None)
+
+        unquest_stops = self.__mitm_mapper.request_latest(
+            origin, "unquest_stops")
+        if unquest_stops is not None:
+            unquest_stops = unquest_stops.get("values", None)
+
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
-                    "lvl_mode": level_mode}
+                    "lvl_mode": level_mode, 'unquest_stops': unquest_stops}
         return json.dumps(response)
 
     # TODO - Deprecate this function as it does not return useful addresses

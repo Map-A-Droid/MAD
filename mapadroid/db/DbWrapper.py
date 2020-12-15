@@ -417,13 +417,16 @@ class DbWrapper:
             i += 1
         return to_be_encountered
 
-    def stop_from_db_without_quests(self, geofence_helper):
+    def stop_from_db_without_quests(self, geofence_helper, latlng=True):
         logger.debug3("DbWrapper::stop_from_db_without_quests called")
+        fields = "pokestop.latitude, pokestop.longitude"
 
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
+        if not latlng:
+            fields = "pokestop_id"
 
         query = (
-            "SELECT pokestop.latitude, pokestop.longitude "
+            "SELECT " + fields + " "
             "FROM pokestop "
             "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
@@ -434,6 +437,12 @@ class DbWrapper:
 
         res = self.execute(query)
         list_of_coords: List[Location] = []
+
+        if not latlng:
+            list_of_ids: List = []
+            for stopid in res:
+                list_of_ids.append(''.join(stopid))
+            return list_of_ids
 
         for (latitude, longitude) in res:
             list_of_coords.append(Location(latitude, longitude))

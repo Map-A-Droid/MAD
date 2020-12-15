@@ -170,6 +170,11 @@ class WorkerMITM(MITMBase):
             scanmode = "nothing"
         injected_settings["scanmode"] = scanmode
 
+        # getting unprocessed stops (without quest)
+        self.unquestStops = self._db_wrapper.stop_from_db_without_quests(
+            self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name),
+            latlng=False)
+
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv:
             (self._latest_encounter_update, encounter_ids) = self._db_wrapper.update_encounters_from_db(
@@ -196,6 +201,7 @@ class WorkerMITM(MITMBase):
             # encounter_ids only contains the newest update.
         self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered", values_dict=self._encounter_ids)
         self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
+        self._mitm_mapper.update_latest(origin=self._origin, key="unquest_stops", values_dict=self.unquestStops)
         self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
