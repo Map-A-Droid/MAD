@@ -5,7 +5,7 @@ import os
 import time
 from abc import abstractmethod
 from threading import Event, Lock, Thread, current_thread
-from typing import Optional
+from typing import Optional, List
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -448,7 +448,7 @@ class WorkerBase(AbstractWorker):
                                         # positive encounter IDs - calculation taken from DbPogoProtoSubmit.mon()
                                         if encounter_id < 0:
                                             encounter_id = encounter_id + 2 ** 64
-                                        if not encounter_id in encountered:
+                                        if encounter_id not in encountered:
                                             monid = pokemon["pokemon_data"]["id"]
                                             not_encountered.append(monid)
                                 # PD encounters 3 species per GMO
