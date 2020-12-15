@@ -423,7 +423,7 @@ class DbWrapper:
 
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
         if not latlng:
-            fields = "pokestop_id"
+            fields = "pokestop.pokestop_id"
 
         query = (
             "SELECT " + fields + " "
