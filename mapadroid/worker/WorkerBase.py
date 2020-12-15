@@ -66,6 +66,7 @@ class WorkerBase(AbstractWorker):
         self._same_screen_count: int = 0
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
         self._loginerrorcounter: int = 0
+        self._wait_again: int = 0
         self._mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
         self._levelmode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
         self._geofencehelper = self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name)
@@ -431,7 +432,39 @@ class WorkerBase(AbstractWorker):
                 )
 
                 try:
-                    self._post_move_location_routine(time_snapshot)
+                    calculate_waits = settings.get("encounter_all", False)
+                    while self._wait_again > 0:
+                        if calculate_waits:
+                            try:
+                                not_encountered: List[int] = []
+                                latest = self._mitm_mapper.request_latest(self._origin)
+                                encountered = latest.get("ids_encountered", {}).get("values", {})
+                                for cell in latest[106]["values"]["payload"]["cells"]:
+                                    for pokemon in cell["wild_pokemon"]:
+                                        encounter_id = pokemon["encounter_id"]
+                                        # positive encounter IDs - calculation taken from DbPogoProtoSubmit.mon()
+                                        if encounter_id < 0:
+                                            encounter_id = encounter_id + 2 ** 64
+                                        if not encounter_id in encountered:
+                                            monid = pokemon["pokemon_data"]["id"]
+                                            not_encountered.append(monid)
+                                # PD encounters 3 species per GMO
+                                self._wait_again = math.ceil(len(set(not_encountered)) / 3)
+                                self.logger.info("Found {} unique mon IDs - need {} GMOs to get all encounter data",
+                                                    len(set(not_encountered)), self._wait_again)
+                                # Do not calculate again on subsequent runs of the while loop
+                                calculate_waits = False
+                            except Exception:
+                                self.logger.warning("Exception trying to calculate the number of GMO waits - continue "
+                                                    "with next location.")
+                                self._wait_again: int = 1
+
+                        self._post_move_location_routine(time_snapshot)
+                        self._wait_again -= 1
+                        if self._wait_again > 0:
+                            self.logger.info("Wait for {} more GMOs for more encounter data", max(self._wait_again, 0))
+                        time_snapshot = time.time()
+
                 except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                         WebsocketWorkerConnectionClosedException):
                     self.logger.warning("Worker failed running post_move_location_routine, stopping worker")
@@ -544,6 +577,7 @@ class WorkerBase(AbstractWorker):
 
         self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name,
                                                                                      self._origin)
+        self._wait_again: int = 1
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
     def _check_for_mad_job(self):
