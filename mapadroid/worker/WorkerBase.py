@@ -434,6 +434,9 @@ class WorkerBase(AbstractWorker):
                 try:
                     calculate_waits = settings.get("encounter_all", False)
                     while self._wait_again > 0:
+                        # We need to wait for data before we're able to do the calculation, otherwise we have wrong
+                        # or missing data
+                        self._post_move_location_routine(time_snapshot)
                         if calculate_waits:
                             try:
                                 not_encountered: List[int] = []
@@ -459,7 +462,6 @@ class WorkerBase(AbstractWorker):
                                                     "with next location.")
                                 self._wait_again: int = 1
 
-                        self._post_move_location_routine(time_snapshot)
                         self._wait_again -= 1
                         if self._wait_again > 0:
                             self.logger.info("Wait for {} more GMOs for more encounter data", max(self._wait_again, 0))
