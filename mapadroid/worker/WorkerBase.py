@@ -4,6 +4,7 @@ import math
 import os
 import time
 from abc import abstractmethod
+from enum import Enum
 from threading import Event, Lock, Thread, current_thread
 from typing import Optional
 from mapadroid.db.DbWrapper import DbWrapper
@@ -27,6 +28,18 @@ from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
 logger = get_logger(LoggerEnums.worker)
+
+
+class FortSearchResultTypes(Enum):
+    UNDEFINED = 0
+    QUEST = 1
+    TIME = 2
+    COOLDOWN = 3
+    INVENTORY = 4
+    LIMIT = 5
+    UNAVAILABLE = 6
+    OUT_OF_RANGE = 7
+    FULL = 8
 
 
 class WorkerBase(AbstractWorker):

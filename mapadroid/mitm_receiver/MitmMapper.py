@@ -164,10 +164,13 @@ class MitmMapper(object):
                 if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
                     del self.__mapping[origin][key]
                 self.__mapping[origin][key] = {}
-                self.__mapping[origin]["location"] = location
-                self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
-                self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
-                self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
+                if location is not None:
+                    self.__mapping[origin]["location"] = location
+                if timestamp_received_raw is not None:
+                    self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
+                    self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
+                if timestamp_received_receiver is not None:
+                    self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
                 self.__mapping[origin][key]["values"] = values_dict
                 updated = True
             else:
