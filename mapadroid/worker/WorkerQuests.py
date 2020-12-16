@@ -460,10 +460,11 @@ class WorkerQuests(MITMBase):
             self.logger.debug("No GMO cells passed for surrounding cell check")
             return cells_with_forts
         # 35m radius around current location (thus cells that may be touched by that radius hopefully get included)
-        s2cells_valid_around_location: List[CellId] = S2Helper.get_s2cells_from_circle(self.current_location.lat,
-                                                                                       self.current_location.lng,
-                                                                                       RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN,
-                                                                                       S2_GMO_CELL_LEVEL)
+        s2cells_valid_around_location: List[CellId] = \
+            S2Helper.get_s2cells_from_circle(self.current_location.lat,
+                                             self.current_location.lng,
+                                             RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN,
+                                             S2_GMO_CELL_LEVEL)
         s2cell_ids_valid: List[str] = [s2cell.id() for s2cell in s2cells_valid_around_location]
         for cell in gmo_cells:
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
@@ -778,9 +779,9 @@ class WorkerQuests(MITMBase):
             self.logger.debug("No proto data for {} at {} after {}", proto_to_wait_for,
                               timestamp_of_proto, timestamp)
         elif proto_to_wait_for == ProtoIdentifier.FORT_SEARCH:
-            quest_type: int = latest_proto.get('challenge_quest', {}) \
-                                     .get('quest', {}) \
-                                     .get('quest_type', False)
+            quest_type: int = latest_proto.get('challenge_quest', {})\
+                .get('quest', {})\
+                .get('quest_type', False)
             result: int = latest_proto.get("result", 0)
             if result == 1 and len(latest_proto.get('items_awarded', [])) == 0:
                 return LatestReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.TIME
