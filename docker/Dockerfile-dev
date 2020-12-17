@@ -17,8 +17,8 @@ libffi-dev libgdbm-dev libsqlite3-dev libssl-dev zlib1g-dev
 
 # Map the user to avoid perm conflict
 ARG USER_NAME=dockeruser
-ARG UID=1000
-ARG GID=1000
+ARG UID=${UID}
+ARG GID=${GID}
 RUN groupadd -g $GID $USER_NAME; useradd -l -r -m -u $UID -g $GID $USER_NAME
 ENV USER $USER_NAME
 # Install pyenv

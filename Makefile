@@ -98,11 +98,11 @@ clean-tox:
 
 build:
 	docker build --file docker/Dockerfile --tag ${LOCAL_MAD_IMAGE} .
-	docker-compose -f ${COMPOSE_FILE_DEV} build --no-cache
+	docker-compose -f ${COMPOSE_FILE_DEV} build --no-cache  --build-arg UID=${UID} --build-arg GUID=${GID}
 
 rebuild:
 	docker build --file docker/Dockerfile --tag ${LOCAL_MAD_IMAGE} .
-	docker-compose -f ${COMPOSE_FILE_DEV} build
+	docker-compose -f ${COMPOSE_FILE_DEV} build  --build-arg UID=${UID} --build-arg GID=${GID}
 
 setup-precommit:
 	$(pip_precommit_installation)
