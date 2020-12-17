@@ -1,9 +1,10 @@
-from enum import IntEnum
 import logging
 import os
 import sys
-from loguru import logger
+from enum import IntEnum
 from functools import wraps
+
+from loguru import logger
 
 
 class LoggerEnums(IntEnum):
@@ -105,7 +106,7 @@ def init_logging(args):
         logger.configure(**logconfig)
         init_custom(logger)
     except ValueError:
-        logger.error("Logging parameters/configuration is invalid.")
+        logger.fatal("Logging parameters/configuration is invalid.")
         sys.exit(1)
     logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
 

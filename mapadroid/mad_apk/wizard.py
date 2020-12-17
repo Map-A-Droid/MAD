@@ -1,19 +1,22 @@
-import apkutils
-from apkutils.apkfile import BadZipFile, LargeZipFile
-import json
 import io
-import requests
+import json
 import zipfile
 from threading import Thread
 from typing import Dict, NoReturn, Optional
+
+import apkutils
+import requests
 import urllib3
-from .abstract_apk_storage import AbstractAPKStorage
-from .apk_enums import APKArch, APKType, APKPackage
-from .utils import lookup_package_info, is_newer_version, supported_pogo_version, lookup_arch_enum, get_apk_info
+from apkutils.apkfile import BadZipFile, LargeZipFile
+
 from mapadroid.utils import global_variables
 from mapadroid.utils.gplay_connector import GPlayConnector
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
+from .abstract_apk_storage import AbstractAPKStorage
+from .apk_enums import APKArch, APKPackage, APKType
+from .utils import (get_apk_info, is_newer_version, lookup_arch_enum,
+                    lookup_package_info, supported_pogo_version)
 
 logger = get_logger(LoggerEnums.package_mgr)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -121,7 +124,7 @@ class APKWizard(object):
         """
         latest_pogo_info = self.find_latest_pogo(architecture)
         if latest_pogo_info is None:
-            logger.warning('Unable to find latest data for PoGo.  Try again later')
+            logger.warning('Unable to find latest data for PoGo. Try again later')
         elif supported_pogo_version(architecture, latest_pogo_info["version"]):
             latest_version = latest_pogo_info["version"]
             current_version = self.storage.get_current_version(APKType.pogo, architecture)
@@ -158,7 +161,7 @@ class APKWizard(object):
                             retries += 1
                             if retries < MAX_RETRIES:
                                 logger.warning('Unable to successfully download the APK')
-                except:  # noqa: E722
+                except Exception:  # noqa: E722
                     raise
                 finally:
                     update_data['download_status'] = 0
@@ -218,7 +221,7 @@ class APKWizard(object):
                         retries += 1
                         if retries < MAX_RETRIES:
                             logger.warning('Unable to successfully download the APK')
-            except:  # noqa: E722
+            except Exception:  # noqa: E722
                 logger.warning('Unable to download the file @ {}', latest_data['url'])
             finally:
                 update_data['download_status'] = 0

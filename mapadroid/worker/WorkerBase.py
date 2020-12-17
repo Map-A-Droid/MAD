@@ -4,29 +4,40 @@ import math
 import os
 import time
 from abc import abstractmethod
+from enum import Enum
 from threading import Event, Lock, Thread, current_thread
 from typing import Optional
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.ocr.screen_type import ScreenType
+from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (
-    InternalStopWorkerException,
-    WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException,
-    ScreenshotType,
-    WebsocketWorkerConnectionClosedException)
+    InternalStopWorkerException, ScreenshotType,
+    WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
+    WebsocketWorkerTimeoutException)
 from mapadroid.utils.resolution import Resocalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.worker)
+
+
+class FortSearchResultTypes(Enum):
+    UNDEFINED = 0
+    QUEST = 1
+    TIME = 2
+    COOLDOWN = 3
+    INVENTORY = 4
+    LIMIT = 5
+    UNAVAILABLE = 6
+    OUT_OF_RANGE = 7
+    FULL = 8
 
 
 class WorkerBase(AbstractWorker):
@@ -97,7 +108,7 @@ class WorkerBase(AbstractWorker):
         try:
             devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._origin)
         except (EOFError, FileNotFoundError) as e:
-            self.logger.warning("Failed fetching devicemappings in with description: {}. Stopping worker", e)
+            self.logger.warning("Failed fetching devicemappings with description: {}. Stopping worker", e)
             self._stop_worker_event.set()
             return None
         if devicemappings is None:
@@ -235,7 +246,7 @@ class WorkerBase(AbstractWorker):
             self.logger.info('Worker already stopped - waiting for it')
         else:
             self._stop_worker_event.set()
-            self.logger.warning("Worker stop called")
+            self.logger.info("Worker stop called")
 
     def _internal_pre_work(self):
         current_thread().name = self._origin
@@ -249,13 +260,13 @@ class WorkerBase(AbstractWorker):
 
             if not self._geofencehelper.is_coord_inside_include_geofence(Location(
                     float(startcoords[0]), float(startcoords[1]))):
-                self.logger.warning("Startcoords not in geofence - setting middle of fence as starting position")
+                self.logger.info("Startcoords not in geofence - setting middle of fence as starting position")
                 lat, lng = self._geofencehelper.get_middle_from_fence()
                 start_position = str(lat) + "," + str(lng)
 
         if start_position is None and \
                 (self._levelmode and calc_type == "routefree"):
-            self.logger.warning("Starting level mode without worker start position")
+            self.logger.info("Starting level mode without worker start position")
             # setting coords
             lat, lng = self._geofencehelper.get_middle_from_fence()
             start_position = str(lat) + "," + str(lng)
@@ -265,7 +276,7 @@ class WorkerBase(AbstractWorker):
 
             if not self._geofencehelper.is_coord_inside_include_geofence(Location(
                     float(startcoords[0]), float(startcoords[1]))):
-                self.logger.warning("Startcoords not in geofence - setting middle of fence as startposition")
+                self.logger.info("Startcoords not in geofence - setting middle of fence as startposition")
                 lat, lng = self._geofencehelper.get_middle_from_fence()
                 start_position = str(lat) + "," + str(lng)
                 startcoords = start_position.replace(' ', '').replace('_', '').split(',')
@@ -378,8 +389,8 @@ class WorkerBase(AbstractWorker):
                 self._health_check()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                     WebsocketWorkerConnectionClosedException):
-                self.logger.error("Websocket connection to lost while running healthchecks, connection terminated "
-                                  "exceptionally")
+                self.logger.error("Websocket connection to {} lost while running healthchecks, connection terminated "
+                                  "exceptionally", self._origin)
                 break
 
             try:
@@ -399,7 +410,7 @@ class WorkerBase(AbstractWorker):
                     break
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                     WebsocketWorkerConnectionClosedException):
-                self.logger.warning("Worker received non valid coords!")
+                self.logger.warning("Worker received invalid coords!")
                 break
 
             try:
@@ -459,7 +470,7 @@ class WorkerBase(AbstractWorker):
         mode = self._walker['walkertype']
         walkereventid = self._walker.get('eventid', None)
         if walkereventid is not None and walkereventid != self._event.get_current_event_id():
-            self.logger.warning("A other Event has started - leaving now")
+            self.logger.warning("Some other Event has started - leaving now")
             return False
         if mode == "countdown":
             self.logger.info("Checking walker mode 'countdown'")
@@ -565,7 +576,7 @@ class WorkerBase(AbstractWorker):
     def _turn_screen_on_and_start_pogo(self):
         if not self._communicator.is_screen_on():
             self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
-            self.logger.warning("Turning screen on")
+            self.logger.info("Turning screen on")
             self._communicator.turn_screen_on()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
         # check if pogo is running and start it if necessary
@@ -585,11 +596,11 @@ class WorkerBase(AbstractWorker):
 
             if screen_type != ScreenType.ERROR and self._last_screen_type == screen_type:
                 self._same_screen_count += 1
-                self.logger.warning("Found {} multiple times in a row ({})", screen_type, self._same_screen_count)
+                self.logger.info("Found {} multiple times in a row ({})", screen_type, self._same_screen_count)
                 if self._same_screen_count > 3:
                     self.logger.warning("Screen is frozen!")
                     if self._same_screen_count > 4 or not self._restart_pogo():
-                        self.logger.error("Restarting PoGo failed - reboot device")
+                        self.logger.warning("Restarting PoGo failed - reboot device")
                         self._reboot()
                     break
             elif self._last_screen_type != screen_type:
@@ -607,7 +618,7 @@ class WorkerBase(AbstractWorker):
                 self._start_pogo()
                 self._loginerrorcounter += 1
             elif screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT]:
-                self.logger.warning('Error getting Gamedata or strange ggl message appears')
+                self.logger.info('Error getting Gamedata or strange ggl message appears')
                 self._loginerrorcounter += 1
                 if self._loginerrorcounter < 2:
                     self._restart_pogo_safe()
@@ -627,7 +638,7 @@ class WorkerBase(AbstractWorker):
                                     ' button - likely entered an invalid birthdate previously')
                 self._loginerrorcounter += 1
             elif screen_type == ScreenType.GPS:
-                self.logger.error("Detected GPS error - reboot device")
+                self.logger.warning("Detected GPS error - reboot device")
                 self._reboot()
                 break
             elif screen_type == ScreenType.SN:
@@ -636,7 +647,7 @@ class WorkerBase(AbstractWorker):
                 break
 
             if self._loginerrorcounter > 1:
-                self.logger.error('Could not login again - (clearing game data + restarting device')
+                self.logger.warning('Could not login again - (clearing game data + restarting device')
                 self._stop_pogo()
                 self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
                 if self.get_devicesettings_value('clear_game_data', False):
@@ -654,7 +665,7 @@ class WorkerBase(AbstractWorker):
             return False
 
     def _restart_pogo_safe(self):
-        self.logger.warning("WorkerBase::_restart_pogo_safe restarting pogo the long way")
+        self.logger.info("WorkerBase::_restart_pogo_safe restarting pogo the long way")
         self._stop_pogo()
         time.sleep(1)
         if self._applicationArgs.enable_worker_specific_extra_start_stop_handling:
@@ -698,7 +709,7 @@ class WorkerBase(AbstractWorker):
 
         if not self._communicator.is_screen_on():
             self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
-            self.logger.warning("Turning screen on")
+            self.logger.info("Turning screen on")
             self._communicator.turn_screen_on()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
@@ -708,7 +719,7 @@ class WorkerBase(AbstractWorker):
         while not pogo_topmost:
             attempts += 1
             if attempts > 10:
-                self.logger.error("_start_pogo failed 10 times")
+                self.logger.warning("_start_pogo failed 10 times")
                 return False
             start_result = self._communicator.start_app(
                 "com.nianticlabs.pokemongo")
@@ -773,7 +784,7 @@ class WorkerBase(AbstractWorker):
                                                    99)
             return self._start_pogo()
         else:
-            self.logger.error("Failed restarting PoGo - reboot device")
+            self.logger.warning("Failed restarting PoGo - reboot device")
             return self._reboot()
 
     def _get_trash_positions(self, full_screen=False):
@@ -809,11 +820,11 @@ class WorkerBase(AbstractWorker):
                                                             screenshot_quality, screenshot_type)
 
         if self._lastScreenshotTaken and time_since_last_screenshot < 0.5:
-            self.logger.error("screenshot taken recently, returning immediately")
+            self.logger.info("screenshot taken recently, returning immediately")
             return True
 
         elif not take_screenshot:
-            self.logger.error("Failed retrieving screenshot")
+            self.logger.warning("Failed retrieving screenshot")
             return False
         else:
             self.logger.debug("Success retrieving screenshot")
@@ -830,7 +841,7 @@ class WorkerBase(AbstractWorker):
 
         if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1)):
             if again:
-                self.logger.error("_check_pogo_main_screen: failed getting a screenshot again")
+                self.logger.warning("_check_pogo_main_screen: failed getting a screenshot again")
                 return False
         attempts = 0
 
@@ -841,11 +852,11 @@ class WorkerBase(AbstractWorker):
 
         self.logger.debug("_check_pogo_main_screen: checking mainscreen")
         while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._origin):
-            self.logger.warning("_check_pogo_main_screen: not on Mainscreen...")
+            self.logger.info("_check_pogo_main_screen: not on Mainscreen...")
             if attempts == max_attempts:
                 # could not reach raidtab in given max_attempts
-                self.logger.error("_check_pogo_main_screen: Could not get to Mainscreen within {} attempts",
-                                  max_attempts)
+                self.logger.warning("_check_pogo_main_screen: Could not get to Mainscreen within {} attempts",
+                                    max_attempts)
                 return False
 
             found = self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path(),
