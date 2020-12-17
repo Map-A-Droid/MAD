@@ -102,7 +102,7 @@ class DbWebhookReader:
         query = (
             "SELECT name, description, url, gym.gym_id, team_id, guard_pokemon_id, slots_available, "
             "latitude, longitude, total_cp, is_in_battle, weather_boosted_condition, "
-            "last_modified, gym.last_scanned, gym.is_ex_raid_eligible "
+            "last_modified, gym.last_scanned, gym.is_ex_raid_eligible, gym.is_ar_scan_eligible "
             "FROM gym "
             "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
             "WHERE gym.last_scanned >= %s"
@@ -129,7 +129,8 @@ class DbWebhookReader:
                 "name": name,
                 "url": url,
                 "description": description,
-                "is_ex_raid_eligible": is_ex_raid_eligible
+                "is_ex_raid_eligible": is_ex_raid_eligible,
+                "is_ar_scan_eligible": is_ar_scan_eligible
             })
         return ret
 
