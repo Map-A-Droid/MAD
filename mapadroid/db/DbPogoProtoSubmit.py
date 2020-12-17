@@ -709,7 +709,7 @@ class DbPogoProtoSubmit:
 
         return (stop_data["id"], 1, stop_data["latitude"], stop_data["longitude"],
                 last_modified, lure, now, active_fort_modifier,
-                incident_start, incident_expiration, incident_grunt_type
+                incident_start, incident_expiration, incident_grunt_type, is_ar_scan_eligible
                 )
 
     def _extract_args_single_stop_details(self, stop_data):
