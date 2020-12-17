@@ -291,12 +291,14 @@ class DbPogoProtoSubmit:
 
         query_stops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
-            "last_updated, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "last_updated, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type, "
+            "is_ar_scan_eligible) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
             "active_fort_modifier=VALUES(active_fort_modifier), incident_start=VALUES(incident_start), "
-            "incident_expiration=VALUES(incident_expiration), incident_grunt_type=VALUES(incident_grunt_type)"
+            "incident_expiration=VALUES(incident_expiration), incident_grunt_type=VALUES(incident_grunt_type), "
+            "is_ar_scan_eligible=VALUES(is_ar_scan_eligible) "
         )
 
         stops_args = []
@@ -414,13 +416,13 @@ class DbPogoProtoSubmit:
 
         query_gym = (
             "INSERT INTO gym (gym_id, team_id, guard_pokemon_id, slots_available, enabled, latitude, longitude, "
-            "total_cp, is_in_battle, last_modified, last_scanned, is_ex_raid_eligible) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "total_cp, is_in_battle, last_modified, last_scanned, is_ex_raid_eligible, is_ar_scan_eligible) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE "
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
             "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible)"
+            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible), is_ar_scan_eligible=VALUES(is_ar_scan_eligible)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
@@ -442,6 +444,7 @@ class DbPogoProtoSubmit:
                     last_modified = datetime.utcfromtimestamp(
                         last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
+                    is_ar_scan_eligible = gym["is_ar_scan_eligible"]
 
                     gym_args.append(
                         (
@@ -452,7 +455,8 @@ class DbPogoProtoSubmit:
                             0,  # is_in_battle
                             last_modified,  # last_modified
                             now,  # last_scanned
-                            is_ex_raid_eligible
+                            is_ex_raid_eligible,
+                            is_ar_scan_eligible
                         )
                     )
 
