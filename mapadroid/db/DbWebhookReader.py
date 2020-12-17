@@ -113,7 +113,7 @@ class DbWebhookReader:
         ret = []
         for (name, description, url, gym_id, team_id, guard_pokemon_id, slots_available,
              latitude, longitude, total_cp, is_in_battle, weather_boosted_condition,
-             last_modified, last_scanned, is_ex_raid_eligible) in res:
+             last_modified, last_scanned, is_ex_raid_eligible, is_ar_scan_eligible) in res:
             ret.append({
                 "gym_id": gym_id,
                 "team_id": team_id,
