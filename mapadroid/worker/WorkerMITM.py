@@ -200,6 +200,6 @@ class WorkerMITM(MITMBase):
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GMO
         else:
-            self.logger.info("{} not in GMO", key_to_check)
+            self.logger.debug("{} not in GMO", key_to_check)
 
         return type_of_data_found, data_found
