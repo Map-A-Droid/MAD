@@ -164,6 +164,7 @@ class WebhookWorker:
                 "quest_task": quest["quest_task"],
                 "quest_condition": quest["quest_condition"].replace("'", '"').lower(),
                 "quest_template": quest["quest_template"],
+                "is_ar_scan_eligible": quest["is_ar_scan_eligible"],
             }
 
         # Other known type is Poracle/RDM compatible.
