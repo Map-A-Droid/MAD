@@ -40,7 +40,7 @@ CREATE TABLE `gym` (
     `last_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_scanned` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `is_ex_raid_eligible` tinyint(1) NOT NULL DEFAULT '0',
-    `is_ar_scan_eligible` tinyint(1) NOT NULL DEFAULT '0'
+    `is_ar_scan_eligible` tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY (`gym_id`),
     KEY `gym_last_modified` (`last_modified`),
     KEY `gym_last_scanned` (`last_scanned`),
