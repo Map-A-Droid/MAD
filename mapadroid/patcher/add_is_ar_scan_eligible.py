@@ -7,7 +7,7 @@ class Patch(PatchBase):
 
     def _execute(self):
         alter_pokestop = """
-            ALTER TABLE `pokestop` 
+            ALTER TABLE `pokestop`
             ADD COLUMN `is_ar_scan_eligible` tinyint(1) NOT NULL DEFAULT '0';
         """
         try:
@@ -15,9 +15,9 @@ class Patch(PatchBase):
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
-            
+
         alter_gym = """
-            ALTER TABLE `gym` 
+            ALTER TABLE `gym`
             ADD COLUMN `is_ar_scan_eligible` tinyint(1) NOT NULL DEFAULT '0';
         """
         try:
