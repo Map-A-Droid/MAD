@@ -1,12 +1,13 @@
 import time
 from typing import List
+
 import numpy as np
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 
@@ -196,7 +197,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                     self.logger.info('There are less stops without quest than route positions - recalc')
                     self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
-                    self.logger.warning("Something wrong with area: it have many new stops - you should delete "
+                    self.logger.warning("Something wrong with area: it has a lot of new stops - you should delete the "
                                         "routefile!!")
                     self.logger.info("Recalc new route for area")
                     self._recalc_stop_route(stops)

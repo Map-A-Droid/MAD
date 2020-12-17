@@ -90,7 +90,7 @@ class MADPatcher(object):
                     self.__set_installed_ver(patch_ver)
                     logger.success('Successfully applied patch')
                 else:
-                    logger.error('Patch was unsuccessful.  Exiting')
+                    logger.fatal('Patch was unsuccessful.  Exiting')
                     sys.exit(1)
             except Exception:
                 logger.opt(exception=True).error('Patch was unsuccessful.  Exiting')

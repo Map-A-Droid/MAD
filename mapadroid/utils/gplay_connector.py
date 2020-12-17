@@ -3,16 +3,17 @@ import io
 import json
 import os
 import re
-from typing import Callable, List
 import warnings
 import zipfile
-from gpapi.googleplay import GooglePlayAPI, LoginError
+from typing import Callable, List
+
 from google.protobuf.message import DecodeError
+from gpapi.googleplay import GooglePlayAPI, LoginError
+
 from mapadroid.mad_apk import APKArch, DeviceCodename
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.token_dispenser import TokenDispenser
 from mapadroid.utils.walkerArgs import parse_args
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.utils)
 
@@ -63,7 +64,7 @@ class GPlayConnector(object):
             try:
                 data_iter = method(packagename, expansion_files=True, versionCode=version_code)
             except IndexError:
-                logger.error("Unable to find the package.  Maybe it no longer a supported device?")
+                logger.error("Unable to find the package. Maybe it no longer is a supported device?")
                 return False
             except DecodeError:
                 # RPi have an issue where they seem to only support delivery and not download
@@ -76,7 +77,7 @@ class GPlayConnector(object):
         try:
             with zipfile.ZipFile(inmem_zip, "w") as myzip:
                 tmp_file = io.BytesIO()
-                for index, chunk in enumerate(data_iter['file']['data']):
+                for _index, chunk in enumerate(data_iter['file']['data']):
                     tmp_file.write(chunk)
                 tmp_file.seek(0, 0)
                 myzip.writestr('base.apk', tmp_file.read())
@@ -85,7 +86,7 @@ class GPlayConnector(object):
                     for obb_file in additional_data:
                         obb_filename = "%s.%s.%s.obb" % (obb_file["type"], obb_file["versionCode"], data_iter["docId"])
                         tmp_file = io.BytesIO()
-                        for index, chunk in enumerate(obb_file["file"]["data"]):
+                        for _index, chunk in enumerate(obb_file["file"]["data"]):
                             tmp_file.write(chunk)
                         tmp_file.seek(0, 0)
                         myzip.writestr(obb_filename, tmp_file.read())
@@ -95,7 +96,7 @@ class GPlayConnector(object):
                         if re.match(r'config.\w\w$', split['name']):
                             continue
                         tmp_file = io.BytesIO()
-                        for index, chunk in enumerate(split["file"]["data"]):
+                        for _index, chunk in enumerate(split["file"]["data"]):
                             tmp_file.write(chunk)
                         tmp_file.seek(0, 0)
                         myzip.writestr(split['name'], tmp_file.read())

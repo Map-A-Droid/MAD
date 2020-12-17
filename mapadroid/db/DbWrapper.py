@@ -3,18 +3,18 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
-from typing import List, Optional, Dict, Tuple
-from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
+from typing import Dict, List, Optional, Tuple
+
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
+from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.database)
 
@@ -70,10 +70,16 @@ class DbWrapper:
         """
         return self._db_exec.autofetch_column(sql, args=args, **kwargs)
 
-    def autoexec_delete(self, table, keyvals, literals=[], where_append=[], **kwargs):
+    def autoexec_delete(self, table, keyvals, literals=None, where_append=None, **kwargs):
+        if where_append is None:
+            where_append = []
+        if literals is None:
+            literals = []
         return self._db_exec.autoexec_delete(table, keyvals, literals=literals, where_append=where_append, **kwargs)
 
-    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT", **kwargs):
+    def autoexec_insert(self, table, keyvals, literals=None, optype="INSERT", **kwargs):
+        if literals is None:
+            literals = []
         return self._db_exec.autoexec_insert(table, keyvals, literals=literals, optype=optype, **kwargs)
 
     def autoexec_update(self, table, set_keyvals, **kwargs):
@@ -236,7 +242,7 @@ class DbWrapper:
         logger.debug3("Got {} encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, "
                       "last_modified): {}", len(encounter_id_coords), params)
         encounter_id_infos = {}
-        for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
+        for (_latitude, _longitude, encounter_id, disappear_time, _last_modified) in encounter_id_coords:
             encounter_id_infos[encounter_id] = disappear_time
 
         return latest, encounter_id_infos
@@ -393,7 +399,7 @@ class DbWrapper:
         results = self.execute(query, sql_args, commit=False)
 
         next_to_encounter = []
-        for latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, _ in results:
+        for latitude, longitude, encounter_id, _spawnpoint_id, pokemon_id, _ in results:
             if pokemon_id not in eligible_mon_ids:
                 continue
             elif latitude is None or longitude is None:
@@ -1049,7 +1055,7 @@ class DbWrapper:
 
             loopcount += 1
             if loopcount >= 10:
-                logger.error("Not getting any new stop - abort")
+                logger.warning("Not getting any new stop - abort")
                 return []
 
             query = (
@@ -1068,7 +1074,7 @@ class DbWrapper:
 
             # getting 0 new locations - more distance!
             if len(res) == 0 or len(res) < limit:
-                logger.warning("No location found or getting not enough locations - need more distance")
+                logger.debug("No location found or not getting enough locations - increasing distance")
                 maxdistance += 2
 
             else:
@@ -1077,14 +1083,14 @@ class DbWrapper:
 
                 stops: List[Location] = []
 
-                for (latitude, longitude, distance) in res:
+                for (latitude, longitude, _distance) in res:
                     stops.append(Location(latitude, longitude))
 
                 if geofence_helper is not None:
                     geofenced_coords = geofence_helper.get_geofenced_coordinates(stops)
                     if len(geofenced_coords) == limit:
                         return geofenced_coords
-                    logger.warning("The coords are out of the fence - increase distance")
+                    logger.debug("The coords are out of the fence - increasing distance")
                     if loopcount >= 5:
                         # setting middle of fence as new startposition
                         lat, lon = geofence_helper.get_middle_from_fence()
@@ -1093,7 +1099,7 @@ class DbWrapper:
                 else:
                     return stops
 
-        logger.error("Not getting any new stop - abort")
+        logger.warning("Not getting any new stop - abort")
         return []
 
     def save_last_walker_position(self, origin, lat, lng):

@@ -9,12 +9,13 @@ from typing import Optional, Tuple, Union
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
-from mapadroid.utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
+from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
+                                 get_lat_lng_offsets_by_distance)
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.WorkerBase import WorkerBase, FortSearchResultTypes
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.worker.WorkerBase import FortSearchResultTypes, WorkerBase
 
 WALK_AFTER_TELEPORT_SPEED = 11
 FALLBACK_MITM_WAIT_TIMEOUT = 45
@@ -152,8 +153,8 @@ class MITMBase(WorkerBase):
                     or not (latest_location.lat != 0.0 and latest_location.lng != 0.0 and
                             -90.0 <= latest_location.lat <= 90.0 and
                             -180.0 <= latest_location.lng <= 180.0)):
-                self.logger.warning("Data may be valid but does not contain a proper location yet: {}",
-                                    str(latest_location))
+                self.logger.debug("Data may be valid but does not contain a proper location yet: {}",
+                                  str(latest_location))
                 check_data = False
             elif proto_to_wait_for == ProtoIdentifier.GMO:
                 check_data = self._is_location_within_allowed_range(latest_location)
@@ -179,8 +180,8 @@ class MITMBase(WorkerBase):
         return type_of_data_returned, data
 
     def _handle_proto_timeout(self, position_type, proto_to_wait_for: ProtoIdentifier, type_of_data_returned):
-        self.logger.warning("Timeout waiting for useful data. Type requested was {}, received {}",
-                            proto_to_wait_for, type_of_data_returned)
+        self.logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
+                         proto_to_wait_for, type_of_data_returned)
         self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
                                                  self._waittime_without_delays,
                                                  position_type, 0,
@@ -199,13 +200,13 @@ class MITMBase(WorkerBase):
             self._reboot_count += 1
             if self._reboot_count > reboot_thresh \
                     and self.get_devicesettings_value("reboot", True):
-                self.logger.error("Too many timeouts - Rebooting device")
+                self.logger.warning("Too many timeouts - Rebooting device")
                 self._reboot(mitm_mapper=self._mitm_mapper)
                 raise InternalStopWorkerException
 
             # self._mitm_mapper.
             self._restart_count = 0
-            self.logger.error("Too many timeouts - Restarting game")
+            self.logger.warning("Too many timeouts - Restarting game")
             self._restart_pogo(True, self._mitm_mapper)
 
     def _reset_restart_count_and_collect_stats(self, position_type):
@@ -231,7 +232,7 @@ class MITMBase(WorkerBase):
         position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
                                                                              self._origin)
         if position_type is None:
-            self.logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
+            self.logger.info("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
 
     def _is_location_within_allowed_range(self, latest_location):
@@ -276,7 +277,7 @@ class MITMBase(WorkerBase):
         while not self._mitm_mapper.get_injection_status(self._origin):
             self._check_for_mad_job()
             if reboot and self._not_injected_count >= injection_thresh_reboot:
-                self.logger.error("Not injected in time - reboot")
+                self.logger.warning("Not injected in time - reboot")
                 self._reboot(self._mitm_mapper)
                 return False
             self.logger.info("Didn't receive any data yet. (Retry count: {}/{})", self._not_injected_count,
@@ -397,7 +398,7 @@ class MITMBase(WorkerBase):
         routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
                                                                                  self._origin)
         if routemanager_status is None:
-            self.logger.warning("Routemanager not available")
+            self.logger.warning("Routemanager of {} not available to update stats", self._origin)
             routemanager_status = [None, None]
         else:
             self.logger.debug('Route Pos: {} - Route Length: {}', routemanager_status[0], routemanager_status[1])
