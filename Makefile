@@ -98,11 +98,11 @@ clean-tox:
 
 build:
 	docker build --file docker/Dockerfile --tag ${LOCAL_MAD_IMAGE} .
-	docker-compose -f ${COMPOSE_FILE_DEV} build --no-cache  --build-arg UID=${UID} --build-arg GUID=${GID}
+	docker-compose -f ${COMPOSE_FILE_DEV} build --no-cache
 
 rebuild:
 	docker build --file docker/Dockerfile --tag ${LOCAL_MAD_IMAGE} .
-	docker-compose -f ${COMPOSE_FILE_DEV} build  --build-arg UID=${UID} --build-arg GID=${GID}
+	docker-compose -f ${COMPOSE_FILE_DEV} build
 
 setup-precommit:
 	$(pip_precommit_installation)
@@ -116,7 +116,7 @@ up:
 	docker-compose -f ${COMPOSE_FILE_DEV} up --detach
 
 shell: up
-	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) $(CONTAINER_NAME) $(CMD)
+	docker-compose -f ${COMPOSE_FILE_DEV} exec $(CONTAINER_NAME) $(CMD)
 
 root-shell: up
 	docker-compose -f ${COMPOSE_FILE_DEV} exec -u root $(CONTAINER_NAME) $(CMD)
@@ -125,10 +125,10 @@ down:
 	docker-compose -f ${COMPOSE_FILE_DEV} down
 
 tests: up
-	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) mapadroid-dev tox
+	docker-compose -f ${COMPOSE_FILE_DEV} exec mapadroid-dev tox
 
 unittests: up
-	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) mapadroid-dev tox -e py37
+	docker-compose -f ${COMPOSE_FILE_DEV} exec mapadroid-dev tox -e py37
 
 # Run bash within a defined tox environment
 # Specify a valid tox environment as such:
@@ -137,9 +137,9 @@ unittests: up
 #   make shell-py37 RECREATE=1
 shell-%: up
 ifdef RECREATE
-	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) mapadroid-dev tox -e $* --recreate -- bash
+	docker-compose -f ${COMPOSE_FILE_DEV} exec mapadroid-dev tox -e $* --recreate -- bash
 else
-	docker-compose -f ${COMPOSE_FILE_DEV} exec -u $(UID) mapadroid-dev tox -e $* -- bash
+	docker-compose -f ${COMPOSE_FILE_DEV} exec mapadroid-dev tox -e $* -- bash
 endif
 
 versions:
