@@ -663,6 +663,7 @@ class DbPogoProtoSubmit:
         incident_start = None
         incident_expiration = None
         incident_grunt_type = None
+        is_ar_scan_eligible = stop_data["is_ar_scan_eligible"]
 
         if len(stop_data["active_fort_modifier"]) > 0:
             # get current lure duration
