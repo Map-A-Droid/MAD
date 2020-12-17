@@ -1,0 +1,8 @@
+pytest
+pytest-dotenv
+flake8
+flake8-variables-names
+flake8-logging-format
+flake8-eradicate
+pep8-naming
+tox-pyenv
