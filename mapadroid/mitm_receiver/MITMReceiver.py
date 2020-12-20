@@ -309,7 +309,7 @@ class MITMReceiver(Process):
         unquest_stops = self.__mitm_mapper.request_latest(
             origin, "unquest_stops")
         if unquest_stops is not None:
-            unquest_stops = unquest_stops.get("values", None)
+            unquest_stops = unquest_stops.get("values", [])
 
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
