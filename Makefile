@@ -97,11 +97,11 @@ clean-tox:
 	rm -rf .tox
 
 build:
-	docker build --file docker/Dockerfile --tag ${LOCAL_MAD_IMAGE} .
+	docker build --file Dockerfile --tag ${LOCAL_MAD_IMAGE} .
 	docker-compose -f ${COMPOSE_FILE_DEV} build --no-cache
 
 rebuild:
-	docker build --file docker/Dockerfile --tag ${LOCAL_MAD_IMAGE} .
+	docker build --file Dockerfile --tag ${LOCAL_MAD_IMAGE} .
 	docker-compose -f ${COMPOSE_FILE_DEV} build
 
 setup-precommit:
