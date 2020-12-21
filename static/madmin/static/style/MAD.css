@@ -13,7 +13,7 @@
 [data-theme="dark"] .svg-inline--fa { color: #fff !important }
 [data-theme="dark"] .leaflet-sidebar-header.bg-dark { background-color: #506680!important; }
 
-[data-theme="dark"] table.dataTable tr.odd { background-color: transparent !important; }
+[data-theme="dark"] table.dataTable tr.odd { background-color: #353535 !important; }
 [data-theme="dark"] table.dataTable tr.even { background-color: transparent !important; }
 
 [data-theme="dark"] .select2-selection.select2-selection--multiple {background-color: #000; }
