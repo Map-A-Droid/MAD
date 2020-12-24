@@ -28,6 +28,7 @@ services:
       - .dev.env
     tty: true
     command: ["bash"]
+    # command: ["/usr/src/app/.tox/py37/bin/python", "/usr/src/app/start.py", "-ut"]
 
   mariadb:
     image: mariadb:10.3
