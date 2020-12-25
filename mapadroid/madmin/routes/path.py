@@ -1,10 +1,10 @@
-from flask import send_from_directory, render_template, request, jsonify, redirect, url_for
+from flask import (jsonify, redirect, render_template, request,
+                   send_from_directory, url_for)
 
 from mapadroid.madmin.functions import auth_required, get_quest_areas
 from mapadroid.utils import MappingManager
 from mapadroid.utils.functions import generate_path
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.madmin)
 

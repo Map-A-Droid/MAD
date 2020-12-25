@@ -1,8 +1,10 @@
-import mysql.connector
-from typing import Optional, List, Tuple
-from .resource import Resource
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from typing import List, Optional, Tuple
 
+import mysql.connector
+
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from .resource import Resource
 
 logger = get_logger(LoggerEnums.data_manager)
 
@@ -43,7 +45,7 @@ class MonIVList(Resource):
         dependencies = []
         for table in tables:
             area_dependencies = self._dbc.autofetch_column(sql % (table,), args=(self.identifier,))
-            for ind, area_id in enumerate(area_dependencies[:]):
+            for _, area_id in enumerate(area_dependencies[:]):
                 dependencies.append(('area', area_id))
         return dependencies
 
@@ -53,7 +55,9 @@ class MonIVList(Resource):
         mons = self._dbc.autofetch_column(mon_query, args=(self.identifier))
         self._data['fields']['mon_ids_iv'] = mons
 
-    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = None) -> int:
+        if ignore_issues is None:
+            ignore_issues = []
         self.presave_validation(ignore_issues=ignore_issues)
         core_data = {
             'monlist': self._data['fields']['monlist']

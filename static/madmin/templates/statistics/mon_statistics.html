@@ -22,7 +22,7 @@
 <script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
     $(function () {
-		
+
         const storedCenter = getStoredCenter();
         var map = L.map("heatmap").setView(storedCenter.split(","), 12);
         var tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png").addTo(map);
@@ -161,7 +161,7 @@
             }
 
         });
-	
+
         $.ajax({
             "url": "get_noniv_encounters_count",
             "type": "GET",
@@ -268,7 +268,7 @@
                 opacity: 0.9
             }).appendTo("body").fadeIn(200);
         }
-	     
+
         function setupSlider() {
             $("#slider-range-max").slider({
                 range: "max",

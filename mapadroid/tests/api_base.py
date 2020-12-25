@@ -1,4 +1,5 @@
 from unittest import TestCase
+
 from mapadroid.tests.local_api import LocalAPI
 from mapadroid.tests.test_utils import ResourceCreator
 

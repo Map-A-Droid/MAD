@@ -1,10 +1,12 @@
-from flask import render_template, Response
 import json
-from mapadroid.mad_apk import (AbstractAPKStorage, get_apk_status, is_newer_version, MADapks, APKType, APKArch,
-                               lookup_arch_enum, lookup_apk_enum)
+
+from flask import Response, render_template
+
+from mapadroid.mad_apk import (AbstractAPKStorage, APKArch, APKType, MADapks,
+                               get_apk_status, is_newer_version,
+                               lookup_apk_enum, lookup_arch_enum)
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils import MappingManager
-from mapadroid.utils import global_variables
+from mapadroid.utils import MappingManager, global_variables
 
 
 class APKManager(object):

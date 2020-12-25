@@ -3,10 +3,11 @@ import collections
 import flask
 
 from . import apiRequest, apiResponse
-from .autoconf import ftr_autoconf
 from .apks import ftr_mad_apks
-from .resources import (ftr_area, ftr_auth, ftr_device, ftr_devicesetting, ftr_geofence, ftr_monlist, ftr_routecalc,
-                        ftr_walker, ftr_walkerarea, ftr_pogoauth)
+from .autoconf import ftr_autoconf
+from .resources import (
+    ftr_area, ftr_auth, ftr_device, ftr_devicesetting, ftr_geofence,
+    ftr_monlist, ftr_pogoauth, ftr_routecalc, ftr_walker, ftr_walkerarea)
 
 BASE_URI = '/api'
 valid_resources = {

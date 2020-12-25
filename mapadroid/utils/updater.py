@@ -5,13 +5,15 @@ import re
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from multiprocessing import Queue, Event
+from multiprocessing import Event, Queue
 from queue import Empty
 from threading import RLock, Thread
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APKType, file_generator, lookup_arch_enum, \
-    APKPackage, APKArch, supported_pogo_version, MADPackages
 
+from mapadroid.mad_apk import (AbstractAPKStorage, APKArch, APKPackage,
+                               APKType, MADPackages, file_generator,
+                               is_newer_version, lookup_arch_enum,
+                               supported_pogo_version)
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
 

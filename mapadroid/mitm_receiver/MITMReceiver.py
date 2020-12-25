@@ -1,26 +1,27 @@
-from functools import wraps
 import gzip
+import io
 import json
 import socket
 import sys
 import time
-import io
+from functools import wraps
 from multiprocessing import JoinableQueue, Process
-from typing import Any, Dict, Union, Optional
+from threading import RLock
+from typing import Any, Dict, Optional, Union
 
 from flask import Flask, Response, request, send_file
 from gevent.pywsgi import WSGIServer
 
+from mapadroid.data_manager.dm_exceptions import UpdateIssue
+from mapadroid.mad_apk import (APKType, lookup_package_info, parse_frontend,
+                               stream_package, supported_pogo_version)
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
+from mapadroid.utils.autoconfig import PDConfig, RGCConfig, origin_generator
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LogLevelChanger, get_logger, LoggerEnums, get_origin_logger
-from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version, APKType
-from threading import RLock
-from mapadroid.utils.autoconfig import origin_generator, RGCConfig, PDConfig
-from mapadroid.data_manager.dm_exceptions import UpdateIssue
-
+from mapadroid.utils.logging import (LoggerEnums, LogLevelChanger, get_logger,
+                                     get_origin_logger)
 
 logger = get_logger(LoggerEnums.mitm)
 app = Flask(__name__)
@@ -223,7 +224,7 @@ class MITMReceiver(Process):
 
     def shutdown(self):
         logger.info("MITMReceiver stop called...")
-        for i in range(self.__application_args.mitmreceiver_data_workers):
+        for _ in range(self.__application_args.mitmreceiver_data_workers):
             self._add_to_queue(None)
 
     def run(self):

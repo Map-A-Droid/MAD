@@ -1,15 +1,18 @@
 import datetime
 import json
 import time
-from flask import (jsonify, render_template, request, redirect, url_for, flash)
+
+from flask import flash, jsonify, redirect, render_template, request, url_for
+
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.madmin.functions import auth_required, generate_coords_from_geofence, get_geofences
-from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv
+from mapadroid.madmin.functions import (auth_required,
+                                        generate_coords_from_geofence,
+                                        get_geofences)
+from mapadroid.utils.gamemechanicutil import calculate_iv, calculate_mon_level
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.language import get_mon_name
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.madmin)
 

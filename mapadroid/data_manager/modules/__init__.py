@@ -1,17 +1,20 @@
 from typing import Optional
-from . import area_idle, area_iv_mitm, area_mon_mitm, area_pokestops, area_raids_mitm
-from .resource import Resource
+
+from ..dm_exceptions import (InvalidArea, ModeNotSpecified, ModeUnknown,
+                             UnknownIdentifier)
+from . import (area_idle, area_iv_mitm, area_mon_mitm, area_pokestops,
+               area_raids_mitm)
 from .area import Area
 from .auth import Auth
 from .device import Device
 from .devicepool import DevicePool
 from .geofence import GeoFence
 from .monivlist import MonIVList
+from .pogoauth import PogoAuth
+from .resource import Resource
 from .routecalc import RouteCalc
 from .walker import Walker
 from .walkerarea import WalkerArea
-from .pogoauth import PogoAuth
-from ..dm_exceptions import InvalidArea, ModeNotSpecified, ModeUnknown, UnknownIdentifier
 
 
 def area_factory(data_manager, identifier: Optional[int] = None, mode: Optional[str] = None) -> Resource:

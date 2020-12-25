@@ -1,13 +1,14 @@
-import inspect
-import os
 import base64
-import json
-import pkgutil
 import configparser
+import inspect
+import json
+import os
+import pkgutil
 import zipfile
 
+from flask import Blueprint, flash, redirect, request, send_file, url_for
 from werkzeug.utils import secure_filename
-from flask import Blueprint, request, flash, redirect, url_for, send_file
+
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.functions import generate_path
 
@@ -202,7 +203,7 @@ class PluginCollection(object):
                 with open(os.path.join(extractpath, "plugin.ini.example"), 'w') as pluginini:
                     pluginini.write('[plugin]\n')
                     pluginini.write('active = false\n')
-        except:  # noqa: E722
+        except:  # noqa: E722 B001
             self._logger.opt(exception=True).error("Cannot install new plugin: " + str(mpl_file))
             return False
 
