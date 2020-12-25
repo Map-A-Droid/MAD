@@ -3,12 +3,13 @@ import io
 import json
 import time
 from typing import List, NoReturn
-from mapadroid.db.DbFactory import DbFactory
-from mapadroid.mad_apk import APKArch, APKType, get_storage_obj, PackageImporter
-from mapadroid.tests.local_api import LocalAPI
-import mapadroid.tests.test_variables as global_variables
-from mapadroid.utils.walkerArgs import parse_args
 
+import mapadroid.tests.test_variables as global_variables
+from mapadroid.db.DbFactory import DbFactory
+from mapadroid.mad_apk import (APKArch, APKType, PackageImporter,
+                               get_storage_obj)
+from mapadroid.tests.local_api import LocalAPI
+from mapadroid.utils.walkerArgs import parse_args
 
 filepath_rgc = 'APK/RemoteGpsController.apk'
 mimetype = 'application/vnd.android.package-archive'

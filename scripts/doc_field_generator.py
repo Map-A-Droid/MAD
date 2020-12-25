@@ -3,8 +3,9 @@
 import os
 import sys
 
-sys.path.append(os.getcwd())
 import mapadroid.madmin.api
+
+sys.path.append(os.getcwd())
 
 EXPECTED_TYPES = {
     str: 'String',

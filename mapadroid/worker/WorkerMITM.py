@@ -1,18 +1,18 @@
 import math
 import time
 from datetime import datetime
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.worker.MITMBase import LatestReceivedType, MITMBase
 
 logger = get_logger(LoggerEnums.worker)
 

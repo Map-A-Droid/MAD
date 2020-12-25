@@ -869,7 +869,7 @@ class WorkerQuests(MITMBase):
                               fort_id, stop_location_known, last_updated)
             if last_updated and last_updated > datetime.now() - timedelta_to_consider_deletion:
                 self.logger.debug3("Stop considered for deletion was last updated recently, not gonna delete it for"
-                                   "now.", last_updated)
+                                   " now.", last_updated)
                 continue
             distance_to_location = get_distance_of_two_points_in_meters(float(stop_location_known.lat),
                                                                         float(stop_location_known.lng),

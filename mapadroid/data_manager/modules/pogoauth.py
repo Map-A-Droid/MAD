@@ -1,6 +1,8 @@
 from typing import Dict, List, Tuple
-from .resource import Resource
+
 from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
+
+from .resource import Resource
 
 
 class PogoAuth(Resource):
@@ -85,7 +87,7 @@ class PogoAuth(Resource):
             except KeyError:
                 # Auth isn't found. Either it doesnt exist or auth_type mismatch
                 return avail_devices
-        for pauth_id, pauth in pogoauths.items():
+        for pauth in pogoauths.values():
             if pauth['device_id'] is not None and device_id is not None and pauth['device_id'] != device_id:
                 invalid_devices.append(pauth['device_id'])
         invalid_devices = list(set(invalid_devices))
@@ -102,7 +104,9 @@ class PogoAuth(Resource):
             dependencies[ind] = ('device', device_id)
         return dependencies
 
-    def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
+    def save(self, core_data=None, force_insert=False, ignore_issues=None, **kwargs):
+        if ignore_issues is None:
+            ignore_issues = []
         self.presave_validation(ignore_issues=ignore_issues)
         if self["login_type"] == "google":
             self["username"] = self["username"].lower()

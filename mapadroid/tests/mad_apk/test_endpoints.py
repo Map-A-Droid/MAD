@@ -1,9 +1,9 @@
 import os
+
 from mapadroid.mad_apk import APKArch, APKType
 from mapadroid.tests.apk_base import APKTestBase
 from mapadroid.tests.test_utils import filepath_rgc, get_rgc_bytes
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.system)
 
