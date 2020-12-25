@@ -111,6 +111,7 @@ setup-precommit:
 
 setup: setup-precommit
 	git config commit.template .gitmessage
+	git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 up:
 	docker-compose -f ${COMPOSE_FILE_DEV} up --detach
