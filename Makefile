@@ -121,8 +121,12 @@ shell: up
 root-shell: up
 	docker-compose -f ${COMPOSE_FILE_DEV} exec -u root $(CONTAINER_NAME) $(CMD)
 
+run: down
+	docker-compose -f ${COMPOSE_FILE_TEST} up
+
 down:
 	docker-compose -f ${COMPOSE_FILE_DEV} down
+	docker-compose -f ${COMPOSE_FILE_TEST} down
 
 tests: up
 	docker-compose -f ${COMPOSE_FILE_DEV} exec mapadroid-dev tox
