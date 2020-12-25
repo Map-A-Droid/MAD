@@ -186,8 +186,7 @@ class MADminConfig(object):
         ortools_info = False
 
         try:
-            from ortools.constraint_solver import routing_enums_pb2
-            from ortools.constraint_solver import pywrapcp
+            from ortools.constraint_solver import pywrapcp, routing_enums_pb2
         except Exception:
             pass
         import platform

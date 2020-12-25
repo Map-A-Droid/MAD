@@ -580,7 +580,7 @@ class DeviceUpdater(object):
                     '|') or not self._args.job_dt_wh:
                 return
 
-            from discord_webhook import DiscordWebhook, DiscordEmbed
+            from discord_webhook import DiscordEmbed, DiscordWebhook
             _webhook = DiscordWebhook(url=self._args.job_dt_wh_url)
 
             origin = self._log[str(job_id)]['origin']
