@@ -1,12 +1,13 @@
-from io import StringIO
 import logging
 import os
 import sys
 from enum import IntEnum
 from functools import wraps
-from mapadroid.utils.walkerArgs import parse_args
+from io import StringIO
 
 from loguru import logger
+
+from mapadroid.utils.walkerArgs import parse_args
 
 
 class LoggerEnums(IntEnum):
@@ -34,6 +35,7 @@ class LoggerEnums(IntEnum):
 
 class RotatingStringIO(StringIO):
     max_size: int = 4 * 1024 * 1024
+
     def size_check(self, additional):
         if self.tell() + len(additional) >= self.max_size:
             self.flush()
@@ -43,7 +45,9 @@ class RotatingStringIO(StringIO):
         self.size_check(log)
         super().write(log)
 
+
 AJAX_INFO: StringIO = RotatingStringIO()
+
 
 def generate_format(args):
     log_level_label, log_level_val = log_level(args.log_level, args.verbose)
@@ -70,6 +74,7 @@ def generate_format(args):
     fs_log_format = ' '.join(log_format_fs)
     log_format_console = ' '.join(log_format_c)
     return fs_log_format, log_format_console
+
 
 def init_logging(args):
     global logger
@@ -364,7 +369,7 @@ class AjaxSink:
 
 
 class RotatingStringIO(StringIO):
-    max_size: int = 4*1024*1024
+    max_size: int = 4 * 1024 * 1024
 
     def size_check(self, additional):
         if self.tell() + len(additional) >= RotatingStringIO.max_size:
