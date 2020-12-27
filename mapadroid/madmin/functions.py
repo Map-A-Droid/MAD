@@ -143,8 +143,8 @@ def generate_coords_from_geofence(mapping_manager, data_manager, fence):
     fence_string = []
     geofences = get_geofences(mapping_manager, data_manager)
     coordinates = []
-    for fence in geofences.values():
-        for fname, coords in fence.get('include').items():
+    for fences in geofences.values():
+        for fname, coords in fences.get('include').items():
             if fname != fence:
                 continue
             coordinates.append(coords)
