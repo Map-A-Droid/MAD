@@ -139,13 +139,13 @@ def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=No
     return geofences
 
 
-def generate_coords_from_geofence(mapping_manager, data_manager, fence):
+def generate_coords_from_geofence(mapping_manager, data_manager, fence_name):
     fence_string = []
     geofences = get_geofences(mapping_manager, data_manager)
     coordinates = []
     for fence in geofences.values():
         for fname, coords in fence.get('include').items():
-            if fname != fence:
+            if fname != fence_name:
                 continue
             coordinates.append(coords)
 
