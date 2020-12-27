@@ -8,9 +8,9 @@ class APKArch(IntEnum):
 
 
 class APKPackage(Enum):
-    pd = 'com.mad.pogodroid'
-    pogo = 'com.nianticlabs.pokemongo'
-    rgc = 'de.grennith.rgc.remotegpscontroller'
+    pd = "com.mad.pogodroid"
+    pogo = "com.nianticlabs.pokemongo"
+    rgc = "de.grennith.rgc.remotegpscontroller"
 
 
 class APKType(IntEnum):
@@ -20,5 +20,5 @@ class APKType(IntEnum):
 
 
 class DeviceCodename(Enum):
-    armeabi_v7a: str = 'hammerhead'
-    arm64_v8a: str = 'angler'
+    armeabi_v7a: str = "hammerhead"
+    arm64_v8a: str = "angler"

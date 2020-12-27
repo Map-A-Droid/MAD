@@ -12,22 +12,50 @@ logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerLevelingRoutefree(RouteManagerQuests):
-    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "route", joinqueue=None):
-        RouteManagerQuests.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                    max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
-                                    path_to_include_geofence=path_to_include_geofence,
-                                    path_to_exclude_geofence=path_to_exclude_geofence,
-                                    routefile=routefile, init=init,
-                                    name=name, settings=settings, mode=mode, level=level, calctype=calctype,
-                                    joinqueue=joinqueue
-                                    )
+    def __init__(
+        self,
+        db_wrapper: DbWrapper,
+        dbm,
+        area_id,
+        coords: List[Location],
+        max_radius: float,
+        max_coords_within_radius: int,
+        path_to_include_geofence: str,
+        path_to_exclude_geofence: str,
+        routefile: str,
+        mode=None,
+        init: bool = False,
+        name: str = "unknown",
+        settings: dict = None,
+        level: bool = False,
+        calctype: str = "route",
+        joinqueue=None,
+    ):
+        RouteManagerQuests.__init__(
+            self,
+            db_wrapper=db_wrapper,
+            dbm=dbm,
+            area_id=area_id,
+            coords=coords,
+            max_radius=max_radius,
+            max_coords_within_radius=max_coords_within_radius,
+            path_to_include_geofence=path_to_include_geofence,
+            path_to_exclude_geofence=path_to_exclude_geofence,
+            routefile=routefile,
+            init=init,
+            name=name,
+            settings=settings,
+            mode=mode,
+            level=level,
+            calctype=calctype,
+            joinqueue=joinqueue,
+        )
 
     def _worker_changed_update_routepools(self):
         with self._manager_mutex and self._workers_registered_mutex:
-            self.logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
+            self.logger.info(
+                "Updating all routepools in level mode for {} origins", len(self._routepool),
+            )
             if len(self._workers_registered) == 0:
                 self.logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
@@ -41,22 +69,25 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                     self.logger.debug("origin {} already has a queue, do not touch...", origin)
                     continue
                 current_worker_pos = entry.current_pos
-                unvisited_stops = self.db_wrapper.get_nearest_stops_from_position(geofence_helper=self.geofence_helper,
-                                                                                  origin=origin,
-                                                                                  lat=current_worker_pos.lat,
-                                                                                  lon=current_worker_pos.lng,
-                                                                                  limit=30,
-                                                                                  ignore_spinned=self.settings.get(
-                                                                                      "ignore_spinned_stops", True),
-                                                                                  maxdistance=5)
+                unvisited_stops = self.db_wrapper.get_nearest_stops_from_position(
+                    geofence_helper=self.geofence_helper,
+                    origin=origin,
+                    lat=current_worker_pos.lat,
+                    lon=current_worker_pos.lng,
+                    limit=30,
+                    ignore_spinned=self.settings.get("ignore_spinned_stops", True),
+                    maxdistance=5,
+                )
                 if len(unvisited_stops) == 0:
-                    self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
+                    self.logger.info(
+                        "There are no unvisited stops left in DB for {} - nothing more to do!", origin,
+                    )
                     continue
 
                 for coord in unvisited_stops:
                     coord_location = Location(coord.lat, coord.lng)
                     if coord_location in self._coords_to_be_ignored:
-                        self.logger.info('Already tried this Stop but it failed spinnable test, skip it')
+                        self.logger.info("Already tried this Stop but it failed spinnable test, skip it")
                         continue
                     origin_local_list.append(coord_location)
 
@@ -68,7 +99,9 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                         origin_local_list.append(Location(coord["lat"], coord["lng"]))
 
                 # subroute is all stops unvisited
-                self.logger.info("Origin {} has {} unvisited stops for this route", origin, len(origin_local_list))
+                self.logger.info(
+                    "Origin {} has {} unvisited stops for this route", origin, len(origin_local_list),
+                )
                 entry.subroute = origin_local_list
                 # let's clean the queue just to make sure
                 entry.queue.clear()
@@ -76,9 +109,9 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                 any_at_all = len(origin_local_list) > 0 or any_at_all
                 # saving new startposition of walker in db
                 newstartposition: Location = entry.queue[0]
-                self.db_wrapper.save_last_walker_position(origin=origin,
-                                                          lat=newstartposition.lat,
-                                                          lng=newstartposition.lng)
+                self.db_wrapper.save_last_walker_position(
+                    origin=origin, lat=newstartposition.lat, lng=newstartposition.lng
+                )
             return True
 
     def _local_recalc_subroute(self, unvisited_stops):
@@ -86,9 +119,9 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         for i in range(len(unvisited_stops)):
             to_be_route[i][0] = float(unvisited_stops[i].lat)
             to_be_route[i][1] = float(unvisited_stops[i].lng)
-        new_route = self.calculate_new_route(to_be_route, self._max_radius, self._max_coords_within_radius,
-                                             False, 1,
-                                             True)
+        new_route = self.calculate_new_route(
+            to_be_route, self._max_radius, self._max_coords_within_radius, False, 1, True,
+        )
 
         return new_route
 
@@ -105,8 +138,9 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         return 0
 
     def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                          in_memory=True)
+        self.recalc_route(
+            self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False, in_memory=True,
+        )
         self._init_route_queue()
 
     def _get_coords_after_finish_route(self) -> bool:
@@ -114,7 +148,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         try:
 
             if self._shutdown_route:
-                self.logger.info('Other worker shutdown route - leaving it')
+                self.logger.info("Other worker shutdown route - leaving it")
                 return False
 
             self._worker_changed_update_routepools()
@@ -141,7 +175,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                 self.logger.info("Starting routemanager")
 
                 if self._shutdown_route:
-                    self.logger.info('Other worker shutdown route - leaving it')
+                    self.logger.info("Other worker shutdown route - leaving it")
                     return False
 
                 self._prio_queue = None
@@ -167,7 +201,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         return False
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route')
+        self.logger.info("Shutdown Route")
         if self._is_started:
             self._is_started = False
             self._round_started_time = None
@@ -182,12 +216,12 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         if self.init:
-            self.logger.debug('Init Mode - coord is valid')
+            self.logger.debug("Init Mode - coord is valid")
             return True
         stop = Location(lat, lng)
-        self.logger.info('Checking Stop with ID {}', stop)
+        self.logger.info("Checking Stop with ID {}", stop)
         if stop in self._coords_to_be_ignored:
-            self.logger.info('Already tried this Stop and failed it')
+            self.logger.info("Already tried this Stop and failed it")
             return False
-        self.logger.info('DB knows nothing of this stop for {} lets try and go there', origin)
+        self.logger.info("DB knows nothing of this stop for {} lets try and go there", origin)
         return True

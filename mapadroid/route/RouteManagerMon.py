@@ -5,18 +5,42 @@ logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerMon(RouteManagerBase):
-    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                 path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=True, init=False,
-                 name="unknown", settings=None, joinqueue=None, include_event_id=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                  max_radius=max_radius,
-                                  max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
-                                  )
+    def __init__(
+        self,
+        db_wrapper,
+        dbm,
+        area_id,
+        coords,
+        max_radius,
+        max_coords_within_radius,
+        path_to_include_geofence,
+        path_to_exclude_geofence,
+        routefile,
+        mode=None,
+        coords_spawns_known=True,
+        init=False,
+        name="unknown",
+        settings=None,
+        joinqueue=None,
+        include_event_id=None,
+    ):
+        RouteManagerBase.__init__(
+            self,
+            db_wrapper=db_wrapper,
+            dbm=dbm,
+            area_id=area_id,
+            coords=coords,
+            max_radius=max_radius,
+            max_coords_within_radius=max_coords_within_radius,
+            path_to_include_geofence=path_to_include_geofence,
+            path_to_exclude_geofence=path_to_exclude_geofence,
+            routefile=routefile,
+            init=init,
+            name=name,
+            settings=settings,
+            mode=mode,
+            joinqueue=joinqueue,
+        )
         self.coords_spawns_known = coords_spawns_known
         self.include_event_id = include_event_id
 
@@ -28,8 +52,9 @@ class RouteManagerMon(RouteManagerBase):
         return True
 
     def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                          in_memory=False)
+        self.recalc_route(
+            self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True, in_memory=False,
+        )
         self._init_route_queue()
 
     def _retrieve_latest_priority_queue(self):
@@ -38,12 +63,10 @@ class RouteManagerMon(RouteManagerBase):
     def _get_coords_post_init(self):
         if self.coords_spawns_known:
             self.logger.info("Reading known Spawnpoints from DB")
-            coords = self.db_wrapper.get_detected_spawns(
-                self.geofence_helper, self.include_event_id)
+            coords = self.db_wrapper.get_detected_spawns(self.geofence_helper, self.include_event_id)
         else:
             self.logger.info("Reading unknown Spawnpoints from DB")
-            coords = self.db_wrapper.get_undetected_spawns(
-                self.geofence_helper, self.include_event_id)
+            coords = self.db_wrapper.get_undetected_spawns(self.geofence_helper, self.include_event_id)
         self._start_priority_queue()
         return coords
 
@@ -71,7 +94,7 @@ class RouteManagerMon(RouteManagerBase):
         return False
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route {}', self.name)
+        self.logger.info("Shutdown Route {}", self.name)
         self._is_started = False
         self._round_started_time = None
 

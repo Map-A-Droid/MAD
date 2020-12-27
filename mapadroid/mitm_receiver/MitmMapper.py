@@ -33,8 +33,8 @@ class MitmMapper(object):
         self.__playerstats_db_update_queue: Queue = Queue()
         self.__playerstats_db_update_mutex: Lock = Lock()
         pstat_args = {
-            'name': 'system',
-            'target': self.__internal_playerstats_db_update_consumer
+            "name": "system",
+            "target": self.__internal_playerstats_db_update_consumer,
         }
         self.__playerstats_db_update_consumer: Thread = Thread(**pstat_args)
         if self.__mapping_manager is not None:
@@ -75,21 +75,18 @@ class MitmMapper(object):
 
     def __process_stats(self, stats, client_id: str, last_processed_timestamp: float):
         origin_logger = get_origin_logger(logger, origin=client_id)
-        origin_logger.debug('Submitting stats')
+        origin_logger.debug("Submitting stats")
         data_send_stats = []
         data_send_location = []
 
         data_send_stats.append(PlayerStats.stats_complete_parser(client_id, stats, last_processed_timestamp))
-        data_send_location.append(
-            PlayerStats.stats_location_parser(client_id, stats, last_processed_timestamp))
+        data_send_location.append(PlayerStats.stats_location_parser(client_id, stats, last_processed_timestamp))
 
         self._db_stats_submit.submit_stats_complete(data_send_stats)
         self._db_stats_submit.submit_stats_locations(data_send_location)
         if self.__application_args.game_stats_raw:
-            data_send_location_raw = PlayerStats.stats_location_raw_parser(client_id, stats,
-                                                                           last_processed_timestamp)
-            data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats,
-                                                                             last_processed_timestamp)
+            data_send_location_raw = PlayerStats.stats_location_raw_parser(client_id, stats, last_processed_timestamp)
+            data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats, last_processed_timestamp)
             self._db_stats_submit.submit_stats_locations_raw(data_send_location_raw)
             self._db_stats_submit.submit_stats_detections_raw(data_send_detection_raw)
 
@@ -118,10 +115,10 @@ class MitmMapper(object):
         if get_devicesettings_of_origin is None:
             return []
         else:
-            enhanced_mode_quest_safe_items = \
-                get_devicesettings_of_origin.get("enhanced_mode_quest_safe_items", "1301, 1401,1402, 1403, 1106, "
-                                                 "901, 902, 903, 501, 502, 503,"
-                                                 "504, 301").split(",")
+            enhanced_mode_quest_safe_items = get_devicesettings_of_origin.get(
+                "enhanced_mode_quest_safe_items",
+                "1301, 1401,1402, 1403, 1106, " "901, 902, 903, 501, 502, 503," "504, 301",
+            ).split(",")
 
             return list(map(int, enhanced_mode_quest_safe_items))
 
@@ -143,8 +140,15 @@ class MitmMapper(object):
         return result
 
     # origin, method, data, timestamp
-    def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = None,
-                      timestamp_received_receiver: float = None, location: Location = None):
+    def update_latest(
+        self,
+        origin: str,
+        key: str,
+        values_dict,
+        timestamp_received_raw: float = None,
+        timestamp_received_receiver: float = None,
+        location: Location = None,
+    ):
         origin_logger = get_origin_logger(logger, origin=origin)
         if timestamp_received_raw is None:
             timestamp_received_raw = time.time()
@@ -159,8 +163,9 @@ class MitmMapper(object):
                 origin_logger.info("New device detected.  Setting up the device configuration")
                 self.__add_new_device(origin)
             if origin in self.__mapping.keys():
-                origin_logger.debug2("Updating timestamp at {} with method {} to {}", location, key,
-                                     timestamp_received_raw)
+                origin_logger.debug2(
+                    "Updating timestamp at {} with method {} to {}", location, key, timestamp_received_raw,
+                )
                 if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
                     del self.__mapping[origin][key]
                 self.__mapping[origin][key] = {}
@@ -196,12 +201,21 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).stats_collector()
 
-    def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, positiontype,
-                               rec_timestamp: float, walker, transporttype):
+    def collect_location_stats(
+        self,
+        origin: str,
+        location: Location,
+        datarec,
+        start_timestamp: float,
+        positiontype,
+        rec_timestamp: float,
+        walker,
+        transporttype,
+    ):
         if self.__playerstats.get(origin, None) is not None and location is not None:
-            self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp,
-                                                                       positiontype,
-                                                                       rec_timestamp, walker, transporttype)
+            self.__playerstats.get(origin).stats_collect_location_data(
+                location, datarec, start_timestamp, positiontype, rec_timestamp, walker, transporttype,
+            )
 
     def get_playerlevel(self, origin: str):
         if self.__playerstats.get(origin, None) is not None:
@@ -242,7 +256,7 @@ class MitmMapper(object):
         if cells is None:
             return
 
-        current_cells_id = sorted(list(map(lambda x: x['id'], cells)))
+        current_cells_id = sorted(list(map(lambda x: x["id"], cells)))
         if origin in self.__last_cellsid:
             last_cells_id = self.__last_cellsid[origin]
             self.__last_cellsid[origin] = current_cells_id

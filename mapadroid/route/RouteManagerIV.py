@@ -8,18 +8,40 @@ logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerIV(RouteManagerBase):
-    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                 path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, init=False,
-                 name="unknown", settings=None, joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                  max_radius=max_radius,
-                                  max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
-                                  )
+    def __init__(
+        self,
+        db_wrapper,
+        dbm,
+        area_id,
+        coords,
+        max_radius,
+        max_coords_within_radius,
+        path_to_include_geofence,
+        path_to_exclude_geofence,
+        routefile,
+        mode=None,
+        init=False,
+        name="unknown",
+        settings=None,
+        joinqueue=None,
+    ):
+        RouteManagerBase.__init__(
+            self,
+            db_wrapper=db_wrapper,
+            dbm=dbm,
+            area_id=area_id,
+            coords=coords,
+            max_radius=max_radius,
+            max_coords_within_radius=max_coords_within_radius,
+            path_to_include_geofence=path_to_include_geofence,
+            path_to_exclude_geofence=path_to_exclude_geofence,
+            routefile=routefile,
+            init=init,
+            name=name,
+            settings=settings,
+            mode=mode,
+            joinqueue=joinqueue,
+        )
         self.encounter_ids_left: List[int] = []
         self.starve_route = True
         if self.delay_after_timestamp_prio is None:
@@ -33,16 +55,17 @@ class RouteManagerIV(RouteManagerBase):
         return True
 
     def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                          in_memory=False)
+        self.recalc_route(
+            self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False, in_memory=False,
+        )
 
     def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info
-        latest_priorities = self.db_wrapper.get_to_be_encountered(geofence_helper=self.geofence_helper,
-                                                                  min_time_left_seconds=self.settings.get(
-                                                                      "min_time_left_seconds", None),
-                                                                  eligible_mon_ids=self.settings.get(
-                                                                      "mon_ids_iv_raw", None))
+        latest_priorities = self.db_wrapper.get_to_be_encountered(
+            geofence_helper=self.geofence_helper,
+            min_time_left_seconds=self.settings.get("min_time_left_seconds", None),
+            eligible_mon_ids=self.settings.get("mon_ids_iv_raw", None),
+        )
         # extract the encounterIDs and set them in the routeManager...
         new_list = []
         for prio in latest_priorities:
@@ -81,7 +104,7 @@ class RouteManagerIV(RouteManagerBase):
         return True
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route')
+        self.logger.info("Shutdown Route")
         self._is_started = False
         self._round_started_time = None
 

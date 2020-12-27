@@ -13,7 +13,7 @@ class Resocalculator(object):
         return True
 
     def get_coords_quest_menu(self):
-        click_x = (int(self._screen_x) / 1.07)
+        click_x = int(self._screen_x) / 1.07
         click_y = int(self._screen_y) - (int(self._screen_x) / 3.86)
         if self._y_offset > 0:
             return click_x + self._x_offset, click_y - self._y_offset - 55
@@ -41,7 +41,11 @@ class Resocalculator(object):
         click_y = int(self._screen_y) / 2
         click_x1 = int(self._screen_x) / 3
         click_x2 = int(self._screen_x) - int(click_x1)
-        return click_x1 + self._x_offset, click_x2 + self._x_offset, click_y + self._y_offset
+        return (
+            click_x1 + self._x_offset,
+            click_x2 + self._x_offset,
+            click_y + self._y_offset,
+        )
 
     def get_close_main_button_coords(self):
         click_x = int(self._screen_x) / 2
@@ -119,20 +123,35 @@ class Resocalculator(object):
 
     def get_inventory_text_diff(self):
         if float(self._xyratio) > 2.1:
-            y1 = int(self._screen_y) - (int(self._screen_x) / 0.61) - \
-                    (int(self._screen_y) - (int(self._screen_x) / 0.58))
+            y1 = (
+                int(self._screen_y)
+                - (int(self._screen_x) / 0.61)
+                - (int(self._screen_y) - (int(self._screen_x) / 0.58))
+            )
         elif float(self._xyratio) > 2:
-            y1 = int(self._screen_y) - (int(self._screen_x) / 0.60) - \
-                    (int(self._screen_y) - (int(self._screen_x) / 0.57))
+            y1 = (
+                int(self._screen_y)
+                - (int(self._screen_x) / 0.60)
+                - (int(self._screen_y) - (int(self._screen_x) / 0.57))
+            )
         elif float(self._xyratio) >= 1.9:
-            y1 = int(self._screen_y) - (int(self._screen_x) / 0.62) - \
-                    (int(self._screen_y) - (int(self._screen_x) / 0.59))
+            y1 = (
+                int(self._screen_y)
+                - (int(self._screen_x) / 0.62)
+                - (int(self._screen_y) - (int(self._screen_x) / 0.59))
+            )
         elif float(self._xyratio) >= 1.7:
-            y1 = int(self._screen_y) - (int(self._screen_x) / 0.715) - \
-                    (int(self._screen_y) - (int(self._screen_x) / 0.68))
+            y1 = (
+                int(self._screen_y)
+                - (int(self._screen_x) / 0.715)
+                - (int(self._screen_y) - (int(self._screen_x) / 0.68))
+            )
         elif float(self._xyratio) < 1.7:
-            y1 = int(self._screen_y) - (int(self._screen_x) / 0.82) - \
-                    (int(self._screen_y) - (int(self._screen_x) / 0.77))
+            y1 = (
+                int(self._screen_y)
+                - (int(self._screen_x) / 0.82)
+                - (int(self._screen_y) - (int(self._screen_x) / 0.77))
+            )
         return y1
 
     def get_delete_item_text(self):
@@ -161,7 +180,12 @@ class Resocalculator(object):
             x2 = int(self._screen_x) / 3.3
             y1 = int(self._screen_y) - (int(self._screen_x) / 0.82)
             y2 = int(self._screen_y) - (int(self._screen_x) / 0.77)
-        return x1 + self._x_offset, x2 + self._x_offset, y1 + self._y_offset, y2 + self._y_offset
+        return (
+            x1 + self._x_offset,
+            x2 + self._x_offset,
+            y1 + self._y_offset,
+            y2 + self._y_offset,
+        )
 
     def get_next_item_coord(self):
         return int(self._screen_x) / 2.84

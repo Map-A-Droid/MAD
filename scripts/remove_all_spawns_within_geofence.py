@@ -29,14 +29,15 @@ def get_value_for(regex_string, force_exit=True):
     if res is None or len(res) != 1 or res == []:
         if force_exit:
             if res is None or res == []:
-                sys.exit("Check your config.ini for %s - this field is required!" % re.search('\\\s\+(.*):',
-                                                                                              regex_string).group(
-                    1))
+                sys.exit(
+                    "Check your config.ini for %s - this field is required!"
+                    % re.search("\\\s\+(.*):", regex_string).group(1)
+                )
             else:
                 sys.exit(
-                    "Found more than one value for %s in config.ini, fix that." % re.search('\\\s\+(.*):',
-                                                                                            regex_string).group(
-                        1))
+                    "Found more than one value for %s in config.ini, fix that."
+                    % re.search("\\\s\+(.*):", regex_string).group(1)
+                )
         return None
     else:
         return res[0]
@@ -50,7 +51,7 @@ def main():
         logger.error("usage: remove_all_spawns_within_geofence.py GEOFENCE_FILENAME")
         sys.exit(1)
 
-    LocationWithID = collections.namedtuple('Location', ['lat', 'lng', 'spawnpoint'])
+    LocationWithID = collections.namedtuple("Location", ["lat", "lng", "spawnpoint"])
 
     geofence_filename = sys.argv[1]
     # print("Argument: '%s'" % (geofence_filename))
@@ -74,20 +75,17 @@ def main():
         "AND latitude <= {} AND longitude <= {}) "
     ).format(minLat, minLon, maxLat, maxLon)
 
-    delete_query = (
-        "DELETE FROM trs_spawn "
-        "WHERE spawnpoint = {} "
-    )
+    delete_query = "DELETE FROM trs_spawn " "WHERE spawnpoint = {} "
 
     list_of_coords: List[LocationWithID] = []
 
-    dbip = get_value_for(r'\s+dbip:\s+([^\s]+)')
-    dbport = get_value_for(r'\s+dbport:\s+([^.\s]*)', False)
+    dbip = get_value_for(r"\s+dbip:\s+([^\s]+)")
+    dbport = get_value_for(r"\s+dbport:\s+([^.\s]*)", False)
     if dbport is None:  # if dbport is not set, use default
-        dbport = '3306'
-    dbusername = get_value_for(r'\s+dbusername:\s+([^.\s]*)')
-    dbpassword = get_value_for(r'\s+dbpassword:\s+([^.\s]*)')
-    dbname = get_value_for(r'\s+dbname:\s+([^.\s]*)')
+        dbport = "3306"
+    dbusername = get_value_for(r"\s+dbusername:\s+([^.\s]*)")
+    dbpassword = get_value_for(r"\s+dbpassword:\s+([^.\s]*)")
+    dbname = get_value_for(r"\s+dbname:\s+([^.\s]*)")
 
     # print("Successfully parsed config.ini, using values:")
     # print("dbport: %s" % dbport)
@@ -95,12 +93,7 @@ def main():
     # print("dbname: %s" % dbname)
     # print("dbip: %s" % dbip)
 
-    connection = mysql.connector.connect(
-        host=dbip,
-        port=dbport,
-        user=dbusername,
-        passwd=dbpassword,
-        database=dbname)
+    connection = mysql.connector.connect(host=dbip, port=dbport, user=dbusername, passwd=dbpassword, database=dbname)
     cursor = connection.cursor()
 
     cursor.execute(query)

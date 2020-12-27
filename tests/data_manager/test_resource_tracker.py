@@ -11,12 +11,12 @@ def get_resource_tracker(data_manager, resource, section, populate_defaults=Fals
     if populate_defaults:
         for field, default_value in resource.configuration[section].items():
             try:
-                defaults[field] = default_value['settings']['empty']
+                defaults[field] = default_value["settings"]["empty"]
             except KeyError:
                 continue
     elif initial_data:
         defaults = initial_data
-    return ResourceTracker(copy.deepcopy(resource.configuration[section]), data_manager, initialdata=defaults)
+    return ResourceTracker(copy.deepcopy(resource.configuration[section]), data_manager, initialdata=defaults,)
 
 
 @pytest.mark.usefixtures("data_manager")
@@ -36,7 +36,7 @@ def test_get_lookups(data_manager):
         "required": True,
         "resource": None,
         "has_empty": False,
-        "empty": None
+        "empty": None,
     }
     assert tracker.get_lookups("login_type") == expected
     tracker = get_resource_tracker(data_manager, PogoAuth, "fields")
@@ -45,7 +45,7 @@ def test_get_lookups(data_manager):
         "required": False,
         "resource": "device",
         "has_empty": True,
-        "empty": None
+        "empty": None,
     }
     assert tracker.get_lookups("device_id") == expected
     tracker = get_resource_tracker(data_manager, area_pokestops.AreaPokestops, "fields")
@@ -54,7 +54,7 @@ def test_get_lookups(data_manager):
         "required": True,
         "resource": None,
         "has_empty": False,
-        "empty": None
+        "empty": None,
     }
     assert tracker.get_lookups("name") == expected
     tracker = get_resource_tracker(data_manager, area_pokestops.AreaPokestops, "fields")
@@ -63,7 +63,7 @@ def test_get_lookups(data_manager):
         "required": True,
         "resource": None,
         "has_empty": True,
-        "empty": False
+        "empty": False,
     }
     assert tracker.get_lookups("init") == expected
     tracker = get_resource_tracker(data_manager, Walker, "fields")
@@ -72,7 +72,7 @@ def test_get_lookups(data_manager):
         "required": True,
         "has_empty": True,
         "empty": [],
-        "resource": "walkerarea"
+        "resource": "walkerarea",
     }
     assert tracker.get_lookups("setup") == expected
 
@@ -106,40 +106,20 @@ def test_format_value():
 @pytest.mark.usefixtures("data_manager")
 def test_process_format_value(data_manager):
     tracker = get_resource_tracker(data_manager, PogoAuth, "fields")
-    lookups = {
-        "expected": str,
-        "required": True,
-        "has_empty": False,
-        "empty": None
-    }
+    lookups = {"expected": str, "required": True, "has_empty": False, "empty": None}
     assert tracker.process_format_value(lookups, "login_type", "ptc") == "ptc"
-    lookups = {
-        "expected": str,
-        "required": True,
-        "has_empty": False,
-        "empty": None
-    }
+    lookups = {"expected": str, "required": True, "has_empty": False, "empty": None}
     assert tracker.process_format_value(lookups, "login_type", "ptc2") == "ptc2"
     lookups = {
         "expected": str,
         "required": True,
         "has_empty": True,
-        "empty": "empty val"
+        "empty": "empty val",
     }
     assert tracker.process_format_value(lookups, "login_type", None) == lookups["empty"]
-    lookups = {
-        "expected": str,
-        "required": False,
-        "has_empty": False,
-        "empty": None
-    }
+    lookups = {"expected": str, "required": False, "has_empty": False, "empty": None}
     assert tracker.process_format_value(lookups, "login_type", None) is None
-    lookups = {
-        "expected": bool,
-        "required": True,
-        "has_empty": False,
-        "empty": None
-    }
+    lookups = {"expected": bool, "required": True, "has_empty": False, "empty": None}
     with pytest.raises(ValueError):
         tracker.process_format_value(lookups, "login_type", "f")
     assert tracker.issues["invalid"][0][0] == "login_type"
@@ -147,29 +127,16 @@ def test_process_format_value(data_manager):
         tracker.process_format_value(lookups, "login_type", None)
     assert tracker.issues["invalid"][1][0] == "login_type"
     tracker = get_resource_tracker(data_manager, Walker, "fields")
-    lookups = {
-        "expected": list,
-        "required": True,
-        "has_empty": True,
-        "empty": []
-    }
+    lookups = {"expected": list, "required": True, "has_empty": True, "empty": []}
     assert tracker.process_format_value(lookups, "setup", None) == []
 
 
 @pytest.mark.usefixtures("data_manager")
 def test_check_required(data_manager):
     tracker = get_resource_tracker(data_manager, PogoAuth, "fields")
-    lookups = {
-        "required": True,
-        "has_empty": True,
-        "empty": 1
-    }
+    lookups = {"required": True, "has_empty": True, "empty": 1}
     assert tracker.check_required(lookups, "test", "True")
-    lookups = {
-        "required": False,
-        "has_empty": True,
-        "empty": 1
-    }
+    lookups = {"required": False, "has_empty": True, "empty": 1}
     assert tracker.check_required(lookups, "test", "True")
     lookups = {
         "required": True,
@@ -177,25 +144,15 @@ def test_check_required(data_manager):
     }
     assert not tracker.check_required(lookups, "test", "")
     assert "test" in tracker.issues["missing"]
-    lookups = {
-        "required": False,
-        "has_empty": True,
-        "empty": 1
-    }
+    lookups = {"required": False, "has_empty": True, "empty": 1}
     assert tracker.check_required(lookups, "test", None)
 
 
 @pytest.mark.usefixtures("data_manager")
 def test_check_dependencies(data_manager):
     tracker = get_resource_tracker(data_manager, area_pokestops.AreaPokestops, "fields")
-    routecalc = {
-        "routecalc_id": 1,
-        "routefile": "[]",
-        "recalc_status": 0
-    }
-    lookups = {
-        "resource": "routecalc"
-    }
+    routecalc = {"routecalc_id": 1, "routefile": "[]", "recalc_status": 0}
+    lookups = {"resource": "routecalc"}
     data_manager.dbc.autofetch_row.return_value = routecalc
     tracker.check_dependencies(lookups, "routecalc", 1)
     tracker.check_dependencies(lookups, "routecalc", [1, 2])

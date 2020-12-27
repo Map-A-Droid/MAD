@@ -9,8 +9,10 @@ import websockets
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import (
-    WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException)
+    WebsocketWorkerConnectionClosedException,
+    WebsocketWorkerRemovedException,
+    WebsocketWorkerTimeoutException,
+)
 from mapadroid.worker.AbstractWorker import AbstractWorker
 
 
@@ -22,9 +24,14 @@ class ReceivedMessageEntry:
 
 
 class WebsocketConnectedClientEntry:
-    def __init__(self, origin: str, worker_thread: Optional[Thread], worker_instance: Optional[AbstractWorker],
-                 websocket_client_connection: Optional[websockets.WebSocketClientProtocol],
-                 loop_running: asyncio.AbstractEventLoop):
+    def __init__(
+        self,
+        origin: str,
+        worker_thread: Optional[Thread],
+        worker_instance: Optional[AbstractWorker],
+        websocket_client_connection: Optional[websockets.WebSocketClientProtocol],
+        loop_running: asyncio.AbstractEventLoop,
+    ):
         self.origin: str = origin
         self.worker_thread: Optional[Thread] = worker_thread
         self.worker_instance: Optional[AbstractWorker] = worker_instance
@@ -47,16 +54,26 @@ class WebsocketConnectedClientEntry:
                 message_entry.message = message
                 self.last_message_received_at = time.time()
 
-    def send_and_wait(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
-                      byte_command: Optional[int] = None) -> Optional[MessageTyping]:
+    def send_and_wait(
+        self,
+        message: MessageTyping,
+        timeout: float,
+        worker_instance: AbstractWorker,
+        byte_command: Optional[int] = None,
+    ) -> Optional[MessageTyping]:
         future = asyncio.run_coroutine_threadsafe(
-            self.send_and_wait_async(message, timeout, worker_instance, byte_command=byte_command),
-            self.loop_running)
+            self.send_and_wait_async(message, timeout, worker_instance, byte_command=byte_command), self.loop_running,
+        )
         return future.result()
 
-    async def send_and_wait_async(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
-                                  byte_command: Optional[int] = None) -> Optional[MessageTyping]:
-        if self.worker_instance is None or self.worker_instance != worker_instance and worker_instance != 'madmin':
+    async def send_and_wait_async(
+        self,
+        message: MessageTyping,
+        timeout: float,
+        worker_instance: AbstractWorker,
+        byte_command: Optional[int] = None,
+    ) -> Optional[MessageTyping]:
+        if self.worker_instance is None or self.worker_instance != worker_instance and worker_instance != "madmin":
             # TODO: consider changing this...
             raise WebsocketWorkerRemovedException
         elif not self.websocket_client_connection.open:
@@ -86,7 +103,9 @@ class WebsocketConnectedClientEntry:
                 if isinstance(new_entry.message, str):
                     self.logger.debug4("Response: {}", new_entry.message.strip())
                 else:
-                    self.logger.debug4("Received binary data , starting with {}", new_entry.message[:10])
+                    self.logger.debug4(
+                        "Received binary data , starting with {}", new_entry.message[:10],
+                    )
                 response = new_entry.message
         except asyncio.TimeoutError:
             self.logger.warning("Timeout, increasing timeout-counter")
@@ -101,14 +120,15 @@ class WebsocketConnectedClientEntry:
         self.logger.debug("Done sending command")
         return response
 
-    async def __send_message(self, message_id: int, message: MessageTyping,
-                             byte_command: Optional[int] = None) -> None:
+    async def __send_message(
+        self, message_id: int, message: MessageTyping, byte_command: Optional[int] = None,
+    ) -> None:
         if isinstance(message, str):
             to_be_sent: str = u"%s;%s" % (str(message_id), message)
             self.logger.debug4("To be sent: {}", to_be_sent.strip())
         elif byte_command is not None:
-            to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder='big')
-            to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
+            to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder="big")
+            to_be_sent += (int(byte_command)).to_bytes(4, byteorder="big")
             to_be_sent += message
             self.logger.debug4("To be sent to (message ID: {}): {}", message_id, to_be_sent[:10])
         else:

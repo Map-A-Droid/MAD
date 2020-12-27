@@ -4,14 +4,13 @@ from multiprocessing import JoinableQueue
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.mitm_receiver.SerializedMitmDataProcessor import \
-    SerializedMitmDataProcessor
+from mapadroid.mitm_receiver.SerializedMitmDataProcessor import SerializedMitmDataProcessor
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.mitm)
 
 
-class MitmDataProcessorManager():
+class MitmDataProcessorManager:
     def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper):
         self._worker_threads = []
         self._args = args
@@ -43,7 +42,9 @@ class MitmDataProcessorManager():
         while not self._stop_queue_check_thread:
             item_count = self.get_queue_size()
             if item_count > 50:
-                logger.warning("MITM data processing workers are falling behind! Queue length: {}", item_count)
+                logger.warning(
+                    "MITM data processing workers are falling behind! Queue length: {}", item_count,
+                )
 
             time.sleep(3)
 
@@ -54,7 +55,8 @@ class MitmDataProcessorManager():
                 self._args,
                 self._mitm_mapper,
                 self._db_wrapper,
-                name="SerialiedMitmDataProcessor-%s" % str(i))
+                name="SerialiedMitmDataProcessor-%s" % str(i),
+            )
 
             data_processor.start()
             self._worker_threads.append(data_processor)

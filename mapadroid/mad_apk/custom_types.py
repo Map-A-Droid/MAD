@@ -4,7 +4,7 @@ from .apk_enums import APKArch, APKType
 
 
 class MADPackage(object):
-    """ Package definition for MAD
+    """Package definition for MAD
 
     Args:
         package (APKType): Package
@@ -33,13 +33,13 @@ class MADPackage(object):
 
     def get_package(self, backend: bool = True):
         return {
-            'arch_disp': self.architecture if backend else self.architecture.name,
-            'file_id': self.file_id,
-            'filename': self.filename,
-            'mimetype': self.mimetype,
-            'size': self.size,
-            'usage_disp': self.package if backend else self.package.name,
-            'version': self.version
+            "arch_disp": self.architecture if backend else self.architecture.name,
+            "file_id": self.file_id,
+            "filename": self.filename,
+            "mimetype": self.mimetype,
+            "size": self.size,
+            "usage_disp": self.package if backend else self.package.name,
+            "version": self.version,
         }
 
     def __str__(self):

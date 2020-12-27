@@ -7,8 +7,8 @@ from mapadroid.madmin.functions import auth_required
 
 
 class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
-    """This plugin is just the identity function: it returns the argument
-    """
+    """This plugin is just the identity function: it returns the argument"""
+
     def __init__(self, mad):
         super().__init__(mad)
 
@@ -37,16 +37,24 @@ class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
         ]
 
         if self._pluginconfig.getboolean("plugin", "active", fallback=False):
-            self._plugin = Blueprint(str(self.pluginname), __name__, static_folder=self.staticpath,
-                                     template_folder=self.templatepath)
+            self._plugin = Blueprint(
+                str(self.pluginname), __name__, static_folder=self.staticpath, template_folder=self.templatepath,
+            )
 
             for route, view_func in self._routes:
                 self._plugin.add_url_rule(route, route.replace("/", ""), view_func=view_func)
 
             for name, link, description in self._hotlink:
-                self._mad['madmin'].add_plugin_hotlink(name, self._plugin.name + "." + link.replace("/", ""),
-                                                       self.pluginname, self.description, self.author, self.url,
-                                                       description, self.version)
+                self._mad["madmin"].add_plugin_hotlink(
+                    name,
+                    self._plugin.name + "." + link.replace("/", ""),
+                    self.pluginname,
+                    self.description,
+                    self.author,
+                    self.url,
+                    description,
+                    self.version,
+                )
 
     def perform_operation(self):
         """The actual implementation of the identity plugin is to just return the
@@ -56,7 +64,7 @@ class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
         # do not change this part ▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽
         if not self._pluginconfig.getboolean("plugin", "active", fallback=False):
             return False
-        self._mad['madmin'].register_plugin(self._plugin)
+        self._mad["madmin"].register_plugin(self._plugin)
         # do not change this part △△△△△△△△△△△△△△△
 
         # load your stuff now
@@ -65,12 +73,8 @@ class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
 
     @auth_required
     def example_route(self):
-        return render_template("testfile.html",
-                               header="Test Plugin", title="Test Plugin"
-                               )
+        return render_template("testfile.html", header="Test Plugin", title="Test Plugin")
 
     @auth_required
     def pluginfaq(self):
-        return render_template("pluginfaq.html",
-                               header="Test Plugin", title="Test Plugin"
-                               )
+        return render_template("pluginfaq.html", header="Test Plugin", title="Test Plugin")

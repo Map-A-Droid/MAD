@@ -1,14 +1,14 @@
 import s2sphere
 
 from mapadroid.utils.collections import Relation
-from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
-                                 get_middle_of_coord_list)
+from mapadroid.utils.geo import get_distance_of_two_points_in_meters, get_middle_of_coord_list
 from mapadroid.utils.s2Helper import S2Helper
 
 
 class ClusteringHelper:
-    def __init__(self, max_radius, max_count_per_circle, max_timedelta_seconds, use_s2: bool = False,
-                 s2_level: int = 30):
+    def __init__(
+        self, max_radius, max_count_per_circle, max_timedelta_seconds, use_s2: bool = False, s2_level: int = 30,
+    ):
         self.max_radius = max_radius
         self.max_count_per_circle = max_count_per_circle
         self.max_timedelta_seconds = max_timedelta_seconds
@@ -19,11 +19,15 @@ class ClusteringHelper:
         relations = {}
         for event in queue:
             for other_event in queue:
-                if event[1].lat == other_event[1].lat and event[1].lng == other_event[1].lng and \
-                   event not in relations.keys():
+                if (
+                    event[1].lat == other_event[1].lat
+                    and event[1].lng == other_event[1].lng
+                    and event not in relations.keys()
+                ):
                     relations[event] = []
-                distance = get_distance_of_two_points_in_meters(event[1].lat, event[1].lng,
-                                                                other_event[1].lat, other_event[1].lng)
+                distance = get_distance_of_two_points_in_meters(
+                    event[1].lat, event[1].lng, other_event[1].lat, other_event[1].lng
+                )
                 # we will always build relations from the event at hand subtracted by the event inspected
                 timedelta = event[0] - other_event[0]
                 if 0 <= distance <= max_radius * 2 and 0 <= timedelta <= self.max_timedelta_seconds:
@@ -32,12 +36,10 @@ class ClusteringHelper:
                     # avoid duplicates
                     already_present = False
                     for relation in relations[event]:
-                        if relation[0][1].lat == other_event[1].lat and \
-                           relation[0][1].lng == other_event[1].lng:
+                        if relation[0][1].lat == other_event[1].lat and relation[0][1].lng == other_event[1].lng:
                             already_present = True
                     if not already_present:
-                        relations[event].append(
-                            Relation(other_event, distance, timedelta))
+                        relations[event].append(Relation(other_event, distance, timedelta))
         return relations
 
     def _get_most_west_amongst_relations(self, relations):
@@ -56,32 +58,38 @@ class ClusteringHelper:
         distance = -1
         farthest = None
         for relation in to_be_inspected:
-            if (len(relation.other_event) == 4 and not relation.other_event[3] or len(relation) < 4) and \
-               relation.timedelta <= self.max_timedelta_seconds and relation.distance > distance:
+            if (
+                (len(relation.other_event) == 4 and not relation.other_event[3] or len(relation) < 4)
+                and relation.timedelta <= self.max_timedelta_seconds
+                and relation.distance > distance
+            ):
                 distance = relation.distance
                 farthest = relation
         return farthest.other_event, distance
 
-    def _get_count_and_coords_in_circle_within_timedelta(self, middle, relations, earliest_timestamp,
-                                                         latest_timestamp, max_radius):
+    def _get_count_and_coords_in_circle_within_timedelta(
+        self, middle, relations, earliest_timestamp, latest_timestamp, max_radius
+    ):
         inside_circle = []
         highest_timedelta = 0
         if self.useS2:
             region = s2sphere.CellUnion(
-                S2Helper.get_s2cells_from_circle(middle.lat, middle.lng, self.max_radius, self.S2level))
+                S2Helper.get_s2cells_from_circle(middle.lat, middle.lng, self.max_radius, self.S2level)
+            )
 
         for event_relations in relations:
             # exclude previously clustered events...
             if len(event_relations) == 4 and event_relations[3]:
                 inside_circle.append(event_relations)
                 continue
-            distance = get_distance_of_two_points_in_meters(middle.lat, middle.lng,
-                                                            event_relations[1].lat,
-                                                            event_relations[1].lng)
+            distance = get_distance_of_two_points_in_meters(
+                middle.lat, middle.lng, event_relations[1].lat, event_relations[1].lng
+            )
             event_in_range = 0 <= distance <= max_radius
             if self.useS2:
-                event_in_range = region.contains(s2sphere.LatLng.from_degrees(event_relations[1].lat,
-                                                                              event_relations[1].lng).to_point())
+                event_in_range = region.contains(
+                    s2sphere.LatLng.from_degrees(event_relations[1].lat, event_relations[1].lng).to_point()
+                )
             # timedelta of event being inspected to the earliest timestamp
             timedelta_end = latest_timestamp - event_relations[0]
             timedelta_start = event_relations[0] - earliest_timestamp
@@ -139,30 +147,35 @@ class ClusteringHelper:
             farthest_away = event
             distance_to_farthest = max_radius
         else:
-            farthest_away, distance_to_farthest = self._get_farthest_in_relation(
-                to_be_inspected)
+            farthest_away, distance_to_farthest = self._get_farthest_in_relation(to_be_inspected)
             all_events_within_range_and_time = [event, farthest_away]
-            earliest_timestamp = self._get_earliest_timestamp_in_queue(
-                all_events_within_range_and_time)
-            latest_timestamp = self._get_latest_timestamp_in_queue(
-                all_events_within_range_and_time)
-            middle = get_middle_of_coord_list(
-                [event[1], farthest_away[1]]
-            )
+            earliest_timestamp = self._get_earliest_timestamp_in_queue(all_events_within_range_and_time)
+            latest_timestamp = self._get_latest_timestamp_in_queue(all_events_within_range_and_time)
+            middle = get_middle_of_coord_list([event[1], farthest_away[1]])
             middle_event = (
-                latest_timestamp, middle, latest_timestamp - earliest_timestamp, True
+                latest_timestamp,
+                middle,
+                latest_timestamp - earliest_timestamp,
+                True,
             )
-        count_inside, events_in_circle, highest_timedelta, latest_timestamp = \
-            self._get_count_and_coords_in_circle_within_timedelta(middle, relations,
-                                                                  earliest_timestamp, latest_timestamp,
-                                                                  max_radius)
-        middle_event = (latest_timestamp, middle_event[1],
-                        highest_timedelta, middle_event[3])
+        (
+            count_inside,
+            events_in_circle,
+            highest_timedelta,
+            latest_timestamp,
+        ) = self._get_count_and_coords_in_circle_within_timedelta(
+            middle, relations, earliest_timestamp, latest_timestamp, max_radius
+        )
+        middle_event = (
+            latest_timestamp,
+            middle_event[1],
+            highest_timedelta,
+            middle_event[3],
+        )
         if count_inside <= self.max_count_per_circle and count_inside == len(to_be_inspected):
             return middle_event, events_in_circle
         elif count_inside > self.max_count_per_circle:
-            to_be_inspected = [
-                to_keep for to_keep in to_be_inspected if not to_keep.other_event == farthest_away]
+            to_be_inspected = [to_keep for to_keep in to_be_inspected if not to_keep.other_event == farthest_away]
             return self._get_circle(event, to_be_inspected, relations, distance_to_farthest)
         else:
             return middle_event, events_in_circle
@@ -185,15 +198,14 @@ class ClusteringHelper:
 
         while len(relations) > 0:
             west_next = self._get_most_west_amongst_relations(relations)
-            middle_event, events_to_be_removed = self._get_circle(west_next, relations[west_next], relations,
-                                                                  self.max_radius)
+            middle_event, events_to_be_removed = self._get_circle(
+                west_next, relations[west_next], relations, self.max_radius
+            )
             final_set.append(middle_event)
-            relations = self._remove_coords_from_relations(
-                relations, events_to_be_removed)
+            relations = self._remove_coords_from_relations(relations, events_to_be_removed)
         return final_set
 
     def get_clustered(self, queue):
-        relations = self._get_relations_in_range_within_time(
-            queue, max_radius=self.max_radius)
+        relations = self._get_relations_in_range_within_time(queue, max_radius=self.max_radius)
         summed_up = self._sum_up_relations(relations)
         return summed_up

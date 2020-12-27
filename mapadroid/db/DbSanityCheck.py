@@ -36,7 +36,8 @@ class DbSanityCheck:
             logger.error("Your MySQL/MariaDB sql_mode settings needs an adjustment.")
             logger.error("Please drop those settings: {}.", ", ".join(detected_wrong_modes))
             logger.error(
-                "More info: https://mad-docs.readthedocs.io/en/latest/faq/#sql-mode-error-mysql-strict-mode-mysql-mode")
+                "More info: https://mad-docs.readthedocs.io/en/latest/faq/#sql-mode-error-mysql-strict-mode-mysql-mode"
+            )
             self.failing_issues = True
 
     def validate_max_allowed_packet(self):
@@ -45,8 +46,8 @@ class DbSanityCheck:
         if res < global_variables.CHUNK_MAX_SIZE:
             logger.error("max_allowed_packet may need to be adjusted to use the MAD APK feature")
             logger.error(
-                "MAD will function without this being set but you will be unable to upload and serve MAD APK files")
-            logger.error(
-                "More info can be found @ https://dev.mysql.com/doc/refman/8.0/en/program-variables.html")
+                "MAD will function without this being set but you will be unable to upload and serve MAD APK files"
+            )
+            logger.error("More info can be found @ https://dev.mysql.com/doc/refman/8.0/en/program-variables.html")
         else:
             self.supports_apks = True

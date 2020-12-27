@@ -4,17 +4,17 @@ from .resource import Resource
 
 
 class WalkerArea(Resource):
-    table = 'settings_walkerarea'
-    name_field = 'walkertext'
-    primary_key = 'walkerarea_id'
-    search_field = 'name'
+    table = "settings_walkerarea"
+    name_field = "walkertext"
+    primary_key = "walkerarea_id"
+    search_field = "name"
     translations = {
-        'walkerarea': 'area_id',
-        'walkertype': 'algo_type',
-        'walkervalue': 'algo_value',
-        'walkermax': 'max_walkers',
-        'walkertext': 'name',
-        'eventid': 'eventid'
+        "walkerarea": "area_id",
+        "walkertype": "algo_type",
+        "walkervalue": "algo_value",
+        "walkermax": "max_walkers",
+        "walkertext": "name",
+        "eventid": "eventid",
     }
     configuration = {
         "fields": {
@@ -26,16 +26,11 @@ class WalkerArea(Resource):
                     "expected": int,
                     "uri": True,
                     "data_source": "area",
-                    "uri_source": "api_area"
+                    "uri_source": "api_area",
                 }
             },
             "walkertype": {
-                "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Mode for the walker",
-                    "expected": str
-                }
+                "settings": {"type": "text", "require": True, "description": "Mode for the walker", "expected": str}
             },
             "walkervalue": {
                 "settings": {
@@ -43,7 +38,7 @@ class WalkerArea(Resource):
                     "require": True,
                     "empty": "",
                     "description": "Value for walkermode.  Please see above how to configure value",
-                    "expected": str
+                    "expected": str,
                 }
             },
             "walkermax": {
@@ -52,7 +47,7 @@ class WalkerArea(Resource):
                     "require": False,
                     "empty": "",
                     "description": "Number of walkers than can be in the area.  Empty = 1 worker (Default: Empty)",
-                    "expected": int
+                    "expected": int,
                 }
             },
             "walkertext": {
@@ -61,7 +56,7 @@ class WalkerArea(Resource):
                     "require": False,
                     "empty": "",
                     "description": "Human-readable description of the walkerarea",
-                    "expected": str
+                    "expected": str,
                 }
             },
             "eventid": {
@@ -70,45 +65,45 @@ class WalkerArea(Resource):
                     "require": False,
                     "empty": "",
                     "description": "internal event id",
-                    "expected": int
+                    "expected": int,
                 }
-            }
+            },
         }
     }
 
     def get_dependencies(self) -> List[Tuple[str, int]]:
-        sql = 'SELECT `walker_id` FROM `settings_walker_to_walkerarea` WHERE `walkerarea_id` = %s'
+        sql = "SELECT `walker_id` FROM `settings_walker_to_walkerarea` WHERE `walkerarea_id` = %s"
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, walkerarea_id in enumerate(dependencies[:]):
-            dependencies[ind] = ('walker', walkerarea_id)
+            dependencies[ind] = ("walker", walkerarea_id)
         return dependencies
 
     def _load(self) -> None:
         super()._load()
         try:
-            if self._data['fields']['walkermax'] is None:
-                self._data['fields']['walkermax'] = ''
+            if self._data["fields"]["walkermax"] is None:
+                self._data["fields"]["walkermax"] = ""
         except KeyError:
-            self._data['fields']['walkermax'] = ''
+            self._data["fields"]["walkermax"] = ""
 
-    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = None) -> int:
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = None,) -> int:
         if ignore_issues is None:
             ignore_issues = []
         self.presave_validation(ignore_issues=ignore_issues)
         try:
-            if self._data['fields']['walkermax'] == '' and self._data['fields']['eventid'] == '':
+            if self._data["fields"]["walkermax"] == "" and self._data["fields"]["eventid"] == "":
                 core_data = self.get_resource(backend=True)
-                core_data['walkermax'] = None
-                core_data['eventid'] = None
-                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
-            elif self._data['fields']['walkermax'] == '' and self._data['fields']['eventid'] != '':
+                core_data["walkermax"] = None
+                core_data["eventid"] = None
+                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues,)
+            elif self._data["fields"]["walkermax"] == "" and self._data["fields"]["eventid"] != "":
                 core_data = self.get_resource(backend=True)
-                core_data['walkermax'] = None
-                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
-            elif self._data['fields']['walkermax'] != '' and self._data['fields']['eventid'] == '':
+                core_data["walkermax"] = None
+                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues,)
+            elif self._data["fields"]["walkermax"] != "" and self._data["fields"]["eventid"] == "":
                 core_data = self.get_resource(backend=True)
-                core_data['eventid'] = None
-                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
+                core_data["eventid"] = None
+                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues,)
             else:
                 return super().save(force_insert=force_insert, ignore_issues=ignore_issues)
         except KeyError:

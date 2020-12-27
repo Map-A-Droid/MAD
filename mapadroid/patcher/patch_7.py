@@ -2,49 +2,34 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Patch 7'
+    name = "Patch 7"
 
     def _execute(self):
-        alter_query = (
-            "ALTER TABLE trs_status "
-            "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
-        )
-        column_exist = self._schema_updater.check_column_exists(
-            'trs_status', 'lastPogoReboot')
+        alter_query = "ALTER TABLE trs_status " "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
+        column_exist = self._schema_updater.check_column_exists("trs_status", "lastPogoReboot")
         if not column_exist:
             try:
                 self._db.execute(alter_query, commit=True)
             except Exception as e:
                 self._logger.info("Unexpected error: {}", e)
                 self.issues = True
-        alter_query = (
-            "ALTER TABLE trs_status "
-            "ADD globalrebootcount int(11) NULL DEFAULT '0'"
-        )
-        column_exist = self._schema_updater.check_column_exists(
-            'trs_status', 'globalrebootcount')
+        alter_query = "ALTER TABLE trs_status " "ADD globalrebootcount int(11) NULL DEFAULT '0'"
+        column_exist = self._schema_updater.check_column_exists("trs_status", "globalrebootcount")
         if not column_exist:
             try:
                 self._db.execute(alter_query, commit=True)
             except Exception as e:
                 self._logger.info("Unexpected error: {}", e)
                 self.issues = True
-        alter_query = (
-            "ALTER TABLE trs_status "
-            "ADD globalrestartcount int(11) NULL DEFAULT '0'"
-        )
-        column_exist = self._schema_updater.check_column_exists(
-            'trs_status', 'globalrestartcount')
+        alter_query = "ALTER TABLE trs_status " "ADD globalrestartcount int(11) NULL DEFAULT '0'"
+        column_exist = self._schema_updater.check_column_exists("trs_status", "globalrestartcount")
         if not column_exist:
             try:
                 self._db.execute(alter_query, commit=True)
             except Exception as e:
                 self._logger.info("Unexpected error: {}", e)
                 self.issues = True
-        alter_query = (
-            "ALTER TABLE trs_status CHANGE lastPogoRestart "
-            "lastPogoRestart VARCHAR(50) NULL DEFAULT NULL"
-        )
+        alter_query = "ALTER TABLE trs_status CHANGE lastPogoRestart " "lastPogoRestart VARCHAR(50) NULL DEFAULT NULL"
         try:
             self._db.execute(alter_query, commit=True)
         except Exception as e:

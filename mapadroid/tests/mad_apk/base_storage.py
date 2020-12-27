@@ -5,9 +5,16 @@ from unittest import TestCase
 from flask import Response
 
 from mapadroid.db.DbFactory import DbFactory
-from mapadroid.mad_apk import (APKArch, APKType, MADapks, MADPackage,
-                               MADPackages, file_generator, get_apk_status,
-                               get_storage_obj)
+from mapadroid.mad_apk import (
+    APKArch,
+    APKType,
+    MADapks,
+    MADPackage,
+    MADPackages,
+    file_generator,
+    get_apk_status,
+    get_storage_obj,
+)
 from mapadroid.tests.test_utils import filepath_rgc, mimetype, upload_package
 from mapadroid.utils.logging import init_logging
 from mapadroid.utils.walkerArgs import parse_args
@@ -17,7 +24,7 @@ init_logging(args)
 
 
 class StorageBase(TestCase):
-    cleanup_tables = ['mad_apk_autosearch', 'mad_apks']
+    cleanup_tables = ["mad_apk_autosearch", "mad_apks"]
 
     def setUp(self):
         self.storage_init()
@@ -25,11 +32,11 @@ class StorageBase(TestCase):
         try:
             storage_type = self.storage_type
         except AttributeError:
-            storage_type = 'fs'
-        if storage_type == 'fs':
-            args.apk_storage_interface = 'fs'
+            storage_type = "fs"
+        if storage_type == "fs":
+            args.apk_storage_interface = "fs"
         else:
-            args.apk_storage_interface = 'db'
+            args.apk_storage_interface = "db"
         (self.storage_manager, self.storage_elem) = get_storage_obj(args, self.db_wrapper)
         self.db_purge()
         self.storage_elem.delete_file(APKType.rgc, APKArch.noarch)
@@ -49,7 +56,7 @@ class StorageBase(TestCase):
 
     def db_purge(self):
         for table in self.cleanup_tables:
-            self.db_wrapper.execute('DELETE FROM `%s`' % (table,), commit=True)
+            self.db_wrapper.execute("DELETE FROM `%s`" % (table,), commit=True)
 
     def status_check(self):
         all_data = get_apk_status(self.storage_elem)
@@ -80,11 +87,11 @@ class StorageBase(TestCase):
         self.assertTrue(package.mimetype == mimetype)
         self.assertTrue(package.size == os.stat(filepath_rgc).st_size)
         package_data = package.get_package()
-        self.assertIsInstance(package_data['arch_disp'], APKArch)
-        self.assertIsInstance(package_data['usage_disp'], APKType)
+        self.assertIsInstance(package_data["arch_disp"], APKArch)
+        self.assertIsInstance(package_data["usage_disp"], APKType)
         package_data = package.get_package(backend=False)
-        self.assertIsInstance(package_data['arch_disp'], str)
-        self.assertIsInstance(package_data['usage_disp'], str)
+        self.assertIsInstance(package_data["arch_disp"], str)
+        self.assertIsInstance(package_data["usage_disp"], str)
 
     def download_check(self):
         upload_package(self.storage_elem)
@@ -104,7 +111,7 @@ class StorageBase(TestCase):
         upload_package(self.storage_elem)
 
     def version_check(self):
-        version = '0.1'
+        version = "0.1"
         upload_package(self.storage_elem, version=version)
         self.assertTrue(self.storage_elem.get_current_version(APKType.rgc, APKArch.noarch) == version)
 

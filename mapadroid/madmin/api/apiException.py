@@ -10,12 +10,12 @@ class APIException(Exception):
 
 class AcceptException(APIException):
     def __repr__(self):
-        return 'Invalid accept sent.  Allowed formats: %s' % (','.join(global_variables.SUPPORTED_FORMATS, ))
+        return "Invalid accept sent.  Allowed formats: %s" % (",".join(global_variables.SUPPORTED_FORMATS,))
 
 
 class ContentException(APIException):
     def __repr__(self):
-        return 'Invalid content-type  Allowed formats: %s' % (','.join(global_variables.SUPPORTED_FORMATS, ))
+        return "Invalid content-type  Allowed formats: %s" % (",".join(global_variables.SUPPORTED_FORMATS,))
 
 
 class FormattingError(APIException):

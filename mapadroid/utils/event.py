@@ -21,7 +21,7 @@ class Event(object):
 
     def start_event_checker(self):
         if not self.args.no_event_checker:
-            event_thread = Thread(name='system', target=self.event_checker)
+            event_thread = Thread(name="system", target=self.event_checker)
             event_thread.daemon = True
             event_thread.start()
 

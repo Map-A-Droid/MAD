@@ -8,8 +8,11 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (
-    InternalStopWorkerException, WebsocketWorkerConnectionClosedException,
-    WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException)
+    InternalStopWorkerException,
+    WebsocketWorkerConnectionClosedException,
+    WebsocketWorkerRemovedException,
+    WebsocketWorkerTimeoutException,
+)
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
@@ -18,8 +21,20 @@ logger = get_logger(LoggerEnums.worker)
 
 
 class WorkerConfigmode(AbstractWorker):
-    def __init__(self, args, dev_id, origin, communicator: AbstractCommunicator, walker, mapping_manager,
-                 mitm_mapper: MitmMapper, db_wrapper: DbWrapper, area_id: int, routemanager_name: str, event):
+    def __init__(
+        self,
+        args,
+        dev_id,
+        origin,
+        communicator: AbstractCommunicator,
+        walker,
+        mapping_manager,
+        mitm_mapper: MitmMapper,
+        db_wrapper: DbWrapper,
+        area_id: int,
+        routemanager_name: str,
+        event,
+    ):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._args = args
         self._event = event
@@ -44,15 +59,17 @@ class WorkerConfigmode(AbstractWorker):
         return devicemappings.get("settings", {}).get(key, default_value)
 
     def start_worker(self):
-        self.logger.warning("Worker started in configmode! This is special, configuration only mode - do not expect"
-                            " scans or avatar moving. After you are done with initial configuration remove -cm flag")
+        self.logger.warning(
+            "Worker started in configmode! This is special, configuration only mode - do not expect"
+            " scans or avatar moving. After you are done with initial configuration remove -cm flag"
+        )
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
         self.logger.debug("Setting device to idle for routemanager")
         self._db_wrapper.save_idle_status(self._dev_id, True)
         self.logger.debug("Device set to idle for routemanager")
         while self.check_walker() and not self._stop_worker_event.is_set():
             time.sleep(10)
-        self.set_devicesettings_value('finished', True)
+        self.set_devicesettings_value("finished", True)
         self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._origin)
         try:
             self._communicator.cleanup()
@@ -62,7 +79,7 @@ class WorkerConfigmode(AbstractWorker):
 
     def stop_worker(self):
         if self._stop_worker_event.set():
-            self.logger.info('Worker already stopped - waiting for it')
+            self.logger.info("Worker already stopped - waiting for it")
         else:
             self._stop_worker_event.set()
             self.logger.warning("Worker stop called")
@@ -82,16 +99,16 @@ class WorkerConfigmode(AbstractWorker):
     def check_walker(self):
         if self._walker is None:
             return True
-        walkereventid = self._walker.get('eventid', None)
+        walkereventid = self._walker.get("eventid", None)
         if walkereventid is None:
             walkereventid = 1
         if walkereventid != self._event.get_current_event_id():
             self.logger.info("Another Event has started - leaving now")
             return False
-        mode = self._walker['walkertype']
+        mode = self._walker["walkertype"]
         if mode == "countdown":
             self.logger.info("Checking walker mode 'countdown'")
-            countdown = self._walker['walkervalue']
+            countdown = self._walker["walkervalue"]
             if not countdown:
                 self.logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
@@ -103,8 +120,8 @@ class WorkerConfigmode(AbstractWorker):
             return True
         elif mode == "timer":
             self.logger.debug("Checking walker mode 'timer'")
-            exittime = self._walker['walkervalue']
-            if not exittime or ':' not in exittime:
+            exittime = self._walker["walkervalue"]
+            if not exittime or ":" not in exittime:
                 self.logger.error("No or wrong Value for Mode - check your settings! Killing worker")
                 return False
             return check_walker_value_type(exittime)
@@ -113,23 +130,23 @@ class WorkerConfigmode(AbstractWorker):
             return False
         elif mode == "period":
             self.logger.debug("Checking walker mode 'period'")
-            period = self._walker['walkervalue']
+            period = self._walker["walkervalue"]
             if len(period) == 0:
                 self.logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
             return check_walker_value_type(period)
         elif mode == "coords":
-            exittime = self._walker['walkervalue']
+            exittime = self._walker["walkervalue"]
             if len(exittime) > 0:
                 return check_walker_value_type(exittime)
             return True
         elif mode == "idle":
             self.logger.debug("Checking walker mode 'idle'")
-            if len(self._walker['walkervalue']) == 0:
+            if len(self._walker["walkervalue"]) == 0:
                 self.logger.error("Wrong Value for mode - check your settings! Killing worker")
                 return False
-            sleeptime = self._walker['walkervalue']
-            self.logger.info('going to sleep')
+            sleeptime = self._walker["walkervalue"]
+            self.logger.info("going to sleep")
             killpogo = False
             if check_walker_value_type(sleeptime):
                 self._stop_pogo()
@@ -139,12 +156,15 @@ class WorkerConfigmode(AbstractWorker):
                 self.logger.debug("Device set to idle for routemanager")
             while check_walker_value_type(sleeptime) and not self._stop_worker_event.isSet():
                 time.sleep(1)
-            self.logger.info('just woke up')
+            self.logger.info("just woke up")
             if killpogo:
                 try:
                     self._start_pogo()
-                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException):
+                except (
+                    WebsocketWorkerRemovedException,
+                    WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException,
+                ):
                     self.logger.error("Timeout during init")
             return False
         else:
@@ -159,8 +179,7 @@ class WorkerConfigmode(AbstractWorker):
             attempts += 1
             if attempts > 10:
                 return False
-            stop_result = self._communicator.stop_app(
-                "com.nianticlabs.pokemongo")
+            stop_result = self._communicator.stop_app("com.nianticlabs.pokemongo")
             time.sleep(1)
             pogo_topmost = self._communicator.is_pogo_topmost()
         return stop_result
@@ -189,8 +208,8 @@ class WorkerConfigmode(AbstractWorker):
 
     def _wait_for_injection(self):
         self._not_injected_count = 0
-        reboot = self.get_devicesettings_value('reboot', True)
-        injection_thresh_reboot = 'Unlimited'
+        reboot = self.get_devicesettings_value("reboot", True)
+        injection_thresh_reboot = "Unlimited"
         if reboot:
             injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
         while not self._mitm_mapper.get_injection_status(self._origin):
@@ -198,8 +217,11 @@ class WorkerConfigmode(AbstractWorker):
                 self.logger.error("Not injected in time - reboot")
                 self._reboot()
                 return False
-            self.logger.info("Didn't receive any data yet. (Retry count: {}/{})", str(self._not_injected_count),
-                             str(injection_thresh_reboot))
+            self.logger.info(
+                "Didn't receive any data yet. (Retry count: {}/{})",
+                str(self._not_injected_count),
+                str(injection_thresh_reboot),
+            )
             if self._stop_worker_event.isSet():
                 self.logger.error("Killed while waiting for injection")
                 return False
@@ -219,7 +241,10 @@ class WorkerConfigmode(AbstractWorker):
             return True
         try:
             start_result = self._communicator.reboot()
-        except (WebsocketWorkerRemovedException, WebsocketWorkerConnectionClosedException):
+        except (
+            WebsocketWorkerRemovedException,
+            WebsocketWorkerConnectionClosedException,
+        ):
             self.logger.warning("Could not reboot due to client already having disconnected")
             start_result = False
         time.sleep(5)
@@ -230,7 +255,7 @@ class WorkerConfigmode(AbstractWorker):
     def _wait_pogo_start_delay(self):
         delay_count: int = 0
         pogo_start_delay: int = self.get_devicesettings_value("post_pogo_start_delay", 60)
-        self.logger.info('Waiting for pogo start: {} seconds', pogo_start_delay)
+        self.logger.info("Waiting for pogo start: {} seconds", pogo_start_delay)
 
         while delay_count <= pogo_start_delay:
             if self._stop_worker_event.is_set():

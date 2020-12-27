@@ -34,7 +34,7 @@ async def hello(websocket, path):
                 response = splitup[1]
             else:
                 print("Received binary values.")
-                message_id = int.from_bytes(message[:4], byteorder='big', signed=False)  # noqa: F841
+                message_id = int.from_bytes(message[:4], byteorder="big", signed=False)  # noqa: F841
                 response = message[4:]
 
             if isinstance(response, str):
@@ -47,7 +47,7 @@ async def hello(websocket, path):
 
 print("Initializing websocket server")
 port = 8080
-start_server = websockets.serve(hello, '0.0.0.0', port)
+start_server = websockets.serve(hello, "0.0.0.0", port)
 
 print("Starting to serve ws://%s:%s" % (socket.gethostbyname(socket.gethostname()), port))
 asyncio.get_event_loop().run_until_complete(start_server)

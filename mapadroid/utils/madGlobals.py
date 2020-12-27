@@ -24,9 +24,10 @@ class InternalStopWorkerException(Exception):
     """
     Exception to be called in derived worker methods to signal stops of the worker
     """
+
     pass
 
 
 class ScreenshotType(Enum):
-    JPEG = 0,
+    JPEG = (0,)
     PNG = 1

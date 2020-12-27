@@ -14,11 +14,9 @@ import psutil
 
 from mapadroid.data_manager import DataManager
 from mapadroid.db.DbFactory import DbFactory
-from mapadroid.mad_apk import (AbstractAPKStorage, StorageSyncManager,
-                               get_storage_obj)
+from mapadroid.mad_apk import AbstractAPKStorage, StorageSyncManager, get_storage_obj
 from mapadroid.madmin.madmin import MADmin
-from mapadroid.mitm_receiver.MitmDataProcessorManager import \
-    MitmDataProcessorManager
+from mapadroid.mitm_receiver.MitmDataProcessorManager import MitmDataProcessorManager
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -26,8 +24,7 @@ from mapadroid.patcher import MADPatcher
 from mapadroid.utils.event import Event
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
 from mapadroid.utils.madGlobals import terminate_mad
-from mapadroid.utils.MappingManager import (MappingManager,
-                                            MappingManagerManager)
+from mapadroid.utils.MappingManager import MappingManager, MappingManagerManager
 from mapadroid.utils.pluginBase import PluginCollection
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
@@ -37,8 +34,7 @@ from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 py_version = sys.version_info
 if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
-    print("MAD requires at least python 3.6! Your version: {}.{}"
-          .format(py_version.major, py_version.minor))
+    print("MAD requires at least python 3.6! Your version: {}.{}".format(py_version.major, py_version.minor))
     sys.exit(1)
 
 
@@ -100,11 +96,15 @@ def get_system_infos(db_wrapper):
     gc.enable()
 
     while not terminate_mad.is_set():
-        logger.debug('Starting internal Cleanup')
-        logger.debug('Collecting...')
+        logger.debug("Starting internal Cleanup")
+        logger.debug("Collecting...")
         unreachable_objs = gc.collect()
-        logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
-                     str(unreachable_objs), str(gc.garbage), str(active_count()))
+        logger.debug(
+            "Unreachable objects: {} - Remaining garbage: {} - Running threads: {}",
+            str(unreachable_objs),
+            str(gc.garbage),
+            str(active_count()),
+        )
 
         for obj in gc.garbage:
             for ref in find_referring_graphs(obj):
@@ -113,13 +113,17 @@ def get_system_infos(db_wrapper):
             del obj  # remove local reference so the node can be deleted
 
         # Clear references held by gc.garbage
-        logger.debug('Clearing gc garbage')
+        logger.debug("Clearing gc garbage")
         del gc.garbage[:]
 
-        mem_usage = py.memory_info()[0] / 2. ** 30
+        mem_usage = py.memory_info()[0] / 2.0 ** 30
         cpu_usage = py.cpu_percent()
-        logger.info('Instance name: "{}" - Memory usage: {:.3f} GB - CPU usage: {}',
-                    str(args.status_name), mem_usage, str(cpu_usage))
+        logger.info(
+            'Instance name: "{}" - Memory usage: {:.3f} GB - CPU usage: {}',
+            str(args.status_name),
+            mem_usage,
+            str(cpu_usage),
+        )
         collected = None
         if args.stat_gc:
             collected = gc.collect()
@@ -132,7 +136,7 @@ def get_system_infos(db_wrapper):
 
 def create_folder(folder):
     if not os.path.exists(folder):
-        logger.info(str(folder) + ' created')
+        logger.info(str(folder) + " created")
         os.makedirs(folder)
 
 
@@ -142,16 +146,16 @@ def check_dependencies():
         try:
             pkg_resources.require(deps)
         except pkg_resources.VersionConflict as version_error:
-            logger.error("Some dependencies aren't met. Required: {} (Installed: {})", version_error.req,
-                         version_error.dist)
             logger.error(
-                "Most of the times you can fix it by running: pip3 install -r requirements.txt --upgrade")
+                "Some dependencies aren't met. Required: {} (Installed: {})", version_error.req, version_error.dist,
+            )
+            logger.error("Most of the times you can fix it by running: pip3 install -r requirements.txt --upgrade")
             sys.exit(1)
 
 
 if __name__ == "__main__":
     args = parse_args()
-    os.environ['LANGUAGE'] = args.language
+    os.environ["LANGUAGE"] = args.language
     init_logging(args)
     logger = get_logger(LoggerEnums.system)
 
@@ -172,9 +176,9 @@ if __name__ == "__main__":
     webhook_worker: Optional[WebhookWorker] = None
     ws_server: WebsocketServer = None
     if args.config_mode:
-        logger.info('Starting MAD in config mode')
+        logger.info("Starting MAD in config mode")
     else:
-        logger.info('Starting MAD')
+        logger.info("Starting MAD")
     check_dependencies()
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
@@ -182,12 +186,14 @@ if __name__ == "__main__":
     create_folder(args.upload_path)
     create_folder(args.temp_path)
     if args.config_mode and args.only_routes:
-        logger.error('Unable to run with config_mode and only_routes.  Only use one option')
+        logger.error("Unable to run with config_mode and only_routes.  Only use one option")
         sys.exit(1)
     if not args.only_scan and not args.only_routes:
-        logger.error("No runmode selected. \nAllowed modes:\n"
-                     " -os    ---- start scanner/devicecontroller\n"
-                     " -or    ---- only calculate routes")
+        logger.error(
+            "No runmode selected. \nAllowed modes:\n"
+            " -os    ---- start scanner/devicecontroller\n"
+            " -or    ---- only calculate routes"
+        )
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
@@ -202,16 +208,15 @@ if __name__ == "__main__":
     event = Event(args, db_wrapper)
     event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
-    time.sleep(.1)
-    MappingManagerManager.register('MappingManager', MappingManager)
+    time.sleep(0.1)
+    MappingManagerManager.register("MappingManager", MappingManager)
     mapping_manager_manager = MappingManagerManager()
     mapping_manager_manager.start()
-    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper,
-                                                                             args,
-                                                                             data_manager,
-                                                                             configmode=args.config_mode)
+    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(
+        db_wrapper, args, data_manager, configmode=args.config_mode
+    )
     if args.only_routes:
-        logger.info('Running in route recalculation mode. MAD will exit once complete')
+        logger.info("Running in route recalculation mode. MAD will exit once complete")
         recalc_in_progress = True
         while recalc_in_progress:
             time.sleep(5)
@@ -223,33 +228,42 @@ if __name__ == "__main__":
     (storage_manager, storage_elem) = get_storage_obj(args, db_wrapper)
     if not args.config_mode:
         pogo_win_manager = PogoWindows(args.temp_path, args.ocr_thread_count)
-        MitmMapperManager.register('MitmMapper', MitmMapper)
+        MitmMapperManager.register("MitmMapper", MitmMapper)
         mitm_mapper_manager = MitmMapperManager()
         mitm_mapper_manager.start()
         mitm_mapper = mitm_mapper_manager.MitmMapper(args, mapping_manager, db_wrapper.stats_submit)
 
-    logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
+    logger.info("Starting PogoDroid Receiver server on port {}".format(str(args.mitmreceiver_port)))
 
     mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper)
     mitm_data_processor_manager.launch_processors()
 
-    mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                         mitm_mapper, args, mapping_manager, db_wrapper,
-                                         data_manager, storage_elem,
-                                         mitm_data_processor_manager.get_queue(),
-                                         enable_configmode=args.config_mode)
+    mitm_receiver_process = MITMReceiver(
+        args.mitmreceiver_ip,
+        int(args.mitmreceiver_port),
+        mitm_mapper,
+        args,
+        mapping_manager,
+        db_wrapper,
+        data_manager,
+        storage_elem,
+        mitm_data_processor_manager.get_queue(),
+        enable_configmode=args.config_mode,
+    )
     mitm_receiver_process.start()
 
-    logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
-    ws_server = WebsocketServer(args=args,
-                                mitm_mapper=mitm_mapper,
-                                db_wrapper=db_wrapper,
-                                mapping_manager=mapping_manager,
-                                pogo_window_manager=pogo_win_manager,
-                                data_manager=data_manager,
-                                event=event,
-                                enable_configmode=args.config_mode)
-    t_ws = Thread(name='system', target=ws_server.start_server)
+    logger.info("Starting websocket server on port {}".format(str(args.ws_port)))
+    ws_server = WebsocketServer(
+        args=args,
+        mitm_mapper=mitm_mapper,
+        db_wrapper=db_wrapper,
+        mapping_manager=mapping_manager,
+        pogo_window_manager=pogo_win_manager,
+        data_manager=data_manager,
+        event=event,
+        enable_configmode=args.config_mode,
+    )
+    t_ws = Thread(name="system", target=ws_server.start_server)
     t_ws.daemon = False
     t_ws.start()
     device_updater = DeviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
@@ -258,38 +272,38 @@ if __name__ == "__main__":
             rarity = Rarity(args, db_wrapper)
             rarity.start_dynamic_rarity()
             webhook_worker = WebhookWorker(args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
-            t_whw = Thread(name="system",
-                           target=webhook_worker.run_worker)
+            t_whw = Thread(name="system", target=webhook_worker.run_worker)
             t_whw.daemon = True
             t_whw.start()
         if args.statistic:
             logger.info("Starting statistics collector")
-            t_usage = Thread(name='system',
-                             target=get_system_infos, args=(db_wrapper,))
+            t_usage = Thread(name="system", target=get_system_infos, args=(db_wrapper,))
             t_usage.daemon = True
             t_usage.start()
 
-    madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, data_manager, device_updater, jobstatus, storage_elem)
+    madmin = MADmin(
+        args, db_wrapper, ws_server, mapping_manager, data_manager, device_updater, jobstatus, storage_elem,
+    )
 
     # starting plugin system
     plugin_parts = {
-        'args': args,
-        'data_manager': data_manager,
-        'db_wrapper': db_wrapper,
-        'device_Updater': device_updater,
-        'event': event,
-        'jobstatus': jobstatus,
-        'logger': get_logger(LoggerEnums.plugin),
-        'madmin': madmin,
-        'mapping_manager': mapping_manager,
-        'mitm_mapper': mitm_mapper,
-        'mitm_receiver_process': mitm_receiver_process,
-        'storage_elem': storage_elem,
-        'webhook_worker': webhook_worker,
-        'ws_server': ws_server,
-        'mitm_data_processor_manager': mitm_data_processor_manager
+        "args": args,
+        "data_manager": data_manager,
+        "db_wrapper": db_wrapper,
+        "device_Updater": device_updater,
+        "event": event,
+        "jobstatus": jobstatus,
+        "logger": get_logger(LoggerEnums.plugin),
+        "madmin": madmin,
+        "mapping_manager": mapping_manager,
+        "mitm_mapper": mitm_mapper,
+        "mitm_receiver_process": mitm_receiver_process,
+        "storage_elem": storage_elem,
+        "webhook_worker": webhook_worker,
+        "ws_server": ws_server,
+        "mitm_data_processor_manager": mitm_data_processor_manager,
     }
-    mad_plugins = PluginCollection('plugins', plugin_parts)
+    mad_plugins = PluginCollection("plugins", plugin_parts)
     mad_plugins.apply_all_plugins_on_value()
 
     if not args.disable_madmin or args.config_mode:
@@ -304,28 +318,30 @@ if __name__ == "__main__":
     try:
         if args.unit_tests:
             from mapadroid.tests.local_api import LocalAPI
+
             api_ready = False
             api = LocalAPI()
-            logger.info('Checking API status')
-            if not data_manager.get_root_resource('device').keys():
+            logger.info("Checking API status")
+            if not data_manager.get_root_resource("device").keys():
                 from mapadroid.tests.test_utils import ResourceCreator
-                logger.info('Creating a device')
-                device_creator = ResourceCreator(api, prefix='MADCore')
-                res = device_creator.create_valid_resource('device')[0]
+
+                logger.info("Creating a device")
+                device_creator = ResourceCreator(api, prefix="MADCore")
+                res = device_creator.create_valid_resource("device")[0]
                 mapping_manager.update()
             max_attempts = 30
             attempt = 0
             while not api_ready and attempt < max_attempts:
                 try:
-                    api.get('/api')
+                    api.get("/api")
                     api_ready = True
-                    logger.info('API is ready for unit testing')
+                    logger.info("API is ready for unit testing")
                 except Exception:
                     attempt += 1
                     time.sleep(1)
             if api_ready:
                 loader = unittest.TestLoader()
-                start_dir = 'mapadroid/tests/'
+                start_dir = "mapadroid/tests/"
                 suite = loader.discover(start_dir)
                 runner = unittest.TextTestRunner()
                 result = runner.run(suite)
@@ -373,7 +389,7 @@ if __name__ == "__main__":
                 logger.debug("Calling mitm_mapper shutdown")
                 mitm_mapper_manager.shutdown()
             if storage_manager is not None:
-                logger.debug('Stopping storage manager')
+                logger.debug("Stopping storage manager")
                 storage_manager.shutdown()
             if db_pool_manager is not None:
                 logger.debug("Calling db_pool_manager shutdown")

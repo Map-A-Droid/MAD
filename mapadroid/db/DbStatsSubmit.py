@@ -5,7 +5,6 @@ logger = get_logger(LoggerEnums.database)
 
 
 class DbStatsSubmit:
-
     def __init__(self, db_exec: PooledQueryExecutor, args):
         self._db_exec: PooledQueryExecutor = db_exec
         self._args = args
@@ -27,8 +26,8 @@ class DbStatsSubmit:
             "INSERT IGNORE INTO trs_stats_detect_fort_raw (worker, guid, type, count, timestamp_scan) "
             "VALUES (%s, %s, %s, %s, %s) "
         )
-        mons = [mon for mon in data if (mon[2] in ['mon', 'mon_iv'])]
-        forts = [(d[0], d[1], d[3], d[4], d[5]) for d in data if (d[2] == 'quest' or d[2] == 'raid')]
+        mons = [mon for mon in data if (mon[2] in ["mon", "mon_iv"])]
+        forts = [(d[0], d[1], d[3], d[4], d[5]) for d in data if (d[2] == "quest" or d[2] == "raid")]
         self._db_exec.executemany(query_status_mon, mons, commit=True)
         self._db_exec.executemany(query_status_fort, forts, commit=True)
         return True
@@ -52,9 +51,7 @@ class DbStatsSubmit:
 
     def cleanup_statistics(self):
         logger.info("Cleanup statistics tables")
-        query = (
-            "DELETE FROM trs_stats_detect WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
-        )
+        query = "DELETE FROM trs_stats_detect WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
         self._db_exec.execute(query, commit=True)
 
         # stop deleting shiny entries. For science, please (-:
@@ -63,19 +60,13 @@ class DbStatsSubmit:
         )
         self._db_exec.execute(query, commit=True)
 
-        query = (
-            "DELETE FROM trs_stats_detect_fort_raw WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
-        )
+        query = "DELETE FROM trs_stats_detect_fort_raw WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
         self._db_exec.execute(query, commit=True)
 
-        query = (
-            "DELETE FROM trs_stats_location WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
-        )
+        query = "DELETE FROM trs_stats_location WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
         self._db_exec.execute(query, commit=True)
 
-        query = (
-            "DELETE FROM trs_stats_location_raw WHERE period < (UNIX_TIMESTAMP() - 604800)"
-        )
+        query = "DELETE FROM trs_stats_location_raw WHERE period < (UNIX_TIMESTAMP() - 604800)"
         self._db_exec.execute(query, commit=True)
 
         if int(self._args.raw_delete_shiny) > 0:

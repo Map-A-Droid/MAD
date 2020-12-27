@@ -12,9 +12,7 @@ def calculate_mon_level(cp_multiplier):
 
 def gen_despawn_timestamp(known_despawn, timestamp):
     despawn_time = datetime.now() + timedelta(seconds=300)
-    despawn_time = datetime.utcfromtimestamp(
-        time.mktime(despawn_time.timetuple())
-    ).strftime("%Y-%m-%d %H:%M:%S")
+    despawn_time = datetime.utcfromtimestamp(time.mktime(despawn_time.timetuple())).strftime("%Y-%m-%d %H:%M:%S")
 
     # despawn time is unknown
     if known_despawn is False:
@@ -26,18 +24,20 @@ def gen_despawn_timestamp(known_despawn, timestamp):
         return int(int(time.time() + 3 * 60) // 60 * 60)
 
     hrmi = known_despawn.split(":")
-    known_despawn = datetime.now().replace(
-        hour=0, minute=int(hrmi[0]), second=int(hrmi[1]), microsecond=0
-    )
+    known_despawn = datetime.now().replace(hour=0, minute=int(hrmi[0]), second=int(hrmi[1]), microsecond=0)
     datatime = datetime.fromtimestamp(timestamp)
     if datatime.minute <= known_despawn.minute:
         despawn = datatime + timedelta(
-            minutes=known_despawn.minute - datatime.minute,
-            seconds=known_despawn.second - datatime.second,
+            minutes=known_despawn.minute - datatime.minute, seconds=known_despawn.second - datatime.second,
         )
     elif datatime.minute > known_despawn.minute:
-        despawn = (datatime + timedelta(hours=1) - timedelta(minutes=(datatime.minute - known_despawn.minute),
-                                                             seconds=datatime.second - known_despawn.second))
+        despawn = (
+            datatime
+            + timedelta(hours=1)
+            - timedelta(
+                minutes=(datatime.minute - known_despawn.minute), seconds=datatime.second - known_despawn.second,
+            )
+        )
 
     despawn_uts = int(time.mktime(despawn.timetuple()))
 
@@ -51,83 +51,25 @@ def calculate_iv(ind_atk, ind_def, ind_stm):
 
 def form_mapper(mon_id, form_id):
     forms = {
-        "19": {
-            "45": 0,  # normal
-            "46": 61  # alola
-        },
-        "20": {
-            "47": 0,  # normal
-            "48": 61  # alola
-        },
-        "26": {
-            "49": 0,  # normal
-            "50": 61  # alola
-        },
-        "27": {
-            "51": 0,  # normal
-            "52": 61  # alola
-        },
-        "28": {
-            "53": 0,  # normal
-            "54": 61  # alola
-        },
-        "37": {
-            "55": 0,  # normal
-            "56": 61  # alola
-        },
-        "38": {
-            "57": 0,  # normal
-            "58": 61  # alola
-        },
-        "50": {
-            "59": 0,  # normal
-            "60": 61  # alola
-        },
-        "51": {
-            "61": 0,  # normal
-            "62": 61  # alola
-        },
-        "52": {
-            "63": 0,  # normal
-            "64": 61  # alola
-        },
-        "53": {
-            "65": 0,  # normal
-            "66": 61  # alola
-        },
-        "74": {
-            "67": 0,  # normal
-            "68": 61  # alola
-        },
-        "75": {
-            "69": 0,  # normal
-            "70": 61  # alola
-        },
-        "76": {
-            "71": 0,  # normal
-            "72": 61  # alola
-        },
-        "88": {
-            "73": 0,  # normal
-            "74": 61  # alola
-        },
-        "89": {
-            "75": 0,  # normal
-            "76": 61  # alola
-        },
-        "103": {
-            "77": 0,  # normal
-            "78": 61  # alola
-        },
-        "105": {
-            "79": 0,  # normal
-            "80": 61  # alola
-        },
-        "150": {  # TODO: missing assets
-            "133": 0,
-            "134": 0,
-            "135": 0
-        },
+        "19": {"45": 0, "46": 61},  # normal  # alola
+        "20": {"47": 0, "48": 61},  # normal  # alola
+        "26": {"49": 0, "50": 61},  # normal  # alola
+        "27": {"51": 0, "52": 61},  # normal  # alola
+        "28": {"53": 0, "54": 61},  # normal  # alola
+        "37": {"55": 0, "56": 61},  # normal  # alola
+        "38": {"57": 0, "58": 61},  # normal  # alola
+        "50": {"59": 0, "60": 61},  # normal  # alola
+        "51": {"61": 0, "62": 61},  # normal  # alola
+        "52": {"63": 0, "64": 61},  # normal  # alola
+        "53": {"65": 0, "66": 61},  # normal  # alola
+        "74": {"67": 0, "68": 61},  # normal  # alola
+        "75": {"69": 0, "70": 61},  # normal  # alola
+        "76": {"71": 0, "72": 61},  # normal  # alola
+        "88": {"73": 0, "74": 61},  # normal  # alola
+        "89": {"75": 0, "76": 61},  # normal  # alola
+        "103": {"77": 0, "78": 61},  # normal  # alola
+        "105": {"79": 0, "80": 61},  # normal  # alola
+        "150": {"133": 0, "134": 0, "135": 0},  # TODO: missing assets
         "201": {
             "1": 11,  # a
             "2": 12,  # b
@@ -156,7 +98,7 @@ def form_mapper(mon_id, form_id):
             "25": 35,  # y
             "26": 36,  # z
             "27": 37,  # !
-            "28": 38  # ?
+            "28": 38,  # ?
         },
         "327": {  # TODO mapping is not really clear
             "121": 0,  # 08
@@ -172,40 +114,13 @@ def form_mapper(mon_id, form_id):
             "131": 0,  # 18
             "132": 0,  # 19
         },
-        "351": {
-            "29": 11,  # normal
-            "30": 12,  # sunny
-            "31": 13,  # rainy
-            "32": 14,  # snowy
-        },
-        "386": {
-            "33": 11,  # normal
-            "34": 12,  # attack
-            "35": 13,  # defense
-            "36": 14  # speed
-        },
-        "412": {
-            "118": 11,  # plant
-            "119": 12,  # sandy
-            "120": 13  # trash
-        },
-        "413": {
-            "87": 11,  # plant
-            "88": 12,  # sandy
-            "89": 13  # trash
-        },
-        "421": {
-            "94": 11,  # overcast
-            "95": 12,  # sunny
-        },
-        "422": {
-            "96": 11,  # west sea
-            "97": 12,  # east sea
-        },
-        "423": {
-            "98": 11,  # west sea
-            "99": 12,  # east sea
-        },
+        "351": {"29": 11, "30": 12, "31": 13, "32": 14},  # normal  # sunny  # rainy  # snowy
+        "386": {"33": 11, "34": 12, "35": 13, "36": 14},  # normal  # attack  # defense  # speed
+        "412": {"118": 11, "119": 12, "120": 13},  # plant  # sandy  # trash
+        "413": {"87": 11, "88": 12, "89": 13},  # plant  # sandy  # trash
+        "421": {"94": 11, "95": 12},  # overcast  # sunny
+        "422": {"96": 11, "97": 12},  # west sea  # east sea
+        "423": {"98": 11, "99": 12},  # west sea  # east sea
         "479": {
             "81": 0,  # normal
             "82": 14,  # frost
@@ -214,14 +129,8 @@ def form_mapper(mon_id, form_id):
             "85": 13,  # wash
             "86": 12,  # heat
         },
-        "487": {
-            "90": 11,  # altered
-            "91": 12,  # origin
-        },
-        "492": {
-            "92": 11,  # sky
-            "93": 12,  # land
-        },
+        "487": {"90": 11, "91": 12},  # altered  # origin
+        "492": {"92": 11, "93": 12},  # sky  # land
         "493": {
             "100": 0,  # normal
             "101": 12,  # fighting
@@ -242,7 +151,6 @@ def form_mapper(mon_id, form_id):
             "116": 27,  # dark
             "117": 28,  # fairy
         },
-
     }
 
     mon = forms.get(str(mon_id), None)
@@ -257,7 +165,7 @@ def form_mapper(mon_id, form_id):
 
 
 def is_mon_ditto(logger, pokemon_data):
-    logger.debug3('Determining if mon is a ditto')
+    logger.debug3("Determining if mon is a ditto")
     logger.debug4(pokemon_data)
     potential_dittos = [46, 163, 167, 187, 223, 293, 316, 322, 399, 590]
     weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
@@ -265,7 +173,7 @@ def is_mon_ditto(logger, pokemon_data):
     valid_def = pokemon_data.get("individual_defense") < 4
     valid_sta = pokemon_data.get("individual_stamina") < 4
     cp_multi = pokemon_data.get("cp_multiplier")
-    valid_boost_attrs = valid_atk or valid_def or valid_sta or cp_multi < .3
+    valid_boost_attrs = valid_atk or valid_def or valid_sta or cp_multi < 0.3
     if pokemon_data.get("id") not in potential_dittos:
         return False
     elif weather_boost is None:

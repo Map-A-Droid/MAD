@@ -9,7 +9,7 @@ from mapadroid.db.DbFactory import DbFactory
 from tests.conftest import args
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def db_wrapper_real():
     """Use when the actual DB is required for testing. If it is, the code should be refactored so use the mocked
     version"""
@@ -24,7 +24,7 @@ def db_wrapper_real():
     db_pool_manager.shutdown()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def db_wrapper():
     """Use when mocking the results of the DB query"""
     return MagicMock()
@@ -46,11 +46,11 @@ def update_args_testing(launch_args):
 
 def create_databases(launch_args):
     """ Prep a database for the current tox env """
-    cnx = connection.MySQLConnection(user=launch_args.dbusername,
-                                     password=launch_args.dbpassword,
-                                     host=launch_args.dbip)
+    cnx = connection.MySQLConnection(
+        user=launch_args.dbusername, password=launch_args.dbpassword, host=launch_args.dbip,
+    )
     cursor = cnx.cursor()
-    cursor.execute("DROP DATABASE IF EXISTS `{}`". format(launch_args.dbname))
+    cursor.execute("DROP DATABASE IF EXISTS `{}`".format(launch_args.dbname))
     cursor.execute("CREATE DATABASE `{}`".format(launch_args.dbname))
     cnx.commit()
     cnx.close()

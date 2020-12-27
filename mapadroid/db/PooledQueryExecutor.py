@@ -37,12 +37,10 @@ class PooledQueryExecutor:
             "port": self.port,
             "user": self.user,
             "password": self.password,
-            "database": self.database
+            "database": self.database,
         }
         self._pool_mutex.acquire()
-        self._pool = MySQLConnectionPool(pool_name="db_wrapper_pool",
-                                         pool_size=self._poolsize,
-                                         **dbconfig)
+        self._pool = MySQLConnectionPool(pool_name="db_wrapper_pool", pool_size=self._poolsize, **dbconfig)
         self._pool_mutex.release()
 
     def close(self, conn, cursor):
@@ -57,12 +55,12 @@ class PooledQueryExecutor:
 
     def setup_cursor(self, conn, **kwargs):
         conn_args = {}
-        use_dict = kwargs.get('use_dict', False)
-        prepared = kwargs.get('prepared', False)
+        use_dict = kwargs.get("use_dict", False)
+        prepared = kwargs.get("prepared", False)
         if use_dict:
-            conn_args['dictionary'] = True
+            conn_args["dictionary"] = True
         if prepared:
-            conn_args['prepared'] = True
+            conn_args["prepared"] = True
         return conn.cursor(**conn_args)
 
     def execute(self, sql, args=(), commit=False, **kwargs):
@@ -77,10 +75,10 @@ class PooledQueryExecutor:
         self._connection_semaphore.acquire()
         conn = self._pool.get_connection()
         cursor = self.setup_cursor(conn, **kwargs)
-        get_id = kwargs.get('get_id', False)
-        get_dict = kwargs.get('get_dict', False)
-        raise_exc = kwargs.get('raise_exc', False)
-        suppress_log = kwargs.get('suppress_log', False)
+        get_id = kwargs.get("get_id", False)
+        get_dict = kwargs.get("get_dict", False)
+        raise_exc = kwargs.get("raise_exc", False)
+        suppress_log = kwargs.get("suppress_log", False)
         # We do not want to display binary data
         has_binary = False
         disp_args = []
@@ -92,12 +90,12 @@ class PooledQueryExecutor:
                 else:
                     disp_args.append(value)
         else:
-            disp_args = (args)
+            disp_args = args
         try:
             multi = False
             if type(args) != tuple and args is not None:
                 args = (args,)
-            if sql.count(';') > 1:
+            if sql.count(";") > 1:
                 multi = True
                 for _ in conn.cmd_query_iter(sql):
                     pass
@@ -177,7 +175,7 @@ class PooledQueryExecutor:
         return [dict(zip(desc, row)) for row in rows]
 
     def __create_clause(self, col_names, col_subs):
-        """ Creates a clause and handles lists
+        """Creates a clause and handles lists
         Args:
             col_names (list): List of column names
             col_subs (list): List of column value substitutions
@@ -193,7 +191,7 @@ class PooledQueryExecutor:
         return clause
 
     def __fix_table(self, table):
-        """ Encapsualtes the table in backticks
+        """Encapsualtes the table in backticks
         Args:
             table (str): Table to encapsulate
         Returns (str):
@@ -211,7 +209,7 @@ class PooledQueryExecutor:
         return table_name
 
     def __process_literals(self, optype, keyvals, literals):
-        """ Processes literals and returns a tuple containing all data required for the query
+        """Processes literals and returns a tuple containing all data required for the query
         Args:
             keyvals (dict): Data to insert into the table
             literals (list): Datapoints that should not be escaped
@@ -256,7 +254,13 @@ class PooledQueryExecutor:
                 else:
                     column_values += [value]
                 ondupe_out += [tmp_value]
-        return (column_names, column_substituion, column_values, literal_values, ondupe_out)
+        return (
+            column_names,
+            column_substituion,
+            column_values,
+            literal_values,
+            ondupe_out,
+        )
 
     def autofetch_all(self, sql, args=(), **kwargs):
         """ Fetch all data and have it returned as a dictionary """
@@ -278,8 +282,7 @@ class PooledQueryExecutor:
         return data[0]
 
     def autofetch_column(self, sql, args=None, **kwargs):
-        """ get one field for 0, 1, or more rows in a query and return the result in a list
-        """
+        """get one field for 0, 1, or more rows in a query and return the result in a list"""
         data = self.execute(sql, args=args, raise_exc=True, **kwargs)
         if data is None:
             data = []
@@ -289,7 +292,7 @@ class PooledQueryExecutor:
         return returned_vals
 
     def autoexec_delete(self, table, keyvals, literals=None, where_append=None, **kwargs):
-        """ Performs a delete
+        """Performs a delete
         Args:
             table (str): Table to run the query against
             keyvals (dict): Data to insert into the table
@@ -306,7 +309,7 @@ class PooledQueryExecutor:
             raise Exception("Literals must be a list")
         table = self.__fix_table(table)
         parsed_literals = self.__process_literals("DELETE", keyvals, literals)
-        (column_names, column_substituion, column_values, literal_values, _) = parsed_literals
+        (column_names, column_substituion, column_values, literal_values, _,) = parsed_literals
         query = "DELETE FROM %s\nWHERE "
         where_clauses = where_append + self.__create_clause(column_names, column_substituion)
         query += "\nAND ".join(k for k in where_clauses)
@@ -316,7 +319,7 @@ class PooledQueryExecutor:
 
     def autoexec_insert(self, table, keyvals, literals=None, optype="INSERT", **kwargs):
 
-        """ Auto-inserts into a table and handles all escaping
+        """Auto-inserts into a table and handles all escaping
         Args:
             table (str): Table to run the query against
             keyvals (dict): Data to insert into the table
@@ -332,15 +335,16 @@ class PooledQueryExecutor:
             literals = []
         optype = optype.upper()
         if optype not in ["INSERT", "REPLACE", "INSERT IGNORE", "ON DUPLICATE"]:
-            raise ProgrammingError("MySQL operation must be 'INSERT', 'REPLACE', 'INSERT IGNORE', 'ON DUPLICATE',"
-                                   "got '%s'" % optype)
+            raise ProgrammingError(
+                "MySQL operation must be 'INSERT', 'REPLACE', 'INSERT IGNORE', 'ON DUPLICATE'," "got '%s'" % optype
+            )
         if type(keyvals) is not dict:
             raise Exception("Data must be a dictionary")
         if type(literals) is not list:
             raise Exception("Literals must be a list")
         table = self.__fix_table(table)
         parsed_literals = self.__process_literals(optype, keyvals, literals)
-        (column_names, column_substituion, column_values, literal_values, ondupe_out) = parsed_literals
+        (column_names, column_substituion, column_values, literal_values, ondupe_out,) = parsed_literals
         ondupe_values = []
         inital_type = optype
         if optype == "ON DUPLICATE":
@@ -349,18 +353,15 @@ class PooledQueryExecutor:
             inital_type += " INTO"
         rownames = ",".join("`%s`" % k for k in column_names)
         rowvalues = ", ".join(k for k in column_substituion)
-        query = "%s %s\n" \
-                "(%s)\n" \
-                "VALUES(%s)" % (inital_type, table, rownames, rowvalues) % tuple(literal_values)
+        query = "%s %s\n" "(%s)\n" "VALUES(%s)" % (inital_type, table, rownames, rowvalues) % tuple(literal_values)
         if optype == "ON DUPLICATE":
             dupe_out = ",\n".join("%s" % k for k in ondupe_out)
-            query += "\nON DUPLICATE KEY UPDATE\n" \
-                     "%s" % dupe_out
+            query += "\nON DUPLICATE KEY UPDATE\n" "%s" % dupe_out
             column_values += ondupe_values
         return self.execute(query, args=tuple(column_values), commit=True, get_id=True, raise_exc=True, **kwargs)
 
     def autoexec_update(self, table, set_keyvals, literals=None, where_keyvals=None, where_literals=None, **kwargs):
-        """ Auto-updates into a table and handles all escaping
+        """Auto-updates into a table and handles all escaping
         Args:
             table (str): Table to run the query against
             set_keyvals (dict): Data to set
@@ -390,8 +391,7 @@ class PooledQueryExecutor:
         actual_values = set_val + where_val
         set_clause = self.__create_clause(set_col_names, set_col_sub)
         first_sub.append(",".join(set_clause) % tuple(set_literal_val))
-        query = "UPDATE %s\n" \
-                "SET %s"
+        query = "UPDATE %s\n" "SET %s"
         if where_col_names:
             query += "\nWHERE %s"
             where_clause = self.__create_clause(where_col_names, where_col_sub)

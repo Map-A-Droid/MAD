@@ -2,19 +2,12 @@ from .area import Area
 
 
 class AreaMonMITM(Area):
-    area_table = 'settings_area_mon_mitm'
-    area_type = 'mon_mitm'
+    area_table = "settings_area_mon_mitm"
+    area_type = "mon_mitm"
     configuration = {
         "description": "Overlay scanner (MITM) for detecting spawnpoints. Raids will also get detected",
         "fields": {
-            "name": {
-                "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Name of area",
-                    "expected": str
-                }
-            },
+            "name": {"settings": {"type": "text", "require": True, "description": "Name of area", "expected": str}},
             "init": {
                 "settings": {
                     "type": "option",
@@ -22,7 +15,7 @@ class AreaMonMITM(Area):
                     "values": [False, True],
                     "empty": False,
                     "description": "Set this option to True, if you scan the area for spawnpoints for the first time",
-                    "expected": bool
+                    "expected": bool,
                 }
             },
             "geofence_included": {
@@ -33,7 +26,7 @@ class AreaMonMITM(Area):
                     "expected": int,
                     "uri": True,
                     "data_source": "geofence",
-                    "uri_source": "api_geofence"
+                    "uri_source": "api_geofence",
                 }
             },
             "geofence_excluded": {
@@ -44,7 +37,7 @@ class AreaMonMITM(Area):
                     "expected": int,
                     "uri": True,
                     "data_source": "geofence",
-                    "uri_source": "api_geofence"
+                    "uri_source": "api_geofence",
                 }
             },
             "routecalc": {
@@ -55,7 +48,7 @@ class AreaMonMITM(Area):
                     "expected": int,
                     "uri": True,
                     "data_source": "routecalc",
-                    "uri_source": "api_routecalc"
+                    "uri_source": "api_routecalc",
                 }
             },
             "coords_spawns_known": {
@@ -64,10 +57,10 @@ class AreaMonMITM(Area):
                     "require": False,
                     "values": [True, False],
                     "description": "Scan all spawnpoints [true] or just ones with unknown endtimes [false] "
-                                   "(Default: True)",
-                    "expected": bool
+                    "(Default: True)",
+                    "expected": bool,
                 }
-            }
+            },
         },
         "settings": {
             "speed": {
@@ -75,8 +68,8 @@ class AreaMonMITM(Area):
                     "type": "text",
                     "require": False,
                     "description": "Speed of player in kmh. This value is used in conjunction with max_distance to "
-                                   "determine if the worker should walk or teleport (Default: 0)",
-                    "expected": float
+                    "determine if the worker should walk or teleport (Default: 0)",
+                    "expected": float,
                 }
             },
             "max_distance": {
@@ -84,8 +77,8 @@ class AreaMonMITM(Area):
                     "type": "text",
                     "require": False,
                     "description": "Max. distance of walking - If the distance between points is greater than this "
-                                   "value the worker will teleport (Default: 0)",
-                    "expected": float
+                    "value the worker will teleport (Default: 0)",
+                    "expected": float,
                 }
             },
             "delay_after_prio_event": {
@@ -93,9 +86,9 @@ class AreaMonMITM(Area):
                     "type": "text",
                     "require": False,
                     "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to "
-                                   "scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = "
-                                   "Disable PrioQ (Default: empty)",
-                    "expected": int
+                    "scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = "
+                    "Disable PrioQ (Default: empty)",
+                    "expected": int,
                 }
             },
             "priority_queue_clustering_timedelta": {
@@ -103,8 +96,8 @@ class AreaMonMITM(Area):
                     "type": "text",
                     "require": False,
                     "description": "Cluster events within the given timedelta in seconds. The latest event in time "
-                                   "within a timedelta will be used to scan the clustered events (Default: 300)",
-                    "expected": float
+                    "within a timedelta will be used to scan the clustered events (Default: 300)",
+                    "expected": float,
                 }
             },
             "max_clustering": {
@@ -112,8 +105,8 @@ class AreaMonMITM(Area):
                     "type": "text",
                     "require": False,
                     "description": "Maximum number of prioQ events to cluster (default: unlimited, 0 or empty to set "
-                                   "unlimited)",
-                    "expected": int
+                    "unlimited)",
+                    "expected": int,
                 }
             },
             "remove_from_queue_backlog": {
@@ -121,9 +114,9 @@ class AreaMonMITM(Area):
                     "type": "text",
                     "require": False,
                     "description": "Remove any events from priority queue that have been due for scanning more than "
-                                   "the given number of seconds ago. Setting this to 0 can cause a significant backlog "
-                                   "buildup, leading to reduced scanning performance. (Default: 300)",
-                    "expected": float
+                    "the given number of seconds ago. Setting this to 0 can cause a significant backlog "
+                    "buildup, leading to reduced scanning performance. (Default: 300)",
+                    "expected": float,
                 }
             },
             "starve_route": {
@@ -132,8 +125,8 @@ class AreaMonMITM(Area):
                     "require": False,
                     "values": [None, False, True],
                     "description": "Disable round-robin of route vs. priority queue events. If True, your route may "
-                                   "not be completed in time and e.g. only spawns will be scanned (Default: False)",
-                    "expected": bool
+                    "not be completed in time and e.g. only spawns will be scanned (Default: False)",
+                    "expected": bool,
                 }
             },
             "init_mode_rounds": {
@@ -141,22 +134,19 @@ class AreaMonMITM(Area):
                     "type": "text",
                     "require": False,
                     "description": "Rounds in Init Mode. (Default: 1)",
-                    "expected": int
+                    "expected": int,
                 }
             },
             "mon_ids_iv": {
                 "settings": {
                     "type": "lookup",
-                    "display": {
-                        "name": "monlist",
-                        "section": "monivlist"
-                    },
+                    "display": {"name": "monlist", "section": "monivlist"},
                     "require": False,
                     "description": "IV List Resource",
                     "expected": int,
                     "uri": True,
                     "data_source": "monivlist",
-                    "uri_source": "api_monivlist"
+                    "uri_source": "api_monivlist",
                 }
             },
             "include_event_id": {
@@ -164,8 +154,8 @@ class AreaMonMITM(Area):
                     "type": "text",
                     "require": False,
                     "description": "Including event (ID) spawns for route calculation",
-                    "expected": int
+                    "expected": int,
                 }
-            }
-        }
+            },
+        },
     }

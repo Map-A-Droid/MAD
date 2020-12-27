@@ -21,23 +21,22 @@ class ADBConnect(object):
                     from adb.client import Client as AdbClient
                 except ImportError:
                     pass
-            self.check_adblib = 'adb.client' in sys.modules or 'ppadb.client' in sys.modules
+            self.check_adblib = "adb.client" in sys.modules or "ppadb.client" in sys.modules
             if not self.check_adblib:
                 logger.warning("Could not find pure-python-adb library. If you are not using ADB you can ignore this")
                 self._useadb = False
             else:
-                self._client = AdbClient(
-                    host=self._args.adb_server_ip, port=self._args.adb_server_port)
+                self._client = AdbClient(host=self._args.adb_server_ip, port=self._args.adb_server_port)
 
     def check_adb_status(self, adb):
         if not self._useadb:
             return None
         try:
             if self._client.device(adb) is not None:
-                self._client.device(adb).shell('echo checkadb')
+                self._client.device(adb).shell("echo checkadb")
                 return True
         except RuntimeError:
-            logger.exception('MADmin: Exception occurred while checking adb status ({}).', adb)
+            logger.exception("MADmin: Exception occurred while checking adb status ({}).", adb)
         return None
 
     def return_adb_devices(self):
@@ -46,7 +45,7 @@ class ADBConnect(object):
         try:
             return self._client.devices()
         except Exception as e:
-            logger.exception('MADmin: Exception occurred while getting adb clients: {}.', e)
+            logger.exception("MADmin: Exception occurred while getting adb clients: {}.", e)
         return []
 
     def send_shell_command(self, adb, origin, command):
@@ -54,11 +53,11 @@ class ADBConnect(object):
         try:
             device = self._client.device(adb)
             if device is not None:
-                origin_logger.info('MADmin: Using ADB shell command')
+                origin_logger.info("MADmin: Using ADB shell command")
                 device.shell(command)
                 return True
         except Exception as e:
-            origin_logger.exception('MADmin: Exception occurred while sending shell command: {}.', e)
+            origin_logger.exception("MADmin: Exception occurred while sending shell command: {}.", e)
         return False
 
     def make_screenshot(self, adb, origin, extenstion):
@@ -66,16 +65,16 @@ class ADBConnect(object):
         try:
             device = self._client.device(adb)
             if device is not None:
-                origin_logger.info('MADmin: Using ADB')
+                origin_logger.info("MADmin: Using ADB")
                 result = device.screencap()
                 # TODO: adjust with devicesettings
-                with open(os.path.join(self._args.temp_path, 'screenshot_%s.png' % str(origin)), "wb") as fp:
+                with open(os.path.join(self._args.temp_path, "screenshot_%s.png" % str(origin)), "wb",) as fp:
                     fp.write(result)
                 if extenstion == "jpg":
-                    pngtojpg(os.path.join(self._args.temp_path, 'screenshot_%s.png' % str(origin)))
+                    pngtojpg(os.path.join(self._args.temp_path, "screenshot_%s.png" % str(origin)))
                 return True
         except Exception as e:
-            origin_logger.exception('MADmin: Exception occurred while making screenshot: {}.', e)
+            origin_logger.exception("MADmin: Exception occurred while making screenshot: {}.", e)
         return False
 
     def make_screenclick(self, adb, origin, position_x, position_y):
@@ -84,11 +83,11 @@ class ADBConnect(object):
             device = self._client.device(adb)
             if device is not None:
                 device.shell("input tap " + str(position_x) + " " + str(position_y))
-                origin_logger.info('MADMin ADB Click x:{} y:{}', position_x, position_y)
+                origin_logger.info("MADMin ADB Click x:{} y:{}", position_x, position_y)
                 time.sleep(1)
                 return True
         except Exception as e:
-            origin_logger.exception('MADmin: Exception occurred while making screenclick: {}.', e)
+            origin_logger.exception("MADmin: Exception occurred while making screenclick: {}.", e)
         return False
 
     def make_screenswipe(self, adb, origin, position_x, position_y, swipe_x, swipe_y):
@@ -96,13 +95,24 @@ class ADBConnect(object):
         try:
             device = self._client.device(adb)
             if device is not None:
-                device.shell("input swipe " + str(position_x) + " " +
-                             str(position_y) + " " + str(swipe_x) + " " + str(swipe_y) + " 100")
-                origin_logger.info('MADMin ADB Swipe x:{} y:{} xe:{} ye:{}', position_x, position_y, swipe_x, swipe_y)
+                device.shell(
+                    "input swipe "
+                    + str(position_x)
+                    + " "
+                    + str(position_y)
+                    + " "
+                    + str(swipe_x)
+                    + " "
+                    + str(swipe_y)
+                    + " 100"
+                )
+                origin_logger.info(
+                    "MADMin ADB Swipe x:{} y:{} xe:{} ye:{}", position_x, position_y, swipe_x, swipe_y,
+                )
                 time.sleep(1)
                 return True
         except Exception as e:
-            origin_logger.exception('MADmin: Exception occurred while making screenswipe: {}.', e)
+            origin_logger.exception("MADmin: Exception occurred while making screenswipe: {}.", e)
         return False
 
     def push_file(self, adb, origin, filename):
@@ -111,9 +121,9 @@ class ADBConnect(object):
             device = self._client.device(adb)
             if device is not None:
                 device.shell("adb push  " + str(filename) + " /sdcard/Download")
-                origin_logger.info('MADMin ADB Push File {}', filename)
+                origin_logger.info("MADMin ADB Push File {}", filename)
                 time.sleep(1)
                 return True
         except Exception as e:
-            origin_logger.exception('MADmin: Exception occurred while pushing file: {}.', e)
+            origin_logger.exception("MADmin: Exception occurred while pushing file: {}.", e)
         return False

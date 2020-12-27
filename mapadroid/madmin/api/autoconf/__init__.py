@@ -1,3 +1,1 @@
-__all__ = [
-    'ftr_autoconf'
-]
+__all__ = ["ftr_autoconf"]

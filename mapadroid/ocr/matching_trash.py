@@ -29,10 +29,10 @@ def trash_image_matching(origin, screen_img, full_screen):
     screen = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
 
     if screen is None:
-        origin_logger.error('trash_image_matching: {} appears to be corrupted', screen_img)
+        origin_logger.error("trash_image_matching: {} appears to be corrupted", screen_img)
         return None
 
-    trash = cv2.imread(os.path.join(mapadroid.MAD_ROOT, 'static/img/trashcan.png'), 0)
+    trash = cv2.imread(os.path.join(mapadroid.MAD_ROOT, "static/img/trashcan.png"), 0)
 
     height, width = screen.shape
     _quest_x = get_delete_quest_coords(width)
@@ -59,8 +59,7 @@ def trash_image_matching(origin, screen_img, full_screen):
 
     for scale in np.linspace(sc_from, sc_till, 15)[::-1]:
 
-        resized = imutils.resize(
-            trash, width=int(trash.shape[1] * scale))
+        resized = imutils.resize(trash, width=int(trash.shape[1] * scale))
         (trash_heigh, trash_width) = resized.shape[:2]
 
         last_y_coord = 0
@@ -78,17 +77,18 @@ def trash_image_matching(origin, screen_img, full_screen):
 
                 if last_y_coord > 0:
                     if last_y_coord + 100 > y_coord or last_y_coord - 100 > y_coord:
-                        if (_inventory_x - 50 < x_coord < _inventory_x + 50) or \
-                                (_quest_x - 50 < x_coord < _quest_x + 50):
+                        if (_inventory_x - 50 < x_coord < _inventory_x + 50) or (
+                            _quest_x - 50 < x_coord < _quest_x + 50
+                        ):
                             last_y_coord = y_coord
                     else:
-                        if (_inventory_x - 50 < x_coord < _inventory_x + 50) or \
-                                (_quest_x - 50 < x_coord < _quest_x + 50):
+                        if (_inventory_x - 50 < x_coord < _inventory_x + 50) or (
+                            _quest_x - 50 < x_coord < _quest_x + 50
+                        ):
                             clicklist.append(Trash(x_coord, y_coord))
                             last_y_coord = y_coord
                 else:
-                    if (_inventory_x - 50 < x_coord < _inventory_x + 50) or \
-                            (_quest_x - 50 < x_coord < _quest_x + 50):
+                    if (_inventory_x - 50 < x_coord < _inventory_x + 50) or (_quest_x - 50 < x_coord < _quest_x + 50):
                         clicklist.append(Trash(x_coord, y_coord))
                         last_y_coord = y_coord
                 boxcount += 1

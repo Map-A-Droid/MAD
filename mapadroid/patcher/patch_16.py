@@ -2,7 +2,7 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Patch 16'
+    name = "Patch 16"
 
     def _execute(self):
         query = (

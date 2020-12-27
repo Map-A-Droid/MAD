@@ -6,10 +6,10 @@ from .resource import Resource
 
 
 class PogoAuth(Resource):
-    table = 'settings_pogoauth'
-    name_field = 'username'
-    primary_key = 'account_id'
-    search_field = 'username'
+    table = "settings_pogoauth"
+    name_field = "username"
+    primary_key = "account_id"
+    search_field = "username"
     configuration = {
         "fields": {
             "login_type": {
@@ -18,25 +18,11 @@ class PogoAuth(Resource):
                     "require": True,
                     "values": ["google", "ptc"],
                     "description": "Account Type",
-                    "expected": str
+                    "expected": str,
                 }
             },
-            "username": {
-                "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Username",
-                    "expected": str
-                }
-            },
-            "password": {
-                "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Password",
-                    "expected": str
-                }
-            },
+            "username": {"settings": {"type": "text", "require": True, "description": "Username", "expected": str}},
+            "password": {"settings": {"type": "text", "require": True, "description": "Password", "expected": str}},
             "device_id": {
                 "settings": {
                     "type": "deviceselect",
@@ -46,27 +32,25 @@ class PogoAuth(Resource):
                     "expected": int,
                     "uri": True,
                     "data_source": "device",
-                    "uri_source": "api_device"
+                    "uri_source": "api_device",
                 }
-            }
+            },
         }
     }
 
     @classmethod
     def get_avail_accounts(cls, data_manager, auth_type, device_id: int = None) -> Dict[int, Resource]:
         accounts: Dict[int, Resource] = {}
-        search = {
-            'login_type': auth_type
-        }
-        pogoauths = data_manager.search('pogoauth', params=search)
+        search = {"login_type": auth_type}
+        pogoauths = data_manager.search("pogoauth", params=search)
         try:
             identifier = int(device_id)
         except (ValueError, TypeError, UnknownIdentifier):
             identifier = None
         # Find all unassigned accounts
         for account_id, account in pogoauths.items():
-            if account['device_id'] is not None:
-                if identifier is not None and account['device_id'] != identifier:
+            if account["device_id"] is not None:
+                if identifier is not None and account["device_id"] != identifier:
                     continue
             accounts[account_id] = account
         return accounts
@@ -76,32 +60,32 @@ class PogoAuth(Resource):
         invalid_devices = []
         avail_devices: Dict[int, Resource] = {}
         device_id: int = None
-        pogoauths = data_manager.search('pogoauth')
+        pogoauths = data_manager.search("pogoauth")
         try:
             identifier = int(auth_id)
         except (ValueError, TypeError, UnknownIdentifier):
             pass
         else:
             try:
-                device_id = pogoauths[identifier]['device_id']
+                device_id = pogoauths[identifier]["device_id"]
             except KeyError:
                 # Auth isn't found. Either it doesnt exist or auth_type mismatch
                 return avail_devices
         for pauth in pogoauths.values():
-            if pauth['device_id'] is not None and device_id is not None and pauth['device_id'] != device_id:
-                invalid_devices.append(pauth['device_id'])
+            if pauth["device_id"] is not None and device_id is not None and pauth["device_id"] != device_id:
+                invalid_devices.append(pauth["device_id"])
         invalid_devices = list(set(invalid_devices))
-        for dev_id, dev in data_manager.get_root_resource('device').items():
+        for dev_id, dev in data_manager.get_root_resource("device").items():
             if dev_id in invalid_devices:
                 continue
             avail_devices[dev_id] = dev
         return avail_devices
 
     def get_dependencies(self) -> List[Tuple[str, int]]:
-        sql = 'SELECT `device_id` FROM `settings_pogoauth` WHERE `account_id` = %s AND `device_id` IS NOT NULL'
+        sql = "SELECT `device_id` FROM `settings_pogoauth` WHERE `account_id` = %s AND `device_id` IS NOT NULL"
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, device_id in enumerate(dependencies[:]):
-            dependencies[ind] = ('device', device_id)
+            dependencies[ind] = ("device", device_id)
         return dependencies
 
     def save(self, core_data=None, force_insert=False, ignore_issues=None, **kwargs):
@@ -114,10 +98,8 @@ class PogoAuth(Resource):
 
     def validate_custom(self):
         issues = []
-        if 'device_id' in self and self['device_id'] is not None:
-            if self['device_id'] not in PogoAuth.get_avail_devices(self._data_manager, auth_id=self.identifier):
+        if "device_id" in self and self["device_id"] is not None:
+            if self["device_id"] not in PogoAuth.get_avail_devices(self._data_manager, auth_id=self.identifier):
                 issues.append(("device_id", "PogoAuth not valid for this device"))
         if issues:
-            return {
-                'issues': issues
-            }
+            return {"issues": issues}

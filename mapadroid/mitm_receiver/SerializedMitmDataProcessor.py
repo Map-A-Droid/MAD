@@ -11,8 +11,9 @@ logger = get_logger(LoggerEnums.mitm)
 
 
 class SerializedMitmDataProcessor(Process):
-    def __init__(self, multi_proc_queue: Queue, application_args, mitm_mapper: MitmMapper,
-                 db_wrapper: DbWrapper, name=None):
+    def __init__(
+        self, multi_proc_queue: Queue, application_args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper, name=None,
+    ):
         Process.__init__(self, name=name)
         self.__queue: Queue = multi_proc_queue
         self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
@@ -32,7 +33,9 @@ class SerializedMitmDataProcessor(Process):
                 self.process_data(item[0], item[1], item[2])
                 self.__queue.task_done()
                 end_time = self.get_time_ms() - start_time
-                logger.debug("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
+                logger.debug(
+                    "MITM data processor {} finished queue item in {}ms", self.__name, end_time,
+                )
             except KeyboardInterrupt:
                 logger.info("Received keyboard interrupt, stopping MITM data processor")
                 break
@@ -86,10 +89,19 @@ class SerializedMitmDataProcessor(Process):
 
                 full_time = self.get_time_ms() - start_time
 
-                origin_logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
-                                    "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
-                                    full_time, weather_time, stops_time, gyms_time, raids_time,
-                                    spawnpoints_time, mons_time, cells_time, gmo_loc_time)
+                origin_logger.debug(
+                    "Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, "
+                    + "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
+                    full_time,
+                    weather_time,
+                    stops_time,
+                    gyms_time,
+                    raids_time,
+                    spawnpoints_time,
+                    mons_time,
+                    cells_time,
+                    gmo_loc_time,
+                )
             elif data_type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:

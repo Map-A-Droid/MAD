@@ -68,8 +68,9 @@ def build_graph(data):
                 if this not in graph:
                     graph[this] = {}
 
-                graph[this][another_point] = get_length(data[this][0], data[this][1], data[another_point][0],
-                                                        data[another_point][1])
+                graph[this][another_point] = get_length(
+                    data[this][0], data[this][1], data[another_point][0], data[another_point][1],
+                )
 
     return graph
 
@@ -142,6 +143,7 @@ def find_odd_vertexes(min_span_tree):
 
 def minimum_weight_matching(min_span_tree, graph, odd_vert):
     import random
+
     random.shuffle(odd_vert)
 
     while odd_vert:

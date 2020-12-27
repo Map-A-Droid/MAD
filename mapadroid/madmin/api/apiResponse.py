@@ -19,18 +19,18 @@ class APIResponse(object):
         resp = flask.Response(converted_data, mimetype=self.mimetype)
         resp.status_code = status_code
         for key, value in kwargs.items():
-            if key == 'headers':
+            if key == "headers":
                 for header_key, header_val in value.items():
                     resp.headers.add(header_key, header_val)
             else:
                 setattr(resp, key, value)
-        self.logger.debug4('Return Data: {}', converted_data)
-        self.logger.debug4('Return Headers: {}', resp.headers)
+        self.logger.debug4("Return Data: {}", converted_data)
+        self.logger.debug4("Return Headers: {}", resp.headers)
         return resp
 
     def convert_to_format(self, content):
-        beautify = self.headers.get('X-Beautify')
-        if self.mimetype == 'application/json':
+        beautify = self.headers.get("X-Beautify")
+        if self.mimetype == "application/json":
             try:
                 indent = None
                 if beautify and beautify.isdigit() and int(beautify) == 1:

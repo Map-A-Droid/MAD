@@ -7,8 +7,7 @@ import s2sphere
 
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
-                                 get_middle_of_coord_list)
+from mapadroid.utils.geo import get_distance_of_two_points_in_meters, get_middle_of_coord_list
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
@@ -47,7 +46,11 @@ class S2Helper:
     @staticmethod
     def get_position_from_cell(cell_id):
         cell = s2sphere.CellId(id_=int(cell_id)).to_lat_lng()
-        return s2sphere.math.degrees(cell.lat().radians), s2sphere.math.degrees(cell.lng().radians), 0
+        return (
+            s2sphere.math.degrees(cell.lat().radians),
+            s2sphere.math.degrees(cell.lng().radians),
+            0,
+        )
 
     @staticmethod
     def _generate_star_locs(center, distance, ring):
@@ -56,8 +59,7 @@ class S2Helper:
             # Star_locs will contain the locations of the 6 vertices of
             # the current ring (90,150,210,270,330 and 30 degrees from
             # origin) to form a star
-            star_loc = S2Helper.get_new_coords(center, distance * ring,
-                                               90 + 60 * i)
+            star_loc = S2Helper.get_new_coords(center, distance * ring, 90 + 60 * i)
             for index in range(0, ring):
                 # Then from each point on the star, create locations
                 # towards the next point of star along the edge of the
@@ -75,7 +77,7 @@ class S2Helper:
             Location(south, east),
             Location(south, west),
             Location(north, east),
-            Location(north, west)
+            Location(north, west),
         ]
         # get the center
         center = get_middle_of_coord_list(corners)
@@ -83,8 +85,7 @@ class S2Helper:
         # get the farthest to the center...
         farthest_dist = 0
         for corner in corners:
-            dist_temp = get_distance_of_two_points_in_meters(
-                center.lat, center.lng, corner.lat, corner.lng)
+            dist_temp = get_distance_of_two_points_in_meters(center.lat, center.lng, corner.lat, corner.lng)
             if dist_temp > farthest_dist:
                 farthest_dist = dist_temp
 
@@ -96,8 +97,7 @@ class S2Helper:
         logger.info("Calculating positions for init scan")
         num_cores = multiprocessing.cpu_count()
         with multiprocessing.Pool(processes=num_cores) as pool:
-            temp = [pool.apply(S2Helper._generate_star_locs, args=(
-                center, distance, i)) for i in range(1, step_limit)]
+            temp = [pool.apply(S2Helper._generate_star_locs, args=(center, distance, i)) for i in range(1, step_limit)]
 
         results = [item for sublist in temp for item in sublist]
         results.append(Location(center.lat, center.lng))
@@ -107,8 +107,9 @@ class S2Helper:
         if geofence_helper is not None and geofence_helper.is_enabled():
             results = geofence_helper.get_geofenced_coordinates(results)
             if not results:
-                logger.error('No cells regarded as valid for desired scan area. Check your provided geofences. '
-                             'Aborting.')
+                logger.error(
+                    "No cells regarded as valid for desired scan area. Check your provided geofences. " "Aborting."
+                )
             else:
                 logger.info("Ordering location")
                 results = S2Helper.order_location_list_rows(results)
@@ -141,8 +142,7 @@ class S2Helper:
                 flip = True
             for loc in next_row:
                 new_list.append(loc)
-            location_list = S2Helper.delete_row_from_list(
-                location_list, next_row)
+            location_list = S2Helper.delete_row_from_list(location_list, next_row)
         return new_list
 
     @staticmethod
@@ -192,8 +192,10 @@ class S2Helper:
     # Returns a set of S2 cells within circle around position
     def get_s2cells_from_circle(lat, lng, radius, level=15):
         earth = 6371000
-        region = s2sphere.Cap.from_axis_angle(s2sphere.LatLng.from_degrees(lat, lng).to_point(),
-                                              s2sphere.Angle.from_degrees(360 * radius / (2 * math.pi * earth)))
+        region = s2sphere.Cap.from_axis_angle(
+            s2sphere.LatLng.from_degrees(lat, lng).to_point(),
+            s2sphere.Angle.from_degrees(360 * radius / (2 * math.pi * earth)),
+        )
         coverer = s2sphere.RegionCoverer()
         coverer.min_level = level
         coverer.max_level = level

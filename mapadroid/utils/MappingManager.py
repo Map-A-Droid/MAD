@@ -18,29 +18,10 @@ from mapadroid.worker.WorkerType import WorkerType
 logger = get_logger(LoggerEnums.utils)
 
 mode_mapping = {
-    "raids_mitm": {
-        "s2_cell_level": 15,
-        "range": 490,
-        "range_init": 980,
-        "max_count": 100000
-    },
-    "mon_mitm": {
-        "s2_cell_level": 17,
-        "range": 67,
-        "range_init": 145,
-        "max_count": 100000
-    },
-    "pokestops": {
-        "s2_cell_level": 13,
-        "range": 0.001,
-        "range_init": 980,
-        "max_count": 100000
-    },
-    "iv_mitm": {
-        "range": 0,
-        "range_init": 0,
-        "max_count": 999999
-    }
+    "raids_mitm": {"s2_cell_level": 15, "range": 490, "range_init": 980, "max_count": 100000},
+    "mon_mitm": {"s2_cell_level": 17, "range": 67, "range_init": 145, "max_count": 100000},
+    "pokestops": {"s2_cell_level": 13, "range": 0.001, "range_init": 980, "max_count": 100000},
+    "iv_mitm": {"range": 0, "range_init": 0, "max_count": 999999},
 }
 
 
@@ -49,7 +30,7 @@ class JoinQueue(object):
         self._joinqueue: Queue = Queue()
         self.__shutdown_event = stop_trigger
         self._mapping_mananger = mapping_manager
-        self.__route_join_thread: Thread = Thread(name='system', target=self.__route_join)
+        self.__route_join_thread: Thread = Thread(name="system", target=self.__route_join)
         self.__route_join_thread.daemon = True
         self.__route_join_thread.start()
 
@@ -96,8 +77,9 @@ class MappingManager:
         self.update(full_lock=True)
 
         self.__devicesettings_setter_queue: Queue = Queue()
-        self.__devicesettings_setter_consumer_thread: Thread = Thread(name='system',
-                                                                      target=self.__devicesettings_setter_consumer, )
+        self.__devicesettings_setter_consumer_thread: Thread = Thread(
+            name="system", target=self.__devicesettings_setter_consumer,
+        )
         self.__devicesettings_setter_consumer_thread.daemon = True
         self.__devicesettings_setter_consumer_thread.start()
 
@@ -111,7 +93,7 @@ class MappingManager:
         return self._devicemappings.get(device_name, None)
 
     def get_devicesettings_of(self, device_name: str) -> Optional[dict]:
-        return self._devicemappings.get(device_name, None).get('settings', None)
+        return self._devicemappings.get(device_name, None).get("settings", None)
 
     def __devicesettings_setter_consumer(self):
         logger.info("Starting Devicesettings consumer Thread")
@@ -131,7 +113,7 @@ class MappingManager:
                     if self._devicemappings.get(device_name, None) is not None:
                         if self._devicemappings[device_name].get("settings", None) is None:
                             self._devicemappings[device_name]["settings"] = {}
-                        self._devicemappings[device_name]['settings'][key] = value
+                        self._devicemappings[device_name]["settings"][key] = value
 
     def set_devicesetting_value_of(self, device_name: str, key: str, value):
         if self._devicemappings.get(device_name, None) is not None:
@@ -145,16 +127,22 @@ class MappingManager:
 
     def get_monlist(self, listname, areaname):
         if type(listname) is list:
-            logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json.'
-                         ' Using empty list instead.', areaname)
+            logger.error(
+                "Area {} is using old list format instead of global mon list. Please check your mappings.json."
+                " Using empty list instead.",
+                areaname,
+            )
             return []
         if listname is not None and int(listname) in self._monlists:
             return self._monlists[int(listname)]
         elif listname is None:
             return []
         else:
-            logger.warning("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
-                           listname, areaname)
+            logger.warning(
+                "IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
+                listname,
+                areaname,
+            )
             return []
 
     def get_all_routemanager_names(self):
@@ -193,7 +181,7 @@ class MappingManager:
         if routemanager is None:
             routemanager = self.get_routemanager_name_from_device(device_name)
             if routemanager is None:
-                logger.info('Device {} is not registered so it cannot be paused', device_name)
+                logger.info("Device {} is not registered so it cannot be paused", device_name)
                 return False
         if routemanager is None:
             return False
@@ -220,8 +208,7 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_rounds(worker_name) if routemanager is not None else None
 
-    def routemanager_redo_stop(self, routemanager_name: str, worker_name: str, lat: float,
-                               lon: float) -> bool:
+    def routemanager_redo_stop(self, routemanager_name: str, worker_name: str, lat: float, lon: float) -> bool:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
 
@@ -264,8 +251,9 @@ class MappingManager:
         else:
             return None
 
-    def routemanager_get_current_route(self, routemanager_name: str) -> Optional[Tuple[List[Location],
-                                                                                       Dict[str, List[Location]]]]:
+    def routemanager_get_current_route(
+        self, routemanager_name: str
+    ) -> Optional[Tuple[List[Location], Dict[str, List[Location]]]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_current_route() if routemanager is not None else None
 
@@ -277,13 +265,11 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_settings() if routemanager is not None else None
 
-    def routemanager_set_worker_sleeping(self, routemanager_name: str, worker_name: str,
-                                         sleep_duration: float):
+    def routemanager_set_worker_sleeping(self, routemanager_name: str, worker_name: str, sleep_duration: float):
         routemanager = self.__fetch_routemanager(routemanager_name)
         routemanager.set_worker_sleeping(worker_name, sleep_duration)
 
-    def set_worker_startposition(self, routemanager_name: str, worker_name: str,
-                                 lat: float, lon: float):
+    def set_worker_startposition(self, routemanager_name: str, worker_name: str, lat: float, lon: float):
         routemanager = self.__fetch_routemanager(routemanager_name)
         routemanager.set_worker_startposition(worker_name, lat, lon)
 
@@ -310,17 +296,13 @@ class MappingManager:
                 active = False
                 successful = True
             args = (routemanager._max_radius, routemanager._max_coords_within_radius)
-            kwargs = {
-                'num_procs': 0,
-                'active': active
-            }
-            recalc_thread = Thread(name=routemanager.name,
-                                   target=routemanager.recalc_route_adhoc,
-                                   args=args,
-                                   kwargs=kwargs)
+            kwargs = {"num_procs": 0, "active": active}
+            recalc_thread = Thread(
+                name=routemanager.name, target=routemanager.recalc_route_adhoc, args=args, kwargs=kwargs,
+            )
             recalc_thread.start()
         except Exception:
-            logger.opt(exception=True).error('Unable to start recalculation')
+            logger.opt(exception=True).error("Unable to start recalculation")
         return successful
 
     def data_manager_is_device_active(self, device_id: int):
@@ -341,7 +323,7 @@ class MappingManager:
         if self.__configmode:
             return areas
 
-        raw_areas = self.__data_manager.get_root_resource('area')
+        raw_areas = self.__data_manager.get_root_resource("area")
 
         thread_pool = ThreadPool(processes=4)
 
@@ -352,16 +334,20 @@ class MappingManager:
                 raise RuntimeError("Cannot work without geofence_included")
 
             try:
-                geofence_included = self.__data_manager.get_resource('geofence', identifier=area["geofence_included"])
+                geofence_included = self.__data_manager.get_resource("geofence", identifier=area["geofence_included"])
             except Exception:
-                raise RuntimeError("geofence_included for area '{}' is specified but does not exist ('{}').".format(
-                                   area["name"], geofence_included))
+                raise RuntimeError(
+                    "geofence_included for area '{}' is specified but does not exist ('{}').".format(
+                        area["name"], geofence_included
+                    )
+                )
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
             try:
                 if geofence_excluded_raw_path is not None:
-                    geofence_excluded = self.__data_manager.get_resource('geofence',
-                                                                         identifier=geofence_excluded_raw_path)
+                    geofence_excluded = self.__data_manager.get_resource(
+                        "geofence", identifier=geofence_excluded_raw_path
+                    )
                 else:
                     geofence_excluded = None
             except Exception:
@@ -371,11 +357,13 @@ class MappingManager:
                     )
                 )
 
-            area_dict = {"mode": area_true.area_type,
-                         "geofence_included": geofence_included,
-                         "geofence_excluded": geofence_excluded,
-                         "routecalc": area["routecalc"],
-                         "name": area['name']}
+            area_dict = {
+                "mode": area_true.area_type,
+                "geofence_included": geofence_included,
+                "geofence_excluded": geofence_excluded,
+                "routecalc": area["routecalc"],
+                "name": area["name"],
+            }
             # also build a routemanager for each area...
 
             # grab coords
@@ -385,66 +373,70 @@ class MappingManager:
             # build routemanagers
 
             # map iv list to ids
-            if area.get('settings', None) is not None and 'mon_ids_iv' in area['settings']:
+            if area.get("settings", None) is not None and "mon_ids_iv" in area["settings"]:
                 # replace list name
-                area['settings']['mon_ids_iv_raw'] = \
-                    self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
-            route_resource = self.__data_manager.get_resource('routecalc', identifier=area["routecalc"])
+                area["settings"]["mon_ids_iv_raw"] = self.get_monlist(
+                    area["settings"].get("mon_ids_iv", None), area.get("name", "unknown"),
+                )
+            route_resource = self.__data_manager.get_resource("routecalc", identifier=area["routecalc"])
 
             calc_type: str = area.get("route_calc_algorithm", "route")
-            route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager,
-                                                                 area_id, None,
-                                                                 mode_mapping.get(mode, {}).get("range", 0),
-                                                                 mode_mapping.get(mode, {}).get("max_count",
-                                                                                                99999999),
-                                                                 geofence_included,
-                                                                 path_to_exclude_geofence=geofence_excluded,
-                                                                 mode=mode,
-                                                                 settings=area.get("settings", None),
-                                                                 init=area.get("init", False),
-                                                                 name=area.get("name", "unknown"),
-                                                                 level=area.get("level", False),
-                                                                 coords_spawns_known=area.get(
-                                                                     "coords_spawns_known", True),
-                                                                 routefile=route_resource,
-                                                                 calctype=calc_type,
-                                                                 joinqueue=self.join_routes_queue,
-                                                                 s2_level=mode_mapping.get(mode, {}).get(
-                                                                     "s2_cell_level", 30),
-                                                                 include_event_id=area.get(
-                                                                     "settings", {}).get("include_event_id", None)
-                                                                 )
+            route_manager = RouteManagerFactory.get_routemanager(
+                self.__db_wrapper,
+                self.__data_manager,
+                area_id,
+                None,
+                mode_mapping.get(mode, {}).get("range", 0),
+                mode_mapping.get(mode, {}).get("max_count", 99999999),
+                geofence_included,
+                path_to_exclude_geofence=geofence_excluded,
+                mode=mode,
+                settings=area.get("settings", None),
+                init=area.get("init", False),
+                name=area.get("name", "unknown"),
+                level=area.get("level", False),
+                coords_spawns_known=area.get("coords_spawns_known", True),
+                routefile=route_resource,
+                calctype=calc_type,
+                joinqueue=self.join_routes_queue,
+                s2_level=mode_mapping.get(mode, {}).get("s2_cell_level", 30),
+                include_event_id=area.get("settings", {}).get("include_event_id", None),
+            )
             logger.info("Initializing area {}", area["name"])
             if mode not in ("iv_mitm", "idle") and calc_type != "routefree":
-                coords = self.__fetch_coords(mode, geofence_helper,
-                                             coords_spawns_known=area.get("coords_spawns_known", True),
-                                             init=area.get("init", False),
-                                             range_init=mode_mapping.get(mode, {}).get("range_init", 630),
-                                             including_stops=area.get("including_stops", False),
-                                             include_event_id=area.get("settings", {}).get("include_event_id", None))
+                coords = self.__fetch_coords(
+                    mode,
+                    geofence_helper,
+                    coords_spawns_known=area.get("coords_spawns_known", True),
+                    init=area.get("init", False),
+                    range_init=mode_mapping.get(mode, {}).get("range_init", 630),
+                    including_stops=area.get("including_stops", False),
+                    include_event_id=area.get("settings", {}).get("include_event_id", None),
+                )
 
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[mode]["range"]
                 max_count_in_radius = mode_mapping[mode]["max_count"]
                 if not area.get("init", False):
 
-                    proc = thread_pool.apply_async(route_manager.initial_calculation,
-                                                   args=(max_radius, max_count_in_radius,
-                                                         0, False))
+                    proc = thread_pool.apply_async(
+                        route_manager.initial_calculation, args=(max_radius, max_count_in_radius, 0, False),
+                    )
                     areas_procs[area_id] = proc
                 else:
-                    logger.info("Init mode enabled. Going row-based for {}", area.get("name", "unknown"))
+                    logger.info(
+                        "Init mode enabled. Going row-based for {}", area.get("name", "unknown"),
+                    )
                     # we are in init, let's write the init route to file to make it visible in madmin
                     calc_coords = []
                     if area["routecalc"] is not None:
                         for loc in coords:
-                            calc_coord = '%s,%s' % (str(loc.lat), str(loc.lng))
+                            calc_coord = "%s,%s" % (str(loc.lat), str(loc.lng))
                             calc_coords.append(calc_coord)
-                        route_resource['routefile'] = calc_coords
+                        route_resource["routefile"] = calc_coords
                         route_resource.save()
                     # gotta feed the route to routemanager... TODO: without recalc...
-                    proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
-                                                                                     0, False))
+                    proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999, 0, False))
                     areas_procs[area_id] = proc
 
             area_dict["routemanager"] = route_manager
@@ -463,10 +455,10 @@ class MappingManager:
         devices = {}
         devices.clear()
 
-        raw_devices = self.__data_manager.get_root_resource('device')
-        raw_walkers = self.__data_manager.get_root_resource('walker')
-        raw_pools = self.__data_manager.get_root_resource('devicepool')
-        raw_walkerareas = self.__data_manager.get_root_resource('walkerarea')
+        raw_devices = self.__data_manager.get_root_resource("device")
+        raw_walkers = self.__data_manager.get_root_resource("walker")
+        raw_pools = self.__data_manager.get_root_resource("devicepool")
+        raw_walkerareas = self.__data_manager.get_root_resource("walkerarea")
 
         if raw_devices is None:
             return devices
@@ -474,25 +466,25 @@ class MappingManager:
         for device_id, device in raw_devices.items():
             device_dict = {}
             device_dict.clear()
-            device_dict['device_id'] = device_id
+            device_dict["device_id"] = device_id
             walker = int(device["walker"])
             device_dict["adb"] = device.get("adbname", None)
             pool = device.get("pool", None)
-            device_dict['ptc_login'] = []
+            device_dict["ptc_login"] = []
             for account_id in device.get("ptc_login", []):
-                account = self.__data_manager.get_resource('pogoauth', identifier=account_id)
-                device_dict['ptc_login'].append((account['username'], account['password']))
+                account = self.__data_manager.get_resource("pogoauth", identifier=account_id)
+                device_dict["ptc_login"].append((account["username"], account["password"]))
             settings = device.get("settings", None)
             try:
-                device_dict["settings"] = self.__inherit_device_settings(settings,
-                                                                         raw_pools[int(pool)].get('settings',
-                                                                                                  []))
+                device_dict["settings"] = self.__inherit_device_settings(
+                    settings, raw_pools[int(pool)].get("settings", [])
+                )
             except (KeyError, AttributeError, TypeError):
                 device_dict["settings"] = device.get("settings", None)
 
             try:
                 workerareas = []
-                for walkerarea_id in raw_walkers[walker].get('setup', []):
+                for walkerarea_id in raw_walkers[walker].get("setup", []):
                     workerareas.append(raw_walkerareas[walkerarea_id].get_resource())
                 device_dict["walker"] = workerareas
             except (KeyError, AttributeError):
@@ -501,9 +493,16 @@ class MappingManager:
             devices[device["origin"]] = device_dict
         return devices
 
-    def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = True,
-                       init: bool = False, range_init: int = 630, including_stops: bool = False,
-                       include_event_id=None) -> List[Location]:
+    def __fetch_coords(
+        self,
+        mode: str,
+        geofence_helper: GeofenceHelper,
+        coords_spawns_known: bool = True,
+        init: bool = False,
+        range_init: int = 630,
+        including_stops: bool = False,
+        include_event_id=None,
+    ) -> List[Location]:
         coords: List[Location] = []
         if not init:
             # grab data from DB depending on mode
@@ -539,7 +538,7 @@ class MappingManager:
         Reads current self.__raw_json mappings dict and checks if auth directive is present.
         :return: Dict of username : password
         """
-        raw_auths = self.__data_manager.get_root_resource('auth')
+        raw_auths = self.__data_manager.get_root_resource("auth")
         if raw_auths is None or len(raw_auths) == 0:
             return None
 
@@ -550,33 +549,31 @@ class MappingManager:
 
     def __get_latest_areas(self) -> dict:
         areas = {}
-        raw_areas = self.__data_manager.get_root_resource('area')
+        raw_areas = self.__data_manager.get_root_resource("area")
 
         if raw_areas is None:
             return areas
 
         for area_id, area in raw_areas.items():
             area_dict = {}
-            area_dict['routecalc'] = area.get('routecalc', None)
-            area_dict['mode'] = area.area_type
-            area_dict['geofence_included'] = area.get(
-                'geofence_included', None)
-            area_dict['geofence_excluded'] = area.get(
-                'geofence_excluded', None)
-            area_dict['init'] = area.get('init', False)
-            area_dict['name'] = area['name']
+            area_dict["routecalc"] = area.get("routecalc", None)
+            area_dict["mode"] = area.area_type
+            area_dict["geofence_included"] = area.get("geofence_included", None)
+            area_dict["geofence_excluded"] = area.get("geofence_excluded", None)
+            area_dict["init"] = area.get("init", False)
+            area_dict["name"] = area["name"]
             areas[area_id] = area_dict
         return areas
 
     def __get_latest_monlists(self) -> dict:
         monlist = {}
-        monivs = self.__data_manager.get_root_resource('monivlist')
+        monivs = self.__data_manager.get_root_resource("monivlist")
 
         if monivs is None:
             return monlist
 
         for moniv_id, elem in monivs.items():
-            monlist[moniv_id] = elem.get('mon_ids_iv', None)
+            monlist[moniv_id] = elem.get("mon_ids_iv", None)
         return monlist
 
     def update(self, full_lock=False):
@@ -593,23 +590,27 @@ class MappingManager:
 
             for area in self._routemanagers:
                 logger.info("Stopping all routemanagers and join threads")
-                self._routemanagers[area]['routemanager'].stop_routemanager(joinwithqueue=False)
-                self._routemanagers[area]['routemanager'].join_threads()
+                self._routemanagers[area]["routemanager"].stop_routemanager(joinwithqueue=False)
+                self._routemanagers[area]["routemanager"].join_threads()
 
             logger.info("Restoring old devicesettings")
             for dev in self._devicemappings:
-                if "last_location" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["last_location"] = \
-                        self._devicemappings[dev]['settings']["last_location"]
-                if "last_mode" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["last_mode"] = \
-                        self._devicemappings[dev]['settings']["last_mode"]
-                if "accountindex" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["accountindex"] = \
-                        self._devicemappings[dev]['settings']["accountindex"]
-                if "account_rotation_started" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["account_rotation_started"] = \
-                        self._devicemappings[dev]['settings']["account_rotation_started"]
+                if "last_location" in self._devicemappings[dev]["settings"]:
+                    devicemappings_tmp[dev]["settings"]["last_location"] = self._devicemappings[dev]["settings"][
+                        "last_location"
+                    ]
+                if "last_mode" in self._devicemappings[dev]["settings"]:
+                    devicemappings_tmp[dev]["settings"]["last_mode"] = self._devicemappings[dev]["settings"][
+                        "last_mode"
+                    ]
+                if "accountindex" in self._devicemappings[dev]["settings"]:
+                    devicemappings_tmp[dev]["settings"]["accountindex"] = self._devicemappings[dev]["settings"][
+                        "accountindex"
+                    ]
+                if "account_rotation_started" in self._devicemappings[dev]["settings"]:
+                    devicemappings_tmp[dev]["settings"]["account_rotation_started"] = self._devicemappings[dev][
+                        "settings"
+                    ]["account_rotation_started"]
 
             logger.debug("Acquiring lock to update mappings")
             with self.__mappings_mutex:
@@ -631,7 +632,7 @@ class MappingManager:
 
     def get_all_devices(self):
         devices = []
-        devices_raw = self.__data_manager.get_root_resource('device')
+        devices_raw = self.__data_manager.get_root_resource("device")
         for _device_id, device in devices_raw.items():
-            devices.append(device['origin'])
+            devices.append(device["origin"])
         return devices

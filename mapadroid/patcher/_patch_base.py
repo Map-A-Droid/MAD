@@ -19,13 +19,14 @@ class PatchBase(object):
         completed (bool): If the patch was completed (pre-, execute, post-)
         issues (bool): If any issues arose during the patch execution
     """
+
     name: str = None
     descr: str = None
     completed: bool = False
     issues: bool = False
 
     def __init__(self, logger, db_wrapper, data_manager, args):
-        logger.info('Applying patch: {}', self.name)
+        logger.info("Applying patch: {}", self.name)
         self._logger = logger
         self._db: DbWrapper = db_wrapper
         self._schema_updater: DbSchemaUpdater = self._db.schema_updater
@@ -37,7 +38,7 @@ class PatchBase(object):
                 self.completed = True
 
     def _execute(self):
-        raise NotImplementedError('Patch not implemented')
+        raise NotImplementedError("Patch not implemented")
 
     def _post_validation(self) -> bool:
         return True

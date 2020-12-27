@@ -2,7 +2,7 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'MADmin APK Wizard'
+    name = "MADmin APK Wizard"
 
     def _execute(self):
         query = (

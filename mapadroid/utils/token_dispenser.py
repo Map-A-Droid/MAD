@@ -8,7 +8,9 @@ logger = get_logger(LoggerEnums.utils)
 
 
 class TokenDispenser(requests.Session):
-    def __init__(self, host: str, retries: int = 3, sleep_timer: float = 1.0, timeout: float = 3.0):
+    def __init__(
+        self, host: str, retries: int = 3, sleep_timer: float = 1.0, timeout: float = 3.0,
+    ):
         # Create the session
         super().__init__()
         self.host = host
@@ -32,8 +34,8 @@ class TokenDispenser(requests.Session):
         finished = False
         expected_code = 200
         if "expected_code" in kwargs:
-            expected_code = kwargs['expected_code']
-            del kwargs['expected_code']
+            expected_code = kwargs["expected_code"]
+            del kwargs["expected_code"]
         last_err = None
         if "timeout" not in kwargs or ("timeout" in kwargs and kwargs["timeout"] is None):
             kwargs["timeout"] = self.timeout
@@ -43,8 +45,8 @@ class TokenDispenser(requests.Session):
                 if req_result.status_code == expected_code:
                     return req_result
                 else:
-                    logger.debug('Invalid status code returned: {}', req_result.status_code)
-            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
+                    logger.debug("Invalid status code returned: {}", req_result.status_code)
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError,) as err:
                 logger.warning(err)
                 last_err = err
             except Exception as err:
@@ -57,13 +59,13 @@ class TokenDispenser(requests.Session):
 
     def setup(self) -> bool:
         try:
-            self.email = self.get('email').text
+            self.email = self.get("email").text
             if self.email is None:
                 return False
-            self.token = self.get('token/email/%s' % (self.email)).text
+            self.token = self.get("token/email/%s" % (self.email)).text
             if self.token is None:
                 return False
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-            logger.debug('Unable to use token-dispenser {}', self.host)
+            logger.debug("Unable to use token-dispenser {}", self.host)
             return False
         return True

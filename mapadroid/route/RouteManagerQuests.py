@@ -7,23 +7,48 @@ from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
-Location = collections.namedtuple('Location', ['lat', 'lng'])
+Location = collections.namedtuple("Location", ["lat", "lng"])
 
 
 class RouteManagerQuests(RouteManagerBase):
-    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "route", joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                  max_radius=max_radius,
-                                  max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, level=level, calctype=calctype,
-                                  joinqueue=joinqueue
-                                  )
+    def __init__(
+        self,
+        db_wrapper: DbWrapper,
+        dbm,
+        area_id,
+        coords: List[Location],
+        max_radius: float,
+        max_coords_within_radius: int,
+        path_to_include_geofence: str,
+        path_to_exclude_geofence: str,
+        routefile: str,
+        mode=None,
+        init: bool = False,
+        name: str = "unknown",
+        settings: dict = None,
+        level: bool = False,
+        calctype: str = "route",
+        joinqueue=None,
+    ):
+        RouteManagerBase.__init__(
+            self,
+            db_wrapper=db_wrapper,
+            dbm=dbm,
+            area_id=area_id,
+            coords=coords,
+            max_radius=max_radius,
+            max_coords_within_radius=max_coords_within_radius,
+            path_to_include_geofence=path_to_include_geofence,
+            path_to_exclude_geofence=path_to_exclude_geofence,
+            routefile=routefile,
+            init=init,
+            name=name,
+            settings=settings,
+            mode=mode,
+            level=level,
+            calctype=calctype,
+            joinqueue=joinqueue,
+        )
         self.starve_route = False
         self._stoplist: List[Location] = []
 
@@ -35,8 +60,8 @@ class RouteManagerQuests(RouteManagerBase):
         time.sleep(5)
         stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
 
-        self.logger.info('Detected stops without quests: {}', len(stops))
-        self.logger.debug('Detected stops without quests: {}', stops)
+        self.logger.info("Detected stops without quests: {}", len(stops))
+        self.logger.debug("Detected stops without quests: {}", stops)
         self._stoplist: List[Location] = stops
 
     def _retrieve_latest_priority_queue(self):
@@ -53,11 +78,13 @@ class RouteManagerQuests(RouteManagerBase):
 
     def _recalc_route_workertype(self):
         if self.init:
-            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                              in_memory=False)
+            self.recalc_route(
+                self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True, in_memory=False,
+            )
         else:
-            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                              in_memory=True)
+            self.recalc_route(
+                self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False, in_memory=True,
+            )
 
         self._init_route_queue()
 
@@ -65,7 +92,7 @@ class RouteManagerQuests(RouteManagerBase):
         self._manager_mutex.acquire()
         try:
             if self._shutdown_route:
-                self.logger.info('Other worker shutdown - leaving it')
+                self.logger.info("Other worker shutdown - leaving it")
                 return False
 
             if self._start_calc:
@@ -119,13 +146,17 @@ class RouteManagerQuests(RouteManagerBase):
 
             for stop, error_count in self._stops_not_processed.items():
                 if stop not in self._stoplist:
-                    self.logger.info("Location {} is no longer in our stoplist and will be ignored", stop)
+                    self.logger.info(
+                        "Location {} is no longer in our stoplist and will be ignored", stop,
+                    )
                     self._coords_to_be_ignored.add(stop)
                 elif error_count < 4:
                     self.logger.info("Found stop not processed yet: {}", stop)
                     list_of_stops_to_return.append(stop)
                 else:
-                    self.logger.warning("Stop {} has not been processed thrice in a row, please check your DB", stop)
+                    self.logger.warning(
+                        "Stop {} has not been processed thrice in a row, please check your DB", stop,
+                    )
                     self._coords_to_be_ignored.add(stop)
 
             if len(list_of_stops_to_return) > 0:
@@ -142,7 +173,7 @@ class RouteManagerQuests(RouteManagerBase):
                 self.logger.info("Starting routemanager")
 
                 if self._shutdown_route:
-                    self.logger.info('Other worker shutdown - leaving it')
+                    self.logger.info("Other worker shutdown - leaving it")
                     return False
 
                 self.generate_stop_list()
@@ -153,7 +184,7 @@ class RouteManagerQuests(RouteManagerBase):
                 self._start_check_routepools()
 
                 if self.init:
-                    self.logger.info('Starting init mode')
+                    self.logger.info("Starting init mode")
                     self._init_route_queue()
                     self._tempinit = True
                     return True
@@ -172,26 +203,26 @@ class RouteManagerQuests(RouteManagerBase):
                         self.logger.info("Stop with coords {} seems new and not in route.", stop)
 
                 if len(stops) == 0:
-                    self.logger.info('No unprocessed Stops detected in route - quit worker')
+                    self.logger.info("No unprocessed Stops detected in route - quit worker")
                     self._shutdown_route = True
                     self._restore_original_route()
                     self._route: List[Location] = []
                     return False
 
-                if 0 < len(stops) < len(self._route) \
-                        and len(stops) / len(self._route) <= 0.3:
+                if 0 < len(stops) < len(self._route) and len(stops) / len(self._route) <= 0.3:
                     # Calculating new route because 70 percent of stops are processed
-                    self.logger.info('There are less stops without quest than routepositions - recalc')
+                    self.logger.info("There are less stops without quest than routepositions - recalc")
                     self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
-                    self.logger.warning("Something wrong with area: it contains a lot of new stops - "
-                                        "better recalc the route!")
+                    self.logger.warning(
+                        "Something wrong with area: it contains a lot of new stops - " "better recalc the route!"
+                    )
                     self.logger.info("Recalc new route for area")
                     self._recalc_stop_route(stops)
                 else:
                     self._init_route_queue()
 
-                self.logger.info('Getting {} positions in route', len(self._route))
+                self.logger.info("Getting {} positions in route", len(self._route))
                 return True
 
         finally:
@@ -210,7 +241,7 @@ class RouteManagerQuests(RouteManagerBase):
         return True
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route')
+        self.logger.info("Shutdown Route")
         if self._is_started:
             self._is_started = False
             self._round_started_time = None
@@ -225,12 +256,12 @@ class RouteManagerQuests(RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         if self.init:
-            self.logger.debug('Init Mode - coord is valid')
+            self.logger.debug("Init Mode - coord is valid")
             return True
         stop = Location(lat, lng)
-        self.logger.info('Checking Stop with ID {}', stop)
+        self.logger.info("Checking Stop with ID {}", stop)
         if stop not in self._stoplist and stop not in self._coords_to_be_ignored:
-            self.logger.info('Already got this Stop')
+            self.logger.info("Already got this Stop")
             return False
-        self.logger.info('Getting new Stop')
+        self.logger.info("Getting new Stop")
         return True

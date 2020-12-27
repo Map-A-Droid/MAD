@@ -22,43 +22,135 @@ class PogoWindows:
     def __init__(self, temp_dir_path, thread_count: int):
         if not os.path.exists(temp_dir_path):
             os.makedirs(temp_dir_path)
-            logger.info('PogoWindows: Temp directory created')
+            logger.info("PogoWindows: Temp directory created")
         self.temp_dir_path = temp_dir_path
         self.__thread_pool = ThreadPool(processes=thread_count)
 
         # screendetection
         self._ScreenType: dict = {}
-        self._ScreenType[1]: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
-        self._ScreenType[2]: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
-        self._ScreenType[3]: list = ['Google', 'Facebook']
-        self._ScreenType[4]: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
-        self._ScreenType[5]: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
-                                     'Authentification', 'Essaye']
-        self._ScreenType[6]: list = ['RETRY', 'TRY', 'DIFFERENT', 'ACCOUNT',
-                                     'ANDERES', 'KONTO', 'VERSUCHEN',
-                                     'AUTRE', 'AUTORISER']
-        self._ScreenType[7]: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
-        self._ScreenType[8]: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
-        self._ScreenType[12]: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
-                                      'notifications', 'évenements,', 'evenements,', 'offres']
-        self._ScreenType[14]: list = ['kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät',
-                                      'Betriebssystem',
-                                      'logiciel']
-        self._ScreenType[15]: list = ['continuer...', 'aktualisieren?', 'now?', 'Aktualisieren',
-                                      'Aktualisieren,',
-                                      'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais',
-                                      'continuer']
-        self._ScreenType[16]: list = ['modified', 'client', 'Strike', 'suspension', 'third-party',
-                                      'modifizierte', 'Verstoß', 'Sperrung', 'Drittpartei']
-        self._ScreenType[17]: list = ['Suspension', 'suspended', 'violating', 'days', ]
-        self._ScreenType[18]: list = ['Termination', 'terminated', 'permanently']
-        self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
-                                      'found.', 'gefunden.', 'Signal', 'geortet', 'detect', '(12)']
-        self._ScreenType[23]: list = ['CLUB', 'KIDS']
+        self._ScreenType[1]: list = ["Geburtdatum", "birth.", "naissance.", "date"]
+        self._ScreenType[2]: list = [
+            "ZURUCKKEHRENDER",
+            "ZURÜCKKEHRENDER",
+            "GAME",
+            "FREAK",
+            "SPIELER",
+        ]
+        self._ScreenType[3]: list = ["Google", "Facebook"]
+        self._ScreenType[4]: list = [
+            "Benutzername",
+            "Passwort",
+            "Username",
+            "Password",
+            "DRESSEURS",
+        ]
+        self._ScreenType[5]: list = [
+            "Authentifizierung",
+            "fehlgeschlagen",
+            "Unable",
+            "authenticate",
+            "Authentification",
+            "Essaye",
+        ]
+        self._ScreenType[6]: list = [
+            "RETRY",
+            "TRY",
+            "DIFFERENT",
+            "ACCOUNT",
+            "ANDERES",
+            "KONTO",
+            "VERSUCHEN",
+            "AUTRE",
+            "AUTORISER",
+        ]
+        self._ScreenType[7]: list = ["incorrect.", "attempts", "falsch.", "gesperrt"]
+        self._ScreenType[8]: list = [
+            "Spieldaten",
+            "abgerufen",
+            "lecture",
+            "depuis",
+            "server",
+            "data",
+        ]
+        self._ScreenType[12]: list = [
+            "Events,",
+            "Benachrichtigungen",
+            "Einstellungen",
+            "events,",
+            "offers,",
+            "notifications",
+            "évenements,",
+            "evenements,",
+            "offres",
+        ]
+        self._ScreenType[14]: list = [
+            "kompatibel",
+            "compatible",
+            "OS",
+            "software",
+            "device",
+            "Gerät",
+            "Betriebssystem",
+            "logiciel",
+        ]
+        self._ScreenType[15]: list = [
+            "continuer...",
+            "aktualisieren?",
+            "now?",
+            "Aktualisieren",
+            "Aktualisieren,",
+            "aktualisieren",
+            "update",
+            "continue...",
+            "Veux-tu",
+            "Fais",
+            "continuer",
+        ]
+        self._ScreenType[16]: list = [
+            "modified",
+            "client",
+            "Strike",
+            "suspension",
+            "third-party",
+            "modifizierte",
+            "Verstoß",
+            "Sperrung",
+            "Drittpartei",
+        ]
+        self._ScreenType[17]: list = [
+            "Suspension",
+            "suspended",
+            "violating",
+            "days",
+        ]
+        self._ScreenType[18]: list = ["Termination", "terminated", "permanently"]
+        self._ScreenType[21]: list = [
+            "GPS",
+            "signal",
+            "GPS-Signal",
+            "(11)",
+            "introuvable.",
+            "found.",
+            "gefunden.",
+            "Signal",
+            "geortet",
+            "detect",
+            "(12)",
+        ]
+        self._ScreenType[23]: list = ["CLUB", "KIDS"]
 
-    def __read_circle_count(self, filename, identifier, ratio, communicator, xcord=False, crop=False,
-                            click=False,
-                            canny=False, secondratio=False):
+    def __read_circle_count(
+        self,
+        filename,
+        identifier,
+        ratio,
+        communicator,
+        xcord=False,
+        crop=False,
+        click=False,
+        canny=False,
+        secondratio=False,
+    ):
         origin_logger = get_origin_logger(logger, origin=identifier)
         origin_logger.debug2("__read_circle_count: Reading circles")
 
@@ -75,9 +167,10 @@ class PogoWindows:
         height, width, _ = screenshot_read.shape
 
         if crop:
-            screenshot_read = screenshot_read[int(height) - int(int(height / 4)):int(height),
-                                              int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
-                                              int(width) / 8)]
+            screenshot_read = screenshot_read[
+                int(height) - int(int(height / 4)) : int(height),
+                int(int(width) / 2) - int(int(width) / 8) : int(int(width) / 2) + int(int(width) / 8),
+            ]
 
         origin_logger.debug("__read_circle_count: Determined screenshot scale: {} x {}", height, width)
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
@@ -93,10 +186,12 @@ class PogoWindows:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
 
-        origin_logger.debug("__read_circle_count: Detect radius of circle: Min {} / Max {}", radius_min, radius_max)
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
-                                   minRadius=radius_min,
-                                   maxRadius=radius_max)
+        origin_logger.debug(
+            "__read_circle_count: Detect radius of circle: Min {} / Max {}", radius_min, radius_max,
+        )
+        circles = cv2.HoughCircles(
+            gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radius_min, maxRadius=radius_max,
+        )
         circle = 0
         # ensure at least some circles were found
         if circles is not None:
@@ -107,14 +202,14 @@ class PogoWindows:
                 if not xcord:
                     circle += 1
                     if click:
-                        origin_logger.debug('__read_circle_count: found Circle - click it')
+                        origin_logger.debug("__read_circle_count: found Circle - click it")
                         communicator.click(width / 2, ((int(height) - int(height / 4.5))) + pos_y)
                         time.sleep(2)
                 else:
                     if pos_x >= (width / 2) - 100 and pos_x <= (width / 2) + 100 and pos_y >= (height - (height / 3)):
                         circle += 1
                         if click:
-                            origin_logger.debug('__read_circle_count: found Circle - click on: it')
+                            origin_logger.debug("__read_circle_count: found Circle - click on: it")
                             communicator.click(width / 2, ((int(height) - int(height / 4.5))) + pos_y)
                             time.sleep(2)
 
@@ -130,7 +225,7 @@ class PogoWindows:
             origin_logger.error("get_trash_click_positions: {} does not exist", filename)
             return None
 
-        return self.__thread_pool.apply_async(trash_image_matching, (origin, filename, full_screen,)).get()
+        return self.__thread_pool.apply_async(trash_image_matching, (origin, filename, full_screen,),).get()
 
     def look_for_button(self, origin, filename, ratiomin, ratiomax, communicator, upper: bool = False):
         origin_logger = get_origin_logger(logger, origin=origin)
@@ -138,8 +233,9 @@ class PogoWindows:
             origin_logger.error("look_for_button: {} does not exist", filename)
             return False
 
-        return self.__thread_pool.apply_async(self.__internal_look_for_button,
-                                              (origin, filename, ratiomin, ratiomax, communicator, upper)).get()
+        return self.__thread_pool.apply_async(
+            self.__internal_look_for_button, (origin, filename, ratiomin, ratiomax, communicator, upper),
+        ).get()
 
     def __internal_look_for_button(self, origin, filename, ratiomin, ratiomax, communicator, upper):
         origin_logger = get_origin_logger(logger, origin=origin)
@@ -178,8 +274,9 @@ class PogoWindows:
 
         num_lines = 0
         lines = []
-        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=90, minLineLength=min_line_length,
-                                maxLineGap=5)
+        lines = cv2.HoughLinesP(
+            edges, rho=1, theta=math.pi / 180, threshold=90, minLineLength=min_line_length, maxLineGap=5,
+        )
         if lines is None:
             return False
 
@@ -190,9 +287,14 @@ class PogoWindows:
             line = [line]
             for x1, y1, x2, y2 in line:
 
-                if y1 == y2 and x2 - x1 <= max_line_length and x2 - x1 >= min_line_length \
-                        and y1 > height / 3 \
-                        and (x2 - x1) / 2 + x1 < width / 2 + 50 and (x2 - x1) / 2 + x1 > width / 2 - 50:
+                if (
+                    y1 == y2
+                    and x2 - x1 <= max_line_length
+                    and x2 - x1 >= min_line_length
+                    and y1 > height / 3
+                    and (x2 - x1) / 2 + x1 < width / 2 + 50
+                    and (x2 - x1) / 2 + x1 > width / 2 - 50
+                ):
 
                     num_lines += 1
                     min_distance_to_middle_tmp = y1 - (height / 2)
@@ -215,28 +317,33 @@ class PogoWindows:
                         _last_y = y1
                         _x1 = x1
                         _x2 = x2
-                    origin_logger.debug("lookForButton: Found Buttonline Nr. {} - Line lenght: {}px Coords - X: {} {} "
-                                        "Y: {} {}", num_lines, x2 - x1, x1, x2, y1, y1)
+                    origin_logger.debug(
+                        "lookForButton: Found Buttonline Nr. {} - Line lenght: {}px Coords - X: {} {} " "Y: {} {}",
+                        num_lines,
+                        x2 - x1,
+                        x1,
+                        x2,
+                        y1,
+                        y1,
+                    )
 
         if 1 < num_lines <= 6:
             # recalculate click area for real resolution
-            click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) /
-                          round(factor, 2))
+            click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) / round(factor, 2))
             click_y = int(click_y)
-            origin_logger.debug('lookForButton: found Button - click on it')
+            origin_logger.debug("lookForButton: found Button - click on it")
             communicator.click(click_x, click_y)
             time.sleep(4)
             return True
 
         elif num_lines > 6:
-            origin_logger.debug('lookForButton: found to much Buttons :) - close it')
-            communicator.click(int(width - (width / 7.2)),
-                               int(height - (height / 12.19)))
+            origin_logger.debug("lookForButton: found to much Buttons :) - close it")
+            communicator.click(int(width - (width / 7.2)), int(height - (height / 12.19)))
             time.sleep(4)
 
             return True
 
-        origin_logger.debug('lookForButton: did not found any Button')
+        origin_logger.debug("lookForButton: did not found any Button")
         return False
 
     def check_lines(self, lines, height):
@@ -250,7 +357,7 @@ class PogoWindows:
                 temp_lines.append([y1, y2, x1, x2])
 
         temp_lines = np.array(temp_lines)
-        sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
+        sort_arr = temp_lines[temp_lines[:, 0].argsort()]
 
         button_value = height / 40
 
@@ -277,16 +384,26 @@ class PogoWindows:
             origin_logger.error("Screenshot corrupted")
             return False
 
-        if self.__read_circle_count(os.path.join('', filename), identifier, float(11), communicator,
-                                    xcord=False,
-                                    crop=True,
-                                    click=False, canny=True) == -1:
+        if (
+            self.__read_circle_count(
+                os.path.join("", filename),
+                identifier,
+                float(11),
+                communicator,
+                xcord=False,
+                crop=True,
+                click=False,
+                canny=True,
+            )
+            == -1
+        ):
             origin_logger.debug("__check_raid_line: Not active")
             return False
 
         height, width, _ = screenshot_read.shape
-        screenshot_read = screenshot_read[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
-                                          int(0):int(width)]
+        screenshot_read = screenshot_read[
+            int(height / 2) - int(height / 3) : int(height / 2) + int(height / 3), int(0) : int(width),
+        ]
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         origin_logger.debug("__check_raid_line: Determined screenshot scale: {} x {}", height, width)
@@ -295,31 +412,44 @@ class PogoWindows:
         origin_logger.debug("__check_raid_line: MaxLineLength: {}", max_line_length)
         min_line_length = width / 6.35 - width * 0.03
         origin_logger.debug("__check_raid_line: MinLineLength: {}", min_line_length)
-        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=min_line_length,
-                                maxLineGap=2)
+        lines = cv2.HoughLinesP(
+            edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=min_line_length, maxLineGap=2,
+        )
         if lines is None:
             return False
         for line in lines:
             for x1, y1, x2, y2 in line:
                 if not left_side:
-                    if y1 == y2 and (x2 - x1 <= max_line_length) and (
-                            x2 - x1 >= min_line_length) and x1 > width / 2 and x2 > width / 2 and y1 < (
-                            height / 2):
-                        origin_logger.debug("__check_raid_line: Raid-tab is active - Line length: {}px "
-                                            "Coords - x: {} {} Y: {} {}", x2 - x1, x1, x2, y1, y2)
+                    if (
+                        y1 == y2
+                        and (x2 - x1 <= max_line_length)
+                        and (x2 - x1 >= min_line_length)
+                        and x1 > width / 2
+                        and x2 > width / 2
+                        and y1 < (height / 2)
+                    ):
+                        origin_logger.debug(
+                            "__check_raid_line: Raid-tab is active - Line length: {}px " "Coords - x: {} {} Y: {} {}",
+                            x2 - x1,
+                            x1,
+                            x2,
+                            y1,
+                            y2,
+                        )
                         return True
                 else:
-                    if y1 == y2 and (x2 - x1 <= max_line_length) and (
-                            x2 - x1 >= min_line_length) and (
-                            (x1 < width / 2 and x2 < width / 2) or (
-                            x1 < width / 2 and x2 > width / 2)) and y1 < (
-                            height / 2):
+                    if (
+                        y1 == y2
+                        and (x2 - x1 <= max_line_length)
+                        and (x2 - x1 >= min_line_length)
+                        and ((x1 < width / 2 and x2 < width / 2) or (x1 < width / 2 and x2 > width / 2))
+                        and y1 < (height / 2)
+                    ):
                         origin_logger.debug("__check_raid_line: Nearby is active - but not Raid-Tab")
                         if clickinvers:
                             raidtab_x = int(width - (x2 - x1))
-                            raidtab_y = int(
-                                (int(height / 2) - int(height / 3) + y1) * 0.9)
-                            origin_logger.debug('__check_raid_line: open Raid-Tab')
+                            raidtab_y = int((int(height / 2) - int(height / 3) + y1) * 0.9)
+                            origin_logger.debug("__check_raid_line: open Raid-Tab")
                             communicator.click(raidtab_x, raidtab_y)
                             time.sleep(3)
                         return True
@@ -339,17 +469,27 @@ class PogoWindows:
             origin_logger.error("Screenshot corrupted: {}", e)
             return False
 
-        imwrite_status = cv2.imwrite(os.path.join(self.temp_dir_path,
-                                     str(identifier) + '_exitcircle.jpg'), image)
+        imwrite_status = cv2.imwrite(os.path.join(self.temp_dir_path, str(identifier) + "_exitcircle.jpg"), image)
         if not imwrite_status:
-            origin_logger.error("Could not save file: {} - check permissions and path",
-                                os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'))
+            origin_logger.error(
+                "Could not save file: {} - check permissions and path",
+                os.path.join(self.temp_dir_path, str(identifier) + "_exitcircle.jpg"),
+            )
             return False
 
-        if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'),
-                                    identifier,
-                                    float(radiusratio), communicator, xcord=False, crop=True, click=True,
-                                    canny=True) > 0:
+        if (
+            self.__read_circle_count(
+                os.path.join(self.temp_dir_path, str(identifier) + "_exitcircle.jpg"),
+                identifier,
+                float(radiusratio),
+                communicator,
+                xcord=False,
+                crop=True,
+                click=True,
+                canny=True,
+            )
+            > 0
+        ):
             return True
 
     def check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
@@ -358,15 +498,16 @@ class PogoWindows:
             origin_logger.error("check_close_except_nearby_button: {} does not exist", filename)
             return False
 
-        return self.__thread_pool.apply_async(self.__internal_check_close_except_nearby_button,
-                                              (filename, identifier, communicator, close_raid)).get()
+        return self.__thread_pool.apply_async(
+            self.__internal_check_close_except_nearby_button, (filename, identifier, communicator, close_raid),
+        ).get()
 
     # checks for X button on any screen... could kill raidscreen, handle properly
-    def __internal_check_close_except_nearby_button(self, filename, identifier, communicator,
-                                                    close_raid=False):
+    def __internal_check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
         origin_logger = get_origin_logger(logger, origin=identifier)
-        origin_logger.debug("__internal_check_close_except_nearby_button: Checking close except nearby with: file {}",
-                            filename)
+        origin_logger.debug(
+            "__internal_check_close_except_nearby_button: Checking close except nearby with: file {}", filename,
+        )
         try:
             screenshot_read = cv2.imread(filename)
         except cv2.error:
@@ -379,15 +520,21 @@ class PogoWindows:
 
         if not close_raid:
             origin_logger.debug("__internal_check_close_except_nearby_button: Raid is not to be closed...")
-            if not os.path.isfile(filename) \
-               or self.__check_raid_line(filename, identifier, communicator) \
-               or self.__check_raid_line(filename, identifier, communicator, True):
+            if (
+                not os.path.isfile(filename)
+                or self.__check_raid_line(filename, identifier, communicator)
+                or self.__check_raid_line(filename, identifier, communicator, True)
+            ):
                 # file not found or raid tab present
-                origin_logger.debug("__internal_check_close_except_nearby_button: Not checking for close button (X). "
-                                    "Input wrong OR nearby window open")
+                origin_logger.debug(
+                    "__internal_check_close_except_nearby_button: Not checking for close button (X). "
+                    "Input wrong OR nearby window open"
+                )
                 return False
-        origin_logger.debug("__internal_check_close_except_nearby_button: Checking for close button (X). Input wrong "
-                            "OR nearby window open")
+        origin_logger.debug(
+            "__internal_check_close_except_nearby_button: Checking for close button (X). Input wrong "
+            "OR nearby window open"
+        )
 
         if self.__check_close_present(filename, identifier, communicator, 10, True):
             origin_logger.debug("Found close button (X). Closing the window - Ratio: 10")
@@ -414,8 +561,9 @@ class PogoWindows:
             origin_logger.error("get_inventory_text: {} does not exist", filename)
             return None
 
-        return self.__thread_pool.apply_async(self.__internal_get_inventory_text,
-                                              (filename, identifier, x1, x2, y1, y2)).get()
+        return self.__thread_pool.apply_async(
+            self.__internal_get_inventory_text, (filename, identifier, x1, x2, y1, y2)
+        ).get()
 
     def __internal_get_inventory_text(self, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
         origin_logger = get_origin_logger(logger, origin=identifier)
@@ -424,7 +572,7 @@ class PogoWindows:
         height = x1 - x2
         width = y1 - y2
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
-        gray = gray[int(y2):(int(y2) + int(width)), int(x2):(int(x2) + int(height))]
+        gray = gray[int(y2) : (int(y2) + int(width)), int(x2) : (int(x2) + int(height))]
         scale_percent = 200  # percent of original size
         scaled_width = int(gray.shape[1] * scale_percent / 100)
         scaled_height = int(gray.shape[0] * scale_percent / 100)
@@ -454,12 +602,13 @@ class PogoWindows:
             origin_logger.error("check_pogo_mainscreen: {} does not exist", filename)
             return False
 
-        return self.__thread_pool.apply_async(self.__internal_check_pogo_mainscreen,
-                                              (filename, identifier)).get()
+        return self.__thread_pool.apply_async(self.__internal_check_pogo_mainscreen, (filename, identifier)).get()
 
     def __internal_check_pogo_mainscreen(self, filename, identifier):
         origin_logger = get_origin_logger(logger, origin=identifier)
-        origin_logger.debug("__internal_check_pogo_mainscreen: Checking close except nearby with: file {}", filename)
+        origin_logger.debug(
+            "__internal_check_pogo_mainscreen: Checking close except nearby with: file {}", filename,
+        )
         mainscreen = 0
         try:
             screenshot_read = cv2.imread(filename)
@@ -472,16 +621,15 @@ class PogoWindows:
             return False
 
         height, width, _ = screenshot_read.shape
-        gray = screenshot_read[int(height) - int(round(height / 5)):int(height),
-                               0: int(int(width) / 4)]
+        gray = screenshot_read[int(height) - int(round(height / 5)) : int(height), 0 : int(int(width) / 4)]
         _, width_, _ = gray.shape
         radius_min = int((width / float(6.8) - 3) / 2)
         radius_max = int((width / float(6) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
         gray = cv2.Canny(gray, 200, 50, apertureSize=3)
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
-                                   minRadius=radius_min,
-                                   maxRadius=radius_max)
+        circles = cv2.HoughCircles(
+            gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radius_min, maxRadius=radius_max,
+        )
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (pos_x, _, _) in circles:
@@ -499,8 +647,7 @@ class PogoWindows:
             origin_logger.error("get_screen_text: image does not exist")
             return None
 
-        return self.__thread_pool.apply_async(self.__internal_get_screen_text,
-                                              (screenpath, identifier)).get()
+        return self.__thread_pool.apply_async(self.__internal_get_screen_text, (screenpath, identifier)).get()
 
     def __internal_get_screen_text(self, screenpath: str, identifier) -> Optional[dict]:
         origin_logger = get_origin_logger(logger, origin=identifier)
@@ -509,10 +656,11 @@ class PogoWindows:
 
         try:
             with Image.open(screenpath) as frame:
-                frame = frame.convert('LA')
+                frame = frame.convert("LA")
                 try:
-                    returning_dict = pytesseract.image_to_data(frame, output_type=Output.DICT, timeout=40,
-                                                               config='--dpi 70')
+                    returning_dict = pytesseract.image_to_data(
+                        frame, output_type=Output.DICT, timeout=40, config="--dpi 70"
+                    )
                 except Exception as e:
                     origin_logger.error("Tesseract Error: {}. Exception: {}", returning_dict, e)
                     returning_dict = None
@@ -532,8 +680,7 @@ class PogoWindows:
             origin_logger.error("get_screen_text: image does not exist")
             return None
 
-        return self.__thread_pool.apply_async(self.__most_frequent_colour_internal,
-                                              (screenshot, identifier)).get()
+        return self.__thread_pool.apply_async(self.__most_frequent_colour_internal, (screenshot, identifier)).get()
 
     def __most_frequent_colour_internal(self, image, identifier) -> Optional[List[int]]:
         origin_logger = get_origin_logger(logger, origin=identifier)
@@ -555,15 +702,14 @@ class PogoWindows:
 
         return most_frequent_pixel[1]
 
-    def screendetection_get_type_by_screen_analysis(self, image,
-                                                    identifier) -> Optional[Tuple[ScreenType,
-                                                                                  Optional[
-                                                                                      dict], int, int, int]]:
-        return self.__thread_pool.apply_async(self.__screendetection_get_type_internal,
-                                              (image, identifier)).get()
+    def screendetection_get_type_by_screen_analysis(
+        self, image, identifier
+    ) -> Optional[Tuple[ScreenType, Optional[dict], int, int, int]]:
+        return self.__thread_pool.apply_async(self.__screendetection_get_type_internal, (image, identifier)).get()
 
-    def __screendetection_get_type_internal(self, image,
-                                            identifier) -> Optional[Tuple[ScreenType, Optional[dict], int, int, int]]:
+    def __screendetection_get_type_internal(
+        self, image, identifier
+    ) -> Optional[Tuple[ScreenType, Optional[dict], int, int, int]]:
         origin_logger = get_origin_logger(logger, origin=identifier)
         returntype: ScreenType = ScreenType.UNDEFINED
         globaldict: Optional[dict] = {}
@@ -578,34 +724,37 @@ class PogoWindows:
                 origin_logger.debug("Screensize: W:{} x H:{}", width, height)
 
                 if width < 1080:
-                    origin_logger.info('Resize screen ...')
+                    origin_logger.info("Resize screen ...")
                     frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
                     diff: int = 2
 
                 texts = [frame_org]
                 for thresh in [200, 175, 150]:
                     fn = lambda x: 255 if x > thresh else 0  # noqa: E731
-                    frame = frame_org.convert('L').point(fn, mode='1')
+                    frame = frame_org.convert("L").point(fn, mode="1")
                     texts.append(frame)
                 for text in texts:
                     try:
-                        globaldict = pytesseract.image_to_data(text, output_type=Output.DICT, timeout=40,
-                                                               config='--dpi 70')
+                        globaldict = pytesseract.image_to_data(
+                            text, output_type=Output.DICT, timeout=40, config="--dpi 70"
+                        )
                     except Exception as e:
                         origin_logger.error("Tesseract Error: {}. Exception: {}", globaldict, e)
                         globaldict = None
                     origin_logger.debug("Screentext: {}", globaldict)
-                    if globaldict is None or 'text' not in globaldict:
+                    if globaldict is None or "text" not in globaldict:
                         continue
-                    n_boxes = len(globaldict['text'])
+                    n_boxes = len(globaldict["text"])
                     for index in range(n_boxes):
                         if returntype != ScreenType.UNDEFINED:
                             break
-                        if len(globaldict['text'][index]) > 3:
+                        if len(globaldict["text"][index]) > 3:
                             for screen_elem in self._ScreenType:
                                 heightlimit = 0 if screen_elem == 21 else height / 4
-                                if globaldict['top'][index] > heightlimit and globaldict['text'][index] in \
-                                        self._ScreenType[screen_elem]:
+                                if (
+                                    globaldict["top"][index] > heightlimit
+                                    and globaldict["text"][index] in self._ScreenType[screen_elem]
+                                ):
                                     returntype = ScreenType(screen_elem)
                     if returntype != ScreenType.UNDEFINED:
                         break

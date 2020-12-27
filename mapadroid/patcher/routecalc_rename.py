@@ -2,7 +2,7 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Change available routecalc algorithms'
+    name = "Change available routecalc algorithms"
     descr = 'Replace optimized/quick algos with just "route"'
 
     def _execute(self):

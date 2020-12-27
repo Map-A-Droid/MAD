@@ -5,19 +5,18 @@ import mysql
 
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
-from ..dm_exceptions import (DependencyError, SaveIssue, UnknownIdentifier,
-                             UpdateIssue)
+from ..dm_exceptions import DependencyError, SaveIssue, UnknownIdentifier, UpdateIssue
 from ..resource_search import SearchType, get_search
 
 logger = get_logger(LoggerEnums.data_manager)
 
 
 USER_READABLE_ERRORS = {
-    str: 'string (MapADroid)',
-    int: 'Integer (1,2,3)',
-    float: 'Decimal (1.0, 1.5)',
-    list: 'Comma-delimited list',
-    bool: 'True|False'
+    str: "string (MapADroid)",
+    int: "Integer (1,2,3)",
+    float: "Decimal (1.0, 1.5)",
+    list: "Comma-delimited list",
+    bool: "True|False",
 }
 
 
@@ -27,12 +26,7 @@ class ResourceTracker(UserDict):
             initialdata = {}
         self.__config = config
         self._data_manager = data_manager
-        self.issues = {
-            'invalid': [],
-            'missing': [],
-            'invalid_uri': [],
-            'unknown': []
-        }
+        self.issues = {"invalid": [], "missing": [], "invalid_uri": [], "unknown": []}
         self.removal = []
         self.completed = False
         if initialdata is None:
@@ -40,26 +34,26 @@ class ResourceTracker(UserDict):
         super().__init__(initialdata)
         for key, entry in self.__config.items():
             try:
-                if entry['settings']['require'] is False:
+                if entry["settings"]["require"] is False:
                     continue
                 if key not in initialdata:
-                    self.issues['missing'].append(key)
+                    self.issues["missing"].append(key)
             except KeyError:
                 continue
 
     def __delitem__(self, key):
         """ Removes the key from the dict.  Tracks it in the removal state so it can be correctly set to null """
         try:
-            if self.__config[key]['settings']['require'] is True:
-                if 'empty' in self.__config[key]['settings']:
-                    super().__setitem__(key, self.__config[key]['settings']['empty'])
+            if self.__config[key]["settings"]["require"] is True:
+                if "empty" in self.__config[key]["settings"]:
+                    super().__setitem__(key, self.__config[key]["settings"]["empty"])
                 else:
-                    self.issues['missing'].append(key)
+                    self.issues["missing"].append(key)
         except KeyError:
             pass
         super().__delitem__(key)
         self.removal.append(key)
-        keys = ['invalid', 'invalid_uri', 'unknown']
+        keys = ["invalid", "invalid_uri", "unknown"]
         for update_key in keys:
             try:
                 self.issues[update_key].remove(key)
@@ -67,15 +61,15 @@ class ResourceTracker(UserDict):
                 pass
 
     def __setitem__(self, key, value):
-        """ Just set the value right? :) Perform all validation against the key / value prior to setting
-            Validates the format (or converts it).  Raises an exception if it cannot convert the value
-            If the field is a resource field, validate all resources are valid
+        """Just set the value right? :) Perform all validation against the key / value prior to setting
+        Validates the format (or converts it).  Raises an exception if it cannot convert the value
+        If the field is a resource field, validate all resources are valid
         """
         this_iteration = {
-            'invalid': False,
-            'invalid_uri': False,
-            'missing': False,
-            'unknown': False
+            "invalid": False,
+            "invalid_uri": False,
+            "missing": False,
+            "unknown": False,
         }
         if not self.check_known_key(key):
             return
@@ -83,20 +77,20 @@ class ResourceTracker(UserDict):
         try:
             value = self.process_format_value(lookups, key, value)
         except ValueError:
-            this_iteration['invalid'] = True
+            this_iteration["invalid"] = True
         if not self.check_required(lookups, key, value):
-            this_iteration['missing'] = True
+            this_iteration["missing"] = True
         # We only want to check sub-resources if we have finished the load from the DB. This is useful
         # during DB migration when things arent fully updated yet
         if lookups["resource"] and self.completed:
             if not self.check_dependencies(lookups, key, value):
-                this_iteration['invalid_uri'] = True
+                this_iteration["invalid_uri"] = True
         super().__setitem__(key, value)
         try:
             self.removal.remove(key)
         except ValueError:
             pass
-        keys = ['invalid', 'invalid_uri', 'missing']
+        keys = ["invalid", "invalid_uri", "missing"]
         for update_key in keys:
             if update_key in this_iteration and this_iteration[update_key]:
                 continue
@@ -117,14 +111,14 @@ class ResourceTracker(UserDict):
                 invalid.append((key, lookups["resource"], identifier))
         if invalid:
             if type(value) != list:
-                self.issues['invalid_uri'].append(invalid[0])
+                self.issues["invalid_uri"].append(invalid[0])
             else:
-                self.issues['invalid_uri'].extend(invalid)
+                self.issues["invalid_uri"].extend(invalid)
             return False
         return True
 
     def check_known_key(self, key):
-        """ Determines if the key is valid for the config
+        """Determines if the key is valid for the config
 
         :param str key: Key to check if it exists in the configuration
 
@@ -132,8 +126,8 @@ class ResourceTracker(UserDict):
         :rtype: bool
         """
         if key not in self.__config:
-            if key not in self.issues['unknown']:
-                self.issues['unknown'].append(key)
+            if key not in self.issues["unknown"]:
+                self.issues["unknown"].append(key)
             return False
         return True
 
@@ -141,8 +135,8 @@ class ResourceTracker(UserDict):
         try:
             if len(value) == 0 and lookups["required"]:
                 if not lookups["has_empty"]:
-                    if key not in self.issues['missing']:
-                        self.issues['missing'].append(key)
+                    if key not in self.issues["missing"]:
+                        self.issues["missing"].append(key)
                     return False
         except TypeError:
             pass
@@ -175,11 +169,11 @@ class ResourceTracker(UserDict):
 
     def get_lookups(self, key):
         """ Lookup required values and return as a dict"""
-        expected = self.__config[key]['settings'].get('expected', str)
-        required = self.__config[key]['settings'].get('require', False)
-        resource = self.__config[key]['settings'].get('data_source', None)
+        expected = self.__config[key]["settings"].get("expected", str)
+        required = self.__config[key]["settings"].get("require", False)
+        resource = self.__config[key]["settings"].get("data_source", None)
         try:
-            empty = self.__config[key]['settings']['empty']
+            empty = self.__config[key]["settings"]["empty"]
             has_empty = True
         except KeyError:
             empty = None
@@ -189,7 +183,7 @@ class ResourceTracker(UserDict):
             "required": required,
             "resource": resource,
             "has_empty": has_empty,
-            "empty": empty
+            "empty": empty,
         }
 
     def process_format_value(self, lookups, key, value):
@@ -207,7 +201,7 @@ class ResourceTracker(UserDict):
                             if value != lookups["empty"] and value is None:
                                 value = lookups["empty"]
                         else:
-                            self.issues['invalid'].append((key, USER_READABLE_ERRORS[lookups["expected"]]))
+                            self.issues["invalid"].append((key, USER_READABLE_ERRORS[lookups["expected"]]))
                             raise ValueError
             except KeyError:
                 pass
@@ -226,7 +220,7 @@ class Resource(object):
     # Configuration for converting from table to class
     configuration = None
     # Default name field
-    name_field = 'TBD'
+    name_field = "TBD"
     search_field = None
 
     def __init__(self, data_manager, identifier=None):
@@ -252,12 +246,12 @@ class Resource(object):
         return key in self.get_resource()
 
     def __delitem__(self, key):
-        if key in self.configuration['fields']:
-            del self._data['fields'][key]
-        elif key == 'settings':
+        if key in self.configuration["fields"]:
+            del self._data["fields"][key]
+        elif key == "settings":
             pass
-        elif key in self._data['fields'].issues['unknown']:
-            self._data['fields'].issues.remove(key)
+        elif key in self._data["fields"].issues["unknown"]:
+            self._data["fields"].issues.remove(key)
         else:
             raise KeyError
 
@@ -265,20 +259,20 @@ class Resource(object):
         return self.get_resource()
 
     def __getitem__(self, key):
-        if key in self.configuration['fields']:
-            return self._data['fields'][key]
-        elif 'settings' in self.configuration and key == 'settings':
-            return self._data['settings']
+        if key in self.configuration["fields"]:
+            return self._data["fields"][key]
+        elif "settings" in self.configuration and key == "settings":
+            return self._data["settings"]
         else:
             raise KeyError
 
     def __setitem__(self, key, value):
-        if key in self.configuration['fields']:
-            self._data['fields'][key] = value
-        elif 'settings' in self.configuration and key in self.configuration['settings']:
-            self._data['settings'][key] = value
+        if key in self.configuration["fields"]:
+            self._data["fields"][key] = value
+        elif "settings" in self.configuration and key in self.configuration["settings"]:
+            self._data["settings"][key] = value
         else:
-            self._data['fields'].issues['unknown'].append(key)
+            self._data["fields"].issues["unknown"].append(key)
 
     def __iter__(self):
         return iter(self.get_resource())
@@ -302,9 +296,9 @@ class Resource(object):
         return self.get_resource().keys()
 
     def update(self, *args, **kwargs):
-        append = kwargs.get('append', False)
+        append = kwargs.get("append", False)
         try:
-            del kwargs['append']
+            del kwargs["append"]
         except KeyError:
             append = False
         for update_elems in list(args) + [kwargs]:
@@ -323,10 +317,10 @@ class Resource(object):
         except KeyError:
             pass
         try:
-            del self._data['instance_id']
+            del self._data["instance_id"]
         except KeyError:
             pass
-        fields = ['fields', 'settings']
+        fields = ["fields", "settings"]
         for field in fields:
             try:
                 self._data[field].completed = True
@@ -342,10 +336,7 @@ class Resource(object):
         dependencies = self.get_dependencies()
         if dependencies:
             raise DependencyError(dependencies)
-        del_data = {
-            self.primary_key: self.identifier,
-            'instance_id': self.instance_id
-        }
+        del_data = {self.primary_key: self.identifier, "instance_id": self.instance_id}
         self._dbc.autoexec_delete(self.table, del_data)
 
     def get_core(self, clear: bool = False):
@@ -354,13 +345,13 @@ class Resource(object):
         else:
             data = self.get_resource(backend=True)
         try:
-            for field, field_value in data['settings'].items():
+            for field, field_value in data["settings"].items():
                 data[field] = field_value
-            for field in data['settings'].removal:
+            for field in data["settings"].removal:
                 data[field] = None
-                del self._data['settings'][field]
-            data['settings'].removal = []
-            del data['settings']
+                del self._data["settings"][field]
+            data["settings"].removal = []
+            del data["settings"]
         except KeyError:
             pass
         return data
@@ -370,43 +361,44 @@ class Resource(object):
 
     def get_resource(self, backend=False):
         user_data = {}
-        fields = self._data['fields']
+        fields = self._data["fields"]
         if not backend:
             fields = dict(fields)
         user_data.update(fields)
-        if 'settings' in self._data:
-            settings = self._data['settings']
+        if "settings" in self._data:
+            settings = self._data["settings"]
             if not backend:
                 settings = dict(settings)
-            user_data['settings'] = settings
+            user_data["settings"] = settings
         return user_data
 
     def _load(self):
-        query = "SELECT * FROM `%s` WHERE `%s` = %%s AND `instance_id` = %%s" % (self.table, self.primary_key)
+        query = "SELECT * FROM `%s` WHERE `%s` = %%s AND `instance_id` = %%s" % (self.table, self.primary_key,)
         data = self._dbc.autofetch_row(query, args=(self.identifier, self.instance_id))
         if not data:
             raise UnknownIdentifier()
-        data = self.translate_keys(data, 'load')
+        data = self.translate_keys(data, "load")
         for field, field_value in data.items():
-            if 'settings' in self.configuration and field in self.configuration['settings']:
+            if "settings" in self.configuration and field in self.configuration["settings"]:
                 if field_value is None:
                     continue
-                self._data['settings'][field] = field_value
-            elif field in self.configuration['fields']:
-                self._data['fields'][field] = field_value
+                self._data["settings"][field] = field_value
+            elif field in self.configuration["fields"]:
+                self._data["fields"][field] = field_value
 
     def _load_defaults(self):
-        sections = ['fields', 'settings']
+        sections = ["fields", "settings"]
         for section in sections:
             defaults = {}
             try:
                 for field, default_value in self.configuration[section].items():
                     try:
-                        defaults[field] = default_value['settings']['empty']
+                        defaults[field] = default_value["settings"]["empty"]
                     except KeyError:
                         continue
-                self._data[section] = ResourceTracker(copy.deepcopy(self.configuration[section]), self._data_manager,
-                                                      initialdata=defaults)
+                self._data[section] = ResourceTracker(
+                    copy.deepcopy(self.configuration[section]), self._data_manager, initialdata=defaults,
+                )
             except KeyError:
                 continue
             except TypeError:
@@ -416,7 +408,7 @@ class Resource(object):
         if ignore_issues is None:
             ignore_issues = []
         # Validate required data has been set
-        top_levels = ['fields', 'settings']
+        top_levels = ["fields", "settings"]
         issues = {}
         if ignore_issues is None:
             ignore_issues = []
@@ -442,8 +434,9 @@ class Resource(object):
                 elif type(set_issues) is dict:
                     issues[key].update(set_issues)
         if issues:
-            logger.warning('Unable to save the resource {} / {}: {}', self.__class__.__name__, self.identifier,
-                           issues)
+            logger.warning(
+                "Unable to save the resource {} / {}: {}", self.__class__.__name__, self.identifier, issues,
+            )
             raise UpdateIssue(**issues)
 
     def save(self, core_data=None, force_insert=False, ignore_issues=None, **kwargs):
@@ -455,8 +448,8 @@ class Resource(object):
         else:
             data = core_data
         if self.include_instance_id:
-            data['instance_id'] = self.instance_id
-        data = self.translate_keys(data, 'save')
+            data["instance_id"] = self.instance_id
+        data = self.translate_keys(data, "save")
         if self.identifier:
             data[self.primary_key] = self.identifier
         try:
@@ -468,9 +461,7 @@ class Resource(object):
                 res = self._dbc.autoexec_insert(self.table, data, **kwargs)
                 self.identifier = res
             else:
-                where = {
-                    self.primary_key: self.identifier
-                }
+                where = {self.primary_key: self.identifier}
                 self._dbc.autoexec_update(self.table, data, where_keyvals=where, **kwargs)
         except mysql.connector.Error as err:
             raise SaveIssue(err)
@@ -478,15 +469,16 @@ class Resource(object):
 
     @classmethod
     def search(cls, dbc, res_obj, instance_id, *args, **kwargs):
-        sql = "SELECT `%s`\n" \
-              "FROM `%s`\n" \
-              "WHERE `instance_id` = %%s"
-        args = [res_obj.primary_key, res_obj.table, ]
+        sql = "SELECT `%s`\n" "FROM `%s`\n" "WHERE `instance_id` = %%s"
+        args = [
+            res_obj.primary_key,
+            res_obj.table,
+        ]
         param_args = [instance_id]
         for search_key, search_value in kwargs.items():
             valid = False
             search_field, search_type = get_search(search_key)
-            if search_field in cls.configuration['fields']:
+            if search_field in cls.configuration["fields"]:
                 valid = True
             if search_field in cls.translations:
                 search_field = cls.translations[search_field]
@@ -518,7 +510,7 @@ def translate_frontend_names(resource, data, operation, translations=None):
             return data
     if not translations:
         return data
-    if operation == 'load':
+    if operation == "load":
         translations = dict(map(reversed, translations.items()))
     translated = {}
     for elem_name, elem_value in data.items():

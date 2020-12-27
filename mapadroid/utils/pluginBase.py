@@ -20,8 +20,8 @@ class Plugin(object):
 
     def __init__(self, mad):
 
-        self.description = 'UNKNOWN'
-        self.pluginname = 'UNKNOWN'
+        self.description = "UNKNOWN"
+        self.pluginname = "UNKNOWN"
         self._pluginconfig = configparser.ConfigParser()
         self._versionconfig = configparser.ConfigParser()
 
@@ -49,13 +49,13 @@ class PluginCollection(object):
 
         self.plugin_package = plugin_package
         self._mad = mad
-        self._logger = mad['logger']
+        self._logger = mad["logger"]
         self._controller = Blueprint(str("MAD_Plugin_Controller"), __name__)
 
         for route, view_func in self._routes:
-            self._controller.route(route, methods=['GET', 'POST'])(view_func)
+            self._controller.route(route, methods=["GET", "POST"])(view_func)
 
-        self._mad['madmin'].register_plugin(self._controller)
+        self._mad["madmin"].register_plugin(self._controller)
 
         self.reload_plugins()
 
@@ -66,34 +66,36 @@ class PluginCollection(object):
         self.plugins = []
         self.seen_paths = []
 
-        self._logger.info(f'Looking for plugins under package {self.plugin_package}')
+        self._logger.info(f"Looking for plugins under package {self.plugin_package}")
         self.walk_package(self.plugin_package)
 
     def apply_all_plugins_on_value(self):
-        """Apply all of the plugins on the argument supplied to this function
-        """
+        """Apply all of the plugins on the argument supplied to this function"""
         for plugin in self.plugins:
-            self._logger.info(f'Applying {plugin["plugin"].pluginname}: '
-                              f'{plugin["plugin"].perform_operation()}')
+            self._logger.info(f'Applying {plugin["plugin"].pluginname}: ' f'{plugin["plugin"].perform_operation()}')
             plugin["name"] = plugin["plugin"].pluginname
 
     def walk_package(self, package):
-        """Recursively walk the supplied package to retrieve all plugins
-        """
+        """Recursively walk the supplied package to retrieve all plugins"""
         try:
-            imported_package = __import__(package, fromlist=['MAD'])
+            imported_package = __import__(package, fromlist=["MAD"])
 
-            for _, pluginname, ispkg in pkgutil.iter_modules(imported_package.__path__,
-                                                             imported_package.__name__ + '.'):
+            for _, pluginname, ispkg in pkgutil.iter_modules(
+                imported_package.__path__, imported_package.__name__ + "."
+            ):
                 if not ispkg:
-                    plugin_module = __import__(pluginname, fromlist=['MAD'])
+                    plugin_module = __import__(pluginname, fromlist=["MAD"])
                     clsmembers = inspect.getmembers(plugin_module, inspect.isclass)
                     for (_, plugin) in clsmembers:
                         # Only add classes that are a sub class of Plugin, but NOT Plugin itself
                         if issubclass(plugin, Plugin) & (plugin is not Plugin):
-                            self._logger.info(f'Found plugin class: {plugin.__name__}')
-                            self.plugins.append({"plugin": plugin(self._mad),
-                                                 "path": [package for package in imported_package.__path__][0]})
+                            self._logger.info(f"Found plugin class: {plugin.__name__}")
+                            self.plugins.append(
+                                {
+                                    "plugin": plugin(self._mad),
+                                    "path": [package for package in imported_package.__path__][0],
+                                }
+                            )
 
             # Now that we have looked at all the modules in the current package, start looking
             # recursively for additional modules in sub packages
@@ -108,18 +110,21 @@ class PluginCollection(object):
                     self.seen_paths.append(pkg_path)
 
                     # Get all sub directory of the current package path directory
-                    child_pkgs = [p for p in os.listdir(pkg_path) if os.path.isdir(os.path.join(pkg_path, p))
-                                  and not p.startswith(".")]
+                    child_pkgs = [
+                        p
+                        for p in os.listdir(pkg_path)
+                        if os.path.isdir(os.path.join(pkg_path, p)) and not p.startswith(".")
+                    ]
 
                     # For each sub directory, apply the walk_package method recursively
                     for child_pkg in child_pkgs:
-                        self.walk_package(package + '.' + child_pkg)
+                        self.walk_package(package + "." + child_pkg)
         except Exception as e:
             self._logger.opt(exception=True).error("Exception in walk_package on package {}: {}", package, e)
 
     def zip_plugin(self, plugin_name, folder, version):
-        plugin_file_temp = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.tmp')
-        plugin_file = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.mp')
+        plugin_file_temp = os.path.join(self._mad["args"].temp_path, str(plugin_name) + ".tmp")
+        plugin_file = os.path.join(self._mad["args"].temp_path, str(plugin_name) + ".mp")
         if not os.path.isdir(folder):
             self._logger.error("Plugin folder does not exists - abort")
             return None
@@ -130,7 +135,7 @@ class PluginCollection(object):
         if os.path.isfile(plugin_file_temp):
             os.remove(plugin_file_temp)
 
-        zipobj = zipfile.ZipFile(plugin_file_temp, 'w', zipfile.ZIP_DEFLATED)
+        zipobj = zipfile.ZipFile(plugin_file_temp, "w", zipfile.ZIP_DEFLATED)
         rootlen = len(folder) + 1
         for base, _, files in os.walk(folder):
             if "__pycache__" not in base and "/." not in base:
@@ -141,13 +146,16 @@ class PluginCollection(object):
 
         zipobj.close()
 
-        with open(plugin_file_temp, mode='rb') as plugin_zip:
+        with open(plugin_file_temp, mode="rb") as plugin_zip:
             plugin_contents = plugin_zip.read()
 
-        plugin_dict = {"plugin_name": plugin_name, "plugin_content": base64.b64encode(plugin_contents).decode('utf-8'),
-                       "plugin_version": version}
+        plugin_dict = {
+            "plugin_name": plugin_name,
+            "plugin_content": base64.b64encode(plugin_contents).decode("utf-8"),
+            "plugin_version": version,
+        }
 
-        with open(plugin_file, 'w') as plugin_export:
+        with open(plugin_file, "w") as plugin_export:
             plugin_export.write(json.dumps(plugin_dict))
 
         os.remove(plugin_file_temp)
@@ -169,9 +177,9 @@ class PluginCollection(object):
         else:
             pass
 
-        plugin_content = base64.b64decode(data['plugin_content'])
-        plugin_meta_name = data['plugin_name']
-        plugin_version = data['plugin_version']
+        plugin_content = base64.b64decode(data["plugin_content"])
+        plugin_meta_name = data["plugin_name"]
+        plugin_version = data["plugin_version"]
 
         tmp_plugin = open(plugin_tmp_zip, "wb")
         tmp_plugin.write(bytearray(plugin_content))
@@ -191,18 +199,17 @@ class PluginCollection(object):
             return False
 
         try:
-            with zipfile.ZipFile(plugin_tmp_zip, 'r') as zip_ref:
+            with zipfile.ZipFile(plugin_tmp_zip, "r") as zip_ref:
                 zip_ref.extractall(extractpath)
 
             os.remove(plugin_tmp_zip)
 
             # check for plugin.ini.example
-            if not os.path.isfile(
-                    os.path.join(extractpath, "plugin.ini.example")):
+            if not os.path.isfile(os.path.join(extractpath, "plugin.ini.example")):
                 self._logger.debug("Creating basic plugin.ini.example")
-                with open(os.path.join(extractpath, "plugin.ini.example"), 'w') as pluginini:
-                    pluginini.write('[plugin]\n')
-                    pluginini.write('active = false\n')
+                with open(os.path.join(extractpath, "plugin.ini.example"), "w") as pluginini:
+                    pluginini.write("[plugin]\n")
+                    pluginini.write("active = false\n")
         except:  # noqa: E722 B001
             self._logger.opt(exception=True).error("Cannot install new plugin: " + str(mpl_file))
             return False
@@ -212,44 +219,47 @@ class PluginCollection(object):
 
     @auth_required
     def upload_plugin(self):
-        if request.method == 'POST':
+        if request.method == "POST":
             # check if the post request has the file part
-            if 'file' not in request.files:
-                flash('No file part')
-                return redirect(url_for('plugins'), code=302)
-            plugin_file = request.files['file']
-            if plugin_file.filename == '':
-                flash('No file selected for uploading')
-                return redirect(url_for('plugins'), code=302)
-            if plugin_file and '.' in plugin_file.filename and \
-                    plugin_file.filename.rsplit('.', 1)[1].lower() in ['mp']:
+            if "file" not in request.files:
+                flash("No file part")
+                return redirect(url_for("plugins"), code=302)
+            plugin_file = request.files["file"]
+            if plugin_file.filename == "":
+                flash("No file selected for uploading")
+                return redirect(url_for("plugins"), code=302)
+            if plugin_file and "." in plugin_file.filename and plugin_file.filename.rsplit(".", 1)[1].lower() in ["mp"]:
                 filename = secure_filename(plugin_file.filename)
-                plugin_file.save(os.path.join(self._mad['args'].temp_path, filename))
-                if self.unzip_plugin(os.path.join(self._mad['args'].temp_path, filename)):
-                    flash('Plugin uploaded successfully - check plugin.ini and restart MAD now!')
+                plugin_file.save(os.path.join(self._mad["args"].temp_path, filename))
+                if self.unzip_plugin(os.path.join(self._mad["args"].temp_path, filename)):
+                    flash("Plugin uploaded successfully - check plugin.ini and restart MAD now!")
                 else:
-                    flash('Error while installation - check MAD log.')
-                return redirect(url_for('plugins'), code=302)
+                    flash("Error while installation - check MAD log.")
+                return redirect(url_for("plugins"), code=302)
             else:
-                flash('Allowed file type is mp only!')
-                return redirect(url_for('plugins'), code=302)
+                flash("Allowed file type is mp only!")
+                return redirect(url_for("plugins"), code=302)
 
     @auth_required
     def download_plugin(self):
         plugin = request.args.get("plugin", None)
         if plugin is None:
-            return redirect(url_for('plugins'), code=302)
+            return redirect(url_for("plugins"), code=302)
 
         mad_plugin = next((item for item in self.plugins if item["name"] == plugin), None)
         if mad_plugin is None:
-            return redirect(url_for('plugins'), code=302)
+            return redirect(url_for("plugins"), code=302)
 
-        mp_file = self.zip_plugin(plugin, mad_plugin['path'], self.get_plugin_version(mad_plugin['path']))
+        mp_file = self.zip_plugin(plugin, mad_plugin["path"], self.get_plugin_version(mad_plugin["path"]))
         if mp_file is None:
-            return redirect(url_for('plugins'), code=302)
+            return redirect(url_for("plugins"), code=302)
 
-        return send_file(generate_path(self._mad['args'].temp_path) + "/" + plugin + ".mp",
-                         as_attachment=True, attachment_filename=plugin + ".mp", cache_timeout=0)
+        return send_file(
+            generate_path(self._mad["args"].temp_path) + "/" + plugin + ".mp",
+            as_attachment=True,
+            attachment_filename=plugin + ".mp",
+            cache_timeout=0,
+        )
 
     @staticmethod
     def get_plugin_version(plugin_folder):

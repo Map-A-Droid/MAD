@@ -11,19 +11,19 @@ mapping_args = parse_args()
 class LocalAPI(requests.Session):
     def __init__(self, **kwargs):
         super(LocalAPI, self).__init__()
-        self.__logger = kwargs.get('logger', None)
-        self.__retries = kwargs.get('retries', 1)
-        self.__timeout = kwargs.get('timeout', 3)
-        self.__protocol = 'http'  # madmin only runs on http unless behind a proxy so we can force http
-        self.__headers = kwargs.get('headers', {})
-        self.auth = kwargs.get('auth', None)
-        api_type = kwargs.get('api_type', None)
-        if api_type in [None, 'api']:
+        self.__logger = kwargs.get("logger", None)
+        self.__retries = kwargs.get("retries", 1)
+        self.__timeout = kwargs.get("timeout", 3)
+        self.__protocol = "http"  # madmin only runs on http unless behind a proxy so we can force http
+        self.__headers = kwargs.get("headers", {})
+        self.auth = kwargs.get("auth", None)
+        api_type = kwargs.get("api_type", None)
+        if api_type in [None, "api"]:
             self.__hostname = mapping_args.madmin_ip
             self.__port = mapping_args.madmin_port
             if mapping_args.madmin_user:
                 self.auth = (mapping_args.madmin_user, mapping_args.madmin_password)
-        elif api_type == 'mitm':
+        elif api_type == "mitm":
             self.__hostname = mapping_args.mitmreceiver_ip
             self.__port = mapping_args.mitmreceiver_port
 
@@ -32,7 +32,7 @@ class LocalAPI(requests.Session):
         # Update the URL
         if request.url[0] == "/":
             request.url = request.url[1:]
-        request.url = "%s://%s:%s/%s" % (self.__protocol, self.__hostname, self.__port, request.url)
+        request.url = "%s://%s:%s/%s" % (self.__protocol, self.__hostname, self.__port, request.url,)
         if self.__headers:
             if not request.headers:
                 request.headers = {}
@@ -66,7 +66,7 @@ class LocalAPI(requests.Session):
                         self.__logger.debug("Bad Gateway received.")
                 else:
                     return response
-            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError,) as err:
                 if self.__logger:
                     self.__logger.warning(err)
                 last_err = err

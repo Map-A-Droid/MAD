@@ -5,19 +5,44 @@ logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerRaids(RouteManagerBase):
-    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                 path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, settings=None, init=False,
-                 name="unknown", joinqueue=None, use_s2: bool = False, s2_level: int = 15):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                  max_radius=max_radius,
-                                  max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, use_s2=True, s2_level=s2_level,
-                                  joinqueue=joinqueue
-                                  )
+    def __init__(
+        self,
+        db_wrapper,
+        dbm,
+        area_id,
+        coords,
+        max_radius,
+        max_coords_within_radius,
+        path_to_include_geofence,
+        path_to_exclude_geofence,
+        routefile,
+        mode=None,
+        settings=None,
+        init=False,
+        name="unknown",
+        joinqueue=None,
+        use_s2: bool = False,
+        s2_level: int = 15,
+    ):
+        RouteManagerBase.__init__(
+            self,
+            db_wrapper=db_wrapper,
+            dbm=dbm,
+            area_id=area_id,
+            coords=coords,
+            max_radius=max_radius,
+            max_coords_within_radius=max_coords_within_radius,
+            path_to_include_geofence=path_to_include_geofence,
+            path_to_exclude_geofence=path_to_exclude_geofence,
+            routefile=routefile,
+            init=init,
+            name=name,
+            settings=settings,
+            mode=mode,
+            use_s2=True,
+            s2_level=s2_level,
+            joinqueue=joinqueue,
+        )
 
     def _priority_queue_update_interval(self):
         return 300
@@ -27,8 +52,9 @@ class RouteManagerRaids(RouteManagerBase):
         return True
 
     def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                          in_memory=False)
+        self.recalc_route(
+            self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True, in_memory=False,
+        )
         self._init_route_queue()
 
     def _retrieve_latest_priority_queue(self):
@@ -41,7 +67,7 @@ class RouteManagerRaids(RouteManagerBase):
 
     def _get_coords_post_init(self):
         coords = self.db_wrapper.gyms_from_db(self.geofence_helper)
-        including_stops = self._data_manager.get_resource('area', self.area_id).get('including_stops', False)
+        including_stops = self._data_manager.get_resource("area", self.area_id).get("including_stops", False)
         if including_stops:
             self.logger.info("Include stops in coords list too!")
             coords.extend(self.db_wrapper.stops_from_db(self.geofence_helper))

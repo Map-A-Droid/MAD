@@ -5,8 +5,8 @@ from mapadroid.tests import test_variables as global_variables
 
 
 class APIGeoFence(api_base.APITestBase):
-    uri = copy.copy(global_variables.DEFAULT_OBJECTS['geofence']['uri'])
-    base_payload = copy.copy(global_variables.DEFAULT_OBJECTS['geofence']['payload'])
+    uri = copy.copy(global_variables.DEFAULT_OBJECTS["geofence"]["uri"])
+    base_payload = copy.copy(global_variables.DEFAULT_OBJECTS["geofence"]["payload"])
 
     def test_landing_page(self):
         super().landing_page()
@@ -18,9 +18,9 @@ class APIGeoFence(api_base.APITestBase):
 
     def test_invalid_post(self):
         payload = {
-            'name': '',
+            "name": "",
         }
-        errors = {"missing": ["name", 'fence_type']}
+        errors = {"missing": ["name", "fence_type"]}
         super().invalid_post(payload, errors)
         self.remove_resources()
 
@@ -30,25 +30,22 @@ class APIGeoFence(api_base.APITestBase):
 
     def test_invalid_put(self):
         payload = {
-            'name': '',
+            "name": "",
         }
-        errors = {"missing": ["name", 'fence_type']}
+        errors = {"missing": ["name", "fence_type"]}
         super().invalid_put(payload, errors)
         self.remove_resources()
 
     def test_valid_put(self):
-        payload = {
-            'name': 'update',
-            'fence_type': 'polygon'
-        }
+        payload = {"name": "update", "fence_type": "polygon"}
         result = copy.copy(payload)
-        result['fence_data'] = []
+        result["fence_data"] = []
         super().valid_put(payload, result)
         self.remove_resources()
 
     def test_invalid_patch(self):
         payload = {
-            'namez': 'update',
+            "namez": "update",
         }
         errors = {"unknown": ["namez"]}
         super().invalid_patch(payload, errors)
@@ -56,7 +53,7 @@ class APIGeoFence(api_base.APITestBase):
 
     def test_valid_patch(self):
         payload = {
-            'name': 'Updated GeoFence',
+            "name": "Updated GeoFence",
         }
         result = copy.copy(self.base_payload)
         result.update(payload)
@@ -64,19 +61,15 @@ class APIGeoFence(api_base.APITestBase):
         self.remove_resources()
 
     def test_invalid_post_fencedata(self):
-        payload = {
-            'fence_type': 'polygon',
-            'fence_data': ['1.00,1.00', '1.00,a']
+        payload = {"fence_type": "polygon", "fence_data": ["1.00,1.00", "1.00,a"]}
+        errors = {
+            "missing": ["name"],
+            "invalid": [["fence_data", "Must be one coord set per line (float,float)"]],
         }
-        errors = {"missing": ["name"],
-                  "invalid": [['fence_data', 'Must be one coord set per line (float,float)']]}
         super().invalid_post(payload, errors)
 
     def test_invalid_patch_fencedata(self):
-        payload = {
-            'fence_type': 'polygon',
-            'fence_data': ['1.00,1.00', '1.00,a']
-        }
-        errors = {"invalid": [['fence_data', 'Must be one coord set per line (float,float)']]}
+        payload = {"fence_type": "polygon", "fence_data": ["1.00,1.00", "1.00,a"]}
+        errors = {"invalid": [["fence_data", "Must be one coord set per line (float,float)"]]}
         super().invalid_patch(payload, errors)
         self.remove_resources()

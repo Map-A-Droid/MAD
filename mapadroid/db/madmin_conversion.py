@@ -1,24 +1,12 @@
 COLUMNS = [
-    {
-        "table": "settings_devicepool",
-        "column": "screendetection",
-        "ctype": "tinyint(1) DEFAULT NULL"
-    },
-    {
-        "table": "settings_routecalc",
-        "column": "recalc_status",
-        "ctype": "tinyint(1) DEFAULT 0 AFTER `instance_id`"
-    },
+    {"table": "settings_devicepool", "column": "screendetection", "ctype": "tinyint(1) DEFAULT NULL"},
+    {"table": "settings_routecalc", "column": "recalc_status", "ctype": "tinyint(1) DEFAULT 0 AFTER `instance_id`"},
     {
         "table": "settings_routecalc",
         "column": "last_updated",
-        "ctype": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `recalc_status`;"
+        "ctype": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `recalc_status`;",
     },
-    {
-        "table": "settings_area_mon_mitm",
-        "column": "max_clustering",
-        "ctype": "int DEFAULT NULL"
-    },
+    {"table": "settings_area_mon_mitm", "column": "max_clustering", "ctype": "int DEFAULT NULL"},
 ]
 TABLES = [
     """CREATE TABLE IF NOT EXISTS `madmin_instance` (
@@ -27,7 +15,6 @@ TABLES = [
         PRIMARY KEY (`instance_id`),
         UNIQUE KEY (`name`)
     ) ENGINE = InnoDB;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_monivlist` (
         `monlist_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
@@ -40,7 +27,6 @@ TABLES = [
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_monivlist_to_mon` (
         `monlist_id` int UNSIGNED NOT NULL,
         `mon_id` int(11) NOT NULL,
@@ -53,7 +39,6 @@ TABLES = [
             REFERENCES `settings_monivlist` (`monlist_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_auth` (
         `auth_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
@@ -67,7 +52,6 @@ TABLES = [
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_devicepool` (
         `pool_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
@@ -101,7 +85,6 @@ TABLES = [
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_geofence` (
         `geofence_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
@@ -112,7 +95,6 @@ TABLES = [
         PRIMARY KEY (`geofence_id`),
         UNIQUE KEY (`name`, `instance_id`)
     ) ENGINE = InnoDB;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_routecalc` (
         `routecalc_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
@@ -120,7 +102,6 @@ TABLES = [
         `routefile` MEDIUMTEXT NULL,
         PRIMARY KEY (`routecalc_id`)
     ) ENGINE = InnoDB;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_area` (
         `area_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
@@ -134,7 +115,6 @@ TABLES = [
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_area_idle` (
         `area_id` int UNSIGNED NOT NULL,
         `geofence_included` int UNSIGNED NOT NULL,
@@ -151,7 +131,6 @@ TABLES = [
             FOREIGN KEY (`routecalc`)
             REFERENCES `settings_routecalc` (`routecalc_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_area_iv_mitm` (
         `area_id` int UNSIGNED NOT NULL,
         `geofence_included` int UNSIGNED NOT NULL,
@@ -180,7 +159,6 @@ TABLES = [
             FOREIGN KEY (`routecalc`)
             REFERENCES `settings_routecalc` (`routecalc_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_area_mon_mitm` (
         `area_id` int UNSIGNED NOT NULL,
         `init` boolean NOT NULL,
@@ -212,7 +190,6 @@ TABLES = [
             FOREIGN KEY (`routecalc`)
             REFERENCES `settings_routecalc` (`routecalc_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_area_pokestops` (
         `area_id` int UNSIGNED NOT NULL,
         `geofence_included` int UNSIGNED NOT NULL,
@@ -237,7 +214,6 @@ TABLES = [
             FOREIGN KEY (`routecalc`)
             REFERENCES `settings_routecalc` (`routecalc_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_area_raids_mitm` (
         `area_id` int UNSIGNED NOT NULL,
         `init` boolean NOT NULL,
@@ -268,7 +244,6 @@ TABLES = [
             FOREIGN KEY (`routecalc`)
             REFERENCES `settings_routecalc` (`routecalc_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_walker` (
         `walker_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
@@ -281,7 +256,6 @@ TABLES = [
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_walkerarea` (
         `walkerarea_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
@@ -301,7 +275,6 @@ TABLES = [
             FOREIGN KEY (`area_id`)
             REFERENCES `settings_area` (`area_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_walker_to_walkerarea` (
         `walker_id` int UNSIGNED NOT NULL,
         `walkerarea_id` int UNSIGNED NOT NULL,
@@ -317,7 +290,6 @@ TABLES = [
             FOREIGN KEY (`walkerarea_id`)
             REFERENCES `settings_walkerarea` (`walkerarea_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
-
     """CREATE TABLE IF NOT EXISTS `settings_device` (
         `device_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,

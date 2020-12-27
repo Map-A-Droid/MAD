@@ -2,19 +2,12 @@ from .area import Area
 
 
 class AreaPokestops(Area):
-    area_table = 'settings_area_pokestops'
-    area_type = 'pokestops'
+    area_table = "settings_area_pokestops"
+    area_type = "pokestops"
     configuration = {
         "description": "Discover all quests from Pokestops",
         "fields": {
-            "name": {
-                "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Name of area",
-                    "expected": str
-                }
-            },
+            "name": {"settings": {"type": "text", "require": True, "description": "Name of area", "expected": str}},
             "geofence_included": {
                 "settings": {
                     "type": "geofence",
@@ -23,7 +16,7 @@ class AreaPokestops(Area):
                     "expected": int,
                     "uri": True,
                     "data_source": "geofence",
-                    "uri_source": "api_geofence"
+                    "uri_source": "api_geofence",
                 }
             },
             "geofence_excluded": {
@@ -34,7 +27,7 @@ class AreaPokestops(Area):
                     "expected": int,
                     "uri": True,
                     "data_source": "geofence",
-                    "uri_source": "api_geofence"
+                    "uri_source": "api_geofence",
                 }
             },
             "routecalc": {
@@ -45,7 +38,7 @@ class AreaPokestops(Area):
                     "expected": int,
                     "uri": True,
                     "data_source": "routecalc",
-                    "uri_source": "api_routecalc"
+                    "uri_source": "api_routecalc",
                 }
             },
             "init": {
@@ -55,7 +48,7 @@ class AreaPokestops(Area):
                     "values": [False, True],
                     "empty": False,
                     "description": "Set this option to True, if you scan the area for stops for the first time",
-                    "expected": bool
+                    "expected": bool,
                 }
             },
             "level": {
@@ -64,18 +57,18 @@ class AreaPokestops(Area):
                     "require": False,
                     "values": [False, True],
                     "description": "Level up an account mode.  (Default: False)",
-                    "expected": bool
+                    "expected": bool,
                 }
             },
             "route_calc_algorithm": {
                 "settings": {
                     "type": "option",
-                    "values": ['route', 'routefree'],
+                    "values": ["route", "routefree"],
                     "require": False,
                     "description": "Method of calculation for routes. (Default route)",
-                    "expected": str
+                    "expected": str,
                 }
-            }
+            },
         },
         "settings": {
             "speed": {
@@ -83,8 +76,8 @@ class AreaPokestops(Area):
                     "type": "text",
                     "require": False,
                     "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to "
-                                   "determine if the worker should walk or teleport (Default: 0)",
-                    "expected": float
+                    "determine if the worker should walk or teleport (Default: 0)",
+                    "expected": float,
                 }
             },
             "max_distance": {
@@ -92,8 +85,8 @@ class AreaPokestops(Area):
                     "type": "text",
                     "require": False,
                     "description": "Max. distance of walking - If the distance between points is greater than this "
-                                   "value the worker will teleport (Default: 0)",
-                    "expected": float
+                    "value the worker will teleport (Default: 0)",
+                    "expected": float,
                 }
             },
             "ignore_spinned_stops": {
@@ -102,7 +95,7 @@ class AreaPokestops(Area):
                     "values": [None, True, False],
                     "require": False,
                     "description": "Do not spin stops that have been spun in the past (for level mode) (Default: True)",
-                    "expected": bool
+                    "expected": bool,
                 }
             },
             "cleanup_every_spin": {
@@ -111,8 +104,8 @@ class AreaPokestops(Area):
                     "values": [None, False, True],
                     "require": False,
                     "description": "Cleanup quest inventory after every stop (Default: False)",
-                    "expected": bool
+                    "expected": bool,
                 }
-            }
-        }
+            },
+        },
     }

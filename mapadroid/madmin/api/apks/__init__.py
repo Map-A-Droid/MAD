@@ -1,3 +1,1 @@
-__all__ = [
-    'ftr_mad_apks'
-]
+__all__ = ["ftr_mad_apks"]

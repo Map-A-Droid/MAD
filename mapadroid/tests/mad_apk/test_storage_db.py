@@ -2,8 +2,13 @@ from mapadroid.tests.mad_apk.base_storage import StorageBase
 
 
 class StorageDB(StorageBase):
-    cleanup_tables = ['filestore_meta', 'filestore_chunks', 'mad_apk_autosearch', 'mad_apks']
-    storage_type = 'db'
+    cleanup_tables = [
+        "filestore_meta",
+        "filestore_chunks",
+        "mad_apk_autosearch",
+        "mad_apks",
+    ]
+    storage_type = "db"
 
     def test_status_check(self):
         super().status_check()
@@ -18,7 +23,7 @@ class StorageDB(StorageBase):
         super().delete_check()
 
     def test_package_upgrade_check(self):
-        version: str = '0.1'
+        version: str = "0.1"
         super().package_upgrade_check(version)
         sql = "SELECT COUNT(DISTINCT `filestore_id`) FROM `filestore_meta`"
         self.assertTrue(self.db_wrapper.autofetch_value(sql) == 1)

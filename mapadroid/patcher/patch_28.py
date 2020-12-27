@@ -2,8 +2,8 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Origin Hopper'
-    descr = 'Allows a device with the correct authentication to generate a new origin record'
+    name = "Origin Hopper"
+    descr = "Allows a device with the correct authentication to generate a new origin record"
 
     def _execute(self):
         origin_sql = """

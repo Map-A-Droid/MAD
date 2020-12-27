@@ -2,7 +2,7 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Patch 24 - Include instance_id in v_trs_status'
+    name = "Patch 24 - Include instance_id in v_trs_status"
 
     def _execute(self):
         sql = """

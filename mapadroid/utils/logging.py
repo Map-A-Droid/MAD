@@ -30,6 +30,7 @@ class LoggerEnums(IntEnum):
 # ========== Core Logging ==========
 # ==================================
 
+
 def init_logging(args):
     global logger
     log_level_label, log_level_val = log_level(args.log_level, args.verbose)
@@ -46,8 +47,20 @@ def init_logging(args):
     log_fmt_level = "[<lvl>{level: >1.1}</lvl>]"
     log_fmt_msg = "<level>{message}</level>"
 
-    log_format_c = [log_fmt_time_c, log_fmt_id, log_fmt_mod_c, log_fmt_level, log_fmt_msg]
-    log_format_fs = [log_fmt_time_fs, log_fmt_id, log_fmt_mod_fs, log_fmt_level, log_fmt_msg]
+    log_format_c = [
+        log_fmt_time_c,
+        log_fmt_id,
+        log_fmt_mod_c,
+        log_fmt_level,
+        log_fmt_msg,
+    ]
+    log_format_fs = [
+        log_fmt_time_fs,
+        log_fmt_id,
+        log_fmt_mod_fs,
+        log_fmt_level,
+        log_fmt_msg,
+    ]
     # Alter the logging capabilities based off the MAD launch settings
     if not args.no_file_logs:
         log_format_c[log_format_c.index(log_fmt_time_c)] = log_fmt_time_fs
@@ -55,14 +68,14 @@ def init_logging(args):
             log_format_c.remove(log_fmt_mod_c)
         else:
             log_format_c[log_format_c.index(log_fmt_mod_c)] = log_fmt_mod_fs
-    fs_log_format = ' '.join(log_format_fs)
-    log_format_console = ' '.join(log_format_c)
+    fs_log_format = " ".join(log_format_fs)
+    log_format_console = " ".join(log_format_c)
     logconfig = {
         "levels": [
             {"name": "DEBUG2", "no": 9, "color": "<blue>"},
             {"name": "DEBUG3", "no": 8, "color": "<blue>"},
             {"name": "DEBUG4", "no": 7, "color": "<blue>"},
-            {"name": "DEBUG5", "no": 6, "color": "<blue>"}
+            {"name": "DEBUG5", "no": 6, "color": "<blue>"},
         ],
         "handlers": [
             {
@@ -71,7 +84,7 @@ def init_logging(args):
                 "colorize": colorize,
                 "level": log_level_val,
                 "enqueue": True,
-                "filter": filter_errors
+                "filter": filter_errors,
             },
             {
                 "sink": sys.stderr,
@@ -80,8 +93,8 @@ def init_logging(args):
                 "level": "ERROR",
                 "diagnose": log_trace,
                 "backtrace": True,
-                "enqueue": True
-            }
+                "enqueue": True,
+            },
         ],
         "extra": {"name": "Unknown"},
     }
@@ -94,7 +107,7 @@ def init_logging(args):
             "backtrace": True,
             "diagnose": log_file_trace,
             "enqueue": True,
-            "encoding": "UTF-8"
+            "encoding": "UTF-8",
         }
         if args.log_file_retention != 0:
             log_file_retention = str(args.log_file_retention) + " days"
@@ -125,7 +138,7 @@ def log_level(arg_log_level, arg_debug_level):
         ("SUCCESS", 25),
         ("WARNING", 30),
         ("ERROR", 40),
-        ("CRITICAL", 50)
+        ("CRITICAL", 50),
     ]
     # Case insensitive.
     arg_log_level = arg_log_level.upper() if arg_log_level else None
@@ -139,23 +152,25 @@ def log_level(arg_log_level, arg_debug_level):
 
     # Default log level.
     if arg_debug_level == 0:
-        return ('INFO', verbosity_map.get('INFO'))
+        return ("INFO", verbosity_map.get("INFO"))
 
     # Log level based on count(-v) verbosity arguments.
     # Limit it to allowed grades, starting at DEBUG.
-    debug_log_level_idx = next(key for key, (label, level) in enumerate(verbosity_levels) if label == 'DEBUG')
+    debug_log_level_idx = next(key for key, (label, level) in enumerate(verbosity_levels) if label == "DEBUG")
 
     # Limit custom verbosity to existing grades.
-    debug_levels = verbosity_levels[:debug_log_level_idx + 1]
+    debug_levels = verbosity_levels[: debug_log_level_idx + 1]
     debug_levels_length = len(debug_levels)
 
     if arg_debug_level < 0 or arg_debug_level > debug_levels_length:
         # Only show the message once per startup. This method is currently called once
         # for console logging, once for file logging.
-        if not hasattr(log_level, 'bounds_exceeded'):
-            logger.debug("Verbosity -v={} is outside of the bounds [0, {}]. Changed to nearest limit.",
-                         str(arg_debug_level),
-                         str(debug_levels_length))
+        if not hasattr(log_level, "bounds_exceeded"):
+            logger.debug(
+                "Verbosity -v={} is outside of the bounds [0, {}]. Changed to nearest limit.",
+                str(arg_debug_level),
+                str(debug_levels_length),
+            )
             log_level.bounds_exceeded = True
 
         arg_debug_level = min(arg_debug_level, debug_levels_length)
@@ -175,6 +190,7 @@ def apply_custom(func):
         log = func(self, *args, **kwargs)
         init_custom(log)
         return log
+
     return decorated
 
 
@@ -188,6 +204,7 @@ def init_custom(log_out):
     log_out.debug4 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG4", message, *args, **kwargs)
     log_out.debug5 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG5", message, *args, **kwargs)
 
+
 # ==================================
 # ========== Filter Funcs ==========
 # ==================================
@@ -200,18 +217,19 @@ def filter_errors(record):
 
 def filter_origin_updater(record):
     try:
-        record['extra']['name'] = record['extra']['origin']
+        record["extra"]["name"] = record["extra"]["origin"]
     except KeyError:
         pass
 
 
 def filter_route_with_origin(record):
     try:
-        routename = record['extra']['name']
-        record['extra']['name'] = record['extra']['origin']
-        record['message'] = '{}: {}'.format(routename, record['message'])
+        routename = record["extra"]["name"]
+        record["extra"]["name"] = record["extra"]["origin"]
+        record["message"] = "{}: {}".format(routename, record["message"])
     except KeyError:
         pass
+
 
 # ==================================
 # ========== Logger Inits ==========
@@ -219,19 +237,19 @@ def filter_route_with_origin(record):
 
 
 def get_bind_name(logger_type: LoggerEnums, name: str) -> str:
-    """ Translates the logger_type into the identifier for the log message.  Specifying name forces the identifier
-        to that value
+    """Translates the logger_type into the identifier for the log message.  Specifying name forces the identifier
+    to that value
     """
     if name:
         pass
     elif logger_type == LoggerEnums.madmin:
-        name = 'madmin'
+        name = "madmin"
     elif logger_type == LoggerEnums.websocket:
-        name = 'websocket'
+        name = "websocket"
     elif logger_type != LoggerEnums.unknown:
-        name = 'system'
+        name = "system"
     else:
-        name = 'Unknown'
+        name = "Unknown"
     return name
 
 
@@ -255,8 +273,8 @@ def get_logger(logger_type: LoggerEnums, name: str = None, filter_func: callable
 
 
 def get_origin_logger(existing_logger, origin=None) -> logger:
-    """ Returns an origin logger.  Could be updated later to use ContextVar to allow for easier tracking of log
-        messages
+    """Returns an origin logger.  Could be updated later to use ContextVar to allow for easier tracking of log
+    messages
     """
     if not any([origin]):
         return existing_logger
@@ -280,13 +298,13 @@ def routelogger_set_origin(existing, origin=None) -> logger:
 class InterceptHandler(logging.Handler):
     def __init__(self, *args, **kwargs):
         try:
-            self.log_section = kwargs['log_section']
-            del kwargs['log_section']
+            self.log_section = kwargs["log_section"]
+            del kwargs["log_section"]
         except KeyError:
             self.log_section = LoggerEnums.unknown
         try:
-            self.log_identifier = kwargs['log_identifier']
-            del kwargs['log_identifier']
+            self.log_identifier = kwargs["log_identifier"]
+            del kwargs["log_identifier"]
         except KeyError:
             self.log_identifier = LoggerEnums.unknown
         super().__init__(*args, **kwargs)

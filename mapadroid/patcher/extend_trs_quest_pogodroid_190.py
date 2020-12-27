@@ -2,8 +2,8 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Extend trs_quest.quest_reward length'
-    descr = 'New Protos, more data.'
+    name = "Extend trs_quest.quest_reward length"
+    descr = "New Protos, more data."
 
     def _execute(self):
         alter_sql = """

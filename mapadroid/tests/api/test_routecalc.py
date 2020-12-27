@@ -5,8 +5,8 @@ from mapadroid.tests import test_variables as global_variables
 
 
 class APIRouteCalc(api_base.APITestBase):
-    uri = copy.copy(global_variables.DEFAULT_OBJECTS['routecalc']['uri'])
-    base_payload = copy.copy(global_variables.DEFAULT_OBJECTS['routecalc']['payload'])
+    uri = copy.copy(global_variables.DEFAULT_OBJECTS["routecalc"]["uri"])
+    base_payload = copy.copy(global_variables.DEFAULT_OBJECTS["routecalc"]["payload"])
 
     def test_landing_page(self):
         super().landing_page()
@@ -18,12 +18,14 @@ class APIRouteCalc(api_base.APITestBase):
 
     def test_invalid_post(self):
         payload = {
-            'routefile': 'not a list',
+            "routefile": "not a list",
         }
-        errors = {'invalid': [
-            ['routefile', 'Comma-delimited list'],
-            ['routefile', 'Must be one coord set per line (float,float)']
-        ]}
+        errors = {
+            "invalid": [
+                ["routefile", "Comma-delimited list"],
+                ["routefile", "Must be one coord set per line (float,float)"],
+            ]
+        }
         super().invalid_post(payload, errors)
         self.remove_resources()
 
@@ -33,12 +35,14 @@ class APIRouteCalc(api_base.APITestBase):
 
     def test_invalid_put(self):
         payload = {
-            'routefile': 'not a list',
+            "routefile": "not a list",
         }
-        errors = {'invalid': [
-            ['routefile', 'Comma-delimited list'],
-            ['routefile', 'Must be one coord set per line (float,float)']
-        ]}
+        errors = {
+            "invalid": [
+                ["routefile", "Comma-delimited list"],
+                ["routefile", "Must be one coord set per line (float,float)"],
+            ]
+        }
         super().invalid_put(payload, errors)
         self.remove_resources()
 
@@ -48,7 +52,7 @@ class APIRouteCalc(api_base.APITestBase):
 
     def test_invalid_patch(self):
         payload = {
-            'namez': 'update',
+            "namez": "update",
         }
         errors = {"unknown": ["namez"]}
         super().invalid_patch(payload, errors)
@@ -56,7 +60,7 @@ class APIRouteCalc(api_base.APITestBase):
 
     def test_valid_patch(self):
         payload = {
-            'routefile': ['1,1'],
+            "routefile": ["1,1"],
         }
         result = copy.copy(self.base_payload)
         result.update(payload)

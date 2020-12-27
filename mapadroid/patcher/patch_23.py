@@ -2,16 +2,16 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Update trs_status'
+    name = "Update trs_status"
 
     def _execute(self):
         sql = "SHOW FIELDS FROM `trs_status`"
         fields = self._db.autofetch_all(sql)
         field_defs = {}
         for field in fields:
-            field_name = field['Field']
+            field_name = field["Field"]
             field_defs[field_name] = field
-        sql = "SELECT %s FROM `trs_status`" % (','.join(field_defs.keys()),)
+        sql = "SELECT %s FROM `trs_status`" % (",".join(field_defs.keys()),)
         try:
             existing_data = self._db.autofetch_all(sql, raise_exec=True)
         except Exception:
@@ -64,56 +64,62 @@ class Patch(PatchBase):
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
-        point_fields = ['currentPos', 'lastPos']
-        bool_fields = ['rebootingOption', 'init']
+        point_fields = ["currentPos", "lastPos"]
+        bool_fields = ["rebootingOption", "init"]
         for row in existing_data:
-            if 'instance' in row:
+            if "instance" in row:
                 try:
-                    row['instance_id'] = int(row['instance'])
-                    del row['instance']
+                    row["instance_id"] = int(row["instance"])
+                    del row["instance"]
                 except ValueError:
-                    if row['instance'] == '':
-                        self._logger.warning('Found an non-instanced row in trs_status.  Skipping {}', row)
+                    if row["instance"] == "":
+                        self._logger.warning(
+                            "Found an non-instanced row in trs_status.  Skipping {}", row,
+                        )
                         continue
                     instance_id_sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = %s"
-                    instance_id = self._db.autofetch_value(instance_id_sql, row['instance'])
+                    instance_id = self._db.autofetch_value(instance_id_sql, row["instance"])
                     if not instance_id:
-                        self._logger.warning('Detected a device that has an invalid instance.  Skipping due to '
-                                             'foreign key issues {}', row)
+                        self._logger.warning(
+                            "Detected a device that has an invalid instance.  Skipping due to " "foreign key issues {}",
+                            row,
+                        )
                         continue
-                    del row['instance']
-                    row['instance_id'] = instance_id
-            if 'origin' in row:
+                    del row["instance"]
+                    row["instance_id"] = instance_id
+            if "origin" in row:
                 dev_id_sql = "SELECT `device_id` FROM `settings_device` WHERE `name` = %s and `instance_id` = %s"
-                device_id = self._db.autofetch_value(dev_id_sql, args=(row['origin'], row['instance_id']))
+                device_id = self._db.autofetch_value(dev_id_sql, args=(row["origin"], row["instance_id"]))
                 if not device_id:
-                    self._logger.warning('Device name is not a configured device.  Skipping {}', row)
+                    self._logger.warning("Device name is not a configured device.  Skipping {}", row)
                     continue
-                del row['origin']
-                row['device_id'] = device_id
+                del row["origin"]
+                row["device_id"] = device_id
             try:
-                row['area_id'] = int(row['routemanager'])
-                if row['area_id'] == 0:
-                    self._logger.warning('Detected a device that has a routemanager of 0.  Skipping due to '
-                                         'foreign key issues {}', row)
+                row["area_id"] = int(row["routemanager"])
+                if row["area_id"] == 0:
+                    self._logger.warning(
+                        "Detected a device that has a routemanager of 0.  Skipping due to " "foreign key issues {}",
+                        row,
+                    )
                     continue
-                del row['routemanager']
+                del row["routemanager"]
             except Exception:
                 continue
             for field in point_fields:
                 if not row[field]:
                     continue
-                if field_defs[field]['Type'] == 'point':
+                if field_defs[field]["Type"] == "point":
                     continue
                 point = row[field].split(",")
                 row[field] = "POINT(%s,%s)" % (point[0], point[1])
             for field in bool_fields:
                 if not row[field]:
                     continue
-                if field_defs[field]['Type'] == 'tinyint(1)':
+                if field_defs[field]["Type"] == "tinyint(1)":
                     continue
-                row[field] = 0 if row[field].lower() == 'false' else 1
-            self._db.autoexec_insert('trs_status', row, literals=point_fields, raise_exec=True)
+                row[field] = 0 if row[field].lower() == "false" else 1
+            self._db.autoexec_insert("trs_status", row, literals=point_fields, raise_exec=True)
         sql = """
             CREATE OR REPLACE VIEW `v_trs_status` AS
                 SELECT trs.`device_id`, dev.`name`, trs.`routePos`, trs.`routeMax`, trs.`area_id`,

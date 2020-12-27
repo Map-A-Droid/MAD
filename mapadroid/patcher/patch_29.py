@@ -2,8 +2,8 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Routefree algo for quest/level mode'
-    descr = 'Adds routefree algo mode'
+    name = "Routefree algo for quest/level mode"
+    descr = "Adds routefree algo mode"
 
     def _execute(self):
         origin_sql = """

@@ -1,9 +1,7 @@
 from typing import Optional
 
-from ..dm_exceptions import (InvalidArea, ModeNotSpecified, ModeUnknown,
-                             UnknownIdentifier)
-from . import (area_idle, area_iv_mitm, area_mon_mitm, area_pokestops,
-               area_raids_mitm)
+from ..dm_exceptions import InvalidArea, ModeNotSpecified, ModeUnknown, UnknownIdentifier
+from . import area_idle, area_iv_mitm, area_mon_mitm, area_pokestops, area_raids_mitm
 from .area import Area
 from .auth import Auth
 from .device import Device
@@ -34,23 +32,23 @@ def area_factory(data_manager, identifier: Optional[int] = None, mode: Optional[
 
 
 MAPPINGS = {
-    'area': area_factory,
-    'area_nomode': Area,
-    'auth': Auth,
-    'device': Device,
-    'devicepool': DevicePool,
-    'geofence': GeoFence,
-    'monivlist': MonIVList,
-    'pogoauth': PogoAuth,
-    'routecalc': RouteCalc,
-    'walker': Walker,
-    'walkerarea': WalkerArea
+    "area": area_factory,
+    "area_nomode": Area,
+    "auth": Auth,
+    "device": Device,
+    "devicepool": DevicePool,
+    "geofence": GeoFence,
+    "monivlist": MonIVList,
+    "pogoauth": PogoAuth,
+    "routecalc": RouteCalc,
+    "walker": Walker,
+    "walkerarea": WalkerArea,
 }
 
 AREA_MAPPINGS = {
-    'idle': area_idle.AreaIdle,
-    'iv_mitm': area_iv_mitm.AreaIVMITM,
-    'mon_mitm': area_mon_mitm.AreaMonMITM,
-    'pokestops': area_pokestops.AreaPokestops,
-    'raids_mitm': area_raids_mitm.AreaRaidsMITM
+    "idle": area_idle.AreaIdle,
+    "iv_mitm": area_iv_mitm.AreaIVMITM,
+    "mon_mitm": area_mon_mitm.AreaMonMITM,
+    "pokestops": area_pokestops.AreaPokestops,
+    "raids_mitm": area_raids_mitm.AreaRaidsMITM,
 }

@@ -96,8 +96,9 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
-    def get_screenshot(self, path: str, quality: int = 70,
-                       screenshot_type: ScreenshotType = ScreenshotType.JPEG) -> bool:
+    def get_screenshot(
+        self, path: str, quality: int = 70, screenshot_type: ScreenshotType = ScreenshotType.JPEG,
+    ) -> bool:
         """
 
         :param path: the screenshot is to be stored at

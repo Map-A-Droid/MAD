@@ -5,8 +5,8 @@ from mapadroid.tests import test_variables as global_variables
 
 
 class APIAuth(api_base.APITestBase):
-    uri = copy.copy(global_variables.DEFAULT_OBJECTS['auth']['uri'])
-    base_payload = copy.copy(global_variables.DEFAULT_OBJECTS['auth']['payload'])
+    uri = copy.copy(global_variables.DEFAULT_OBJECTS["auth"]["uri"])
+    base_payload = copy.copy(global_variables.DEFAULT_OBJECTS["auth"]["payload"])
 
     def test_landing_page(self):
         super().landing_page()
@@ -18,9 +18,9 @@ class APIAuth(api_base.APITestBase):
 
     def test_invalid_post(self):
         payload = {
-            'username': '',
+            "username": "",
         }
-        errors = {"missing": ["username", 'password']}
+        errors = {"missing": ["username", "password"]}
         super().invalid_post(payload, errors)
         self.remove_resources()
 
@@ -29,34 +29,25 @@ class APIAuth(api_base.APITestBase):
         self.remove_resources()
 
     def test_invalid_put(self):
-        payload = {
-            'username': '',
-            'password': 'pass'
-        }
+        payload = {"username": "", "password": "pass"}
         errors = {"missing": ["username"]}
         super().invalid_put(payload, errors)
         self.remove_resources()
 
     def test_valid_put(self):
-        payload = {
-            'username': 'update',
-            'password': 'pass'
-        }
+        payload = {"username": "update", "password": "pass"}
         super().valid_put(payload, payload)
         self.remove_resources()
 
     def test_invalid_patch(self):
-        payload = {
-            'usernamez': 'update',
-            'password': 'pass'
-        }
+        payload = {"usernamez": "update", "password": "pass"}
         errors = {"unknown": ["usernamez"]}
         super().invalid_patch(payload, errors)
         self.remove_resources()
 
     def test_valid_patch(self):
         payload = {
-            'username': 'update',
+            "username": "update",
         }
         result = copy.copy(self.base_payload)
         result.update(payload)

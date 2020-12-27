@@ -7,10 +7,13 @@ from flask_caching import Cache
 from mapadroid.data_manager import DataManagerException
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.madmin.functions import (auth_required,
-                                        generate_coords_from_geofence,
-                                        get_bound_params, get_coord_float,
-                                        get_geofences)
+from mapadroid.madmin.functions import (
+    auth_required,
+    generate_coords_from_geofence,
+    get_bound_params,
+    get_coord_float,
+    get_geofences,
+)
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
@@ -20,7 +23,7 @@ from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.madmin)
-cache = Cache(config={'CACHE_TYPE': 'simple'})
+cache = Cache(config={"CACHE_TYPE": "simple"})
 
 
 class MADminMap:
@@ -29,9 +32,9 @@ class MADminMap:
         self._args = args
         self._app = app
         if self._args.madmin_time == "12":
-            self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
+            self._datetimeformat = "%Y-%m-%d %I:%M:%S %p"
         else:
-            self._datetimeformat = '%Y-%m-%d %H:%M:%S'
+            self._datetimeformat = "%Y-%m-%d %H:%M:%S"
 
         self._mapping_manager: MappingManager = mapping_manager
         self._data_manager = data_manager
@@ -52,7 +55,7 @@ class MADminMap:
             ("/get_map_mons", self.get_map_mons),
             ("/get_cells", self.get_cells),
             ("/get_stops", self.get_stops),
-            ("/savefence", self.savefence)
+            ("/savefence", self.savefence),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -62,10 +65,11 @@ class MADminMap:
 
     @auth_required
     def map(self):
-        setlat = request.args.get('lat', 0)
-        setlng = request.args.get('lng', 0)
-        return render_template('map.html', lat=self._args.home_lat, lng=self._args.home_lng,
-                               setlat=setlat, setlng=setlng)
+        setlat = request.args.get("lat", 0)
+        setlng = request.args.get("lng", 0)
+        return render_template(
+            "map.html", lat=self._args.home_lat, lng=self._args.home_lng, setlat=setlat, setlng=setlng,
+        )
 
     @auth_required
     def get_workers(self):
@@ -78,7 +82,7 @@ class MADminMap:
             worker = {
                 "name": str(name),
                 "lat": get_coord_float(lat),
-                "lon": get_coord_float(lon)
+                "lon": get_coord_float(lon),
             }
             positions.append(worker)
 
@@ -94,26 +98,24 @@ class MADminMap:
             if len(geofence_helper.geofenced_areas) == 1:
                 geofenced_area = geofence_helper.geofenced_areas[0]
                 if "polygon" in geofenced_area:
-                    export.append({
-                        "id": geofence_id,
-                        "name": geofence["name"],
-                        "coordinates": geofenced_area["polygon"]
-                    })
+                    export.append(
+                        {"id": geofence_id, "name": geofence["name"], "coordinates": geofenced_area["polygon"]}
+                    )
 
         return jsonify(export)
 
     @auth_required
     def get_areas(self):
         areas = self._mapping_manager.get_areas()
-        areas_sorted = sorted(areas, key=lambda x: areas[x]['name'])
+        areas_sorted = sorted(areas, key=lambda x: areas[x]["name"])
         geofences = get_geofences(self._mapping_manager, self._data_manager)
         geofencexport = []
         for area_id in areas_sorted:
             fences = geofences[area_id]
             coordinates = []
-            for fname, coords in fences.get('include').items():
-                coordinates.append([coords, fences.get('exclude').get(fname, [])])
-            geofencexport.append({'name': areas[area_id]['name'], 'coordinates': coordinates})
+            for fname, coords in fences.get("include").items():
+                coordinates.append([coords, fences.get("exclude").get(fname, [])])
+            geofencexport.append({"name": areas[area_id]["name"], "coordinates": coordinates})
         return jsonify(geofencexport)
 
     @auth_required
@@ -132,7 +134,7 @@ class MADminMap:
             routeexport.append(get_routepool_route(name, mode, route))
             if len(workers) > 1:
                 for worker, worker_route in workers.items():
-                    disp_name = '%s - %s' % (name, worker,)
+                    disp_name = "%s - %s" % (name, worker,)
                     routeexport.append(get_routepool_route(disp_name, mode, worker_route))
 
         return jsonify(routeexport)
@@ -146,31 +148,28 @@ class MADminMap:
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
             name = self._mapping_manager.routemanager_get_name(routemanager)
-            route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_prioroute(
-                routemanager)
+            route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_prioroute(routemanager)
 
             if route is None:
                 continue
             route_serialized = []
 
             for location in route:
-                route_serialized.append({
-                    "timestamp": location[0],
-                    "latitude": get_coord_float(location[1].lat),
-                    "longitude": get_coord_float(location[1].lng)
-                })
+                route_serialized.append(
+                    {
+                        "timestamp": location[0],
+                        "latitude": get_coord_float(location[1].lat),
+                        "longitude": get_coord_float(location[1].lng),
+                    }
+                )
 
-            routeexport.append({
-                "name": name,
-                "mode": mode,
-                "coordinates": route_serialized
-            })
+            routeexport.append({"name": name, "mode": mode, "coordinates": route_serialized})
 
         return jsonify(routeexport)
 
     @auth_required
     def get_spawns(self):
-        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
+        (ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon,) = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         coords = {}
@@ -184,7 +183,7 @@ class MADminMap:
                 o_ne_lon=o_ne_lon,
                 o_sw_lat=o_sw_lat,
                 o_sw_lon=o_sw_lon,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
         )
 
@@ -192,17 +191,19 @@ class MADminMap:
             spawn = data[str(spawnid)]
             if spawn["event"] not in coords:
                 coords[spawn["event"]] = []
-            coords[spawn["event"]].append({
-                "id": spawn["id"],
-                "endtime": spawn["endtime"],
-                "lat": spawn["lat"],
-                "lon": spawn["lon"],
-                "spawndef": spawn["spawndef"],
-                "lastnonscan": spawn["lastnonscan"],
-                "lastscan": spawn["lastscan"],
-                "first_detection": spawn["first_detection"],
-                "event": spawn["event"]
-            })
+            coords[spawn["event"]].append(
+                {
+                    "id": spawn["id"],
+                    "endtime": spawn["endtime"],
+                    "lat": spawn["lat"],
+                    "lon": spawn["lon"],
+                    "spawndef": spawn["spawndef"],
+                    "lastnonscan": spawn["lastnonscan"],
+                    "lastscan": spawn["lastscan"],
+                    "first_detection": spawn["first_detection"],
+                    "event": spawn["event"],
+                }
+            )
 
         cluster_spawns = []
         for spawn in coords:
@@ -212,7 +213,7 @@ class MADminMap:
 
     @auth_required
     def get_gymcoords(self):
-        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
+        (ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon,) = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         coords = []
@@ -226,23 +227,25 @@ class MADminMap:
             o_ne_lon=o_ne_lon,
             o_sw_lat=o_sw_lat,
             o_sw_lon=o_sw_lon,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         for gymid in data:
             gym = data[str(gymid)]
 
-            coords.append({
-                "id": gymid,
-                "name": gym["name"],
-                "img": gym["url"],
-                "lat": gym["latitude"],
-                "lon": gym["longitude"],
-                "team_id": gym["team_id"],
-                "last_updated": gym["last_updated"],
-                "last_scanned": gym["last_scanned"],
-                "raid": gym["raid"]
-            })
+            coords.append(
+                {
+                    "id": gymid,
+                    "name": gym["name"],
+                    "img": gym["url"],
+                    "lat": gym["latitude"],
+                    "lon": gym["longitude"],
+                    "team_id": gym["team_id"],
+                    "last_updated": gym["last_updated"],
+                    "last_scanned": gym["last_scanned"],
+                    "raid": gym["raid"],
+                }
+            )
 
         return jsonify(coords)
 
@@ -251,12 +254,12 @@ class MADminMap:
         coords = []
 
         fence = request.args.get("fence", None)
-        if fence not in (None, 'None', 'All'):
+        if fence not in (None, "None", "All"):
             fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, fence)
         else:
             fence = None
 
-        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
+        (ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon,) = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         data = self._db.quests_from_db(
@@ -269,7 +272,7 @@ class MADminMap:
             o_sw_lat=o_sw_lat,
             o_sw_lon=o_sw_lon,
             timestamp=timestamp,
-            fence=fence
+            fence=fence,
         )
 
         for stopid in data:
@@ -280,7 +283,7 @@ class MADminMap:
 
     @auth_required
     def get_map_mons(self):
-        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
+        (ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon,) = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         data = self._db.get_mons_in_rectangle(
@@ -292,7 +295,7 @@ class MADminMap:
             o_ne_lon=o_ne_lon,
             o_sw_lat=o_sw_lat,
             o_sw_lon=o_sw_lon,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         mons_raw = {}
@@ -315,7 +318,7 @@ class MADminMap:
 
     @auth_required
     def get_cells(self):
-        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
+        (ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon,) = get_bound_params(request)
         timestamp = request.args.get("timestamp", None)
 
         data = self._db.get_cells_in_rectangle(
@@ -327,22 +330,24 @@ class MADminMap:
             o_ne_lon=o_ne_lon,
             o_sw_lat=o_sw_lat,
             o_sw_lon=o_sw_lon,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         ret = []
         for cell in data:
-            ret.append({
-                "id": str(cell["cell_id"]),
-                "polygon": S2Helper.coords_of_cell(cell["cell_id"]),
-                "updated": cell["updated"]
-            })
+            ret.append(
+                {
+                    "id": str(cell["cell_id"]),
+                    "polygon": S2Helper.coords_of_cell(cell["cell_id"]),
+                    "updated": cell["updated"],
+                }
+            )
 
         return jsonify(ret)
 
     @auth_required
     def get_stops(self):
-        ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon = get_bound_params(request)
+        (ne_lat, ne_lon, sw_lat, sw_lon, o_ne_lat, o_ne_lon, o_sw_lat, o_sw_lon,) = get_bound_params(request)
         data = self._db.get_stops_in_rectangle(
             ne_lat,
             ne_lon,
@@ -352,7 +357,7 @@ class MADminMap:
             o_ne_lon=o_ne_lon,
             o_sw_lat=o_sw_lat,
             o_sw_lon=o_sw_lon,
-            timestamp=request.args.get("timestamp", None)
+            timestamp=request.args.get("timestamp", None),
         )
         return jsonify(data)
 
@@ -360,19 +365,19 @@ class MADminMap:
     @auth_required
     def savefence(self):
         # TODO - Modify madmin.js to use the API
-        name = request.args.get('name', False)
-        coords = request.args.get('coords', False)
+        name = request.args.get("name", False)
+        coords = request.args.get("coords", False)
         if not name and not coords:
-            return redirect(url_for('map'), code=302)
+            return redirect(url_for("map"), code=302)
 
-        resource = self._data_manager.get_resource('geofence')
+        resource = self._data_manager.get_resource("geofence")
         # Enforce 128 character limit
         if len(name) > 128:
-            name = name[len(name) - 128:]
+            name = name[len(name) - 128 :]
         update_data = {
-            'name': name,
-            'fence_type': 'polygon',
-            'fence_data': coords.split("|")
+            "name": name,
+            "fence_type": "polygon",
+            "fence_data": coords.split("|"),
         }
         resource.update(update_data)
         try:
@@ -380,7 +385,7 @@ class MADminMap:
         except DataManagerException:
             # TODO - present the user with an issue.  probably fence-name already exists
             pass
-        return redirect(url_for('map'), code=302)
+        return redirect(url_for("map"), code=302)
 
 
 def get_routepool_route(name, mode, coords):
@@ -399,4 +404,4 @@ def get_routepool_coords(coord_list, mode):
         prepared_coords = coord_list.subroute
     for location in prepared_coords:
         route_serialized.append([get_coord_float(location.lat), get_coord_float(location.lng)])
-    return (route_serialized)
+    return route_serialized

@@ -22,8 +22,7 @@ class testimage(object):
         print(float(self._screen_y) / float(self._screen_x))
 
         self._resocalc = Resocalculator
-        print(self._resocalc.get_x_y_ratio(
-            self, self._screen_x, self._screen_y, xoffset, yoffset))
+        print(self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, xoffset, yoffset))
 
         print(self._resocalc.get_inventory_text_diff(self))
 
@@ -80,35 +79,44 @@ class testimage(object):
         cv2.waitKey(0)
 
     def open_close_menu(self, image):
-        print('Open Close Menu')
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-               self._resocalc.get_close_main_button_coords(self)[
-                   1]
+        print("Open Close Menu")
+        x, y = (
+            self._resocalc.get_close_main_button_coords(self)[0],
+            self._resocalc.get_close_main_button_coords(self)[1],
+        )
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def check_menu(self, image):
-        print('Check PokemonGo Menu')
-        x, y = self._resocalc.get_item_menu_coords(
-            self)[0], self._resocalc.get_item_menu_coords(self)[1]
+        print("Check PokemonGo Menu")
+        x, y = (
+            self._resocalc.get_item_menu_coords(self)[0],
+            self._resocalc.get_item_menu_coords(self)[1],
+        )
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def open_quest_menu(self, image):
-        print('Open Quest Menu')
-        x, y = self._resocalc.get_coords_quest_menu(
-            self)[0], self._resocalc.get_coords_quest_menu(self)[1]
+        print("Open Quest Menu")
+        x, y = (
+            self._resocalc.get_coords_quest_menu(self)[0],
+            self._resocalc.get_coords_quest_menu(self)[1],
+        )
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def open_del_item(self, image):
-        print('Check Open del Item')
+        print("Check Open del Item")
 
-        x, y = self._resocalc.get_delete_item_coords(
-            self)[0], self._resocalc.get_delete_item_coords(self)[1]
+        x, y = (
+            self._resocalc.get_delete_item_coords(self)[0],
+            self._resocalc.get_delete_item_coords(self)[1],
+        )
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def open_next_del_item(self, image):
-        print('Check Open next del Item')
-        x, y = self._resocalc.get_delete_item_coords(
-            self)[0], self._resocalc.get_delete_item_coords(self)[1]
+        print("Check Open next del Item")
+        x, y = (
+            self._resocalc.get_delete_item_coords(self)[0],
+            self._resocalc.get_delete_item_coords(self)[1],
+        )
         y += self._resocalc.get_next_item_coord(self)
         y += self._resocalc.get_next_item_coord(self)
         y += self._resocalc.get_next_item_coord(self)
@@ -116,60 +124,73 @@ class testimage(object):
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def swipe_del_item(self, image):
-        print('Swipe del item')
-        x1, x2, y = self._resocalc.get_swipe_item_amount(self)[0], self._resocalc.get_swipe_item_amount(self)[
-            1], self._resocalc.get_swipe_item_amount(self)[2]
+        print("Swipe del item")
+        x1, x2, y = (
+            self._resocalc.get_swipe_item_amount(self)[0],
+            self._resocalc.get_swipe_item_amount(self)[1],
+            self._resocalc.get_swipe_item_amount(self)[2],
+        )
         return cv2.line(image, (int(x1), int(y)), (int(x2), int(y)), (255, 0, 0), 5)
 
     def confirm_delete_item(self, image):
-        print('Check confirm delete item')
-        x, y = self._resocalc.get_confirm_delete_item_coords(
-            self)[0], self._resocalc.get_confirm_delete_item_coords(self)[1]
+        print("Check confirm delete item")
+        x, y = (
+            self._resocalc.get_confirm_delete_item_coords(self)[0],
+            self._resocalc.get_confirm_delete_item_coords(self)[1],
+        )
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def open_del_quest(self, image):
-        print('Check Open del quest')
-        x, y = self._resocalc.get_delete_quest_coords(
-            self)[0], self._resocalc.get_delete_quest_coords(self)[1]
+        print("Check Open del quest")
+        x, y = (
+            self._resocalc.get_delete_quest_coords(self)[0],
+            self._resocalc.get_delete_quest_coords(self)[1],
+        )
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def confirm_del_quest(self, image):
-        print('Check confirm delete quest')
-        x, y = self._resocalc.get_confirm_delete_quest_coords(
-            self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
+        print("Check confirm delete quest")
+        x, y = (
+            self._resocalc.get_confirm_delete_quest_coords(self)[0],
+            self._resocalc.get_confirm_delete_quest_coords(self)[1],
+        )
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def get_gym_click_coords(self, image):
-        print('Opening gym')
-        x, y = self._resocalc.get_gym_click_coords(
-            self)[0], self._resocalc.get_gym_click_coords(self)[1]
+        print("Opening gym")
+        x, y = (
+            self._resocalc.get_gym_click_coords(self)[0],
+            self._resocalc.get_gym_click_coords(self)[1],
+        )
         print(x, y)
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def find_pokeball(self, image):
-        print('Check Pokeball Mainscreen')
+        print("Check Pokeball Mainscreen")
         height, width, _ = image.shape
-        image = image[int(height) - int(round(height / 4.5)):int(height),
-                0: round(int(width) / 2)]
+        image = image[
+            int(height) - int(round(height / 4.5)) : int(height), 0 : round(int(width) / 2),
+        ]
         output = image.copy()
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         radMin = int((width / float(7.5) - 3) / 2)
         radMax = int((width / float(6.5) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
         gray = cv2.Canny(gray, 100, 50, apertureSize=3)
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8,
-                                   param1=100, param2=15, minRadius=radMin, maxRadius=radMax)
+        circles = cv2.HoughCircles(
+            gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin, maxRadius=radMax,
+        )
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (x, y, r) in circles:
-                raidhash = output[y - r - 1:y + r + 1, x - r - 1:x + r + 1]
+                raidhash = output[y - r - 1 : y + r + 1, x - r - 1 : x + r + 1]
                 cv2.imshow("output", np.hstack([raidhash]))
                 cv2.waitKey(0)
         else:
-            print('No Mainscreen found')
+            print("No Mainscreen found")
 
     def get_delete_item_text(self, image):
-        print('Get item Text')
+        print("Get item Text")
         x1, x2, y1, y2 = self._resocalc.get_delete_item_text(self)
         # y1 += self._resocalc.get_next_item_coord(self)
         # y2 += self._resocalc.get_next_item_coord(self)
@@ -180,7 +201,7 @@ class testimage(object):
         h = x1 - x2
         w = y1 - y2
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        gray = gray[int(y2):(int(y2) + int(w)), int(x2):(int(x2) + int(h))]
+        gray = gray[int(y2) : (int(y2) + int(w)), int(x2) : (int(x2) + int(h))]
         cv2.imshow("output", gray)
         cv2.waitKey(0)
         filename = "{}.png".format(os.getpid())
@@ -192,12 +213,11 @@ class testimage(object):
         return cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)
 
     def check_mainscreen(self, image):
-        print('Check Mainscreen')
+        print("Check Mainscreen")
         mainscreen = 0
 
         height, width, _ = image.shape
-        gray = image[int(height) - int(round(height / 6)):int(height),
-               0: int(int(width) / 3)]
+        gray = image[int(height) - int(round(height / 6)) : int(height), 0 : int(int(width) / 3)]
         original = gray
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
@@ -206,17 +226,16 @@ class testimage(object):
         gray = cv2.Canny(gray, 100, 50, apertureSize=3)
         cv2.imshow("output", gray)
         cv2.waitKey(0)
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
-                                   minRadius=radMin,
-                                   maxRadius=radMax)
+        circles = cv2.HoughCircles(
+            gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin, maxRadius=radMax,
+        )
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (x, y, r) in circles:
                 if x < width_ - width_ / 3:
                     cv2.circle(original, (x, y), r, (0, 255, 0), 4)
                     mainscreen += 1
-                    raidhash = original[y - r - 1:y +
-                                                  r + 1, x - r - 1:x + r + 1]
+                    raidhash = original[y - r - 1 : y + r + 1, x - r - 1 : x + r + 1]
                     cv2.imshow("output", np.hstack([raidhash]))
                     cv2.waitKey(0)
 
@@ -231,8 +250,7 @@ class testimage(object):
         gray = cv2.cvtColor(filename, cv2.COLOR_BGR2GRAY)
         height, width, _ = filename.shape
         _widthold = float(width)
-        print("lookForButton: Determined screenshot scale: " +
-              str(height) + " x " + str(width))
+        print("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
 
         # resize for better line quality
         # gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
@@ -256,20 +274,26 @@ class testimage(object):
         lineCount = 0
         _x = 0
         _y = height
-        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=90, minLineLength=minLineLength,
-                                maxLineGap=5)
+        lines = cv2.HoughLinesP(
+            edges, rho=1, theta=math.pi / 180, threshold=90, minLineLength=minLineLength, maxLineGap=5,
+        )
         if lines is None:
             return False
 
-        lines = (self.check_lines(lines, height))
+        lines = self.check_lines(lines, height)
 
         _last_y = 0
         for line in lines:
             line = [line]
             for x1, y1, x2, y2 in line:
-                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength \
-                        and y1 > height / 3 \
-                        and (x2 - x1) / 2 + x1 < width / 2 + 50 and (x2 - x1) / 2 + x1 > width / 2 - 50:
+                if (
+                    y1 == y2
+                    and x2 - x1 <= maxLineLength
+                    and x2 - x1 >= minLineLength
+                    and y1 > height / 3
+                    and (x2 - x1) / 2 + x1 < width / 2 + 50
+                    and (x2 - x1) / 2 + x1 > width / 2 - 50
+                ):
                     lineCount += 1
                     disToMiddleMin_temp = y1 - (height / 2)
                     if upper:
@@ -292,25 +316,36 @@ class testimage(object):
                         _x1 = x1
                         _x2 = x2
 
-                    print("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
-                        x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(
-                        y2))
+                    print(
+                        "lookForButton: Found Buttonline Nr. "
+                        + str(lineCount)
+                        + " - Line lenght: "
+                        + str(x2 - x1)
+                        + "px Coords - X: "
+                        + str(x1)
+                        + " "
+                        + str(x2)
+                        + " Y: "
+                        + str(y1)
+                        + " "
+                        + str(y2)
+                    )
 
                     cv2.line(filename, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 5)
 
         if 1 < lineCount <= 6:
-            click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) /
-                          round(factor, 2))
+            click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) / round(factor, 2))
             click_y = int(click_y)
-            print('lookForButton: found Button - click on it')
+            print("lookForButton: found Button - click on it")
             return cv2.circle(filename, (int(click_x), int(click_y)), 20, (0, 0, 255), -1)
 
         elif lineCount > 6:
-            print('lookForButton: found to much Buttons :) - close it')
-            return cv2.circle(filename, (int(width - (width / 7.2)), int(height - (height / 12.19))),
-                              20, (0, 0, 255), -1)
+            print("lookForButton: found to much Buttons :) - close it")
+            return cv2.circle(
+                filename, (int(width - (width / 7.2)), int(height - (height / 12.19))), 20, (0, 0, 255), -1,
+            )
 
-        print('lookForButton: did not found any Button')
+        print("lookForButton: did not found any Button")
         return False
 
     def check_lines(self, lines, height):
@@ -324,7 +359,7 @@ class testimage(object):
                 temp_lines.append([y1, y2, x1, x2])
 
         temp_lines = np.array(temp_lines)
-        sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
+        sort_arr = temp_lines[temp_lines[:, 0].argsort()]
 
         button_value = height / 40
 

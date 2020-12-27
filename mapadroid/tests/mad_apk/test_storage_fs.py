@@ -1,8 +1,7 @@
 import os
 import shutil
 
-from mapadroid.mad_apk import (APKArch, APKStorageFilesystem, APKType,
-                               generate_filename)
+from mapadroid.mad_apk import APKArch, APKStorageFilesystem, APKType, generate_filename
 from mapadroid.tests.mad_apk.base_storage import StorageBase
 from mapadroid.tests.test_utils import mimetype
 from mapadroid.utils.walkerArgs import parse_args
@@ -11,12 +10,12 @@ args = parse_args()
 
 
 class StorageFS(StorageBase):
-    storage_path = args.temp_path + '/' + APKStorageFilesystem.config_apks
-    storage_type = 'fs'
+    storage_path = args.temp_path + "/" + APKStorageFilesystem.config_apks
+    storage_type = "fs"
 
     def storage_cleanup(self):
         try:
-            shutil.rmtree(os.getcwd() + '/' + StorageFS.storage_path)
+            shutil.rmtree(os.getcwd() + "/" + StorageFS.storage_path)
         except FileNotFoundError:
             pass
 
@@ -41,10 +40,9 @@ class StorageFS(StorageBase):
         super().delete_check()
 
     def test_package_upgrade_check(self):
-        version: str = '0.1'
+        version: str = "0.1"
         super().package_upgrade_check(version)
-        relative_path = StorageFS.storage_path + '/' + generate_filename(APKType.rgc,
-                                                                         APKArch.noarch, version, mimetype)
+        relative_path = StorageFS.storage_path + "/" + generate_filename(APKType.rgc, APKArch.noarch, version, mimetype)
         self.assertFalse(os.path.exists(relative_path))
 
     def test_version_check(self):

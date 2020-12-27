@@ -11,20 +11,13 @@ TEST_GPLAY_RESPONSE = io.BytesIO(b"Dummy File")
 
 
 class WizardTests(StorageBase):
-
-    @patch('mapadroid.mad_apk.wizard.supported_pogo_version')
-    @patch('mapadroid.mad_apk.wizard.get_apk_info')
+    @patch("mapadroid.mad_apk.wizard.supported_pogo_version")
+    @patch("mapadroid.mad_apk.wizard.get_apk_info")
     def test_invalid_version_from_gplay(self, get_apk_info, supported_pogo_version):
         supported_pogo_version.return_value = True
         get_apk_info.return_value = ("0.123.3", "com.ignored")
-        latest_gplay = {
-            "version_code": 20200901,
-            "version": "0.123.4"
-        }
-        autosearch_latest = {
-            "version": "0.123.4",
-            "url": 20201001
-        }
+        latest_gplay = {"version_code": 20200901, "version": "0.123.4"}
+        autosearch_latest = {"version": "0.123.4", "url": 20201001}
         with GetStorage(get_connection_api()) as storage:
             package_downloader = APKWizard(storage.db_wrapper, storage.storage_manager)
             package_downloader.find_latest_pogo = MagicMock(return_value=latest_gplay)
@@ -34,16 +27,10 @@ class WizardTests(StorageBase):
             with self.assertRaises(InvalidDownload):
                 package_downloader.download_pogo(APKArch.arm64_v8a)
 
-    @patch('mapadroid.mad_apk.wizard.get_apk_info')
+    @patch("mapadroid.mad_apk.wizard.get_apk_info")
     def test_valid_version_from_gplay(self, get_apk_info):
-        latest_gplay = {
-            "version_code": 20200901,
-            "version": "0.123.4"
-        }
-        autosearch_latest = {
-            "version": "0.123.4",
-            "url": 20201001
-        }
+        latest_gplay = {"version_code": 20200901, "version": "0.123.4"}
+        autosearch_latest = {"version": "0.123.4", "url": 20201001}
         get_apk_info_resp = ("0.123.4", "com.ignored")
         get_apk_info.return_value = get_apk_info_resp
         with GetStorage(get_connection_api()) as storage:
@@ -62,16 +49,8 @@ class WizardTests(StorageBase):
         with GetStorage(get_connection_api()) as storage:
             package_downloader = APKWizard(storage.db_wrapper, storage.storage_manager)
             gplay_latest = (20201001, "0.123.4")
-            latest_supported = {
-                APKArch.arm64_v8a: {
-                    "versionCode": 20201001,
-                    "version": "0.123.4"
-                }
-            }
-            autosearch_latest = {
-                "version": "0.123.4",
-                "url": 20201001
-            }
+            latest_supported = {APKArch.arm64_v8a: {"versionCode": 20201001, "version": "0.123.4"}}
+            autosearch_latest = {"version": "0.123.4", "url": 20201001}
             package_downloader.get_latest_version = MagicMock(return_value=latest_supported)
             storage.storage_manager.get_current_version = MagicMock(return_value="0.123.3")
             package_downloader.get_latest = MagicMock(return_value=autosearch_latest)
@@ -85,16 +64,8 @@ class WizardTests(StorageBase):
         with GetStorage(get_connection_api()) as storage:
             package_downloader = APKWizard(storage.db_wrapper, storage.storage_manager)
             gplay_latest = (20200901, "0.123.3")
-            latest_supported = {
-                APKArch.arm64_v8a: {
-                    "versionCode": 20201001,
-                    "version": "0.123.4"
-                }
-            }
-            autosearch_latest = {
-                "version": "0.123.4",
-                "url": 20201001
-            }
+            latest_supported = {APKArch.arm64_v8a: {"versionCode": 20201001, "version": "0.123.4"}}
+            autosearch_latest = {"version": "0.123.4", "url": 20201001}
             package_downloader.get_latest_version = MagicMock(return_value=latest_supported)
             storage.storage_manager.get_current_version = MagicMock(return_value="0.123.3")
             package_downloader.get_latest = MagicMock(return_value=autosearch_latest)
@@ -106,16 +77,8 @@ class WizardTests(StorageBase):
         with GetStorage(get_connection_api()) as storage:
             package_downloader = APKWizard(storage.db_wrapper, storage.storage_manager)
             gplay_latest = (20201001, "0.123.4")
-            latest_supported = {
-                APKArch.arm64_v8a: {
-                    "versionCode": 20200901,
-                    "version": "0.123.3"
-                }
-            }
-            autosearch_latest = {
-                "version": "0.123.4",
-                "url": 20201001
-            }
+            latest_supported = {APKArch.arm64_v8a: {"versionCode": 20200901, "version": "0.123.3"}}
+            autosearch_latest = {"version": "0.123.4", "url": 20201001}
             package_downloader.get_latest_version = MagicMock(return_value=latest_supported)
             storage.storage_manager.get_current_version = MagicMock(return_value="0.123.3")
             package_downloader.get_latest = MagicMock(return_value=autosearch_latest)
