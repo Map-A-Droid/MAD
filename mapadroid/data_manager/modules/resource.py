@@ -23,6 +23,8 @@ USER_READABLE_ERRORS = {
 
 class ResourceTracker(UserDict):
     def __init__(self, config, data_manager, initialdata=None):
+        if initialdata is None:
+            initialdata = {}
         self.__config = config
         self._data_manager = data_manager
         self.issues = {
@@ -411,6 +413,8 @@ class Resource(object):
                 continue
 
     def presave_validation(self, ignore_issues=None):
+        if ignore_issues is None:
+            ignore_issues = []
         # Validate required data has been set
         top_levels = ['fields', 'settings']
         issues = {}

@@ -1,7 +1,10 @@
-import flask
 import json
-from . import apiException
+
+import flask
+
 from mapadroid.utils.json_encoder import MADEncoder
+
+from . import apiException
 
 
 class APIResponse(object):

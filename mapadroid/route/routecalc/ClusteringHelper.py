@@ -1,10 +1,8 @@
 import s2sphere
 
 from mapadroid.utils.collections import Relation
-from mapadroid.utils.geo import (
-    get_distance_of_two_points_in_meters,
-    get_middle_of_coord_list
-)
+from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
+                                 get_middle_of_coord_list)
 from mapadroid.utils.s2Helper import S2Helper
 
 

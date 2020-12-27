@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import requests
 import json
+
+import requests
 
 PROTO_URL = "https://raw.githubusercontent.com/Furtif/POGOProtos/master/src/POGOProtos/Inventory/Item/ItemId.proto"
 

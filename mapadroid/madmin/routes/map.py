@@ -1,21 +1,23 @@
 import json
 from typing import List, Optional
-from flask import (jsonify, render_template, request, redirect, url_for)
+
+from flask import jsonify, redirect, render_template, request, url_for
 from flask_caching import Cache
+
 from mapadroid.data_manager import DataManagerException
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.madmin.functions import (
-    auth_required, get_coord_float, get_bound_params, get_geofences, generate_coords_from_geofence
-)
+from mapadroid.madmin.functions import (auth_required,
+                                        generate_coords_from_geofence,
+                                        get_bound_params, get_coord_float,
+                                        get_geofences)
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_name
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
@@ -295,7 +297,7 @@ class MADminMap:
 
         mons_raw = {}
 
-        for index, mon in enumerate(data):
+        for index, _ in enumerate(data):
             try:
                 mon_id = data[index]["mon_id"]
                 if str(mon_id) in mons_raw:

@@ -1,6 +1,8 @@
 from flask import Response
-from .. import apiHandler
+
 from mapadroid.madmin.functions import auth_required
+
+from .. import apiHandler
 
 
 class AutoConfHandler(apiHandler.APIHandler):

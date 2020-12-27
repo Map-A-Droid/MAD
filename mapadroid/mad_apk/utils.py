@@ -1,18 +1,20 @@
-import apkutils
-from apkutils.apkfile import BadZipFile, LargeZipFile
-import zipfile
-from distutils.version import LooseVersion
-from flask import Response, stream_with_context
 import io
 import json
-import requests
-from typing import Tuple, Union, Generator
-from .apk_enums import APKArch, APKType, APKPackage
-from .abstract_apk_storage import AbstractAPKStorage
-from .custom_types import MADapks, MADPackage, MADPackages
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
-from mapadroid.utils.logging import get_logger, LoggerEnums
+import zipfile
+from distutils.version import LooseVersion
+from typing import Generator, Tuple, Union
 
+import apkutils
+import requests
+from apkutils.apkfile import BadZipFile, LargeZipFile
+from flask import Response, stream_with_context
+
+from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from .abstract_apk_storage import AbstractAPKStorage
+from .apk_enums import APKArch, APKPackage, APKType
+from .custom_types import MADapks, MADPackage, MADPackages
 
 logger = get_logger(LoggerEnums.package_mgr)
 
@@ -149,7 +151,7 @@ def get_apk_info(downloaded_file: io.BytesIO) -> Tuple[str, str]:
     package_name: str = None
     try:
         apk = apkutils.APK(downloaded_file)
-    except:  # noqa: E722
+    except:  # noqa: E722 B001
         logger.warning('Unable to parse APK file')
     else:
         manifest = apk.get_manifest()

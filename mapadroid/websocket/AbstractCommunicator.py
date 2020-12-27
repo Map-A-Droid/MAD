@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.collections import Location
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.madGlobals import ScreenshotType
 
 

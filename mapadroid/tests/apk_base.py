@@ -1,4 +1,5 @@
 from unittest import TestCase
+
 from mapadroid.tests.test_utils import get_connection_api, get_connection_mitm
 
 
