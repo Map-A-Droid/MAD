@@ -1,19 +1,19 @@
 import json
 import os
 import re
-from flask import (render_template, request, redirect, url_for, Response)
+from typing import List, Tuple
+
+from flask import Response, redirect, render_template, request, url_for
 from flask_caching import Cache
+
 from mapadroid.data_manager import DataManagerException
+from mapadroid.data_manager.dm_exceptions import ModeNotSpecified, ModeUnknown
+from mapadroid.data_manager.modules.pogoauth import PogoAuth
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file
-from mapadroid.data_manager.dm_exceptions import (
-    ModeNotSpecified,
-    ModeUnknown
-)
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.MappingManager import MappingManager
 
 logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
@@ -44,6 +44,7 @@ class MADminConfig(object):
             ("/settings/devices", self.settings_devices),
             ("/settings/geofence", self.settings_geofence),
             ("/settings/ivlists", self.settings_ivlists),
+            ("/settings/pogoauth", self.settings_pogoauth),
             ("/settings/monsearch", self.monsearch),
             ("/settings/shared", self.settings_pools),
             ("/settings/routecalc", self.settings_routecalc),
@@ -128,7 +129,6 @@ class MADminConfig(object):
                 settings_vars = {}
         if request.method == 'GET':
             included_data = {
-                'advcfg': self._args.advanced_config,
                 'base_uri': url_for(base_uri),
                 'identifier': identifier
             }
@@ -186,8 +186,7 @@ class MADminConfig(object):
         ortools_info = False
 
         try:
-            from ortools.constraint_solver import routing_enums_pb2
-            from ortools.constraint_solver import pywrapcp
+            from ortools.constraint_solver import pywrapcp, routing_enums_pb2
         except Exception:
             pass
         import platform
@@ -237,6 +236,22 @@ class MADminConfig(object):
     @logger.catch
     @auth_required
     def settings_devices(self):
+        try:
+            identifier = request.args.get('id')
+            int(identifier)
+        except (TypeError, ValueError):
+            pass
+        ggl_accounts = PogoAuth.get_avail_accounts(self._data_manager,
+                                                   'google',
+                                                   device_id=identifier)
+        ptc_accounts = []
+        for account_id, account in PogoAuth.get_avail_accounts(self._data_manager,
+                                                               'ptc',
+                                                               device_id=identifier).items():
+            ptc_accounts.append({
+                'text': account['username'],
+                'id': account_id
+            })
         required_data = {
             'identifier': 'id',
             'base_uri': 'api_device',
@@ -249,6 +264,12 @@ class MADminConfig(object):
                 'walkers': 'walker',
                 'pools': 'devicepool'
             },
+            'passthrough': {
+                'ggl_accounts': ggl_accounts,
+                'ptc_accounts': ptc_accounts,
+                'requires_auth': not self._args.autoconfig_no_auth,
+                'responsive': str(self._args.madmin_noresponsive).lower()
+            }
         }
         return self.process_element(**required_data)
 
@@ -294,6 +315,39 @@ class MADminConfig(object):
             'passthrough': {
                 'current_mons_list': current_mons_list
             }
+        }
+        return self.process_element(**required_data)
+
+    @logger.catch
+    @auth_required
+    def settings_pogoauth(self):
+        devices = self._data_manager.get_root_resource('device')
+        devs_google: List[Tuple[int, str]] = []
+        devs_ptc: List[Tuple[int, str]] = []
+        current_id = request.args.get('id', None)
+        try:
+            identifier = int(current_id)
+        except (TypeError, ValueError):
+            identifier = None
+        for dev_id, dev in PogoAuth.get_avail_devices(self._data_manager,
+                                                      auth_id=identifier).items():
+            devs_google.append((dev_id, dev['origin']))
+        for dev_id, dev in PogoAuth.get_avail_devices(self._data_manager,
+                                                      auth_id=identifier).items():
+            devs_ptc.append((dev_id, dev['origin']))
+        required_data = {
+            'identifier': 'id',
+            'base_uri': 'api_pogoauth',
+            'data_source': 'pogoauth',
+            'redirect': 'settings_pogoauth',
+            'html_single': 'settings_singlepogoauth.html',
+            'html_all': 'settings_pogoauth.html',
+            'subtab': 'pogoauth',
+            'passthrough': {
+                'devices': devices,
+                'devs_google': devs_google,
+                'devs_ptc': devs_ptc
+            },
         }
         return self.process_element(**required_data)
 

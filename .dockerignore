@@ -1,8 +1,0 @@
-# Files and directories not required in a docker build
-APK/
-venv/
-logs/
-temp/
-files/
-upload/
-update_log.json

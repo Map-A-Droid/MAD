@@ -142,5 +142,13 @@
   "38": {
     "prototext": "QUEST_BUDDY_YATTA",
     "text": ""
+  },
+  "43": {
+    "prototext": "QUEST_MEGA_EVOLVE",
+    "text": "Mega Evolve {0} Pokemon"
+  },
+  "46": {
+    "protoext": "GEOTARGETED_AR_SCAN",
+    "text": "Scan pokestop"
   }
 }

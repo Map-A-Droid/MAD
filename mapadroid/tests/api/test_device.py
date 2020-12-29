@@ -1,4 +1,5 @@
 import copy
+
 from mapadroid.tests import api_base
 from mapadroid.tests import test_variables as global_variables
 
@@ -66,3 +67,30 @@ class APIDevice(api_base.APITestBase):
         response = self.api.post(device_obj['uri'], json=payload, headers=headers)
         self.assertEqual(response.status_code, 204)
         self.remove_resources()
+
+    def test_ggl_as_ptc(self):
+        pogoauth = super().create_valid_resource('pogoauth')
+        payload = copy.copy(global_variables.DEFAULT_OBJECTS['device']['payload'])
+        payload['ptc_login'] = [pogoauth['uri']]
+        res = self.api.post(global_variables.DEFAULT_OBJECTS['device']['uri'], json=payload)
+        self.assertTrue(res.status_code == 422)
+        self.assertTrue('invalid' in res.json())
+        self.assertTrue(res.json()['invalid'][0][0] == 'ptc_login')
+
+    def test_ptc_as_ggl(self):
+        payload = copy.copy(global_variables.DEFAULT_OBJECTS['pogoauth']['payload'])
+        payload['login_type'] = 'ptc'
+        pogoauth = super().create_valid_resource('pogoauth', payload=payload)
+        payload = copy.copy(global_variables.DEFAULT_OBJECTS['device']['payload'])
+        payload['ggl_login'] = pogoauth['uri']
+        res = self.api.post(global_variables.DEFAULT_OBJECTS['device']['uri'], json=payload)
+        self.assertTrue(res.status_code == 422)
+        self.assertTrue('invalid' in res.json())
+        self.assertTrue(res.json()['invalid'][0][0] == 'ggl_login')
+
+    def test_duplicate_mac(self):
+        payload = copy.copy(global_variables.DEFAULT_OBJECTS['device']['payload'])
+        payload['mac_address'] = '00:1F:F3:00:1F:F3'
+        super().create_valid_resource('device', payload=payload)
+        res = self.api.post(global_variables.DEFAULT_OBJECTS['device']['uri'], json=payload)
+        self.assertTrue(res.status_code == 422)

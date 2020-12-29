@@ -14,7 +14,7 @@ Replace quest.pot with the new generated quest.po
 > rm quest.pot
 > mv quest.po quest.pot
 
-Next step, use POEdit (https://poedit.net/ ) to translate the files. Once you are done, make sure you save your po file. 
+Next step, use POEdit (https://poedit.net/ ) to translate the files. Once you are done, make sure you save your po file.
 Then, make sure you COMPILE your po file into a mo file (you can find this option in the file menu).
 
 NB! The updated quest.pot file + the quest.po + quest.mo files in LC_MESSGES all needs to be commited
@@ -25,4 +25,3 @@ There are a few static json-files that also needs to be translated, either compa
 - pokemonTypes - names the types of pokemon
 - types.json - names the quest types and provides base translation of a lot of quest
 - quest_templates - translates quests based on template names - will override any logic and translations done elsewhere.
-

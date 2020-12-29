@@ -1,8 +1,9 @@
 import copy
 import time
-import requests
-from mapadroid.utils.walkerArgs import parse_args
 
+import requests
+
+from mapadroid.utils.walkerArgs import parse_args
 
 mapping_args = parse_args()
 
@@ -12,7 +13,7 @@ class LocalAPI(requests.Session):
         super(LocalAPI, self).__init__()
         self.__logger = kwargs.get('logger', None)
         self.__retries = kwargs.get('retries', 1)
-        self.__timeout = kwargs.get('timeout', 1)
+        self.__timeout = kwargs.get('timeout', 3)
         self.__protocol = 'http'  # madmin only runs on http unless behind a proxy so we can force http
         self.__headers = kwargs.get('headers', {})
         self.auth = kwargs.get('auth', None)

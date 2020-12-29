@@ -1,5 +1,7 @@
 import flask
+
 from mapadroid.mad_apk import parse_frontend
+
 from .. import apiHandler
 
 
@@ -26,6 +28,9 @@ class APKHandler(apiHandler.APIHandler):
         self._app.route('/api/mad_apk/<string:apk_type>/download',
                         methods=['GET'],
                         endpoint='api_madapk_apk_download_noarch')(self.entrypoint)
+        self._app.route('/api/mad_apk/reload',
+                        methods=['GET'],
+                        endpoint='api_madapk_reload')(self.entrypoint)
 
     # =====================================
     # ========= API Functionality =========
@@ -51,5 +56,5 @@ class APKHandler(apiHandler.APIHandler):
             elif flask.request.method == 'POST':
                 data = self.post(apk_type=apk_type, apk_arch=apk_arch)
                 return data
-        except:  # noqa: E722
+        except:  # noqa: E722 B001
             return (None, 404)

@@ -1,13 +1,15 @@
 import json
 import time
 from datetime import datetime, timedelta
+
 from bitstring import BitArray
+
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
-from mapadroid.utils.gamemechanicutil import gen_despawn_timestamp, is_mon_ditto
+from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
+                                              is_mon_ditto)
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
-
 
 logger = get_logger(LoggerEnums.database)
 
@@ -23,7 +25,7 @@ class DbPogoProtoSubmit:
     def __init__(self, db_exec: PooledQueryExecutor):
         self._db_exec: PooledQueryExecutor = db_exec
 
-    def mons(self, origin: str, map_proto: dict, mitm_mapper):
+    def mons(self, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
         """
         Update/Insert mons from a map_proto dict
         """
@@ -61,7 +63,7 @@ class DbPogoProtoSubmit:
 
                 # get known spawn end time and feed into despawn time calculation
                 getdetspawntime = self._get_detected_endtime(str(spawnid))
-                despawn_time_unix = gen_despawn_timestamp(getdetspawntime)
+                despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp)
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
                 if getdetspawntime is None:
@@ -104,7 +106,7 @@ class DbPogoProtoSubmit:
         spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
 
         getdetspawntime = self._get_detected_endtime(str(spawnid))
-        despawn_time_unix = gen_despawn_timestamp(getdetspawntime)
+        despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp)
         despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
         latitude = wild_pokemon.get("latitude")
@@ -354,8 +356,16 @@ class DbPogoProtoSubmit:
         reward_type = reward.get("type", None)
         item_item = item.get("item", None)
         item_amount = item.get("amount", None)
-        stardust = reward.get("stardust", None)
         pokemon_id = encounter.get("pokemon_id", None)
+
+        if reward_type == 4:
+            item_amount = reward.get('candy', {}).get('amount', 0)
+            pokemon_id = reward.get('candy', {}).get('pokemon_id', 0)
+        elif reward_type == 12:
+            item_amount = reward.get('mega_resource', {}).get('amount', 0)
+            pokemon_id = reward.get('mega_resource', {}).get('pokemon_id', 0)
+
+        stardust = reward.get("stardust", None)
         form_id = encounter.get("pokemon_display", {}).get("form_value", 0)
         costume_id = encounter.get("pokemon_display", {}).get("costume_value", 0)
         target = goal.get("target", None)
@@ -512,12 +522,12 @@ class DbPogoProtoSubmit:
 
         query_raid = (
             "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, "
-            "is_exclusive, gender, costume) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "is_exclusive, gender, costume, evolution) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
             "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned), is_exclusive=VALUES(is_exclusive), "
-            "form=VALUES(form), gender=VALUES(gender), costume=VALUES(costume)"
+            "form=VALUES(form), gender=VALUES(gender), costume=VALUES(costume), evolution=VALUES(evolution)"
         )
 
         for cell in cells:
@@ -525,13 +535,16 @@ class DbPogoProtoSubmit:
                 if gym["type"] == 0 and gym["gym_details"]["has_raid"]:
                     gym_has_raid = gym["gym_details"]["raid_info"]["has_pokemon"]
                     if gym_has_raid:
-                        pokemon_id = gym["gym_details"]["raid_info"]["raid_pokemon"]["id"]
-                        cp = gym["gym_details"]["raid_info"]["raid_pokemon"]["cp"]
-                        move_1 = gym["gym_details"]["raid_info"]["raid_pokemon"]["move_1"]
-                        move_2 = gym["gym_details"]["raid_info"]["raid_pokemon"]["move_2"]
-                        form = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["form_value"]
-                        gender = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["gender_value"]
-                        costume = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["costume_value"]
+                        raid_info = gym["gym_details"]["raid_info"]
+
+                        pokemon_id = raid_info["raid_pokemon"]["id"]
+                        cp = raid_info["raid_pokemon"]["cp"]
+                        move_1 = raid_info["raid_pokemon"]["move_1"]
+                        move_2 = raid_info["raid_pokemon"]["move_2"]
+                        form = raid_info["raid_pokemon"]["display"]["form_value"]
+                        gender = raid_info["raid_pokemon"]["display"]["gender_value"]
+                        costume = raid_info["raid_pokemon"]["display"]["costume_value"]
+                        evolution = raid_info["raid_pokemon"]["display"].get("current_temp_evolution", 0)
                     else:
                         pokemon_id = None
                         cp = 0
@@ -540,6 +553,7 @@ class DbPogoProtoSubmit:
                         form = None
                         gender = None
                         costume = None
+                        evolution = 0
 
                     raid_end_sec = int(gym["gym_details"]["raid_info"]["raid_end"] / 1000)
                     raid_spawn_sec = int(gym["gym_details"]["raid_info"]["raid_spawn"] / 1000)
@@ -572,7 +586,8 @@ class DbPogoProtoSubmit:
                             form,
                             is_exclusive,
                             gender,
-                            costume
+                            costume,
+                            evolution
                         )
                     )
         self._db_exec.executemany(query_raid, raid_args, commit=True)
@@ -634,7 +649,7 @@ class DbPogoProtoSubmit:
 
     def _extract_args_single_stop(self, stop_data):
         if stop_data["type"] != 1:
-            logger.warning("{} is not a pokestop", stop_data)
+            logger.info("{} is not a pokestop", stop_data)
             return None
 
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")

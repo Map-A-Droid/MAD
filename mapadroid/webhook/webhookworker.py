@@ -1,16 +1,17 @@
 import json
 import time
-from typing import Optional, List
+from typing import List, Optional
+
 import requests
+
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.webhook)
 
@@ -28,7 +29,11 @@ class WebhookWorker:
         self._db_reader = db_webhook_reader
         self.__rarity = rarity
         self.__last_check = int(time.time())
+        self.__webhook_receivers = []
+        self.__webhook_types = []
+        self.__valid_types = ['pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop']
 
+        self.__build_webhook_receivers()
         self.__build_ivmon_list(mapping_manager)
         self.__build_excluded_areas(mapping_manager)
 
@@ -61,23 +66,12 @@ class WebhookWorker:
             logger.debug2("Payload empty. Skip sending to webhook.")
             return
 
-        # get list of urls
-        webhooks = self.__args.webhook_url.replace(" ", "").split(",")
-
-        webhook_count = len(webhooks)
         current_wh_num = 1
-
-        for webhook in webhooks:
+        for webhook in self.__webhook_receivers:
             payload_to_send = []
-            sub_types = "all"
-            url = webhook.strip()
+            sub_types = webhook.get('types')
 
-            if url.startswith("["):
-                end_index = webhook.rindex("]")
-                end_index += 1
-                sub_types = webhook[:end_index]
-                url = url[end_index:]
-
+            if sub_types is not None:
                 for payload in payloads:
                     if payload["type"] in sub_types:
                         payload_to_send.append(payload)
@@ -85,10 +79,10 @@ class WebhookWorker:
                 payload_to_send = payloads
 
             if len(payload_to_send) == 0:
-                logger.debug2("Payload empty. Skip sending to: {} (Filter: {})", url, sub_types)
+                logger.debug2("Payload empty. Skip sending to: {} (Filter: {})", webhook.get('url'), sub_types)
                 continue
             else:
-                logger.debug2("Sending to webhook url: {} (Filter: {})", url, sub_types)
+                logger.debug2("Sending to webhook: {} (Filter: {})", webhook.get('url'), sub_types)
 
             payload_list = self.__payload_chunk(
                 payload_to_send, self.__args.webhook_max_payload_size
@@ -101,7 +95,7 @@ class WebhookWorker:
 
                 try:
                     response = requests.post(
-                        url,
+                        webhook.get('url'),
                         data=json.dumps(payload_chunk),
                         headers={"Content-Type": "application/json"},
                         timeout=5,
@@ -111,8 +105,8 @@ class WebhookWorker:
                         logger.warning("Got status code other than 200 OK from webhook destination: {}",
                                        response.status_code)
                     else:
-                        if webhook_count > 1:
-                            whcount_text = " [wh {}/{}]".format(current_wh_num, webhook_count)
+                        if len(self.__webhook_receivers) > 1:
+                            whcount_text = " [wh {}/{}]".format(current_wh_num, len(self.__webhook_receivers))
                         else:
                             whcount_text = ""
 
@@ -180,23 +174,26 @@ class WebhookWorker:
         quest_conditions = json.loads(quest["quest_condition"].replace("'", '"'))
         quest_condition = []
         quest_rewards = []
-        a_quest_type = quest["quest_reward_type_raw"]
+        a_quest_reward_type = quest["quest_reward_type_raw"]
         a_quest_reward = {}
         quest_rewards.append(a_quest_reward)
         a_quest_reward["info"] = {}
-        a_quest_reward["type"] = a_quest_type
+        a_quest_reward["type"] = a_quest_reward_type
 
-        if a_quest_type == 2:
+        if a_quest_reward_type == 2:
             a_quest_reward["info"]["item_id"] = quest["item_id"]
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
-        if a_quest_type == 3:
+        if a_quest_reward_type == 3:
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
-        if a_quest_type == 7:
+        if a_quest_reward_type == 7:
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
             a_quest_reward["info"]["pokemon_form"] = int(quest["pokemon_form"])
             a_quest_reward["info"]["pokemon_costume"] = int(quest.get("pokemon_costume", '0'))
             a_quest_reward["info"]["shiny"] = 0
             a_quest_reward["info"]["form"] = int(quest["pokemon_form"])
+        elif a_quest_reward_type == 12:
+            a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
+            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
 
         for a_quest_condition in quest_conditions:
             # Quest condition for special type of pokemon.
@@ -304,6 +301,7 @@ class WebhookWorker:
                 "start": raid["start"],
                 "end": raid["end"],
                 "name": raid["name"],
+                "evolution": raid["evolution"],
             }
 
             if raid["move_1"] is not None:
@@ -328,10 +326,10 @@ class WebhookWorker:
                 raid_payload["form"] = raid["form"]
 
             if raid["is_ex_raid_eligible"] is not None:
-                raid_payload["is_ex_raid_eligible"] = raid["is_ex_raid_eligible"]
+                raid_payload["is_ex_raid_eligible"] = raid["is_ex_raid_eligible"] != 0
 
             if raid["is_exclusive"] is not None:
-                raid_payload["is_exclusive"] = raid["is_exclusive"]
+                raid_payload["is_exclusive"] = raid["is_exclusive"] != 0
 
             if raid["gender"] is not None:
                 raid_payload["gender"] = raid["gender"]
@@ -497,6 +495,32 @@ class WebhookWorker:
 
         return ret
 
+    def __build_webhook_receivers(self):
+        webhooks = self.__args.webhook_url.replace(" ", "").split(",")
+
+        for webhook in webhooks:
+            sub_types = None
+            url = webhook.strip()
+
+            if url.startswith("["):
+                end_index = webhook.rindex("]")
+                end_index += 1
+                sub_types = webhook[:end_index]
+                url = url[end_index:]
+
+                for vtype in self.__valid_types:
+                    if vtype not in self.__webhook_types and vtype in sub_types:
+                        self.__webhook_types.append(vtype)
+            else:
+                for vtype in self.__valid_types:
+                    if vtype not in self.__webhook_types:
+                        self.__webhook_types.append(vtype)
+
+            self.__webhook_receivers.append({
+                "url": url,
+                "types": sub_types
+            })
+
     def __build_ivmon_list(self, mapping_manager: MappingManager):
         self.__IV_MON: List[int] = []
 
@@ -539,41 +563,42 @@ class WebhookWorker:
 
         try:
             # raids
-            raids = self.__prepare_raid_data(
-                self._db_reader.get_raids_changed_since(self.__last_check)
-            )
-            full_payload += raids
+            if 'raid' in self.__webhook_types:
+                raids = self.__prepare_raid_data(
+                    self._db_reader.get_raids_changed_since(self.__last_check)
+                )
+                full_payload += raids
 
             # quests
-            if self.__args.quest_webhook:
+            if 'quest' in self.__webhook_types:
                 quest = self.__prepare_quest_data(
                     self._db_reader.get_quests_changed_since(self.__last_check)
                 )
                 full_payload += quest
 
             # weather
-            if self.__args.weather_webhook:
+            if 'weather' in self.__webhook_types:
                 weather = self.__prepare_weather_data(
                     self._db_reader.get_weather_changed_since(self.__last_check)
                 )
                 full_payload += weather
 
             # gyms
-            if self.__args.gym_webhook:
+            if 'gym' in self.__webhook_types:
                 gyms = self.__prepare_gyms_data(
                     self._db_reader.get_gyms_changed_since(self.__last_check)
                 )
                 full_payload += gyms
 
             # stops
-            if self.__args.pokestop_webhook:
+            if 'pokestop' in self.__webhook_types:
                 pokestops = self.__prepare_stops_data(
                     self._db_reader.get_stops_changed_since(self.__last_check)
                 )
                 full_payload += pokestops
 
             # mon
-            if self.__args.pokemon_webhook:
+            if 'pokemon' in self.__webhook_types:
                 mon = self.__prepare_mon_data(
                     self._db_reader.get_mon_changed_since(self.__last_check)
                 )

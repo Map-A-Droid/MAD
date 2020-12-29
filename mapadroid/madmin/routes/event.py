@@ -1,9 +1,10 @@
-from flask import (render_template, request, redirect, url_for, jsonify, flash)
-from flask_caching import Cache
 from datetime import datetime
+
+from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask_caching import Cache
+
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.MappingManager import MappingManager
-
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
@@ -106,7 +107,8 @@ class MADminEvent(object):
             return redirect(url_for('events'), code=302)
 
         self._db.save_event(event_name, event_start_date + " " + event_start_time,
-                            event_end_date + " " + event_end_time, event_lure_duration=event_lure_duration, id=event_id)
+                            event_end_date + " " + event_end_time, event_lure_duration=event_lure_duration,
+                            event_id=event_id)
 
         flash('Successfully added this event')
 
@@ -116,7 +118,7 @@ class MADminEvent(object):
     def del_event(self):
         event_id = request.args.get("id", None)
         if event_id is not None:
-            if self._db.delete_event(id=event_id):
+            if self._db.delete_event(event_id=event_id):
                 flash('Successfully deleted this event')
                 return redirect(url_for('events'), code=302)
             else:

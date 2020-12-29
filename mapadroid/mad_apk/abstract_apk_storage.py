@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import Optional, NoReturn
+from typing import NoReturn, Optional
+
 from .apk_enums import APKArch, APKType
 from .custom_types import MADPackages
 
@@ -36,6 +37,9 @@ class AbstractAPKStorage(ABC):
 
     @abstractmethod
     def get_storage_type(self) -> str:
+        pass
+
+    def reload(self) -> NoReturn:
         pass
 
     @abstractmethod

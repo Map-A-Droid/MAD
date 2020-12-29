@@ -1,12 +1,15 @@
 import copy
 import io
+import json
+import time
 from typing import List, NoReturn
-from mapadroid.db.DbFactory import DbFactory
-from mapadroid.mad_apk import APKArch, APKType, get_storage_obj, PackageImporter
-from mapadroid.tests.local_api import LocalAPI
-import mapadroid.tests.test_variables as global_variables
-from mapadroid.utils.walkerArgs import parse_args
 
+import mapadroid.tests.test_variables as global_variables
+from mapadroid.db.DbFactory import DbFactory
+from mapadroid.mad_apk import (APKArch, APKType, PackageImporter,
+                               get_storage_obj)
+from mapadroid.tests.local_api import LocalAPI
+from mapadroid.utils.walkerArgs import parse_args
 
 filepath_rgc = 'APK/RemoteGpsController.apk'
 mimetype = 'application/vnd.android.package-archive'
@@ -15,7 +18,7 @@ args = parse_args()
 
 class ResourceCreator():
     generated_uris: List[str] = []
-    index: int = 0
+    index: int = int(time.time())
     prefix: str = 'ResourceCreator'
 
     def __init__(self, api, prefix=prefix):
@@ -88,6 +91,8 @@ class ResourceCreator():
             name_elem = 'name'
         elif resource == 'monivlist':
             name_elem = 'monlist'
+        elif resource == 'pogoauth':
+            name_elem = 'username'
         elif resource == 'walker':
             elem['resources']['walkerarea'] = self.create_valid_resource('walkerarea')[0]
             payload['setup'] = [elem['resources']['walkerarea']['uri']]
@@ -118,20 +123,64 @@ class GetStorage(object):
     storage_elem = None
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
+    def __init__(self, api):
+        self.api = api
+
     def __enter__(self):
         self.db_wrapper, self.db_pool_manager = DbFactory.get_wrapper(args)
         args.apk_storage_interface = 'fs'
         (self.storage_manager, self.storage_elem) = get_storage_obj(args, self.db_wrapper)
         self.db_purge()
-        return self.storage_elem
+        self.pogo_versions = {
+            APKArch.armeabi_v7a: None,
+            APKArch.arm64_v8a: None,
+        }
+        # determine supported pogo versions
+        with open('configs/version_codes.json', 'rb') as fh:
+            data = json.load(fh)
+            for version in list(data.keys()):
+                version_info = version.rsplit('_')
+                if version_info[-1] == '32':
+                    self.pogo_versions[APKArch.armeabi_v7a] = version_info[0]
+                elif version_info[-1] == '64':
+                    self.pogo_versions[APKArch.arm64_v8a] = version_info[0]
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.storage_manager.shutdown()
         self.db_pool_manager.shutdown()
 
     def db_purge(self):
+        self.storage_elem.delete_file(APKType.rgc, APKArch.noarch)
+        self.storage_elem.delete_file(APKType.pd, APKArch.noarch)
+        self.storage_elem.delete_file(APKType.pogo, APKArch.arm64_v8a)
+        self.storage_elem.delete_file(APKType.pogo, APKArch.armeabi_v7a)
         for table in GetStorage.cleanup_tables:
             self.db_wrapper.execute('DELETE FROM `%s`' % (table,), commit=True)
+
+    def upload_all(self):
+        self.upload_pd(reload=False)
+        self.upload_pogo(reload=False)
+        self.upload_rgc(reload=False)
+        self.api.get('/api/mad_apk/reload')
+
+    def upload_pd(self, reload: bool = True):
+        upload_package(self.storage_elem, version="0.1", apk_type=APKType.pd, apk_arch=APKArch.noarch)
+        if reload:
+            self.api.get('/api/mad_apk/reload')
+
+    def upload_pogo(self, reload: bool = True):
+        upload_package(self.storage_elem, version=self.pogo_versions[APKArch.arm64_v8a], apk_type=APKType.pogo,
+                       apk_arch=APKArch.arm64_v8a)
+        upload_package(self.storage_elem, version=self.pogo_versions[APKArch.armeabi_v7a], apk_type=APKType.pogo,
+                       apk_arch=APKArch.armeabi_v7a)
+        if reload:
+            self.api.get('/api/mad_apk/reload')
+
+    def upload_rgc(self, reload: bool = True):
+        upload_package(self.storage_elem, version="0.1", apk_type=APKType.rgc, apk_arch=APKArch.noarch)
+        if reload:
+            self.api.get('/api/mad_apk/reload')
 
 
 def get_connection_api():
@@ -170,9 +219,10 @@ def get_rgc_bytes() -> io.BytesIO:
     return data
 
 
-def upload_rgc(storage_elem, version: str = None, apk_type: APKType = APKType.rgc) -> NoReturn:
+def upload_package(storage_elem, version: str = None, apk_type: APKType = APKType.rgc,
+                   apk_arch: APKArch = APKArch.noarch) -> NoReturn:
     data = get_rgc_bytes()
     if version is None:
-        PackageImporter(apk_type, APKArch.noarch, storage_elem, data, mimetype)
+        PackageImporter(apk_type, apk_arch, storage_elem, data, mimetype)
     else:
-        storage_elem.save_file(apk_type, APKArch.noarch, version, mimetype, data)
+        storage_elem.save_file(apk_type, apk_arch, version, mimetype, data)

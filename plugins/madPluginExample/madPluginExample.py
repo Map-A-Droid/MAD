@@ -1,7 +1,9 @@
-import mapadroid.utils.pluginBase
-from flask import render_template, Blueprint
-from mapadroid.madmin.functions import auth_required
 import os
+
+from flask import Blueprint, render_template
+
+import mapadroid.utils.pluginBase
+from mapadroid.madmin.functions import auth_required
 
 
 class MadPluginExample(mapadroid.utils.pluginBase.Plugin):

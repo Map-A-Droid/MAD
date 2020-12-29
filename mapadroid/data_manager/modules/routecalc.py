@@ -1,12 +1,14 @@
 import json
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
-from typing import Optional, Dict, List, Tuple
-from .resource import Resource
-from ..dm_exceptions import UnknownIdentifier
+
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
+from ..dm_exceptions import UnknownIdentifier
+from .resource import Resource
 
 logger = get_logger(LoggerEnums.data_manager)
 
@@ -44,7 +46,7 @@ class RouteCalc(Resource):
             table_sql = sql % (table,)
             try:
                 area_dependencies = self._dbc.autofetch_column(table_sql, args=(self.identifier))
-                for ind, area_id in enumerate(area_dependencies[:]):
+                for _, area_id in enumerate(area_dependencies[:]):
                     dependencies.append(('area', area_id))
             except TypeError:
                 pass
@@ -59,8 +61,10 @@ class RouteCalc(Resource):
         self._data['fields']['routefile'] = json.loads(data['routefile'])
         self.recalc_status = data['recalc_status']
 
-    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = [],
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = None,
              update_time: bool = False) -> int:
+        if ignore_issues is None:
+            ignore_issues = []
         self.presave_validation(ignore_issues=ignore_issues)
         literals = []
         core_data = self.get_resource()
@@ -161,7 +165,8 @@ class RouteCalc(Resource):
             logger.info("Calculating a short route through all those coords. Might take a while")
             from timeit import default_timer as timer
             start = timer()
-            from mapadroid.route.routecalc.calculate_route_all import route_calc_all
+            from mapadroid.route.routecalc.calculate_route_all import \
+                route_calc_all
             sol_best = route_calc_all(less_coords, route_name, num_processes, algorithm)
 
             end = timer()

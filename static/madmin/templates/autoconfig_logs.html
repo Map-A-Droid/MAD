@@ -1,0 +1,110 @@
+{% extends "autoconfig_root.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<style>
+    div.container {
+        width: 80%;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+<script>
+    var errorCount = 0;
+    var dataTable = $("#show-data-status").DataTable({
+            "ajax": {
+                "url": "{{ url_for('autoconfig_root') }}/logs/{{ session_id }}/update",
+                "dataSrc": function (data) {
+                        errorCount = 0;
+                        return data;
+                },
+                "error": function (xhr, error, code) {
+                    if(xhr.status == 302) {
+                        alert('Session has completed or has been deleted.  Returning to pending page');
+                        location.href = '{{ url_for('autoconfig_root') }}';
+                    }
+                    console.log(xhr);
+                    console.log(error);
+                    console.log(code);
+                    errorCount++;
+                    if (errorCount == 5) {
+                            alert("Could not get updates from MAD five times in a row. More logs in browser developer console. Is MAD running?");
+                    }
+                }
+            },
+            "columns": [
+                {data: 'log_time', title: 'Message Time'},
+                {data: 'level', title: 'Level'},
+                {data: 'msg', title: 'Message Time'},
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        if (type == "sort") { return data; }
+                        var dateToShow = moment.utc(data * 1000);
+                        if (dateToShow.isValid() && data != null && data != undefined) {
+                            return dateToShow.local()
+                        }
+                        return "None";
+                    }
+                }
+            ],
+            "order": [[0, "desc"]],
+            "responsive": {{ responsive }},
+            "autoWidth": false,
+            "stateSave": true,
+            "stateDuration": 0
+        });
+
+    var toHHMMSS_mark = (secs) => {
+        var sec_test = parseInt(secs, 10);
+        if (sec_test <  localStorage['MAD_MAXSECONDS_STATUS']) {
+                return "<i class='fas fa-check' style='color: green !important;'></i>";
+        }
+        return toHHMMSS(secs);
+    }
+
+    var toHHMMSS = (secs) => {
+        var sec_num = parseInt(secs, 10)
+        var hours   = Math.floor(sec_num / 3600)
+        var minutes = Math.floor(sec_num / 60) % 60
+        var seconds = sec_num % 60
+
+        return [hours,minutes,seconds]
+            .map(v => v < 10 ? "0" + v : v)
+            .filter((v,i) => v !== "00" || i > 0)
+            .join(":")
+    }
+
+    $(document).ready(function () {
+        setInterval(function () {
+                dataTable.ajax.reload(null, false); //user paging is not reset on reload
+        }, 10000);
+    });
+
+</script>
+<style>
+   table.dataTable tr.odd { background-color: #F8F8F8; }
+   table.dataTable tr.even { background-color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row">
+  <div class="col">
+    <div class="alert alert-primary">
+      This page gives a status of the progress of auto-configuration for the device.
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    <table id="show-data-status" class="table"></table>
+  </div>
+</div>
+{% endblock %}

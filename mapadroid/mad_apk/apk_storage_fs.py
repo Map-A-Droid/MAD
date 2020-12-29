@@ -1,19 +1,21 @@
-from copy import copy
-from flask import Response
-from functools import wraps
-from io import BytesIO
 import json
 import os
 import re
+from copy import copy
+from functools import wraps
+from io import BytesIO
+from threading import RLock
 from typing import Any, ClassVar, NamedTuple, NoReturn, Optional
+
+from flask import Response
+
+from mapadroid.utils.json_encoder import MADEncoder
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKType
-from .utils import lookup_apk_enum, lookup_arch_enum, generate_filename
 from .custom_types import MADapks, MADPackage, MADPackages
-from mapadroid.utils.json_encoder import MADEncoder
-from threading import RLock
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from .utils import generate_filename, lookup_apk_enum, lookup_arch_enum
 
 logger = get_logger(LoggerEnums.storage)
 
@@ -26,7 +28,6 @@ def ensure_exists(func) -> Any:
             return func(self, *args, **kwargs)
         except FileNotFoundError:
             msg = 'Attempted to access a non-existent file for {} [{}]'.format(args[0].name, args[1].name)
-            logger.warning(msg)
             return Response(status=404, response=json.dumps(msg))
     return decorated
 
@@ -37,7 +38,7 @@ def ensure_config_file(func) -> Any:
         try:
             return func(self, *args, **kwargs)
         except FileNotFoundError:
-            logger.warning('Configuration file not found.  Recreating')
+            logger.info('Configuration file not found.  Recreating')
             with self.file_lock:
                 self.create_structure()
                 self.create_config()
@@ -189,7 +190,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         with self.file_lock:
             try:
                 data = copy(self.apks[package])
-                for arch, apk_info in data.items():
+                for arch, _apk_info in data.items():
                     self.validate_file(package, arch)
             except KeyError:
                 logger.debug('Package has not been downloaded')
@@ -204,6 +205,11 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     def get_storage_type(self) -> str:
         return 'fs'
+
+    def reload(self) -> NoReturn:
+        with self.file_lock:
+            self.create_structure()
+            self.create_config(delete_config=True)
 
     def save_configuration(self) -> NoReturn:
         "Save the current configuration to the filesystem with human-readable indentation"
@@ -265,7 +271,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
                     self.save_configuration()
                     logger.info('Successfully saved {} to the disk', filename)
                     return True
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             logger.opt(exception=True).critical('Unable to upload APK')
         return False
 

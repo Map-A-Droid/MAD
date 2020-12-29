@@ -1,7 +1,8 @@
 import json
+
 from mapadroid.data_manager.modules.resource import Resource
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
-from mapadroid.mad_apk.custom_types import MADPackage, MADPackages, MADapks
+from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
 
 
 class MADEncoder(json.JSONEncoder):

@@ -1,24 +1,27 @@
 import datetime
 import os
 import time
+
+from flask import (flash, jsonify, redirect, render_template, request,
+                   send_file, url_for)
 from PIL import Image
-from flask import (render_template, request, redirect, flash, jsonify, url_for, send_file)
 from werkzeug.utils import secure_filename
+
 import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.madmin.functions import (
-    auth_required, generate_device_screenshot_path, nocache, allowed_file, uploaded_files,
-    generate_device_logcat_zip_path
-)
+from mapadroid.madmin.functions import (allowed_file, auth_required,
+                                        generate_device_logcat_zip_path,
+                                        generate_device_screenshot_path,
+                                        nocache, uploaded_files)
 from mapadroid.utils import MappingManager
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.collections import Location
-from mapadroid.utils.functions import (creation_date, generate_phones, image_resize, generate_path)
+from mapadroid.utils.functions import (creation_date, generate_path,
+                                       generate_phones, image_resize)
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import ScreenshotType
 from mapadroid.utils.updater import JobType
 from mapadroid.websocket.WebsocketServer import WebsocketServer
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
-
 
 logger = get_logger(LoggerEnums.madmin)
 
@@ -161,7 +164,7 @@ class MADminControl(object):
         filename = generate_device_screenshot_path(origin, devicemappings, self._args)
 
         if useadb == 'True' and self._adb_connect.make_screenshot(adb, origin, "jpg"):
-            origin_logger.info('MADMin: ADB screenshot successfully')
+            origin_logger.info('MADmin: ADB screenshot successfully')
         else:
             self.generate_screenshot(origin)
 
@@ -205,8 +208,9 @@ class MADminControl(object):
         adb = devicemappings.get(origin, {}).get('adb', False)
 
         if useadb == 'True' and self._adb_connect.make_screenclick(adb, origin, real_click_x, real_click_y):
-            origin_logger.info('MADMin: ADB screenclick successfully')
+            origin_logger.info('MADmin: ADB screenclick successfully')
         else:
+            origin_logger.info("MADmin: WS Click x:{}, y:{}", real_click_x, real_click_y)
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.click(int(real_click_x), int(real_click_y))
 
@@ -237,9 +241,9 @@ class MADminControl(object):
         if useadb == 'True' and self._adb_connect.make_screenswipe(adb, origin, real_click_x,
                                                                    real_click_y, real_click_xe,
                                                                    real_click_ye):
-            origin_logger.info('MADMin: ADB screenswipe successfully')
+            origin_logger.info('MADmin: ADB screenswipe successfully')
         else:
-            origin_logger.info('MADMin WS Swipe x:{} y:{} xe:{} ye:{}', real_click_x, real_click_y, real_click_xe,
+            origin_logger.info('MADmin WS Swipe x:{} y:{} xe:{} ye:{}', real_click_x, real_click_y, real_click_xe,
                                real_click_ye)
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.touch_and_hold(int(real_click_x), int(real_click_y), int(real_click_xe), int(real_click_ye))
@@ -260,27 +264,27 @@ class MADminControl(object):
             self._db.save_last_restart(device_id)
         origin_logger.info('MADmin: Restart Pogo')
         if useadb and self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
-            origin_logger.info('MADMin: ADB shell force-stop game command successfully')
+            origin_logger.info('MADmin: ADB shell force-stop game command successfully')
             if restart:
                 time.sleep(1)
                 started = self._adb_connect.send_shell_command(adb, origin,
                                                                "am start com.nianticlabs.pokemongo")
                 if started:
-                    origin_logger.info('MADMin: ADB shell start game command successfully')
+                    origin_logger.info('MADmin: ADB shell start game command successfully')
                 else:
-                    origin_logger.error('MADMin: ADB shell start game command failed')
+                    origin_logger.error('MADmin: ADB shell start game command failed')
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             if restart:
-                origin_logger.info('MADMin: trying to restart game')
+                origin_logger.info('MADmin: trying to restart game')
                 temp_comm.restart_app("com.nianticlabs.pokemongo")
 
                 time.sleep(1)
             else:
-                origin_logger.info('MADMin: trying to stop game')
+                origin_logger.info('MADmin: trying to stop game')
                 temp_comm.stop_app("com.nianticlabs.pokemongo")
 
-            origin_logger.info('MADMin: WS command successfully')
+            origin_logger.info('MADmin: WS command successfully')
         time.sleep(2)
         return self.take_screenshot(origin, useadb)
 
@@ -297,7 +301,7 @@ class MADminControl(object):
         origin_logger.info('MADmin: Restart device')
         cmd = "am broadcast -a android.intent.action.BOOT_COMPLETED"
         if (useadb and self._adb_connect.send_shell_command(adb, origin, cmd)):
-            origin_logger.info('MADMin: ADB shell command successfully')
+            origin_logger.info('MADmin: ADB shell command successfully')
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reboot()
@@ -340,7 +344,7 @@ class MADminControl(object):
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                     adb, origin, "pm clear com.nianticlabs.pokemongo")):
-            origin_logger.info('MADMin: ADB shell command successfully')
+            origin_logger.info('MADmin: ADB shell command successfully')
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reset_app_data("com.nianticlabs.pokemongo")
@@ -385,7 +389,7 @@ class MADminControl(object):
             return 'Empty text'
         origin_logger.info('MADmin: Send text')
         if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin, 'input text "' + text + '"'):
-            origin_logger.info('MADMin: Send text successfully')
+            origin_logger.info('MADmin: Send text successfully')
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.enter_text(text)
@@ -485,13 +489,11 @@ class MADminControl(object):
                 else:
                     flash('File could not be installed successfully :(')
             else:
-                self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
-                                                type=type_)
+                self._device_updater.preadd_job(origin, jobname, int(time.time()), type_)
                 flash('File successfully queued --> See Job Status')
 
         elif type_ != JobType.INSTALLATION:
-            self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
-                                            type=type_)
+            self._device_updater.preadd_job(origin, jobname, int(time.time()), type_)
             flash('Job successfully queued --> See Job Status')
 
         return redirect(url_for('uploaded_files', origin=str(origin), adb=useadb), code=302)

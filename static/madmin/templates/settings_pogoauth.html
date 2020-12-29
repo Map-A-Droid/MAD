@@ -1,0 +1,101 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+$(document).ready(function () {
+    $(".delete").click(function() {
+        if(confirm('Are you sure you want to delete this resource?')) {
+            var elem =  $(this);
+            loadingBlockUI('Deleting a  {{ subtab }}' );
+            $.ajax({
+                url : '{{ base_uri }}/'+ $(this).data('identifier'),
+                type : 'DELETE',
+                success: function(data, status, xhr) {
+                    if(xhr.status == 202) {
+                        elem.parent().parent().remove();
+                        toggleConfiguredElement();
+                    }
+                },
+                error: function(data, status, xhr) {
+                    if(data.status == 412) {
+                        var dependencies = data.responseJSON;
+                        var msg = 'The following entities have a dependency on this element:';
+                        $.each(dependencies, function() {
+                            msg += "\n"+ this['name'] +" ("+ this['uri'] +")";
+                        });
+                        alert(msg);
+                    } else {
+                        alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+                    }
+                }
+            });
+            $.unblockUI();
+        }
+    });
+    // Toggle on boot
+    toggleConfiguredElement();
+  });
+
+  function toggleConfiguredElement() {
+    if($(".delete").length == 0) {
+        $('#no-configured-elements').show();
+    } else {
+        $('#no-configured-elements').hide();
+    }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row">
+  <div class="col">
+    <div class="alert alert-primary">
+      These authentication users are used to login to Pokemon GO on your device.  Google accounts are used during autoconfiguration while PTC accounts are used at login
+    </div>
+  </div>
+</div>
+<div class="row mt-3">
+  <div class="col">
+    <table class="table table-striped table-hover table-sm">
+      <thead>
+        <tr>
+          <th style="width: 15%" class="align-middle">Type <i class="fas fa-info-circle" data-toggle="tooltip" title="Login Type"></th>
+          <th style="width: 35%" class="align-middle">Username <i class="fas fa-info-circle" data-toggle="tooltip" title="Username for the login"></th>
+          <th style="width: 35%" class="align-middle">Device <i class="fas fa-info-circle" data-toggle="tooltip" title="Device assigned to this login"></th>
+          <th style="width: 15%" class="text-right align-middle"><a href='{{ url_for('settings_pogoauth', id='new') }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+        </tr>
+      </thead>
+      {% if auth is none %}
+        <div id='no-configured-elements' class="alert alert-info">No PoGo logins added yet</div>
+      {% else %}
+      <tbody>
+        {% for auth_id, auth in pogoauth.items() %}
+        <tr>
+          <td class="align-middle">
+            {{ auth.login_type }}
+          </td>
+          <td class="align-middle">
+            <a href="{{ url_for('settings_pogoauth', id=auth_id) }}">{{ auth.username }}</a>
+          </td>
+          <td>
+            {% if auth.device_id is not none %}
+             <a href="{{ url_for('settings_devices', id=devices[auth.device_id].identifier) }}">{{ devices[auth.device_id].origin }}</a>
+            {% endif %}
+          <td class="text-right align-middle">
+            <a href="{{ redirect }}?id={{ auth_id }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+            <button data-identifier='{{ auth_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% endblock %}

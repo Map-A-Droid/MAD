@@ -9,12 +9,12 @@
         $(tableGridHtmlId).DataTable({
             "data": gridData,
             "columns": [
-                { data: 'origin', title: 'Device' },
-                { data: 'jobname', title: 'File / Command' },
-                { data: 'status', title: 'Status' },
-                { data: null, title: 'Init Date/Time' },
-                { data: null, title: 'Date/Time' },
-                { data: null, title: 'Action' }
+                { data: 'origin', title: 'Device', responsivePriority: 1},
+                { data: 'jobname', title: 'File / Command', responsivePriority: 3 },
+                { data: 'status', title: 'Status', responsivePriority: 2 },
+                { data: null, title: 'Init Date/Time',responsivePriority: 6 },
+                { data: null, title: 'Date/Time', responsivePriority: 5 },
+                { data: null, title: 'Action',responsivePriority: 4 }
             ],
             "columnDefs": [
                 {

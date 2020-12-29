@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block header %}
-<link rel="stylesheet" href="static/style/madmin.css" />
+<link rel="stylesheet" href="static/style/madmin.css"/>
 {% endblock %}
 
 {% block scripts %}
@@ -14,221 +14,262 @@
 <script>
     var errorCount = 0;
     var dataTable = $("#show-data-status").DataTable({
-            "ajax": {
-                "url": "get_status",
-                "dataSrc": function (data) {
-                        errorCount = 0;
-                        return data;
-                },
-                "error": function (xhr, error, code) {
-                        errorCount++;
-                        console.log(xhr);
-                        console.log(error);
-                        console.log(code);
-                        if (errorCount == 5) {
-                                alert("Could not get updates from MAD five times in a row. More logs in browser developer console. Is MAD running?");
-                        }
+        "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+        "ajax": {
+            "url": "get_status",
+            "dataSrc": function (data) {
+                errorCount = 0;
+                return data;
+            },
+            "error": function (xhr, error, code) {
+                errorCount++;
+                console.log(xhr);
+                console.log(error);
+                console.log(code);
+                if (errorCount == 5) {
+                    alert("Could not get updates from MAD five times in a row. More logs in browser developer console. Is MAD running?");
+                }
+            }
+        },
+        "columns": [
+            {
+                responsivePriority: 1, data: 'name', title: 'Origin',
+                "render": function (data, type, oData) {
+                    return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
                 }
             },
-            "columns": [
-                {
-                    data: 'name', title: 'Origin',
-                    "render": function (data, type, oData) {
-                        return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
-                    }
-                },
-                {data: 'lastProtoDateTime', title: 'Last Update'},
-                {data: 'currentSleepTime', title: 'Next Action'},
-                {
-                    data: 'rmname', title: 'Route',
-                    "render": function (data, type, oData) {
-                        if (oData.rmname != 'Idle') {
-                            return "<a href='{{ url_for('settings_areas') }}?id=" + oData.area_id + "&mode=" + oData.mode + "'>" + oData.rmname + "</a>";
-                        } else {
-                            return 'Idle';
-                        }
-                    }
-                },
-                {data: 'routeMax', title: 'Route Length'},
-                {data: 'init', title: 'Init Mode'},
-                {data: 'restartCounter', title: 'Restart Counter'},
-                {data: 'globalrestartcount', title: 'Total Restarts'},
-                {data: 'lastPogoRestart', title: 'Last Restart'},
-                {data: 'rebootingOption', title: 'Reboot Device'},
-                {data: 'rebootCounter', title: 'Reboot Counter'},
-                {data: 'globalrebootcount', title: 'Total Reboots'},
-                {data: 'lastPogoReboot', title: 'Last Reboot'},
-                {
-                    data: null, orderable: false, className: "text-nowrap",
-                    "render": function (data, type, oData) {
-                        return "<center><button data-toggle='tooltip' title='Delete worker stats from database' type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' data-toggle='tooltip' title='Reset workers stats' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
-                    }
-                }            ],
-            "columnDefs": [
-                {
-                    "targets": [5, 9],
-                    "render": function (data, type, row) {
-                        return (parseInt(data) == 0 ? "False" : "True");
-                    }
-                },
-                {
-                    "targets": [4],
-                    "render": function (data, type, row) {
-                        return row.routePos + "/" + row.routeMax
-                    }
-                },
-                {
-                    "targets": [1],
-                    "render": function (data, type, row) {
-                        if (type == "sort") { return data; }
-                        var dateToShow = moment.utc(data * 1000);
-                        if (dateToShow.isValid() && data != null && data != undefined) {
-                            return toHHMMSS_mark(Math.abs(dateToShow.diff(moment.utc()) / 1000));
-                        }
-                        return "None";
-                    }
-                },
-                {
-                    "targets": [8, 12],
-                    "render": function (data, type, row) {
-                        if (type == "sort") { return data; }
-                        var dateToShow = moment.utc(data * 1000);
-                        if (dateToShow.isValid() && data != null && data != undefined && data > 0) {
-                            return toHHMMSS(Math.abs(dateToShow.diff(moment.utc()) / 1000));
-                        }
-                        return "None";
-                    }
-                },
-                {
-                    "targets": [2],
-                    "render": function (data, type, row) {
-                        return toHHMMSS(data);
+            {responsivePriority: 2, data: 'lastProtoDateTime', title: 'Last Update'},
+            {data: 'currentSleepTime', title: 'Next Action'},
+            {
+                responsivePriority: 3, data: 'rmname', title: 'Route',
+                "render": function (data, type, oData) {
+                    if (oData.rmname != 'Idle') {
+                        return "<a href='{{ url_for('settings_areas') }}?id=" + oData.area_id + "&mode=" + oData.mode + "'>" + oData.rmname + "</a>";
+                    } else {
+                        return 'Idle';
                     }
                 }
-            ],
-            "order": [[0, "asc"]],
-            "responsive": {{ responsive }},
-            "autoWidth": false,
-            "stateSave": true,
-            "stateDuration": 0
-        });
+            },
+            {data: 'routeMax', title: 'Route Length'},
+            {data: 'init', title: 'Init Mode'},
+            {data: 'restartCounter', title: 'Restart Counter'},
+            {data: 'globalrestartcount', title: 'Total Restarts'},
+            {data: 'lastPogoRestart', title: 'Last Restart'},
+            {data: 'rebootingOption', title: 'Reboot Device'},
+            {data: 'rebootCounter', title: 'Reboot Counter'},
+            {data: 'globalrebootcount', title: 'Total Reboots'},
+            {data: 'lastPogoReboot', title: 'Last Reboot'},
+            {
+                responsivePriority: 4, data: null, orderable: false, className: "text-nowrap",
+                "render": function (data, type, oData) {
+                    return "<center><button data-toggle='tooltip' title='Delete worker stats from database' type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' data-toggle='tooltip' title='Reset workers stats' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
+                }
+            }],
+        "columnDefs": [
+            {
+                "targets": [5, 9],
+                "render": function (data, type, row) {
+                    return (parseInt(data) == 0 ? "False" : "True");
+                }
+            },
+            {
+                "targets": [4],
+                "render": function (data, type, row) {
+                    return row.routePos + "/" + row.routeMax
+                }
+            },
+            {
+                "targets": [1],
+                "render": function (data, type, row) {
+                    if (type == "sort") {
+                        return data;
+                    }
+                    var dateToShow = moment.utc(data * 1000);
+                    if (dateToShow.isValid() && data != null && data != undefined) {
+                        return toHHMMSS_mark(Math.abs(dateToShow.diff(moment.utc()) / 1000));
+                    }
+                    return "None";
+                }
+            },
+            {
+                "targets": [8, 12],
+                "render": function (data, type, row) {
+                    if (type == "sort") {
+                        return data;
+                    }
+                    var dateToShow = moment.utc(data * 1000);
+                    if (dateToShow.isValid() && data != null && data != undefined && data > 0) {
+                        return toHHMMSS(Math.abs(dateToShow.diff(moment.utc()) / 1000));
+                    }
+                    return "None";
+                }
+            },
+            {
+                "targets": [2],
+                "render": function (data, type, row) {
+                    return toHHMMSS(data);
+                }
+            }
+        ],
+        "order": [[0, "asc"]],
+        "responsive": {
+            details: {
+                details: {
+                    display: $.fn.dataTable.Responsive.display.childRowImmediate,
+                    type: ''
+                }
+            }
+        },
+        "autoWidth": false,
+        "stateSave": true,
+        "stateDuration": 0
+    });
+
+    var showAllButton = $('#btn-show-all-children')
+    var hideAllButton = $('#btn-hide-all-children')
+
+    // Hide expand all hide all if table is not responsive
+    if (dataTable.responsive.hasHidden()){
+        showAllButton.show()
+        hideAllButton.show()
+    }else{
+        showAllButton.hide()
+        hideAllButton.hide()
+    }
+
+        // Handle click on "Expand All" button
+    showAllButton.on('click', function(){
+        // Expand row details
+        dataTable.rows(':not(.parent)').nodes().to$().find('td:first-child').trigger('click');
+    });
+
+    // Handle click on "Collapse All" button
+    hideAllButton.on('click', function(){
+        // Collapse row details
+        dataTable.rows('.parent').nodes().to$().find('td:first-child').trigger('click');
+    });
 
     var toHHMMSS_mark = (secs) => {
         var sec_test = parseInt(secs, 10);
-        if (sec_test <  localStorage['MAD_MAXSECONDS_STATUS']) {
-                return "<i class='fas fa-check' style='color: green !important;'></i>";
+        if (sec_test < localStorage['MAD_MAXSECONDS_STATUS']) {
+            return "<i class='fas fa-check' style='color: green !important;'></i>";
         }
         return toHHMMSS(secs);
     }
 
     var toHHMMSS = (secs) => {
         var sec_num = parseInt(secs, 10)
-        var hours   = Math.floor(sec_num / 3600)
+        var hours = Math.floor(sec_num / 3600)
         var minutes = Math.floor(sec_num / 60) % 60
         var seconds = sec_num % 60
 
-        return [hours,minutes,seconds]
+        return [hours, minutes, seconds]
             .map(v => v < 10 ? "0" + v : v)
-            .filter((v,i) => v !== "00" || i > 0)
+            .filter((v, i) => v !== "00" || i > 0)
             .join(":")
     }
 
     $(document).ready(function () {
         $("#navstatus").addClass("active");
         $('input#maxSeconds').val(localStorage["MAD_MAXSECONDS_STATUS"]);
-        $('input#maxSeconds').on('input', function() {
-                localStorage['MAD_MAXSECONDS_STATUS'] = $(this).val();
+        $('input#maxSeconds').on('input', function () {
+            localStorage['MAD_MAXSECONDS_STATUS'] = $(this).val();
         });
 
         setInterval(function () {
-                dataTable.ajax.reload(null, false); //user paging is not reset on reload
+            dataTable.ajax.reload(null, false); //user paging is not reset on reload
         }, 10000);
     });
 
-    $( "#show-data-status" ).on( "click", 'button.delete', function(e) {
+    $("#show-data-status").on("click", 'button.delete', function (e) {
         e.stopImmediatePropagation();
         var r = confirm("You really want to delete this entry?");
         if (r != true) {
-             return;
+            return;
         }
         var delete_div = $(this).find(".delete_div");
 
         delete_div.empty();
         elem = $(document.createElement("img")).attr({
-                      'src': "{{ url_for('static', filename='loading.gif') }}",
-                      'class': 'convert_disp fa',
-                      'width': '13px',
-                      'heigth': '13px'
-                    });
+            'src': "{{ url_for('static', filename='loading.gif') }}",
+            'class': 'convert_disp fa',
+            'width': '13px',
+            'heigth': '13px'
+        });
         delete_div.append(elem);
         var deviceid = $(this).data('deviceid');
 
 
         $.ajax({
             type: 'GET',
-            url:'delete_status_entry',
-            data:'deviceid='+ deviceid,
-            success: function(msg){
-            if (msg.status == 'success') {
-                 dataTable.ajax.reload(null, false);
-            }
+            url: 'delete_status_entry',
+            data: 'deviceid=' + deviceid,
+            success: function (msg) {
+                if (msg.status == 'success') {
+                    dataTable.ajax.reload(null, false);
+                }
             },
-            error: function(msg) {
+            error: function (msg) {
                 alert(msg);
                 delete_div.empty();
                 elem = $(document.createElement("i")).attr({
-                      'class': 'fa fa-minus-circle',
+                    'class': 'fa fa-minus-circle',
                 });
                 delete_div.append(elem);
             }
         });
 
-     });
+    });
 
-     $( "#show-data-status" ).on( "click", 'button.reset', function(e) {
+    $("#show-data-status").on("click", 'button.reset', function (e) {
         e.stopImmediatePropagation();
         var r = confirm("You really want to reset the count values?");
         if (r != true) {
-             return;
+            return;
         }
         var delete_div = $(this).find(".delete_div");
 
         delete_div.empty();
         elem = $(document.createElement("img")).attr({
-                      'src': "{{ url_for('static', filename='loading.gif') }}",
-                      'class': 'convert_disp fa',
-                      'width': '13px',
-                      'heigth': '13px'
-                    });
+            'src': "{{ url_for('static', filename='loading.gif') }}",
+            'class': 'convert_disp fa',
+            'width': '13px',
+            'heigth': '13px'
+        });
         delete_div.append(elem);
         var deviceid = $(this).data('deviceid');
 
 
         $.ajax({
             type: 'GET',
-            url:'reset_status_entry',
-            data:'deviceid='+ deviceid,
-            success: function(msg){
-            if (msg.status == 'success') {
-                 dataTable.ajax.reload(null, false);
-            }
+            url: 'reset_status_entry',
+            data: 'deviceid=' + deviceid,
+            success: function (msg) {
+                if (msg.status == 'success') {
+                    dataTable.ajax.reload(null, false);
+                }
             },
-            error: function(msg) {
+            error: function (msg) {
                 alert(msg);
                 delete_div.empty();
                 elem = $(document.createElement("i")).attr({
-                      'class': 'fa fa-minus-circle',
+                    'class': 'fa fa-minus-circle',
                 });
                 delete_div.append(elem);
             }
         });
 
-     });
+    });
 
 </script>
 <style>
-   table.dataTable tr.odd { background-color: #F8F8F8; }
-   table.dataTable tr.even { background-color: white; }
+    table.dataTable tr.odd {
+        background-color: #F8F8F8;
+    }
+
+    table.dataTable tr.even {
+        background-color: white;
+    }
 </style>
 
 {% endblock %}
@@ -237,22 +278,28 @@
 <h2>Worker Status</h2>
 
 <div class="row">
-  <div class="col">
-    <div class="alert alert-primary">
-      View workers and their current status. Times are displayed as (HH:)MM:SS.
+    <div class="col">
+        <div class="alert alert-primary">
+            View workers and their current status. Times are displayed as (HH):MM:SS.
+        </div>
     </div>
-  </div>
 </div>
 
-<div class="row">
-  <div class="col">
-    <table id="show-data-status" class="table"></table>
-  </div>
+<div style="text-align: right;">
+    <button id="btn-show-all-children" class="btn btn-success btn-sm" type="button">Expand All</button>
+    <button id="btn-hide-all-children" class="btn btn-success btn-sm" type="button">Collapse All</button>
 </div>
-
+<br>
 <div class="row">
-  <div class="col">
-    Set maximum time in seconds to display "Last update" as <i class="fas fa-check" style="color: green !important;"></i> for an easier overview <input type="number" id="maxSeconds" />
-  </div>
+    <div class="col">
+        <table id="show-data-status" class="table"></table>
+    </div>
+</div>
+<br>
+<div class="row">
+    <div class="col">
+        Set maximum time in seconds to display "Last update" as <i class="fas fa-check"
+                                                                   style="color: green !important;"></i> for an easier overview <input type="number" id="maxSeconds"/>
+    </div>
 </div>
 {% endblock %}

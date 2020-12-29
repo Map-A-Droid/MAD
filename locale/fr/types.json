@@ -129,7 +129,7 @@
   },
   "35": {
     "prototext": "QUEST_BUDDY_PET",
-    "text": ""
+    "text": "Jouez avec votre copain"
   },
   "36": {
     "prototext": "QUEST_BUDDY_LEVEL",
@@ -142,5 +142,13 @@
   "38": {
     "prototext": "QUEST_BUDDY_YATTA",
     "text": ""
+  },
+  "43": {
+    "prototext": "QUEST_MEGA_EVOLVE",
+    "text": "Fais Mega évoluer {0} Pokémon"
+  },
+  "46": {
+    "protoext": "GEOTARGETED_AR_SCAN",
+    "text": "Scanner le Pok\u00e9Stop"
   }
 }

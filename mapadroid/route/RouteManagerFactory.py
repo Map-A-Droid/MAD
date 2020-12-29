@@ -1,8 +1,10 @@
 from typing import Optional
-from mapadroid.route.RouteManagerMon import RouteManagerMon
+
 from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.route.RouteManagerLeveling import RouteManagerLeveling
-from mapadroid.route.RouteManagerLevelingRoutefree import RouteManagerLevelingRoutefree
+from mapadroid.route.RouteManagerLevelingRoutefree import \
+    RouteManagerLevelingRoutefree
+from mapadroid.route.RouteManagerMon import RouteManagerMon
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.route.RouteManagerRaids import RouteManagerRaids
 from mapadroid.worker.WorkerType import WorkerType
@@ -15,7 +17,7 @@ class RouteManagerFactory:
                          path_to_exclude_geofence: Optional[int], routefile: str,
                          mode: WorkerType = WorkerType.UNDEFINED,
                          init: bool = False, name: str = "unknown", settings=None,
-                         coords_spawns_known: bool = False,
+                         coords_spawns_known: bool = True,
                          level: bool = False, calctype: str = "route", use_s2: bool = False,
                          s2_level: int = 15, joinqueue=None, include_event_id=None):
 

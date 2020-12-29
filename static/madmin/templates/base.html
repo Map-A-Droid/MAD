@@ -1,121 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="utf-8">
-    {% if title %}
-    <title>MADmin - {{ title }}</title>
-    {% else %}
-    <title>MADmin</title>
-    {% endif %}
-    <base href="{{config.basePath}}">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style/MAD.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha256-aAr2Zpq8MZ+YA/D6JtRD3xtrwpEz2IqOS+pWD/7XKIw=" crossorigin="anonymous" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/css/jquery.dataTables.min.css" integrity="sha256-YY1izqyhIj4W3iyJOaGWOpXDSwrHWFL4Nfk+W0LyCHE=" crossorigin="anonymous" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.5/css/responsive.dataTables.min.css" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    {% block header %}{% endblock %}
-    {% if not pub %}
-    <style>
-        body {
-          padding-top: 56px;
-        }
-        .brandimg {
-            max-height: 20px;
-        }
-    </style>
-    {% endif %}
+  <meta charset="utf-8">
+  {% if title %}
+  <title>MADmin - {{ title }}</title>
+  {% else %}
+  <title>MADmin</title>
+  {% endif %}
+  <base href="{{config.basePath}}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style/MAD.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css"
+    integrity="sha256-aAr2Zpq8MZ+YA/D6JtRD3xtrwpEz2IqOS+pWD/7XKIw=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css"
+    integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/css/jquery.dataTables.min.css"
+    integrity="sha256-YY1izqyhIj4W3iyJOaGWOpXDSwrHWFL4Nfk+W0LyCHE=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.5/css/responsive.dataTables.min.css"
+    crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  {% block header %}{% endblock %}
+  {% if not pub %}
+  <style>
+    body {
+      padding-top: 56px;
+    }
+
+    .brandimg {
+      max-height: 20px;
+    }
+  </style>
+  {% endif %}
 </head>
 
 <body>
-    {% if not pub %}
-    <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg">
-        <div class="container">
-          <a class="navbar-brand" href="{{ url_for('root') }}">
-              <img src="{{ url_for('static', filename='mad_banner_trans.png') }}" class="brandimg">
-          </a><br>
+  {% if not pub %}
+  <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('root') }}">
+        <img src="{{ url_for('static', filename='mad_banner_trans.png') }}" class="brandimg">
+      </a><br>
 
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-          </button>
-          <div id="navbarNav" class="navbar-collapse collapse">
-              <ul class="navbar-nav mr-auto">
-                  <li class="nav-item">
-                    <a href="{{ url_for('map') }}" class="nav-link">Map</a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="{{ url_for('quest') }}" class="nav-link">Quests</a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="{{ url_for('settings_devices') }}" class="nav-link">Settings</a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="{{ url_for('status') }}" class="nav-link">Status</a>
-                  </li>
-                  <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="statistics" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Statistics
-                    </a>
-                      <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
-                      <a href="{{ url_for('statistics') }}" class="dropdown-item">Global Stats</a>
-                      <a href="{{ url_for('statistics_stop_quest') }}" class="dropdown-item">Quest/Stop Stats</a>
-                      <a href="{{ url_for('statistics_mon') }}" class="dropdown-item">Mon Stats</a>
-                      <a href="{{ url_for('statistics_shiny') }}" class="dropdown-item">Shiny Stats</a>
-                      <a href="{{ url_for('statistics_spawns') }}" class="dropdown-item">Spawnpoint Stats</a>
-                    </div>
-                  </li>
-                  <li class="nav-item">
-                    <a href="{{ url_for('get_phonescreens') }}" class="nav-link">Devicecontrol</a>
-                  </li>
-                  <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="uploaded_files" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Jobs
-                    </a>
-                      <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
-                      <a href="{{ url_for('uploaded_files') }}" class="dropdown-item">Jobs</a>
-                      <a href="{{ url_for('install_status') }}" class="dropdown-item">Job Status</a>
-                      <a href="{{ url_for('install_status', withautojobs='true') }}" class="dropdown-item">Auto Job Status</a>
-                      <a href="{{ url_for('upload') }}" class="dropdown-item">Create APK install job</a>
-                      <a href="{{ url_for('reload_jobs') }}" class="dropdown-item">Reload existing Jobs</a>
-                    </div>
-                  </li>
-                  <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="system" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        System
-                    </a>
-                      <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
-                        <a href="{{ url_for('mad_apks') }}" class="dropdown-item">MADmin APKs</a>
-                        <a href="{{ url_for('events') }}" class="dropdown-item">MAD Events</a>
-                        <a href="{{ url_for('plugins') }}" class="dropdown-item">MAD Plugins</a>
-                        <div class="darkmode_check">
-                          <input class="darkmode-input" type="checkbox" value="" id="darkSwitch">
-                          <label class="darkmode-label" for="darkSwitch">Darkmode</label>
-                        </div>
-                    </div>
-                  </li>
-              </ul>
-              <button type="button" class="btn btn-success btn-sm nav-link text-uppercase font-weight-bold" id="reload">Apply settings</button>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="navbarNav" class="navbar-collapse collapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a href="{{ url_for('map') }}" class="nav-link">Map</a>
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('quest') }}" class="nav-link">Quests</a>
+          </li>
+          <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="settings" id="navbarDropdown" role="button" data-toggle="dropdown"
+            aria-haspopup="true" aria-expanded="false">Settings</a>
+          <div class="dropdown-menu" i aria-labelledby="navbarDropdown">
+            <a href="{{ url_for('settings_areas') }}" class="dropdown-item">Areas</a>
+            <a href="{{ url_for('settings_auth') }}" class="dropdown-item">Auth</a>
+            <a href="{{ url_for('settings_devices') }}" class="dropdown-item">Devices</a>
+            <a href="{{ url_for('settings_geofence') }}" class="dropdown-item">Geofence</a>
+            <a href="{{ url_for('settings_ivlists') }}" class="dropdown-item">IV Lists</a>
+            <a href="{{ url_for('settings_pogoauth') }}" class="dropdown-item">PoGo Auth</a>
+            <a href="{{ url_for('settings_pools') }}" class="dropdown-item">Shared settings</a>
+            <a href="{{ url_for('settings_walkers') }}" class="dropdown-item">Walkers</a>
           </div>
-        </div>
-    </nav>
-    {% endif %}
-    <div class="container" role="main">
-        {% block content %}{% endblock %}
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('status') }}" class="nav-link">Status</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="statistics" id="navbarDropdown" role="button"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Statistics
+            </a>
+            <div class="dropdown-menu" i aria-labelledby="navbarDropdown">
+              <a href="{{ url_for('statistics') }}" class="dropdown-item">Global stats</a>
+              <a href="{{ url_for('statistics_stop_quest') }}" class="dropdown-item">Quest/Stop stats</a>
+              <a href="{{ url_for('statistics_mon') }}" class="dropdown-item">Mon stats</a>
+              <a href="{{ url_for('statistics_shiny') }}" class="dropdown-item">Shiny stats</a>
+              <a href="{{ url_for('statistics_spawns') }}" class="dropdown-item">Spawnpoint stats</a>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('get_phonescreens') }}" class="nav-link">Device control</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="uploaded_files" id="navbarDropdown" role="button"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Jobs
+            </a>
+            <div class="dropdown-menu" i aria-labelledby="navbarDropdown">
+              <a href="{{ url_for('uploaded_files') }}" class="dropdown-item">Jobs</a>
+              <a href="{{ url_for('install_status') }}" class="dropdown-item">Job status</a>
+              <a href="{{ url_for('install_status', withautojobs='true') }}" class="dropdown-item">Auto-job status</a>
+              <a href="{{ url_for('upload') }}" class="dropdown-item">Create APK install job</a>
+              <a href="{{ url_for('reload_jobs') }}" class="dropdown-item">Reload jobs</a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="system" id="navbarDropdown" role="button" data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+              System
+            </a>
+            <div class="dropdown-menu" i aria-labelledby="navbarDropdown">
+              <a href="{{ url_for('autoconfig_root') }}" class="dropdown-item">Auto-Config</a>
+              <a href="{{ url_for('mad_apks') }}" class="dropdown-item">MADmin Packages</a>
+              <a href="{{ url_for('events') }}" class="dropdown-item">MAD Events</a>
+              <a href="{{ url_for('plugins') }}" class="dropdown-item">MAD Plugins</a>
+              <div class="darkmode_check">
+                <input class="darkmode-input" type="checkbox" value="" id="darkSwitch">
+                <label class="darkmode-label" for="darkSwitch">Darkmode</label>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <button type="button" class="btn btn-success btn-sm nav-link text-uppercase font-weight-bold" id="reload">Apply
+          settings</button>
+      </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js" integrity="sha256-rM07UBSW6+4qeBuQ8omnk2429AHQoxqTPSDqEzsJowI=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/js/bootstrap.bundle.min.js" integrity="sha256-Xt8pc4G0CdcRvI0nZ2lRpZ4VHng0EoUDMlGcBSQ9HiQ=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js" integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js" integrity="sha256-9wRM03dUw6ABCs+AU69WbK33oktrlXamEXMvxUaF+KU=" crossorigin="anonymous"></script>
-    <script src="https://cdn.datatables.net/responsive/2.2.5/js/dataTables.responsive.min.js" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='js/dark-mode-switch.js') }}"></script>
-    <!--<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>-->
-    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.Aplus.min.js') }}"></script>
-    <script>
-    $(document).ready(function() {
+  </nav>
+  {% endif %}
+  {% if app_config_mode %}
+  <div class="alert alert-danger">
+    <center>
+      <i class="fas fa-exclamation-triangle"></i> MAD is running in config mode and will not move the workers. Please
+      restart without config mode enabled to begin mapping <i class="fas fa-exclamation-triangle"></i>
+    </center>
+  </div>
+  {% endif %}
+  {% if app_dupe_macs %}
+  <div class="alert alert-danger">
+    <center>
+      <i class="fas fa-exclamation-triangle"></i>Duplicate MAC addresses detected assigned to devices. This will cause
+      issues and it will not be apparent whats broken. This is only checked on MAD startup<i class="fas fa-exclamation-triangle"></i>
+      {% for dupe in app_dupe_macs_devs %}
+      <br>{{ dupe.mac_address }}: {{ dupe.origins }}
+      {% endfor %}
+    </center>
+  </div>
+  {% endif %}
+  <div class="container" role="main">
+    {% block content %}{% endblock %}
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+    integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"
+    integrity="sha256-rM07UBSW6+4qeBuQ8omnk2429AHQoxqTPSDqEzsJowI=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/js/bootstrap.bundle.min.js"
+    integrity="sha256-Xt8pc4G0CdcRvI0nZ2lRpZ4VHng0EoUDMlGcBSQ9HiQ=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js"
+    integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"
+    integrity="sha256-9wRM03dUw6ABCs+AU69WbK33oktrlXamEXMvxUaF+KU=" crossorigin="anonymous"></script>
+  <script src="https://cdn.datatables.net/responsive/2.2.5/js/dataTables.responsive.min.js"
+    crossorigin="anonymous"></script>
+  <script src="{{ url_for('static', filename='js/dark-mode-switch.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.Aplus.min.js') }}"></script>
+  <script>
+    function loadingBlockUI(message) {
+      $.fn.center = function () {
+        this.css("position", "absolute");
+        this.css("top", ($(window).height() - this.height()) / 2 + $(window).scrollTop() + "px");
+        this.css("left", ($(window).width() - this.width()) / 2 + $(window).scrollLeft() + "px");
+        return this;
+      }
+
+      $.blockUI({css: {
+        height: 'auto',
+        textAlign: 'center',
+        width: 'auto'
+      }, message: '<img src="{{ url_for("static", filename="loading.gif") }}" width="100px" /><br/><h2  style="margin-left: 20px;margin-right: 20px;">' + message + '</h2>' })
+
+      $('.blockUI.blockMsg').center();
+    }
+
+    $(document).ready(function () {
+      $.fn.center = function () {
+        this.css("position", "absolute");
+        this.css("top", ($(window).height() - this.height()) / 2 + $(window).scrollTop() + "px");
+        this.css("left", ($(window).width() - this.width()) / 2 + $(window).scrollLeft() + "px");
+        return this;
+      }
+
+
       if (darkSwitch) {
         initTheme();
         darkSwitch.addEventListener('change', () => {
@@ -123,18 +195,21 @@
         });
       }
 
-      $("body").css("visibility","visible");
+      $("body").css("visibility", "visible");
 
       $('[data-toggle="tooltip"]').tooltip();
 
-      $("#reload").click(function() {
+      $("#reload").click(function () {
         if (confirm('Do you really want reload and apply settings?')) {
-          $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
+          $('#navbarNav').removeClass()
+          $("#navbarNav").addClass('navbar-collapse collapse')
+          loadingBlockUI("Applying")
           $(location).attr('href', '{{ url_for('reload') }}');
         }
       });
     });
-    </script>
-    {% block scripts %}{% endblock %}
+  </script>
+  {% block scripts %}{% endblock %}
 </body>
+
 </html>

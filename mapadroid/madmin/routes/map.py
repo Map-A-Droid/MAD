@@ -1,20 +1,23 @@
 import json
 from typing import List, Optional
-from flask import (jsonify, render_template, request, redirect, url_for)
+
+from flask import jsonify, redirect, render_template, request, url_for
 from flask_caching import Cache
+
 from mapadroid.data_manager import DataManagerException
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.madmin.functions import (
-    auth_required, get_coord_float, get_bound_params, get_geofences, generate_coords_from_geofence
-)
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.madmin.functions import (auth_required,
+                                        generate_coords_from_geofence,
+                                        get_bound_params, get_coord_float,
+                                        get_geofences)
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_name
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
@@ -39,7 +42,8 @@ class MADminMap:
         routes = [
             ("/map", self.map),
             ("/get_workers", self.get_workers),
-            ("/get_geofence", self.get_geofence),
+            ("/get_geofences", self.get_geofences),
+            ("/get_areas", self.get_areas),
             ("/get_route", self.get_route),
             ("/get_prioroute", self.get_prioroute),
             ("/get_spawns", self.get_spawns),
@@ -81,7 +85,25 @@ class MADminMap:
         return jsonify(positions)
 
     @auth_required
-    def get_geofence(self):
+    def get_geofences(self):
+        geofences = self._data_manager.get_root_resource("geofence")
+        export = []
+
+        for geofence_id, geofence in geofences.items():
+            geofence_helper = GeofenceHelper(geofence, None, geofence["name"])
+            if len(geofence_helper.geofenced_areas) == 1:
+                geofenced_area = geofence_helper.geofenced_areas[0]
+                if "polygon" in geofenced_area:
+                    export.append({
+                        "id": geofence_id,
+                        "name": geofence["name"],
+                        "coordinates": geofenced_area["polygon"]
+                    })
+
+        return jsonify(export)
+
+    @auth_required
+    def get_areas(self):
         areas = self._mapping_manager.get_areas()
         areas_sorted = sorted(areas, key=lambda x: areas[x]['name'])
         geofences = get_geofences(self._mapping_manager, self._data_manager)
@@ -275,7 +297,7 @@ class MADminMap:
 
         mons_raw = {}
 
-        for index, mon in enumerate(data):
+        for index, _ in enumerate(data):
             try:
                 mon_id = data[index]["mon_id"]
                 if str(mon_id) in mons_raw:

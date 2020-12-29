@@ -2,18 +2,16 @@ import time
 from multiprocessing import Lock, Queue
 from multiprocessing.managers import SyncManager
 from queue import Empty
-from threading import Thread, Event
+from threading import Event, Thread
 from typing import Dict
+
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
-from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.walkerArgs import parse_args
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
-
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
+from mapadroid.utils.MappingManager import MappingManager
 
 logger = get_logger(LoggerEnums.mitm)
-args = parse_args()
 
 
 class MitmMapperManager(SyncManager):
@@ -21,7 +19,7 @@ class MitmMapperManager(SyncManager):
 
 
 class MitmMapper(object):
-    def __init__(self, mapping_manager: MappingManager, db_stats_submit: DbStatsSubmit):
+    def __init__(self, args, mapping_manager: MappingManager, db_stats_submit: DbStatsSubmit):
         self.__mapping = {}
         self.__playerstats: Dict[str, PlayerStats] = {}
         self.__mapping_mutex = Lock()
@@ -166,10 +164,13 @@ class MitmMapper(object):
                 if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
                     del self.__mapping[origin][key]
                 self.__mapping[origin][key] = {}
-                self.__mapping[origin]["location"] = location
-                self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
-                self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
-                self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
+                if location is not None:
+                    self.__mapping[origin]["location"] = location
+                if timestamp_received_raw is not None:
+                    self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
+                    self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
+                if timestamp_received_receiver is not None:
+                    self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
                 self.__mapping[origin][key]["values"] = values_dict
                 updated = True
             else:
@@ -187,6 +188,11 @@ class MitmMapper(object):
         return self.__injected.get(origin, False)
 
     def run_stats_collector(self, origin: str):
+        if not self.__application_args.game_stats:
+            pass
+
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug2("Running stats collector")
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).stats_collector()
 

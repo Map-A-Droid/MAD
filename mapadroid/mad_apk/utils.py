@@ -1,14 +1,20 @@
-from distutils.version import LooseVersion
-from flask import Response, stream_with_context
+import io
 import json
-import requests
-from typing import Tuple, Union, Generator
-from .apk_enums import APKArch, APKType, APKPackage
-from .abstract_apk_storage import AbstractAPKStorage
-from .custom_types import MADapks, MADPackage, MADPackages
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, ADDRESSES_GITHUB
-from mapadroid.utils.logging import get_logger, LoggerEnums
+import zipfile
+from distutils.version import LooseVersion
+from typing import Generator, Tuple, Union
 
+import apkutils
+import requests
+from apkutils.apkfile import BadZipFile, LargeZipFile
+from flask import Response, stream_with_context
+
+from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from .abstract_apk_storage import AbstractAPKStorage
+from .apk_enums import APKArch, APKPackage, APKType
+from .custom_types import MADapks, MADPackage, MADPackages
 
 logger = get_logger(LoggerEnums.package_mgr)
 
@@ -140,6 +146,35 @@ def generate_filename(package: APKType, architecture: APKArch, version: str, mim
     return '{}__{}__{}.{}'.format(friendlyname, version, architecture.name, ext)
 
 
+def get_apk_info(downloaded_file: io.BytesIO) -> Tuple[str, str]:
+    package_version: str = None
+    package_name: str = None
+    try:
+        apk = apkutils.APK(downloaded_file)
+    except:  # noqa: E722 B001
+        logger.warning('Unable to parse APK file')
+    else:
+        manifest = apk.get_manifest()
+        try:
+            package_version, package_name = (manifest['@android:versionName'], manifest['@package'])
+        except (TypeError, KeyError):
+            logger.debug("Invalid manifest file. Potentially a split package")
+            with zipfile.ZipFile(downloaded_file) as zip_data:
+                for item in zip_data.infolist():
+                    try:
+                        with zip_data.open(item, 'r') as fh:
+                            apk = apkutils.APK(io.BytesIO(fh.read()))
+                            manifest = apk.get_manifest()
+                            try:
+                                package_version = manifest['@android:versionName']
+                                package_name = manifest['@package']
+                            except KeyError:
+                                pass
+                    except (BadZipFile, LargeZipFile):
+                        continue
+    return package_version, package_name
+
+
 def is_newer_version(first_ver: str, second_ver: str) -> bool:
     """ Determines if the first version is newer than the second """
     try:
@@ -204,7 +239,11 @@ def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
     Returns:
         Tuple containing (Package or Packages info, status code)
     """
-    package_info: MADPackages = storage_obj.get_current_package_info(package)
+    package_info: MADPackages = None
+    try:
+        package_info = storage_obj.get_current_package_info(package)
+    except AttributeError:
+        pass
     if package_info is None:
         return (None, 404)
     if architecture is None:
@@ -275,18 +314,17 @@ def supported_pogo_version(architecture: APKArch, version: str) -> bool:
         bits = '32'
     else:
         bits = '64'
+    composite_key = '%s_%s' % (version, bits,)
     try:
-        with open('configs/addresses.json') as fh:
-            address_object = json.load(fh)
-            composite_key = '%s_%s' % (version, bits,)
-            address_object[composite_key]
-            valid = True
+        with open('configs/version_codes.json') as fh:
+            json.load(fh)[composite_key]
+            return True
     except KeyError:
         try:
-            requests.get(ADDRESSES_GITHUB).json()[composite_key]
-            valid = True
+            requests.get(VERSIONCODES_URL).json()[composite_key]
+            return True
         except KeyError:
             pass
     if not valid:
-        logger.info('Current version of POGO [{}] is not supported', composite_key)
+        logger.info('Current version of PoGo [{}] is not supported', composite_key)
     return valid

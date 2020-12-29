@@ -1,6 +1,5 @@
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 
@@ -8,7 +7,7 @@ logger = get_logger(LoggerEnums.routemanager)
 class RouteManagerMon(RouteManagerBase):
     def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
                  path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=False, init=False,
+                 path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=True, init=False,
                  name="unknown", settings=None, joinqueue=None, include_event_id=None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
                                   max_radius=max_radius,

@@ -5,13 +5,15 @@ import re
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from multiprocessing import Queue, Event
+from multiprocessing import Event, Queue
 from queue import Empty
 from threading import RLock, Thread
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APKType, file_generator, lookup_arch_enum, \
-    APKPackage, APKArch, supported_pogo_version, MADPackages
 
+from mapadroid.mad_apk import (AbstractAPKStorage, APKArch, APKPackage,
+                               APKType, MADPackages, file_generator,
+                               is_newer_version, lookup_arch_enum,
+                               supported_pogo_version)
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
 
@@ -130,7 +132,7 @@ class DeviceUpdater(object):
                 processtime = datetime.timestamp(datetime.now() + timedelta(minutes=algo))
 
                 self.write_status_log(str(job_id), field='processingdate', value=processtime)
-                self.add_job(globalid, origin, file_, job_id=job_id, type=jobtype, counter=0, status='future',
+                self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=0, status='future',
                              waittime=waittime, processtime=processtime, redo=redo, jobname=jobname)
 
             else:
@@ -578,7 +580,7 @@ class DeviceUpdater(object):
                     '|') or not self._args.job_dt_wh:
                 return
 
-            from discord_webhook import DiscordWebhook, DiscordEmbed
+            from discord_webhook import DiscordEmbed, DiscordWebhook
             _webhook = DiscordWebhook(url=self._args.job_dt_wh_url)
 
             origin = self._log[str(job_id)]['origin']
@@ -633,8 +635,7 @@ class DeviceUpdater(object):
                     self._globaljoblog[globalid]['autojob'] = True
                     self._globaljoblog[globalid]['redoonerror'] = autocommand.get('redoonerror', False)
 
-                    self.preadd_job(origin=origin, job=job, job_id=int(time.time()),
-                                    job_type=str(JobType.CHAIN))
+                    self.preadd_job(origin, job, int(time.time()), str(JobType.CHAIN))
                     # get a unique id !
                     time.sleep(1)
         else:

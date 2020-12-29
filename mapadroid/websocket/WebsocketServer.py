@@ -1,23 +1,27 @@
-import functools
-import queue
-import time
-from threading import Thread, current_thread, Event
-from typing import Dict, Optional, Set, Coroutine, List
-import random as rand
-import websockets
 import asyncio
+import functools
+import logging
+import queue
+import random as rand
+import time
+from threading import Event, Thread, current_thread
+from typing import Coroutine, Dict, List, Optional, Set
+
+import websockets
+
+from mapadroid.data_manager import DataManager
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.CustomTypes import MessageTyping
-from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.authHelper import check_auth
-from mapadroid.data_manager import DataManager
-from mapadroid.utils.logging import InterceptHandler, get_logger, LoggerEnums, get_origin_logger
-import logging
+from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
+                                     get_origin_logger)
+from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.websocket.WebsocketConnectedClientEntry import WebsocketConnectedClientEntry
 from mapadroid.websocket.communicator import Communicator
+from mapadroid.websocket.WebsocketConnectedClientEntry import \
+    WebsocketConnectedClientEntry
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerFactory import WorkerFactory
 
@@ -164,6 +168,8 @@ class WebsocketServer(object):
             return
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.info("New connection from {}", websocket_client_connection.remote_address)
+        if self.__enable_configmode:
+            origin_logger.warning('Connected in ConfigMode.  No mapping will occur in the current mode')
         async with self.__users_connecting_mutex:
             if origin in self.__users_connecting:
                 origin_logger.info("Client is already connecting")
@@ -175,7 +181,17 @@ class WebsocketServer(object):
         async with self.__current_users_mutex:
             origin_logger.debug("Checking if an entry is already present")
             entry = self.__current_users.get(origin, None)
-            if entry is None:
+            device = None
+            use_configmode = self.__enable_configmode
+            if not self.__enable_configmode:
+                for _, dev in self.__data_manager.search('device', params={'origin': origin}).items():
+                    if dev['origin'] == origin:
+                        device = dev
+                        break
+                if not self.__data_manager.is_device_active(device.identifier):
+                    origin_logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
+                    use_configmode = True
+            if entry is None or use_configmode:
                 origin_logger.info("Need to start a new worker thread")
 
                 entry = WebsocketConnectedClientEntry(origin=origin,
@@ -183,7 +199,7 @@ class WebsocketServer(object):
                                                       worker_instance=None,
                                                       worker_thread=None,
                                                       loop_running=self.__loop)
-                if not await self.__add_worker_and_thread_to_entry(entry, origin):
+                if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
                     continue_register = False
             else:
                 origin_logger.info("There is a worker thread entry present, handling accordingly")
@@ -199,7 +215,7 @@ class WebsocketServer(object):
                     # TODO: does this need more handling? probably update communicator or whatever?
                 elif not entry.worker_thread.is_alive():
                     origin_logger.info("Old thread is dead, trying to start a new one")
-                    if not await self.__add_worker_and_thread_to_entry(entry, origin):
+                    if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
                         continue_register = False
                 else:
                     origin_logger.info("Old thread is about to stop. Wait a little and reconnect")
@@ -233,12 +249,12 @@ class WebsocketServer(object):
             self.__worker_shutdown_queue.put(entry.worker_thread)
         origin_logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 
-    async def __add_worker_and_thread_to_entry(self, entry, origin) -> bool:
+    async def __add_worker_and_thread_to_entry(self, entry, origin, use_configmode: bool = None) -> bool:
         communicator: AbstractCommunicator = Communicator(
             entry, origin, None, self.__args.websocket_command_timeout)
+        use_configmode: bool = use_configmode if use_configmode is not None else self.__enable_configmode
         worker: Optional[AbstractWorker] = await self.__worker_factory \
-            .get_worker_using_settings(origin, self.__enable_configmode,
-                                       communicator=communicator)
+            .get_worker_using_settings(origin, use_configmode, communicator=communicator)
         if worker is None:
             return False
         # to break circular dependencies, we need to set the worker ref >.<
@@ -263,9 +279,6 @@ class WebsocketServer(object):
                            websocket_client_connection.remote_address)
             return (None, False)
         origin_logger = get_origin_logger(logger, origin=origin)
-        if not self.__data_manager.is_device_active(origin):
-            origin_logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
-            return (origin, False)
         origin_logger.info("Client registering")
         if self.__mapping_manager is None:
             origin_logger.warning("No configuration has been defined.  Please define in MADmin and click "

@@ -4,8 +4,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css" integrity="sha256-SHMGCYmST46SoyGgo4YR/9AlK1vf3ff84Aq9yK4hdqM=" crossorigin="anonymous" />
 <link rel="stylesheet" href="static/style/leaflet-easybutton.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.EasyButton/2.4.0/easy-button.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.css" />
-<link rel="stylesheet" href="static/style/madmin.css?1580754407" />
+<link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.7.0/dist/leaflet-geoman.css" />
+<link rel="stylesheet" href="static/style/madmin.css?1596807250" />
 {% endblock %}
 
 {% block scripts %}
@@ -19,9 +19,10 @@ var setlng = {{ setlng }};
 <script src="static/js/leaflet-sidebar.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.EasyButton/2.4.0/easy-button.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.7.0/dist/leaflet-geoman.min.js"></script>
+<script src="static/js/leaflet-event-forwarder.js?1599172474"></script>
 <script src="static/js/s2geometry.min.js"></script>
-<script src="static/js/madmin.js?1592482058"></script>
+<script src="static/js/madmin.js?1598819723"></script>
 {% endblock %}
 
 {% block content %}
@@ -29,12 +30,13 @@ var setlng = {{ setlng }};
   <div id="sidebar" class="leaflet-sidebar">
     <div class="leaflet-sidebar-tabs">
       <ul role="tablist">
-        <li><a href="#points" role="tab"><i class="fa fa-map-marker"></i></a></li>
-        <li><a href="#routes" role="tab"><i class="fa fa-route"></i></a></li>
-        <li><a href="#prioroutes" role="tab"><i class="fas fa-sort-numeric-up"></i></a></li>
-        <li><a href="#geofences" role="tab"><i class="fa fa-draw-polygon"></i></a></li>
-        <li><a href="#spawns" role="tab"><i class="fa fa-splotch"></i></a></li>
-        <li><a href="#settings" role="tab"><i class="fa fa-cog"></i></a></li>
+        <li><a href="#points" role="tab" title="Points"><i class="fa fa-map-marker"></i></a></li>
+        <li><a href="#routes" role="tab" title="Routes"><i class="fa fa-route"></i></a></li>
+        <li><a href="#prioroutes" role="tab" title="Priority routes"><i class="fas fa-sort-numeric-up"></i></a></li>
+        <li><a href="#geofences" role="tab" title="Geofences"><i class="fa fa-draw-polygon"></i></a></li>
+        <li><a href="#areas" role="tab" title="Areas"><i class="fas fa-drafting-compass"></i></a></li>
+        <li><a href="#spawns" role="tab" title="Spawnpoints"><i class="fa fa-splotch"></i></a></li>
+        <li><a href="#settings" role="tab" title="Settings"><i class="fa fa-cog"></i></a></li>
       </ul>
     </div>
 
@@ -97,11 +99,28 @@ var setlng = {{ setlng }};
         <div class="sidebar-pane-content">
           <ul class="list-group list-group-flush">
             {% raw %}
-            <li v-for="(fence, index) in layers.dyn.geofences" class="list-group-item layer-item d-flex">
+            <li v-for="geofence in sortedGeofences" v-bind:key="geofence.id" class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">{{ geofence.name }}</div>
+              <div class="custom-control custom-switch">
+                <input :id="'layers-dyn-geofences-'+geofence.id" type="checkbox" v-model="geofence.show" class="custom-control-input" />
+                <label :for="'layers-dyn-geofences-'+geofence.id" class="custom-control-label"></label>
+              </div>
+            </li>
+            {% endraw %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="leaflet-sidebar-pane" id="areas">
+        <h1 class="leaflet-sidebar-header bg-dark">Areas<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <div class="sidebar-pane-content">
+          <ul class="list-group list-group-flush">
+            {% raw %}
+            <li v-for="(area, index) in layers.dyn.areas" class="list-group-item layer-item d-flex">
               <div class="flex-grow-1">{{ index }}</div>
               <div class="custom-control custom-switch">
-                <input :id="'layers-dyn-geofences-'+index" type="checkbox" v-model="layers.dyn.geofences[index].show" class="custom-control-input" />
-                <label :for="'layers-dyn-geofences-'+index" class="custom-control-label"></label>
+                <input :id="'layers-dyn-areas-'+index" type="checkbox" v-model="area.show" class="custom-control-input" />
+                <label :for="'layers-dyn-areas-'+index" class="custom-control-label"></label>
               </div>
             </li>
             {% endraw %}

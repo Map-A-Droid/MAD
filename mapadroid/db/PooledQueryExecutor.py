@@ -1,10 +1,11 @@
 from multiprocessing import Lock, Semaphore
 from multiprocessing.managers import SyncManager
+
 import mysql
 from mysql.connector import ProgrammingError
 from mysql.connector.pooling import MySQLConnectionPool
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
 
@@ -80,17 +81,33 @@ class PooledQueryExecutor:
         get_dict = kwargs.get('get_dict', False)
         raise_exc = kwargs.get('raise_exc', False)
         suppress_log = kwargs.get('suppress_log', False)
+        # We do not want to display binary data
+        has_binary = False
+        disp_args = []
+        if args and type(args) is tuple:
+            for value in args:
+                if isinstance(value, bytes):
+                    disp_args.append(value[:10])
+                    has_binary = True
+                else:
+                    disp_args.append(value)
+        else:
+            disp_args = (args)
         try:
             multi = False
             if type(args) != tuple and args is not None:
                 args = (args,)
             if sql.count(';') > 1:
                 multi = True
-                for res in conn.cmd_query_iter(sql):
+                for _ in conn.cmd_query_iter(sql):
                     pass
             else:
                 cursor.execute(sql, args)
-            logger.debug3(cursor.statement)
+            if not has_binary:
+                logger.debug3(cursor.statement)
+            else:
+                logger.debug3("SQL: {}", sql)
+                logger.debug3("Args: {}", disp_args)
             if commit is True:
                 conn.commit()
                 if not multi:
@@ -107,9 +124,7 @@ class PooledQueryExecutor:
                     return res
         except mysql.connector.Error as err:
             if not suppress_log:
-                logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
-            logger.debug3(sql)
-            logger.debug3(args)
+                logger.error("Failed executing query: {} ({}), error: {}", sql, disp_args, err)
             if raise_exc:
                 raise err
             return None
@@ -273,7 +288,7 @@ class PooledQueryExecutor:
             returned_vals.append(row[0])
         return returned_vals
 
-    def autoexec_delete(self, table, keyvals, literals=[], where_append=[], **kwargs):
+    def autoexec_delete(self, table, keyvals, literals=None, where_append=None, **kwargs):
         """ Performs a delete
         Args:
             table (str): Table to run the query against
@@ -281,6 +296,10 @@ class PooledQueryExecutor:
             literals (list): Datapoints that should not be escaped
             where_append (list): Additional data to append to the query
         """
+        if literals is None:
+            literals = []
+        if where_append is None:
+            where_append = []
         if type(keyvals) is not dict:
             raise Exception("Data must be a dictionary")
         if type(literals) is not list:
@@ -295,7 +314,8 @@ class PooledQueryExecutor:
         query = query % tuple(literal_values)
         self.execute(query, args=tuple(column_values), commit=True, raise_exc=True, **kwargs)
 
-    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT", **kwargs):
+    def autoexec_insert(self, table, keyvals, literals=None, optype="INSERT", **kwargs):
+
         """ Auto-inserts into a table and handles all escaping
         Args:
             table (str): Table to run the query against
@@ -308,6 +328,8 @@ class PooledQueryExecutor:
         Returns (int):
             Primary key for the row
         """
+        if literals is None:
+            literals = []
         optype = optype.upper()
         if optype not in ["INSERT", "REPLACE", "INSERT IGNORE", "ON DUPLICATE"]:
             raise ProgrammingError("MySQL operation must be 'INSERT', 'REPLACE', 'INSERT IGNORE', 'ON DUPLICATE',"
@@ -337,7 +359,7 @@ class PooledQueryExecutor:
             column_values += ondupe_values
         return self.execute(query, args=tuple(column_values), commit=True, get_id=True, raise_exc=True, **kwargs)
 
-    def autoexec_update(self, table, set_keyvals, literals=[], where_keyvals={}, where_literals=[], **kwargs):
+    def autoexec_update(self, table, set_keyvals, literals=None, where_keyvals=None, where_literals=None, **kwargs):
         """ Auto-updates into a table and handles all escaping
         Args:
             table (str): Table to run the query against
@@ -346,6 +368,12 @@ class PooledQueryExecutor:
             where_keyvals (dict): Data used in the where clause
             where_literals (list): Datapoints that should not be escaped
         """
+        if literals is None:
+            literals = []
+        if where_keyvals is None:
+            where_keyvals = {}
+        if where_literals is None:
+            where_literals = []
         if type(set_keyvals) is not dict:
             raise Exception("Set Keyvals must be a dictionary")
         if type(literals) is not list:

@@ -1,6 +1,5 @@
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 
@@ -35,8 +34,7 @@ class RouteManagerRaids(RouteManagerBase):
     def _retrieve_latest_priority_queue(self):
         # TODO: pass timedelta for timeleft on raids that can be ignored.
         # e.g.: a raid only has 5mins to go, ignore those
-        return self.db_wrapper.get_next_raid_hatches(self.delay_after_timestamp_prio,
-                                                     self.geofence_helper)
+        return self.db_wrapper.get_next_raid_hatches(self.geofence_helper)
 
     def _delete_coord_after_fetch(self) -> bool:
         return False

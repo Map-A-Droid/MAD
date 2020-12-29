@@ -18,10 +18,15 @@
             ],
             "columnDefs": [
             {
-                    "targets": [1,2],
-                    "render": function (data, type, row) {
-                        return type === "display" && data.toString().length > 10 ?
-                        data.toString().substr(0,8)+"..." : data;
+                "targets": [3],
+                "render": function (data, type, row) {
+                    var lastscan = new Date(Date.parse(row.lastscan));
+                    var lastnonscan = new Date(Date.parse(row.lastnonscan));
+                    if (lastscan > new Date(Date.parse('1970-01-01 00:00:00'))) {
+                        return "<i class='fa fa-check fablack' data-toggle='tooltip' title='Known despawn time'></i></a></li> " + lastscan.getFullYear() + "-" + ("0"+(lastscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastscan.getDate()).slice(-2) + " " + ("0" + lastscan.getHours()).slice(-2) + ":" + ("0" + lastscan.getMinutes()).slice(-2) + ":" + ("0" + lastscan.getSeconds()).slice(-2)
+                    } else {
+                        return "<i class='fa fa-ban fablack' data-toggle='tooltip' title='Unknown despawn time'></i></a></li> " + lastnonscan.getFullYear() + "-" + ("0"+(lastnonscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastnonscan.getDate()).slice(-2) + " " + ("0" + lastnonscan.getHours()).slice(-2) + ":" + ("0" + lastnonscan.getMinutes()).slice(-2) + ":" + ("0" + lastnonscan.getSeconds()).slice(-2);
+                    }
                 }
             },
             {
@@ -38,17 +43,18 @@
                     "targets": [5],
                     "render": function (data, type, row) {
                         var conv = "";
-                        var del = "<button type='button' class='delete btn btn-danger btn-sm'><a href='delete_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}' class='confirm' title='Delete spawnpoint'><i class='fa fa-trash'></i></a></button>";
+                        var del = `<button type="button" class="delete btn btn-danger btn-sm"><a href="delete_spawn?id=${row.id}&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}" class="confirm" data-toggle="tooltip" title="Delete spawnpoint"><i class='fa fa-trash'></i></a></button>`;
                         {% if event != 'DEFAULT' %}
-                            conv = "<button type='button' class='delete btn btn-info btn-sm'><a href='convert_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}' class='confirm' title='Convert event spawnpoint to non-event spawnpoint'><i class='fa fa-exchange-alt'></i></a></button>";
+                        conv = `<button type="button" class="delete btn btn-info btn-sm"><a href="convert_spawn?id=${row.id}&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}" class="confirm" data-toggle="tooltip" title="Convert event spawnpoint to non-event spawnpoint"><i class='fa fa-exchange-alt'></i></a></button>`;
                         {% endif %}
-                        var map = "<button type='button' class='delete btn btn-success btn-sm'><a href='map?lat=" + row.lat + "&lng=" + row.lon + "' title='Show on Madmin map' target=_new> <i class='fa fa-map-marker'></i></a></button>";
-                        return del + " " + conv + " " + map
+                        var map = `<button type="button" class="delete btn btn-success btn-sm" data-toggle="tooltip" title="Show on MADmin map"><a href="map?lat=${row.lat}&lng=${row.lon}" target="_new"><i class="fa fa-map-marker"></i></a></button>`;
+                        return `<span style="white-space: nowrap">${del} ${conv} ${map}</span>`
                     }
                 }
             ],
             "drawCallback": function () {
                 $("img.lazy").lazyload();
+                $("[data-toggle='tooltip']").tooltip();
             },
             "responsive": {{ responsive }},
             "order": [[ 0, "asc" ]],
@@ -59,7 +65,7 @@
   }
 
     $(document).ready(function () {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+        loadingBlockUI("Loading");
         $('body').Aplus();
         $("#navgyms").addClass("active");
         $.ajax({
@@ -68,6 +74,7 @@
             success: function (result) {
                 setTimeout($.unblockUI, 100);
                 setGrid('#show-spawnpoints-stats', result);
+                $("[data-toggle='tooltip']").tooltip();
             }
         });
     });

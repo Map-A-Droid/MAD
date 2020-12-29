@@ -1,12 +1,16 @@
-from apkutils.apkfile import BadZipFile, LargeZipFile
-import flask
 import io
 from threading import Thread
-from .apkHandler import APKHandler
-from mapadroid.mad_apk import APKArch, APKType, stream_package, APKWizard, get_apk_status, MADapks, \
-    PackageImporter, WizardError
+
+import flask
+from apkutils.apkfile import BadZipFile, LargeZipFile
+
+from mapadroid.mad_apk import (APKArch, APKType, APKWizard, MADapks,
+                               PackageImporter, WizardError, get_apk_status,
+                               stream_package)
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
+
+from .apkHandler import APKHandler
 
 
 class APIMadAPK(APKHandler):
@@ -23,6 +27,9 @@ class APIMadAPK(APKHandler):
     def get(self, apk_type: APKType, apk_arch: APKArch):
         if flask.request.url.split('/')[-1] == 'download':
             return stream_package(self.dbc, self.storage_obj, apk_type, apk_arch)
+        elif flask.request.url.split('/')[-1] == 'reload':
+            self.storage_obj.reload()
+            return (None, 200)
         else:
             data = get_apk_status(self.storage_obj)
             if apk_type is None and apk_arch is APKArch.noarch:
@@ -112,5 +119,9 @@ class APIMadAPK(APKHandler):
         if type(resp) == flask.Response:
             return resp
         if resp:
+            del_where = {
+                "usage": apk_type.value
+            }
+            self.dbc.autoexec_delete("mad_apk_autosearch", del_where)
             return (None, 202)
         return (None, 404)

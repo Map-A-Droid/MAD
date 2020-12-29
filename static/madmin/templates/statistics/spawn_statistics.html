@@ -5,110 +5,122 @@
 
 {% block scripts %}
 <script>
-    function setGrid(tableGridHtmlId, gridData) {
-        $(tableGridHtmlId).DataTable({
-            "data": gridData,
-            "columns": [
-                    { data: 'fence', title: 'Fence' },
-                    { data: 'event', title: 'Type/Event' },
-                    { data: 'mode', title: 'Mode' },
-                    { data: 'sum', title: 'Spawnpoints' },
-                    { data: 'known', title: 'known' },
-                    { data: 'unknown', title: 'unknown' },
-                    { data: null, title: 'Actions', orderable: false }
-            ],
-            "columnDefs": [
-                {
-                    "targets": [6],
-                    "render": function (data, type, row) {
-                        var all = "<button type='button' class='btn btn-primary btn-sm'><a href='spawn_details?id=" + row.area_id + "&eventid=" + row.eventid + "&index=" + row.index + "&event=" + row.event + "&mode=ALL' title='Show all Spawnpoints ( " + row.sum + " )'><i class='fa fa-eye'></i></a></button>";
-                        var del = "<button type='button' class='delete btn btn-danger btn-sm confirm' data-areaid='" + row.area_id + "' data-index='" + row.index + "' data-eventid='" + row.eventid + "' title='Do you really want to delete these spawnpoints?'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>";
-                        var conv = "";
-                        var activetoday = "";
-                        var outdated = "";
+  function setGrid(tableGridHtmlId, gridData) {
+    $(tableGridHtmlId).DataTable({
+      "data": gridData,
+      "columns": [
+        { data: 'fence', title: 'Fence', responsivePriority: 1, },
+        { data: 'event', title: 'Type/Event', responsivePriority: 8 },
+        { data: 'mode', title: 'Mode', responsivePriority: 7 },
+        { data: 'sum', title: 'Spawnpoints', responsivePriority: 4, },
+        { data: 'known', title: 'Known', responsivePriority: 6 },
+        { data: 'unknown', title: 'Unknown', responsivePriority: 5 },
+        { data: null, title: '% known', responsivePriority: 2 },
+        { data: null, title: 'Actions', orderable: false, responsivePriority: 3 }
+      ],
+      "columnDefs": [
+        {
+          "targets": [6],
+          "render": function (data, type, row) {
 
-                        if (row.event == "DEFAULT") {
-                            outdated = "<button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i></button>";
-                            if (row.outdatedspawns > 0) {
-                                outdated = "<button type='button' class='outdated btn btn-dark btn-sm'><a href='spawn_details?id=" + row.area_id + "&index=" + row.index + "&eventid=" + row.eventid + "&event=" + row.event + "&mode=OLD' title='Show outdated Spawnpoints ( " + row.outdatedspawns + " )'><i class='fa fa-history'></i></a></button>";
-                            }
-                        }
 
-                        if (row.event != "DEFAULT") {
-                            conv = "<button type='button' class='convert delete btn btn-info btn-sm' data-areaid='" + row.area_id + "' data-index='" + row.index + "' data-eventid='" + row.eventid + "'> <div class='convert_div' style='display:inline;'><i class='fa fa-exchange-alt'></i></div></button>";
-                            activetoday = "<button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i></button>";
-                            if (row.todayspawns > 0) {
-                                activetoday = "<button type='button' class='activetoday btn btn-success btn-sm'><a href='spawn_details?id=" + row.area_id + "&index=" + row.index + "&eventid=" + row.eventid + "&event=" + row.event + "&mode=ACTIVE' title='Check still active event spawnpoints ( " + row.todayspawns + " )'><i class='fa fa-clock'></i></a></button>";
-                            }
-                        }
-                        return all + " " + del + " " + activetoday + " " + outdated + " " + conv
-                    }
-                }
-            ],
-            "drawCallback": function () {
-                $("img.lazy").lazyload();
-            },
-            "responsive": {{ responsive }},
-            "order": [[ 0, "asc" ]],
-            "stateSave": true,
-            "stateDuration": 0,
-            "stateSaveCallback": function(settings,data) {
-                localStorage.setItem( 'MAD_aeSP_' + settings.sInstance, JSON.stringify(data) )
-            },
-            "stateLoadCallback": function(settings) {
-                return JSON.parse( localStorage.getItem( 'MAD_aeSP_' + settings.sInstance ) )
+            return `<span style="white-space: nowrap">${parseFloat((row.known / row.sum * 100)).toFixed(2) + "%"}</span>`
+          }
+        },
+        {
+          "targets": [7],
+          "render": function (data, type, row) {
+            var all = `<a class="btn btn-primary btn-sm" href="spawn_details?id=${row.area_id}&eventid=${row.eventid}&index=${row.index}&event=${row.event}&mode=ALL" data-toggle="tooltip" title="Show all Spawnpoints (${row.sum})"><i class="fa fa-eye"></i></a>`;
+            var del = `<button type="button" class="delete btn btn-danger btn-sm confirm" data-areaid="${row.area_id}" data-index="${row.index}" data-eventid="${row.eventid}" data-toggle="tooltip" title="Delete all spawnpoints"><span class="delete_div"><i class="fa fa-trash"></i></span></button>`;
+            var conv = "";
+            var activetoday = "";
+            var outdated = "";
+
+            if (row.event == "DEFAULT") {
+              outdated = "<button type='button' class='btn btn-dark btn-sm'><a href='#' data-toggle='tooltip' title='No dead spawnpoints'><i class='fa fa-minus-circle'></i></a></button>";
+              if (row.outdatedspawns > 0) {
+                outdated = `<button type="button" class="outdated btn btn-dark btn-sm" data-toggle="tooltip" title="Show dead spawnpoints (${row.outdatedspawns})"><a href="spawn_details?id=${row.area_id}&index=${row.index}&eventid=${row.eventid}&event=${row.event}&mode=OLD"><i class="fa fa-history"></i></a></button>`;
+              }
             }
+
+            if (row.event != "DEFAULT") {
+              conv = `<button type="button" class="convert btn btn-info btn-sm" data-areaid="${row.area_id}" data-index="${row.index}" data-eventid="${row.eventid}" data-toggle="tooltip" title="Convert event spawnpoints"><span class="convert_div"><i class="fa fa-exchange-alt"></i></span></button>`;
+              activetoday = "<button type='button' class='btn btn-success btn-sm' data-toggle='tooltip' title='Has currently active event spawnpoints'><i class='fa fa-minus-circle'></i></button>";
+              if (row.todayspawns > 0) {
+                activetoday = `<button type="button" class="activetoday btn btn-success btn-sm"><a href="spawn_details?id=${row.area_id}&index=${row.index}&eventid=${row.eventid}&event=${row.event}&mode=ACTIVE" data-toggle="tooltip" title="Check still active event spawnpoints (${row.todayspawns})"><i class='fa fa-clock'></i></a></button>`;
+              }
+            }
+            return `<span style="white-space: nowrap">${all} ${del} ${activetoday} ${outdated} ${conv}</span>`
+          }
+        }
+      ],
+      "drawCallback": function () {
+        $("img.lazy").lazyload();
+        $("[data-toggle='tooltip']").tooltip();
+      },
+      "responsive": {{ responsive }},
+  "order": [[0, "asc"]],
+    "stateSave": true,
+      "stateDuration": 0,
+        "stateSaveCallback": function(settings, data) {
+          localStorage.setItem('MAD_aeSP_' + settings.sInstance, JSON.stringify(data))
+        },
+  "stateLoadCallback": function(settings) {
+    return JSON.parse(localStorage.getItem('MAD_aeSP_' + settings.sInstance))
+  }
         });
   }
 
   function loadData() {
-      $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Loading...</h2>' });
-            $('body').Aplus();
-            $("#navgyms").addClass("active");
-            $.ajax({
-                type: "GET",
-                url: "get_spawnpoints_stats" + "?type=" + $("#geofence_type_selector").val(),
-                success: function (result) {
-                    setTimeout($.unblockUI, 100);
-                    setGrid('#show-spawnpoints-stats', result.spawnpoints);
-                }
-            });
+    loadingBlockUI("Loading");
+    $('body').Aplus();
+    $("#navgyms").addClass("active");
+    $.ajax({
+      type: "GET",
+      url: "get_spawnpoints_stats" + "?type=" + $("#geofence_type_selector").val(),
+      success: function (result) {
+        setTimeout($.unblockUI, 100);
+        setGrid('#show-spawnpoints-stats', result.spawnpoints);
+        $("[data-toggle='tooltip']").tooltip();
+      }
+    });
   }
 
-        function loadDataByFence() {
-            $.blockUI({ message: '<img src="static/loading.gif" width="100px" /><br /><h2>Loading...</h2>' });
-            $('body').Aplus();
-            $("#navgyms").addClass("active");
-            $.ajax({
-                type: "GET",
-                url: "get_spawnpoints_stats" + "?fence=" + $("select#geofence_type_selector_overkill").val(),
-                success: function (result) {
+  function loadDataByFence() {
+    loadingBlockUI("Loading");
+    $('body').Aplus();
+    $("#navgyms").addClass("active");
+    $.ajax({
+      type: "GET",
+      url: "get_spawnpoints_stats" + "?fence=" + $("select#geofence_type_selector_overkill").val(),
+      success: function (result) {
         setTimeout($.unblockUI, 100);
-                    setGrid('#show-spawnpoints-stats', result.spawnpoints);
-                }
-            });
-        }
+        setGrid('#show-spawnpoints-stats', result.spawnpoints);
+        $("[data-toggle='tooltip']").tooltip();
+      }
+    });
+  }
 
-        function enableOverkillMode() {
+  function enableOverkillMode() {
     destroyDatatable("#show-spawnpoints-stats");
-                $("#geofence_type_selector_span").hide();
-                $("div#geofence_type_selector_overkill").show();
-                $("select#geofence_type_selector_overkill").change(function() {
+    $("#geofence_type_selector_span").hide();
+    $("div#geofence_type_selector_overkill").show();
+    $("select#geofence_type_selector_overkill").change(function () {
       destroyDatatable("#show-spawnpoints-stats");
-                        loadDataByFence();
-                });
-        }
+      loadDataByFence();
+    });
+  }
 
-        function enableNormalMode() {
+  function enableNormalMode() {
     destroyDatatable("#show-spawnpoints-stats");
-                $("div#geofence_type_selector_overkill").hide();
-                $("#geofence_type_selector_span").show();
-                $("#geofence_type_selector").change(function() {
+    $("div#geofence_type_selector_overkill").hide();
+    $("#geofence_type_selector_span").show();
+    $("#geofence_type_selector").change(function () {
       destroyDatatable("#show-spawnpoints-stats");
-                        loadData();
-                });
-                loadData();
-        }
+      loadData();
+    });
+    loadData();
+  }
 
   function destroyDatatable(selector) {
     if ($.fn.DataTable.isDataTable(selector)) {
@@ -116,248 +128,256 @@
     }
   }
 
-        function loadSummary() {
-            $.blockUI({ message: '<img src="static/loading.gif" width="100px" /><br /><h2>Quick check, please wait.</h2>' });
-            $('body').Aplus();
-            $("#navgyms").addClass("active");
-            $.ajax({
-                type: "GET",
-                url: "get_spawnpoints_stats_summary",
-                success: function (result) {
+  function loadSummary() {
+    loadingBlockUI("Quick check, please wait.");
+    $('body').Aplus();
+    $("#navgyms").addClass("active");
+    $.ajax({
+      type: "GET",
+      url: "get_spawnpoints_stats_summary",
+      success: function (result) {
         var tmp_fences = Object.keys(result.fences).map(k => result.fences[k]);
         var mon_mitm_fences_count = tmp_fences.filter(fence => fence.mode === "mon_mitm").length
-        console.log("e*s*m = " + result.events.length * result.spawnpoints_count * mon_mitm_fences_count);
-                    tmp_fences.sort(function (a, b) {
-                        return a["name"].toLowerCase() > b["name"].toLowerCase() ? 1 : -1;
-                    });
-                    $("select#geofence_type_selector_overkill").append($('<option>', {value: -1, text: "-- select geofence --"}));
-                        for (fence in tmp_fences) {
-                            $("select#geofence_type_selector_overkill").append($('<option>', {value: tmp_fences[fence].area_id, text: tmp_fences[fence].name + " [" + tmp_fences[fence].mode + "]"}));
-                    }
-        // 1500000 is totally arbitrary number, it all depends from database, number of events, etc.
-                    if (result.events.length * result.spawnpoints_count * mon_mitm_fences_count > 1500000) {
-                        // Enable overkill mode aka single area selector. Better than loading for 10 minutes.
-                        $.unblockUI();
-                        enableOverkillMode();
-                    } else {
-                        enableNormalMode();
-                    }
-                }
-            });
-        }
-
-
-    $(document).ready(function () {
-        loadSummary();
-        $("a#overkill_mode").click(function() {
-            enableOverkillMode();
+        tmp_fences.sort(function (a, b) {
+          return a["name"].toLowerCase() > b["name"].toLowerCase() ? 1 : -1;
         });
-        $("a#normal_mode").click(function() {
-          if (confirm("We detected you have a lot of spawns*events*geofences, switching to normal mode can take a long time and provide no more functionality than current mode. Just shows more geofences at the same time. Do you really want to switch?")) {
-              enableNormalMode();
-    }
+        $("select#geofence_type_selector_overkill").append($('<option>', { value: -1, text: "-- select geofence --" }));
+        for (fence in tmp_fences) {
+          $("select#geofence_type_selector_overkill").append($('<option>', { value: tmp_fences[fence].area_id, text: tmp_fences[fence].name + " [" + tmp_fences[fence].mode + "]" }));
+        }
+        // 1500000 is totally arbitrary number, it all depends from database, number of events, etc.
+        if (result.events.length * result.spawnpoints_count * mon_mitm_fences_count > 1500000) {
+          // Enable overkill mode aka single area selector. Better than loading for 10 minutes.
+          $.unblockUI();
+          enableOverkillMode();
+        } else {
+          enableNormalMode();
+        }
+      }
+    });
+  }
+
+
+  $(document).ready(function () {
+    loadSummary();
+    $("a#overkill_mode").click(function () {
+      enableOverkillMode();
+    });
+    $("a#normal_mode").click(function () {
+      if (confirm("We detected you have a lot of spawns*events*geofences, switching to normal mode can take a long time and provide no more functionality than current mode. Just shows more geofences at the same time. Do you really want to switch?")) {
+        enableNormalMode();
+      }
+    });
   });
+
+  $("#show-spawnpoints-stats").on("click", ".convert", function (e) {
+    e.stopImmediatePropagation();
+    var r = confirm("Do you really want to convert the spawnpoint(s) to normal one(s)?");
+    if (r != true) {
+      return;
+    }
+    var convert_div = $(this).find(".convert_div");
+    convert_div.empty();
+    elem = $(document.createElement("img")).attr({
+      'src': "{{ url_for('static', filename='loading.gif') }}",
+      'class': 'convert_disp fa',
+      'width': '13px',
+      'heigth': '13px'
+    });
+    var areaid = $(this).data('areaid');
+    var eventid = $(this).data('eventid');
+    var index = $(this).data('index');
+    convert_div.append(elem);
+
+    $.ajax({
+      type: 'GET',
+      url: 'convert_spawns',
+      data: 'id=' + areaid + '&eventid=' + eventid + '&index=' + index,
+      success: function (msg) {
+        if (msg.status == 'success') {
+          destroyDatatable("#show-spawnpoints-stats");
+          loadData();
+        } else if (msg.status == 'event') {
+          alert('Event is still active.');
+          convert_div.empty();
+          elem = $(document.createElement("i")).attr({
+            'class': 'fa fa-minus-circle',
+          });
+          convert_div.append(elem);
+        }
+      },
+      error: function (msg) {
+        alert(msg);
+        convert_div.empty();
+        elem = $(document.createElement("i")).attr({
+          'class': 'fa fa-minus-circle',
+        });
+        convert_div.append(elem);
+      }
     });
 
-    $( "#show-spawnpoints-stats" ).on( "click", '.convert', function(e) {
-        e.stopImmediatePropagation();
-        var r = confirm("You really want to convert this spawnpoints to normale one?");
-        if (r != true) {
-             return;
+  });
+
+  $("#delete_unfenced_coords").on("click", "button.delete", function (e) {
+    e.stopImmediatePropagation();
+    var r = confirm("You really want to delete all unfenced spawnpoints?");
+    if (r != true) {
+      return;
+    }
+    var delete_div = $(this).find(".delete_all_div");
+    delete_div.empty();
+    elem = $(document.createElement("img")).attr({
+      'src': "{{ url_for('static', filename='loading.gif') }}",
+      'class': 'convert_disp fa',
+      'width': '13px',
+      'heigth': '13px'
+    });
+    delete_div.append(elem);
+
+    $.ajax({
+      type: 'GET',
+      url: 'delete_unfenced_spawns',
+      success: function (msg) {
+        if (msg.status == 'success') {
+
+          delete_div.empty();
+          elem = $(document.createElement("i")).attr({
+            'class': 'fa fa-check',
+          });
+          delete_div.append(elem);
         }
-        var convert_div = $(this).find(".convert_div");
-        convert_div.empty();
-        elem = $(document.createElement("img")).attr({
-                      'src': "{{ url_for('static', filename='loading.gif') }}",
-                      'class': 'convert_disp fa',
-                      'width': '13px',
-                      'heigth': '13px'
-                    });
-        var areaid = $(this).data('areaid');
-        var eventid = $(this).data('eventid');
-        var index = $(this).data('index');
-        convert_div.append(elem);
-
-        $.ajax({
-            type: 'GET',
-            url:'convert_spawns',
-            data:'id='+ areaid +'&eventid='+ eventid + '&index=' + index,
-            success: function(msg){
-                if (msg.status == 'success') {
-                    destroyDatatable("#show-spawnpoints-stats");
-                    loadData();
-                } else if (msg.status == 'event') {
-                    alert('Event is still active.');
-                    convert_div.empty();
-                    elem = $(document.createElement("i")).attr({
-                          'class': 'fa fa-minus-circle',
-                    });
-                    convert_div.append(elem);
-                }
-            },
-            error: function(msg) {
-                alert(msg);
-                convert_div.empty();
-                elem = $(document.createElement("i")).attr({
-                      'class': 'fa fa-minus-circle',
-                });
-                convert_div.append(elem);
-            }
-        });
-
-     });
-
-     $( "#delete_unfenced_coords" ).on( "click", '.delete', function(e) {
-        e.stopImmediatePropagation();
-        var r = confirm("You really want to delete all unfenced spawnpoints?");
-        if (r != true) {
-             return;
-        }
-        var delete_div = $(this).find(".delete_all_div");
+      },
+      error: function (msg) {
+        alert(msg);
         delete_div.empty();
-        elem = $(document.createElement("img")).attr({
-                      'src': "{{ url_for('static', filename='loading.gif') }}",
-                      'class': 'convert_disp fa',
-                      'width': '13px',
-                      'heigth': '13px'
-                    });
-        delete_div.append(elem);
-
-        $.ajax({
-            type: 'GET',
-            url:'delete_unfenced_spawns',
-            success: function(msg){
-                if (msg.status == 'success') {
-
-                    delete_div.empty();
-                    elem = $(document.createElement("i")).attr({
-                         'class': 'fa fa-check',
-                    });
-                    delete_div.append(elem);
-                }
-            },
-            error: function(msg) {
-                alert(msg);
-                delete_div.empty();
-                elem = $(document.createElement("i")).attr({
-                      'class': 'fa fa-minus-circle',
-                });
-                delete_div.append(elem);
-            }
+        elem = $(document.createElement("i")).attr({
+          'class': 'fa fa-minus-circle',
         });
+        delete_div.append(elem);
+      }
+    });
 
-     });
+  });
 
-     $( "#show-spawnpoints-stats" ).on( "click", 'button.delete', function(e) {
-        e.stopImmediatePropagation();
-        var r = confirm("You really want to delete this spawnpoints?");
-        if (r != true) {
-             return;
+  $("#show-spawnpoints-stats").on("click", ".delete", function (e) {
+    e.stopImmediatePropagation();
+    var r = confirm("You really want to delete these spawnpoints?");
+    if (r != true) {
+      return;
+    }
+    var delete_div = $(this).find(".delete_div");
+    var parentRow = $(this).closest("tr")[0];
+
+    delete_div.empty();
+    elem = $(document.createElement("img")).attr({
+      'src': "{{ url_for('static', filename='loading.gif') }}",
+      'class': 'convert_disp fa',
+      'width': '13px',
+      'heigth': '13px'
+    });
+    delete_div.append(elem);
+    var areaid = $(this).data('areaid');
+    var eventid = $(this).data('eventid');
+    var index = $(this).data('index');
+
+
+    $.ajax({
+      type: 'GET',
+      url: 'delete_spawns',
+      data: 'id=' + areaid + '&eventid=' + eventid + '&index=' + index,
+      success: function (msg) {
+        if (msg.status == 'success') {
+          $("#show-spawnpoints-stats").DataTable().rows(parentRow)
+            .remove()
+            .draw();
+        } else if (msg.status == 'event') {
+          alert('Event is still active.');
+          delete_div.empty();
+          elem = $(document.createElement("i")).attr({
+            'class': 'fa fa-minus-circle',
+          });
+          delete_div.append(elem);
         }
-        var delete_div = $(this).find(".delete_div");
-        var parentRow = $(this).closest("tr")[0];
-
+      },
+      error: function (msg) {
+        alert(msg);
         delete_div.empty();
-        elem = $(document.createElement("img")).attr({
-                      'src': "{{ url_for('static', filename='loading.gif') }}",
-                      'class': 'convert_disp fa',
-                      'width': '13px',
-                      'heigth': '13px'
-                    });
-        delete_div.append(elem);
-        var areaid = $(this).data('areaid');
-        var eventid = $(this).data('eventid');
-        var index = $(this).data('index');
-
-
-        $.ajax({
-            type: 'GET',
-            url:'delete_spawns',
-            data:'id='+ areaid +'&eventid='+ eventid + '&index=' + index,
-            success: function(msg){
-            if (msg.status == 'success') {
-                $( "#show-spawnpoints-stats" ).DataTable().rows( parentRow )
-               .remove()
-               .draw();
-            } else if (msg.status == 'event') {
-                alert('Event is still active.');
-                delete_div.empty();
-                elem = $(document.createElement("i")).attr({
-                      'class': 'fa fa-minus-circle',
-                });
-                delete_div.append(elem);
-            }
-            },
-            error: function(msg) {
-                alert(msg);
-                delete_div.empty();
-                elem = $(document.createElement("i")).attr({
-                      'class': 'fa fa-minus-circle',
-                });
-                delete_div.append(elem);
-            }
+        elem = $(document.createElement("i")).attr({
+          'class': 'fa fa-minus-circle',
         });
+        delete_div.append(elem);
+      }
+    });
 
-     });
+  });
 
 </script>
 <style>
-    table.dataTable tr.odd { background-color: #F8F8F8; }
-    table.dataTable tr.even { background-color: white; }
+  table.dataTable tr.odd {
+    background-color: #F8F8F8;
+  }
+
+  table.dataTable tr.even {
+    background-color: white;
+  }
 </style>
 
-
-
 <style type="text/css">
-    #flot_usage {
-        width: 100%;
-        height: 300px;
-    }
+  #flot_usage {
+    width: 100%;
+    height: 300px;
+  }
 
-    i.fa {
-        color: white;
-    }
+  i.fa {
+    color: white;
+  }
 
-    #flot_spawn {
-        width: 100%;
-        height: 300px;
-    }
+  #flot_spawn {
+    width: 100%;
+    height: 300px;
+  }
 
-    #flot_quest {
-        width: 100%;
-        height: 300px;
-    }
+  #flot_quest {
+    width: 100%;
+    height: 300px;
+  }
 
-    #flot_gym {
-        width: 100%;
-        height: 300px;
-    }
+  #flot_gym {
+    width: 100%;
+    height: 300px;
+  }
 
-    #flot_stop {
-        width: 100%;
-        height: 300px;
-    }
+  #flot_stop {
+    width: 100%;
+    height: 300px;
+  }
 
-    #legendContainer {
-        background-color: #fff;
-        padding: 2px;
-        margin-bottom: 8px;
-        display: inline-block;
-        margin: 0 auto;
-    }
+  #legendContainer {
+    background-color: #fff;
+    padding: 2px;
+    margin-bottom: 8px;
+    display: inline-block;
+    margin: 0 auto;
+  }
 
-    #flotcontainer {
-        width: 600px;
-        height: 200px;
-        text-align: left;
-    }
+  #flotcontainer {
+    width: 600px;
+    height: 200px;
+    text-align: left;
+  }
 
-    #selector {
-        font-size: 1.5em;
-        margin: 10px;
-    }
-    table.dataTable tr.odd { background-color: #F8F8F8; }
-    table.dataTable tr.even { background-color: white; }
+  #selector {
+    font-size: 1.5em;
+    margin: 10px;
+  }
+
+  table.dataTable tr.odd {
+    background-color: #F8F8F8;
+  }
+
+  table.dataTable tr.even {
+    background-color: white;
+  }
 </style>
 {% endblock %}
 
@@ -385,12 +405,12 @@
 
 <p>
   {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    {% for message in messages %}
-      <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-    {% endfor %}
-    {% endif %}
-  {% endwith %}
+  {% if messages %}
+  {% for message in messages %}
+<div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
 </p>
 
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
@@ -399,7 +419,8 @@
   <div class="col">
     <div id="delete_unfenced_coords">
       <button type='button' class='delete btn btn-danger btn-sm'>
-        <div class='delete_all_div' style='display:inline;'><i class='fa fa-trash'></i> Delete all unfenced spawnpoints</div>
+        <div class='delete_all_div' style='display:inline;'><i class='fa fa-trash'></i> Delete all unfenced spawnpoints
+        </div>
       </button>
     </div>
   </div>

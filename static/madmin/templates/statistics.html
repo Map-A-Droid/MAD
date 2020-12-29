@@ -108,7 +108,7 @@
             }
         };
 
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
+        loadingBlockUI("Loading");
 
         $.ajax({
             "url": "get_game_stats?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",

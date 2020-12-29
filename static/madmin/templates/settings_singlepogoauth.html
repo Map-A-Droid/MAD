@@ -1,0 +1,90 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script>
+var devices_google = {{ devs_google|tojson }};
+var devices_ptc = {{ devs_ptc|tojson }};
+
+$(document).ready(function () {
+    $("#submit").click(function() {
+        loadingBlockUI('Saving {{ subtab }}');
+        save_data = get_save_data();
+        if(isEmptyObj(save_data) != false) {
+            alert('No changes have been made');
+            window.location.replace('{{ redirect }}');
+        } else {
+            process_api_request("{{ uri }}", "{{ method }}", "{{ redirect }}");
+        }
+    });
+    $("select[name='login_type']").change(function() {
+        let dev_select = $("select[name='device_id']");
+        let devices = {}
+        dev_select.empty();
+        if($(".login_type").val() == 'google') {
+            devices = devices_google;
+        } else if($(".login_type").val() == 'ptc') {
+            devices = devices_ptc;
+        }
+        default_val = dev_select.data("default");
+        let option = document.createElement("OPTION");
+        option.value = "None";
+        option.text = "None"
+        dev_select.append(option);
+        $.each(devices, function(index) {
+            let device = devices[index];
+            let dev_id = device[0];
+            let dev_name = device[1];
+            let option = document.createElement("OPTION");
+            option.value = "{{ url_for('api_device') }}/"+ dev_id;
+            option.text = dev_name;
+            if(option.value == default_val) {
+                option.setAttribute('selected', 'selected');
+            }
+            dev_select.append(option);
+        });
+    });
+    $("select[name='login_type']").trigger( "change" );
+});
+
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+
+<h1 class="display-5">{{ element.username }}</h1>
+<div class="row">
+  <div class="col-sm">
+    <div class="form-group">
+      <select class="form-control login_type" name="login_type" data-default="{{ element.login_type if 'login_type' in element else 'None' }}">
+        <option value="google" {% if 'login_type' in element and element.login_type == 'google' %}{{ 'selected="selected"' }}{% endif %}>google</option>
+        <option value="ptc" {% if 'login_type' in element and element.login_type == 'ptc' %}{{ 'selected="selected"' }}{% endif %}>ptc</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="username">username</label>
+      <input type="input" class="form-control" id="username" name="username" value="{{ element.username }}" data-default="{{ element.username }}">
+      <small class="form-text text-muted">Username</small>
+    </div>
+    <div class="form-group">
+      <label for="password">password</label>
+      <input type="input" class="form-control" id="password" name="password" value="{{ element.password }}" data-default="{{ element.password }}">
+      <small class="form-text text-muted">Password</small>
+    </div>
+    <div class="form-group">
+      <label for="device_id">Assigned Device</label>
+      <select id="device_id" class="form-control" name="device_id" data-default="{{ url_for('api_device') + '/'+ element.device_id|string if element.device_id else 'None' }}">
+      </select>
+      <small class="form-text text-muted">Aligned Device</small>
+    </div>
+    <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+  </div>
+</div>
+{% endblock %}

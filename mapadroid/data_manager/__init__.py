@@ -1,17 +1,14 @@
 import collections
 import copy
-from typing import Optional, List, Dict
-from . import modules
-from .dm_exceptions import (
-    ModeUnknown,
-    ModeNotSpecified,
-    InvalidSection,
-    DataManagerException
-)
-from .modules.resource import Resource
-from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from typing import Dict, List, Optional
 
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from . import modules
+from .dm_exceptions import (DataManagerException, InvalidSection,
+                            ModeNotSpecified, ModeUnknown)
+from .modules.resource import Resource
 
 logger = get_logger(LoggerEnums.data_manager)
 
@@ -22,7 +19,7 @@ class DataManager(object):
     def __init__(self, dbc: DbWrapper, instance_id: int):
         self.dbc = dbc
         self.instance_id = instance_id
-        self.__paused_devices = []
+        self.__paused_devices: List[int] = []
 
     def clear_on_boot(self) -> None:
         # This function should handle any on-boot clearing.  It is not initiated by __init__ on the off-chance that
@@ -68,9 +65,10 @@ class DataManager(object):
         if section == 'area':
             return modules.area_factory(self, identifier=identifier)
         try:
-            return modules.MAPPINGS[section](self, identifier=identifier)
+            class_def = modules.MAPPINGS[section]
         except KeyError:
             raise InvalidSection()
+        return class_def(self, identifier=identifier)
 
     def get_resource_def(self, section: str, **kwargs) -> Resource:
         mode = kwargs.get('mode', None)
@@ -149,15 +147,15 @@ class DataManager(object):
             valid_modes = sorted(modules.AREA_MAPPINGS.keys())
         return valid_modes
 
-    def set_device_state(self, dev_name: str, active: int) -> None:
+    def set_device_state(self, device_id: int, active: int) -> None:
         if active == 1:
             try:
-                self.__paused_devices.remove(dev_name)
+                self.__paused_devices.remove(device_id)
             except ValueError:
                 pass
         else:
-            if dev_name not in self.__paused_devices:
-                self.__paused_devices.append(dev_name)
+            if device_id not in self.__paused_devices:
+                self.__paused_devices.append(device_id)
 
-    def is_device_active(self, dev_name: str) -> bool:
-        return dev_name not in self.__paused_devices
+    def is_device_active(self, device_id: int) -> bool:
+        return device_id not in self.__paused_devices

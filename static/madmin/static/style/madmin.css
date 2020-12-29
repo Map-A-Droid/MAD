@@ -5,18 +5,11 @@ html, body, div[role="main"], #app {
 div.container[role="main"] {
     max-width: 100%;
     padding: 0px !important;
+    margin-bottom: 40px;
 }
 
 .navbar {
     z-index: 2001;
-}
-
-.leaflet-routes-pane {
-    z-index: 399;
-}
-
-.leaflet-geofences-pane {
-    z-index: 398;
 }
 
 .leaflet-locinject-pane {
@@ -25,6 +18,13 @@ div.container[role="main"] {
 
 .spawnpopup .leaflet-popup-content {
     width: 300px !important;
+    margin: 13px !important;
+}
+
+.geofencepopup .leaflet-popup-content,
+.areapopup .leaflet-popup-content,
+.routepopup .leaflet-popup-content {
+    width: 250px !important;
     margin: 13px !important;
 }
 
@@ -76,7 +76,17 @@ div.container[role="main"] {
 
 .leaflet-popup-content .name {
     margin-bottom: 10px;
+    margin-right: 10px;
     font-size: 15px;
+}
+
+.leaflet-popup-content .name input {
+    width: 90%;
+    font-weight: inherit;
+}
+
+.leaflet-popup-content .name i.fa::after, .leaflet-popup-content .name i.fas::after {
+    content: " "
 }
 
 .leaflet-popup-content .id > span {
@@ -108,6 +118,10 @@ div.container[role="main"] {
     position: absolute;
     bottom: -35px;
     right: -35px;
+}
+
+.routepopup .leaflet-popup-content .badge {
+    font-size: 100%;
 }
 
 #map {
@@ -187,4 +201,8 @@ li.list-group-item.layer-item {
 
 .modal {
     top: 40px;
+}
+
+.leaflet-pm-icon-polygon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='24' height='24' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cpath id='polygon-a' d='M19.4206892,9.16509725 C19.1523681,8.66992914 19,8.10275831 19,7.5 C19,5.56700338 20.5670034,4 22.5,4 C24.4329966,4 26,5.56700338 26,7.5 C26,9.26323595 24.6961471,10.7219407 23,10.9645556 L23,19.0354444 C24.6961471,19.2780593 26,20.736764 26,22.5 C26,24.4329966 24.4329966,26 22.5,26 C20.736764,26 19.2780593,24.6961471 19.0354444,23 L10.9645556,23 C10.7219407,24.6961471 9.26323595,26 7.5,26 C5.56700338,26 4,24.4329966 4,22.5 C4,20.5670034 5.56700338,19 7.5,19 C8.10275831,19 8.66992914,19.1523681 9.16509725,19.4206892 L19.4206892,9.16509725 Z M20.8349073,10.5793063 L10.5793108,20.8349027 C10.6086731,20.8890888 10.6366469,20.9441372 10.6631844,21 L19.3368156,21 C19.6825775,20.272154 20.272154,19.6825775 21,19.3368156 L21,10.6631844 C20.9441372,10.6366469 20.8890888,10.6086731 20.8349027,10.5793108 Z M22.5,9 C23.3284271,9 24,8.32842712 24,7.5 C24,6.67157288 23.3284271,6 22.5,6 C21.6715729,6 21,6.67157288 21,7.5 C21,8.32842712 21.6715729,9 22.5,9 Z M22.5,24 C23.3284271,24 24,23.3284271 24,22.5 C24,21.6715729 23.3284271,21 22.5,21 C21.6715729,21 21,21.6715729 21,22.5 C21,23.3284271 21.6715729,24 22.5,24 Z M7.5,24 C8.32842712,24 9,23.3284271 9,22.5 C9,21.6715729 8.32842712,21 7.5,21 C6.67157288,21 6,21.6715729 6,22.5 C6,23.3284271 6.67157288,24 7.5,24 Z'/%3E%3C/defs%3E%3Cg fill='none' fill-rule='evenodd' transform='translate(-3 -3)'%3E%3Cmask id='polygon-b' fill='%23fff'%3E%3Cuse xlink:href='%23polygon-a'/%3E%3C/mask%3E%3Cuse fill='%23000' fill-rule='nonzero' xlink:href='%23polygon-a'/%3E%3Cg fill='%23000' mask='url(%23polygon-b)'%3E%3Crect width='30' height='30'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E%0A") !important;
 }

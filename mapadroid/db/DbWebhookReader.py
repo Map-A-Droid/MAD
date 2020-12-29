@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
+from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
 
@@ -20,7 +20,7 @@ class DbWebhookReader:
         query = (
             "SELECT raid.gym_id, raid.level, raid.spawn, raid.start, raid.end, raid.pokemon_id, "
             "raid.cp, raid.move_1, raid.move_2, raid.last_scanned, raid.form, raid.is_exclusive, raid.gender, "
-            "raid.costume, gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
+            "raid.costume, raid.evolution, gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
             "gym.team_id, weather_boosted_condition, gym.is_ex_raid_eligible "
             "FROM raid "
             "LEFT JOIN gymdetails ON gymdetails.gym_id = raid.gym_id "
@@ -33,7 +33,7 @@ class DbWebhookReader:
         ret = []
         for (gym_id, level, spawn, start, end, pokemon_id,
              cp, move_1, move_2, last_scanned, form, is_exclusive, gender,
-             costume, name, url, latitude, longitude, team_id,
+             costume, evolution, name, url, latitude, longitude, team_id,
              weather_boosted_condition, is_ex_raid_eligible) in res:
             ret.append({
                 "gym_id": gym_id,
@@ -56,7 +56,8 @@ class DbWebhookReader:
                 "is_exclusive": is_exclusive,
                 "gender": gender,
                 "is_ex_raid_eligible": is_ex_raid_eligible,
-                "costume": costume
+                "costume": costume,
+                "evolution": evolution
             })
         return ret
 

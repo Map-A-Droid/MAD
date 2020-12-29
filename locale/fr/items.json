@@ -1,4 +1,8 @@
 {
+  "0": {
+    "protoname": "ITEM_UNKNOWN",
+    "name": "ITEM_UNKNOWN"
+  },
   "1": {
     "protoname": "ITEM_POKE_BALL",
     "name": "Poké Ball"
@@ -17,7 +21,7 @@
   },
   "5": {
     "protoname": "ITEM_PREMIER_BALL",
-    "name": "Honor Ball"
+    "name": "ITEM_PREMIER_BALL"
   },
   "101": {
     "protoname": "ITEM_POTION",
@@ -53,15 +57,19 @@
   },
   "402": {
     "protoname": "ITEM_INCENSE_SPICY",
-    "name": "Incense Spicy"
+    "name": "ITEM_INCENSE_SPICY"
   },
   "403": {
     "protoname": "ITEM_INCENSE_COOL",
-    "name": "Incense Cool"
+    "name": "ITEM_INCENSE_COOL"
   },
   "404": {
     "protoname": "ITEM_INCENSE_FLORAL",
-    "name": "Incense Floral"
+    "name": "ITEM_INCENSE_FLORAL"
+  },
+  "405": {
+    "protoname": "ITEM_INCENSE_BELUGA_BOX",
+    "name": "Boîte Mystère"
   },
   "501": {
     "protoname": "ITEM_TROY_DISK",
@@ -89,7 +97,7 @@
   },
   "604": {
     "protoname": "ITEM_X_MIRACLE",
-    "name": "X Miracle"
+    "name": "UNDEFINED"
   },
   "701": {
     "protoname": "ITEM_RAZZ_BERRY",
@@ -117,11 +125,15 @@
   },
   "707": {
     "protoname": "ITEM_GOLDEN_NANAB_BERRY",
-    "name": "Baie Nanab dorée"
+    "name": "ITEM_GOLDEN_NANAB_BERRY"
   },
   "708": {
     "protoname": "ITEM_GOLDEN_PINAP_BERRY",
     "name": "Baie Nanana argentée"
+  },
+  "709": {
+    "protoname": "ITEM_POFFIN",
+    "name": "Poffin"
   },
   "801": {
     "protoname": "ITEM_SPECIAL_CAMERA",
@@ -141,11 +153,11 @@
   },
   "1001": {
     "protoname": "ITEM_POKEMON_STORAGE_UPGRADE",
-    "name": "Pokémon Storage Upgrade"
+    "name": "ITEM_POKEMON_STORAGE_UPGRADE"
   },
   "1002": {
     "protoname": "ITEM_ITEM_STORAGE_UPGRADE",
-    "name": "Item Storage Upgrade"
+    "name": "ITEM_ITEM_STORAGE_UPGRADE"
   },
   "1101": {
     "protoname": "ITEM_SUN_STONE",
@@ -183,6 +195,14 @@
     "protoname": "ITEM_MOVE_REROLL_SPECIAL_ATTACK",
     "name": "CT Attaque Chargée"
   },
+  "1203": {
+    "protoname": "ITEM_MOVE_REROLL_ELITE_FAST_ATTACK",
+    "name": "CT Attaque Immédiate d’élite"
+  },
+  "1204": {
+    "protoname": "ITEM_MOVE_REROLL_ELITE_SPECIAL_ATTACK",
+    "name": "CT Attaque Chargée d’élite"
+  },
   "1301": {
     "protoname": "ITEM_RARE_CANDY",
     "name": "Super Bonbon"
@@ -193,7 +213,7 @@
   },
   "1402": {
     "protoname": "ITEM_PAID_RAID_TICKET",
-    "name": "Passe de Raid Premium"
+    "name": "Passe de combat premium"
   },
   "1403": {
     "protoname": "ITEM_LEGENDARY_RAID_TICKET",
@@ -206,5 +226,33 @@
   "1405": {
     "protoname": "ITEM_FRIEND_GIFT_BOX",
     "name": "Cadeau"
+  },
+  "1406": {
+    "protoname": "ITEM_TEAM_CHANGE",
+    "name": "Médaillon d’équipe"
+  },
+  "1408": {
+    "protoname": "ITEM_REMOTE_RAID_TICKET",
+    "name": "Passe de Raid à distance"
+  },
+  "1501": {
+    "protoname": "ITEM_LEADER_MAP_FRAGMENT",
+    "name": "Élément mystérieux"
+  },
+  "1502": {
+    "protoname": "ITEM_LEADER_MAP",
+    "name": "Radar Rocket"
+  },
+  "1503": {
+    "protoname": "ITEM_GIOVANNI_MAP",
+    "name": "Super Radar Rocket"
+  },
+  "1600": {
+    "protoname": "ITEM_GLOBAL_EVENT_TICKET",
+    "name": "Ticket"
+  },
+  "1601": {
+    "protoname": "ITEM_EVENT_TICKET_PINK",
+    "name": "Ticket"
   }
 }

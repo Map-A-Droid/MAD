@@ -1,37 +1,29 @@
-var locinjectPane = null;
-var locInjectBtn = L.easyButton({
+let locInjectPane = null;
+let locInjectBtn = L.easyButton({
     position: "bottomright",
     states: [{
-        stateName: 'scanmode-activate',
-        icon: 'fa-satellite-dish',
-        title: 'Enable click-to-scan mode',
+        stateName: "scanmode-activate",
+        icon: "fa-satellite-dish",
+        title: "Enable click-to-scan mode",
         onClick: function (btn, map) {
             clickToScanActive = true;
-            L.DomUtil.addClass(map._container, 'crosshair-cursor-enabled');
+            L.DomUtil.addClass(map._container, "crosshair-cursor-enabled");
             locInjectPane = map.createPane("locinject")
-            locInjectPane.style.pointerEvents = 'auto';
-            btn.state('scanmode-deactivate');
+            locInjectPane.style.pointerEvents = "auto";
+            btn.state("scanmode-deactivate");
         }
     }, {
-        stateName: 'scanmode-deactivate',
-        icon: 'fa-satellite-dish',
-        title: 'Disable click-to-scan mode',
+        stateName: "scanmode-deactivate",
+        icon: "fa-satellite-dish",
+        title: "Disable click-to-scan mode",
         onClick: function (btn, map) {
             clickToScanActive = false;
-            L.DomUtil.removeClass(map._container, 'crosshair-cursor-enabled');
+            L.DomUtil.removeClass(map._container, "crosshair-cursor-enabled");
             L.DomUtil.remove(locInjectPane);
-            btn.state('scanmode-activate');
+            btn.state("scanmode-activate");
         }
     }]
 });
-
-function loopCoords(coordarray) {
-    var returning = "";
-    coordarray[0].forEach((element, index, array) => {
-        returning += (element.lat + ',' + element.lng + '|');
-    });
-    return returning;
-};
 
 function copyClipboard(text) {
     navigator.clipboard.writeText(text.replace("|", ",")).then(function () {
@@ -117,18 +109,33 @@ L.Marker.addInitHook(function () {
 })()
 
 // globals
-var map;
-var sidebar;
-var init = true;
-var fetchTimeout = null;
-var clickToScanActive = false;
-var cleanupInterval = null;
-var newfences = {};
-const teamNames = ['Uncontested', 'Mystic', 'Valor', 'Instinct']
+let map;
+let mapEventForwarder;
+let sidebar;
+let init = true;
+let fetchTimeout = null;
+let clickToScanActive = false;
+let cleanupInterval = null;
+const teamNames = ["Uncontested", "Mystic", "Valor", "Instinct"];
 const iconBasePath = "https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large";
 
+// pane (and order inside that pane) of various layers
+const layerOrders = {
+    cells: { pane: "cells" },
+    areas: { pane: "fences", bringTo: "bringToBack" },
+    geofences: { pane: "fences", bringTo: "bringToFront" },
+    routes: { pane: "routes" },
+    gyms: { pane: "points", bringTo: "bringToBack" },
+    stops: { pane: "points", bringTo: "bringToBack" },
+    spawns: { pane: "points" },
+    raids: { pane: "markers" },
+    quests: { pane: "markers" },
+    mons: { pane: "markers" },
+    workers: { pane: "markers", bringTo: "bringToFront" }
+};
+
 // object to hold all the markers and elements
-var leaflet_data = {
+const leaflet_data = {
     tileLayer: "",
     raids: {},
     spawns: {},
@@ -137,12 +144,29 @@ var leaflet_data = {
     routes: {},
     prioroutes: {},
     geofences: {},
+    areas: {},
     workers: {},
     mons: {},
     monicons: {},
     cellupdates: {},
     stops: {}
 };
+
+const mouseEventsIgnore = {
+    ignoreCount: 0,
+    enableIgnore() {
+        ++this.ignoreCount;
+        mapEventForwarder.isEnabled = false;
+    },
+    disableIgnore() {
+        if (--this.ignoreCount === 0) {
+            mapEventForwarder.isEnabled = true;
+        }
+    },
+    isIgnored() {
+        return this.ignoreCount !== 0;
+    }
+}
 
 new Vue({
     el: '#app',
@@ -154,18 +178,7 @@ new Vue({
         mons: {},
         spawns: {},
         cellupdates: {},
-        fetchers: {
-          workers: false,
-          gyms: false,
-          routes: false,
-          geofences: false,
-          spawns: false,
-          quests: false,
-          stops: false,
-          mons: false,
-          prioroutes: false,
-          cells: false
-        },
+        fetchers: {},
         layers: {
             stat: {
                 gyms: false,
@@ -179,6 +192,7 @@ new Vue({
                 routes: {},
                 prioroutes: {},
                 geofences: {},
+                areas: {},
                 spawns: {}
             }
         },
@@ -212,10 +226,6 @@ new Vue({
                 name: "OpenStreetMap HOT",
                 url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
             },
-            wikimedia: {
-                name: "Wikimedia",
-                url: "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png"
-            },
             hydda: {
                 name: "Hydda",
                 url: "https://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png"
@@ -230,7 +240,15 @@ new Vue({
                     quests: 40,
                     mons: 67
                 }
-            }
+            },
+            cellUpdateTimeout: 50000
+        }
+    },
+    computed: {
+        sortedGeofences() {
+            return Object.values(this.layers.dyn.geofences).sort(function (x, y) {
+                return x.name.localeCompare(y.name, "en", {sensitivity: "base"});
+            });
         }
     },
     watch: {
@@ -239,67 +257,72 @@ new Vue({
                 this.map_fetch_gyms(this.buildUrlFilter(true));
             }
 
-            this.changeStaticLayer("raids", oldVal, newVal);
-            this.changeStaticLayer("gyms", oldVal, newVal);
+            this.changeStaticLayer("gyms", oldVal, newVal, layerOrders.gyms.bringTo);
+            this.changeStaticLayer("raids", oldVal, newVal, layerOrders.raids.bringTo);
         },
         "layers.stat.workers": function (newVal, oldVal) {
             if (newVal && !init) {
                 this.map_fetch_workers(this.buildUrlFilter(true));
             }
 
-            this.changeStaticLayer("workers", oldVal, newVal);
+            this.changeStaticLayer("workers", oldVal, newVal, layerOrders.workers.bringTo);
         },
         "layers.stat.quests": function (newVal, oldVal) {
             if (newVal && !init) {
                 this.map_fetch_quests(this.buildUrlFilter(true));
             }
 
-            this.changeStaticLayer("quests", oldVal, newVal);
+            this.changeStaticLayer("quests", oldVal, newVal, layerOrders.quests.bringTo);
         },
         "layers.stat.stops": function (newVal, oldVal) {
             if (newVal && !init) {
                 this.map_fetch_stops(this.buildUrlFilter(true));
             }
 
-            this.changeStaticLayer("stops", oldVal, newVal);
+            this.changeStaticLayer("stops", oldVal, newVal, layerOrders.stops.bringTo);
         },
         "layers.stat.mons": function (newVal, oldVal) {
             if (newVal && !init) {
                 this.map_fetch_mons(this.buildUrlFilter(true));
             }
 
-            this.changeStaticLayer("mons", oldVal, newVal);
+            this.changeStaticLayer("mons", oldVal, newVal, layerOrders.mons.bringTo);
         },
         "layers.stat.cellupdates": function (newVal, oldVal) {
             if (newVal && !init) {
                 this.map_fetch_cells(this.buildUrlFilter(true));
             }
 
-            this.changeStaticLayer("cellupdates", oldVal, newVal);
+            this.changeStaticLayer("cellupdates", oldVal, newVal, layerOrders.cells.bringTo);
         },
         "layers.dyn.spawns": {
             deep: true,
             handler: function () {
-                this.changeDynamicLayers("spawns");
+                this.changeDynamicLayers("spawns", true, layerOrders.spawns.bringTo);
             }
         },
         "layers.dyn.geofences": {
             deep: true,
             handler: function () {
-                this.changeDynamicLayers("geofences");
+                this.changeDynamicLayers("geofences", false, layerOrders.geofences.bringTo);
             }
         },
-
+        "layers.dyn.areas": {
+            deep: true,
+            handler: function () {
+                this.changeDynamicLayers("areas", false, layerOrders.areas.bringTo);
+            }
+        },
         "layers.dyn.routes": {
             deep: true,
             handler: function () {
-                this.changeDynamicLayers("routes");
+                this.changeDynamicLayers("routes", false, layerOrders.routes.bringTo);
             }
         },
         "layers.dyn.prioroutes": {
             deep: true,
             handler: function () {
-                this.changeDynamicLayers("prioroutes");
+                this.changeDynamicLayers("prioroutes", false, layerOrders.routes.bringTo);
             }
         },
         'settings.maptiles': function (newVal) {
@@ -314,6 +337,9 @@ new Vue({
             } else {
                 clearInterval(cleanupInterval);
             }
+        },
+        'settings.cellUpdateTimeout': function (newVal) {
+        	this.updateStoredSetting('settings-cellUpdateTimeout', newVal);
         },
         'settings.routes.coordinateRadius': {
             deep: true,
@@ -350,13 +376,14 @@ new Vue({
     },
     methods: {
         map_fetch_everything() {
-            urlFilter = this.buildUrlFilter();
+            const urlFilter = this.buildUrlFilter();
 
             this.map_fetch_workers();
             this.map_fetch_gyms(urlFilter);
             this.map_fetch_routes();
             this.map_fetch_geofences();
-            this.map_fetch_spawns();
+            this.map_fetch_areas();
+            this.map_fetch_spawns(urlFilter);
             this.map_fetch_quests(urlFilter);
             this.map_fetch_stops(urlFilter);
             this.map_fetch_mons(urlFilter);
@@ -366,722 +393,764 @@ new Vue({
             this.updateBounds(true);
         },
         map_fetch_workers() {
-            var $this = this;
-
-            if (this.fetchers.workers == true) {
-              return;
-            }
-
-            this.fetchers.workers = true;
-            axios.get("get_workers").then(function (res) {
+            this.mapGuardedFetch("workers", "get_workers", function (res) {
                 res.data.forEach(function (worker) {
-                    var name = worker["name"];
+                    const name = worker["name"];
 
-                    if ($this["workers"][name]) {
-                        leaflet_data["workers"][name].setLatLng([worker["lat"], worker["lon"]])
+                    if (this.workers[name]) {
+                        leaflet_data.workers[name].setLatLng([worker["lat"], worker["lon"]])
+                    }
+                    else {
+                        this.workers[name] = worker;
 
-                        if (map.hasLayer(leaflet_data["workers"][name])) {
-                            leaflet_data["workers"][name].bringToFront();
-                        }
-                    } else {
-                        $this.workers[name] = worker;
-
-                        leaflet_data["workers"][name] = L.circleMarker([worker['lat'], worker['lon']], {
+                        leaflet_data.workers[name] = L.circleMarker([worker["lat"], worker["lon"]], {
                             radius: 7,
-                            color: '#E612CB',
-                            fillColor: '#E612CB',
+                            color: "#E612CB",
+                            fillColor: "#E612CB",
                             weight: 1,
                             opacity: 0.9,
-                            fillOpacity: 0.9
+                            fillOpacity: 0.9,
+                            pane: layerOrders.workers.pane,
+                            pmIgnore: true,
                         }).bindPopup(name);
 
-                        $this.addMouseEventPopup(leaflet_data["workers"][name]);
+                        this.addMouseEventPopup(leaflet_data.workers[name]);
 
-                        if ($this.layers.stat.workers) {
-                            leaflet_data["workers"][worker["name"]].addTo(map);
+                        if (this.layers.stat.workers) {
+                            this.mapAddLayer(leaflet_data.workers[name], layerOrders.workers.bringTo);
                         }
                     }
-                });
-            }).finally(function() {
-              $this.fetchers.workers = false;
+                }, this);
             });
         },
         map_fetch_gyms(urlFilter) {
-            var $this = this;
-
-            if (!$this.layers.stat.gyms) {
+            if (!this.layers.stat.gyms) {
                 return;
             }
 
-            if (this.fetchers.gyms == true) {
-              return;
-            }
-
-            this.fetchers.gyms = true;
-            axios.get('get_gymcoords' + urlFilter).then(function (res) {
+            this.mapGuardedFetch("gyms", "get_gymcoords" + urlFilter, function (res) {
                 res.data.forEach(function (gym) {
-                    switch (gym['team_id']) {
+
+                    let color;
+                    switch (gym["team_id"]) {
                         default:
-                            color = '#888';
+                            color = "#888";
                             break;
                         case 1:
-                            color = '#0C6DFF';
+                            color = "#0C6DFF";
                             break;
                         case 2:
-                            color = '#FC0016';
+                            color = "#FC0016";
                             break;
                         case 3:
-                            color = '#FD830E';
+                            color = "#FD830E";
                             break;
                     }
 
-                    var skip = true;
-                    if ($this["gyms"][gym["id"]]) {
+                    const id = gym["id"];
+                    let skip = true;
+
+                    if (this.gyms[id]) {
                         // check if we should update an existing gym
-                        if ($this["gyms"][gym["id"]]["team_id"] != gym["team_id"]) {
-                            map.removeLayer(leaflet_data["gyms"][gym["id"]]);
-                            delete leaflet_data["gyms"][gym["id"]];
-                        } else {
+                        if (this.gyms[id]["team_id"] !== gym["team_id"]) {
+                            map.removeLayer(leaflet_data.gyms[id]);
+                            delete leaflet_data.gyms[id];
+                        }
+                        else {
                             skip = false;
                         }
                     }
 
                     if (skip) {
                         // store gym meta data
-                        $this["gyms"][gym["id"]] = gym;
+                        this.gyms[id] = gym;
 
-                        leaflet_data["gyms"][gym["id"]] = L.circle([gym['lat'], gym['lon']], {
-                            id: gym["id"],
+                        leaflet_data.gyms[id] = L.circle([gym["lat"], gym["lon"]], {
+                            id: id,
                             radius: Math.pow((20 - map.getZoom()), 2.5),
                             color: color,
                             fillColor: color,
                             weight: 2,
-                            opacity: 1.0,
-                            fillOpacity: 0.8,
-                        }).bindPopup($this.build_gym_popup, {'className': 'gympopup', autoPan: false});
+                            opacity: 0.7,
+                            fillOpacity: 0.7,
+                            pane: layerOrders.gyms.pane,
+                            pmIgnore: true
+                        }).bindPopup(this.build_gym_popup, { "className": "gympopup", autoPan: false });
 
-                        $this.addMouseEventPopup(leaflet_data["gyms"][gym["id"]]);
+                        this.addMouseEventPopup(leaflet_data.gyms[id]);
 
                         // only add them if they're set to visible
-                        if ($this.layers.stat.gyms) {
-                            leaflet_data["gyms"][gym["id"]].addTo(map);
+                        if (this.layers.stat.gyms) {
+                            this.mapAddLayer(leaflet_data.gyms[id], layerOrders.gyms.bringTo);
                         }
                     }
 
-                    if ($this["raids"][gym["id"]]) {
+                    if (this["raids"][id]) {
                         /// TODO remove past raids
                         // end time is different -> new raid
-                        if ($this["raids"][gym["id"]]["end"] != gym["raid"]["end"] || gym["raid"]["end"] > (new Date().getTime() / 1000)) {
-                            map.removeLayer(leaflet_data["raids"][gym["id"]]);
-                            delete leaflet_data["raids"][gym["id"]];
+                        if (this.raids[id]["end"] !== gym["raid"]["end"] || gym["raid"]["end"] > (new Date().getTime() / 1000)) {
+                            map.removeLayer(leaflet_data.raids[id]);
+                            delete leaflet_data.raids[id];
                         }
                     }
 
-                    if (gym["raid"] != null && gym["raid"]["end"] > (new Date().getTime() / 1000)) {
-                        if (map.hasLayer(leaflet_data["raids"][gym["id"]])) {
+                    if (gym["raid"] && gym["raid"]["end"] > (new Date().getTime() / 1000)) {
+                        if (map.hasLayer(leaflet_data.raids[id])) {
                             return;
                         }
 
-                        $this["raids"][gym["id"]] = gym["raid"];
+                        this.raids[id] = gym["raid"];
 
-                        var icon = L.divIcon({
+                        const icon = L.divIcon({
                             html: gym["raid"]["level"],
                             className: "raidIcon",
                             iconAnchor: [-1 * (18 - map.getZoom()), -1 * (18 - map.getZoom())]
                         });
 
-                        leaflet_data["raids"][gym["id"]] = L.marker([gym["lat"], gym["lon"]], {
-                            id: gym["id"],
+                        leaflet_data.raids[id] = L.marker([gym["lat"], gym["lon"]], {
+                            id: id,
                             icon: icon,
-                            interactive: false
+                            interactive: false,
+                            pane: layerOrders.raids.pane,
+                            pmIgnore: true
                         });
 
-                        leaflet_data["raids"][gym["id"]].addTo(map);
+                        this.mapAddLayer(leaflet_data.raids[id], layerOrders.raids.bringTo);
                     }
-                });
-            }).finally(function() {
-              $this.fetchers.gyms = false;
+                }, this);
             });
         },
         map_fetch_routes() {
-            var $this = this;
-
-            if (this.fetchers.routes == true) {
-              return;
-            }
-
-            this.fetchers.routes = true;
-            axios.get("get_route").then(function (res) {
+            this.mapGuardedFetch("routes", "get_route", function (res) {
                 res.data.forEach(function (route) {
-                    var group = L.layerGroup();
-                    var coords = [];
+                    const name = route.name;
 
-                    var name = route.name;
-                    var color = $this.getRandomColor();
-
-                    if ($this.layers.dyn.routes[name]) {
+                    if (this.layers.dyn.routes[name]) {
                         return;
                     }
 
-                    if (route.mode == "mon_mitm") {
+                    let mode;
+                    let cradius;
+
+                    if (route.mode === "mon_mitm") {
                         mode = "mons";
-                        cradius = $this.settings.routes.coordinateRadius.mons;
-                    } else if (route.mode == "pokestops") {
+                        cradius = this.settings.routes.coordinateRadius.mons;
+                    }
+                    else if (route.mode === "pokestops") {
                         mode = "quests";
-                        cradius = $this.settings.routes.coordinateRadius.quests;
-                    } else if (route.mode == "raids_mitm") {
+                        cradius = this.settings.routes.coordinateRadius.quests;
+                    }
+                    else if (route.mode === "raids_mitm") {
                         mode = "raids";
-                        cradius = $this.settings.routes.coordinateRadius.raids;
-                    } else {
+                        cradius = this.settings.routes.coordinateRadius.raids;
+                    }
+                    else {
                         mode = route.mode;
                     }
 
                     let stack = []
                     let processedCells = {};
 
+                    const group = L.layerGroup();
+                    const color = this.getRandomColor();
+
                     route.coordinates.forEach(function (coord) {
-                        circle = L.circle(coord, {
-                            pane: "routes",
+                        const circle = L.circle(coord, {
                             radius: cradius,
                             color: color,
                             fillColor: color,
-                            fillOpacity: 1,
                             weight: 1,
                             opacity: 0.4,
-                            fillOpacity: 0.1
+                            fillOpacity: 0.1,
+                            interactive: false,
+                            pane: layerOrders.routes.pane,
+                            pmIgnore: true
                         });
 
                         circle.addTo(group);
-                        coords.push(circle);
 
-                        if (mode == "raids") {
-                          // super dirty workaround to get bounds
-                          // of a circle. The getbounds() function
-                          // is only available if it has been added
-                          // to the map.
-                          // See https://github.com/Leaflet/Leaflet/issues/4978
-                          circle.addTo(map);
-                          const bounds = circle.getBounds();
-                          circle.removeFrom(map);
+                        if (mode === "raids") {
+                            // super dirty workaround to get bounds
+                            // of a circle. The getbounds() function
+                            // is only available if it has been added
+                            // to the map.
+                            // See https://github.com/Leaflet/Leaflet/issues/4978
+                            circle.addTo(map);
+                            const bounds = circle.getBounds();
+                            circle.removeFrom(map);
 
-                          const centerCell = S2.S2Cell.FromLatLng(circle.getLatLng(), 15)
-                          processedCells[centerCell.toString()] = true
-                          stack.push(centerCell)
-                          L.polygon(centerCell.getCornerLatLngs(), {
-                            color: color,
-                            opacity: 0.5,
-                            weight: 1,
-                            fillOpacity: 0,
-                            interactive: false
-                          }).addTo(group);
+                            const centerCell = S2.S2Cell.FromLatLng(circle.getLatLng(), 15)
+                            processedCells[centerCell.toString()] = true
+                            stack.push(centerCell)
+                            L.polygon(centerCell.getCornerLatLngs(), {
+                                color: color,
+                                opacity: 0.5,
+                                weight: 1,
+                                fillOpacity: 0,
+                                interactive: false,
+                                pane: layerOrders.cells.pane,
+                                pmIgnore: true
+                            }).addTo(group);
 
-                          while (stack.length > 0) {
-                            const cell = stack.pop();
-                            const neighbors = cell.getNeighbors()
-                            neighbors.forEach(function (ncell, index) {
-                              if (processedCells[ncell.toString()] !== true) {
-                                const cornerLatLngs = ncell.getCornerLatLngs();
+                            while (stack.length > 0) {
+                                const cell = stack.pop();
+                                const neighbors = cell.getNeighbors()
+                                neighbors.forEach(function (ncell) {
+                                    if (processedCells[ncell.toString()] !== true) {
+                                        const cornerLatLngs = ncell.getCornerLatLngs();
 
-                                for (let i = 0; i < 4; i++) {
-                                  const item = cornerLatLngs[i];
-                                  const distance = L.latLng(item.lat, item.lng).distanceTo(circle.getLatLng());
-                                  if (item.lat >= bounds.getSouthWest().lat
-                                      && item.lng >= bounds.getSouthWest().lng
-                                      && item.lat <= bounds.getNorthEast().lat
-                                      && item.lng <= bounds.getNorthEast().lng
-                                      && distance <= cradius) {
-                                    processedCells[ncell.toString()] = true;
-                                    stack.push(ncell);
-                                    L.polygon(ncell.getCornerLatLngs(), {
-                                      color: color,
-                                      opacity: 0.5,
-                                      weight: 1,
-                                      fillOpacity: 0,
-                                      interactive: false
-                                    }).addTo(group);
-                                    break
-                                  }
-                                }
-                              }
-                            })
-                          }
+                                        for (let i = 0; i < 4; i++) {
+                                            const item = cornerLatLngs[i];
+                                            const distance = L.latLng(item.lat, item.lng).distanceTo(circle.getLatLng());
+                                            if (item.lat >= bounds.getSouthWest().lat
+                                                && item.lng >= bounds.getSouthWest().lng
+                                                && item.lat <= bounds.getNorthEast().lat
+                                                && item.lng <= bounds.getNorthEast().lng
+                                                && distance <= cradius) {
+                                                processedCells[ncell.toString()] = true;
+                                                stack.push(ncell);
+                                                L.polygon(ncell.getCornerLatLngs(), {
+                                                    color: color,
+                                                    opacity: 0.5,
+                                                    weight: 1,
+                                                    fillOpacity: 0,
+                                                    interactive: false,
+                                                    pane: layerOrders.cells.pane,
+                                                    pmIgnore: true,
+                                                }).addTo(group);
+                                                break
+                                            }
+                                        }
+                                    }
+                                })
+                            }
                         }
                     });
 
-                    var geojson = {
-                        "type": "LineString",
-                        "coordinates": $this.convertToLonLat(route.coordinates)
-                    }
-
                     // add route to layergroup
-                    L.geoJSON(geojson, {
-                        pane: "routes",
-                        style: {
-                            "color": color,
-                            "weight": 2,
-                            "opacity": 0.4
-                        }
-                    }).addTo(group);
+                    L.polyline(route.coordinates, {
+                        color: color,
+                        weight: 2,
+                        opacity: 0.4,
+                        pane: layerOrders.routes.pane
+                    })
+                    .bindPopup(this.build_route_popup(route), { className: "routepopup" })
+                    .addTo(group);
 
                     // add layergroup to management object
-                    leaflet_data["routes"][name] = group;
+                    leaflet_data.routes[name] = group;
 
-                    var settings = {
-                        "show": $this.getStoredSetting("layers-dyn-routes-" + name, false),
+                    const settings = {
+                        "show": this.getStoredSetting("layers-dyn-routes-" + name, false),
                         "mode": mode
                     };
 
-                    $this.$set($this.layers.dyn.routes, name, settings);
-                });
-            }).finally(function() {
-              $this.fetchers.routes = false;
+                    this.$set(this.layers.dyn.routes, name, settings);
+
+                }, this);
             });
         },
         map_fetch_prioroutes() {
-            var $this = this;
-
-            if (this.fetchers.prioroutes == true) {
-              return;
-            }
-
-            this.fetchers.prioroutes = true;
-            axios.get("get_prioroute").then(function (res) {
+            this.mapGuardedFetch("prioroutes", "get_prioroute", function (res) {
                 res.data.forEach(function (route) {
-                    var group = L.layerGroup();
-                    var coords = [];
+                    const name = route.name;
 
-                    var name = route.name;
-
-                    if ($this.layers.dyn.prioroutes[name]) {
-                        map.removeLayer(leaflet_data["prioroutes"][name]);
+                    if (this.layers.dyn.prioroutes[name]) {
+                        map.removeLayer(leaflet_data.prioroutes[name]);
                     }
 
-                    if (route.mode == "mon_mitm" || route.mode == "iv_mitm") {
+                    let mode;
+                    let cradius;
+
+                    if (route.mode === "mon_mitm" || route.mode === "iv_mitm") {
                         mode = "mons";
-                        cradius = $this.settings.routes.coordinateRadius.mons;
-                    } else if (route.mode == "pokestops") {
+                        cradius = this.settings.routes.coordinateRadius.mons;
+                    }
+                    else if (route.mode === "pokestops") {
                         mode = "quests";
-                        cradius = $this.settings.routes.coordinateRadius.quests;
-                    } else if (route.mode == "raids_mitm") {
+                        cradius = this.settings.routes.coordinateRadius.quests;
+                    }
+                    else if (route.mode === "raids_mitm") {
                         mode = "raids";
-                        cradius = $this.settings.routes.coordinateRadius.raids;
+                        cradius = this.settings.routes.coordinateRadius.raids;
                     }
 
-                    var maxcolored = 10;
-                    var color = "#BBB";
-
-                    var linecoords = [];
+                    const linecoords = [];
+                    const group = L.layerGroup();
 
                     // only display first 10 entries of the queue
                     const now = Math.round((new Date()).getTime() / 1000);
                     route.coordinates.slice(0, 14).forEach(function (coord, index) {
-                        let until = coord.timestamp - now;
+                        const until = coord.timestamp - now;
+                        let hue;
+                        let sat;
 
                         if (until < 0) {
-                            var hue = 0;
-                            var sat = 100;
-                        } else {
-                            var hue = 120;
-                            var sat = (index * 100) / 15;
+                            hue = 0;
+                            sat = 100;
+                        }
+                        else {
+                            hue = 120;
+                            sat = (index * 100) / 15;
                         }
 
-                        var color = `hsl(${hue}, ${sat}%, 50%)`;
+                        const color = `hsl(${hue}, ${sat}%, 50%)`;
 
-                        circle = L.circle([coord.latitude, coord.longitude], {
+                        L.circle([coord.latitude, coord.longitude], {
                             ctimestamp: coord.timestamp,
                             radius: cradius,
                             color: color,
                             fillColor: color,
-                            fillOpacity: 1,
                             weight: 1,
                             opacity: 0.8,
-                            fillOpacity: 0.5
-                        }).bindPopup($this.build_prioq_popup);
+                            fillOpacity: 0.5,
+                            pmIgnore: true,
+                            pane: layerOrders.routes.pane,
+                        })
+                        .bindPopup(this.build_prioq_popup)
+                        .addTo(group);
 
-                        circle.addTo(group);
-                        coords.push(circle);
                         linecoords.push([coord.latitude, coord.longitude]);
-                    });
-
-                    var geojson = {
-                        "type": "LineString",
-                        "coordinates": $this.convertToLonLat(linecoords)
-                    }
+                    }, this);
 
                     // add route to layergroup
-                    L.geoJSON(geojson, {
-                        style: {
-                            "color": "#000000",
-                            "weight": 2,
-                            "opacity": 0.2
-                        }
-                    }).addTo(group);
+                    L.polyline(linecoords, {
+                        "color": "#000000",
+                        "weight": 2,
+                        "opacity": 0.2,
+                        "pane": layerOrders.routes.pane,
+                        "pmIgnore": true
+                    })
+                    .bindPopup(this.build_prioq_route_popup(route), { className: "routepopup" })
+                    .addTo(group);
 
                     // add layergroup to management object
-                    leaflet_data["prioroutes"][name] = group;
+                    leaflet_data.prioroutes[name] = group;
 
-                    var settings = {
-                        "show": $this.getStoredSetting("layers-dyn-prioroutes-" + name, false),
+                    const settings = {
+                        "show": this.getStoredSetting("layers-dyn-prioroutes-" + name, false),
                         "mode": mode
                     };
 
-                    $this.$set($this.layers.dyn.prioroutes, name, settings);
-                });
-            }).finally(function() {
-              $this.fetchers.prioroutes = false;
+                    this.$set(this.layers.dyn.prioroutes, name, settings);
+
+                }, this);
             });
         },
-        map_fetch_spawns() {
-           var $this = this;
-
-            if (this.fetchers.spawns == true) {
-              return;
-            }
-
-            this.fetchers.spawns = true;
-            axios.get('get_spawns' + urlFilter).then(function (res) {
+        map_fetch_spawns(urlFilter) {
+            this.mapGuardedFetch("spawns", "get_spawns" + urlFilter, function (res) {
                 res.data.forEach(function (spawns) {
-                    spawns['Coords'].forEach(function (spawn) {
-                        var eventname = spawns['EVENT'];
+                    const eventName = spawns["EVENT"];
 
-                        if (spawn['endtime'] !== null) {
-                            var endsplit = spawn['endtime'].split(':');
-                            var endMinute = parseInt(endsplit[0]);
-                            var endSecond = parseInt(endsplit[1]);
-                            var despawntime = moment();
-                            var now = moment();
+                    spawns["Coords"].forEach(function (spawn) {
+                        let color;
 
-                            if (spawn['spawndef'] == 15) {
-                                var timeshift = 60;
-                            } else {
-                                var timeshift = 30;
-                            }
+                        if (spawn["endtime"] !== null) {
+                            const endsplit = spawn["endtime"].split(":");
+                            const endMinute = parseInt(endsplit[0]);
+                            const endSecond = parseInt(endsplit[1]);
+                            const despawntime = moment();
+                            const now = moment();
+
+                            const timeshift = spawn["spawndef"] === 15 ? 60 : 30;
 
                             // setting despawn and spawn time
                             despawntime.minute(endMinute);
                             despawntime.second(endSecond);
-                            var spawntime = moment(despawntime);
-                            spawntime.subtract(timeshift, 'm');
+                            const spawntime = moment(despawntime);
+                            spawntime.subtract(timeshift, "m");
 
                             if (despawntime.isBefore(now)) {
                                 // already despawned. shifting hours
-                                spawntime.add(1, 'h');
-                                despawntime.add(1, 'h');
+                                spawntime.add(1, "h");
+                                despawntime.add(1, "h");
                             }
 
-                            timeformat = 'YYYY-MM-DD HH:mm:ss';
                             if (now.isBetween(spawntime, despawntime)) {
-                                var color = "green";
-                            } else if (spawntime.isAfter(now)) {
-                                var color = "blue";
+                                color = "green";
                             }
-                        } else {
-                            var color = "red";
+                            else if (spawntime.isAfter(now)) {
+                                color = "blue";
+                            }
+                        }
+                        else {
+                            color = "red";
                         }
 
-                        var skip = true;
-                        if ($this["spawns"][eventname] && $this["spawns"][eventname][spawn["id"]]) {
+                        const id = spawn["id"];
+                        let skip = true;
+
+                        if (this.spawns[eventName] && this.spawns[eventName][id]) {
                             // check if we should update an existing spawn
-                            if ($this["spawns"][eventname][spawn["id"]]["endtime"] === null && spawn["endtime"] !== null) {
-                                map.removeLayer(leaflet_data["spawns"][eventname][spawn["id"]]);
-                                delete leaflet_data["spawns"][eventname][spawn["id"]];
-                            } else {
+                            if (this.spawns[eventName][id]["endtime"] === null && spawn["endtime"] !== null) {
+                                map.removeLayer(leaflet_data.spawns[eventName][id]);
+                                delete leaflet_data.spawns[eventName][id];
+                            }
+                            else {
                                 skip = false;
                             }
                         }
 
                         if (skip) {
                             // store spawn meta data
-                            if (!$this["spawns"][eventname]) {
-                                $this["spawns"][eventname] = {};
+                            if (!this.spawns[eventName]) {
+                                this.spawns[eventName] = {};
                             }
 
-                            $this["spawns"][eventname][spawn["id"]] = spawn;
+                            this.spawns[eventName][id] = spawn;
 
-                            if (!leaflet_data["spawns"][eventname]) {
-                                leaflet_data["spawns"][eventname] = {};
+                            if (!leaflet_data.spawns[eventName]) {
+                                leaflet_data.spawns[eventName] = {};
                             }
 
-                            leaflet_data["spawns"][eventname][spawn["id"]] = L.circle([spawn['lat'], spawn['lon']], {
+                            leaflet_data.spawns[eventName][id] = L.circle([spawn["lat"], spawn["lon"]], {
                                 radius: 2,
                                 color: color,
                                 fillColor: color,
                                 weight: 1,
                                 opacity: 0.7,
                                 fillOpacity: 0.5,
-                                id: spawn["id"],
-                                event: eventname
-                            }).bindPopup($this.build_spawn_popup, {'className': 'spawnpopup'});
+                                id: id,
+                                event: eventName,
+                                pane: layerOrders.spawns.pane,
+                                pmIgnore: true
+                            }).bindPopup(this.build_spawn_popup, { "className": "spawnpopup" });
 
-                            $this.addMouseEventPopup(leaflet_data["spawns"][eventname][spawn["id"]]);
+                            this.addMouseEventPopup(leaflet_data.spawns[eventName][id]);
+                        }
+                    }, this);
 
-                            }
+                    const settings = {
+                        "show": this.getStoredSetting("layers-dyn-spawns-" + eventName, false)
+                    };
+                    this.$set(this.layers.dyn.spawns, eventName, settings);
 
-                        });
-                            var settings = {
-                                "show": $this.getStoredSetting("layers-dyn-spawns-" + spawns['EVENT'], false)
-                            };
-                            $this.$set($this.layers.dyn.spawns, spawns['EVENT'], settings);
-                    });
-            }).finally(function() {
-              $this.fetchers.spawns = false;
+                }, this);
             });
         },
         map_fetch_quests(urlFilter) {
-            var $this = this;
-
-            if (!$this.layers.stat.quests) {
+            if (!this.layers.stat.quests) {
                 return;
             }
 
-            if (this.fetchers.quests == true) {
-              return;
-            }
-
-            this.fetchers.quests = true;
-            axios.get("get_quests" + urlFilter).then(function (res) {
+            this.mapGuardedFetch("quests", "get_quests" + urlFilter, function (res) {
                 res.data.forEach(function (quest) {
-                    if ($this.quests[quest["pokestop_id"]]) {
+                    const id = quest["pokestop_id"];
+
+                    if (this.quests[id]) {
                         return;
                     }
 
-                    $this.quests[quest["pokestop_id"]] = quest;
+                    this.quests[id] = quest;
 
-                    leaflet_data["quests"][quest["pokestop_id"]] = L.marker([quest['latitude'], quest['longitude']], {
-                        id: quest["pokestop_id"],
+                    leaflet_data.quests[id] = L.marker([quest["latitude"], quest["longitude"]], {
+                        id: id,
                         virtual: true,
-                        icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'], quest['pokemon_form'], quest['pokemon_asset_bundle_id'], quest['pokemon_costume'])
-                    }).bindPopup($this.build_quest_popup, {"className": "questpopup"});
+                        icon: this.build_quest_small(
+                            quest["quest_reward_type_raw"],
+                            quest["item_id"],
+                            quest["pokemon_id"],
+                            quest["pokemon_form"],
+                            quest["pokemon_asset_bundle_id"],
+                            quest["pokemon_costume"]),
+                        pane: layerOrders.quests.pane,
+                        pmIgnore: true
+                    }).bindPopup(this.build_quest_popup, { "className": "questpopup" });
 
-                    $this.addMouseEventPopup(leaflet_data["quests"][quest["pokestop_id"]]);
+                    this.addMouseEventPopup(leaflet_data.quests[id]);
 
-                    if ($this.layers.stat.quests) {
-                        leaflet_data["quests"][quest["pokestop_id"]].addTo(map);
+                    if (this.layers.stat.quests) {
+                        this.mapAddLayer(leaflet_data.quests[id], layerOrders.quests.bringTo);
                     }
-                });
-            }).finally(function() {
-              $this.fetchers.quests = false;
+
+                }, this);
             });
         },
         map_fetch_stops(urlFilter) {
-            var $this = this;
-            if (!$this.layers.stat.stops) {
+            if (!this.layers.stat.stops) {
                 return;
             }
 
-            if (this.fetchers.stops == true) {
-              return;
-            }
+            this.mapGuardedFetch("stops", "get_stops" + urlFilter, function(res) {
+                res.data.forEach(function(stop) {
+                    const id = stop["pokestop_id"];
 
-            this.fetchers.stops = true;
-            axios.get("get_stops" + urlFilter).then(function (res) {
-                res.data.forEach(function (stop) {
-                    var stop_id = stop["pokestop_id"];
-                    if ($this.stops[stop_id]) {
+                    if (this.stops[id]) {
                         return;
                     }
-                    var color = stop["has_quest"] ? "blue" : "red";
-                    $this.stops[stop_id] = stop;
-                    leaflet_data["stops"][stop_id] = L.circle([stop["latitude"], stop["longitude"]], {
+
+                    const color = stop["has_quest"] ? "blue" : "red";
+                    this.stops[id] = stop;
+                    leaflet_data.stops[id] = L.circle([stop["latitude"], stop["longitude"]], {
                         radius: 8,
                         color: color,
                         fillColor: color,
                         weight: 1,
                         opacity: 0.7,
                         fillOpacity: 0.5,
-                        id: stop_id
-                    }).bindPopup($this.build_stop_popup, {"className": "stoppopup"});
-                    $this.addMouseEventPopup(leaflet_data["stops"][stop_id]);
-                    if ($this.layers.stat.stops) {
-                        leaflet_data["stops"][stop_id].addTo(map);
+                        pane: layerOrders.stops.pane,
+                        pmIgnore: true,
+                        id: id
+                    }).bindPopup(this.build_stop_popup, { "className": "stoppopup" });
+                    this.addMouseEventPopup(leaflet_data.stops[id]);
+
+                    if (this.layers.stat.stops) {
+                        this.mapAddLayer(leaflet_data.stops[id], layerOrders.stops.bringTo);
                     }
-                });
-            }).finally(function() {
-              $this.fetchers.stops = false;
+
+                }, this);
             });
         },
         map_fetch_geofences() {
-            var $this = this;
+            this.mapGuardedFetch("geofences", "get_geofences", function (res) {
+                res.data.forEach(function(geofence) {
+                    this.mapAddGeofence(geofence, this.getStoredSetting("layers-dyn-geofences-" + geofence.id, false));
+                }, this);
+            });
+        },
+        map_fetch_areas() {
+            this.mapGuardedFetch("areas", "get_areas", function (res) {
+                res.data.forEach(function(area) {
+                    const name = area.name;
 
-            if (this.fetchers.geofences == true) {
-              return;
-            }
-
-            this.fetchers.geofences = true;
-            axios.get('get_geofence').then(function (res) {
-                res.data.forEach(function (geofence) {
-                    var group = L.layerGroup();
-
-                    // meta data for management
-                    var name = geofence.name;
-
-                    if ($this.layers.dyn.geofences[name]) {
+                    if (this.layers.dyn.areas[name]) {
                         return;
                     }
 
-                    // add geofence to layergroup
-                    var group = L.polygon(geofence.coordinates, {pane: "geofences",})
-                        .setStyle({
-                            "color": $this.getRandomColor(),
-                            "weight": 2,
-                            "opacity": 0.5
-                        })
-                        .addTo(map);
+                    const polygon = L.polygon(area.coordinates, {
+                        color: this.getRandomColor(),
+                        weight: 2,
+                        opacity: 0.5,
+                        pane: layerOrders.areas.pane,
+                        pmIgnore: true
+                    }).bindPopup(this.build_area_popup(area), { className: "areapopup" });
 
-                    // add layergroup to management object
-                    leaflet_data["geofences"][name] = group;
+                    leaflet_data.areas[name] = polygon;
 
-                    var settings = {
-                        "show": $this.getStoredSetting("layers-dyn-geofences-" + name, false),
+                    const settings = {
+                        show: this.getStoredSetting("layers-dyn-areas-" + name, false)
                     };
+                    this.$set(this.layers.dyn.areas, name, settings);
 
-                    $this.$set($this.layers.dyn.geofences, name, settings);
-                });
-            }).finally(function() {
-              $this.fetchers.geofences = false;
+                }, this);
             });
         },
         map_fetch_mons(urlFilter) {
-            var $this = this;
-
-            if (!$this.layers.stat.mons) {
+            if (!this.layers.stat.mons) {
                 return;
             }
 
-            if (this.fetchers.mons == true) {
-              return;
-            }
-
-            this.fetchers.mons = true;
-            axios.get('get_map_mons' + urlFilter).then(function (res) {
+            this.mapGuardedFetch("mons", "get_map_mons" + urlFilter, function (res) {
                 res.data.forEach(function (mon) {
+                    const id = mon["encounter_id"];
 
-                    var noskip = true;
-                    if ($this["mons"][mon["encounter_id"]]) {
-                        if ($this["mons"][mon["encounter_id"]]["last_modified"] != mon["last_modified"]) {
-                            map.removeLayer(leaflet_data["mons"][mon["encounter_id"]]);
-                            delete leaflet_data["mons"][mon["encounter_id"]];
-                        } else {
-                            noskip = false;
+                    if (this.mons[id]) {
+                        if (this.mons[id]["last_modified"] === mon["last_modified"]) {
+                            return;
                         }
+
+                        map.removeLayer(leaflet_data.mons[id]);
+                        delete leaflet_data.mons[id];
                     }
 
-                    if (noskip) {
-                        // store meta data
-                        $this["mons"][mon["encounter_id"]] = mon;
+                    // store meta data
+                    this.mons[id] = mon;
 
-                        if (leaflet_data["monicons"][mon["mon_id"]]) {
-                            var icon = leaflet_data["monicons"][mon["mon_id"]];
-                        } else {
-                            var form = mon["form"] == 0 ? "00" : mon["form"];
-                            var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
-                            var icon = L.icon({
-                                iconUrl: image,
-                                iconSize: [40, 40],
-                            });
-
-                            leaflet_data["monicons"][mon["mon_id"]] = icon;
-                        }
-
-                        leaflet_data["mons"][mon["encounter_id"]] = L.marker([mon["latitude"], mon["longitude"]], {
-                            id: mon["encounter_id"],
-                            virtual: true,
-                            icon: icon
-                        }).bindPopup($this.build_mon_popup, {"className": "monpopup"});
-
-                        $this.addMouseEventPopup(leaflet_data["mons"][mon["encounter_id"]]);
-
-                        // only add them if they're set to visible
-                        if ($this.layers.stat.mons) {
-                            leaflet_data["mons"][mon["encounter_id"]].addTo(map);
-                        }
+                    const monId = mon["mon_id"];
+                    let icon;
+                    if (leaflet_data.monicons[monId]) {
+                        icon = leaflet_data.monicons[monId];
                     }
-                });
-            }).finally(function() {
-              $this.fetchers.mons = false;
+                    else {
+                        const form = mon["form"] === 0 ? "00" : mon["form"];
+                        const image = `${iconBasePath}/pokemon_icon_${monId.toString().padStart(3, "0")}_${form}.png`;
+                        icon = L.icon({
+                            iconUrl: image,
+                            iconSize: [40, 40]
+                        });
+
+                        leaflet_data.monicons[monId] = icon;
+                    }
+
+                    leaflet_data.mons[id] = L.marker([mon["latitude"], mon["longitude"]], {
+                        id: id,
+                        virtual: true,
+                        icon: icon,
+                        pane: layerOrders.mons.pane,
+                        pmIgnore: true
+                    }).bindPopup(this.build_mon_popup, {"className": "monpopup"});
+
+                    this.addMouseEventPopup(leaflet_data.mons[id]);
+
+                    // only add them if they're set to visible
+                    if (this.layers.stat.mons) {
+                        this.mapAddLayer(leaflet_data.mons[id], layerOrders.mons.bringTo);
+                    }
+
+                }, this);
             });
         },
         map_fetch_cells(urlFilter) {
-            var $this = this;
-
-            if (!$this.layers.stat.cellupdates) {
+            if (!this.layers.stat.cellupdates) {
                 return;
             }
 
-            if (this.fetchers.cells == true) {
-              return;
-            }
+            var $this = this;
 
-            this.fetchers.cells = true;
-            axios.get('get_cells' + urlFilter).then(function (res) {
+            this.mapGuardedFetch("cellupdates", "get_cells" + urlFilter, function (res) {
                 const now = Math.round((new Date()).getTime() / 1000);
 
                 res.data.forEach(function (cell) {
-                    var noskip = true;
-                    if ($this.cellupdates[cell.id]) {
-                        if ($this.cellupdates[cell.id].updated != cell.updated) {
-                            map.removeLayer(leaflet_data.cellupdates[cell.id]);
-                            delete leaflet_data.cellupdates[cell.id];
+                    const id = cell["id"];
+
+					var noSkip = true;
+                    var notTooOld = true;
+                    if (this.cellupdates[id]) {
+                        if (this.cellupdates[id]["updated"] === cell["updated"]) {
+                            noSkip = false;
                         } else {
-                            noskip = false;
+                        	map.removeLayer(leaflet_data.cellupdates[id]);
+                        	delete leaflet_data.cellupdates[id];
                         }
                     }
-
-                    if (noskip) {
-                        $this.cellupdates[cell.id] = cell;
-
-                        leaflet_data.cellupdates[cell.id] = L.polygon(cell.polygon, {id: cell.id})
-                            .setStyle($this.getCellStyle(now, cell.updated))
-                            .bindPopup($this.build_cell_popup, {className: "cellpopup"})
-                            .addTo(map);
+                    //  86400
+                    if($this.settings.cellUpdateTimeout > 0 && now - cell.updated > $this.settings.cellUpdateTimeout) {
+                        notTooOld = false;
                     }
-                })
-            }).finally(function() {
-              $this.fetchers.cells = false;
+
+                    if (noSkip && notTooOld) {
+                        $this.cellupdates[id] = cell;
+
+                    	leaflet_data.cellupdates[id] = L.polygon(cell["polygon"], {
+                            id: id,
+                            pane: layerOrders.cells.pane,
+                            pmIgnore: true
+                        })
+                        .setStyle(this.getCellStyle(now, cell["updated"]))
+                        .bindPopup(this.build_cell_popup, { className: "cellpopup" });
+
+                    	this.mapAddLayer(leaflet_data.cellupdates[id], layerOrders.cells.bringTo);
+                    }
+
+                }, this);
             });
         },
-        changeDynamicLayers(type) {
-            for (k in this.layers.dyn[type]) {
-                tlayer = this.layers.dyn[type][k];
-                this.updateStoredSetting("layers-dyn-" + type + "-" + k, tlayer.show);
+        mapGuardedFetch(guardName, url, onSuccess) {
+            if (this.fetchers[guardName]) {
+                return;
+            }
 
+            this.fetchers[guardName] = true;
 
+            axios.get(url)
+                .then(onSuccess.bind(this))
+                .finally(function () { this.fetchers[guardName] = false; }.bind(this));
+        },
+        mapAddGeofence(geofence, show) {
+            const id = geofence.id;
 
-                if (tlayer.show == true && !map.hasLayer(leaflet_data[type][k])) {
-                   if (type=="spawns") {
-                       for (var prop in leaflet_data[type][k]) {
-                           if (typeof(leaflet_data[type][k][prop]) == 'object') {
-                               map.addLayer(leaflet_data[type][k][prop]);
-                           }
-                       }
-                   } else {
-                       map.addLayer(leaflet_data[type][k]);
-                   }
+            if (this.layers.dyn.geofences[id]) {
+                return;
+            }
 
-                } else if (tlayer.show == false) {
-                if (type=="spawns") {
-                       for (var prop in leaflet_data[type][k]) {
-                           if (typeof(leaflet_data[type][k][prop]) == 'object') {
-                               map.removeLayer(leaflet_data[type][k][prop]);
-                           }
-                       }
-                   } else {
-                       if (map.hasLayer(leaflet_data[type][k])) {
-                          map.removeLayer(leaflet_data[type][k]);
-                       }
-                   }
+            const polygon = L.polygon(geofence.coordinates, {
+                color: this.getRandomColor(),
+                weight: 2,
+                opacity: 0.5,
+                pane: layerOrders.geofences.pane
+            });
+
+            polygon.bindPopup(
+                this.build_geofence_popup(geofence.id, geofence.name, polygon, function (name) { geofence.name = name; }),
+                { className: "geofencepopup" });
+
+            leaflet_data.geofences[id] = polygon;
+
+            geofence.show = show;
+            this.$set(this.layers.dyn.geofences, id, geofence);
+        },
+        mapAddLayer(layer, bringTo) {
+            map.addLayer(layer);
+
+            if (typeof bringTo === "string" && typeof layer[bringTo] === "function") {
+                layer[bringTo]();
+            }
+
+            if (layer instanceof L.LayerGroup) {
+                layer.eachLayer(this.configureVisibleLayerMouseEvents);
+            }
+            else {
+                this.configureVisibleLayerMouseEvents(layer);
+            }
+        },
+        configureVisibleLayerMouseEvents(layer) {
+            if (!(layer instanceof L.Path) || !layer.options.interactive) {
+                return;
+            }
+
+            const originalOpacity = layer.options.opacity;
+            const originalWeight = layer.options.weight;
+
+            layer.on("mouseover", onMouseOver);
+            layer.on("mouseout", onMouseOut);
+            layer.on("remove", onRemove);
+
+            function onMouseOver() {
+                if (!mouseEventsIgnore.isIgnored()) {
+                    layer.setStyle({ opacity: 1.0, weight: originalWeight + 1.0 })
+                }
+            }
+
+            function onMouseOut() {
+                if (!mouseEventsIgnore.isIgnored() && !(layer.pm && layer.pm.enabled())) {
+                    layer.setStyle({ opacity: originalOpacity, weight: originalWeight });
+                }
+            }
+
+            function onRemove() {
+                layer.off("mouseover", onMouseOver);
+                layer.off("mouseout", onMouseOut);
+                layer.off("remove", onRemove);
+            }
+        },
+        changeDynamicLayers(type, hasMultipleLayersPerType, bringTo) {
+            for (const key in this.layers.dyn[type]) {
+                const show = this.layers.dyn[type][key].show;
+                this.updateStoredSetting(`layers-dyn-${type}-${key}`, show);
+
+                function showHideLayer(layer) {
+                    if (!show) {
+                        map.removeLayer(layer);
+                    }
+                    else if (!map.hasLayer(layer)) {
+                        this.mapAddLayer(layer, bringTo);
+                    }
+                }
+
+                if (hasMultipleLayersPerType) {
+                    const layers = leaflet_data[type][key];
+                    for (const prop in layers) {
+                        if (typeof layers[prop] === "object") {
+                            showHideLayer.call(this, layers[prop]);
+                        }
+                    }
+                }
+                else {
+                    showHideLayer.call(this, leaflet_data[type][key]);
                 }
             }
         },
-        changeStaticLayer(name, oldstate, newState) {
-            if (oldstate === true) {
-                Object.keys(leaflet_data[name]).forEach(function (key) {
-                    map.removeLayer(leaflet_data[name][key]);
-                });
-            } else {
-                Object.keys(leaflet_data[name]).forEach(function (key) {
-                    map.addLayer(leaflet_data[name][key]);
-                });
+        changeStaticLayer(name, oldState, newState, bringTo) {
+            const layers = leaflet_data[name];
+            if (oldState === true) {
+                Object.keys(layers).forEach(function (key) {
+                    map.removeLayer(layers[key]);
+                }, this);
+            }
+            else {
+                Object.keys(layers).forEach(function (key) {
+                    this.mapAddLayer(layers[key], bringTo);
+                }, this);
             }
 
             this.updateStoredSetting("layer-stat-" + name, newState);
@@ -1140,8 +1209,24 @@ new Vue({
         </div>`;
         },
         build_prioq_popup(marker) {
-            var time = moment(marker.options.ctimestamp * 1000);
+            const time = moment(marker.options.ctimestamp * 1000);
             return `Due: ${time.format("YYYY-MM-DD HH:mm:ss")} (${marker.options.ctimestamp})`;
+        },
+        build_prioq_route_popup(route) {
+
+            const popupContainer = $(`
+              <div>
+                <div class="name"><i class="fas fa-sort-numeric-up"></i> <strong></strong></div>
+                <div><i class="fas fa-adjust"></i> Mode: <span class="badge badge-secondary"></span></div>
+                <div><i class="fas fa-ruler-horizontal"></i> Length: <strong class="length"></strong></div>
+              </div>
+            `);
+
+            $(".name strong", popupContainer).text(route.name);
+            $(".badge", popupContainer).text(route.mode);
+            $(".length", popupContainer).text(route.coordinates.length);
+
+            return popupContainer[0];
         },
         build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id, quest_pokemon_form_id, quest_pokemon_asset_bundle_id, quest_pokemon_costume_id) {
             switch (quest_reward_type_raw) {
@@ -1162,6 +1247,11 @@ new Vue({
                         costume = '_' + quest_pokemon_costume_id;
                     }
                     var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${quest_pokemon_form_id}${costume}.png`;
+                    var size = [30, 30]
+                    var anchor = [30, 30]
+                    break;
+                case 12:
+                    var image = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/rewards/reward_mega_energy.png'
                     var size = [30, 30]
                     var anchor = [30, 30]
                     break;
@@ -1200,6 +1290,10 @@ new Vue({
                     var rewardtext = quest_pokemon_name;
                     var size = "150%";
                     break;
+                case 12:
+                    var image = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/rewards/reward_mega_energy.png'
+                    var rewardtext =  `${quest_item_amount} ${quest_item_type} ${quest_pokemon_name}`;
+                    break;
             }
 
             return `
@@ -1211,7 +1305,7 @@ new Vue({
         },
         build_stop_base_popup(id, image, name, latitude, longitude) {
             return `
-          <div class="image" style="background: url(${image}) center center no-repeat;"></div>
+          <div class="image" style="background: url(${image}) center center/cover no-repeat;"></div>
           <div class="name"><strong>${name}</strong></div>
           <div class="id"><i class="fa fa-fingerprint"></i> <span>${id}</span></div>
           <div class="coords">
@@ -1310,7 +1404,7 @@ new Vue({
 
             return `
         <div class="content">
-          <div class="image" style="background: url(${gym["img"]}) center center no-repeat;"></div>
+          <div class="image" style="background: url(${gym["img"]}) center center/cover no-repeat;"></div>
           <div class="name"><strong>${gymName}</strong></div>
           <div class="id"><i class="fa fa-fingerprint"></i> <span>${gym["id"]}</span></div>
           <div class="coords">
@@ -1441,6 +1535,202 @@ new Vue({
         </div>
       `;
         },
+        build_route_popup(route) {
+
+            const popupContainer = $(`
+              <div>
+                <div class="name"><i class="fa fa-route"></i> <strong></strong></div>
+                <div><i class="fas fa-adjust"></i> Mode: <span class="badge badge-secondary"></span></div>
+                <div><i class="fas fa-ruler-horizontal"></i> Length: <strong class="length"></strong></div>
+              </div>
+            `);
+
+            $(".name strong", popupContainer).text(route.name);
+            $(".badge", popupContainer).text(route.mode);
+            $(".length", popupContainer).text(route.coordinates.length);
+
+            return popupContainer[0];
+        },
+        build_geofence_popup(id, name, layer, onNameChanged) {
+            const popupContainer = $(`
+              <div>
+                <div class="name">
+                  <i class="fa fa-draw-polygon"></i>
+                  <strong>
+                    <span class="map-popup-group-edit"></span>
+                    <input type="text" class="map-popup-group-save hidden" />
+                  </strong>
+                </div>
+                <div class="m-1">
+                  <div class="map-popup-group-edit">
+                    <button type="button" class="btn btn-sm btn-outline-secondary map-popup-button-edit"><i class="fas fa-edit"></i> Edit</button>
+                  </div>
+                  <div class="map-popup-group-saving hidden">
+                    <img src="{{ url_for('static', filename='loading.gif') }}" style="height: 3em" /> Saving...
+                  </div>
+                  <div class="map-popup-group-save hidden">
+                    <button type="button" class="btn btn-sm btn-outline-primary map-popup-button-save"><i class="fas fa-save"></i> Save</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger map-popup-button-cancel"><i class="fas fa-times"></i> <span>Reset</span></button>
+                  </div>
+                </div>
+              </div>
+            `);
+
+            const standardOpacity = layer.options.opacity;
+            let originalLatLngs;
+
+            $(".name span", popupContainer).text(name);
+            $(".name input", popupContainer).val(name);
+
+            function showGroup(suffix) {
+                $(".map-popup-group-" + suffix, popupContainer).removeClass("hidden");
+            }
+
+            function hideGroup(suffix) {
+                $(".map-popup-group-" + suffix, popupContainer).addClass("hidden");
+            }
+
+            function enableEdit() {
+                hideGroup("edit");
+                showGroup("save");
+
+                layer.setStyle({ opacity: 1.0 });
+                layer.pm.enable({ snappable: false, allowSelfIntersection: false });
+
+                layer.on("pm:markerdragstart", function() {
+                    mouseEventsIgnore.enableIgnore();
+                });
+
+                layer.on("pm:markerdragend", function() {
+                    mouseEventsIgnore.disableIgnore();
+                });
+            }
+
+            function disableEdit() {
+                layer.pm.disable();
+                layer.setStyle({ opacity: standardOpacity });
+            }
+
+            $(".map-popup-button-edit", popupContainer).on("click", function () {
+                originalLatLngs = layer.getLatLngs();
+                enableEdit();
+            });
+
+            const cancelButton = $(".map-popup-button-cancel", popupContainer);
+
+            cancelButton.on("click", function () {
+                const message = id === null
+                    ? "Do you really want to delete this newly created geofence?"
+                    : "Do you really want to stop editing and reset all changes made to this geofence?";
+
+                if (!window.confirm(message)) {
+                    return;
+                }
+
+                disableEdit();
+                layer.closePopup();
+
+                if (id === null) {
+                    map.removeLayer(layer);
+                }
+                else {
+                    if (originalLatLngs) {
+                        layer.setLatLngs(originalLatLngs);
+                        delete originalLatLngs;
+                    }
+
+                    hideGroup("save");
+                    showGroup("edit");
+                }
+            });
+
+            $(".map-popup-button-save", popupContainer).on("click", function () {
+                disableEdit();
+
+                hideGroup("save");
+                showGroup("saving");
+
+                let coords = []
+
+                function buildCoords(latLngs) {
+                    for (let i = 0; i < latLngs.length; ++i) {
+                        const value = latLngs[i];
+                        if (Array.isArray(value)) {
+                            buildCoords(value);
+                        }
+                        else {
+                            coords.push(value.lat.toFixed(6) + "," + value.lng.toFixed(6));
+                        }
+                    }
+                }
+
+                buildCoords(layer.getLatLngs());
+
+                const name = $(".name input", popupContainer).val();
+                const json = {
+                    name: name,
+                    fence_type: "polygon",
+                    fence_data: coords
+                }
+
+                const request = id === null
+                    ? axios.post("api/geofence", json)
+                    : axios.patch("api/geofence/" + id, json);
+
+                request.then(
+                    function (result) {
+                        layer.closePopup();
+
+                        if (id === null) {
+                            // we've added a new geofence, remove the temporary polygon (which is on a top-most pane)
+                            // and add a standard geofence on the correct pane instead
+                            map.removeLayer(layer);
+
+                            const match = /\/(\d+)$/.exec(result.headers["x-uri"]);
+                            if (match !== null) {
+                                this.mapAddGeofence({
+                                    id: match[1],
+                                    name: json.name,
+                                    coordinates: layer.getLatLngs()
+                                }, true);
+                            }
+                        }
+                        else {
+                            hideGroup("saving");
+                            showGroup("edit");
+                            $(".name span", popupContainer).text(name);
+                            if (typeof onNameChanged === "function") {
+                                onNameChanged(name);
+                            }
+                        }
+                    }.bind(this),
+                    function () {
+                        hideGroup("saving");
+                        enableEdit();
+                        alert("Unable to save the geofence.");
+                    }.bind(this)
+                );
+            }.bind(this));
+
+            if (id === null) {
+                $("span", cancelButton).text("Delete");
+                enableEdit();
+            }
+
+            return popupContainer[0];
+        },
+        build_area_popup(route) {
+
+            const popupContainer = $(`
+              <div>
+                <div class="name"><i class="fas fa-drafting-compass"></i> <strong></strong></div>
+              </div>
+            `);
+
+            $(".name strong", popupContainer).text(route.name);
+
+            return popupContainer[0];
+        },
         getStoredSetting(name, defaultval) {
             var val = localStorage.getItem('settings');
             if (val == null) {
@@ -1516,31 +1806,31 @@ new Vue({
             }
         },
         addMouseEventPopup(marker) {
-            if (L.Browser.touch) {
-              return;
-            }
-
             marker.on("mouseover", function (e) {
-                marker.keepPopupOpen = false;
-                marker.openPopup();
-                marker.popupOpen = true;
+                if (!mouseEventsIgnore.isIgnored() && !marker.isPopupOpen()) {
+                    marker.keepPopupOpen = false;
+                    marker.openPopup();
+                }
             });
 
             marker.on("mouseout", function (e) {
-                if (!marker.keepPopupOpen) {
+                if (!mouseEventsIgnore.isIgnored() && !marker.keepPopupOpen) {
                     marker.closePopup();
-                    marker.popupOpen = false;
                 }
             });
 
             marker.on("click", function (e) {
-                if (marker.popupOpen) {
+                if (mouseEventsIgnore.isIgnored()) {
+                    return;
+                }
+
+                if (marker.isPopupOpen()) {
                     marker.openPopup();
                     marker.keepPopupOpen = true;
-                } else {
+                }
+                else {
                     marker.keepPopupOpen = false;
                     marker.closePopup();
-                    marker.popupOpen = false;
                 }
             });
         },
@@ -1571,12 +1861,21 @@ new Vue({
                     '&sleeptime=' + $('#injectionSleep').val()
             });
         },
-        convertToLonLat(coords) {
-            lonlat = []
-            coords.forEach(function (coord) {
-                lonlat.push([coord[1], coord[0]]);
-            });
-            return lonlat;
+        onShapeDrawn(args) {
+            if (args.shape !== "Polygon") {
+                return;
+            }
+
+            const layer = args.layer;
+            layer.pm.enable({ snappable: false, allowSelfIntersection: false });
+
+            const popupContent = this.build_geofence_popup(
+                null,
+                "Geofence" + (Object.keys(leaflet_data.geofences).length + 1),
+                layer);
+            layer.bindPopup(popupContent, { className: "geofencepopup" });
+            layer.openPopup();
+            $(".name input", popupContent).focus();
         },
         buildUrlFilter(force = false) {
             var oSwLat = this.getStoredSetting("oSwLat", null);
@@ -1645,10 +1944,11 @@ new Vue({
             // get stored settings
             this.settings.cleanup = this.getStoredSetting("settings-cleanup", true);
             this.settings.maptiles = this.getStoredSetting("settings-maptiles", "cartodblight");
-            this.settings.routes.coordinateRadius.raids = this.getStoredSetting('settings-coordinateRadius-raids', 490);
-            this.settings.routes.coordinateRadius.quests = this.getStoredSetting('settings-coordinateRadius-quests', 40);
-            this.settings.routes.coordinateRadius.mons = this.getStoredSetting('settings-coordinateRadius-mons', 67);
-            for (index of Object.keys(this.layers.stat)) {
+            this.settings.routes.coordinateRadius.raids = this.getStoredSetting("settings-coordinateRadius-raids", 490);
+            this.settings.routes.coordinateRadius.quests = this.getStoredSetting("settings-coordinateRadius-quests", 40);
+            this.settings.routes.coordinateRadius.mons = this.getStoredSetting("settings-coordinateRadius-mons", 67);
+            this.settings.cellUpdateTimeout = this.getStoredSetting('settings-cellUpdateTimeout', 0);
+            for (const index of Object.keys(this.layers.stat)) {
                 this.layers.stat[index] = this.getStoredSetting("layer-stat-" + index, false);
             }
 
@@ -1660,8 +1960,8 @@ new Vue({
             });
 
             // get stored center and zoom level if they exists
-            const storedZoom = this.getStoredSetting('zoomlevel', 3);
-            const storedCenter = this.getStoredSetting('center', '52.521374,13.411201');
+            const storedZoom = this.getStoredSetting("zoomlevel", 3);
+            const storedCenter = this.getStoredSetting("center", "52.521374,13.411201");
             leaflet_data.tileLayer = L.tileLayer(this.maptiles[this.settings.maptiles].url, {
                 noWrap: true,
                 bounds: [
@@ -1670,7 +1970,7 @@ new Vue({
                 ]
             });
 
-            map = L.map('map', {
+            map = L.map("map", {
                 layers: [leaflet_data.tileLayer],
                 zoomControl: false,
                 updateWhenZooming: false,
@@ -1681,19 +1981,32 @@ new Vue({
                     [-90, -180],
                     [90, 180]
                 ]
-            }).setView(storedCenter.split(','), storedZoom);
+            }).setView(storedCenter.split(","), storedZoom);
+
+            // forward events to the next canvas
+            mapEventForwarder = new L.eventForwarder(map);
+
+            // create panes
+            let zIndex = 390;
+            const createdPanes = { };
+            for (const key in layerOrders) {
+                const paneName = layerOrders[key].pane;
+                if (!paneName || createdPanes[paneName]) {
+                    continue;
+                }
+
+                const pane = map.createPane(layerOrders[key].pane);
+                pane.style.zIndex = zIndex.toString();
+                createdPanes[paneName] = true;
+                ++zIndex;
+            }
 
             // add custom button
             locInjectBtn.addTo(map);
 
-            // extra panes to make sure routes and
-            // geofences are below everything else
-            map.createPane("geofences");
-            map.createPane("routes");
-
             // move zoom controls
             L.control.zoom({
-                position: 'bottomright'
+                position: "bottomright"
             }).addTo(map);
 
             // add sidebar
@@ -1706,10 +2019,10 @@ new Vue({
 
             sidebar.close();
 
-            if (setlat != 0 && setlng != 0) {
-                var circle = L.circle([setlat, setlng], {
-                    color: 'blue',
-                    fillColor: 'blue',
+            if (setlat !== 0 && setlng !== 0) {
+                L.circle([setlat, setlng], {
+                    color: "blue",
+                    fillColor: "blue",
                     fillOpacity: 0.5,
                     radius: 30
                 }).addTo(map);
@@ -1717,65 +2030,42 @@ new Vue({
                 map.setView([setlat, setlng], 20);
             }
 
-            map.on('zoomend', this.l_event_zoomed);
-            map.on('moveend', this.l_event_moveend);
-            map.on('click', this.l_event_click);
-            map.on('mousedown', function () {
-                sidebar.close();
+            // configure leaflet-geoman
+            map.pm.addControls({
+                position: "topright",
+                drawMarker: false,
+                drawCircleMarker: false,
+                drawPolyline: false,
+                drawRectangle: false,
+                drawPolygon: true,
+                drawCircle: false,
+                editMode: false,
+                dragMode: false,
+                cutPolygon: false,
+                removalMode: false,
+                pinningOption: false,
+                snappingOption: false
             });
 
-            var editableLayers = new L.FeatureGroup();
-            map.addLayer(editableLayers);
-
-            var options = {
-                position: 'topright',
-                draw: {
-                    polyline: false,
-                    polygon: {
-                        allowIntersection: false,
-                        drawError: {
-                            color: '#e1e100',
-                            message: '<strong>Oh snap!<strong> you can\'t draw that!'
-                        },
-                        shapeOptions: {
-                            color: '#ac00e6'
-                        }
-                    },
-                    circle: false,
-                    circlemarker: false,
-                    rectangle: false,
-                    line: false,
-                    marker: false,
-                },
-                edit: {
-                    featureGroup: editableLayers,
-                    remove: false
-                }
-            };
-
-            var drawControl = new L.Control.Draw(options);
-            map.addControl(drawControl);
-
-            map.on(L.Draw.Event.CREATED, function (e) {
-                var type = e.layerType;
-                var layer = e.layer;
-
-                var fencename = prompt("Please enter name of fence", "");
-                coords = loopCoords(layer.getLatLngs())
-                newfences[layer] = fencename
-                layer.bindPopup('<b>' + fencename + '</b><br><a href=savefence?name=' + encodeURI(fencename) + '&coords=' + coords + '>Save to MAD</a>');
-                editableLayers.addLayer(layer);
-                layer.openPopup();
+            map.pm.setGlobalOptions({
+                snappable: false,
+                allowSelfIntersection: false
             });
 
-            map.on('draw:edited', function (e) {
-                var layers = e.layers;
-                layers.eachLayer(function (layer) {
-                    coords = loopCoords(layer.getLatLngs())
-                    layer._popup.setContent('<b>' + newfences[layer] + '</b><br><a href=savefence?name=' + encodeURI(newfences[layer]) + '&coords=' + coords + '>Save to MAD</a>')
-                    layer.openPopup();
-                });
-            });
+            map.pm.setLang(
+                "custom-en",
+                { buttonTitles: { drawPolyButton: "Draw new geofence" } },
+                "en"
+            );
+
+            map.on("pm:drawstart", function () { mouseEventsIgnore.enableIgnore(); });
+            map.on("pm:drawend", function () { mouseEventsIgnore.disableIgnore(); });
+            map.on("pm:create", this.onShapeDrawn);
+
+            map.on("zoomend", this.l_event_zoomed);
+            map.on("moveend", this.l_event_moveend);
+            map.on("click", this.l_event_click);
+            map.on("mousedown", function () { sidebar.close(); });
 
             // initial load
             this.map_fetch_everything();

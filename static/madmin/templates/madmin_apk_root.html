@@ -14,12 +14,32 @@
         }
     });
 
+    $(".reload_wiz").click(function() {
+        url = '{{ url_for('api_madapk') }}/reload';
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success:function(data, status, xhr){
+                if(xhr.status == 200) {
+                    $.unblockUI();
+                    alert('Wizard re-caching complete');
+                    location.reload();
+                }
+                $.unblockUI();
+            },
+            error:function(data, status, xhr) {
+                alert('Something bad happened.  Check server logs');
+                $.unblockUI();
+            }
+        });
+    });
+
     $('#file-input').on('change', function () {
         url = '{{ url_for('api_madapk') }}/'+ $("#apk_type").val() + '/'+ $("#apk_arch").val();
         var fd = new FormData();
         fd.append('file', $('#file-input')[0].files[0]);
         fd.append('filename', $('#file-input')[0].files[0].name);
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Uploading APK...</h2>' });
+        loadingBlockUI("Uploading APK")
         $.ajax({
             url: url,
             type: 'POST',
@@ -45,7 +65,7 @@
 
     $(".search").click(function() {
         if(confirm('Are you sure you want to search for an updated APK?  Currently no locks so dont spam it :)')) {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Starting search...</h2>' });
+            loadingBlockUI("Starting search")
             rpc_call = {
               'call': 'search'
             }
@@ -64,7 +84,7 @@
                 },
                 error: function(data, status, xhr) {
                     alert('Unable to start the search.  Please look at server logs');
-                    
+
                     location.reload();
                 }
             });
@@ -72,8 +92,8 @@
     });
 
     $(".bulk_update").click(function() {
-        if(confirm('Are you sure you want to Update and Download this APK?')) {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Bulk Updating...</h2>' });
+        if(confirm('Are you sure you want to Update and Download every APK?')) {
+            loadingBlockUI("Bulk Updating")
             rpc_call = {
               'call': 'search_download'
             }
@@ -100,7 +120,7 @@
     $(".delete").click(function() {
         if(confirm('Are you sure you want to delete this APK?')) {
             var elem =  $(this);
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting an APK...</h2>' });
+            loadingBlockUI("Deleting an APK")
             var apk_type = $(this).data('apk_type');
             var apk_arch = $(this).data('apk_arch');
             var url = '{{ url_for('api_madapk') }}/'+ apk_type +'/'+ apk_arch;
@@ -183,7 +203,7 @@
 
     function download_apk(){
         if(confirm('Are you sure you want to download the APK?')) {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Starting download...</h2>' });
+            loadingBlockUI("Starting download")
             rpc_call = {
               'call': 'import'
             }
@@ -217,7 +237,7 @@
 
 {% block content %}
 {{ super() }}
-<div class="row">
+<div class="row mt-3">
     <div class="col">
         <div class="alert alert-primary">
             This section allows you to easily manage the required APKs for running MAD.
@@ -233,15 +253,15 @@
     </ul>
   {% endif %}
 {% endwith %}
-{% block body %}{% endblock %}
-<div class="row mt-3">
+<div style="clear: both;"></div>
+<div class="row">
     <div class="col">
         <table class="table table-striped table-hover table-sm">
             <thead>
                 <tr>
                     <th style="width: 20%" class="align-middle">APK Type</th>
                     <th style="width: 40%" class="align-middle">Version</th>
-                    <th style="width: 20%" class="align-middle d-none d-lg-table-cell">Architecture</th>
+                    <th style="width: 20%" class="align-middle">Architecture</th>
                     <th style="width: 20%" class="text-right align-middle"></th>
                 </tr>
             </thead>
@@ -253,11 +273,11 @@
                             <td class="align-middle">{{ data.version }}</td>
                             <td class="align-middle">{{ data.architecture.name }}</td>
                             <td align="right">
-                                <div class='update_status' data-apk_type="{{ apk_type.value }}" data-apk_arch="{{ architecture.value }}" style='display:inline;'></div>
-                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="search btn btn-success btn-sm"><i class="fas fa-sync"></i></button>
-                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="upload btn btn-success btn-sm"><i class="fas fa-upload"></i></button>
+                                <div class='update_status' data-apk_type="{{ apk_type.value }}" data-apk_arch="{{ architecture.value }}" style='display:inline;' data-toggle="tooltip" title="Download newer version"></div>
+                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="search btn btn-success btn-sm" data-toggle="tooltip" title="Search for new version"><i class="fas fa-sync"></i></button>
+                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="upload btn btn-success btn-sm" data-toggle="tooltip" title="Upload APK file"><i class="fas fa-upload"></i></button>
                                 {% if data.filename != None %}
-                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
+                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="delete btn btn-danger btn-sm" data-toggle="tooltip" title="Delete current file"><i class="fas fa-trash-alt"></i></button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -265,8 +285,9 @@
                 {% endfor %}
             </tbody>
         </table>
-        <div align="right">
-            Update Everything -><button class="bulk_update btn btn-info btn-sm"><i class="fas fa-3x fa-hat-wizard"></i></button>
+        <div class="btn-group-vertical float-right">
+            <button class="btn btn-info btn-sm nav-link text-uppercase font-weight-bold bulk_update align-items-center mb-1"><i class="fas fa-3x fa-hat-wizard align-middle"></i> Update Everything</button>
+            <button class="btn btn-success btn-sm nav-link text-uppercase font-weight-bold reload_wiz align-items-center">Reload / Refresh wizard</button>
         </div>
     </div>
 </div>

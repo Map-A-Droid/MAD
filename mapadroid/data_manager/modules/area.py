@@ -1,6 +1,8 @@
-from typing import Optional, Dict, List, Tuple
-from .resource import Resource
+from typing import Dict, List, Optional, Tuple
+
 from mapadroid.db.DbWrapper import DbWrapper
+
+from .resource import Resource
 
 
 class Area(Resource):
@@ -41,7 +43,9 @@ class Area(Resource):
         routecalc = self._data_manager.get_resource('routecalc', self._data['fields']['routecalc'])
         self.recalc_status = routecalc.recalc_status
 
-    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = None) -> int:
+        if ignore_issues is None:
+            ignore_issues = []
         has_identifier = True if self.identifier else False
         self.presave_validation(ignore_issues=ignore_issues)
         core_data = {
@@ -102,6 +106,14 @@ class Area(Resource):
             if self._data['fields']['geofence_included'] == self._data['fields']['geofence_excluded']:
                 issues = {
                     'invalid': [('geofence_excluded', 'Cannot be the same as geofence_included')]
+                }
+        except KeyError:
+            pass
+        try:
+            if self._data['fields']['level'] and self._data['fields']['init']:
+                issues = {
+                    'invalid': [('init', 'Cannot have init and level set to True at the same time. '
+                                         'For leveling up init must be set False.')]
                 }
         except KeyError:
             pass

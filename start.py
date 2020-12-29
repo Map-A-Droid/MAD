@@ -1,45 +1,45 @@
+import calendar
+import datetime
+import gc
+import os
 import sys
+import time
+import unittest
+from multiprocessing import Process
+from threading import Thread, active_count
+from typing import Optional
+
+import pkg_resources
+import psutil
+
+from mapadroid.data_manager import DataManager
+from mapadroid.db.DbFactory import DbFactory
+from mapadroid.mad_apk import (AbstractAPKStorage, StorageSyncManager,
+                               get_storage_obj)
+from mapadroid.madmin.madmin import MADmin
+from mapadroid.mitm_receiver.MitmDataProcessorManager import \
+    MitmDataProcessorManager
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
+from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
+from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.patcher import MADPatcher
+from mapadroid.utils.event import Event
+from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
+from mapadroid.utils.madGlobals import terminate_mad
+from mapadroid.utils.MappingManager import (MappingManager,
+                                            MappingManagerManager)
+from mapadroid.utils.pluginBase import PluginCollection
+from mapadroid.utils.rarity import Rarity
+from mapadroid.utils.updater import DeviceUpdater
+from mapadroid.utils.walkerArgs import parse_args
+from mapadroid.webhook.webhookworker import WebhookWorker
+from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 py_version = sys.version_info
 if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
     print("MAD requires at least python 3.6! Your version: {}.{}"
           .format(py_version.major, py_version.minor))
     sys.exit(1)
-from multiprocessing import Process
-from typing import Optional
-import calendar
-import datetime
-import gc
-import os
-import pkg_resources
-import time
-from threading import Thread, active_count
-import psutil
-from mapadroid.utils.MappingManager import MappingManager, MappingManagerManager
-from mapadroid.db.DbFactory import DbFactory
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
-from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
-from mapadroid.utils.madGlobals import terminate_mad
-from mapadroid.utils.rarity import Rarity
-from mapadroid.utils.event import Event
-from mapadroid.patcher import MADPatcher
-from mapadroid.utils.walkerArgs import parse_args
-from mapadroid.websocket.WebsocketServer import WebsocketServer
-from mapadroid.utils.updater import DeviceUpdater
-from mapadroid.data_manager import DataManager
-from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.webhook.webhookworker import WebhookWorker
-from mapadroid.mad_apk import get_storage_obj, StorageSyncManager, AbstractAPKStorage
-from mapadroid.madmin.madmin import MADmin
-from mapadroid.utils.pluginBase import PluginCollection
-import unittest
-from mapadroid.utils.logging import init_logging, get_logger, LoggerEnums
-
-
-args = parse_args()
-os.environ['LANGUAGE'] = args.language
-init_logging(args)
-logger = get_logger(LoggerEnums.system)
 
 
 # Patch to make exceptions in threads cause an exception.
@@ -150,6 +150,11 @@ def check_dependencies():
 
 
 if __name__ == "__main__":
+    args = parse_args()
+    os.environ['LANGUAGE'] = args.language
+    init_logging(args)
+    logger = get_logger(LoggerEnums.system)
+
     data_manager: DataManager = None
     device_updater: DeviceUpdater = None
     event: Event = None
@@ -206,7 +211,7 @@ if __name__ == "__main__":
                                                                              data_manager,
                                                                              configmode=args.config_mode)
     if args.only_routes:
-        logger.info('Running in route recalculation mode.  MAD will exit once complete')
+        logger.info('Running in route recalculation mode. MAD will exit once complete')
         recalc_in_progress = True
         while recalc_in_progress:
             time.sleep(5)
@@ -221,14 +226,20 @@ if __name__ == "__main__":
         MitmMapperManager.register('MitmMapper', MitmMapper)
         mitm_mapper_manager = MitmMapperManager()
         mitm_mapper_manager.start()
-        mitm_mapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper.stats_submit)
+        mitm_mapper = mitm_mapper_manager.MitmMapper(args, mapping_manager, db_wrapper.stats_submit)
+
     logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
+
+    mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper)
+    mitm_data_processor_manager.launch_processors()
+
     mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                          mitm_mapper, args, mapping_manager, db_wrapper,
-                                         data_manager,
-                                         storage_elem,
+                                         data_manager, storage_elem,
+                                         mitm_data_processor_manager.get_queue(),
                                          enable_configmode=args.config_mode)
     mitm_receiver_process.start()
+
     logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
     ws_server = WebsocketServer(args=args,
                                 mitm_mapper=mitm_mapper,
@@ -276,11 +287,12 @@ if __name__ == "__main__":
         'storage_elem': storage_elem,
         'webhook_worker': webhook_worker,
         'ws_server': ws_server,
+        'mitm_data_processor_manager': mitm_data_processor_manager
     }
     mad_plugins = PluginCollection('plugins', plugin_parts)
     mad_plugins.apply_all_plugins_on_value()
 
-    if args.with_madmin or args.config_mode:
+    if not args.disable_madmin or args.config_mode:
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin.madmin_start)
         t_madmin.daemon = True
@@ -301,20 +313,26 @@ if __name__ == "__main__":
                 device_creator = ResourceCreator(api, prefix='MADCore')
                 res = device_creator.create_valid_resource('device')[0]
                 mapping_manager.update()
-            while not api_ready:
+            max_attempts = 30
+            attempt = 0
+            while not api_ready and attempt < max_attempts:
                 try:
                     api.get('/api')
                     api_ready = True
                     logger.info('API is ready for unit testing')
                 except Exception:
+                    attempt += 1
                     time.sleep(1)
-            loader = unittest.TestLoader()
-            start_dir = 'mapadroid/tests/'
-            suite = loader.discover(start_dir)
-            runner = unittest.TextTestRunner()
-            result = runner.run(suite)
-            exit_code = 0 if result.wasSuccessful() else 1
-            raise KeyboardInterrupt
+            if api_ready:
+                loader = unittest.TestLoader()
+                start_dir = 'mapadroid/tests/'
+                suite = loader.discover(start_dir)
+                runner = unittest.TextTestRunner()
+                result = runner.run(suite)
+                exit_code = 0 if result.wasSuccessful() else 1
+                raise KeyboardInterrupt
+            else:
+                exit_code = 1
         else:
             while True:
                 time.sleep(10)
@@ -332,11 +350,13 @@ if __name__ == "__main__":
             if mitm_receiver_process is not None:
                 logger.info("Trying to stop receiver")
                 mitm_receiver_process.shutdown()
-                logger.debug("MITM child threads successfully shutdown.  Terminating parent thread")
+                logger.debug("MITM child threads successfully shutdown. Terminating parent thread")
                 mitm_receiver_process.terminate()
                 logger.debug("Trying to join MITMReceiver")
                 mitm_receiver_process.join()
                 logger.debug("MITMReceiver joined")
+            if mitm_data_processor_manager is not None:
+                mitm_data_processor_manager.shutdown()
             if device_updater is not None:
                 device_updater.stop_updater()
             if t_whw is not None:

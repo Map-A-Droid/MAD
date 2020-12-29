@@ -3,16 +3,17 @@ import os
 import os.path
 import time
 from multiprocessing.pool import ThreadPool
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
+
 import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
 from pytesseract import Output
+
 from mapadroid.ocr.matching_trash import trash_image_matching
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
-
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 
 logger = get_logger(LoggerEnums.ocr)
 
@@ -102,8 +103,7 @@ class PogoWindows:
             # convert the (x, y) coordinates and radius of the circles to integers
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
-            for (pos_x, pos_y, radius) in circles:
-
+            for (pos_x, pos_y, _) in circles:
                 if not xcord:
                     circle += 1
                     if click:
@@ -178,7 +178,7 @@ class PogoWindows:
 
         num_lines = 0
         lines = []
-        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=min_line_length,
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=90, minLineLength=min_line_length,
                                 maxLineGap=5)
         if lines is None:
             return False
@@ -339,8 +339,12 @@ class PogoWindows:
             origin_logger.error("Screenshot corrupted: {}", e)
             return False
 
-        cv2.imwrite(os.path.join(self.temp_dir_path,
-                                 str(identifier) + '_exitcircle.jpg'), image)
+        imwrite_status = cv2.imwrite(os.path.join(self.temp_dir_path,
+                                     str(identifier) + '_exitcircle.jpg'), image)
+        if not imwrite_status:
+            origin_logger.error("Could not save file: {} - check permissions and path",
+                                os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'))
+            return False
 
         if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'),
                                     identifier,
@@ -428,7 +432,10 @@ class PogoWindows:
 
         # resize image
         gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
-        cv2.imwrite(temp_path_item, gray)
+        imwrite_status = cv2.imwrite(temp_path_item, gray)
+        if not imwrite_status:
+            origin_logger.error("Could not save file: {} - check permissions and path", temp_path_item)
+            return None
         try:
             with Image.open(temp_path_item) as im:
                 try:
@@ -477,7 +484,7 @@ class PogoWindows:
                                    maxRadius=radius_max)
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
-            for (pos_x, pos_y, radius) in circles:
+            for (pos_x, _, _) in circles:
                 if pos_x < width_ - width_ / 3:
                     mainscreen += 1
 
@@ -590,7 +597,7 @@ class PogoWindows:
                     origin_logger.debug("Screentext: {}", globaldict)
                     if globaldict is None or 'text' not in globaldict:
                         continue
-                    n_boxes = len(globaldict['level'])
+                    n_boxes = len(globaldict['text'])
                     for index in range(n_boxes):
                         if returntype != ScreenType.UNDEFINED:
                             break

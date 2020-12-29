@@ -1,7 +1,7 @@
 import datetime
 import re
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
 

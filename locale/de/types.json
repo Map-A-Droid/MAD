@@ -121,7 +121,7 @@
   },
   "33": {
     "prototext": "QUEST_BUDDY_FEED",
-    "text": ""
+    "text": "Gib deinem Kumpel {0} Snacks"
   },
   "34": {
     "prototext": "QUEST_BUDDY_EARN_AFFECTION_POINTS",
@@ -129,7 +129,7 @@
   },
   "35": {
     "prototext": "QUEST_BUDDY_PET",
-    "text": ""
+    "text": "Spiel mit deinem Kumpel"
   },
   "36": {
     "prototext": "QUEST_BUDDY_LEVEL",
@@ -142,5 +142,13 @@
   "38": {
     "prototext": "QUEST_BUDDY_YATTA",
     "text": ""
+  },
+  "43": {
+    "prototext": "QUEST_MEGA_EVOLVE",
+    "text": "Mega Entwickle {0} Pokemon"
+  },
+  "46": {
+    "protoext": "GEOTARGETED_AR_SCAN",
+    "text": "Pok\u00e9stop scannen"
   }
 }

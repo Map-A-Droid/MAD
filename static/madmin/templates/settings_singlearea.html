@@ -14,7 +14,7 @@ $.urlParam = function(name){
 }
 $(document).ready(function () {
     $("#submit").click(function() {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        loadingBlockUI('Saving a {{ subtab }}' );
         save_data = get_save_data();
         if(isEmptyObj(save_data) != false) {
             alert('No changes have been made');
@@ -64,11 +64,10 @@ $(document).ready(function () {
 {% block content %}
 {{ super() }}
 
-<h1 class="display-4">{{ element.name }} <small class="badge badge-secondary" style="font-weight: normal; font-size: 45%">{{ element.mode }}</small></h1>
+<h1 class="display-5">{{ element.name }} <small class="badge badge-secondary" style="font-weight: normal; font-size: 45%">{{ element.mode }}</small></h1>
 
 <div class="row">
   {% if settings_vars.settings is defined %}
-  {% if advcfg == True %}
   <div class="col-sm">
     {% for key, field in settings_vars.settings|dictsort %}
     <div class="form-group">
@@ -105,7 +104,6 @@ $(document).ready(function () {
         </select>
       </div>
     </div>
-  {% endif %}
   {% endif %}
   {% if settings_vars.fields is defined %}
   <div class="col-sm">

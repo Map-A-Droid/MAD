@@ -1,18 +1,19 @@
 import collections
 import copy
 import re
+
 import flask
-from mapadroid.madmin.functions import auth_required
-from mapadroid.data_manager.dm_exceptions import (
-    UnknownIdentifier,
-    ModeNotSpecified,
-    ModeUnknown,
-    UpdateIssue,
-    DependencyError,
-    SaveIssue
-)
-from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
+
+from mapadroid.data_manager.dm_exceptions import (DependencyError,
+                                                  InvalidSection,
+                                                  ModeNotSpecified,
+                                                  ModeUnknown, SaveIssue,
+                                                  UnknownIdentifier,
+                                                  UpdateIssue)
 from mapadroid.data_manager.modules import MAPPINGS
+from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
+from mapadroid.madmin.functions import auth_required
+
 from .. import apiHandler
 
 
@@ -97,7 +98,9 @@ class ResourceHandler(apiHandler.APIHandler):
             pass
         return resource
 
-    def get_resource_info_elems(self, config, skip_fields=[]):
+    def get_resource_info_elems(self, config, skip_fields=None):
+        if skip_fields is None:
+            skip_fields = []
         variables = []
         for key, field in config.items():
             if key in skip_fields:
@@ -270,12 +273,18 @@ class ResourceHandler(apiHandler.APIHandler):
             errors = []
             for section, identifier in err.dependencies:
                 # TODO - Fix TBD if name is not present
-                resource = self._data_manager.get_resource(section, identifier)
-                name = resource.get(resource.name_field, 'TBD')
-                errors.append({
-                    'name': name,
-                    'uri': '%s/%s' % (flask.url_for('api_%s' % (section,)), identifier,)
-                })
+                try:
+                    resource = self._data_manager.get_resource(section, identifier)
+                    name = resource.get(resource.name_field, 'TBD')
+                    errors.append({
+                        'name': name,
+                        'uri': '%s/%s' % (flask.url_for('api_%s' % (section,)), identifier,)
+                    })
+                except InvalidSection:
+                    errors.append({
+                        'name': section,
+                        'identifier': identifier
+                    })
             return (errors, 412)
         else:
             headers = {
@@ -328,7 +337,7 @@ class ResourceHandler(apiHandler.APIHandler):
             converted = self.translate_data_for_response(resource)
             return (converted, 201, {'headers': headers})
         else:
-            raise (flask.request.method, 405)
+            return (flask.request.method, 405)
 
     def put(self, identifier, data, resource_def, resource_info, *args, **kwargs):
         """ API call to replace an object """

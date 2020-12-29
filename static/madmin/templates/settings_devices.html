@@ -12,7 +12,8 @@ function bulk_patch(uri, patch_data) {
       url : uri,
       data : JSON.stringify(patch_data),
       type : 'PATCH',
-      contentType : 'application/json'
+      contentType : 'application/json',
+      async: false
   });
 }
 function flush_level(uri, data) {
@@ -38,7 +39,7 @@ $(document).ready(function () {
         var uri = '{{ base_uri }}/'+ $(this).data('identifier');
         var walker_uri = $(this).children("option:selected").attr('name');
         var patch_data = {"walker": walker_uri};
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
+        loadingBlockUI("Loading")
         bulk_patch(uri, patch_data);
         $.unblockUI();
     });
@@ -46,7 +47,7 @@ $(document).ready(function () {
       var selected_uri = $(this).children("option:selected").val();
       var devices = $('.bulk_sel:checkbox:checked');
       if(devices.length > 0 && confirm('Are you sure you want to bulk update?')) {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Bulk Updating</h2>' });
+        loadingBlockUI("Bulk Updating");
         var data = {};
         var operation = bulk_patch;
         if(selected_uri.indexOf('walker') > 0) {
@@ -69,7 +70,7 @@ $(document).ready(function () {
     $(".delete").click(function() {
         if(confirm('Are you sure you want to delete this resource?')) {
             var elem =  $(this);
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting a {{ subtab }}...</h2>' });
+            loadingBlockUI('Deleting a  {{ subtab }}' )
             $.ajax({
                 url : '{{ base_uri }}/'+ $(this).data('identifier'),
                 type : 'DELETE',
@@ -97,7 +98,7 @@ $(document).ready(function () {
     });
     $(".dev_state").click(function() {
         if(confirm('Are you sure you want to toggle state of this device?')) {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Toggling device state...</h2>' });
+            loadingBlockUI("Toggling device state")
             rpc_call = {
               'call': 'device_state',
               'args': {

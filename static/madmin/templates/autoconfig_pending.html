@@ -1,0 +1,208 @@
+{% extends "autoconfig_root.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript">
+function bulk_status_update(uri, data) {
+  $.ajax({
+      url : uri,
+      data : JSON.stringify(data),
+      type : 'POST',
+      contentType : 'application/json'
+  });
+}
+$(document).ready(function () {
+    $("#selectAll").change(function() {
+      sel = this.checked
+      $(".bulk_sel").each(function() {
+        $(this).prop('checked', sel);
+      });
+    });
+
+    $(".bulk_update").change(function() {
+      var selected_uri = $(this).children("option:selected").val();
+      var devices = $('.bulk_sel:checkbox:checked');
+      if(devices.length > 0 && confirm('Are you sure you want to bulk set to '+ $(".bulk_update").val() +'?')) {
+          loadingBlockUI("Bulk Updating")
+        var status = $(".bulk_update").val() == 'Accept';
+        $.each($('.bulk_sel:checkbox:checked'), function() {
+          uri = '{{ url_for('api_autoconf') }}/' + $(this).data('identifier');
+          bulk_status_update(uri, {'status':status});
+        });
+      }
+    });
+
+    $(".delete_sess").click(function() {
+        var session_id = $(this).data('identifier');
+        if(confirm('Are you sure you want to delete this session?')) {
+            loadingBlockUI("Updating registration")
+            $.ajax({
+                url : '{{ url_for('api_autoconf') }}/'+ session_id,
+                type : 'DELETE',
+                success: function(data, status, xhr) {
+                    if(xhr.status == 200) {
+                      alert('Successfully delete the registration');
+                      location.reload();
+                    }
+                },
+                error: function(data, status, xhr) {
+                    alert('Unable to delete registration.  Please look at server logs');
+                }
+            });
+            $.unblockUI();
+        }
+    });
+
+    $(".download_config").click(function() {
+        window.location.href = "{{ url_for('autoconfig_download_file') }}";
+    });
+
+    $(".sess_logs").click(function() {
+        var session_id = $(this).data('identifier');
+        window.location.replace('{{ url_for('autoconfig_root') }}/logs/'+ session_id);
+    });
+
+    $(".reg_status").click(function() {
+        var accepted = false;
+        var msg = 'reject';
+        var additional = "";
+        var session_id = $(this).data('identifier');
+        if($(this).hasClass('accept')) {
+            accepted = true;
+            msg = 'accept';
+            additional = "This will create a new device instead of using an existing device.  To use an existing device click on the registration IP address."
+        }
+        if(confirm('Are you sure you want to '+ msg +' this session?  '+ additional)) {
+            loadingBlockUI("Updating registration")
+            $.ajax({
+                url : '{{ url_for('api_autoconf') }}/'+ session_id,
+                contentType : 'application/json',
+                data: JSON.stringify({'status':accepted}),
+                type : 'POST',
+                success: function(data, status, xhr) {
+                    if(xhr.status == 200) {
+                      alert('Successfully updated the registration state');
+                      location.reload();
+                    }
+                },
+                error: function(data, status, xhr) {
+                    if(xhr.status == 500) {
+                      alert('Unable to update registration state.  Please look at server logs');
+                    } else {
+                      alert(data['responseJSON']);
+                    }
+                }
+            });
+            $.unblockUI();
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row">
+  <div class="col">
+    <div class="alert alert-primary">
+      This is a list of all devices that are waiting to be auto-registered from MADrom.<br>
+      Defaults will be the first created walker and origin hopper (default MADrom)<br>
+      Clicking on the device will allow you to select a specific origin
+    </div>
+    {% if issues_warning %}
+        <div class="alert alert-warning">
+        {% for issue in issues_warning %}
+            {% if loop.index != 1 %}
+            <br>
+            {% endif %}
+            {{ issue|safe }}
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% if issues_critical %}
+        <div class="alert alert-danger">
+        {% for issue in issues_critical %}
+            {% if loop.index != 1 %}
+            <br>
+            {% endif %}
+            {{ issue|safe }}
+        {% endfor %}
+        </div>
+    {% endif %}
+  </div>
+</div>
+<div class="row mt-3">
+  <div class="col">
+    <table class="table table-striped table-hover table-sm">
+      <thead>
+        <tr>
+          <th style="width: 5%" class="align-middle"><input type="checkbox" id="selectAll"></th>
+          <th style="width: 15%" class="align-middle">IP</th>
+          <th style="width: 50%" class="align-middle d-none d-lg-table-cell">Assigned Origin</th>
+          <th style="width: 30%" class="text-right align-middle">Status</th>
+        </tr>
+      </thead>
+      {% if pending is none %}
+        <div id='no-configured-elements' class="alert alert-info">No pending devices</div>
+      {% else %}
+      <tbody>
+        {% for session_id, session in pending.items() %}
+        <tr>
+          <td><input type="checkbox" class="bulk_sel" data-identifier="{{ session_id }}"></td>
+          <td class="align-middle">
+            {% if not issues_critical %}
+              <a href="{{ url_for('autoconfig_pending_dev', session_id=session_id) }}">{{ session.ip }}</a>
+            {% else %}
+              {{ session.ip }}
+            {% endif %}
+          </td>
+          <td class="align-middle">
+          {% if session.device_id is not none %}
+            <a href="{{ url_for('settings_devices', id=session.device_id) }}">{{ session.origin }}</a>
+          {% else %}
+            {{ session.origin if session.origin is not none else '' }}
+          {% endif %}
+          </td>
+          <td class="text-right align-middle">{{ session.status_hr }}
+            {% if session.status == 0 %}
+              {% if not issues_warning %}
+                  <button data-identifier='{{ session_id }}' type="button" class="reg_status accept btn btn-success btn-sm" data-toggle="tooltip" title="Accept"><i class="fa fa-check-circle"></i>
+              {% endif %}
+              <button data-identifier='{{ session_id }}' type="button" class="reg_status delete btn btn-danger btn-sm" data-toggle="tooltip" title="Reject"><i class="fa fa-ban"></i>
+            {% endif %}
+            <button data-identifier='{{ session_id }}' type="button" class="sess_logs btn btn-info btn-sm" data-toggle="tooltip" title="View session logs"><i class="fas fa-history"></i></button>
+            <button data-identifier='{{ session_id }}' type="button" class="delete_sess btn btn-danger btn-sm" data-toggle="tooltip" title="Delete session"><i class="fas fa-trash-alt"></i></button>
+        </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm">
+    Bulk Actions
+    <select class='bulk_update'>
+      <option value="None">None</option>
+      {% if is_ready %}
+        <option value='Accept'>Accept</option>
+      {% endif %}
+      <option value='Reject'>Reject</option>
+      <!-- <option value='Reject'>Delete</option> -->
+    </select>
+  </div>
+  <div class="col-sm">
+        <div class="btn-group-vertical float-right">
+        {% if issues_critical %}
+        Clear all blocking issues to get USB Configuration file
+        {% else %}
+        <button class="btn btn-info btn-sm nav-link text-uppercase font-weight-bold download_config align-items-center mb-1"><i class="fas fa-3x fa-cog align-middle"></i> Download Configuration</button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

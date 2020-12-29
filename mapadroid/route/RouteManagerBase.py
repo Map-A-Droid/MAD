@@ -6,21 +6,23 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from operator import itemgetter
 from threading import Event, RLock, Thread
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Set, Tuple
+
 import numpy as np
 from dataclasses import dataclass
+
+from mapadroid.data_manager import DataManager
+from mapadroid.data_manager.modules.geofence import GeoFence
+from mapadroid.data_manager.modules.routecalc import RouteCalc
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
-from mapadroid.data_manager import DataManager
-from mapadroid.data_manager.modules.geofence import GeoFence
-from mapadroid.data_manager.modules.routecalc import RouteCalc
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.logging import (LoggerEnums, get_logger,
+                                     routelogger_set_origin)
 from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.utils.logging import get_logger, LoggerEnums, routelogger_set_origin
-
 
 logger = get_logger(LoggerEnums.routemanager)
 args = parse_args()
@@ -483,10 +485,12 @@ class RouteManagerBase(ABC):
             # clustering
             return latest
         if self.mode == "mon_mitm" and self.remove_from_queue_backlog == 0:
-            self.logger.error("You are running in mon_mitm mode with priority queue enabled and "
-                              "remove_from_queue_backlog set to 0. This may result in building up a significant queue "
-                              "backlog and reduced scanning performance. Please review this setting or set it to the "
-                              "default of 300.")
+            self.logger.warning("You are running in mon_mitm mode with priority queue enabled and "
+                                "remove_from_queue_backlog set to 0. This may result in building up a significant "
+                                "queue "
+                                "backlog and reduced scanning performance. Please review this setting or set it to "
+                                "the "
+                                "default of 300.")
 
         if self.remove_from_queue_backlog is not None:
             delete_before = time.time() - self.remove_from_queue_backlog
@@ -717,7 +721,7 @@ class RouteManagerBase(ABC):
     def _check_worker_rounds(self) -> int:
         temp_worker_round_list: list = []
         with self._manager_mutex:
-            for origin, entry in self._routepool.items():
+            for _origin, entry in self._routepool.items():
                 temp_worker_round_list.append(entry.rounds)
 
         return 0 if len(temp_worker_round_list) == 0 else min(temp_worker_round_list)
@@ -725,7 +729,7 @@ class RouteManagerBase(ABC):
     def _get_unprocessed_coords_from_worker(self) -> list:
         unprocessed_coords: list = []
         with self._manager_mutex:
-            for origin, entry in self._routepool.items():
+            for _origin, entry in self._routepool.items():
                 unprocessed_coords.append(entry.queue)
 
         return unprocessed_coords
@@ -821,20 +825,25 @@ class RouteManagerBase(ABC):
             if workers > len(self._current_route_round_coords):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
+                extra_length_workers = 0
             else:
                 try:
                     new_subroute_length = math.floor(len(self._current_route_round_coords) /
                                                      workers)
                     if new_subroute_length == 0:
                         return False
+                    extra_length_workers = len(self._current_route_round_coords) % workers
                 except Exception:
                     self.logger.info('Something happens with the worker - breakup')
                     return False
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
 
-            self.logger.debug("Workers in route: {}", self._routepool)
-            self.logger.debug("New subroute length: {}", new_subroute_length)
+            self.logger.debug("Workers in route: {}", workers)
+            if extra_length_workers > 0:
+                self.logger.debug("New subroute length: {}-{}", new_subroute_length, new_subroute_length + 1)
+            else:
+                self.logger.debug("New subroute length: {}", new_subroute_length)
 
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
@@ -846,7 +855,7 @@ class RouteManagerBase(ABC):
 
                 self.logger.debug("Checking routepools in the following order: {}", sorted_routepools)
                 compare = lambda x, y: collections.Counter(x) == collections.Counter(y)  # noqa: E731
-                for origin, time_added in sorted_routepools:
+                for origin, _time_added in sorted_routepools:
                     if origin not in self._routepool:
                         # TODO probably should restart this job or something
                         self.logger.info('{} must have unregistered when we weren\'t looking.. skip it', origin)
@@ -857,8 +866,10 @@ class RouteManagerBase(ABC):
 
                     new_subroute: List[Location] = []
                     subroute_index: int = 0
-                    while len(temp_total_round) > 0 and (
-                            subroute_index <= new_subroute_length or i == len(self._routepool)):
+                    new_subroute_actual_length = new_subroute_length
+                    if i < extra_length_workers:
+                        new_subroute_actual_length += 1
+                    while len(temp_total_round) > 0 and subroute_index < new_subroute_actual_length:
                         subroute_index += 1
                         new_subroute.append(temp_total_round.popleft())
 

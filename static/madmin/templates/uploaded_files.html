@@ -35,7 +35,7 @@ function setGrid(tableGridHtmlId, gridData) {
                 "' title='Install on selected devices'><i class='fas fa-tasks'></i></a> <a href='install_file_all_devices?jobname=" +
                 row.jobname + "&type=" + row.type +
                 "' class='confirm' title='Do you really want to start this job on all devices?'><i class='fas fa-play-circle'></i></a>";
-              if(row.type == "jobType.INSTALLATION") {
+              if(row.type == "JobType.INSTALLATION") {
                 dellink = " <a href='delete_file?filename=" + row.jobname +
                   "' class='confirm' title='Do you really want to delete this file?'><i class='fas fa-trash-alt'></i></a>"
               }

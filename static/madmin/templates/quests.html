@@ -30,8 +30,11 @@ function setGrid(tableGridHtmlId, gridData) {
             {
                 "targets": [0],
                 "render": function (data, type, row) {
-                    var url = row.url.replace('http://', 'https://')
-                    var img = `<img class='lazy pokestopimg mr-3' data-original='${url}' width=100>`;
+                    var img = '';
+                    if (row.url !== null) {
+                        var url = row.url.replace('http://', 'https://')
+                        img = `<img class='lazy pokestopimg mr-3' data-original='${url}' width=100>`;
+                    }
                     var name = build_name(row)
                     return `<div class="media">${img}<div class="media-body">${name}</div></div>`
                 }
@@ -57,9 +60,7 @@ function setGrid(tableGridHtmlId, gridData) {
 
 $(document).ready(function() {
     $("#navgyms").addClass("active");
-    $.blockUI({
-        message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>'
-    });
+    loadingBlockUI("Loading")
     $.ajax({
         type: "GET",
         url: "{{ url_for('get_quests') }}?fence={{fence}}",
@@ -101,6 +102,9 @@ function build_reward_text(quest_reward_type, quest_item_amount, monname, quest_
         case 7:
             var rewardtext = monname;
             break;
+        case 12:
+            var rewardtext = monname + " " + quest_item_name + '<br>Amount: ' + quest_item_amount;
+            break;
     }
     return rewardtext;
 }
@@ -123,6 +127,11 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, q
             var url = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${quest_pokemon_form_id}${costume}.png`;
             var image = `<img class="mr-3" src="${url}" width="50">`;
             break;
+        case 12:
+            var url = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/rewards/reward_mega_energy.png'
+            var image = `<img class="mr-3" src="${url}" width="50">`;
+            break;
+
     }
     return image;
 }

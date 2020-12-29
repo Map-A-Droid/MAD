@@ -1,7 +1,11 @@
 import os
+
 from mapadroid.mad_apk import APKArch, APKType
 from mapadroid.tests.apk_base import APKTestBase
 from mapadroid.tests.test_utils import filepath_rgc, get_rgc_bytes
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+logger = get_logger(LoggerEnums.system)
 
 
 class EndpointTests(APKTestBase):
@@ -71,6 +75,8 @@ class EndpointTests(APKTestBase):
         self.web_upload_rgc()
         rgc_size = get_rgc_bytes().getbuffer().nbytes
         response = self.mitm.get('mad_apk/rgc/noarch/download')
+        self.assertTrue(response.status_code == 200)
         self.assertTrue(len(response.content) == rgc_size)
         response = self.api.get('api/mad_apk/rgc/noarch/download')
+        self.assertTrue(response.status_code == 200)
         self.assertTrue(len(response.content) == rgc_size)

@@ -1,18 +1,22 @@
-import apkutils
-from apkutils.apkfile import BadZipFile, LargeZipFile
 import io
-import requests
+import json
 import zipfile
 from threading import Thread
-from typing import NoReturn, Optional
+from typing import Dict, NoReturn, Optional
+
+import apkutils
+import requests
 import urllib3
-from .abstract_apk_storage import AbstractAPKStorage
-from .apk_enums import APKArch, APKType, APKPackage
-from .utils import lookup_package_info, is_newer_version, supported_pogo_version, lookup_arch_enum
+from apkutils.apkfile import BadZipFile, LargeZipFile
+
 from mapadroid.utils import global_variables
 from mapadroid.utils.gplay_connector import GPlayConnector
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
+from .abstract_apk_storage import AbstractAPKStorage
+from .apk_enums import APKArch, APKPackage, APKType
+from .utils import (get_apk_info, is_newer_version, lookup_arch_enum,
+                    lookup_package_info, supported_pogo_version)
 
 logger = get_logger(LoggerEnums.package_mgr)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -23,6 +27,10 @@ MAX_RETRIES: int = 3  # Number of attempts for downloading on failure
 
 
 class WizardError(Exception):
+    pass
+
+
+class InvalidDownload(WizardError):
     pass
 
 
@@ -52,7 +60,6 @@ class APKWizard(object):
 
     def apk_all_actions(self) -> NoReturn:
         "Search and download all required packages"
-        self.apk_all_search()
         self.apk_all_download()
 
     def apk_all_download(self) -> NoReturn:
@@ -82,8 +89,13 @@ class APKWizard(object):
 
     def apk_nonblocking_download(self) -> NoReturn:
         "Download all packages"
-        self.download_pogo(APKArch.armeabi_v7a)
-        self.download_pogo(APKArch.arm64_v8a)
+        for arch in APKArch:
+            if arch == APKArch.noarch:
+                continue
+            try:
+                self.download_pogo(arch)
+            except InvalidDownload:
+                pass
         self.download_rgc(APKArch.noarch)
         self.download_pd(APKArch.noarch)
 
@@ -110,10 +122,11 @@ class APKWizard(object):
         Args:
             architecture (APKArch): Architecture of the package to download
         """
-        latest_version = self.find_latest_pogo(architecture)
-        if latest_version is None:
-            logger.warning('Unable to find latest data for PoGo.  Try again later')
-        elif supported_pogo_version(architecture, latest_version):
+        latest_pogo_info = self.find_latest_pogo(architecture)
+        if latest_pogo_info is None:
+            logger.warning('Unable to find latest data for PoGo. Try again later')
+        elif supported_pogo_version(architecture, latest_pogo_info["version"]):
+            latest_version = latest_pogo_info["version"]
             current_version = self.storage.get_current_version(APKType.pogo, architecture)
             if type(current_version) is not str:
                 current_version = None
@@ -131,17 +144,24 @@ class APKWizard(object):
                     successful: bool = False
                     while retries < MAX_RETRIES and not successful:
                         self.gpconn = GPlayConnector(architecture)
-                        downloaded_file = self.gpconn.download(APKPackage.pogo.value)
+                        latest_data = self.get_latest(APKType.pogo, architecture)
+                        downloaded_file = self.gpconn.download(APKPackage.pogo.value, version_code=latest_data['url'])
                         if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
-                            PackageImporter(APKType.pogo, architecture, self.storage, downloaded_file,
-                                            'application/zip', version=latest_version)
-                            successful = True
-                        else:
+                            version, _ = get_apk_info(downloaded_file)
+                            if version != latest_version:
+                                msg = f"Playstore returned {version} when requesting {latest_version}"
+                                logger.warning(msg)
+                                raise InvalidDownload(msg)
+                            else:
+                                PackageImporter(APKType.pogo, architecture, self.storage, downloaded_file,
+                                                'application/zip', version=latest_version)
+                                successful = True
+                        if not successful:
                             logger.info("Issue downloading apk")
                             retries += 1
                             if retries < MAX_RETRIES:
                                 logger.warning('Unable to successfully download the APK')
-                except:  # noqa: E722
+                except Exception:  # noqa: E722
                     raise
                 finally:
                     update_data['download_status'] = 0
@@ -201,7 +221,7 @@ class APKWizard(object):
                         retries += 1
                         if retries < MAX_RETRIES:
                             logger.warning('Unable to successfully download the APK')
-            except:  # noqa: E722
+            except Exception:  # noqa: E722
                 logger.warning('Unable to download the file @ {}', latest_data['url'])
             finally:
                 update_data['download_status'] = 0
@@ -252,24 +272,49 @@ class APKWizard(object):
             architecture (APKArch): Architecture of the package to check
         """
         latest = None
+        version_code: int = None
+        version_str: str = None
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
-        self.gpconn = GPlayConnector(architecture)
         try:
-            download_url = None
-            latest = self.gpconn.get_latest_version(APKPackage.pogo.value)
+            latest_pogo_version = self.get_latest_version()
+            if latest_pogo_version[architecture] is None:
+                return latest
+            latest_supported = latest_pogo_version[architecture]
             current_version = self.storage.get_current_version(APKType.pogo, architecture)
             if type(current_version) is not str:
                 current_version = None
-            if current_version is None or is_newer_version(latest, current_version):
-                if supported_pogo_version(architecture, latest):
-                    logger.info('Newer version found on the Play Store: {}', latest)
-                    download_url = True
+            # do some sanity checking until this is fixed properly
+            tmp_latest = self.get_latest(APKType.pogo, architecture)
+            if current_version is None or is_newer_version(latest_supported["version"], current_version) or (
+                    tmp_latest and tmp_latest['url'] is not None):
+                # Validate its available via google
+                gpconn = GPlayConnector(architecture)
+                (store_vc, store_vs) = gpconn.get_latest_version(APKPackage.pogo.value)
+                if store_vc < latest_supported["versionCode"]:
+                    logger.info(f"Latest supported is {store_vc} while installed is {latest_supported['versionCode']}. "
+                                "Unable to find a newer version")
+                    return None
+                elif store_vc > latest_supported["versionCode"]:
+                    logger.info("Version in store is newer than supported version. Using an older version")
+                    version_code = latest_supported["versionCode"]
+                    version_str = latest_supported["version"]
+                elif current_version and store_vs == current_version:
+                    logger.info("Latest version [{}] is already installed", store_vc)
+                    version_code = store_vc
+                    version_str = store_vs
+                else:
+                    logger.info('Newer version found: {}', store_vs)
+                    version_code = store_vc
+                    version_str = store_vs
             else:
                 logger.info('No newer version found')
-            self.set_last_searched(APKType.pogo, architecture, version=latest, url=download_url)
+            self.set_last_searched(APKType.pogo, architecture, version=version_str, url=version_code)
         except Exception as err:
             logger.opt(exception=True).critical(err)
-        return latest
+        return {
+            "version_code": version_code,
+            "version": version_str
+        }
 
     def find_latest_rgc(self, architecture: APKArch) -> Optional[str]:
         """ Determine if the package de.grennith.rgc.remotegpscontroller has an update
@@ -292,6 +337,63 @@ class APKWizard(object):
         """
         sql = "SELECT `version`, `url` FROM `mad_apk_autosearch` WHERE `usage` = %s AND `arch` = %s"
         return self.dbc.autofetch_row(sql, args=(package.value, architecture.value))
+
+    def get_latest_version(self) -> Dict[APKArch, str]:
+        versions: Dict[APKArch, str] = {
+            APKArch.armeabi_v7a: None,
+            APKArch.arm64_v8a: None
+        }
+        gh_resp = requests.get(global_variables.VERSIONCODES_URL)
+        for ver_identifier, version_code in gh_resp.json().items():
+            version, arch = ver_identifier.split('_')
+            named_arch = APKArch.armeabi_v7a if arch == '32' else APKArch.arm64_v8a
+            if versions[named_arch] is None:
+                versions[named_arch] = {
+                    "versionCode": version_code,
+                    "version": version
+                }
+            elif is_newer_version(version, versions[named_arch]["version"]):
+                versions[named_arch] = {
+                    "versionCode": version_code,
+                    "version": version
+                }
+        return versions
+
+    def get_version_code(self, latest_supported: Dict[APKArch, str], arch: APKArch) -> Optional[int]:
+        pogo_vc_sess = requests.session()
+        pogo_vc_sess.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        })
+        # attempt to pull the information locally
+        try:
+            with open('configs/version_codes.json', 'r') as fh:
+                data = json.load(fh)
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            pass
+        else:
+            version_code = self.parse_version_code(latest_supported, arch, data)
+            if version_code is not None:
+                return version_code
+        # match not found locally.  Try GitHub
+        try:
+            data = pogo_vc_sess.get(global_variables.VERSIONCODES_GITHUB).json()
+        except Exception:
+            pass
+        else:
+            version_code = self.parse_version_code(latest_supported, arch, data)
+            if version_code is not None:
+                return version_code
+        return None
+
+    def parse_version_code(self, latest_supported: Dict[APKArch, str], arch: APKArch, data: Dict) -> Optional[int]:
+        named_arch = '32' if arch == APKArch.armeabi_v7a else '64'
+        latest_version = f"{latest_supported[arch]}_{named_arch}"
+        if data:
+            try:
+                return data[latest_version]
+            except KeyError:
+                pass
+        return None
 
     def set_last_searched(self, package: APKType, architecture: APKArch, version: str = None,
                           url: str = None) -> NoReturn:
@@ -333,7 +435,7 @@ class PackageImporter(object):
         self.package_arch: APKArch = None
         self._data: io.BytesIO = downloaded_file
         if mimetype == 'application/vnd.android.package-archive':
-            self.get_apk_info(downloaded_file)
+            self.package_version, self.package_name = get_apk_info(downloaded_file)
         else:
             self.normalize_package()
             mimetype = 'application/zip'
@@ -354,18 +456,6 @@ class PackageImporter(object):
             logger.info(log_msg, package.name, version)
         else:
             logger.warning('Unable to determine apk information')
-
-    def get_apk_info(self, downloaded_file: io.BytesIO) -> NoReturn:
-        try:
-            apk = apkutils.APK(downloaded_file)
-        except:  # noqa: E722
-            logger.warning('Unable to parse APK file')
-        else:
-            manifest = apk.get_manifest()
-            try:
-                self.package_version, self.package_name = (manifest['@android:versionName'], manifest['@package'])
-            except KeyError:
-                raise InvalidFile('Unable to parse the APK file')
 
     def normalize_package(self) -> NoReturn:
         """ Normalize the package
