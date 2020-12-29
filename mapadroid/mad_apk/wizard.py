@@ -287,32 +287,40 @@ class APKWizard(object):
             if latest_pogo_version[architecture] is None:
                 return latest
             latest_supported = latest_pogo_version[architecture]
-            current_version = self.storage.get_current_version(APKType.pogo, architecture)
-            if type(current_version) is not str:
-                current_version = None
+            current_version_string = self.storage.get_current_version(APKType.pogo, architecture)
+            current_version_code = None
+            if type(current_version_string) is not str:
+                current_version_string = None
+            if current_version_string:
+                ls: dict = {architecture: current_version_string}
+                current_version_code = self.get_version_code(latest_supported=ls, arch=architecture)
+                version_str = current_version_string
+                version_code = current_version_code
             # do some sanity checking until this is fixed properly
             tmp_latest = self.get_latest(APKType.pogo, architecture)
-            if current_version is None or is_newer_version(latest_supported["version"], current_version) or (
-                    tmp_latest and tmp_latest['url'] is not None):
+            if (current_version_string is None
+                    or is_newer_version(latest_supported["version"], current_version_string)
+                    or (tmp_latest and tmp_latest['url'] is not None)):
                 # Validate its available via google
                 gpconn = GPlayConnector(architecture)
-                (store_vc, store_vs) = gpconn.get_latest_version(APKPackage.pogo.value)
-                if store_vc < latest_supported["versionCode"]:
-                    logger.info(f"Latest supported is {store_vc} while installed is {latest_supported['versionCode']}. "
-                                "Unable to find a newer version")
-                    return None
-                elif store_vc > latest_supported["versionCode"]:
-                    logger.info("Version in store is newer than supported version. Using an older version")
-                    version_code = latest_supported["versionCode"]
-                    version_str = latest_supported["version"]
-                elif current_version and store_vs == current_version:
-                    logger.info("Latest version [{}] is already installed", store_vc)
-                    version_code = store_vc
-                    version_str = store_vs
+                (store_version_code, store_version_string) = gpconn.get_latest_version(APKPackage.pogo.value)
+                if not supported_pogo_version(architecture, store_version_string):
+                    logger.info(f"Store version {store_version_string} is not supported by MAD. Unable to get a newer "
+                                "supported version.")
+                    if current_version_code:
+                        version_code = current_version_code
+                        version_str = current_version_string
+                    else:
+                        return None
+                elif current_version_code and store_version_code <= current_version_code:
+                    logger.info(f"Latest store version is {store_version_string} while {current_version_string} is "
+                                "already installed. Unable to find a newer version")
+                    version_code = current_version_code
+                    version_str = current_version_string
                 else:
-                    logger.info('Newer version found: {}', store_vs)
-                    version_code = store_vc
-                    version_str = store_vs
+                    logger.info('Newer version found: {}', store_version_string)
+                    version_code = store_version_code
+                    version_str = store_version_string
             else:
                 logger.info('No newer version found')
             self.set_last_searched(APKType.pogo, architecture, version=version_str, url=version_code)
