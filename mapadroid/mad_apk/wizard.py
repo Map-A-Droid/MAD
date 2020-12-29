@@ -391,7 +391,7 @@ class APKWizard(object):
                 return version_code
         # match not found locally.  Try GitHub
         try:
-            data = pogo_vc_sess.get(global_variables.VERSIONCODES_GITHUB).json()
+            data = pogo_vc_sess.get(global_variables.VERSIONCODES_URL).json()
         except Exception:
             pass
         else:
