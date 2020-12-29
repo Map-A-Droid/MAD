@@ -96,8 +96,10 @@ class APKWizard(object):
                 self.download_pogo(arch)
             except InvalidDownload:
                 pass
-        self.download_rgc(APKArch.noarch)
-        self.download_pd(APKArch.noarch)
+        if self.find_latest_rgc(APKArch.noarch):
+            self.download_rgc(APKArch.noarch)
+        if self.find_latest_pd(APKArch.noarch):
+            self.download_pd(APKArch.noarch)
 
     def apk_search(self, package: APKType, architecture: APKArch) -> NoReturn:
         """ Search for a specific package
@@ -236,7 +238,7 @@ class APKWizard(object):
         logger.info("Downloading latest RGC")
         self.__download_simple(APKType.rgc, architecture)
 
-    def __find_latest_head(self, package, architecture, url) -> NoReturn:
+    def __find_latest_head(self, package, architecture, url) -> Optional[bool]:
         """ Determine if there is a newer version by checking the size of the package from the HEAD response
 
         Args:
@@ -244,26 +246,31 @@ class APKWizard(object):
             architecture (APKArch): Architecture of the package to download
             url (str): URL to perform the HEAD against
         """
-        (curr_info, status) = lookup_package_info(self.storage, package)
+        update_available = False
+        (packages, status) = lookup_package_info(self.storage, package)
+        curr_info = packages[architecture]
         installed_size = None
         if curr_info:
-            installed_size = curr_info.get('size', None)
+            installed_size = curr_info.size
         head = requests.head(url, verify=False, headers=APK_HEADERS, allow_redirects=True)
         mirror_size = int(head.headers['Content-Length'])
         if not curr_info or (installed_size and installed_size != mirror_size):
-            logger.info('Newer version found on the mirror of size {}', mirror_size)
+            logger.info('Newer version found on the mirror of size {} (old version {} of size {})',
+                        mirror_size, curr_info.version, curr_info.size)
+            update_available = True
         else:
-            logger.info('No newer version found')
+            logger.info('No newer version found (installed version {} of size {})', curr_info.version, curr_info.size)
         self.set_last_searched(package, architecture, version=mirror_size, url=url)
+        return update_available
 
-    def find_latest_pd(self, architecture: APKArch) -> Optional[str]:
+    def find_latest_pd(self, architecture: APKArch) -> Optional[bool]:
         """ Determine if the package com.mad.pogodroid has an update
 
         Args:
             architecture (APKArch): Architecture of the package to check
         """
         logger.info('Searching for a new version of PD [{}]', architecture.name)
-        self.__find_latest_head(APKType.pd, architecture, global_variables.URL_PD_APK)
+        return self.__find_latest_head(APKType.pd, architecture, global_variables.URL_PD_APK)
 
     def find_latest_pogo(self, architecture: APKArch) -> Optional[str]:
         """ Determine if the package com.nianticlabs.pokemongo has an update
@@ -316,14 +323,14 @@ class APKWizard(object):
             "version": version_str
         }
 
-    def find_latest_rgc(self, architecture: APKArch) -> Optional[str]:
+    def find_latest_rgc(self, architecture: APKArch) -> Optional[bool]:
         """ Determine if the package de.grennith.rgc.remotegpscontroller has an update
 
         Args:
             architecture (APKArch): Architecture of the package to check
         """
         logger.info('Searching for a new version of RGC [{}]', architecture.name)
-        self.__find_latest_head(APKType.rgc, architecture, global_variables.URL_RGC_APK)
+        return self.__find_latest_head(APKType.rgc, architecture, global_variables.URL_RGC_APK)
 
     def get_latest(self, package: APKType, architecture: APKArch) -> dict:
         """ Determine the latest found version for a given package / architecture
