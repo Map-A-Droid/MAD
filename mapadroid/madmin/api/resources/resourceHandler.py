@@ -1,19 +1,19 @@
 import collections
 import copy
 import re
+
 import flask
-from mapadroid.madmin.functions import auth_required
-from mapadroid.data_manager.dm_exceptions import (
-    UnknownIdentifier,
-    ModeNotSpecified,
-    ModeUnknown,
-    UpdateIssue,
-    DependencyError,
-    SaveIssue,
-    InvalidSection
-)
-from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
+
+from mapadroid.data_manager.dm_exceptions import (DependencyError,
+                                                  InvalidSection,
+                                                  ModeNotSpecified,
+                                                  ModeUnknown, SaveIssue,
+                                                  UnknownIdentifier,
+                                                  UpdateIssue)
 from mapadroid.data_manager.modules import MAPPINGS
+from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
+from mapadroid.madmin.functions import auth_required
+
 from .. import apiHandler
 
 
@@ -98,7 +98,9 @@ class ResourceHandler(apiHandler.APIHandler):
             pass
         return resource
 
-    def get_resource_info_elems(self, config, skip_fields=[]):
+    def get_resource_info_elems(self, config, skip_fields=None):
+        if skip_fields is None:
+            skip_fields = []
         variables = []
         for key, field in config.items():
             if key in skip_fields:

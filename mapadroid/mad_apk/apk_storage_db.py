@@ -1,13 +1,14 @@
 from io import BytesIO
-from typing import NoReturn, Optional
-from .abstract_apk_storage import AbstractAPKStorage
-from .custom_types import MADPackage, MADPackages
-from .apk_enums import APKArch, APKType
-from .utils import generate_filename
-from mapadroid.utils import global_variables
 from threading import RLock
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from typing import NoReturn, Optional
 
+from mapadroid.utils import global_variables
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from .abstract_apk_storage import AbstractAPKStorage
+from .apk_enums import APKArch, APKType
+from .custom_types import MADPackage, MADPackages
+from .utils import generate_filename
 
 logger = get_logger(LoggerEnums.storage)
 
@@ -125,7 +126,7 @@ class APKStorageDatabase(AbstractAPKStorage):
                 self.dbc.autoexec_insert('filestore_chunks', insert_data)
             logger.info('Finished upload of APK')
             return True
-        except:  # noqa: E722
+        except:  # noqa: E722 B001
             logger.opt(exception=True).critical('Unable to upload APK')
         return False
 

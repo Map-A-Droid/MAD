@@ -108,4 +108,3 @@ echo "IMPORTANT : If you were already scanning in MAD using your Monocle databas
 echo "This will let MAD create missing columns on your new RM schema"
 echo ""
 echo -ne "\e[0m"
-

@@ -1,5 +1,4 @@
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 
@@ -177,8 +176,10 @@ def find_eulerian_tour(matched_min_span_tree):
     ep = [neighbours[start_vertex][0]]
 
     while len(matched_min_span_tree) > 0:
-        for i, v in enumerate(ep):  # noqa: VNE001
+        stop_ind = None
+        for ind, v in enumerate(ep):  # noqa: VNE001
             if len(neighbours[v]) > 0:
+                stop_ind = ind
                 break
 
         while len(neighbours[v]) > 0:
@@ -189,8 +190,8 @@ def find_eulerian_tour(matched_min_span_tree):
             del neighbours[v][(neighbours[v].index(w))]
             del neighbours[w][(neighbours[w].index(v))]
 
-            i += 1
-            ep.insert(i, w)
+            stop_ind += 1
+            ep.insert(stop_ind, w)
 
             v = w  # noqa: VNE001
 

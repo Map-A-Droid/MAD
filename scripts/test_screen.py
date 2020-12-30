@@ -8,8 +8,9 @@ import numpy as np
 import pytesseract
 from PIL import Image
 
-sys.path.append("..")
 from mapadroid.utils.resolution import Resocalculator
+
+sys.path.append("..")
 
 
 class testimage(object):

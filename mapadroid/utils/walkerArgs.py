@@ -3,6 +3,7 @@ import sys
 from time import strftime
 
 import configargparse
+
 import mapadroid
 
 
@@ -270,7 +271,10 @@ def parse_args():
                         help='MAD PoGo auth is not required during autoconfiguration',
                         dest='autoconfig_no_auth')
 
-    args = parser.parse_args()
+    if "MODE" in os.environ and os.environ["MODE"] == "DEV":
+        args = parser.parse_known_args()[0]
+    else:
+        args = parser.parse_args()
     # Allow status name and date formatting in log filename.
     args.log_filename = strftime(args.log_filename)
     args.log_filename = args.log_filename.replace('<sn>', '<SN>')

@@ -1,9 +1,10 @@
 ############################
 # MAD
 ############################
-FROM python:3.7-slim
+FROM python:3.7-slim AS mad-core
 # Working directory for the application
 WORKDIR /usr/src/app
+
 
 # copy requirements only, to reduce image size and improve cache usage
 COPY requirements.txt /usr/src/app/

@@ -1,21 +1,19 @@
 import json
 import os
 import re
-from flask import (render_template, request, redirect, url_for, Response)
-from flask_caching import Cache
 from typing import List, Tuple
+
+from flask import Response, redirect, render_template, request, url_for
+from flask_caching import Cache
+
 from mapadroid.data_manager import DataManagerException
+from mapadroid.data_manager.dm_exceptions import ModeNotSpecified, ModeUnknown
+from mapadroid.data_manager.modules.pogoauth import PogoAuth
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file
-from mapadroid.data_manager.dm_exceptions import (
-    ModeNotSpecified,
-    ModeUnknown
-)
-from mapadroid.data_manager.modules.pogoauth import PogoAuth
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.MappingManager import MappingManager
 
 logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
@@ -188,8 +186,7 @@ class MADminConfig(object):
         ortools_info = False
 
         try:
-            from ortools.constraint_solver import routing_enums_pb2
-            from ortools.constraint_solver import pywrapcp
+            from ortools.constraint_solver import pywrapcp, routing_enums_pb2
         except Exception:
             pass
         import platform

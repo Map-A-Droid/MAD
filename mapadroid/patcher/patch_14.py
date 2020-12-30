@@ -1,6 +1,7 @@
-from ._patch_base import PatchBase
 import json
 import shutil
+
+from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
@@ -73,7 +74,7 @@ class Patch(PatchBase):
                             cache[key][entry['walkername']] = index
                             valid_areas = []
                             if 'setup' in entry:
-                                for ind, area in enumerate(entry['setup']):
+                                for _, area in enumerate(entry['setup']):
                                     try:
                                         area['walkerarea'] = '/api/area/%s' % (cache['areas'][area['walkerarea']],)
                                     except KeyError:

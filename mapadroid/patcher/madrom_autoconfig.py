@@ -1,5 +1,6 @@
 import importlib
 import sys
+
 from ._patch_base import PatchBase
 
 
@@ -15,7 +16,7 @@ class Patch(PatchBase):
             if patch.completed and not patch.issues:
                 self._logger.success('Validating / Installed patch_30 was applied')
             else:
-                self._logger.error('patch_30 was unsuccessful.  Please use your help channel for assistance')
+                self._logger.fatal('patch_30 was unsuccessful.  Please use your help channel for assistance')
                 sys.exit(1)
         except Exception:
             self._logger.opt(exception=True).error('Patch was unsuccessful.  Exiting')

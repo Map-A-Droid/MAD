@@ -1,9 +1,10 @@
-from flask import (render_template, request, redirect, url_for, jsonify, flash)
-from flask_caching import Cache
 from datetime import datetime
+
+from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask_caching import Cache
+
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.MappingManager import MappingManager
-
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 

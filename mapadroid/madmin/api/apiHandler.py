@@ -1,8 +1,11 @@
-import flask
 from threading import current_thread
-from mapadroid.madmin.functions import auth_required
-from . import apiResponse, apiRequest, apiException, global_variables
+
+import flask
+
 from mapadroid.mad_apk import AbstractAPKStorage
+from mapadroid.madmin.functions import auth_required
+
+from . import apiException, apiRequest, apiResponse, global_variables
 
 
 class APIHandler(object):

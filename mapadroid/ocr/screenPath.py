@@ -3,14 +3,15 @@ import re
 import time
 import xml.etree.ElementTree as ET  # noqa: N817
 from enum import Enum
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
+
 import numpy as np
+
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils import MappingManager
-from mapadroid.utils.collections import Login_PTC, Login_GGL
+from mapadroid.utils.collections import Login_GGL, Login_PTC
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import ScreenshotType
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
-
 
 logger = get_logger(LoggerEnums.ocr)
 
@@ -504,7 +505,7 @@ class WordToScreenMatching(object):
             return False
 
         time.sleep(2)
-        self._logger.warning('Dont find any button...')
+        self._logger.warning('Could not find any button...')
         return False
 
     def parse_ggl(self, xml, mail: str) -> bool:

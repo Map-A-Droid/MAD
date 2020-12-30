@@ -1,6 +1,7 @@
-from ._patch_base import PatchBase
 import json
 import re
+
+from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):

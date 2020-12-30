@@ -1,13 +1,15 @@
-from flask import Response, url_for
 import copy
-from enum import IntEnum
 import json
+from enum import IntEnum
 from io import BytesIO
 from typing import Any, Dict, List, NoReturn, Tuple
 from xml.sax.saxutils import escape
+
+from flask import Response, url_for
+
 from mapadroid.data_manager.modules import MAPPINGS
-from mapadroid.mad_apk import get_apk_status
 from mapadroid.data_manager.modules.resource import USER_READABLE_ERRORS
+from mapadroid.mad_apk import get_apk_status
 
 
 class AutoConfIssues(IntEnum):
@@ -234,7 +236,7 @@ class AutoConfigCreator:
         processed = []
         missing: List[str] = []
         invalid: List[str] = []
-        for section, sect_conf in self.sections.items():
+        for sect_conf in self.sections.values():
             for key, elem in sect_conf.items():
                 processed.append(key)
                 if elem['required'] and key not in user_vals:

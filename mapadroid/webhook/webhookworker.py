@@ -1,16 +1,17 @@
 import json
 import time
-from typing import Optional, List
+from typing import List, Optional
+
 import requests
+
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.webhook)
 
