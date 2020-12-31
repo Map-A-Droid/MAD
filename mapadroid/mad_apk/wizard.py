@@ -292,8 +292,8 @@ class APKWizard(object):
             if type(current_version_string) is not str:
                 current_version_string = None
             if current_version_string:
-                ls: dict = {architecture: current_version_string}
-                current_version_code = self.get_version_code(latest_supported=ls, arch=architecture)
+                latest_supported_dict: dict = {architecture: current_version_string}
+                current_version_code = self.get_version_code(latest_supported=latest_supported_dict, arch=architecture)
                 version_str = current_version_string
                 version_code = current_version_code
             # do some sanity checking until this is fixed properly
