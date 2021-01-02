@@ -96,8 +96,10 @@ class APKWizard(object):
                 self.download_pogo(arch)
             except InvalidDownload:
                 pass
-        self.download_rgc(APKArch.noarch)
-        self.download_pd(APKArch.noarch)
+        if self.find_latest_rgc(APKArch.noarch):
+            self.download_rgc(APKArch.noarch)
+        if self.find_latest_pd(APKArch.noarch):
+            self.download_pd(APKArch.noarch)
 
     def apk_search(self, package: APKType, architecture: APKArch) -> NoReturn:
         """ Search for a specific package
@@ -236,7 +238,7 @@ class APKWizard(object):
         logger.info("Downloading latest RGC")
         self.__download_simple(APKType.rgc, architecture)
 
-    def __find_latest_head(self, package, architecture, url) -> NoReturn:
+    def __find_latest_head(self, package, architecture, url) -> Optional[bool]:
         """ Determine if there is a newer version by checking the size of the package from the HEAD response
 
         Args:
@@ -244,26 +246,31 @@ class APKWizard(object):
             architecture (APKArch): Architecture of the package to download
             url (str): URL to perform the HEAD against
         """
-        (curr_info, status) = lookup_package_info(self.storage, package)
+        update_available = False
+        (packages, status) = lookup_package_info(self.storage, package)
+        curr_info = packages[architecture]
         installed_size = None
         if curr_info:
-            installed_size = curr_info.get('size', None)
+            installed_size = curr_info.size
         head = requests.head(url, verify=False, headers=APK_HEADERS, allow_redirects=True)
         mirror_size = int(head.headers['Content-Length'])
         if not curr_info or (installed_size and installed_size != mirror_size):
-            logger.info('Newer version found on the mirror of size {}', mirror_size)
+            logger.info('Newer version found on the mirror of size {} (old version {} of size {})',
+                        mirror_size, curr_info.version, curr_info.size)
+            update_available = True
         else:
-            logger.info('No newer version found')
+            logger.info('No newer version found (installed version {} of size {})', curr_info.version, curr_info.size)
         self.set_last_searched(package, architecture, version=mirror_size, url=url)
+        return update_available
 
-    def find_latest_pd(self, architecture: APKArch) -> Optional[str]:
+    def find_latest_pd(self, architecture: APKArch) -> Optional[bool]:
         """ Determine if the package com.mad.pogodroid has an update
 
         Args:
             architecture (APKArch): Architecture of the package to check
         """
         logger.info('Searching for a new version of PD [{}]', architecture.name)
-        self.__find_latest_head(APKType.pd, architecture, global_variables.URL_PD_APK)
+        return self.__find_latest_head(APKType.pd, architecture, global_variables.URL_PD_APK)
 
     def find_latest_pogo(self, architecture: APKArch) -> Optional[str]:
         """ Determine if the package com.nianticlabs.pokemongo has an update
@@ -280,32 +287,41 @@ class APKWizard(object):
             if latest_pogo_version[architecture] is None:
                 return latest
             latest_supported = latest_pogo_version[architecture]
-            current_version = self.storage.get_current_version(APKType.pogo, architecture)
-            if type(current_version) is not str:
-                current_version = None
+            current_version_string = self.storage.get_current_version(APKType.pogo, architecture)
+            current_version_code = None
+            if type(current_version_string) is not str:
+                current_version_string = None
+            if current_version_string:
+                latest_supported_dict: dict = {architecture: current_version_string}
+                current_version_code = self.get_version_code(latest_supported=latest_supported_dict, arch=architecture)
+                version_str = current_version_string
+                version_code = current_version_code
             # do some sanity checking until this is fixed properly
             tmp_latest = self.get_latest(APKType.pogo, architecture)
-            if current_version is None or is_newer_version(latest_supported["version"], current_version) or (
-                    tmp_latest and tmp_latest['url'] is not None):
+            if (current_version_string is None
+                    or is_newer_version(latest_supported["version"], current_version_string)
+                    or (tmp_latest and tmp_latest['url'] is not None)):
                 # Validate its available via google
                 gpconn = GPlayConnector(architecture)
-                (store_vc, store_vs) = gpconn.get_latest_version(APKPackage.pogo.value)
-                if store_vc < latest_supported["versionCode"]:
-                    logger.info(f"Latest supported is {store_vc} while installed is {latest_supported['versionCode']}. "
-                                "Unable to find a newer version")
-                    return None
-                elif store_vc > latest_supported["versionCode"]:
-                    logger.info("Version in store is newer than supported version. Using an older version")
-                    version_code = latest_supported["versionCode"]
-                    version_str = latest_supported["version"]
-                elif current_version and store_vs == current_version:
-                    logger.info("Latest version [{}] is already installed", store_vc)
-                    version_code = store_vc
-                    version_str = store_vs
+                (store_version_code, store_version_string) = gpconn.get_latest_version(APKPackage.pogo.value)
+                if not supported_pogo_version(architecture, store_version_string):
+                    logger.info(f"Store version {store_version_string} is not supported by MAD. Unable to get a newer "
+                                "supported version.")
+                    if current_version_code:
+                        version_code = current_version_code
+                        version_str = current_version_string
+                    else:
+                        version_code = latest_supported["versionCode"]
+                        version_str = latest_supported["version"]
+                elif current_version_code and store_version_code <= current_version_code:
+                    logger.info(f"Latest store version is {store_version_string} while {current_version_string} is "
+                                "already installed. Unable to find a newer version")
+                    version_code = current_version_code
+                    version_str = current_version_string
                 else:
-                    logger.info('Newer version found: {}', store_vs)
-                    version_code = store_vc
-                    version_str = store_vs
+                    logger.info('Newer version found: {}', store_version_string)
+                    version_code = store_version_code
+                    version_str = store_version_string
             else:
                 logger.info('No newer version found')
             self.set_last_searched(APKType.pogo, architecture, version=version_str, url=version_code)
@@ -316,14 +332,14 @@ class APKWizard(object):
             "version": version_str
         }
 
-    def find_latest_rgc(self, architecture: APKArch) -> Optional[str]:
+    def find_latest_rgc(self, architecture: APKArch) -> Optional[bool]:
         """ Determine if the package de.grennith.rgc.remotegpscontroller has an update
 
         Args:
             architecture (APKArch): Architecture of the package to check
         """
         logger.info('Searching for a new version of RGC [{}]', architecture.name)
-        self.__find_latest_head(APKType.rgc, architecture, global_variables.URL_RGC_APK)
+        return self.__find_latest_head(APKType.rgc, architecture, global_variables.URL_RGC_APK)
 
     def get_latest(self, package: APKType, architecture: APKArch) -> dict:
         """ Determine the latest found version for a given package / architecture
@@ -376,7 +392,7 @@ class APKWizard(object):
                 return version_code
         # match not found locally.  Try GitHub
         try:
-            data = pogo_vc_sess.get(global_variables.VERSIONCODES_GITHUB).json()
+            data = pogo_vc_sess.get(global_variables.VERSIONCODES_URL).json()
         except Exception:
             pass
         else:

@@ -58,7 +58,9 @@ class WizardTests(StorageBase):
         with self.assertRaises(WizardError):
             upload_package(self.storage_elem, apk_type=APKType.pd)
 
-    def test_version_newer_avail(self):
+    @patch('mapadroid.mad_apk.wizard.supported_pogo_version')
+    def test_version_newer_avail(self, supported_pogo_version):
+        supported_pogo_version.return_value = True
         with GetStorage(get_connection_api()) as storage:
             package_downloader = APKWizard(storage.db_wrapper, storage.storage_manager)
             gplay_latest = (20201001, "0.123.4")
@@ -81,7 +83,9 @@ class WizardTests(StorageBase):
             self.assertTrue(latest_supported[APKArch.arm64_v8a]["versionCode"] == wizard_latest["version_code"])
             self.assertTrue(latest_supported[APKArch.arm64_v8a]["version"] == wizard_latest["version"])
 
-    def test_version_supported_but_not_gplay(self):
+    @patch('mapadroid.mad_apk.wizard.supported_pogo_version')
+    def test_version_supported_but_not_gplay(self, supported_pogo_version):
+        supported_pogo_version.return_value = True
         with GetStorage(get_connection_api()) as storage:
             package_downloader = APKWizard(storage.db_wrapper, storage.storage_manager)
             gplay_latest = (20200901, "0.123.3")
@@ -100,7 +104,9 @@ class WizardTests(StorageBase):
             package_downloader.get_latest = MagicMock(return_value=autosearch_latest)
             GPlayConnector.get_latest_version = MagicMock(return_value=gplay_latest)
             wizard_latest = package_downloader.find_latest_pogo(APKArch.arm64_v8a)
-            self.assertTrue(wizard_latest is None)
+            self.assertTrue(wizard_latest is not None)
+            self.assertTrue(gplay_latest[0] == wizard_latest["version_code"])
+            self.assertTrue(gplay_latest[1] == wizard_latest["version"])
 
     def test_version_newest_not_supported_but_older_supported(self):
         with GetStorage(get_connection_api()) as storage:
@@ -124,3 +130,29 @@ class WizardTests(StorageBase):
             self.assertTrue(wizard_latest is not None)
             self.assertTrue(latest_supported[APKArch.arm64_v8a]["versionCode"] == wizard_latest["version_code"])
             self.assertTrue(latest_supported[APKArch.arm64_v8a]["version"] == wizard_latest["version"])
+
+    @patch('mapadroid.mad_apk.wizard.supported_pogo_version')
+    def test_gplay_between_current_and_supported(self, supported_pogo_version):
+        supported_pogo_version.return_value = True
+        with GetStorage(get_connection_api()) as storage:
+            package_downloader = APKWizard(storage.db_wrapper, storage.storage_manager)
+            gplay_latest = (20200901, "0.123.3")
+            latest_supported = {
+                APKArch.arm64_v8a: {
+                    "versionCode": 20201001,
+                    "version": "0.123.4"
+                }
+            }
+            autosearch_latest = {
+                "version": "0.123.4",
+                "url": 20201001
+            }
+            package_downloader.get_latest_version = MagicMock(return_value=latest_supported)
+            package_downloader.get_version_code = MagicMock(return_value=20200801)
+            storage.storage_manager.get_current_version = MagicMock(return_value="0.123.2")
+            package_downloader.get_latest = MagicMock(return_value=autosearch_latest)
+            GPlayConnector.get_latest_version = MagicMock(return_value=gplay_latest)
+            wizard_latest = package_downloader.find_latest_pogo(APKArch.arm64_v8a)
+            self.assertTrue(wizard_latest is not None)
+            self.assertTrue(gplay_latest[0] == wizard_latest["version_code"])
+            self.assertTrue(gplay_latest[1] == wizard_latest["version"])
