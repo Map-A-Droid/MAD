@@ -46,7 +46,7 @@ def after_request(response):
 
 @app.errorhandler(500)
 def internal_error(self, exception):
-    logger.opt(exception=True).critical("An unhanded exception occurred!")
+    logger.opt(exception=True).critical("An unhandled exception occurred!")
     return render_template('500.html'), 500
 
 
