@@ -49,10 +49,9 @@ class RouteManagerIV(RouteManagerBase):
             new_list.append(prio[2])
         self.encounter_ids_left = new_list
 
-        self._manager_mutex.acquire()
-        heapq.heapify(latest_priorities)
-        self._prio_queue = latest_priorities
-        self._manager_mutex.release()
+        with self._manager_mutex:
+            heapq.heapify(latest_priorities)
+            self._prio_queue = latest_priorities
         return None
 
     def get_encounter_ids_left(self) -> List[int]:
@@ -70,14 +69,11 @@ class RouteManagerIV(RouteManagerBase):
         return False
 
     def _start_routemanager(self):
-        self._manager_mutex.acquire()
-        try:
+        with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
                 self._start_priority_queue()
-        finally:
-            self._manager_mutex.release()
         return True
 
     def _quit_route(self):

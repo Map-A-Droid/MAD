@@ -249,8 +249,7 @@ class WorkerQuests(MITMBase):
             # switch if player lvl >= 30
             self.switch_account()
 
-        try:
-            self._work_mutex.acquire()
+        with self._work_mutex:
             if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
                 self.logger.info("Processing Stop / Quest...")
 
@@ -267,9 +266,6 @@ class WorkerQuests(MITMBase):
             else:
                 self.logger.debug('Currently in INIT Mode - no Stop processing')
                 time.sleep(5)
-        finally:
-            self.logger.debug("Releasing lock")
-            self._work_mutex.release()
 
     def _cleanup(self):
         if self.clear_thread is not None:
@@ -284,26 +280,25 @@ class WorkerQuests(MITMBase):
                 time.sleep(1)
                 continue
 
-            try:
-                self._work_mutex.acquire()
-                time.sleep(1)
-                if self.clear_thread_task == ClearThreadTasks.BOX:
-                    self.logger.info("Clearing box")
-                    self.clear_box(self._delay_add)
+            with self._work_mutex:
+                try:
+                    time.sleep(1)
+                    if self.clear_thread_task == ClearThreadTasks.BOX:
+                        self.logger.info("Clearing box")
+                        self.clear_box(self._delay_add)
+                        self.clear_thread_task = ClearThreadTasks.IDLE
+                    elif self.clear_thread_task == ClearThreadTasks.QUEST and not self._level_mode:
+                        self.logger.info("Clearing quest")
+                        self._clear_quests(self._delay_add)
+                        self.clear_thread_task = ClearThreadTasks.IDLE
+                    time.sleep(1)
+                except (InternalStopWorkerException, WebsocketWorkerRemovedException,
+                        WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException):
+                    self.logger.error("Worker removed while clearing quest/box")
+                    self._stop_worker_event.set()
+                    return
+                finally:
                     self.clear_thread_task = ClearThreadTasks.IDLE
-                elif self.clear_thread_task == ClearThreadTasks.QUEST and not self._level_mode:
-                    self.logger.info("Clearing quest")
-                    self._clear_quests(self._delay_add)
-                    self.clear_thread_task = ClearThreadTasks.IDLE
-                time.sleep(1)
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException,
-                    WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException):
-                self.logger.error("Worker removed while clearing quest/box")
-                self._stop_worker_event.set()
-                return
-            finally:
-                self.clear_thread_task = ClearThreadTasks.IDLE
-                self._work_mutex.release()
 
     def clear_box(self, delayadd):
         stop_inventory_clear = Event()
