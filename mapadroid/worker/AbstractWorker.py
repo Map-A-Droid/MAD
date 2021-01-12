@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 
 logger = get_logger(LoggerEnums.worker)
 

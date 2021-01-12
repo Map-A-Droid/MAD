@@ -4,7 +4,7 @@ import os
 from functools import update_wrapper, wraps
 from math import floor
 
-from flask import (make_response, request)
+from flask import make_response, request
 
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.functions import creation_date
@@ -143,7 +143,7 @@ def generate_coords_from_geofence(mapping_manager, data_manager, fence):
     fence_string = []
     geofences = get_geofences(mapping_manager, data_manager)
     coordinates = []
-    for name, fences in geofences.items():
+    for fences in geofences.values():
         for fname, coords in fences.get('include').items():
             if fname != fence:
                 continue

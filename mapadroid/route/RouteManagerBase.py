@@ -3,13 +3,13 @@ import heapq
 import math
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime
 from operator import itemgetter
 from threading import Event, RLock, Thread
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
+from dataclasses import dataclass
 
 from mapadroid.data_manager import DataManager
 from mapadroid.data_manager.modules.geofence import GeoFence

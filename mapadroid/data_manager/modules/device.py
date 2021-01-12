@@ -1,9 +1,10 @@
 import re
 from typing import List, Optional
-from .resource import Resource
-from mapadroid.data_manager.modules.pogoauth import PogoAuth
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
+from mapadroid.data_manager.modules.pogoauth import PogoAuth
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
+
+from .resource import Resource
 
 logger = get_logger(LoggerEnums.data_manager)
 pogoauth_fields = {
@@ -397,7 +398,7 @@ class Device(Resource):
                 field: data[field]
             }
             in_use = self._data_manager.search('device', params=search)
-            for dev_id, device in in_use.items():
+            for dev_id in in_use.keys():
                 if dev_id != self.identifier:
                     bad_macs.append((field, 'MAC in use'))
         if bad_macs:
@@ -439,7 +440,9 @@ class Device(Resource):
                 except StopIteration:
                     self[field] = None
 
-    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = None) -> int:
+        if ignore_issues is None:
+            ignore_issues = []
         core_data = self.get_core()
         for field in pogoauth_fields:
             try:

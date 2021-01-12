@@ -27,11 +27,12 @@ services:
     env_file:
       - .dev.env
     tty: true
-    command: ["bash"]
-    # command: ["/usr/src/app/.tox/py37/bin/python", "/usr/src/app/start.py", "-ut"]
+    command: ["/usr/local/bin/python3", "start.py"]
 
   mariadb:
     image: mariadb:10.3
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    volumes:
+      - ~/mariadb/mad:/var/lib/mysql:rw
     env_file:
       - .dev.env

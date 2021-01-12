@@ -1,4 +1,5 @@
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
+
 from .resource import Resource
 
 
@@ -90,7 +91,9 @@ class WalkerArea(Resource):
         except KeyError:
             self._data['fields']['walkermax'] = ''
 
-    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = None) -> int:
+        if ignore_issues is None:
+            ignore_issues = []
         self.presave_validation(ignore_issues=ignore_issues)
         try:
             if self._data['fields']['walkermax'] == '' and self._data['fields']['eventid'] == '':

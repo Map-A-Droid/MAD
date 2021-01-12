@@ -1,18 +1,18 @@
 import math
 import time
 from datetime import datetime
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.worker.MITMBase import LatestReceivedType, MITMBase
 
 logger = get_logger(LoggerEnums.worker)
 
@@ -136,9 +136,10 @@ class WorkerMITM(MITMBase):
         injected_settings["scanmode"] = scanmode
 
         # getting unprocessed stops (without quest)
-        self.unquestStops = self._db_wrapper.stop_from_db_without_quests(
-            self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name),
-            latlng=False)
+        self.unquestStops = []
+        # self._db_wrapper.stop_from_db_without_quests(
+        #    self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name),
+        #    latlng=False)
 
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv:

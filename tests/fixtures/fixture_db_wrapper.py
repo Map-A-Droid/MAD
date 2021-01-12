@@ -1,5 +1,6 @@
 import os
 import platform
+from unittest.mock import MagicMock
 
 import pytest
 from mysql.connector import connection
@@ -9,7 +10,9 @@ from tests.conftest import args
 
 
 @pytest.fixture(scope='session')
-def db_wrapper():
+def db_wrapper_real():
+    """Use when the actual DB is required for testing. If it is, the code should be refactored so use the mocked
+    version"""
     # Update any walker args that need to be adjusted for this instance
     update_args_testing(args)
     # Prepare the database for the tox env
@@ -19,6 +22,12 @@ def db_wrapper():
     yield db_wrapper
     # Will be executed after the last test
     db_pool_manager.shutdown()
+
+
+@pytest.fixture(scope='function')
+def db_wrapper():
+    """Use when mocking the results of the DB query"""
+    return MagicMock()
 
 
 def get_db_name(ver: str) -> str:
