@@ -1,6 +1,6 @@
 import json
-import time
 import math
+import time
 from datetime import datetime, timedelta
 
 from bitstring import BitArray
