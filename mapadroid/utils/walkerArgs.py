@@ -271,6 +271,17 @@ def parse_args():
                         help='MAD PoGo auth is not required during autoconfiguration',
                         dest='autoconfig_no_auth')
 
+    # Redis cache
+    parser.add_argument('-ec', '--enable_cache', action='store_true', default=False,
+                        help=('Enable caching for incoming data to prevent re-inserting '
+                              'data to the DB over and over again'))
+    parser.add_argument('-ch', '--cache_host', default='localhost',
+                        help=('Redis host used by caching'))
+    parser.add_argument('-cp', '--cache_port', default=6379,
+                        help=('Redis port used by caching'))
+    parser.add_argument('-cdb', '--cache_database', default=0,
+                        help=('Redis database. Use different numbers (0-15) if you are running multiple instances'))
+
     if "MODE" in os.environ and os.environ["MODE"] == "DEV":
         args = parser.parse_known_args()[0]
     else:

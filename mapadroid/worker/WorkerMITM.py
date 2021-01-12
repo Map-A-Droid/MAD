@@ -137,9 +137,6 @@ class WorkerMITM(MITMBase):
 
         # getting unprocessed stops (without quest)
         self.unquestStops = []
-        # self._db_wrapper.stop_from_db_without_quests(
-        #    self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name),
-        #    latlng=False)
 
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv:
