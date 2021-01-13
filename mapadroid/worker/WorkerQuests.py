@@ -753,6 +753,8 @@ class WorkerQuests(MITMBase):
     def _check_for_data_content(self, latest, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
             -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
         type_of_data_found: LatestReceivedType = LatestReceivedType.UNDEFINED
+        # Cut off decimal places of timestamp as PD also does that...
+        timestamp = int(timestamp)
         data_found: Optional[object] = None
         # Check if we have clicked a gym or mon...
         if ProtoIdentifier.GYM_INFO.value in latest \
