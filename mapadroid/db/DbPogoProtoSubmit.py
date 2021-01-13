@@ -96,8 +96,9 @@ class DbPogoProtoSubmit:
                     )
                 )
 
-                cache_time = despawn_time_unix - int(datetime.now().timestamp())
-                cache.set(cache_key, 1, ex=int(cache_time))
+                cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
+                if cache_time > 0:
+                    cache.set(cache_key, 1, ex=cache_time)
 
         self._db_exec.executemany(query_mons, mon_args, commit=True)
         return True
@@ -208,8 +209,9 @@ class DbPogoProtoSubmit:
         )
 
         self._db_exec.execute(query, insert_values, commit=True)
-        cache_time = despawn_time_unix - datetime.now().timestamp()
-        cache.set(cache_key, 1, ex=int(cache_time))
+        cache_time = int(despawn_time_unix - datetime.now().timestamp())
+        if cache_time > 0:
+            cache.set(cache_key, 1, ex=int(cache_time))
         origin_logger.debug3("Done updating mon in DB")
         return True
 
