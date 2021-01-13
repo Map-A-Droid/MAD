@@ -11,12 +11,6 @@ def calculate_mon_level(cp_multiplier):
 
 
 def gen_despawn_timestamp(known_despawn, timestamp):
-    despawn_time = datetime.now() + timedelta(seconds=300)
-    despawn_time = datetime.utcfromtimestamp(
-        time.mktime(despawn_time.timetuple())
-    ).strftime("%Y-%m-%d %H:%M:%S")
-
-    # despawn time is unknown
     if known_despawn is False:
         # just set despawn time to now + 3 minutes
         # after that round down to full minutes to fix
