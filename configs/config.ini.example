@@ -164,7 +164,7 @@
 
 # Redis caching
 ######################
-#enable_cache          # Enable cache (bycked by Redis) to prevent re-inserting data over and over again
+#enable_cache          # Enable cache (backed by Redis) to prevent re-inserting data over and over again
 #cache_host            # Redis cache host (Default: localhost)
 #cache_port            # Redis cache port (Default: 6379)
 #cache_database        # Redis database. Use different numbers (0-15) if you are running multiple instances.
