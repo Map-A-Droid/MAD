@@ -181,8 +181,6 @@ class WorkerMITM(MITMBase):
         # proto has previously been received, let's check the timestamp...
         mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
         timestamp_of_proto: float = latest_proto_entry.get("timestamp", None)
-        # Rounding down by cutting the decimal places
-        timestamp = int(timestamp)
         self.logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
                           datetime.fromtimestamp(timestamp_of_proto), datetime.fromtimestamp(timestamp),
                           proto_to_wait_for)
