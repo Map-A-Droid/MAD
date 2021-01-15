@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import math
 import time
 from datetime import datetime, timedelta
@@ -53,7 +51,7 @@ class PositionStopType(Enum):
     SPINNABLE_STOP = 8
 
     @staticmethod
-    def type_contains_stop_at_all(position_stop_type: PositionStopType) -> bool:
+    def type_contains_stop_at_all(position_stop_type) -> bool:
         return position_stop_type in (PositionStopType.SPINNABLE_STOP,
                                       PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE,
                                       PositionStopType.STOP_CLOSED, PositionStopType.STOP_COOLDOWN,
