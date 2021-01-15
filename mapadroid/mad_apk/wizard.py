@@ -248,15 +248,17 @@ class APKWizard(object):
         """
         update_available = False
         (packages, status) = lookup_package_info(self.storage, package)
-        curr_info = packages[architecture]
-        installed_size = None
+        curr_info = packages[architecture] if packages else None
         if curr_info:
             installed_size = curr_info.size
+            curr_info_logstring = f' (old version {curr_info.version} of size {curr_info.size})'
+        else:
+            installed_size = None
+            curr_info_logstring = ''
         head = requests.head(url, verify=False, headers=APK_HEADERS, allow_redirects=True)
         mirror_size = int(head.headers['Content-Length'])
         if not curr_info or (installed_size and installed_size != mirror_size):
-            logger.info('Newer version found on the mirror of size {} (old version {} of size {})',
-                        mirror_size, curr_info.version, curr_info.size)
+            logger.info('Newer version found on the mirror of size {}{}', mirror_size, curr_info_logstring)
             update_available = True
         else:
             logger.info('No newer version found (installed version {} of size {})', curr_info.version, curr_info.size)
