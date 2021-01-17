@@ -62,8 +62,7 @@ class RouteManagerQuests(RouteManagerBase):
         self._init_route_queue()
 
     def _get_coords_after_finish_route(self) -> bool:
-        self._manager_mutex.acquire()
-        try:
+        with self._manager_mutex:
             if self._shutdown_route:
                 self.logger.info('Other worker shutdown - leaving it')
                 return False
@@ -93,8 +92,6 @@ class RouteManagerQuests(RouteManagerBase):
                 self._restore_original_route()
                 return False
             return True
-        finally:
-            self._manager_mutex.release()
 
     def _restore_original_route(self):
         if not self._tempinit:
@@ -102,9 +99,7 @@ class RouteManagerQuests(RouteManagerBase):
             self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
-        self._manager_mutex.acquire()
-
-        try:
+        with self._manager_mutex:
             list_of_stops_to_return: List[Location] = []
 
             if len(self._stoplist) == 0:
@@ -131,12 +126,9 @@ class RouteManagerQuests(RouteManagerBase):
             if len(list_of_stops_to_return) > 0:
                 self.logger.info("Found stops not yet processed, retrying those in the next round")
             return list_of_stops_to_return
-        finally:
-            self._manager_mutex.release()
 
     def _start_routemanager(self):
-        self._manager_mutex.acquire()
-        try:
+        with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
@@ -193,10 +185,6 @@ class RouteManagerQuests(RouteManagerBase):
 
                 self.logger.info('Getting {} positions in route', len(self._route))
                 return True
-
-        finally:
-            self._manager_mutex.release()
-
         return True
 
     def _recalc_stop_route(self, stops):

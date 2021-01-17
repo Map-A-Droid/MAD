@@ -39,11 +39,10 @@ class PooledQueryExecutor:
             "password": self.password,
             "database": self.database
         }
-        self._pool_mutex.acquire()
-        self._pool = MySQLConnectionPool(pool_name="db_wrapper_pool",
-                                         pool_size=self._poolsize,
-                                         **dbconfig)
-        self._pool_mutex.release()
+        with self._pool_mutex:
+            self._pool = MySQLConnectionPool(pool_name="db_wrapper_pool",
+                                             pool_size=self._poolsize,
+                                             **dbconfig)
 
     def close(self, conn, cursor):
         """
