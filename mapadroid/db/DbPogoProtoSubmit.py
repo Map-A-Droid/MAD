@@ -332,6 +332,7 @@ class DbPogoProtoSubmit:
                     cache_key = "stop{}{}".format(fort["id"], fort.get("last_modified_timestamp_ms", alt_modified_time))
                     if cache.exists(cache_key):
                         continue
+                    cache.set(cache_key, 1, ex=900)
                     stops_args.append(stop)
 
         self._db_exec.executemany(query_stops, stops_args, commit=True)
@@ -361,6 +362,7 @@ class DbPogoProtoSubmit:
                                                 stop_proto.get("last_modified_timestamp_ms", alt_modified_time))
             if cache.exists(cache_key):
                 return
+            cache.set(cache_key, 1, ex=900)
             self._db_exec.execute(query_stops, stop_args, commit=True)
         return True
 
