@@ -26,7 +26,7 @@ wget \
 && mkdir /usr/local/share/tessdata/ \
 && mv -v eng.traineddata /usr/local/share/tessdata/ \
 # python reqs
-&& python3 -m pip install --no-cache-dir -r requirements.txt ortools \
+&& python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
 # cleanup
 && apt-get remove -y wget \
 && apt-get remove -y build-essential \
