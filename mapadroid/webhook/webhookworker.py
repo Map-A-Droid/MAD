@@ -503,7 +503,7 @@ class WebhookWorker:
             url = webhook.strip()
 
             if url.startswith("["):
-                end_index = webhook.rindex("]")
+                end_index = webhook.index("]")
                 end_index += 1
                 sub_types = webhook[:end_index]
                 url = url[end_index:]
