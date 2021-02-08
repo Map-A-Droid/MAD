@@ -57,7 +57,7 @@ class SerializedMitmDataProcessor(Process):
                     origin_logger.debug(
                         "Data received at {} is older than configured threshold of {}s ({}). Ignoring data.",
                         processed_timestamp, threshold_seconds, datetime.fromtimestamp(minimum_timestamp))
-                    pass
+                    return
 
             if data_type == 106:
                 origin_logger.info("Processing GMO. Received at {}", processed_timestamp)
