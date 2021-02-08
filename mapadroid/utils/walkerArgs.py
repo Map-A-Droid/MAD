@@ -70,6 +70,9 @@ def parse_args():
                         help='Port to listen on for proto data (MITM data). Default: 8000')
     parser.add_argument('-mrdw', '--mitmreceiver_data_workers', type=int, default=2,
                         help='Amount of workers to work off the data that queues up. Default: 2')
+    parser.add_argument('-miptt', '--mitm_ignore_proc_time_thresh', type=int, default=0,
+                        help='Ignore MITM data having a timestamp too far in the past.'
+                             'Specify in seconds. Default: 0 (off)')
     parser.add_argument('-mipb', '--mitm_ignore_pre_boot', default=False, type=bool,
                         help='Ignore MITM data having a timestamp pre MAD\'s startup time')
     parser.add_argument('-mspass', '--mitm_status_password', default='',
