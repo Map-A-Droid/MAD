@@ -82,6 +82,7 @@ def generate_quest(quest):
         'quest_target': quest['quest_target'],
         'quest_condition': quest['quest_condition'],
         'quest_template': quest['quest_template'],
+        'is_ar_scan_eligible': quest['is_ar_scan_eligible'],
 
     })
     return quest_raw
