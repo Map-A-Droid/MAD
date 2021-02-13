@@ -152,7 +152,7 @@ class MappingManager:
         all_mons = area['settings'].get('all_mons', False)
         try:
             mon_list = copy.copy(self._monlists[int(mon_iv_list)])
-        except KeyError:
+        except (KeyError, TypeError):
             if not all_mons:
                 logger.warning(
                     "IV list '{}' has been used in area '{}' but does not exist. Using empty IV list"
