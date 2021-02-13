@@ -90,6 +90,7 @@ class MappingManager:
         self._areas: Optional[dict] = None
         self._routemanagers: Optional[Dict[str, dict]] = None
         self._auths: Optional[dict] = None
+        self.__areamons: Optional[Dict[int, list[int]]] = {}
         self._monlists: Optional[dict] = None
         self.__shutdown_event: Event = Event()
         self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
@@ -146,27 +147,10 @@ class MappingManager:
         return self._areas
 
     def get_monlist(self, area_id):
-        mon_list = []
-        area = self.__data_manager.get_resource('area', area_id)
-        mon_iv_list = area['settings'].get('mon_ids_iv', None)
-        all_mons = area['settings'].get('all_mons', False)
         try:
-            mon_list = copy.copy(self._monlists[int(mon_iv_list)])
-        except (KeyError, TypeError):
-            if not all_mons:
-                logger.warning(
-                    "IV list '{}' has been used in area '{}' but does not exist. Using empty IV list"
-                    "instead.", mon_iv_list, area["name"]
-                )
-                return []
-        all_mons = area['settings'].get('all_mons', False)
-        if all_mons:
-            logger.debug("Area {} is configured for all mons", area["name"])
-            for mon_id in get_mon_ids():
-                if mon_id in mon_list:
-                    continue
-                mon_list.append(mon_id)
-        return mon_list
+            return self.__areamons[area_id]
+        except KeyError:
+            return []
 
     def get_all_routemanager_names(self):
         return self._routemanagers.keys()
@@ -590,6 +574,33 @@ class MappingManager:
             monlist[moniv_id] = elem.get('mon_ids_iv', None)
         return monlist
 
+    def __get_latest_areamons(self, areas):
+        areamons = {}
+        for area_id, area in areas.items():
+            area = self.__data_manager.get_resource('area', area_id)
+            mon_iv_list = area['settings'].get('mon_ids_iv', None)
+            all_mons = area['settings'].get('all_mons', False)
+            mon_list = []
+            try:
+                mon_list = copy.copy(self._monlists[int(mon_iv_list)])
+            except (KeyError, TypeError):
+                if not all_mons:
+                    logger.warning(
+                        "IV list '{}' has been used in area '{}' but does not exist. Using empty IV list"
+                        "instead.", mon_iv_list, area["name"]
+                    )
+                    areamons[area_id] = mon_list
+                    continue
+            all_mons = area['settings'].get('all_mons', False)
+            if all_mons:
+                logger.debug("Area {} is configured for all mons", area["name"])
+                for mon_id in get_mon_ids():
+                    if mon_id in mon_list:
+                        continue
+                    mon_list.append(int(mon_id))
+            areamons[area_id] = mon_list
+        return areamons
+
     def update(self, full_lock=False):
         """
         Updates the internal mappings and routemanagers
@@ -598,6 +609,7 @@ class MappingManager:
         if not full_lock:
             self._monlists = self.__get_latest_monlists()
             areas_tmp = self.__get_latest_areas()
+            self.__areamons = self.__get_latest_areamons(areas_tmp)
             devicemappings_tmp = self.__get_latest_devicemappings()
             routemanagers_tmp = self.__get_latest_routemanagers()
             auths_tmp = self.__get_latest_auths()
@@ -633,8 +645,9 @@ class MappingManager:
             logger.debug("Acquiring lock to update mappings,full")
             with self.__mappings_mutex:
                 self._monlists = self.__get_latest_monlists()
-                self._routemanagers = self.__get_latest_routemanagers()
                 self._areas = self.__get_latest_areas()
+                self.__areamons = self.__get_latest_areamons(self._areas)
+                self._routemanagers = self.__get_latest_routemanagers()
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
 
