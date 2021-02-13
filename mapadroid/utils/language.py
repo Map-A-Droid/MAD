@@ -34,3 +34,8 @@ def get_mon_name(mon_id):
             return mons_file[str_id]["name"]
     else:
         return "No-name-in-pokemon-json"
+
+
+def get_mon_ids():
+    mons_file = open_json_file('pokemon')
+    return list(mons_file.keys())

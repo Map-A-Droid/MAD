@@ -1,3 +1,4 @@
+import copy
 import time
 from multiprocessing import Event, Lock
 from multiprocessing.managers import SyncManager
@@ -11,6 +12,7 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.utils.collections import Location
+from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
@@ -143,19 +145,28 @@ class MappingManager:
     def get_areas(self) -> Optional[dict]:
         return self._areas
 
-    def get_monlist(self, listname, areaname):
-        if type(listname) is list:
-            logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json.'
-                         ' Using empty list instead.', areaname)
-            return []
-        if listname is not None and int(listname) in self._monlists:
-            return self._monlists[int(listname)]
-        elif listname is None:
-            return []
-        else:
-            logger.warning("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
-                           listname, areaname)
-            return []
+    def get_monlist(self, area_id):
+        mon_list = []
+        area = self.__data_manager.get_resource('area', area_id)
+        mon_iv_list = area['settings'].get('mon_ids_iv', None)
+        all_mons = area['settings'].get('all_mons', False)
+        try:
+            mon_list = copy.copy(self._monlists[int(mon_iv_list)])
+        except KeyError:
+            if not all_mons:
+                logger.warning(
+                    "IV list '{}' has been used in area '{}' but does not exist. Using empty IV list"
+                    "instead.", mon_iv_list, area["name"]
+                )
+                return []
+        all_mons = area['settings'].get('all_mons', False)
+        if all_mons:
+            logger.debug("Area {} is configured for all mons", area["name"])
+            for mon_id in get_mon_ids():
+                if mon_id in mon_list:
+                    continue
+                mon_list.append(mon_id)
+        return mon_list
 
     def get_all_routemanager_names(self):
         return self._routemanagers.keys()
@@ -388,7 +399,7 @@ class MappingManager:
             if area.get('settings', None) is not None and 'mon_ids_iv' in area['settings']:
                 # replace list name
                 area['settings']['mon_ids_iv_raw'] = \
-                    self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
+                    self.get_monlist(area_id)
             route_resource = self.__data_manager.get_resource('routecalc', identifier=area["routecalc"])
 
             calc_type: str = area.get("route_calc_algorithm", "route")

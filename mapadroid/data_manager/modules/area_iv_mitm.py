@@ -119,6 +119,17 @@ class AreaIVMITM(Area):
                     "uri_source": "api_monivlist"
                 }
             },
+            "all_mons": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [False, True],
+                    "description":
+                        "Encounter all mons even if they are not part of an IV list. Mons not on the IV"
+                        "list will be encountered based off mon id.",
+                    "expected": bool
+                }
+            },
             "min_time_left_seconds": {
                 "settings": {
                     "type": "text",
