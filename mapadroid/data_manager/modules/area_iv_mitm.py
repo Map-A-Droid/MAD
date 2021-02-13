@@ -125,8 +125,9 @@ class AreaIVMITM(Area):
                     "require": False,
                     "values": [False, True],
                     "description":
-                        "Encounter all mons even if they are not part of an IV list. Mons not on the IV"
-                        "list will be encountered based off mon id.",
+                        "Dynamically generate the areas IV list to ensure all mons are included. If a mon is not part "
+                        "of the IV list it will be appended to the end of the list. Mons will be added in ascending "
+                        "order based on their ID.",
                     "expected": bool
                 }
             },

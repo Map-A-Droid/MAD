@@ -2,8 +2,11 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Enable dynamic IV list for mons. This allows for non-selected priority mons to be scanned in ID order'
-    descr = 'Less clicky more usefulness!'
+    name = "Dynamic IV Lists"
+    descr = (
+        'Enable dynamic IV list for mons which allows for mons to be scanned not on an IV list. If a mon is not on the '
+        'IV list it will be added to the list based on mon id'
+    )
 
     def _execute(self):
         tables = ["settings_area_iv_mitm", "settings_area_mon_mitm", "settings_area_raids_mitm"]
