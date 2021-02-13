@@ -578,8 +578,14 @@ class MappingManager:
         areamons = {}
         for area_id, area in areas.items():
             area = self.__data_manager.get_resource('area', area_id)
-            mon_iv_list = area['settings'].get('mon_ids_iv', None)
-            all_mons = area['settings'].get('all_mons', False)
+            try:
+                mon_iv_list = area["settings"]["mon_ids_iv"]
+            except KeyError:
+                mon_iv_list = None
+            try:
+                all_mons = area['settings']['all_mons']
+            except KeyError:
+                all_mons = False
             mon_list = []
             try:
                 mon_list = copy.copy(self._monlists[int(mon_iv_list)])
@@ -591,7 +597,6 @@ class MappingManager:
                     )
                     areamons[area_id] = mon_list
                     continue
-            all_mons = area['settings'].get('all_mons', False)
             if all_mons:
                 logger.debug("Area {} is configured for all mons", area["name"])
                 for mon_id in get_mon_ids():
