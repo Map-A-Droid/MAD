@@ -147,6 +147,18 @@ class AreaRaidsMITM(Area):
                     "data_source": "monivlist",
                     "uri_source": "api_monivlist"
                 }
-            }
+            },
+            "all_mons": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [False, True],
+                    "description":
+                        "Dynamically generate the areas IV list to ensure all mons are included. If a mon is not part "
+                        "of the IV list it will be appended to the end of the list. Mons will be added in ascending "
+                        "order based on their ID.",
+                    "expected": bool
+                }
+            },
         }
     }
