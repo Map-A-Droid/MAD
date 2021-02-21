@@ -15,7 +15,7 @@ class Patch(PatchBase):
                 alter = """
                     ALTER TABLE `{}`
                     ADD COLUMN `all_mons` tinyint(1) NOT NULL DEFAULT '0'
-                    AFTER `monlist_id`
+                    AFTER `monlist_id`;
                 """.format(table)
                 try:
                     self._db.execute(alter, commit=True, raise_exec=True)
