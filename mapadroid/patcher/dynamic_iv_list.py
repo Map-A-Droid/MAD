@@ -14,7 +14,7 @@ class Patch(PatchBase):
             if not self._schema_updater.check_column_exists(table, "all_mons"):
                 alter = """
                     ALTER TABLE `{}`
-                    ADD COLUMN `all_mons` tinyint(1) NOT NULL DEFAULT '0';
+                    ADD COLUMN `all_mons` tinyint(1) NOT NULL DEFAULT '0'
                     AFTER `monlist_id`
                 """.format(table)
                 try:
