@@ -259,7 +259,7 @@ class WebhookWorker:
 
             # Quest condition for battling another trainer (type = 23)
             if "with_pvp_combat" in a_quest_condition:
-                a_quest_condition['indo'] = a_quest_condition['with_pvp_combat']
+                a_quest_condition['info'] = a_quest_condition['with_pvp_combat']
 
             # Quest condition for location (type = 24) is unused
 
@@ -280,7 +280,6 @@ class WebhookWorker:
             # Quest condition for snapshots with buddy (type = 28)
             if "with_buddy" in a_quest_condition:
                 a_quest_condition['info'] = a_quest_condition['with_buddy']
-
 
             quest_condition.append(a_quest_condition)
 
