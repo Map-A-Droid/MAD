@@ -285,8 +285,8 @@ class WebhookWorker:
 
         return {
             "pokestop_id": quest["pokestop_id"],
-            "pokestop_name": quest["name"].replace("\n", "\\n"),
             "template": quest["quest_template"],
+            "pokestop_name": quest["name"].replace("\n", "\\n"),
             "pokestop_url": quest["url"],
             "conditions": quest_condition,
             "type": quest["quest_type_raw"],
@@ -294,7 +294,7 @@ class WebhookWorker:
             "longitude": quest["longitude"],
             "rewards": quest_rewards,
             "target": quest["quest_target"],
-            "timestamp": quest["timestamp"],
+            "updated": quest["timestamp"],
             "quest_task": quest["quest_task"],
         }
 
