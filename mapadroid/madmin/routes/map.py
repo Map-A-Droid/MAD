@@ -117,25 +117,50 @@ class MADminMap:
 
     @auth_required
     def get_route(self):
-        routeexport = []
-
+        routeinfo_by_id = {}
         routemanager_names = self._mapping_manager.get_all_routemanager_names()
 
         for routemanager in routemanager_names:
+            (memory_route, workers) = self._mapping_manager.routemanager_get_current_route(routemanager)
+            if memory_route is None:
+                continue
+
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
             name = self._mapping_manager.routemanager_get_name(routemanager)
             routecalc_id = self._mapping_manager.routemanager_get_routecalc_id(routemanager)
-            (route, workers) = self._mapping_manager.routemanager_get_current_route(routemanager)
+            routeinfo_by_id[routecalc_id] = routeinfo = {
+                "id": routecalc_id,
+                "route": memory_route,
+                "name": name,
+                "mode": mode,
+                "subroutes": []
+            }
 
-            if route is None:
-                continue
-            routeexport.append(get_routepool_route(routecalc_id, name, mode, route))
             if len(workers) > 1:
                 for worker, worker_route in workers.items():
-                    disp_name = '%s - %s' % (name, worker,)
-                    routeexport.append(get_routepool_route(None, disp_name, mode, worker_route))
+                    routeinfo["subroutes"].append({
+                        "id": "%d_sub_%s" % (routecalc_id, worker),
+                        "route": worker_route,
+                        "name": "%s - %s" % (routeinfo["name"], worker),
+                        "tag": "subroute"
+                    })
 
-        return jsonify(routeexport)
+        if len(routeinfo_by_id) > 0:
+            routecalcs = self._data_manager.get_root_resource("routecalc")
+            for routecalc_id, routecalc in routecalcs.items():
+                if routecalc_id in routeinfo_by_id:
+                    routeinfo = routeinfo_by_id[routecalc_id]
+                    db_route = list(map(lambda coord: Location(coord["lat"], coord["lng"]),
+                                        routecalc.get_saved_json_route()))
+                    if db_route != routeinfo["route"]:
+                        routeinfo["subroutes"].append({
+                            "id": "%d_unapplied" % routeinfo["id"],
+                            "route": db_route,
+                            "name": "%s (unapplied)" % routeinfo["name"],
+                            "tag": "unapplied"
+                        })
+
+        return jsonify(list(map(lambda route: get_routepool_route(route), routeinfo_by_id.values())))
 
     @auth_required
     def get_prioroute(self):
@@ -357,21 +382,26 @@ class MADminMap:
         return jsonify(data)
 
 
-def get_routepool_route(routecalc_id, name, mode, coords):
-    parsed_coords = get_routepool_coords(coords, mode)
+def get_routepool_route(route):
     return {
-        "id": routecalc_id,
-        "name": name,
-        "mode": mode,
-        "coordinates": parsed_coords
+        "id": route["id"],
+        "name": route["name"],
+        "mode": route["mode"],
+        "coordinates": get_routepool_coords(route["route"]),
+        "subroutes": list(map(lambda subroute: {
+            "id": subroute["id"],
+            "name": subroute["name"],
+            "tag": subroute["tag"],
+            "coordinates": get_routepool_coords(subroute["route"])
+        }, route["subroutes"]))
     }
 
 
-def get_routepool_coords(coord_list, mode):
+def get_routepool_coords(coord_list):
     route_serialized = []
     prepared_coords = coord_list
     if isinstance(coord_list, RoutePoolEntry):
         prepared_coords = coord_list.subroute
     for location in prepared_coords:
         route_serialized.append([get_coord_float(location.lat), get_coord_float(location.lng)])
-    return (route_serialized)
+    return route_serialized

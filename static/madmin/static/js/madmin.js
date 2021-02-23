@@ -249,6 +249,11 @@ new Vue({
             return Object.values(this.layers.dyn.geofences).sort(function (x, y) {
                 return x.name.localeCompare(y.name, "en", {sensitivity: "base"});
             });
+        },
+        sortedRoutes() {
+            return Object.values(this.layers.dyn.routes).sort(function (x, y) {
+                return x.name.localeCompare(y.name, "en", {sensitivity: "base"});
+            });
         }
     },
     watch: {
@@ -325,11 +330,11 @@ new Vue({
                 this.changeDynamicLayers("prioroutes", false, layerOrders.routes.bringTo);
             }
         },
-        'settings.maptiles': function (newVal) {
+        "settings.maptiles": function (newVal) {
             this.updateStoredSetting("settings-maptiles", newVal);
             leaflet_data.tileLayer.setUrl(this.maptiles[newVal].url);
         },
-        'settings.cleanup': function (newVal) {
+        "settings.cleanup": function (newVal) {
             this.updateStoredSetting("settings-cleanup", newVal);
 
             if (newVal) {
@@ -338,10 +343,10 @@ new Vue({
                 clearInterval(cleanupInterval);
             }
         },
-        'settings.cellUpdateTimeout': function (newVal) {
-        	this.updateStoredSetting('settings-cellUpdateTimeout', newVal);
+        "settings.cellUpdateTimeout": function (newVal) {
+            this.updateStoredSetting('settings-cellUpdateTimeout', newVal);
         },
-        'settings.routes.coordinateRadius': {
+        "settings.routes.coordinateRadius": {
             deep: true,
             handler: function () {
                 $this = this;
@@ -523,135 +528,38 @@ new Vue({
         map_fetch_routes() {
             this.mapGuardedFetch("routes", "get_route", function (res) {
                 res.data.forEach(function (route) {
-                    const name = route.name;
+                    route.editableId = route.id
 
-                    if (this.layers.dyn.routes[name]) {
-                        return;
-                    }
-
-                    let mode;
-                    let cradius;
-
-                    if (route.mode === "mon_mitm") {
-                        mode = "mons";
-                        cradius = this.settings.routes.coordinateRadius.mons;
-                    }
-                    else if (route.mode === "pokestops") {
-                        mode = "quests";
-                        cradius = this.settings.routes.coordinateRadius.quests;
-                    }
-                    else if (route.mode === "raids_mitm") {
-                        mode = "raids";
-                        cradius = this.settings.routes.coordinateRadius.raids;
-                    }
-                    else {
-                        mode = route.mode;
-                    }
-
-                    let stack = []
-                    let processedCells = {};
-
-                    const group = L.layerGroup();
-                    const color = this.getRandomColor();
-                    const circleOptions = {
-                        radius: cradius,
-                        color: color,
-                        fillColor: color,
-                        weight: 1,
-                        opacity: 0.4,
-                        fillOpacity: 0.1,
-                        interactive: false,
-                        pane: layerOrders.routes.pane,
-                        pmIgnore: true
-                    };
-
-                    const circles = []
-
-                    route.coordinates.forEach(function (coord) {
-                        const circle = L.circle(coord, circleOptions);
-                        circles.push(circle);
-                        circle.addTo(group);
-
-                        if (mode === "raids") {
-                            // super dirty workaround to get bounds
-                            // of a circle. The getbounds() function
-                            // is only available if it has been added
-                            // to the map.
-                            // See https://github.com/Leaflet/Leaflet/issues/4978
-                            circle.addTo(map);
-                            const bounds = circle.getBounds();
-                            circle.removeFrom(map);
-
-                            const centerCell = S2.S2Cell.FromLatLng(circle.getLatLng(), 15)
-                            processedCells[centerCell.toString()] = true
-                            stack.push(centerCell)
-                            L.polygon(centerCell.getCornerLatLngs(), {
-                                color: color,
-                                opacity: 0.5,
-                                weight: 1,
-                                fillOpacity: 0,
-                                interactive: false,
-                                pane: layerOrders.cells.pane,
-                                pmIgnore: true
-                            }).addTo(group);
-
-                            while (stack.length > 0) {
-                                const cell = stack.pop();
-                                const neighbors = cell.getNeighbors()
-                                neighbors.forEach(function (ncell) {
-                                    if (processedCells[ncell.toString()] !== true) {
-                                        const cornerLatLngs = ncell.getCornerLatLngs();
-
-                                        for (let i = 0; i < 4; i++) {
-                                            const item = cornerLatLngs[i];
-                                            const distance = L.latLng(item.lat, item.lng).distanceTo(circle.getLatLng());
-                                            if (item.lat >= bounds.getSouthWest().lat
-                                                && item.lng >= bounds.getSouthWest().lng
-                                                && item.lat <= bounds.getNorthEast().lat
-                                                && item.lng <= bounds.getNorthEast().lng
-                                                && distance <= cradius) {
-                                                processedCells[ncell.toString()] = true;
-                                                stack.push(ncell);
-                                                L.polygon(ncell.getCornerLatLngs(), {
-                                                    color: color,
-                                                    opacity: 0.5,
-                                                    weight: 1,
-                                                    fillOpacity: 0,
-                                                    interactive: false,
-                                                    pane: layerOrders.cells.pane,
-                                                    pmIgnore: true,
-                                                }).addTo(group);
-                                                break
-                                            }
-                                        }
-                                    }
-                                })
+                    let hasUnappliedCounterpart = false;
+                    if (Array.isArray(route.subroutes)) {
+                        route.subroutes.forEach(function (subroute) {
+                            subroute.mode = route.mode;
+                            if (subroute.tag === "unapplied") {
+                                hasUnappliedCounterpart = true;
+                                subroute.editableId = route.id;
                             }
-                        }
-                    });
+                        }, this);
+                    }
 
-                    // add route to layergroup
-                    const polyline = L.polyline(route.coordinates, {
-                        color: color,
-                        weight: 2,
-                        opacity: 0.4,
-                        pane: layerOrders.routes.pane
-                    });
+                    const settingPrefix = "layers-dyn-routes-";
+                    const routeSettingName = settingPrefix + route.id;
+                    let show = this.getStoredSetting(routeSettingName, false);
 
-                    polyline
-                        .bindPopup(this.build_route_popup(route, polyline, circles, group, circleOptions), { className: "routepopup" })
-                        .addTo(group);
+                    // if the unapplied route was visible last time, but has been applied since, show the normal route instead
+                    if (!hasUnappliedCounterpart) {
+                        const unappliedRouteSettingName = routeSettingName + "_unapplied";
+                        show = show || this.getStoredSetting(unappliedRouteSettingName, false);
+                        this.updateStoredSetting(routeSettingName, show);
+                        this.removeStoredSetting(unappliedRouteSettingName);
+                    }
 
-                    // add layergroup to management object
-                    leaflet_data.routes[name] = group;
+                    this.mapAddRoute(route, show);
 
-                    const settings = {
-                        "show": this.getStoredSetting("layers-dyn-routes-" + name, false),
-                        "mode": mode
-                    };
-
-                    this.$set(this.layers.dyn.routes, name, settings);
-
+                     if (Array.isArray(route.subroutes)) {
+                         route.subroutes.forEach(function (subroute) {
+                             this.mapAddRoute(subroute, this.getStoredSetting(settingPrefix + subroute.id, false));
+                         }, this);
+                     }
                 }, this);
             });
         },
@@ -1071,8 +979,141 @@ new Vue({
 
             leaflet_data.geofences[id] = polygon;
 
-            geofence.show = show;
-            this.$set(this.layers.dyn.geofences, id, geofence);
+            this.$set(this.layers.dyn.geofences, id, {
+                id: geofence.id,
+                name: geofence.name,
+                show: show
+            });
+        },
+        mapAddRoute(route, show) {
+            const id = route.id;
+
+            if (this.layers.dyn.routes[id]) {
+                return;
+            }
+
+            let modeDisplay;
+            let cradius;
+
+            if (route.mode === "mon_mitm") {
+                modeDisplay = "mons";
+                cradius = this.settings.routes.coordinateRadius.mons;
+            }
+            else if (route.mode === "pokestops") {
+                modeDisplay = "quests";
+                cradius = this.settings.routes.coordinateRadius.quests;
+            }
+            else if (route.mode === "raids_mitm") {
+                modeDisplay = "raids";
+                cradius = this.settings.routes.coordinateRadius.raids;
+            }
+            else {
+                modeDisplay = route.mode;
+                cradius = 0;
+            }
+
+            let stack = [];
+            let processedCells = {};
+
+            const group = L.layerGroup();
+            const color = this.getRandomColor();
+            const circleOptions = {
+                radius: cradius,
+                color: color,
+                fillColor: color,
+                weight: 1,
+                opacity: 0.4,
+                fillOpacity: 0.1,
+                interactive: false,
+                pane: layerOrders.routes.pane,
+                pmIgnore: true
+            };
+
+            const circles = [];
+
+            route.coordinates.forEach(function (coord) {
+                const circle = L.circle(coord, circleOptions);
+                circles.push(circle);
+                circle.addTo(group);
+
+                if (route.mode === "raids_mitm") {
+                    // super dirty workaround to get bounds
+                    // of a circle. The getbounds() function
+                    // is only available if it has been added
+                    // to the map.
+                    // See https://github.com/Leaflet/Leaflet/issues/4978
+                    circle.addTo(map);
+                    const bounds = circle.getBounds();
+                    circle.removeFrom(map);
+
+                    const centerCell = S2.S2Cell.FromLatLng(circle.getLatLng(), 15)
+                    processedCells[centerCell.toString()] = true
+                    stack.push(centerCell)
+                    L.polygon(centerCell.getCornerLatLngs(), {
+                        color: color,
+                        opacity: 0.5,
+                        weight: 1,
+                        fillOpacity: 0,
+                        interactive: false,
+                        pane: layerOrders.cells.pane,
+                        pmIgnore: true
+                    }).addTo(group);
+
+                    while (stack.length > 0) {
+                        const cell = stack.pop();
+                        const neighbors = cell.getNeighbors()
+                        neighbors.forEach(function (ncell) {
+                            if (processedCells[ncell.toString()] !== true) {
+                                const cornerLatLngs = ncell.getCornerLatLngs();
+
+                                for (let i = 0; i < 4; i++) {
+                                    const item = cornerLatLngs[i];
+                                    const distance = L.latLng(item.lat, item.lng).distanceTo(circle.getLatLng());
+                                    if (item.lat >= bounds.getSouthWest().lat
+                                        && item.lng >= bounds.getSouthWest().lng
+                                        && item.lat <= bounds.getNorthEast().lat
+                                        && item.lng <= bounds.getNorthEast().lng
+                                        && distance <= cradius) {
+                                        processedCells[ncell.toString()] = true;
+                                        stack.push(ncell);
+                                        L.polygon(ncell.getCornerLatLngs(), {
+                                            color: color,
+                                            opacity: 0.5,
+                                            weight: 1,
+                                            fillOpacity: 0,
+                                            interactive: false,
+                                            pane: layerOrders.cells.pane,
+                                            pmIgnore: true,
+                                        }).addTo(group);
+                                        break
+                                    }
+                                }
+                            }
+                        })
+                    }
+                }
+            });
+
+            const polyline = L.polyline(route.coordinates, {
+                color: color,
+                weight: 2,
+                opacity: 0.4,
+                pane: layerOrders.routes.pane
+            });
+
+            polyline
+                .bindPopup(this.build_route_popup(route, polyline, circles, group, circleOptions), { className: "routepopup" })
+                .addTo(group);
+
+            leaflet_data.routes[id] = group;
+
+            this.$set(this.layers.dyn.routes, id, {
+                id: id,
+                name: route.name,
+                tag: route.tag,
+                mode: modeDisplay,
+                show: show
+            });
         },
         mapAddLayer(layer, bringTo) {
             map.addLayer(layer);
@@ -1553,7 +1594,7 @@ new Vue({
             $(".badge", mainContent).text(route.mode);
             $(".length", mainContent).text(route.coordinates.length);
 
-            if (route.mode === "mon_mitm" && typeof route.id === "number") {
+            if (route.mode === "mon_mitm" && typeof route.editableId === "number") {
 
                 function getCircleIndex(event) {
                     return event.indexPath[0];
@@ -1605,24 +1646,48 @@ new Vue({
                     polyline.off("pm:vertexremoved", onVertexRemoved);
                 })
 
-                return this.build_editable_popup(
-                    mainContent, route.id, polyline, "route", true,
-                    function (coords) {
-                        return axios.patch("api/routecalc/" + route.id, { routefile: coords })
-                    },
-                    null,
-                    function (originalLatLngs) {
-                        circles.forEach(function (circle) { circle.remove() })
-                        circles.splice(0, circles.length)
+                function restoreOriginalCircles(originalLatLngs) {
+                    circles.forEach(function (circle) { circle.remove() })
+                    circles.splice(0, circles.length)
 
-                        if (Array.isArray(originalLatLngs)) {
-                            originalLatLngs.forEach(function (latLng) {
-                                const circle = L.circle(latLng, circleOptions);
-                                circles.push(circle);
-                                circle.addTo(layerGroup);
-                            })
-                        }
+                    if (Array.isArray(originalLatLngs)) {
+                        originalLatLngs.forEach(function (latLng) {
+                            const circle = L.circle(latLng, circleOptions);
+                            circles.push(circle);
+                            circle.addTo(layerGroup);
+                        })
                     }
+                }
+
+                return this.build_editable_popup(
+                    mainContent, route.editableId, polyline, "route", true,
+                    function (coords) {
+                        return axios.patch("api/routecalc/" + route.editableId, { routefile: coords })
+                    },
+                    function (result, originalLatLngs) {
+                        // we've just edited an applied route:
+                        //  - clone that edited routed has an unapplied route
+                        //  - restore the route before modifications as the applied one
+                        if (route.id === route.editableId) {
+                            const unappliedRouteId = route.id + "_unapplied";
+                            if (this.layers.dyn.routes[unappliedRouteId]) {
+                                this.$delete(this.layers.dyn.routes, unappliedRouteId);
+                                leaflet_data.routes[unappliedRouteId].removeFrom(map);
+                            }
+
+                            const unappliedRoute = Object.assign({ }, route);
+                            unappliedRoute.id = unappliedRouteId;
+                            unappliedRoute.name = route.name + " (unapplied)";
+                            unappliedRoute.tag = "unapplied";
+                            unappliedRoute.coordinates = polyline.getLatLngs().map(function (latLng) { return [latLng.lat, latLng.lng] });
+                            this.mapAddRoute(unappliedRoute, true);
+
+                            polyline.setLatLngs(originalLatLngs);
+                            restoreOriginalCircles(originalLatLngs);
+                            this.layers.dyn.routes[route.id].show = false;
+                        }
+                    },
+                    restoreOriginalCircles
                 )
             }
 
@@ -1757,7 +1822,7 @@ new Vue({
                 layer.closePopup();
 
                 if (typeof onCancelled === "function") {
-                    onCancelled(originalLatLngs)
+                    onCancelled.call(this, originalLatLngs)
                 }
 
                 if (id === null) {
@@ -1801,7 +1866,7 @@ new Vue({
                         layer.closePopup();
 
                         if (typeof onSaved === "function") {
-                            onSaved(result);
+                            onSaved.call(this, result, originalLatLngs);
                         }
 
                         if (id !== null) {

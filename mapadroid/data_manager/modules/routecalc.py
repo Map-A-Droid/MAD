@@ -129,21 +129,15 @@ class RouteCalc(Resource):
     def get_json_route(self, coords: List[Tuple[str, str]], max_radius: int, max_coords_within_radius: int,
                        in_memory: bool, num_processes: int = 1, algorithm: str = 'route', use_s2: bool = False,
                        s2_level: int = 15, route_name: str = 'Unknown') -> List[Dict[str, float]]:
+        if not in_memory:
+            saved_route = self.get_saved_json_route()
+            if len(saved_route) > 0:
+                logger.debug('Using routefile from DB')
+                return saved_route
+
         export_data = []
         if use_s2:
             logger.debug("Using S2 method for calculation with S2 level: {}", s2_level)
-        if not in_memory and \
-                (self._data['fields']['routefile'] is not None and len(
-                    self._data['fields']['routefile']) > 0):
-            logger.debug('Using routefile from DB')
-            for line in self._data['fields']['routefile']:
-                # skip empty lines
-                if not line.strip():
-                    continue
-                line_split = line.split(',')
-                export_data.append({'lat': float(line_split[0].strip()),
-                                    'lng': float(line_split[1].strip())})
-            return export_data
 
         less_coords = coords
         if len(coords) > 0 and max_radius and max_coords_within_radius:
@@ -216,3 +210,14 @@ class RouteCalc(Resource):
             self.primary_key: self.identifier
         }
         self._dbc.autoexec_update(self.table, data, where_keyvals=where)
+
+    def get_saved_json_route(self):
+        result = []
+        routefile = self._data['fields']['routefile']
+        if routefile is not None:
+            for line in routefile:
+                if not line.strip():
+                    continue
+                line_split = line.split(',')
+                result.append({'lat': float(line_split[0].strip()), 'lng': float(line_split[1].strip())})
+        return result
