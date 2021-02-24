@@ -831,7 +831,7 @@ new Vue({
                     }
 
                     const polygon = L.polygon(area.coordinates, {
-                        color: this.getRandomColor(),
+                        color: this.getRandomBackgroundColor(),
                         weight: 2,
                         opacity: 0.5,
                         pane: layerOrders.areas.pane,
@@ -967,7 +967,7 @@ new Vue({
             }
 
             const polygon = L.polygon(geofence.coordinates, {
-                color: this.getRandomColor(),
+                color: this.getRandomBackgroundColor(),
                 weight: 2,
                 opacity: 0.5,
                 pane: layerOrders.geofences.pane
@@ -1016,14 +1016,14 @@ new Vue({
             let processedCells = {};
 
             const group = L.layerGroup();
-            const color = this.getRandomColor();
+            const color = this.getRandomForegroundColor();
             const circleOptions = {
                 radius: cradius,
                 color: color,
                 fillColor: color,
                 weight: 1,
                 opacity: 0.4,
-                fillOpacity: 0.1,
+                fillOpacity: 0.2,
                 interactive: false,
                 pane: layerOrders.routes.pane,
                 pmIgnore: true
@@ -1096,8 +1096,8 @@ new Vue({
 
             const polyline = L.polyline(route.coordinates, {
                 color: color,
-                weight: 2,
-                opacity: 0.4,
+                weight: 3,
+                opacity: 1.0,
                 pane: layerOrders.routes.pane
             });
 
@@ -1143,7 +1143,7 @@ new Vue({
 
             function onMouseOver() {
                 if (!mouseEventsIgnore.isIgnored()) {
-                    layer.setStyle({ opacity: 1.0, weight: originalWeight + 1.0 })
+                    layer.setStyle({ opacity: 1.0, weight: originalWeight + 2.0 })
                 }
             }
 
@@ -1222,28 +1222,14 @@ new Vue({
                 weight: 1
             };
         },
-        getRandomColor() {
-            // generates only dark colors for better contrast
-            var letters = '0123456789'.split('');
-            var color = '#';
-            for (var i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 10)];
-            }
-            return color;
+        getRandomForegroundColor() {
+            return this.getHslColor(Math.floor(Math.random() * 360), 80, 30);
         },
-        getPercentageColor(percentage) {
-            var r, g, b = 0;
-
-            if (percentage < 50) {
-                r = 255;
-                g = Math.round(5.1 * percentage);
-            } else {
-                g = 255;
-                r = Math.round(510 - 5.10 * percentage);
-            }
-
-            var h = r * 0x10000 + g * 0x100 + b * 0x1;
-            return "#" + ("000000" + h.toString(16)).slice(-6);
+        getRandomBackgroundColor() {
+            return this.getHslColor(Math.floor(Math.random() * 360), 30, 50);
+        },
+        getHslColor(hue, saturation, lightness) {
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
         },
         build_cell_popup(marker) {
             var cell = this.cellupdates[marker.options.id];
