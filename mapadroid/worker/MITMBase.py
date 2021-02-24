@@ -105,6 +105,8 @@ class MITMBase(WorkerBase):
             -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
         if timestamp is None:
             timestamp = time.time()
+        # Cut off decimal places of timestamp as PD also does that...
+        timestamp = int(timestamp)
         if timeout is None:
             timeout = self.get_devicesettings_value("mitm_wait_timeout", FALLBACK_MITM_WAIT_TIMEOUT)
 

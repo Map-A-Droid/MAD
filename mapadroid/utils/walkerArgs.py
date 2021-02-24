@@ -70,6 +70,9 @@ def parse_args():
                         help='Port to listen on for proto data (MITM data). Default: 8000')
     parser.add_argument('-mrdw', '--mitmreceiver_data_workers', type=int, default=2,
                         help='Amount of workers to work off the data that queues up. Default: 2')
+    parser.add_argument('-miptt', '--mitm_ignore_proc_time_thresh', type=int, default=0,
+                        help='Ignore MITM data having a timestamp too far in the past.'
+                             'Specify in seconds. Default: 0 (off)')
     parser.add_argument('-mipb', '--mitm_ignore_pre_boot', default=False, type=bool,
                         help='Ignore MITM data having a timestamp pre MAD\'s startup time')
     parser.add_argument('-mspass', '--mitm_status_password', default='',
@@ -270,6 +273,17 @@ def parse_args():
     parser.add_argument('-acna', '--autoconfig_no_auth', action='store_true', default=False,
                         help='MAD PoGo auth is not required during autoconfiguration',
                         dest='autoconfig_no_auth')
+
+    # Redis cache
+    parser.add_argument('-ec', '--enable_cache', action='store_true', default=False,
+                        help=('Enable caching for incoming data to prevent re-inserting '
+                              'data to the DB over and over again'))
+    parser.add_argument('-ch', '--cache_host', default='localhost',
+                        help=('Redis host used by caching'))
+    parser.add_argument('-cp', '--cache_port', default=6379,
+                        help=('Redis port used by caching'))
+    parser.add_argument('-cdb', '--cache_database', default=0,
+                        help=('Redis database. Use different numbers (0-15) if you are running multiple instances'))
 
     if "MODE" in os.environ and os.environ["MODE"] == "DEV":
         args = parser.parse_known_args()[0]

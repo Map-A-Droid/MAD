@@ -106,9 +106,7 @@ class RouteManagerLeveling(RouteManagerQuests):
         self._init_route_queue()
 
     def _get_coords_after_finish_route(self) -> bool:
-        self._manager_mutex.acquire()
-        try:
-
+        with self._manager_mutex:
             if self._shutdown_route:
                 self.logger.info('Other worker shutdown route - leaving it')
                 return False
@@ -135,8 +133,6 @@ class RouteManagerLeveling(RouteManagerQuests):
             self._worker_changed_update_routepools()
             self._start_calc = False
             return True
-        finally:
-            self._manager_mutex.release()
 
     def _restore_original_route(self):
         if not self._tempinit:
@@ -145,18 +141,13 @@ class RouteManagerLeveling(RouteManagerQuests):
                 self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
-        self._manager_mutex.acquire()
-
-        try:
+        with self._manager_mutex:
             # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
             # least one origin is connected to it.
             return self._stoplist
-        finally:
-            self._manager_mutex.release()
 
     def _start_routemanager(self):
-        self._manager_mutex.acquire()
-        try:
+        with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
@@ -206,10 +197,6 @@ class RouteManagerLeveling(RouteManagerQuests):
 
                 self.logger.info('Getting {} positions', len(self._route))
                 return True
-
-        finally:
-            self._manager_mutex.release()
-
         return True
 
     def _recalc_stop_route(self, stops):

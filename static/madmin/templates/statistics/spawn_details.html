@@ -12,25 +12,30 @@
                     { data: 'id', title: 'Id' },
                     { data: 'lat', title: 'Latitude' },
                     { data: 'lon', title: 'Longitude' },
-                    { data: null, title: 'Last scanned' },
+                    { data: 'lastnonscan', title: 'Last mon seen' },
+                    { data: null, title: 'Last despawn time confirmation' },
                     { data: null, orderable: false, className: 'text-nowrap' }
             ],
             "columnDefs": [
             {
-                "targets": [3],
-
-                "render": function (data, type, row) {
-                    var lastscan = new Date(Date.parse(row.lastscan));
-                    var lastnonscan = new Date(Date.parse(row.lastnonscan));
-                    if (lastscan > new Date(Date.parse('1970-01-01 00:00:00'))) {
-                        return "<i class='fa fa-check fablack' data-toggle='tooltip' title='Known despawn time'></i></a></li> " + lastscan.getFullYear() + "-" + ("0"+(lastscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastscan.getDate()).slice(-2) + " " + ("0" + lastscan.getHours()).slice(-2) + ":" + ("0" + lastscan.getMinutes()).slice(-2) + ":" + ("0" + lastscan.getSeconds()).slice(-2)
-                    } else {
-                        return "<i class='fa fa-ban fablack' data-toggle='tooltip' title='Unknown despawn time'></i></a></li> " + lastnonscan.getFullYear() + "-" + ("0"+(lastnonscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastnonscan.getDate()).slice(-2) + " " + ("0" + lastnonscan.getHours()).slice(-2) + ":" + ("0" + lastnonscan.getMinutes()).slice(-2) + ":" + ("0" + lastnonscan.getSeconds()).slice(-2);
+                    "targets": [1,2],
+                    "render": function (data, type, row) {
+                        return type === "display" && data.toString().length > 10 ?
+                        data.toString().substr(0,8)+"..." : data;
                     }
-                }
             },
-                {
+            {
                     "targets": [4],
+                    "render": function (data, type, row) {
+                        if (row.lastscan == "1970-01-01 00:00:00") {
+                            return "<i class='fa fa-ban fablack' title='Unknown despawn time'></i></a></li> Unknown spawn time";
+                        } else {
+                            return "<i class='fa fa-check fablack' title='Known despawn time'></i></a></li> " + row.lastscan
+                        }
+                    }
+            },
+            {
+                    "targets": [5],
                     "render": function (data, type, row) {
                         var conv = "";
                         var del = `<button type="button" class="delete btn btn-danger btn-sm"><a href="delete_spawn?id=${row.id}&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}" class="confirm" data-toggle="tooltip" title="Delete spawnpoint"><i class='fa fa-trash'></i></a></button>`;
@@ -38,7 +43,6 @@
                         conv = `<button type="button" class="delete btn btn-info btn-sm"><a href="convert_spawn?id=${row.id}&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}" class="confirm" data-toggle="tooltip" title="Convert event spawnpoint to non-event spawnpoint"><i class='fa fa-exchange-alt'></i></a></button>`;
                         {% endif %}
                         var map = `<button type="button" class="delete btn btn-success btn-sm" data-toggle="tooltip" title="Show on MADmin map"><a href="map?lat=${row.lat}&lng=${row.lon}" target="_new"><i class="fa fa-map-marker"></i></a></button>`;
-
                         return `<span style="white-space: nowrap">${del} ${conv} ${map}</span>`
                     }
                 }
@@ -52,13 +56,6 @@
             "ordering": true,
             "stateSave": true,
             "stateDuration": 0,
-            "stateSaveCallback": function(settings,data) {
-                localStorage.setItem( 'MAD_SP_' + settings.sInstance, JSON.stringify(data) )
-            },
-            "stateLoadCallback": function(settings) {
-                return JSON.parse( localStorage.getItem( 'MAD_SP_' + settings.sInstance ) )
-            }
-
         });
   }
 

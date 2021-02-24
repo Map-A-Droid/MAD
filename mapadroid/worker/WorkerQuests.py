@@ -39,6 +39,25 @@ class ClearThreadTasks(Enum):
     QUEST = 2
 
 
+class PositionStopType(Enum):
+    GMO_NOT_AVAILABLE = 0,
+    GMO_EMPTY = 1,
+    GYM = 2,
+    VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE = 3,
+    STOP_DISABLED = 4,
+    STOP_CLOSED = 5,
+    STOP_COOLDOWN = 6
+    NO_FORT = 7
+    SPINNABLE_STOP = 8
+
+    @staticmethod
+    def type_contains_stop_at_all(position_stop_type) -> bool:
+        return position_stop_type in (PositionStopType.SPINNABLE_STOP,
+                                      PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE,
+                                      PositionStopType.STOP_CLOSED, PositionStopType.STOP_COOLDOWN,
+                                      PositionStopType.STOP_DISABLED)
+
+
 class WorkerQuests(MITMBase):
 
     def similar(self, elem_a, elem_b):
@@ -249,8 +268,7 @@ class WorkerQuests(MITMBase):
             # switch if player lvl >= 30
             self.switch_account()
 
-        try:
-            self._work_mutex.acquire()
+        with self._work_mutex:
             if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
                 self.logger.info("Processing Stop / Quest...")
 
@@ -267,9 +285,6 @@ class WorkerQuests(MITMBase):
             else:
                 self.logger.debug('Currently in INIT Mode - no Stop processing')
                 time.sleep(5)
-        finally:
-            self.logger.debug("Releasing lock")
-            self._work_mutex.release()
 
     def _cleanup(self):
         if self.clear_thread is not None:
@@ -284,26 +299,25 @@ class WorkerQuests(MITMBase):
                 time.sleep(1)
                 continue
 
-            try:
-                self._work_mutex.acquire()
-                time.sleep(1)
-                if self.clear_thread_task == ClearThreadTasks.BOX:
-                    self.logger.info("Clearing box")
-                    self.clear_box(self._delay_add)
+            with self._work_mutex:
+                try:
+                    time.sleep(1)
+                    if self.clear_thread_task == ClearThreadTasks.BOX:
+                        self.logger.info("Clearing box")
+                        self.clear_box(self._delay_add)
+                        self.clear_thread_task = ClearThreadTasks.IDLE
+                    elif self.clear_thread_task == ClearThreadTasks.QUEST and not self._level_mode:
+                        self.logger.info("Clearing quest")
+                        self._clear_quests(self._delay_add)
+                        self.clear_thread_task = ClearThreadTasks.IDLE
+                    time.sleep(1)
+                except (InternalStopWorkerException, WebsocketWorkerRemovedException,
+                        WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException):
+                    self.logger.error("Worker removed while clearing quest/box")
+                    self._stop_worker_event.set()
+                    return
+                finally:
                     self.clear_thread_task = ClearThreadTasks.IDLE
-                elif self.clear_thread_task == ClearThreadTasks.QUEST and not self._level_mode:
-                    self.logger.info("Clearing quest")
-                    self._clear_quests(self._delay_add)
-                    self.clear_thread_task = ClearThreadTasks.IDLE
-                time.sleep(1)
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException,
-                    WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException):
-                self.logger.error("Worker removed while clearing quest/box")
-                self._stop_worker_event.set()
-                return
-            finally:
-                self.clear_thread_task = ClearThreadTasks.IDLE
-                self._work_mutex.release()
 
     def clear_box(self, delayadd):
         stop_inventory_clear = Event()
@@ -476,18 +490,18 @@ class WorkerQuests(MITMBase):
             self.logger.debug2("GMO cells around current position ({}) do not contain stops ", self.current_location)
         return cells_with_forts
 
-    def _current_position_has_spinnable_stop(self, timestamp: float):
+    def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
         type_received, data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=ProtoIdentifier.GMO)
         if type_received != LatestReceivedType.GMO or data_received is None:
             self._spinnable_data_failure()
-            return False, False
+            return PositionStopType.GMO_NOT_AVAILABLE
         latest_proto = data_received.get("payload")
         gmo_cells: list = latest_proto.get("cells", None)
 
         if not gmo_cells:
             self.logger.warning("Can't spin stop - no map info in GMO!")
             self._spinnable_data_failure()
-            return False, False
+            return PositionStopType.GMO_EMPTY
 
         cells_with_stops = self._directly_surrounding_gmo_cells_containing_stops_around_current_position(gmo_cells)
         for cell in cells_with_stops:
@@ -515,53 +529,69 @@ class WorkerQuests(MITMBase):
                     self._db_wrapper.delete_stop(latitude, longitude)
                     self.logger.warning("Tried to open a stop but found a gym instead!")
                     self._spinnable_data_failcount = 0
-                    return False, True
+                    return PositionStopType.GYM
 
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
                     self.logger.info("Level mode: Stop already visited - skipping it")
                     self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
                     self._spinnable_data_failcount = 0
-                    return False, True
+                    return PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE
 
                 enabled: bool = fort.get("enabled", True)
                 if not enabled:
                     self.logger.info("Can't spin the stop - it is disabled")
+                    return PositionStopType.STOP_DISABLED
                 closed: bool = fort.get("closed", False)
                 if closed:
                     self.logger.info("Can't spin the stop - it is closed")
+                    return PositionStopType.STOP_CLOSED
+
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
                 if not cooldown == 0:
                     self.logger.info("Can't spin the stop - it has cooldown")
+                    return PositionStopType.STOP_COOLDOWN
                 self._spinnable_data_failcount = 0
-                return fort_type == 1 and enabled and not closed and cooldown == 0, False
+                return PositionStopType.SPINNABLE_STOP
+
         # by now we should've found the stop in the GMO
         self.logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
                             "- likely not standing exactly on top ...", str(self.current_location))
         self._check_if_stop_was_nearby_and_update_location(gmo_cells)
         self._spinnable_data_failure()
-        return False, False
+        return PositionStopType.NO_FORT
 
     def _try_to_open_pokestop(self, timestamp: float) -> LatestReceivedType:
         to = 0
         type_received: LatestReceivedType = LatestReceivedType.UNDEFINED
         proto_entry = None
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
-        spinnable_stop, skip_recheck = self._current_position_has_spinnable_stop(timestamp)
+        stop_type: PositionStopType = self._current_position_has_spinnable_stop(timestamp)
 
         recheck_count = 0
-        while not spinnable_stop and not skip_recheck and not recheck_count > 2:
+        while stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
+                            PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1
             self.logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
             type_received, proto_entry = self._wait_for_data(timestamp=time.time(),
                                                              proto_to_wait_for=ProtoIdentifier.GMO,
                                                              timeout=35)
             if type_received != LatestReceivedType.UNDEFINED:
-                spinnable_stop, skip_recheck = self._current_position_has_spinnable_stop(timestamp)
+                stop_type = self._current_position_has_spinnable_stop(timestamp)
 
-        if not spinnable_stop:
-            self.logger.info("Stop {}, {} considered to be ignored in the next round due to failed "
+        if not PositionStopType.type_contains_stop_at_all(stop_type):
+            self.logger.info("Location {}, {} considered to be ignored in the next round due to failed "
                              "spinnable check", self.current_location.lat, self.current_location.lng)
+            self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+                                                                        self.current_location.lat,
+                                                                        self.current_location.lng)
+            return type_received
+        elif stop_type in (PositionStopType.STOP_CLOSED, PositionStopType.STOP_COOLDOWN,
+                           PositionStopType.STOP_DISABLED):
+            self.logger.info("Stop at {}, {} is not spinnable at the moment ({})")
+            return type_received
+        elif stop_type == PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE:
+            self.logger.info("Stop at {}, {} has been spun before and is to be ignored in the next round.")
             self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
                                                                         self.current_location.lat,
                                                                         self.current_location.lng)

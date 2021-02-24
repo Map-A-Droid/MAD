@@ -55,8 +55,7 @@ class RouteManagerRaids(RouteManagerBase):
             return 600
 
     def _start_routemanager(self):
-        self._manager_mutex.acquire()
-        try:
+        with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
@@ -64,9 +63,6 @@ class RouteManagerRaids(RouteManagerBase):
                     self._start_priority_queue()
                     self._start_check_routepools()
                     self._init_route_queue()
-        finally:
-            self._manager_mutex.release()
-
         return True
 
     def _quit_route(self):

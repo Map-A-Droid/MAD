@@ -30,7 +30,7 @@ class DbWrapper:
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec)
+        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec, args)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
@@ -299,7 +299,7 @@ class DbWrapper:
             "trs_quest.quest_pokemon_costume_id, trs_quest.quest_reward_type, "
             "trs_quest.quest_item_id, trs_quest.quest_item_amount, pokestop.name, pokestop.image, "
             "trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
-            "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template "
+            "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template, pokestop.is_ar_scan_eligible "
             "FROM pokestop INNER JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
         )
@@ -334,7 +334,7 @@ class DbWrapper:
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id,
              quest_pokemon_form_id, quest_pokemon_costume_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
-             quest_timestamp, quest_task, quest_reward, quest_template) in res:
+             quest_timestamp, quest_task, quest_reward, quest_template, is_ar_scan_eligible) in res:
             mon = "%03d" % quest_pokemon_id
             form_id = "%02d" % quest_pokemon_form_id
             costume_id = "%02d" % quest_pokemon_costume_id
@@ -347,7 +347,9 @@ class DbWrapper:
                 'quest_item_amount': quest_item_amount, 'name': name, 'image': image,
                 'quest_target': quest_target,
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
-                'task': quest_task, 'quest_reward': quest_reward, 'quest_template': quest_template})
+                'task': quest_task, 'quest_reward': quest_reward, 'quest_template': quest_template,
+                'is_ar_scan_eligible': is_ar_scan_eligible
+            })
 
         return questinfo
 

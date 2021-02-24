@@ -11,12 +11,6 @@ def calculate_mon_level(cp_multiplier):
 
 
 def gen_despawn_timestamp(known_despawn, timestamp):
-    despawn_time = datetime.now() + timedelta(seconds=300)
-    despawn_time = datetime.utcfromtimestamp(
-        time.mktime(despawn_time.timetuple())
-    ).strftime("%Y-%m-%d %H:%M:%S")
-
-    # despawn time is unknown
     if known_despawn is False:
         # just set despawn time to now + 3 minutes
         # after that round down to full minutes to fix
@@ -259,7 +253,7 @@ def form_mapper(mon_id, form_id):
 def is_mon_ditto(logger, pokemon_data):
     logger.debug3('Determining if mon is a ditto')
     logger.debug4(pokemon_data)
-    potential_dittos = [46, 163, 167, 187, 223, 293, 316, 322, 399, 590]
+    potential_dittos = [163, 167, 187, 223, 293, 316, 322, 399, 590]
     weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
     valid_atk = pokemon_data.get("individual_attack") < 4
     valid_def = pokemon_data.get("individual_defense") < 4

@@ -175,15 +175,12 @@ class DeviceUpdater(object):
                 job_id = item
                 origin = self._log[str(job_id)]['origin']
 
-                self._update_mutex.acquire()
-                try:
+                with self._update_mutex:
                     if origin in self._current_job_device:
                         self._update_queue.put(str(job_id))
                         continue
 
                     self._current_job_device.append(origin)
-                finally:
-                    self._update_mutex.release()
 
                 file_ = self._log[str(job_id)]['file']
                 counter = self._log[str(job_id)]['counter']
@@ -432,8 +429,7 @@ class DeviceUpdater(object):
         self._update_queue.put(str(job_id))
 
     def write_status_log(self, job_id, field=None, value=None, delete=False):
-        self._update_mutex.acquire()
-        try:
+        with self._update_mutex:
             if delete:
                 if field is None:
                     del self._log[str(job_id)]
@@ -447,8 +443,6 @@ class DeviceUpdater(object):
                     self._log[str(job_id)][field] = value
                 else:
                     self._log[str(job_id)] = field
-        finally:
-            self._update_mutex.release()
 
         self.update_status_log()
 

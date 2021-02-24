@@ -82,7 +82,7 @@ class APIMadAPK(APKHandler):
                 self._logger.warning(err)
                 return (str(err), 406)
             except Exception:
-                self._logger.opt(exception=True).critical("An unhanded exception occurred!")
+                self._logger.opt(exception=True).critical("An unhandled exception occurred!")
                 return (None, 500)
         else:
             try:
