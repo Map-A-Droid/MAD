@@ -211,6 +211,8 @@ class DbWrapper:
         if geofence_helper is None:
             logger.error("No geofence_helper! Not fetching encounters.")
             return 0, {}
+        if latest == 0:
+            latest = time.time() - 15 * 60
 
         logger.debug3("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
