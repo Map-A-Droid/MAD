@@ -123,7 +123,7 @@ root-shell: up
 	docker-compose -f ${COMPOSE_FILE_DEV} exec -u root $(CONTAINER_NAME) $(CMD)
 
 run: down
-	docker-compose -f ${COMPOSE_FILE_TEST} up
+	docker-compose -f ${COMPOSE_FILE_PERSISTENT} up
 
 down:
 	docker-compose -f ${COMPOSE_FILE_DEV} down
@@ -134,6 +134,9 @@ tests: up
 
 unittests: up
 	docker-compose -f ${COMPOSE_FILE_DEV} exec mapadroid-dev tox -e py37
+
+test: up
+	docker-compose -f ${COMPOSE_FILE_TEST} run mapadroid-dev
 
 # Run bash within a defined tox environment
 # Specify a valid tox environment as such:
