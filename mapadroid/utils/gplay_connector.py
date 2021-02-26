@@ -165,7 +165,11 @@ class GPlayConnector(object):
     def generate_new_tokens(self, args) -> bool:
         """ Iterate over the available dispensers and cache the first successful connection"""
         for host in self.token_list:
-            dispenser = TokenDispenser(host)
+            try:
+                dispenser = TokenDispenser(host)
+            except Exception:
+                logger.debug("Invalid host. Skipping")
+                continue
             if dispenser.email is None:
                 logger.debug('Unable to obtain required information from {}', host)
                 continue

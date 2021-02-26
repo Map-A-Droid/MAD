@@ -30,7 +30,7 @@ class TokenDispenser(requests.Session):
         """ Override the class function to handle retries and specific error codes """
         attempt = 0
         finished = False
-        expected_code = 200
+        expected_code = None
         if "expected_code" in kwargs:
             expected_code = kwargs['expected_code']
             del kwargs['expected_code']
@@ -40,11 +40,18 @@ class TokenDispenser(requests.Session):
         while not finished and attempt < self.retries:
             try:
                 req_result = super().send(request, **kwargs)
-                if req_result.status_code == expected_code:
-                    return req_result
+                if expected_code is not None:
+                    if expected_code == req_result.status_code:
+                        return req_result
+                    else:
+                        raise requests.exceptions.HTTPError("Invalid code returned. Got {} but expecting {}",
+                                                            req_result.status_code, expected_code)
                 else:
-                    logger.debug('Invalid status code returned: {}', req_result.status_code)
-            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
+                    req_result.raise_for_status()
+                    return req_result
+            except (requests.exceptions.Timeout,
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.HTTPError) as err:
                 logger.warning(err)
                 last_err = err
             except Exception as err:
