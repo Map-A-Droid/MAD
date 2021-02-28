@@ -1,7 +1,7 @@
 import asyncio
 import math
 import time
-from threading import Thread
+from asyncio import Task
 from typing import Dict, Optional
 
 import websockets
@@ -22,14 +22,14 @@ class ReceivedMessageEntry:
 
 
 class WebsocketConnectedClientEntry:
-    def __init__(self, origin: str, worker_thread: Optional[Thread], worker_instance: Optional[AbstractWorker],
+    def __init__(self, origin: str, worker_task: Optional[Task], worker_instance: Optional[AbstractWorker],
                  websocket_client_connection: Optional[websockets.WebSocketClientProtocol],
                  loop_running: asyncio.AbstractEventLoop):
         self.origin: str = origin
-        self.worker_thread: Optional[Thread] = worker_thread
+        self.worker_task: Optional[Task] = worker_task
         self.worker_instance: Optional[AbstractWorker] = worker_instance
         self.websocket_client_connection: Optional[websockets.WebSocketClientProtocol] = websocket_client_connection
-        self.loop_running: asyncio.AbstractEventLoop = loop_running
+        # self.loop_running: asyncio.AbstractEventLoop = loop_running
         self.fail_counter: int = 0
         self.received_messages: Dict[int, ReceivedMessageEntry] = {}
         self.received_mutex: asyncio.Lock = asyncio.Lock()
@@ -47,12 +47,9 @@ class WebsocketConnectedClientEntry:
                 message_entry.message = message
                 self.last_message_received_at = time.time()
 
-    def send_and_wait(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
+    async def send_and_wait(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
                       byte_command: Optional[int] = None) -> Optional[MessageTyping]:
-        future = asyncio.run_coroutine_threadsafe(
-            self.send_and_wait_async(message, timeout, worker_instance, byte_command=byte_command),
-            self.loop_running)
-        return future.result()
+        return await self.send_and_wait_async(message, timeout, worker_instance, byte_command=byte_command)
 
     async def send_and_wait_async(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
                                   byte_command: Optional[int] = None) -> Optional[MessageTyping]:

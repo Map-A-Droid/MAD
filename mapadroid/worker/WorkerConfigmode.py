@@ -1,6 +1,6 @@
+import asyncio
 import math
 import time
-from threading import Event
 from typing import Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
@@ -23,7 +23,7 @@ class WorkerConfigmode(AbstractWorker):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._args = args
         self._event = event
-        self._stop_worker_event = Event()
+        self._stop_worker_event = asyncio.Event()
         self._dev_id = dev_id
         self._origin = origin
         self._routemanager_name = routemanager_name
@@ -34,33 +34,32 @@ class WorkerConfigmode(AbstractWorker):
         self._mitm_mapper = mitm_mapper
         self._db_wrapper = db_wrapper
 
-    def set_devicesettings_value(self, key: str, value):
-        self._mapping_manager.set_devicesetting_value_of(self._origin, key, value)
+    async def set_devicesettings_value(self, key: str, value):
+        await self._mapping_manager.set_devicesetting_value_of(self._origin, key, value)
 
-    def get_devicesettings_value(self, key: str, default_value: object = None):
-        devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._origin)
+    async def get_devicesettings_value(self, key: str, default_value: object = None):
+        devicemappings: Optional[dict] = await self._mapping_manager.get_devicemappings_of(self._origin)
         if devicemappings is None:
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
 
-    def start_worker(self):
+    async def start_worker(self):
         self.logger.warning("Worker started in configmode! This is special, configuration only mode - do not expect"
                             " scans or avatar moving. After you are done with initial configuration remove -cm flag")
-        self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
+        await self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
         self.logger.debug("Setting device to idle for routemanager")
-        self._db_wrapper.save_idle_status(self._dev_id, True)
+        await self._db_wrapper.save_idle_status(self._dev_id, True)
         self.logger.debug("Device set to idle for routemanager")
-        while self.check_walker() and not self._stop_worker_event.is_set():
-            time.sleep(10)
-        self.set_devicesettings_value('finished', True)
-        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._origin)
+        while not self._stop_worker_event.is_set() and await self.check_walker():
+            await asyncio.sleep(10)
+        await self.set_devicesettings_value('finished', True)
+        await self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._origin)
         try:
-            self._communicator.cleanup()
+            await self._communicator.cleanup()
         finally:
             self.logger.info("Internal cleanup finished")
-        return
 
-    def stop_worker(self):
+    async def stop_worker(self):
         if self._stop_worker_event.set():
             self.logger.info('Worker already stopped - waiting for it')
         else:
@@ -79,7 +78,7 @@ class WorkerConfigmode(AbstractWorker):
     def set_job_deactivated(self):
         return True
 
-    def check_walker(self):
+    async def check_walker(self):
         if self._walker is None:
             return True
         walkereventid = self._walker.get('eventid', None)
@@ -132,17 +131,17 @@ class WorkerConfigmode(AbstractWorker):
             self.logger.info('going to sleep')
             killpogo = False
             if check_walker_value_type(sleeptime):
-                self._stop_pogo()
+                await self._stop_pogo()
                 killpogo = True
                 self.logger.debug("Setting device to idle for routemanager")
-                self._db_wrapper.save_idle_status(self._dev_id, True)
+                await self._db_wrapper.save_idle_status(self._dev_id, True)
                 self.logger.debug("Device set to idle for routemanager")
-            while check_walker_value_type(sleeptime) and not self._stop_worker_event.isSet():
-                time.sleep(1)
+            while check_walker_value_type(sleeptime) and not self._stop_worker_event.is_set():
+                await asyncio.sleep(1)
             self.logger.info('just woke up')
             if killpogo:
                 try:
-                    self._start_pogo()
+                    await self._start_pogo()
                 except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                         WebsocketWorkerConnectionClosedException):
                     self.logger.error("Timeout during init")
@@ -151,90 +150,89 @@ class WorkerConfigmode(AbstractWorker):
             self.logger.error("Unknown walker mode! Killing worker")
             return False
 
-    def _stop_pogo(self):
+    async def _stop_pogo(self):
         attempts = 0
-        stop_result = self._communicator.stop_app("com.nianticlabs.pokemongo")
-        pogo_topmost = self._communicator.is_pogo_topmost()
+        stop_result = await self._communicator.stop_app("com.nianticlabs.pokemongo")
+        pogo_topmost = await self._communicator.is_pogo_topmost()
         while pogo_topmost:
             attempts += 1
             if attempts > 10:
                 return False
-            stop_result = self._communicator.stop_app(
-                "com.nianticlabs.pokemongo")
-            time.sleep(1)
-            pogo_topmost = self._communicator.is_pogo_topmost()
+            stop_result = await self._communicator.stop_app("com.nianticlabs.pokemongo")
+            await asyncio.sleep(1)
+            pogo_topmost = await self._communicator.is_pogo_topmost()
         return stop_result
 
-    def _start_pogo(self):
-        pogo_topmost = self._communicator.is_pogo_topmost()
+    async def _start_pogo(self):
+        pogo_topmost = await self._communicator.is_pogo_topmost()
         if pogo_topmost:
             return True
 
-        if not self._communicator.is_screen_on():
-            self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
+        if not await self._communicator.is_screen_on():
+            await self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
             self.logger.info("Turning screen on")
-            self._communicator.turn_screen_on()
-            time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
+            await self._communicator.turn_screen_on()
+            await asyncio.sleep(await self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
         while not pogo_topmost:
-            self._mitm_mapper.set_injection_status(self._origin, False)
-            self._communicator.start_app("com.nianticlabs.pokemongo")
-            time.sleep(1)
-            self._communicator.is_pogo_topmost()
+            await self._mitm_mapper.set_injection_status(self._origin, False)
+            await self._communicator.start_app("com.nianticlabs.pokemongo")
+            await asyncio.sleep(1)
+            pogo_topmost = await self._communicator.is_pogo_topmost()
 
         reached_raidtab = False
-        self._wait_pogo_start_delay()
+        await self._wait_pogo_start_delay()
 
         return reached_raidtab
 
-    def _wait_for_injection(self):
+    async def _wait_for_injection(self):
         self._not_injected_count = 0
-        reboot = self.get_devicesettings_value('reboot', True)
+        reboot = await self.get_devicesettings_value('reboot', True)
         injection_thresh_reboot = 'Unlimited'
         if reboot:
-            injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
-        while not self._mitm_mapper.get_injection_status(self._origin):
+            injection_thresh_reboot = int(await self.get_devicesettings_value("injection_thresh_reboot", 20))
+        while not await self._mitm_mapper.get_injection_status(self._origin):
             if reboot and self._not_injected_count >= injection_thresh_reboot:
                 self.logger.error("Not injected in time - reboot")
-                self._reboot()
+                await self._reboot()
                 return False
             self.logger.info("Didn't receive any data yet. (Retry count: {}/{})", str(self._not_injected_count),
                              str(injection_thresh_reboot))
-            if self._stop_worker_event.isSet():
+            if self._stop_worker_event.is_set():
                 self.logger.error("Killed while waiting for injection")
                 return False
             self._not_injected_count += 1
             wait_time = 0
             while wait_time < 20:
                 wait_time += 1
-                if self._stop_worker_event.isSet():
+                if self._stop_worker_event.is_set():
                     self.logger.error("Worker get killed while waiting for injection")
                     return False
-                time.sleep(1)
+                await asyncio.sleep(1)
         return True
 
-    def _reboot(self):
-        if not self.get_devicesettings_value("reboot", True):
+    async def _reboot(self):
+        if not await self.get_devicesettings_value("reboot", True):
             self.logger.warning("Reboot command to be issued to device but reboot is disabled. Skipping reboot")
             return True
         try:
-            start_result = self._communicator.reboot()
+            start_result = await self._communicator.reboot()
         except (WebsocketWorkerRemovedException, WebsocketWorkerConnectionClosedException):
             self.logger.warning("Could not reboot due to client already having disconnected")
             start_result = False
-        time.sleep(5)
-        self._db_wrapper.save_last_reboot(self._dev_id)
-        self.stop_worker()
+        await asyncio.sleep(5)
+        await self._db_wrapper.save_last_reboot(self._dev_id)
+        await self.stop_worker()
         return start_result
 
-    def _wait_pogo_start_delay(self):
+    async def _wait_pogo_start_delay(self):
         delay_count: int = 0
-        pogo_start_delay: int = self.get_devicesettings_value("post_pogo_start_delay", 60)
+        pogo_start_delay: int = await self.get_devicesettings_value("post_pogo_start_delay", 60)
         self.logger.info('Waiting for pogo start: {} seconds', pogo_start_delay)
 
         while delay_count <= pogo_start_delay:
             if self._stop_worker_event.is_set():
                 self.logger.error("Killed while waiting for pogo start")
                 raise InternalStopWorkerException
-            time.sleep(1)
+            await asyncio.sleep(1)
             delay_count += 1

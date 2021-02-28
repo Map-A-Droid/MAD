@@ -15,7 +15,7 @@ class DbWebhookReader:
         # resolved in future iterations.
         self._db_wrapper = db_wrapper
 
-    def get_raids_changed_since(self, timestamp):
+    async def get_raids_changed_since(self, timestamp):
         logger.debug2("DbWebhookReader::get_raids_changed_since called")
         query = (
             "SELECT raid.gym_id, raid.level, raid.spawn, raid.start, raid.end, raid.pokemon_id, "

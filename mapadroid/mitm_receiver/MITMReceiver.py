@@ -1,15 +1,21 @@
+import asyncio
 import gzip
 import io
 import json
 import socket
 import sys
 import time
+from asyncio import Task
 from functools import wraps
 from multiprocessing import JoinableQueue, Process
 from threading import RLock
 from typing import Any, Dict, Optional, Union
 
-from flask import Flask, Response, request, send_file
+from aiofile import async_open
+from flask import Response, request, send_file
+# Temporary... TODO: Replace with aiohttp
+from quart import Quart
+
 from gevent.pywsgi import WSGIServer
 
 from mapadroid.data_manager.dm_exceptions import UpdateIssue
@@ -24,7 +30,6 @@ from mapadroid.utils.logging import (LoggerEnums, LogLevelChanger, get_logger,
                                      get_origin_logger)
 
 logger = get_logger(LoggerEnums.mitm)
-app = Flask(__name__)
 
 
 def validate_accepted(func) -> Any:
@@ -74,7 +79,7 @@ class EndpointAction(object):
         self.mapping_manager: MappingManager = mapping_manager
         self.__data_manager = data_manager
 
-    def __call__(self, *args, **kwargs):
+    async def __call__(self, *args, **kwargs):
         logger.debug2("HTTP Request from {}", request.remote_addr)
         origin = request.headers.get('Origin')
         origin_logger = get_origin_logger(logger, origin=origin)
@@ -116,8 +121,8 @@ class EndpointAction(object):
                 origin_logger.warning("Missing Origin header in request")
                 self.response = Response(status=500, headers={})
                 abort = True
-            elif self.mapping_manager.get_all_devicemappings().keys() is not None and \
-                    origin not in self.mapping_manager.get_all_devicemappings().keys():
+            elif (await self.mapping_manager.get_all_devicemappings()).keys() is not None and \
+                    origin not in (await self.mapping_manager.get_all_devicemappings()).keys():
                 origin_logger.warning("MITMReceiver request without Origin or disallowed Origin")
                 self.response = Response(status=403, headers={})
                 abort = True
@@ -146,7 +151,7 @@ class EndpointAction(object):
                     request_data = json.loads(request_data)
                 else:
                     request_data = request_data
-                response_payload = self.action(origin, request_data, *args, **kwargs)
+                response_payload = await self.action(origin, request_data, *args, **kwargs)
                 if response_payload is None:
                     response_payload = ""
                 if type(response_payload) is Response:
@@ -160,11 +165,11 @@ class EndpointAction(object):
         return self.response
 
 
-class MITMReceiver(Process):
+class MITMReceiver():
     def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager: MappingManager,
                  db_wrapper, data_manager, storage_obj, data_queue: JoinableQueue,
                  name=None, enable_configmode: Optional[bool] = False):
-        Process.__init__(self, name=name)
+        # Process.__init__(self, name=name)
         self.__application_args = args_passed
         self.__mapping_manager = mapping_manager
         self.__listen_ip = listen_ip
@@ -175,7 +180,7 @@ class MITMReceiver(Process):
         self._db_wrapper = db_wrapper
         self.__storage_obj = storage_obj
         self._data_queue: JoinableQueue = data_queue
-        self.app = Flask("MITMReceiver")
+        self.app = Quart("MITMReceiver")
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
                           handler=self.get_addresses,
                           methods_passed=['GET'])
@@ -227,9 +232,14 @@ class MITMReceiver(Process):
         for _ in range(self.__application_args.mitmreceiver_data_workers):
             self._add_to_queue(None)
 
+    async def run_async(self) -> Task:
+        loop = asyncio.get_event_loop()
+        return loop.create_task(self.app.run_task(host=self.__listen_ip, port=int(self.__listen_port)))
+
     def run(self):
+        # TODO: Probably gotta replace that with the ordinary app.run...
         httpsrv = WSGIServer((self.__listen_ip, int(
-            self.__listen_port)), self.app.wsgi_app, log=LogLevelChanger)
+            self.__listen_port)), self.app.asgi_app, log=LogLevelChanger)
         try:
             httpsrv.serve_forever()
         except KeyboardInterrupt:
@@ -245,7 +255,7 @@ class MITMReceiver(Process):
                                              self.__data_manager),
                               methods=methods_passed)
 
-    def proto_endpoint(self, origin: str, data: Union[dict, list]):
+    async def proto_endpoint(self, origin: str, data: Union[dict, list]):
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug2("Receiving proto")
         origin_logger.debug4("Proto data received {}", data)
@@ -254,15 +264,15 @@ class MITMReceiver(Process):
             # list of protos... we hope so at least....
             origin_logger.debug2("Receiving list of protos")
             for proto in data:
-                self.__handle_proto_data_dict(origin, proto)
+                await self.__handle_proto_data_dict(origin, proto)
         elif isinstance(data, dict):
             origin_logger.debug2("Receiving single proto")
             # single proto, parse it...
-            self.__handle_proto_data_dict(origin, data)
+            await self.__handle_proto_data_dict(origin, data)
 
-        self.__mitm_mapper.set_injection_status(origin)
+        await self.__mitm_mapper.set_injection_status(origin)
 
-    def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
+    async def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
         origin_logger = get_origin_logger(logger, origin=origin)
         proto_type = data.get("type", None)
         if proto_type is None or proto_type == 0:
@@ -281,7 +291,7 @@ class MITMReceiver(Process):
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
                 location_of_data.lng > 180 or location_of_data.lng < -180):
             location_of_data: Location = Location(0, 0)
-        self.__mitm_mapper.update_latest(origin, timestamp_received_raw=timestamp,
+        await self.__mitm_mapper.update_latest(origin, timestamp_received_raw=timestamp,
                                          timestamp_received_receiver=time.time(), key=proto_type, values_dict=data,
                                          location=location_of_data)
         origin_logger.debug2("Placing data received to data_queue")
@@ -291,23 +301,23 @@ class MITMReceiver(Process):
         if self._data_queue:
             self._data_queue.put(data)
 
-    def get_latest(self, origin, data):
-        injected_settings = self.__mitm_mapper.request_latest(
+    async def get_latest(self, origin, data):
+        injected_settings = await self.__mitm_mapper.request_latest(
             origin, "injected_settings")
 
-        ids_iv = self.__mitm_mapper.request_latest(origin, "ids_iv")
+        ids_iv = await self.__mitm_mapper.request_latest(origin, "ids_iv")
         if ids_iv is not None:
             ids_iv = ids_iv.get("values", None)
 
-        safe_items = self.__mitm_mapper.get_safe_items(origin)
-        level_mode = self.__mitm_mapper.get_levelmode(origin)
+        safe_items = await self.__mitm_mapper.get_safe_items(origin)
+        level_mode = await self.__mitm_mapper.get_levelmode(origin)
 
-        ids_encountered = self.__mitm_mapper.request_latest(
+        ids_encountered = await self.__mitm_mapper.request_latest(
             origin, "ids_encountered")
         if ids_encountered is not None:
             ids_encountered = ids_encountered.get("values", None)
 
-        unquest_stops = self.__mitm_mapper.request_latest(
+        unquest_stops = await self.__mitm_mapper.request_latest(
             origin, "unquest_stops")
         if unquest_stops is not None:
             unquest_stops = unquest_stops.get("values", [])
@@ -318,54 +328,56 @@ class MITMReceiver(Process):
         return json.dumps(response)
 
     # TODO - Deprecate this function as it does not return useful addresses
-    def get_addresses(self, origin, data):
+    async def get_addresses(self, origin, data):
         supported: Dict[str, Dict] = {}
         try:
-            supported = self.get_addresses_read("configs/addresses.json")
+            supported = await self.get_addresses_read("configs/addresses.json")
         except FileNotFoundError:
-            supported = self.get_addresses_read("configs/version_codes.json")
+            supported = await self.get_addresses_read("configs/version_codes.json")
         return supported
 
-    def get_addresses_read(self, path):
+    async def get_addresses_read(self, path) -> Dict:
         supported: Dict[str, Dict] = {}
-        with open(path, 'rb') as fh:
-            data = json.load(fh)
+        async with async_open(path, 'rb') as fh:
+            data = json.loads(await fh.read())
             for key, value in data.items():
                 if type(value) is dict:
                     supported[key] = value
                 else:
                     supported[key] = {}
-        return json.dumps(supported)
+        return supported
 
-    def status(self, origin, data):
+    async def status(self, origin, data):
         origin_return: dict = {}
         data_return: dict = {}
-        for origin in self.__mapping_manager.get_all_devicemappings().keys():
+        for origin in (await self.__mapping_manager.get_all_devicemappings()).keys():
             origin_return[origin] = {}
-            origin_return[origin]['injection_status'] = self.__mitm_mapper.get_injection_status(origin)
-            origin_return[origin]['latest_data'] = self.__mitm_mapper.request_latest(origin,
+            origin_return[origin]['injection_status'] = await self.__mitm_mapper.get_injection_status(origin)
+            origin_return[origin]['latest_data'] = await self.__mitm_mapper.request_latest(origin,
                                                                                      'timestamp_last_data')
-            origin_return[origin]['mode_value'] = self.__mitm_mapper.request_latest(origin,
+            origin_return[origin]['mode_value'] = await self.__mitm_mapper.request_latest(origin,
                                                                                     'injected_settings')
             origin_return[origin][
-                'last_possibly_moved'] = self.__mitm_mapper.get_last_timestamp_possible_moved(origin)
+                'last_possibly_moved'] = await self.__mitm_mapper.get_last_timestamp_possible_moved(origin)
 
         data_return['origin_status'] = origin_return
 
         return json.dumps(data_return)
 
-    def mad_apk_download(self, *args, **kwargs):
+    async def mad_apk_download(self, *args, **kwargs):
         parsed = parse_frontend(**kwargs)
         if type(parsed) == Response:
             return parsed
         apk_type, apk_arch = parsed
+        # TODO: This is most likely not async...
         return stream_package(self._db_wrapper, self.__storage_obj, apk_type, apk_arch)
 
-    def mad_apk_info(self, *args, **kwargs) -> Response:
+    async def mad_apk_info(self, *args, **kwargs) -> Response:
         parsed = parse_frontend(**kwargs)
         if type(parsed) == Response:
             return parsed
         apk_type, apk_arch = parsed
+        # TODO: async
         (msg, status_code) = lookup_package_info(self.__storage_obj, apk_type, apk_arch)
         if msg:
             if apk_type == APKType.pogo and not supported_pogo_version(apk_arch, msg.version):
@@ -374,14 +386,15 @@ class MITMReceiver(Process):
         else:
             return Response(status=status_code)
 
-    def origin_generator_endpoint(self, *args, **kwargs):
+    async def origin_generator_endpoint(self, *args, **kwargs):
+        # TODO: async
         return origin_generator(self.__data_manager, self._db_wrapper, **kwargs)
 
     # ========================================
     # ============== AutoConfig ==============
     # ========================================
     @validate_session
-    def autoconfig_complete(self, *args, **kwargs) -> Response:
+    async def autoconfig_complete(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
         try:
             info = {
@@ -391,7 +404,7 @@ class MITMReceiver(Process):
             sql = "SELECT MAX(`level`)\n"\
                   "FROM `autoconfig_logs`\n"\
                   "WHERE `session_id` = %s AND `instance_id` = %s"
-            max_msg = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
+            max_msg = await self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
             if max_msg and max_msg == 4:
                 logger.warning('Unable to clear session due to a failure.  Manual deletion required')
                 update_data = {
@@ -401,16 +414,16 @@ class MITMReceiver(Process):
                     'session_id': session_id,
                     'instance_id': self._db_wrapper.instance_id
                 }
-                self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
+                await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
                 return Response(status=400, response="")
-            self._db_wrapper.autoexec_delete('autoconfig_registration', info)
+            await self._db_wrapper.autoexec_delete('autoconfig_registration', info)
             return Response(status=200, response="")
         except Exception:
             logger.opt(exception=True).error('Unable to delete session')
             return Response(status=404, response="")
 
     @validate_accepted
-    def autoconfig_get_config(self, *args, **kwargs) -> Response:
+    async def autoconfig_get_config(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
         operation: Optional[str] = kwargs.get('operation', None)
         try:
@@ -418,12 +431,13 @@ class MITMReceiver(Process):
                   "FROM `settings_device` sd\n"\
                   "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
                   "WHERE ar.`session_id` = %s AND ar.`instance_id` = %s"
-            origin = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
+            origin = await self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
             if operation in ['pd', 'rgc']:
                 if operation == 'pd':
                     config = PDConfig(self._db_wrapper, self.__application_args, self.__data_manager)
                 else:
                     config = RGCConfig(self._db_wrapper, self.__application_args, self.__data_manager)
+                # TODO: Ensure async
                 return send_file(config.generate_config(origin), as_attachment=True, attachment_filename='conf.xml',
                                  mimetype='application/xml')
             elif operation in ['google']:
@@ -431,7 +445,7 @@ class MITMReceiver(Process):
                       "FROM `settings_pogoauth` ag\n"\
                       "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n"\
                       "WHERE ar.`session_id` = %s and ag.`instance_id` = %s and ag.`login_type` = %s"
-                login = self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id, 'google'))
+                login = await self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id, 'google'))
                 if login:
                     return Response(status=200, response='\n'.join([login['username'], login['password']]))
                 else:
@@ -442,7 +456,7 @@ class MITMReceiver(Process):
             logger.opt(exception=True).critical('Unable to process autoconfig')
             return Response(status=406, response="")
 
-    def autoconfig_log(self, *args, **kwargs) -> Response:
+    async def autoconfig_log(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
         try:
             level = kwargs['level']
@@ -459,11 +473,11 @@ class MITMReceiver(Process):
         except TypeError:
             info['level'] = 0
             logger.warning('Unable to parse level for autoconfig log')
-        self._db_wrapper.autoexec_insert('autoconfig_logs', info)
+        await self._db_wrapper.autoexec_insert('autoconfig_logs', info)
         sql = "SELECT `status`\n"\
               "FROM `autoconfig_registration`\n"\
               "WHERE `instance_id` = %s AND `session_id` = %s"
-        status = self._db_wrapper.autofetch_value(sql, (self._db_wrapper.instance_id, session_id))
+        status = await self._db_wrapper.autofetch_value(sql, (self._db_wrapper.instance_id, session_id))
         if int(level) == 4 and status == 1:
             update_data = {
                 'status': 3
@@ -472,10 +486,10 @@ class MITMReceiver(Process):
                 'session_id': session_id,
                 'instance_id': self._db_wrapper.instance_id
             }
-            self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
+            await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
         return Response(status=201)
 
-    def autoconf_mymac(self, *args, **kwargs) -> Response:
+    async def autoconf_mymac(self, *args, **kwargs) -> Response:
         origin = request.headers.get('Origin')
         if origin is None:
             return Response(status=404)
@@ -490,7 +504,7 @@ class MITMReceiver(Process):
         sql = "SELECT `session_id`\n"\
               "FROM `autoconfig_registration`\n"\
               "WHERE `device_id` = %s"
-        session_id = self._db_wrapper.autofetch_value(sql, (device.identifier))
+        session_id = await self._db_wrapper.autofetch_value(sql, device.identifier)
         log_data = {}
         if session_id is not None:
             log_data = {
@@ -501,7 +515,7 @@ class MITMReceiver(Process):
         if request.method == 'GET':
             if log_data:
                 log_data['msg'] = 'Getting assigned MAC device'
-                self.autoconfig_log(**log_data)
+                await self.autoconfig_log(**log_data)
             try:
                 mac_type = device.get('interface_type', 'lan')
                 mac_addr = device.get('mac_address', '')
@@ -509,22 +523,22 @@ class MITMReceiver(Process):
                     mac_addr = ''
                 if log_data:
                     log_data['msg'] = "Assigned MAC Address: '{}'".format(mac_addr)
-                    self.autoconfig_log(**log_data)
+                    await self.autoconfig_log(**log_data)
                 return Response(status=200, response='\n'.join([mac_type, mac_addr]))
             except KeyError:
                 if log_data:
                     log_data['msg'] = 'No assigned MAC address.  Device will generate a new one'
-                    self.autoconfig_log(**log_data)
+                    await self.autoconfig_log(**log_data)
                 return Response(status=200, response="")
         elif request.method == 'POST':
             data = str(request.data, 'utf-8')
             if log_data:
                 log_data['msg'] = 'Device is requesting a new MAC address be set, {}'.format(data)
-                self.autoconfig_log(**log_data)
+                await self.autoconfig_log(**log_data)
             if not data:
                 if log_data:
                     log_data['msg'] = 'No MAC provided during MAC assignment'
-                    self.autoconfig_log(**log_data)
+                    await self.autoconfig_log(**log_data)
                 return Response(status=400, response='No MAC provided')
             try:
                 device['mac_address'] = data
@@ -536,7 +550,7 @@ class MITMReceiver(Process):
             return Response(status=405)
 
     @validate_session
-    def autoconfig_operation(self, *args, **kwargs) -> Response:
+    async def autoconfig_operation(self, *args, **kwargs) -> Response:
         operation: Optional[str] = kwargs.get('operation', None)
         session_id: Optional[int] = kwargs.get('session_id', None)
         if operation is None:
@@ -550,25 +564,25 @@ class MITMReceiver(Process):
             if operation == 'status':
                 if log_data:
                     log_data['msg'] = 'Device is checking status of the session'
-                    self.autoconfig_log(**log_data)
-                return self.autoconfig_status(*args, **kwargs)
+                    await self.autoconfig_log(**log_data)
+                return await self.autoconfig_status(*args, **kwargs)
             elif operation in ['pd', 'rgc', 'google', 'origin']:
                 if log_data:
                     log_data['msg'] = 'Device is attempting to pull a config endpoint, {}'.format(operation)
-                    self.autoconfig_log(**log_data)
-                return self.autoconfig_get_config(*args, **kwargs)
+                    await self.autoconfig_log(**log_data)
+                return await self.autoconfig_get_config(*args, **kwargs)
         elif request.method == 'DELETE':
             if operation == 'complete':
                 if log_data:
                     log_data['msg'] = 'Device ihas requested the completion of the auto-configuration session'
-                    self.autoconfig_log(**log_data)
-                return self.autoconfig_complete(*args, **kwargs)
+                    await self.autoconfig_log(**log_data)
+                return await self.autoconfig_complete(*args, **kwargs)
         elif request.method == 'POST':
             if operation == 'log':
-                return self.autoconfig_log(*args, **kwargs)
+                return await self.autoconfig_log(*args, **kwargs)
         return Response(status=404, response="")
 
-    def autoconf_register(self, *args, **kwargs) -> Response:
+    async def autoconf_register(self, *args, **kwargs) -> Response:
         """ Device attempts to register with MAD.  Returns a session id for tracking future calls """
         status = 0
         #  TODO - auto-accept list
@@ -579,18 +593,18 @@ class MITMReceiver(Process):
             'ip': get_actual_ip(request),
             'instance_id': self._db_wrapper.instance_id
         }
-        session_id = self._db_wrapper.autoexec_insert('autoconfig_registration', register_data)
+        session_id = await self._db_wrapper.autoexec_insert('autoconfig_registration', register_data)
         log_data = {
             'session_id': session_id,
             'instance_id': self._db_wrapper.instance_id,
             'level': 2,
             'msg': 'Registration request from {}'.format(get_actual_ip(request))
         }
-        self.autoconfig_log(**log_data)
+        await self.autoconfig_log(**log_data)
         return Response(status=201, response=str(session_id))
 
     @validate_accepted
-    def autoconfig_status(self, *args, **kwargs) -> Response:
+    async def autoconfig_status(self, *args, **kwargs) -> Response:
         session_id: Optional[int] = kwargs.get('session_id', None)
         update_data = {
             'ip': get_actual_ip(request)
@@ -599,7 +613,7 @@ class MITMReceiver(Process):
             'session_id': session_id,
             'instance_id': self._db_wrapper.instance_id
         }
-        self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
+        await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
         return Response(status=200)
 
 

@@ -1,10 +1,11 @@
+import asyncio
 import datetime
 import json
 import os
 import time
 from math import floor
-from multiprocessing import Lock
 from pathlib import Path
+from aiofile import async_open
 
 from mapadroid.mitm_receiver import MitmMapper
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
@@ -22,28 +23,26 @@ class PlayerStats(object):
         self._stats_collector_start = True
         self._last_processed_timestamp = 0
         self._generate_stats = application_args.game_stats
-        self.__mapping_mutex = Lock()
+        self.__mapping_mutex = asyncio.Lock()
         self.__mitm_mapper_parent: MitmMapper = mitm_mapper_parent
         self._poke_stop_visits: int = 0
 
-    def set_level(self, level: int):
+    def set_level(self, level: int) -> None:
         if self._level != level:
             self._logger.info('set level {}', level)
             self._level = int(level)
-        return True
 
     def get_level(self) -> int:
         return self._level
 
-    def set_poke_stop_visits(self, visits: int):
+    def set_poke_stop_visits(self, visits: int) -> None:
         self._logger.debug2('set pokestops visited {}', visits)
         self._poke_stop_visits = visits
-        return True
 
     def get_poke_stop_visits(self) -> int:
         return self._poke_stop_visits
 
-    def gen_player_stats(self, data: dict):
+    def gen_player_stats(self, data: dict) -> None:
         if 'inventory_delta' not in data:
             self._logger.debug2('gen_player_stats cannot generate new stats')
             return
@@ -66,14 +65,14 @@ class PlayerStats(object):
                     })
                     with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'),
                               'w') as outfile:
-                        json.dump(data, outfile, indent=4, sort_keys=True)
+                        outfile.write(json.dumps(data, indent=4, sort_keys=True))
 
     def open_player_stats(self):
         statsfile = Path(os.path.join(
             self.__application_args.file_path, str(self._id) + '.stats'))
         try:
-            with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats')) as f:
-                data = json.load(f)
+            with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'), "r") as f:
+                data = json.loads(f.read())
                 self.set_level(int(data[self._id][0]['level']))
                 self.set_poke_stop_visits(int(data[self._id][0]['poke_stop_visits']))
         except IOError:
@@ -92,25 +91,25 @@ class PlayerStats(object):
             return True
         return False
 
-    def stats_collector(self):
+    async def stats_collector(self):
         self._logger.debug2("Creating stats_collector task")
-        with self.__mapping_mutex:
+        async with self.__mapping_mutex:
             if not self._stats_collector_start:
                 if time.time() - self._last_processed_timestamp >= self.__application_args.game_stats_save_time or \
                         self.compare_hour(self._last_processed_timestamp):
                     self._last_processed_timestamp = time.time()
 
-                    self.__mitm_mapper_parent.add_stats_to_process(self._id, self.__stats_collected.copy(),
+                    await self.__mitm_mapper_parent.add_stats_to_process(self._id, self.__stats_collected.copy(),
                                                                    self._last_processed_timestamp)
                     self.__stats_collected.clear()
             else:
                 self._stats_collector_start = False
                 self._last_processed_timestamp = time.time()
 
-    def stats_collect_mon(self, encounter_id: str):
+    async def stats_collect_mon(self, encounter_id: str):
         if not self._generate_stats:
             return
-        with self.__mapping_mutex:
+        async with self.__mapping_mutex:
             if 106 not in self.__stats_collected:
                 self.__stats_collected[106] = {}
 
@@ -126,10 +125,10 @@ class PlayerStats(object):
             else:
                 self.__stats_collected[106]['mon'][encounter_id] += 1
 
-    def stats_collect_mon_iv(self, encounter_id: str, shiny: int):
+    async def stats_collect_mon_iv(self, encounter_id: str, shiny: int):
         if not self._generate_stats:
             return
-        with self.__mapping_mutex:
+        async with self.__mapping_mutex:
             if 102 not in self.__stats_collected:
                 self.__stats_collected[102] = {}
 
@@ -147,10 +146,10 @@ class PlayerStats(object):
             else:
                 self.__stats_collected[102]['mon_iv'][encounter_id]['count'] += 1
 
-    def stats_collect_raid(self, gym_id: str):
+    async def stats_collect_raid(self, gym_id: str):
         if not self._generate_stats:
             return
-        with self.__mapping_mutex:
+        async with self.__mapping_mutex:
             if 106 not in self.__stats_collected:
                 self.__stats_collected[106] = {}
 
@@ -166,10 +165,10 @@ class PlayerStats(object):
             else:
                 self.__stats_collected[106]['raid'][gym_id] += 1
 
-    def stats_collect_quest(self, stop_id):
+    async def stats_collect_quest(self, stop_id):
         if not self._generate_stats:
             return
-        with self.__mapping_mutex:
+        async with self.__mapping_mutex:
             if 106 not in self.__stats_collected:
                 self.__stats_collected[106] = {}
 
@@ -185,11 +184,11 @@ class PlayerStats(object):
             else:
                 self.__stats_collected[106]['quest'][stop_id] += 1
 
-    def stats_collect_location_data(self, location, datarec, start_timestamp, positiontype, rec_timestamp, walker,
+    async def stats_collect_location_data(self, location, datarec, start_timestamp, positiontype, rec_timestamp, walker,
                                     transporttype):
         if not self._generate_stats:
             return
-        with self.__mapping_mutex:
+        async with self.__mapping_mutex:
             if 'location' not in self.__stats_collected:
                 self.__stats_collected['location'] = []
 

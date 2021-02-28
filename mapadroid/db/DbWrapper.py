@@ -5,12 +5,14 @@ from datetime import datetime, timedelta, timezone
 from functools import reduce
 from typing import Dict, List, Optional, Tuple
 
+from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
+from mapadroid.db.model import Scannedlocation
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -93,7 +95,7 @@ class DbWrapper:
         unixtime = (dt - datetime(1970, 1, 1)).total_seconds()
         return unixtime
 
-    def get_next_raid_hatches(self, geofence_helper=None):
+    def get_next_raid_hatches(self, geofence_helper=None) -> List[Tuple[float, Location]]:
         """
         In order to build a priority queue, we need to be able to check for the next hatches of raid eggs
         The result may not be sorted by priority, to be done at a higher level!
@@ -128,27 +130,28 @@ class DbWrapper:
         logger.debug4("Latest Q: {}", data)
         return data
 
-    def set_scanned_location(self, lat, lng):
+    async def set_scanned_location(self, lat, lng):
         """
         Update scannedlocation (in RM) of a given lat/lng
         """
         logger.debug3("DbWrapper::set_scanned_location called")
-        now = datetime.utcfromtimestamp(
-            time.time()).strftime('%Y-%m-%d %H:%M:%S')
         cell_id = int(S2Helper.lat_lng_to_cell_id(float(lat), float(lng), 16))
-        query = (
-            "INSERT INTO scannedlocation (cellid, latitude, longitude, last_modified, done, band1, band2, "
-            "band3, band4, band5, midpoint, width) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified)"
-        )
-        # TODO: think of a better "unique, real number"
-        sql_args = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, 0)
-        self.execute(query, sql_args, commit=True)
+        scanned_location: Scannedlocation = Scannedlocation()
+        scanned_location.cellid = cell_id
+        scanned_location.latitude = lat
+        scanned_location.longitude = lng
+        scanned_location.last_modified = datetime.utcnow()
+        scanned_location.done = -1
+        scanned_location.band1 = -1
+        scanned_location.band2 = -1
+        scanned_location.band3 = -1
+        scanned_location.band4 = -1
+        scanned_location.band5 = -1
+        scanned_location.midpoint = -1
+        scanned_location.width = 0
+        await self._db_accessor.immediate_save(scanned_location)
 
-        return True
-
-    def check_stop_quest(self, latitude, longitude):
+    async def check_stop_quest(self, latitude, longitude):
         """
         Update scannedlocation (in RM) of a given lat/lng
         """
@@ -202,7 +205,7 @@ class DbWrapper:
             list_of_coords)
         return geofenced_coords
 
-    def update_encounters_from_db(self, geofence_helper, latest=0):
+    async def update_encounters_from_db(self, geofence_helper, latest=0):
         """
         Retrieve all encountered ids inside the geofence.
         :return: the new value of latest and a dict like encounter_id: disappear_time
@@ -713,7 +716,7 @@ class DbWrapper:
             pokestop['has_quest'] = pokestop['pokestop_id'] in quests
         return pokestops
 
-    def update_pokestop_location(self, fort_id: str, latitude: float, longitude: float) -> None:
+    async def update_pokestop_location(self, fort_id: str, latitude: float, longitude: float) -> None:
         query = (
             "UPDATE pokestop "
             "SET latitude = %s, longitude = %s "
@@ -722,7 +725,7 @@ class DbWrapper:
         update_vars = (latitude, longitude, fort_id)
         self.execute(query, update_vars, commit=True)
 
-    def delete_stop(self, latitude: float, longitude: float):
+    async def delete_stop(self, latitude: float, longitude: float):
         logger.debug3('Deleting stop from db')
         query = (
             "delete from pokestop where latitude=%s and longitude=%s"
@@ -734,7 +737,7 @@ class DbWrapper:
         query = "DELETE FROM trs_visited WHERE origin=%s"
         self.execute(query, (origin,), commit=True)
 
-    def submit_pokestop_visited(self, origin, latitude, longitude):
+    async def submit_pokestop_visited(self, origin, latitude, longitude):
         logger.debug3("Flag pokestop as visited...")
         query = "INSERT IGNORE INTO trs_visited SELECT pokestop_id,'{}' " \
                 "FROM pokestop WHERE latitude={} AND longitude={}".format(origin, str(latitude),
@@ -1001,7 +1004,7 @@ class DbWrapper:
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
 
-    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.5) \
+    async def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.5) \
             -> Dict[str, Tuple[Location, datetime]]:
         """
         Fetch the IDs and the stops' locations from DB around the given location with a radius of distance passed
@@ -1135,7 +1138,7 @@ class DbWrapper:
         data['instance_id'] = self.instance_id
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
-    def save_last_reboot(self, dev_id):
+    async def save_last_reboot(self, dev_id):
         logger.debug3("dbWrapper::save_last_reboot")
         literals = ['lastPogoReboot', 'globalrebootcount']
         data = {
@@ -1148,7 +1151,7 @@ class DbWrapper:
         }
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
-    def save_last_restart(self, dev_id):
+    async def save_last_restart(self, dev_id):
         logger.debug3("dbWrapper::save_last_restart")
         literals = ['lastPogoRestart', 'globalrestartcount']
         data = {
@@ -1160,7 +1163,7 @@ class DbWrapper:
         }
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
-    def save_idle_status(self, dev_id, status):
+    async def save_idle_status(self, dev_id, status):
         data = {
             'instance_id': self.instance_id,
             'device_id': dev_id,

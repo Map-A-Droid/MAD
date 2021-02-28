@@ -540,7 +540,7 @@ class WordToScreenMatching(object):
     def get_devicesettings_value(self, key: str, default_value: object = None):
         self._logger.debug2("Fetching devicemappings")
         try:
-            devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self.origin)
+            devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of_sync(self.origin)
         except (EOFError, FileNotFoundError) as e:
             self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
             return None

@@ -3,9 +3,9 @@ import functools
 import logging
 import queue
 import random as rand
-import time
-from threading import Event, Thread, current_thread
-from typing import Coroutine, Dict, List, Optional, Set
+from asyncio import Task
+from threading import current_thread
+from typing import Coroutine, Dict, List, Optional, Set, Tuple
 
 import websockets
 
@@ -46,7 +46,7 @@ class WebsocketServer(object):
         self.__enable_configmode: bool = enable_configmode
 
         # Event to signal that the server is to be stopped. Used to not accept new connections for example
-        self.__stop_server: Event = Event()
+        self.__stop_server: asyncio.Event = asyncio.Event()
 
         # Dict keeping currently running connections and workers for management
         # Do think twice before plainly accessing, there's locks to be used
@@ -59,12 +59,11 @@ class WebsocketServer(object):
                                                              self.__db_wrapper, self.__pogo_window_manager, event)
 
         # asyncio loop for the entire server
-        self.__loop: Optional[asyncio.AbstractEventLoop] = asyncio.new_event_loop()
+        self.__loop: Optional[asyncio.AbstractEventLoop] = None
         self.__loop_tid: int = -1
-        self.__worker_shutdown_queue: queue.Queue[Thread] = queue.Queue()
-        self.__internal_worker_join_thread: Thread = Thread(name='system',
-                                                            target=self.__internal_worker_join)
-        self.__internal_worker_join_thread.daemon = True
+        self.__server_task = None
+        self.__worker_shutdown_queue: asyncio.Queue[Task] = asyncio.Queue()
+        self.__internal_worker_join_task: Optional[Task] = None
 
     def _add_task_to_loop(self, coro: Coroutine):
         create_task = functools.partial(self.__loop.create_task, coro)
@@ -78,78 +77,79 @@ class WebsocketServer(object):
             return self.__loop.call_soon_threadsafe(create_task)
 
     async def __setup_first_loop(self):
+        logger.debug("Device mappings: {}", await self.__mapping_manager.get_all_devicemappings())
+
         self.__current_users_mutex: asyncio.Lock = asyncio.Lock()
         self.__users_connecting_mutex: asyncio.Lock = asyncio.Lock()
 
-    def start_server(self) -> None:
+    async def start_server(self) -> None:
         logger.info("Starting websocket-server...")
 
-        logger.debug("Device mappings: {}", self.__mapping_manager.get_all_devicemappings())
+        self.__loop = asyncio.get_event_loop()
+        self.__internal_worker_join_task: Task = self.__loop.create_task(self.__internal_worker_join())
 
-        asyncio.set_event_loop(self.__loop)
-        if not self.__internal_worker_join_thread.is_alive():
-            self.__internal_worker_join_thread.start()
-        self._add_task_to_loop(self.__setup_first_loop())
+        await self.__setup_first_loop()
         # the type-check here is sorta wrong, not entirely sure why
         # noinspection PyTypeChecker
-        self.__loop.run_until_complete(
-            websockets.serve(self.__connection_handler, self.__args.ws_ip, int(self.__args.ws_port), max_size=2 ** 25,
-                             close_timeout=10))
+        await websockets.serve(self.__connection_handler, self.__args.ws_ip, int(self.__args.ws_port), max_size=2 ** 25,
+                               close_timeout=10)
         self.__loop_tid = current_thread()
-        self.__loop.run_forever()
+        # self.__loop.run_forever()
         logger.info("Websocket-server stopping...")
 
     async def __close_all_connections_and_signal_stop(self):
         logger.info("Signaling all workers to stop")
         async with self.__current_users_mutex:
             for worker_entry in self.__current_users.values():
-                worker_entry.worker_instance.stop_worker()
+                await worker_entry.worker_instance.stop_worker()
                 await self.__close_websocket_client_connection(worker_entry.origin,
                                                                worker_entry.websocket_client_connection)
         logger.info("Done signalling all workers to stop")
 
-    def stop_server(self) -> None:
+    async def stop_server(self) -> None:
         logger.info("Trying to stop websocket server")
         self.__stop_server.set()
         # wait for connecting users to empty
         while len(self.__users_connecting) > 0:
             logger.info("Shutdown of websocket waiting for connecting devices")
-            time.sleep(1)
+            await asyncio.sleep(1)
 
-        future = asyncio.run_coroutine_threadsafe(
-            self.__close_all_connections_and_signal_stop(),
-            self.__loop)
-        future.result()
+        await self.__close_all_connections_and_signal_stop()
         logger.info("Waiting for join-queue to be emptied and threads to be joined")
-        if not self.__internal_worker_join_thread.is_alive():
+        #if not self.__internal_worker_join_task.done():
             # join the join thread, gotta love the irony
-            self.__internal_worker_join_thread.join()
+            # TODO: this is async..
+            # await self.__internal_worker_join_task.join()
+        #    self.__internal_worker_join_task.result()
         # TODO: this could block forever, should we just place a timeout and have daemon = True handle it all anyway?
-        self.__worker_shutdown_queue.join()
-        self.__loop.call_soon_threadsafe(self.__loop.stop)
+        await self.__worker_shutdown_queue.join()
+        # await self.__loop.stop)
 
         logger.info("Stopped websocket server")
 
-    def __internal_worker_join(self):
+    # TODO:.. is this really needed at all?
+    async def __internal_worker_join(self):
         while not self.__stop_server.is_set() \
                 or (self.__stop_server.is_set() and not self.__worker_shutdown_queue.empty()):
             try:
-                next_item: Optional[Thread] = self.__worker_shutdown_queue.get_nowait()
+                next_item: Optional[Task] = self.__worker_shutdown_queue.get_nowait()
             except queue.Empty:
-                time.sleep(1)
+                await asyncio.sleep(1)
                 continue
             if next_item is not None:
                 logger.info("Trying to join worker thread")
                 try:
-                    next_item.join(10)
+                    await asyncio.wait_for(next_item, timeout=30)
+                except asyncio.TimeoutError:
+                    next_item.cancel()
                 except RuntimeError as e:
                     logger.warning("Caught runtime error trying to join thread, the thread likely did not start at all."
                                    " Exact message: {}", e)
-                if next_item.is_alive():
-                    logger.debug("Error while joining worker thread - requeue it")
-                    self.__worker_shutdown_queue.put(next_item)
-                else:
-                    logger.debug("Done with worker thread, moving on")
+                # if next_item.is_alive():
+                #    logger.debug("Error while joining worker thread - requeue it")
+                #    self.__worker_shutdown_queue.put(next_item)
+                # else:
+                #    logger.debug("Done with worker thread, moving on")
             self.__worker_shutdown_queue.task_done()
         logger.info("Worker join-thread done")
 
@@ -197,7 +197,7 @@ class WebsocketServer(object):
                 entry = WebsocketConnectedClientEntry(origin=origin,
                                                       websocket_client_connection=websocket_client_connection,
                                                       worker_instance=None,
-                                                      worker_thread=None,
+                                                      worker_task=None,
                                                       loop_running=self.__loop)
                 if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
                     continue_register = False
@@ -210,11 +210,13 @@ class WebsocketServer(object):
 
                 entry.websocket_client_connection = websocket_client_connection
                 # TODO: also change the worker's Communicator? idk yet
-                if entry.worker_thread.is_alive() and not entry.worker_instance.is_stopping():
+                if not entry.worker_task.done() and not entry.worker_instance.is_stopping():
                     origin_logger.info("Worker thread still alive, continue as usual")
                     # TODO: does this need more handling? probably update communicator or whatever?
-                elif not entry.worker_thread.is_alive():
-                    origin_logger.info("Old thread is dead, trying to start a new one")
+                # TODO: This check will not work with asyncio anymore...
+                elif not entry.worker_task.done():
+                    origin_logger.info("Old task is not done but was supposed to stop?! Trying to start a new one")
+                    # TODO: entry.worker_task.cancel() or somehow call cleanup&cancel?
                     if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
                         continue_register = False
                 else:
@@ -232,8 +234,9 @@ class WebsocketServer(object):
             return
 
         try:
-            if not entry.worker_thread.is_alive():
-                entry.worker_thread.start()
+            if entry.worker_task and not entry.worker_task.done():
+                # TODO...
+                entry.worker_task.start()
             # TODO: we need to somehow check threads and synchronize connection status with worker status?
             async with self.__users_connecting_mutex:
                 self.__users_connecting.remove(origin)
@@ -246,7 +249,7 @@ class WebsocketServer(object):
         finally:
             origin_logger.info("Awaiting unregister")
             # TODO: cleanup thread is not really desired, I'd prefer to only restart a worker if the route changes :(
-            self.__worker_shutdown_queue.put(entry.worker_thread)
+            await self.__worker_shutdown_queue.put(entry.worker_task)
         origin_logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 
     async def __add_worker_and_thread_to_entry(self, entry, origin, use_configmode: bool = None) -> bool:
@@ -259,14 +262,12 @@ class WebsocketServer(object):
             return False
         # to break circular dependencies, we need to set the worker ref >.<
         communicator.worker_instance_ref = worker
-        new_worker_thread = Thread(name=origin, target=worker.start_worker)
-        new_worker_thread.daemon = True
-        entry.worker_thread = new_worker_thread
+        entry.worker_task = await worker.start_worker()
         entry.worker_instance = worker
         return True
 
     async def __authenticate_connection(self, websocket_client_connection: websockets.WebSocketClientProtocol) \
-            -> Optional[str]:
+            -> Tuple[Optional[str], bool]:
         """
         :param websocket_client_connection:
         :return: origin (string) if the auth and everything else checks out, else None to signal abort
@@ -277,22 +278,22 @@ class WebsocketServer(object):
         except IndexError:
             logger.warning("Client from {} tried to connect without Origin header",
                            websocket_client_connection.remote_address)
-            return (None, False)
+            return None, False
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.info("Client registering")
         if self.__mapping_manager is None:
             origin_logger.warning("No configuration has been defined.  Please define in MADmin and click "
                                   "'APPLY SETTINGS'")
-            (origin, False)
-        elif origin not in self.__mapping_manager.get_all_devicemappings().keys():
-            if(self.__data_manager.search('device', params={'origin': origin})):
+            return origin, False
+        elif origin not in (await self.__mapping_manager.get_all_devicemappings()).keys():
+            if self.__data_manager.search('device', params={'origin': origin}):
                 origin_logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
             else:
                 origin_logger.warning("Register attempt of unknown origin.  Please create the device in MADmin and "
                                       " click 'APPLY SETTINGS'")
-            return (origin, False)
+            return origin, False
 
-        valid_auths = self.__mapping_manager.get_auths()
+        valid_auths = await self.__mapping_manager.get_auths()
         auth_base64 = None
         if valid_auths:
             try:
@@ -300,10 +301,10 @@ class WebsocketServer(object):
                     websocket_client_connection.request_headers.get_all("Authorization")[0])
             except IndexError:
                 origin_logger.warning("Client tried to connect without auth header")
-                return (origin, False)
+                return origin, False
         if valid_auths and auth_base64 and not check_auth(origin_logger, auth_base64, self.__args, valid_auths):
-            return (origin, False)
-        return (origin, True)
+            return origin, False
+        return origin, True
 
     async def __client_message_receiver(self, origin: str, client_entry: WebsocketConnectedClientEntry) -> None:
         if client_entry is None:
@@ -322,7 +323,7 @@ class WebsocketServer(object):
                 origin_logger.warning("Connection was closed, stopping receiver. Exception: {}", cc)
                 entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
                 if entry is not None:
-                    entry.worker_instance.stop_worker()
+                    await entry.worker_instance.stop_worker()
                 return
 
             if message is not None:
@@ -330,7 +331,7 @@ class WebsocketServer(object):
         origin_logger.warning("Connection closed in __client_message_receiver")
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
         if entry is not None:
-            entry.worker_instance.stop_worker()
+            await entry.worker_instance.stop_worker()
 
     @staticmethod
     async def __on_message(client_entry: WebsocketConnectedClientEntry, message: MessageTyping) -> None:
@@ -394,7 +395,7 @@ class WebsocketServer(object):
         async with self.__current_users_mutex:
             entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
             if entry is not None:
-                entry.worker_instance.stop_worker()
+                await entry.worker_instance.stop_worker()
                 await self.__close_websocket_client_connection(entry.origin,
                                                                entry.websocket_client_connection)
                 origin_logger.info("Done signaling stop")

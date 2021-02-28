@@ -10,7 +10,7 @@ class DbStatsSubmit:
         self._db_exec: PooledQueryExecutor = db_exec
         self._args = args
 
-    def submit_stats_complete(self, data):
+    async def submit_stats_complete(self, data):
         query_status = (
             "INSERT INTO trs_stats_detect (worker, timestamp_scan, raid, mon, mon_iv, quest) "
             "VALUES (%s, %s, %s, %s, %s, %s) "
@@ -18,7 +18,7 @@ class DbStatsSubmit:
         self._db_exec.executemany(query_status, data, commit=True)
         return True
 
-    def submit_stats_detections_raw(self, data) -> bool:
+    async def submit_stats_detections_raw(self, data) -> bool:
         query_status_mon = (
             "INSERT IGNORE INTO trs_stats_detect_mon_raw (worker, encounter_id, type, count, is_shiny, timestamp_scan) "
             "VALUES (%s, %s, %s, %s, %s, %s) "
@@ -33,7 +33,7 @@ class DbStatsSubmit:
         self._db_exec.executemany(query_status_fort, forts, commit=True)
         return True
 
-    def submit_stats_locations(self, data):
+    async def submit_stats_locations(self, data):
         query_status = (
             "INSERT IGNORE INTO trs_stats_location (worker, timestamp_scan, location_count, location_ok, location_nok) "
             "VALUES (%s, %s, %s, %s, %s) "
@@ -41,7 +41,7 @@ class DbStatsSubmit:
         self._db_exec.executemany(query_status, data, commit=True)
         return True
 
-    def submit_stats_locations_raw(self, data):
+    async def submit_stats_locations_raw(self, data):
         query_status = (
             "INSERT IGNORE INTO trs_stats_location_raw (worker, fix_ts, lat, lng, data_ts, type, walker, "
             "success, period, transporttype) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
@@ -50,7 +50,7 @@ class DbStatsSubmit:
         self._db_exec.executemany(query_status, data, commit=True)
         return True
 
-    def cleanup_statistics(self):
+    async def cleanup_statistics(self):
         logger.info("Cleanup statistics tables")
         query = (
             "DELETE FROM trs_stats_detect WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"

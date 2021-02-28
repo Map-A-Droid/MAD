@@ -13,11 +13,11 @@ class AbstractWorker(ABC):
         self._communicator: AbstractCommunicator = communicator
 
     @abstractmethod
-    def start_worker(self):
+    async def start_worker(self):
         pass
 
     @abstractmethod
-    def stop_worker(self):
+    async def stop_worker(self):
         pass
 
     @abstractmethod

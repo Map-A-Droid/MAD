@@ -352,12 +352,13 @@ class PogoWindows:
                                     canny=True) > 0:
             return True
 
-    def check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
+    async def check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
             origin_logger.error("check_close_except_nearby_button: {} does not exist", filename)
             return False
 
+        # TODO: Need to be non blocking...
         return self.__thread_pool.apply_async(self.__internal_check_close_except_nearby_button,
                                               (filename, identifier, communicator, close_raid)).get()
 
@@ -408,12 +409,13 @@ class PogoWindows:
             origin_logger.debug("Could not find close button (X).")
             return False
 
-    def get_inventory_text(self, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
+    async def get_inventory_text(self, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
         origin_logger = get_origin_logger(logger, origin=identifier)
         if not os.path.isfile(filename):
             origin_logger.error("get_inventory_text: {} does not exist", filename)
             return None
 
+        # TODO: Non blocking for asyncio...
         return self.__thread_pool.apply_async(self.__internal_get_inventory_text,
                                               (filename, identifier, x1, x2, y1, y2)).get()
 

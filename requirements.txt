@@ -4,7 +4,7 @@ ImageHash~=4.0
 bitstring~=3.1
 dataclasses>=0.6
 geopy~=1.20
-gevent==1.4.0
+gevent~=20.9.0
 gpxdata~=1.2
 imutils~=0.5
 loguru~=0.4.0
@@ -21,3 +21,13 @@ numpy~=1.18.0
 apkutils~=0.6.6
 matlink-gpapi~=0.4.4.5
 greenlet<0.4.17
+
+Flask~=1.1.2
+Pillow~=8.1.0
+SQLAlchemy==1.4.0b1
+Werkzeug~=1.0.1
+urllib3~=1.26.2
+GeoAlchemy2~=0.8.4
+
+aiounittest~=1.4.0
+aiofile~=3.4.0

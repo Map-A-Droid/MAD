@@ -1,10 +1,12 @@
 from multiprocessing import Lock, Semaphore
 from multiprocessing.managers import SyncManager
+from typing import Optional
 
 import mysql
 from mysql.connector import ProgrammingError
 from mysql.connector.pooling import MySQLConnectionPool
 
+from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -27,7 +29,8 @@ class PooledQueryExecutor:
         self._pool_mutex = Lock()
 
         self._connection_semaphore = Semaphore(poolsize)
-
+        self._db_accessor: Optional[DbAccessor] = None
+        self._async_db_initiated = False
         self._init_pool()
 
     def _init_pool(self):
@@ -43,6 +46,7 @@ class PooledQueryExecutor:
             self._pool = MySQLConnectionPool(pool_name="db_wrapper_pool",
                                              pool_size=self._poolsize,
                                              **dbconfig)
+            self._db_accessor: DbAccessor = DbAccessor(f"mysql+mysqldb://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}", self._poolsize)
 
     def close(self, conn, cursor):
         """
@@ -167,6 +171,14 @@ class PooledQueryExecutor:
             self.close(conn, cursor)
             self._connection_semaphore.release()
 
+    async def execute_async(self, sql, args=(), commit=False, **kwargs):
+        # TODO This sucks...
+        with self._pool_mutex:
+            if not self._async_db_initiated:
+                await self._db_accessor.setup()
+                self._async_db_initiated = True
+
+
     # ===================================================
     # =============== DB Helper Functions ===============
     # ===================================================
@@ -263,6 +275,7 @@ class PooledQueryExecutor:
 
     def autofetch_value(self, sql, args=(), **kwargs):
         """ Fetch the first value from the first row """
+        # TODO: Async
         data = self.execute(sql, args=args, raise_exc=True, **kwargs)
         if not data or len(data) == 0:
             return None
@@ -271,6 +284,7 @@ class PooledQueryExecutor:
     def autofetch_row(self, sql, args=(), **kwargs):
         """ Fetch the first row and have it return as a dictionary """
         # TODO - Force LIMIT 1
+        # TODO: Async
         data = self.execute(sql, args=args, get_dict=True, raise_exc=True, **kwargs)
         if not data or len(data) == 0:
             return {}
@@ -311,6 +325,7 @@ class PooledQueryExecutor:
         query += "\nAND ".join(k for k in where_clauses)
         literal_values = [table] + literal_values
         query = query % tuple(literal_values)
+        # TODO Async
         self.execute(query, args=tuple(column_values), commit=True, raise_exc=True, **kwargs)
 
     def autoexec_insert(self, table, keyvals, literals=None, optype="INSERT", **kwargs):
@@ -356,6 +371,7 @@ class PooledQueryExecutor:
             query += "\nON DUPLICATE KEY UPDATE\n" \
                      "%s" % dupe_out
             column_values += ondupe_values
+        # TODO: Async...
         return self.execute(query, args=tuple(column_values), commit=True, get_id=True, raise_exc=True, **kwargs)
 
     def autoexec_update(self, table, set_keyvals, literals=None, where_keyvals=None, where_literals=None, **kwargs):
@@ -396,4 +412,5 @@ class PooledQueryExecutor:
             where_clause = self.__create_clause(where_col_names, where_col_sub)
             first_sub.append("\nAND".join(where_clause) % tuple(where_literal_val))
         query = query % tuple(first_sub)
+        # TODO: Async...........
         self.execute(query, args=tuple(actual_values), commit=True, raise_exc=True, **kwargs)

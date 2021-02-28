@@ -1,9 +1,10 @@
+import asyncio
 import math
 import time
+from asyncio import Task
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from enum import Enum
-from threading import Event, Thread
 from typing import Dict, List, Optional, Tuple, Union
 
 from s2sphere import CellId
@@ -74,79 +75,87 @@ class WorkerQuests(MITMBase):
                           db_wrapper=db_wrapper,
                           mitm_mapper=mitm_mapper, pogo_window_manager=pogo_window_manager, walker=walker,
                           event=event)
-        self.clear_thread = None
+        self.clear_inventory_task: Optional[Task] = None
         # 0 => None
         # 1 => clear box
         # 2 => clear quest
-        self.clear_thread_task = ClearThreadTasks.IDLE
-        self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
-        self._stop_process_time = 0
-        self._clear_quest_counter = 0
-        self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
-        self._ignore_spinned_stops = self._mapping_manager.routemanager_get_settings(self._routemanager_name) \
-            .get("ignore_spinned_stops", True)
-        self._always_cleanup = self._mapping_manager.routemanager_get_settings(self._routemanager_name) \
-            .get("cleanup_every_spin", False)
-
-        self._rotation_waittime = self.get_devicesettings_value('rotation_waittime', 300)
+        self.clear_thread_task: ClearThreadTasks = ClearThreadTasks.IDLE
+        self._stop_process_time: int = 0
+        self._clear_quest_counter: int = 0
+        self._delay_add: int = 0
+        self._level_mode: bool = False
+        self._ignore_spinned_stops: bool = False
         self._latest_quest = 0
         self._clear_box_failcount = 0
         self._spinnable_data_failcount = 0
+        self._rotation_waittime: int = self._rotation_waittime
+        self._always_cleanup: bool = False
 
-    def _pre_work_loop(self):
-        if self.clear_thread is not None:
+    async def start_worker(self):
+        # TODO: own InjectionSettings class
+        self._delay_add = int(await self.get_devicesettings_value("vps_delay", 0))
+        self._level_mode = await self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        self._ignore_spinned_stops = await self._mapping_manager.routemanager_get_settings(self._routemanager_name) \
+            .get("ignore_spinned_stops", True)
+        self._rotation_waittime = await self.get_devicesettings_value('rotation_waittime', 300)
+        self._always_cleanup = await self._mapping_manager.routemanager_get_settings(self._routemanager_name) \
+            .get("cleanup_every_spin", False)
+        await super().start_worker()
+
+    async def _pre_work_loop(self):
+        if self.clear_inventory_task is not None:
             return
-        self.clear_thread = Thread(name=self._origin, target=self._clear_thread)
-        self.clear_thread.daemon = True
-        self.clear_thread.start()
+        # TODO: Remove that thread, useless for us
+        loop = asyncio.get_event_loop()
+        self.clear_inventory_task: Task = loop.create_task(self._clear_thread())
 
-        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+        if self._stop_worker_event.is_set() or not await self._wait_for_injection():
             raise InternalStopWorkerException
 
-        if self.get_devicesettings_value('account_rotation', False) and not \
-                self.get_devicesettings_value('account_rotation_started', False):
+        if await self.get_devicesettings_value('account_rotation', False) and not \
+                await self.get_devicesettings_value('account_rotation_started', False):
             # switch to first account if first started and rotation is activated
-            if not self._switch_user():
+            if not await self._switch_user():
                 self.logger.error('Something happened during account rotation')
                 raise InternalStopWorkerException
             else:
-                reached_main_menu = self._check_pogo_main_screen(10, True)
+                reached_main_menu = await self._check_pogo_main_screen(10, True)
                 if not reached_main_menu:
-                    if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                    if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
 
-                self.set_devicesettings_value('account_rotation_started', True)
-            time.sleep(10)
+                await self.set_devicesettings_value('account_rotation_started', True)
+            await asyncio.sleep(10)
         else:
-            reached_main_menu = self._check_pogo_main_screen(10, True)
+            reached_main_menu = await self._check_pogo_main_screen(10, True)
             if not reached_main_menu:
-                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
 
         if self._level_mode:
             self.logger.info("Starting Level Mode")
-            if self._mapping_manager.routemanager_get_calc_type(self._routemanager_name) == "routefree":
+            if await self._mapping_manager.routemanager_get_calc_type(self._routemanager_name) == "routefree":
                 self.logger.info("Sleeping one minute for getting data")
-                time.sleep(60)
+                await asyncio.sleep(60)
         else:
             # initial cleanup old quests
             if not self._init:
-                self.clear_thread_task = ClearThreadTasks.QUEST
+                self.clear_thread_task: ClearThreadTasks = ClearThreadTasks.QUEST
 
-    def _health_check(self):
+    async def _health_check(self):
         """
         Not gonna check for main screen here since we will do health checks in post_move_location_routine
         :return:
         """
         pass
 
-    def _pre_location_update(self):
-        self._update_injection_settings()
+    async def _pre_location_update(self):
+        await self._update_injection_settings()
 
-    def _move_to_location(self):
-        distance, routemanager_settings = self._get_route_manager_settings_and_distance_to_current_location()
+    async def _move_to_location(self):
+        distance, routemanager_settings = await self._get_route_manager_settings_and_distance_to_current_location()
 
         self.logger.debug("Getting time")
         speed = routemanager_settings.get("speed", 0)
@@ -155,12 +164,12 @@ class WorkerQuests(MITMBase):
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self.logger.debug("main: Teleporting...")
             self._transporttype = 0
-            self._communicator.set_location(
+            await self._communicator.set_location(
                 Location(self.current_location.lat, self.current_location.lng), 0)
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
-            delay_used = self.get_devicesettings_value('post_teleport_delay', 0)
+            delay_used = await self.get_devicesettings_value('post_teleport_delay', 0)
             speed = 16.67  # Speed can be 60 km/h up to distances of 3km
 
             if self.last_location.lat == 0.0 and self.last_location.lng == 0.0:
@@ -174,11 +183,11 @@ class WorkerQuests(MITMBase):
             self.logger.info("main: Walking {} m, this will take {} seconds", distance, delay_used)
             cur_time = self._walk_to_location(speed)
 
-            delay_used = self.get_devicesettings_value('post_walk_delay', 0)
-        walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
+            delay_used = await self.get_devicesettings_value('post_walk_delay', 0)
+        walk_distance_post_teleport = await self.get_devicesettings_value('walk_after_teleport_distance', 0)
         if 0 < walk_distance_post_teleport < distance:
             # TODO: actually use to_walk for distance
-            to_walk = self._walk_after_teleport(walk_distance_post_teleport)
+            to_walk = await self._walk_after_teleport(walk_distance_post_teleport)
             delay_used -= (to_walk / 3.05) - 1.  # We already waited for a bit because of this walking part
             if delay_used < 0:
                 delay_used = 0
@@ -186,23 +195,23 @@ class WorkerQuests(MITMBase):
         if self._init:
             delay_used = 5
 
-        if self.get_devicesettings_value('last_action_time', None) is not None:
-            timediff = time.time() - self.get_devicesettings_value('last_action_time', 0)
+        if await self.get_devicesettings_value('last_action_time', None) is not None:
+            timediff = time.time() - await self.get_devicesettings_value('last_action_time', 0)
             self.logger.info("Timediff between now and last action time: {}", int(timediff))
             delay_used = delay_used - timediff
-        elif self.get_devicesettings_value('last_action_time', None) is None and not self._level_mode:
+        elif await self.get_devicesettings_value('last_action_time', None) is None and not self._level_mode:
             self.logger.info('Starting first time - we wait because of some default pogo delays ...')
             delay_used = 20
         else:
             self.logger.debug("No last action time found - no calculation")
             delay_used = -1
 
-        if self.get_devicesettings_value('screendetection', True) and \
+        if await self.get_devicesettings_value('screendetection', True) and \
                 self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
-                and self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
+                and await self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
             # Waiting time to long and more then one account - switch! (not level mode!!)
             self.logger.info('Could use more then 1 account - switch & no cooldown')
-            self.switch_account()
+            await self.switch_account()
             delay_used = -1
 
         if delay_used < 0:
@@ -213,10 +222,10 @@ class WorkerQuests(MITMBase):
             self.logger.info("Real sleep time: {} seconds: next action {}", delay_used,
                              datetime.now() + timedelta(seconds=delay_used))
             cleanupbox: bool = False
-            lastcleanupbox = self.get_devicesettings_value('last_cleanup_time', None)
+            lastcleanupbox = await self.get_devicesettings_value('last_cleanup_time', None)
 
             self._current_sleep_time = delay_used
-            self.worker_stats()
+            await self.worker_stats()
 
             if lastcleanupbox is not None:
                 if time.time() - lastcleanupbox > 900:
@@ -224,93 +233,91 @@ class WorkerQuests(MITMBase):
                     cleanupbox = True
             else:
                 cleanupbox = True
-            self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._origin,
+            await self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._origin,
                                                                    delay_used)
             while time.time() <= int(cur_time) + int(delay_used):
                 if delay_used > 200 and cleanupbox and not self._enhanced_mode:
                     self.clear_thread_task = ClearThreadTasks.BOX
                 cleanupbox = False
-                if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                if not await self._mapping_manager.routemanager_present(self._routemanager_name) \
                         or self._stop_worker_event.is_set():
                     self.logger.error("Worker was killed while sleeping")
                     self._current_sleep_time = 0
                     raise InternalStopWorkerException
-                time.sleep(1)
+                await asyncio.sleep(1)
 
         self._current_sleep_time = 0
-        self.set_devicesettings_value("last_location", self.current_location)
+        await self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location
         return cur_time, True
 
-    def switch_account(self):
+    async def switch_account(self):
         if not self._switch_user():
             self.logger.error('Something happend while account switching :(')
             raise InternalStopWorkerException
         else:
-            time.sleep(10)
-            reached_main_menu = self._check_pogo_main_screen(10, True)
+            await asyncio.sleep(10)
+            reached_main_menu = await self._check_pogo_main_screen(10, True)
             if not reached_main_menu:
-                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
 
-    def _post_move_location_routine(self, timestamp: float):
+    async def _post_move_location_routine(self, timestamp: float):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
-        position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
+        position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
                                                                              self._origin)
         if position_type is None:
             self.logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
 
-        if self.get_devicesettings_value('rotate_on_lvl_30', False) and \
-                self._mitm_mapper.get_playerlevel(self._origin) >= 30 and self._level_mode:
+        if await self.get_devicesettings_value('rotate_on_lvl_30', False) and \
+                await self._mitm_mapper.get_playerlevel(self._origin) >= 30 and self._level_mode:
             # switch if player lvl >= 30
-            self.switch_account()
+            await self.switch_account()
 
-        with self._work_mutex:
-            if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
+        async with self._work_mutex:
+            if not await self._mapping_manager.routemanager_get_init(self._routemanager_name):
                 self.logger.info("Processing Stop / Quest...")
 
-                on_main_menu = self._check_pogo_main_screen(10, False)
+                on_main_menu = await self._check_pogo_main_screen(10, False)
                 if not on_main_menu:
-                    self._restart_pogo(mitm_mapper=self._mitm_mapper)
+                    await self._restart_pogo(mitm_mapper=self._mitm_mapper)
 
                 self.logger.info('Open Stop')
                 self._stop_process_time = math.floor(time.time())
-                type_received: LatestReceivedType = self._try_to_open_pokestop(timestamp)
+                type_received: LatestReceivedType = await self._try_to_open_pokestop(timestamp)
                 if type_received is not None and type_received == LatestReceivedType.STOP:
-                    self._handle_stop(self._stop_process_time)
+                    await self._handle_stop(self._stop_process_time)
 
             else:
                 self.logger.debug('Currently in INIT Mode - no Stop processing')
-                time.sleep(5)
+                await asyncio.sleep(5)
 
-    def _cleanup(self):
-        if self.clear_thread is not None:
-            while self.clear_thread.isAlive():
-                self.clear_thread.join()
-                time.sleep(1)
+    async def _cleanup(self):
+        if self.clear_inventory_task is not None:
+            self.clear_inventory_task.cancel()
 
-    def _clear_thread(self):
+    async def _clear_thread(self):
         self.logger.info('Starting clear Quest Thread')
         while not self._stop_worker_event.is_set():
             if self.clear_thread_task == ClearThreadTasks.IDLE:
-                time.sleep(1)
+                await asyncio.sleep(1)
                 continue
 
-            with self._work_mutex:
+            async with self._work_mutex:
                 try:
-                    time.sleep(1)
+                    await asyncio.sleep(1)
                     if self.clear_thread_task == ClearThreadTasks.BOX:
                         self.logger.info("Clearing box")
-                        self.clear_box(self._delay_add)
+                        await self.clear_box(self._delay_add)
                         self.clear_thread_task = ClearThreadTasks.IDLE
                     elif self.clear_thread_task == ClearThreadTasks.QUEST and not self._level_mode:
                         self.logger.info("Clearing quest")
-                        self._clear_quests(self._delay_add)
+                        await self._clear_quests(self._delay_add)
                         self.clear_thread_task = ClearThreadTasks.IDLE
-                    time.sleep(1)
+                    await asyncio.sleep(1)
                 except (InternalStopWorkerException, WebsocketWorkerRemovedException,
                         WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException):
                     self.logger.error("Worker removed while clearing quest/box")
@@ -319,11 +326,12 @@ class WorkerQuests(MITMBase):
                 finally:
                     self.clear_thread_task = ClearThreadTasks.IDLE
 
-    def clear_box(self, delayadd):
-        stop_inventory_clear = Event()
-        stop_screen_clear = Event()
+    async def clear_box(self, delayadd):
+        # TODO: these events are odd...
+        stop_inventory_clear = asyncio.Event()
+        stop_screen_clear = asyncio.Event()
         self.logger.info('Cleanup Box')
-        self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._origin, 300)
+        await self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._origin, 300)
         not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère', 'Premium',
                      'Raid', 'Teil',
@@ -331,23 +339,23 @@ class WorkerQuests(MITMBase):
                      'Fern-Raid-Pass', 'Pass', 'Passe', 'distance', 'Remote Raid', 'Remote Pass',
                      'Remote Raid Pass', 'Battle Pass', 'Premium Battle Pass', 'Premium Battle', 'Sticker')
         x, y = self._resocalc.get_close_main_button_coords(self)
-        self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
+        await self._communicator.click(int(x), int(y))
+        await asyncio.sleep(1 + int(delayadd))
         x, y = self._resocalc.get_item_menu_coords(self)
-        self._communicator.click(int(x), int(y))
-        time.sleep(2 + int(delayadd))
+        await self._communicator.click(int(x), int(y))
+        await asyncio.sleep(2 + int(delayadd))
         text_x1, text_x2, _, _ = self._resocalc.get_delete_item_text(self)
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)
-        click_duration = int(self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000
-        delrounds_remaining = int(self.get_devicesettings_value("inventory_clear_rounds", 10))
+        click_duration = int(await self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000
+        delrounds_remaining = int(await self.get_devicesettings_value("inventory_clear_rounds", 10))
         first_round = True
         delete_allowed = False
         error_counter = 0
         success_counter = 0
 
-        while delrounds_remaining > 0 and not stop_inventory_clear.is_set():
+        while not stop_inventory_clear.is_set() and delrounds_remaining > 0:
 
             trash = 0
             if not first_round and not delete_allowed:
@@ -361,15 +369,15 @@ class WorkerQuests(MITMBase):
                                                 self._clear_box_failcount)
                         else:
                             self.logger.error("Unable to delete any items 3 times in a row - restart pogo ...")
-                            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                            if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
                     continue
                 self.logger.info('Found no item to delete. Scrolling down ({} times)', error_counter)
-                self._communicator.touch_and_hold(int(200), int(600), int(200), int(100))
-                time.sleep(5)
+                await self._communicator.touch_and_hold(int(200), int(600), int(200), int(100))
+                await asyncio.sleep(5)
 
-            trashcancheck = self._get_trash_positions()
+            trashcancheck = await self._get_trash_positions()
 
             if trashcancheck is None:
                 self.logger.warning('Could not find any trashcans - abort')
@@ -385,7 +393,7 @@ class WorkerQuests(MITMBase):
                     self)
 
                 try:
-                    item_text = self._pogoWindowManager.get_inventory_text(self.get_screenshot_path(),
+                    item_text = await self._pogoWindowManager.get_inventory_text(self.get_screenshot_path(),
                                                                            self._origin, text_x1, text_x2,
                                                                            check_y_text_ending,
                                                                            check_y_text_starter)
@@ -405,18 +413,19 @@ class WorkerQuests(MITMBase):
                         trash += 1
                     else:
                         self.logger.info('Going to delete item: {}', item_text)
-                        self._communicator.click(int(trashcancheck[trash].x), int(trashcancheck[trash].y))
-                        time.sleep(1 + int(delayadd))
+                        await self._communicator.click(int(trashcancheck[trash].x), int(trashcancheck[trash].y))
+                        await asyncio.sleep(1 + int(delayadd))
 
-                        self._communicator.touch_and_hold(
+                        await self._communicator.touch_and_hold(
                             click_x1, click_y, click_x2, click_y, click_duration)
-                        time.sleep(1)
+                        await asyncio.sleep(1)
 
-                        delx, dely = self._resocalc.get_confirm_delete_item_coords(self)
+                        # TODO: Why does it require a second self?
+                        delx, dely = self._resocalc.get_confirm_delete_item_coords()
                         cur_time = time.time()
-                        self._communicator.click(int(delx), int(dely))
+                        await self._communicator.click(int(delx), int(dely))
                         deletion_timeout = 35
-                        type_received, proto_entry = self._wait_for_data(timestamp=cur_time,
+                        type_received, proto_entry = await self._wait_for_data(timestamp=cur_time,
                                                                          proto_to_wait_for=ProtoIdentifier.INVENTORY,
                                                                          timeout=deletion_timeout)
 
@@ -424,7 +433,7 @@ class WorkerQuests(MITMBase):
                             if type_received == LatestReceivedType.CLEAR:
                                 success_counter += 1
                                 self._clear_box_failcount = 0
-                                self.set_devicesettings_value('last_cleanup_time', time.time())
+                                await self.set_devicesettings_value('last_cleanup_time', time.time())
                                 delrounds_remaining -= 1
                                 stop_screen_clear.set()
                                 delete_allowed = True
@@ -442,20 +451,20 @@ class WorkerQuests(MITMBase):
                     pass
 
         x, y = self._resocalc.get_close_main_button_coords(self)
-        self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
+        await self._communicator.click(int(x), int(y))
+        await asyncio.sleep(1 + int(delayadd))
         return True
 
-    def _update_injection_settings(self):
+    async def _update_injection_settings(self):
         injected_settings = {}
         scanmode = "quests"
         injected_settings["scanmode"] = scanmode
         ids_iv: List[int] = []
         self._encounter_ids = {}
-        self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered", values_dict=self._encounter_ids)
-        self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
+        await self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered", values_dict=self._encounter_ids)
+        await self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
 
-        self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
+        await self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
 
     def _directly_surrounding_gmo_cells_containing_stops_around_current_position(self, gmo_cells) -> List:
         """
@@ -490,17 +499,17 @@ class WorkerQuests(MITMBase):
             self.logger.debug2("GMO cells around current position ({}) do not contain stops ", self.current_location)
         return cells_with_forts
 
-    def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
-        type_received, data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=ProtoIdentifier.GMO)
+    async def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
+        type_received, data_received = await self._wait_for_data(timestamp=timestamp, proto_to_wait_for=ProtoIdentifier.GMO)
         if type_received != LatestReceivedType.GMO or data_received is None:
-            self._spinnable_data_failure()
+            await self._spinnable_data_failure()
             return PositionStopType.GMO_NOT_AVAILABLE
         latest_proto = data_received.get("payload")
         gmo_cells: list = latest_proto.get("cells", None)
 
         if not gmo_cells:
             self.logger.warning("Can't spin stop - no map info in GMO!")
-            self._spinnable_data_failure()
+            await self._spinnable_data_failure()
             return PositionStopType.GMO_EMPTY
 
         cells_with_stops = self._directly_surrounding_gmo_cells_containing_stops_around_current_position(gmo_cells)
@@ -526,7 +535,7 @@ class WorkerQuests(MITMBase):
 
                 fort_type: int = fort.get("type", 0)
                 if fort_type == 0:
-                    self._db_wrapper.delete_stop(latitude, longitude)
+                    await self._db_wrapper.delete_stop(latitude, longitude)
                     self.logger.warning("Tried to open a stop but found a gym instead!")
                     self._spinnable_data_failcount = 0
                     return PositionStopType.GYM
@@ -534,7 +543,7 @@ class WorkerQuests(MITMBase):
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
                     self.logger.info("Level mode: Stop already visited - skipping it")
-                    self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
+                    await self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
                     self._spinnable_data_failcount = 0
                     return PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE
 
@@ -557,32 +566,32 @@ class WorkerQuests(MITMBase):
         # by now we should've found the stop in the GMO
         self.logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
                             "- likely not standing exactly on top ...", str(self.current_location))
-        self._check_if_stop_was_nearby_and_update_location(gmo_cells)
-        self._spinnable_data_failure()
+        await self._check_if_stop_was_nearby_and_update_location(gmo_cells)
+        await self._spinnable_data_failure()
         return PositionStopType.NO_FORT
 
-    def _try_to_open_pokestop(self, timestamp: float) -> LatestReceivedType:
+    async def _try_to_open_pokestop(self, timestamp: float) -> LatestReceivedType:
         to = 0
         type_received: LatestReceivedType = LatestReceivedType.UNDEFINED
         proto_entry = None
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
-        stop_type: PositionStopType = self._current_position_has_spinnable_stop(timestamp)
+        stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
 
         recheck_count = 0
         while stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
                             PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1
             self.logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
-            type_received, proto_entry = self._wait_for_data(timestamp=time.time(),
+            type_received, proto_entry = await self._wait_for_data(timestamp=time.time(),
                                                              proto_to_wait_for=ProtoIdentifier.GMO,
                                                              timeout=35)
             if type_received != LatestReceivedType.UNDEFINED:
-                stop_type = self._current_position_has_spinnable_stop(timestamp)
+                stop_type = await self._current_position_has_spinnable_stop(timestamp)
 
         if not PositionStopType.type_contains_stop_at_all(stop_type):
             self.logger.info("Location {}, {} considered to be ignored in the next round due to failed "
                              "spinnable check", self.current_location.lat, self.current_location.lng)
-            self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+            await self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
                                                                         self.current_location.lat,
                                                                         self.current_location.lng)
             return type_received
@@ -592,7 +601,7 @@ class WorkerQuests(MITMBase):
             return type_received
         elif stop_type == PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE:
             self.logger.info("Stop at {}, {} has been spun before and is to be ignored in the next round.")
-            self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+            await self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
                                                                         self.current_location.lat,
                                                                         self.current_location.lng)
             return type_received
@@ -600,29 +609,29 @@ class WorkerQuests(MITMBase):
         while type_received != LatestReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
             self._waittime_without_delays = self._stop_process_time
-            self._click_pokestop_at_current_location(self._delay_add)
-            self.set_devicesettings_value('last_action_time', time.time())
-            type_received, proto_entry = self._wait_for_data(
+            await self._click_pokestop_at_current_location(self._delay_add)
+            await self.set_devicesettings_value('last_action_time', time.time())
+            type_received, proto_entry = await self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_DETAILS, timeout=15)
             if type_received == LatestReceivedType.GYM:
                 self.logger.info('Clicked GYM')
-                time.sleep(10)
+                await asyncio.sleep(10)
                 x, y = self._resocalc.get_close_main_button_coords(
                     self)[0], self._resocalc.get_close_main_button_coords(self)[1]
-                self._communicator.click(int(x), int(y))
-                time.sleep(3)
-                self._turn_map(self._delay_add)
-                time.sleep(1)
+                await self._communicator.click(int(x), int(y))
+                await asyncio.sleep(3)
+                await self._turn_map(self._delay_add)
+                await asyncio.sleep(1)
             elif type_received == LatestReceivedType.MON:
-                time.sleep(1)
+                await asyncio.sleep(1)
                 self.logger.info('Clicked MON')
-                time.sleep(.5)
-                self._turn_map(self._delay_add)
-                time.sleep(1)
+                await asyncio.sleep(.5)
+                await self._turn_map(self._delay_add)
+                await asyncio.sleep(1)
             elif type_received == LatestReceivedType.UNDEFINED:
                 self.logger.info('Getting timeout - or other unknown error. Trying again')
                 if not self._check_pogo_button():
-                    self._check_pogo_close(takescreen=True)
+                    await self._check_pogo_close(takescreen=True)
 
             to += 1
             if to > 2:
@@ -631,7 +640,7 @@ class WorkerQuests(MITMBase):
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
     #  /FortSearchResponse.proto#L12
-    def _handle_stop(self, timestamp: float):
+    async def _handle_stop(self, timestamp: float):
         to = 0
         timeout = 35
         type_received: LatestReceivedType = LatestReceivedType.UNDEFINED
@@ -639,15 +648,15 @@ class WorkerQuests(MITMBase):
 
         while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
             self.logger.info('Spin Stop')
-            type_received, data_received = self._wait_for_data(
+            type_received, data_received = await self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_SEARCH, timeout=timeout)
 
             if (type_received == LatestReceivedType.FORT_SEARCH_RESULT
                     and data_received == FortSearchResultTypes.INVENTORY):
                 self.logger.info('Box is full... clear out items!')
                 self.clear_thread_task = ClearThreadTasks.BOX
-                time.sleep(5)
-                if not self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._origin,
+                await asyncio.sleep(5)
+                if not await self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._origin,
                                                                     self.current_location.lat,
                                                                     self.current_location.lng):
                     self.logger.warning('Cannot process this stop again')
@@ -659,7 +668,7 @@ class WorkerQuests(MITMBase):
                 if self._level_mode:
                     self.logger.info("Saving visitation info...")
                     self._latest_quest = math.floor(time.time())
-                    self._db_wrapper.submit_pokestop_visited(self._origin,
+                    await self._db_wrapper.submit_pokestop_visited(self._origin,
                                                              self.current_location.lat,
                                                              self.current_location.lng)
                     # This is leveling mode, it's faster to just ignore spin result and continue ?
@@ -667,8 +676,8 @@ class WorkerQuests(MITMBase):
 
                 if data_received == FortSearchResultTypes.COOLDOWN:
                     self.logger.info('Stop is on cooldown.. sleeping 10 seconds but probably should just move on')
-                    time.sleep(10)
-                    if self._db_wrapper.check_stop_quest(self.current_location.lat,
+                    await asyncio.sleep(10)
+                    if await self._db_wrapper.check_stop_quest(self.current_location.lat,
                                                          self.current_location.lng):
                         self.logger.info('Quest is done without us noticing. Getting new Quest...')
                     self.clear_thread_task = ClearThreadTasks.QUEST
@@ -682,18 +691,18 @@ class WorkerQuests(MITMBase):
                         self._clear_quest_counter += 1
                         if self._clear_quest_counter == 3:
                             self.logger.info('Collected 3 quests - clean them')
-                            reached_main_menu = self._check_pogo_main_screen(10, True)
+                            reached_main_menu = await self._check_pogo_main_screen(10, True)
                             if not reached_main_menu:
-                                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                                if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                     # TODO: put in loop, count up for a reboot ;)
                                     raise InternalStopWorkerException
                             self.clear_thread_task = ClearThreadTasks.QUEST
                             self._clear_quest_counter = 0
                     else:
                         self.logger.info('Getting new quest - clean it')
-                        reached_main_menu = self._check_pogo_main_screen(10, True)
+                        reached_main_menu = await self._check_pogo_main_screen(10, True)
                         if not reached_main_menu:
-                            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                            if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
                         self.clear_thread_task = ClearThreadTasks.QUEST
@@ -703,19 +712,19 @@ class WorkerQuests(MITMBase):
                     and (data_received == FortSearchResultTypes.TIME
                          or data_received == FortSearchResultTypes.OUT_OF_RANGE)):
                 self.logger.warning('Softban - return to main screen and open again...')
-                on_main_menu = self._check_pogo_main_screen(10, False)
+                on_main_menu = await self._check_pogo_main_screen(10, False)
                 if not on_main_menu:
-                    self._restart_pogo(mitm_mapper=self._mitm_mapper)
+                    await self._restart_pogo(mitm_mapper=self._mitm_mapper)
                 self._stop_process_time = math.floor(time.time())
-                if self._try_to_open_pokestop(self._stop_process_time) == LatestReceivedType.UNDEFINED:
+                if await self._try_to_open_pokestop(self._stop_process_time) == LatestReceivedType.UNDEFINED:
                     return
             elif (type_received == LatestReceivedType.FORT_SEARCH_RESULT
                     and data_received == FortSearchResultTypes.FULL):
                 self.logger.warning("Failed getting quest but got items - quest box is probably full. Starting cleanup "
                                     "routine.")
-                reached_main_menu = self._check_pogo_main_screen(10, True)
+                reached_main_menu = await self._check_pogo_main_screen(10, True)
                 if not reached_main_menu:
-                    if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                    if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
                 self.clear_thread_task = ClearThreadTasks.QUEST
@@ -726,29 +735,29 @@ class WorkerQuests(MITMBase):
                     self.logger.info("Got MON data after opening stop. This does not make sense - just retry...")
                 else:
                     self.logger.info("Brief speed lock or we already spun it, trying again")
-                if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat,
+                if to > 2 and await self._db_wrapper.check_stop_quest(self.current_location.lat,
                                                                 self.current_location.lng):
                     self.logger.info('Quest is done without us noticing. Getting new Quest...')
                     if not self._enhanced_mode:
                         self.clear_thread_task = ClearThreadTasks.QUEST
                     break
-                elif to > 2 and self._level_mode and self._mitm_mapper.get_poke_stop_visits(
+                elif to > 2 and self._level_mode and await self._mitm_mapper.get_poke_stop_visits(
                         self._origin) > 6800:
                     self.logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
-                                        self._mitm_mapper.get_poke_stop_visits(self._origin))
+                                        await self._mitm_mapper.get_poke_stop_visits(self._origin))
 
-                self._turn_map(self._delay_add)
-                time.sleep(1)
+                await self._turn_map(self._delay_add)
+                await asyncio.sleep(1)
                 self._stop_process_time = math.floor(time.time())
-                if self._try_to_open_pokestop(self._stop_process_time) == LatestReceivedType.UNDEFINED:
+                if await self._try_to_open_pokestop(self._stop_process_time) == LatestReceivedType.UNDEFINED:
                     return
                 to += 1
                 if to > 3:
                     self.logger.warning("giving up spinning after 4 tries in handle_stop loop")
 
-        self.set_devicesettings_value('last_action_time', time.time())
+        await self.set_devicesettings_value('last_action_time', time.time())
 
-    def _check_for_data_content(self, latest, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
+    async def _check_for_data_content(self, latest, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
             -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
         type_of_data_found: LatestReceivedType = LatestReceivedType.UNDEFINED
         data_found: Optional[object] = None
@@ -773,8 +782,8 @@ class WorkerQuests(MITMBase):
         if proto_to_wait_for in [ProtoIdentifier.FORT_SEARCH, ProtoIdentifier.FORT_DETAILS]:
             potential_replacements = [
                 self._latest_quest,
-                self.get_devicesettings_value('last_cleanup_time', 0),
-                self.get_devicesettings_value('last_questclear_time', 0)
+                await self.get_devicesettings_value('last_cleanup_time', 0),
+                await self.get_devicesettings_value('last_questclear_time', 0)
             ]
             replacement = max(x for x in potential_replacements if isinstance(x, int) or isinstance(x, float))
             self.logger.debug("timestamp {} being replaced with {} because we're waiting for proto {}",
@@ -840,19 +849,19 @@ class WorkerQuests(MITMBase):
 
         return type_of_data_found, data_found
 
-    def _spinnable_data_failure(self):
+    async def _spinnable_data_failure(self):
         if self._spinnable_data_failcount > 9:
             self._spinnable_data_failcount = 0
             self.logger.warning("Worker failed spinning stop with GMO/data issues 10+ times - restart pogo")
-            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+            if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException
         else:
             self._spinnable_data_failcount += 1
 
-    def _check_if_stop_was_nearby_and_update_location(self, gmo_cells):
+    async def _check_if_stop_was_nearby_and_update_location(self, gmo_cells):
         self.logger.info("Checking stops around current location ({}) for deleted stops.", self.current_location)
-        stops: Dict[str, Tuple[Location, datetime]] = self._db_wrapper.get_stop_ids_and_locations_nearby(
+        stops: Dict[str, Tuple[Location, datetime]] = await self._db_wrapper.get_stop_ids_and_locations_nearby(
             self.current_location
         )
         self.logger.debug("Checking if GMO contains location changes or DB has stops that are already deleted. In DB: "
@@ -889,7 +898,7 @@ class WorkerQuests(MITMBase):
                     # now update the stop
                     self.logger.warning("Updating fort {} with previous location {} now placed at {}, {}",
                                         fort_id, str(stop_location_known), latitude, longitude)
-                    self._db_wrapper.update_pokestop_location(fort_id, latitude, longitude)
+                    await self._db_wrapper.update_pokestop_location(fort_id, latitude, longitude)
 
         timedelta_to_consider_deletion = timedelta(days=3)
         for fort_id in stops.keys():
@@ -912,7 +921,7 @@ class WorkerQuests(MITMBase):
                     "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and within "
                     "100m of worker ({}m) and was last updated more than 3 days ago ()",
                     fort_id, str(stop_location_known), distance_to_location, last_updated)
-                self._db_wrapper.delete_stop(stop_location_known.lat, stop_location_known.lng)
-                self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+                await self._db_wrapper.delete_stop(stop_location_known.lat, stop_location_known.lng)
+                await self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
                                                                             stop_location_known.lat,
                                                                             stop_location_known.lng)

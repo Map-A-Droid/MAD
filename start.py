@@ -1,7 +1,9 @@
+import asyncio
 import calendar
 import datetime
 import gc
 import os
+import signal
 import sys
 import time
 import unittest
@@ -19,15 +21,14 @@ from mapadroid.mad_apk import (AbstractAPKStorage, StorageSyncManager,
 from mapadroid.madmin.madmin import MADmin
 from mapadroid.mitm_receiver.MitmDataProcessorManager import \
     MitmDataProcessorManager
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.patcher import MADPatcher
 from mapadroid.utils.event import Event
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
 from mapadroid.utils.madGlobals import terminate_mad
-from mapadroid.utils.MappingManager import (MappingManager,
-                                            MappingManagerManager)
+from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.pluginBase import PluginCollection
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
@@ -149,20 +150,14 @@ def check_dependencies():
             sys.exit(1)
 
 
-if __name__ == "__main__":
-    args = parse_args()
-    os.environ['LANGUAGE'] = args.language
-    init_logging(args)
-    logger = get_logger(LoggerEnums.system)
-
+async def start():
     data_manager: DataManager = None
     device_updater: DeviceUpdater = None
     event: Event = None
     jobstatus: dict = {}
-    mapping_manager_manager: MappingManagerManager = None
+    # mapping_manager_manager: MappingManagerManager = None
     mapping_manager: Optional[MappingManager] = None
     mitm_receiver_process: MITMReceiver = None
-    mitm_mapper_manager: Optional[MitmMapperManager] = None
     mitm_mapper: Optional[MitmMapper] = None
     pogo_win_manager: Optional[PogoWindows] = None
     storage_elem: Optional[AbstractAPKStorage] = None
@@ -175,7 +170,7 @@ if __name__ == "__main__":
         logger.info('Starting MAD in config mode')
     else:
         logger.info('Starting MAD')
-    check_dependencies()
+    # check_dependencies()
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
     create_folder(args.file_path)
@@ -202,14 +197,16 @@ if __name__ == "__main__":
     event = Event(args, db_wrapper)
     event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
-    time.sleep(.1)
-    MappingManagerManager.register('MappingManager', MappingManager)
-    mapping_manager_manager = MappingManagerManager()
-    mapping_manager_manager.start()
-    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper,
-                                                                             args,
-                                                                             data_manager,
-                                                                             configmode=args.config_mode)
+    await asyncio.sleep(.1)
+    # MappingManagerManager.register('MappingManager', MappingManager)
+    # mapping_manager_manager = MappingManagerManager()
+    # mapping_manager_manager.start()
+    mapping_manager: MappingManager = MappingManager(db_wrapper,
+                                                     args,
+                                                     data_manager,
+                                                     configmode=args.config_mode)
+    # TODO: Call init of mapping_manager properly rather than in constructor...
+
     if args.only_routes:
         logger.info('Running in route recalculation mode. MAD will exit once complete')
         recalc_in_progress = True
@@ -223,23 +220,24 @@ if __name__ == "__main__":
     (storage_manager, storage_elem) = get_storage_obj(args, db_wrapper)
     if not args.config_mode:
         pogo_win_manager = PogoWindows(args.temp_path, args.ocr_thread_count)
-        MitmMapperManager.register('MitmMapper', MitmMapper)
-        mitm_mapper_manager = MitmMapperManager()
-        mitm_mapper_manager.start()
-        mitm_mapper = mitm_mapper_manager.MitmMapper(args, mapping_manager, db_wrapper.stats_submit)
-
+        # MitmMapperManager.register('MitmMapper', MitmMapper)
+        # mitm_mapper_manager = MitmMapperManager()
+        # mitm_mapper_manager.start()
+        mitm_mapper = MitmMapper(args, mapping_manager, db_wrapper.stats_submit)
+        await mitm_mapper.init()
     logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
 
+    # TODO: Enable and properly integrate...
     mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper)
-    mitm_data_processor_manager.launch_processors()
+    #mitm_data_processor_manager.launch_processors()
 
     mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                          mitm_mapper, args, mapping_manager, db_wrapper,
                                          data_manager, storage_elem,
                                          mitm_data_processor_manager.get_queue(),
                                          enable_configmode=args.config_mode)
-    mitm_receiver_process.start()
-
+    # mitm_receiver_process.start()
+    mitm_receiver_task = await mitm_receiver_process.run_async()
     logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
     ws_server = WebsocketServer(args=args,
                                 mitm_mapper=mitm_mapper,
@@ -249,9 +247,11 @@ if __name__ == "__main__":
                                 data_manager=data_manager,
                                 event=event,
                                 enable_configmode=args.config_mode)
-    t_ws = Thread(name='system', target=ws_server.start_server)
-    t_ws.daemon = False
-    t_ws.start()
+    # t_ws = Thread(name='system', target=ws_server.start_server)
+    # t_ws.daemon = False
+    # t_ws.start()
+    await ws_server.start_server()
+
     device_updater = DeviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
     if not args.config_mode:
         if args.webhook:
@@ -335,7 +335,7 @@ if __name__ == "__main__":
                 exit_code = 1
         else:
             while True:
-                time.sleep(10)
+                await asyncio.sleep(10)
     except KeyboardInterrupt or Exception:
         logger.info("Shutdown signal received")
     finally:
@@ -350,10 +350,11 @@ if __name__ == "__main__":
             if mitm_receiver_process is not None:
                 logger.info("Trying to stop receiver")
                 mitm_receiver_process.shutdown()
-                logger.debug("MITM child threads successfully shutdown. Terminating parent thread")
-                mitm_receiver_process.terminate()
-                logger.debug("Trying to join MITMReceiver")
-                mitm_receiver_process.join()
+                # logger.debug("MITM child threads successfully shutdown. Terminating parent thread")
+                # mitm_receiver_process.()
+                # logger.debug("Trying to join MITMReceiver")
+                # mitm_receiver_process.join()
+                mitm_receiver_task.cancel()
                 logger.debug("MITMReceiver joined")
             if mitm_data_processor_manager is not None:
                 mitm_data_processor_manager.shutdown()
@@ -364,14 +365,11 @@ if __name__ == "__main__":
                 t_whw.join()
             if ws_server is not None:
                 logger.info("Stopping websocket server")
-                ws_server.stop_server()
+                await ws_server.stop_server()
                 logger.info("Waiting for websocket-thread to exit")
                 t_ws.join()
-            if mapping_manager_manager is not None:
-                mapping_manager_manager.shutdown()
-            if mitm_mapper_manager is not None:
-                logger.debug("Calling mitm_mapper shutdown")
-                mitm_mapper_manager.shutdown()
+            if mapping_manager is not None:
+                mapping_manager.shutdown()
             if storage_manager is not None:
                 logger.debug('Stopping storage manager')
                 storage_manager.shutdown()
@@ -384,3 +382,21 @@ if __name__ == "__main__":
         logger.info("Done shutting down")
         logger.debug(str(sys.exc_info()))
         sys.exit(exit_code)
+
+if __name__ == "__main__":
+    args = parse_args()
+    os.environ['LANGUAGE'] = args.language
+    init_logging(args)
+    logger = get_logger(LoggerEnums.system)
+
+    loop = asyncio.get_event_loop()
+    #signal.signal(signal.SIGINT, signal_handler)
+    #signal.signal(signal.SIGTERM, signal_handler)
+
+    loop_being_run = loop
+    try:
+        loop.run_until_complete(start())
+    except (KeyboardInterrupt, Exception) as e:
+        #shutdown(loop_being_run)
+        logger.info(f"Shutting down. {e}")
+

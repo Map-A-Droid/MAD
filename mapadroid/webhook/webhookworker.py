@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time
 from typing import List, Optional
@@ -31,14 +32,8 @@ class WebhookWorker:
         self.__last_check = int(time.time())
         self.__webhook_receivers = []
         self.__webhook_types = []
+        self.__mapping_manager: MappingManager = mapping_manager
         self.__valid_types = ['pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop']
-
-        self.__build_webhook_receivers()
-        self.__build_ivmon_list(mapping_manager)
-        self.__build_excluded_areas(mapping_manager)
-
-        if self.__args.webhook_start_time != 0:
-            self.__last_check = int(self.__args.webhook_start_time)
 
     def __payload_type_count(self, payload):
         count = {}
@@ -61,7 +56,7 @@ class WebhookWorker:
 
         return False
 
-    def __send_webhook(self, payloads):
+    async def __send_webhook(self, payloads):
         if len(payloads) == 0:
             logger.debug2("Payload empty. Skip sending to webhook.")
             return
@@ -94,6 +89,7 @@ class WebhookWorker:
                 logger.debug4("Payload: {}", json.dumps(payload_chunk))
 
                 try:
+                    # TODO: Asyncio POST needed...
                     response = requests.post(
                         webhook.get('url'),
                         data=json.dumps(payload_chunk),
@@ -523,26 +519,26 @@ class WebhookWorker:
                 "types": sub_types
             })
 
-    def __build_ivmon_list(self, mapping_manager: MappingManager):
+    async def __build_ivmon_list(self):
         self.__IV_MON: List[int] = []
 
-        for routemanager_name in mapping_manager.get_all_routemanager_names():
-            ids_iv_list: Optional[List[int]] = mapping_manager.routemanager_get_ids_iv(routemanager_name)
+        for routemanager_name in await self.__mapping_manager.get_all_routemanager_names():
+            ids_iv_list: Optional[List[int]] = await self.__mapping_manager.routemanager_get_ids_iv(routemanager_name)
 
             if ids_iv_list is not None:
                 # TODO check if area/routemanager is actually active before adding the IDs
                 self.__IV_MON = self.__IV_MON + list(set(ids_iv_list) - set(self.__IV_MON))
 
-    def __build_excluded_areas(self, mapping_manager: MappingManager):
+    async def __build_excluded_areas(self):
         self.__excluded_areas: List[GeofenceHelper] = []
 
         if self.__args.webhook_excluded_areas == "":
             pass
 
         tmp_excluded_areas = {}
-        for rm in mapping_manager.get_all_routemanager_names():
-            name = mapping_manager.routemanager_get_name(rm)
-            gfh = mapping_manager.routemanager_get_geofence_helper(rm)
+        for rm in await self.__mapping_manager.get_all_routemanager_names():
+            name = await self.__mapping_manager.routemanager_get_name(rm)
+            gfh = await self.__mapping_manager.routemanager_get_geofence_helper(rm)
             tmp_excluded_areas[name] = gfh
 
         area_names = self.__args.webhook_excluded_areas.split(",")
@@ -557,52 +553,53 @@ class WebhookWorker:
         if len(self.__excluded_areas) > 0:
             logger.info("Excluding {} areas from webhooks", len(self.__excluded_areas))
 
-    def __create_payload(self):
+    async def __create_payload(self):
         logger.debug("Fetching data changed since {}", self.__last_check)
 
         # the payload that is about to be sent
         full_payload = []
 
+        # TODO: Single transaction...
         try:
             # raids
             if 'raid' in self.__webhook_types:
                 raids = self.__prepare_raid_data(
-                    self._db_reader.get_raids_changed_since(self.__last_check)
+                    await self._db_reader.get_raids_changed_since(self.__last_check)
                 )
                 full_payload += raids
 
             # quests
             if 'quest' in self.__webhook_types:
                 quest = self.__prepare_quest_data(
-                    self._db_reader.get_quests_changed_since(self.__last_check)
+                    await self._db_reader.get_quests_changed_since(self.__last_check)
                 )
                 full_payload += quest
 
             # weather
             if 'weather' in self.__webhook_types:
                 weather = self.__prepare_weather_data(
-                    self._db_reader.get_weather_changed_since(self.__last_check)
+                    await self._db_reader.get_weather_changed_since(self.__last_check)
                 )
                 full_payload += weather
 
             # gyms
             if 'gym' in self.__webhook_types:
                 gyms = self.__prepare_gyms_data(
-                    self._db_reader.get_gyms_changed_since(self.__last_check)
+                    await self._db_reader.get_gyms_changed_since(self.__last_check)
                 )
                 full_payload += gyms
 
             # stops
             if 'pokestop' in self.__webhook_types:
                 pokestops = self.__prepare_stops_data(
-                    self._db_reader.get_stops_changed_since(self.__last_check)
+                    await self._db_reader.get_stops_changed_since(self.__last_check)
                 )
                 full_payload += pokestops
 
             # mon
             if 'pokemon' in self.__webhook_types:
                 mon = self.__prepare_mon_data(
-                    self._db_reader.get_mon_changed_since(self.__last_check)
+                    await self._db_reader.get_mon_changed_since(self.__last_check)
                 )
                 full_payload += mon
         except Exception:
@@ -612,19 +609,26 @@ class WebhookWorker:
 
         return full_payload
 
-    def run_worker(self):
+    async def run_worker(self):
         logger.info("Starting webhook worker thread")
+
+        self.__build_webhook_receivers()
+        await self.__build_ivmon_list()
+        await self.__build_excluded_areas()
+
+        if self.__args.webhook_start_time != 0:
+            self.__last_check = int(self.__args.webhook_start_time)
 
         while not terminate_mad.is_set():
             preparing_timestamp = int(time.time())
 
             # fetch data and create payload
-            full_payload = self.__create_payload()
+            full_payload = await self.__create_payload()
 
             # send our payload
-            self.__send_webhook(full_payload)
+            await self.__send_webhook(full_payload)
 
             self.__last_check = preparing_timestamp
-            time.sleep(self.__worker_interval_sec)
+            await asyncio.sleep(self.__worker_interval_sec)
 
         logger.info("Stopping webhook worker thread")

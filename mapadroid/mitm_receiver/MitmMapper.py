@@ -1,8 +1,6 @@
+import asyncio
 import time
-from multiprocessing import Lock, Queue
-from multiprocessing.managers import SyncManager
 from queue import Empty
-from threading import Event, Thread
 from typing import Dict
 
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
@@ -14,66 +12,68 @@ from mapadroid.utils.MappingManager import MappingManager
 logger = get_logger(LoggerEnums.mitm)
 
 
-class MitmMapperManager(SyncManager):
-    pass
-
-
 class MitmMapper(object):
     def __init__(self, args, mapping_manager: MappingManager, db_stats_submit: DbStatsSubmit):
         self.__mapping = {}
         self.__playerstats: Dict[str, PlayerStats] = {}
-        self.__mapping_mutex = Lock()
+        self.__mapping_mutex = asyncio.Lock()
         self.__mapping_manager: MappingManager = mapping_manager
         self.__injected = {}
         self.__last_cellsid = {}
         self.__last_possibly_moved = {}
         self.__application_args = args
         self._db_stats_submit: DbStatsSubmit = db_stats_submit
-        self.__playerstats_db_update_stop: Event = Event()
-        self.__playerstats_db_update_queue: Queue = Queue()
-        self.__playerstats_db_update_mutex: Lock = Lock()
+        self.__playerstats_db_update_stop: asyncio.Event = asyncio.Event()
+        self.__playerstats_db_update_queue: asyncio.Queue = asyncio.Queue()
+        self.__playerstats_db_update_mutex: asyncio.Lock = asyncio.Lock()
         pstat_args = {
             'name': 'system',
             'target': self.__internal_playerstats_db_update_consumer
         }
-        self.__playerstats_db_update_consumer: Thread = Thread(**pstat_args)
+
+        self.__playerstats_db_update_consumer = None
+
+    async def init(self):
+        loop = asyncio.get_event_loop()
+        self.__playerstats_db_update_consumer = loop.create_task(self.__internal_playerstats_db_update_consumer())
+        # self.__playerstats_db_update_consumer: Thread = Thread(**pstat_args)
+        # TODO: Move to async init method.......
         if self.__mapping_manager is not None:
-            for origin in self.__mapping_manager.get_all_devicemappings().keys():
+            devicemappings = await self.__mapping_manager.get_all_devicemappings()
+            for origin in devicemappings.keys():
                 self.__add_new_device(origin)
-        self.__playerstats_db_update_consumer.daemon = True
-        self.__playerstats_db_update_consumer.start()
 
     def __add_new_device(self, origin):
         self.__mapping[origin] = {}
         self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
         self.__playerstats[origin].open_player_stats()
 
-    def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
+    async def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
         if self.__application_args.game_stats:
-            with self.__playerstats_db_update_mutex:
-                self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
+            async with self.__playerstats_db_update_mutex:
+                await self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
 
-    def __internal_playerstats_db_update_consumer(self):
+    async def __internal_playerstats_db_update_consumer(self):
         try:
             while not self.__playerstats_db_update_stop.is_set():
                 if not self.__application_args.game_stats:
                     logger.info("Playerstats are disabled")
                     break
                 try:
-                    with self.__playerstats_db_update_mutex:
+                    async with self.__playerstats_db_update_mutex:
                         next_item = self.__playerstats_db_update_queue.get_nowait()
                 except Empty:
-                    time.sleep(0.5)
+                    await asyncio.sleep(0.5)
                     continue
                 if next_item is not None:
                     client_id, stats, last_processed_timestamp = next_item
                     logger.info("Running stats processing on {}", client_id)
-                    self.__process_stats(stats, client_id, last_processed_timestamp)
+                    await self.__process_stats(stats, client_id, last_processed_timestamp)
         except Exception as e:
             logger.error("Playerstats consumer stopping because of {}", e)
         logger.info("Shutting down Playerstats update consumer")
 
-    def __process_stats(self, stats, client_id: str, last_processed_timestamp: float):
+    async def __process_stats(self, stats, client_id: str, last_processed_timestamp: float):
         origin_logger = get_origin_logger(logger, origin=client_id)
         origin_logger.debug('Submitting stats')
         data_send_stats = []
@@ -83,28 +83,29 @@ class MitmMapper(object):
         data_send_location.append(
             PlayerStats.stats_location_parser(client_id, stats, last_processed_timestamp))
 
-        self._db_stats_submit.submit_stats_complete(data_send_stats)
-        self._db_stats_submit.submit_stats_locations(data_send_location)
+        # TODO: Single transaction!
+        await self._db_stats_submit.submit_stats_complete(data_send_stats)
+        await self._db_stats_submit.submit_stats_locations(data_send_location)
         if self.__application_args.game_stats_raw:
+            # TODO: Do these need to be run elsewhere as well?
             data_send_location_raw = PlayerStats.stats_location_raw_parser(client_id, stats,
                                                                            last_processed_timestamp)
             data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats,
                                                                              last_processed_timestamp)
-            self._db_stats_submit.submit_stats_locations_raw(data_send_location_raw)
-            self._db_stats_submit.submit_stats_detections_raw(data_send_detection_raw)
+            await self._db_stats_submit.submit_stats_locations_raw(data_send_location_raw)
+            await self._db_stats_submit.submit_stats_detections_raw(data_send_detection_raw)
 
         data_send_stats.clear()
         data_send_location.clear()
 
-        self._db_stats_submit.cleanup_statistics()
+        await self._db_stats_submit.cleanup_statistics()
 
     def shutdown(self):
         self.__playerstats_db_update_stop.set()
-        self.__playerstats_db_update_consumer.join()
-        self.__playerstats_db_update_queue.close()
+        self.__playerstats_db_update_consumer.cancel()
 
-    def get_levelmode(self, origin):
-        device_routemananger = self.__mapping_manager.get_routemanager_name_from_device(origin)
+    async def get_levelmode(self, origin):
+        device_routemananger = await self.__mapping_manager.get_routemanager_name_from_device(origin)
         if device_routemananger is None:
             return False
 
@@ -113,8 +114,8 @@ class MitmMapper(object):
 
         return False
 
-    def get_safe_items(self, origin):
-        get_devicesettings_of_origin = self.__mapping_manager.get_devicesettings_of(origin)
+    async def get_safe_items(self, origin):
+        get_devicesettings_of_origin = await self.__mapping_manager.get_devicesettings_of(origin)
         if get_devicesettings_of_origin is None:
             return []
         else:
@@ -125,10 +126,10 @@ class MitmMapper(object):
 
             return list(map(int, enhanced_mode_quest_safe_items))
 
-    def request_latest(self, origin, key=None):
+    async def request_latest(self, origin, key=None):
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug2("Request latest called")
-        with self.__mapping_mutex:
+        async with self.__mapping_mutex:
             result = None
             retrieved = self.__mapping.get(origin, None)
             if retrieved is not None:
@@ -143,7 +144,7 @@ class MitmMapper(object):
         return result
 
     # origin, method, data, timestamp
-    def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = None,
+    async def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = None,
                       timestamp_received_receiver: float = None, location: Location = None):
         origin_logger = get_origin_logger(logger, origin=origin)
         if timestamp_received_raw is None:
@@ -154,8 +155,10 @@ class MitmMapper(object):
 
         updated = False
         origin_logger.debug2("Trying to acquire lock and update proto {}", key)
-        with self.__mapping_mutex:
-            if origin not in self.__mapping.keys() and origin in self.__mapping_manager.get_all_devicemappings().keys():
+        async with self.__mapping_mutex:
+            loop = asyncio.get_event_loop()
+            devicemappings = loop.create_task(self.__mapping_manager.get_all_devicemappings())
+            if origin not in self.__mapping.keys() and origin in devicemappings.result().keys():
                 origin_logger.info("New device detected.  Setting up the device configuration")
                 self.__add_new_device(origin)
             if origin in self.__mapping.keys():
@@ -178,13 +181,13 @@ class MitmMapper(object):
         origin_logger.debug2("Done updating proto {}", key)
         return updated
 
-    def set_injection_status(self, origin, status=True):
+    async def set_injection_status(self, origin, status=True):
         origin_logger = get_origin_logger(logger, origin=origin)
         if origin not in self.__injected or not self.__injected[origin] and status is True:
             origin_logger.success("Worker is injected now")
         self.__injected[origin] = status
 
-    def get_injection_status(self, origin):
+    async def get_injection_status(self, origin):
         return self.__injected.get(origin, False)
 
     def run_stats_collector(self, origin: str):
@@ -196,10 +199,10 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).stats_collector()
 
-    def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, positiontype,
+    async def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, positiontype,
                                rec_timestamp: float, walker, transporttype):
         if self.__playerstats.get(origin, None) is not None and location is not None:
-            self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp,
+            await self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp,
                                                                        positiontype,
                                                                        rec_timestamp, walker, transporttype)
 
@@ -209,7 +212,7 @@ class MitmMapper(object):
         else:
             return -1
 
-    def get_poke_stop_visits(self, origin: str) -> int:
+    async def get_poke_stop_visits(self, origin: str) -> int:
         if self.__playerstats.get(origin, None) is not None:
             return self.__playerstats.get(origin).get_poke_stop_visits()
         else:
