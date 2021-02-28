@@ -93,6 +93,12 @@ class MITMAutoConf(unittest.TestCase):
     def setUp(self):
         self.api = get_connection_api()
         self.mitm = get_connection_mitm(self.api)
+        devs = self.api.get("/api/device")
+        for dev_uri in devs.json()["results"]:
+            self.api.delete(dev_uri)
+        pauth = self.api.get("/api/pogoauth")
+        for uri in pauth.json()["results"]:
+            self.api.delete(uri)
 
     def tearDown(self):
         self.api.close()
@@ -133,7 +139,7 @@ class MITMAutoConf(unittest.TestCase):
                         AutoConfIssues.rgc_not_configured.value,
                     ],
                     'X-Warnings': [
-                        AutoConfIssues.no_ggl_login.value,
+                        AutoConfIssues.no_login.value,
                         AutoConfIssues.auth_not_configured.value,
                     ]
                 }
@@ -166,7 +172,7 @@ class MITMAutoConf(unittest.TestCase):
                         AutoConfIssues.package_missing.value,
                     ],
                     'X-Warnings': [
-                        AutoConfIssues.no_ggl_login.value,
+                        AutoConfIssues.no_login.value,
                         AutoConfIssues.auth_not_configured.value,
                     ]
                 }
@@ -182,7 +188,7 @@ class MITMAutoConf(unittest.TestCase):
                         AutoConfIssues.package_missing.value,
                     ],
                     'X-Warnings': [
-                        AutoConfIssues.no_ggl_login.value,
+                        AutoConfIssues.no_login.value,
                         AutoConfIssues.auth_not_configured.value,
                     ]
                 }
@@ -198,7 +204,7 @@ class MITMAutoConf(unittest.TestCase):
                         AutoConfIssues.package_missing.value,
                     ],
                     'X-Warnings': [
-                        AutoConfIssues.no_ggl_login.value,
+                        AutoConfIssues.no_login.value,
                         AutoConfIssues.auth_not_configured.value,
                     ]
                 }
@@ -213,7 +219,7 @@ class MITMAutoConf(unittest.TestCase):
                         AutoConfIssues.rgc_not_configured.value,
                     ],
                     'X-Warnings': [
-                        AutoConfIssues.no_ggl_login.value,
+                        AutoConfIssues.no_login.value,
                         AutoConfIssues.auth_not_configured.value,
                     ]
                 }
