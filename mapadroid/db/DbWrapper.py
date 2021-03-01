@@ -59,9 +59,17 @@ class DbWrapper:
         """ Fetch all data and have it returned as a dictionary """
         return self._db_exec.autofetch_all(sql, args=args, **kwargs)
 
+    async def autofetch_value_async(self, sql, args=(), **kwargs):
+        """ Fetch the first value from the first row using asyncio """
+        return await self._db_exec.autofetch_value_async(sql, args=args, **kwargs)
+
     def autofetch_value(self, sql, args=(), **kwargs):
         """ Fetch the first value from the first row """
         return self._db_exec.autofetch_value(sql, args=args, **kwargs)
+
+    async def autofetch_row_async(self, sql, args=(), **kwargs):
+        """ Fetch the first row and have it return as a dictionary """
+        return await self._db_exec.autofetch_row_async(sql, args=args, **kwargs)
 
     def autofetch_row(self, sql, args=(), **kwargs):
         """ Fetch the first row and have it return as a dictionary """

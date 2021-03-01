@@ -71,7 +71,7 @@ class MITMBase(WorkerBase):
     async def start_worker(self) -> Task:
         await self._db_wrapper.save_idle_status(self._dev_id, False)
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 2, 0,
-                                                 self._mapping_manager.routemanager_get_mode(
+                                                 await self._mapping_manager.routemanager_get_mode(
                                                      self._routemanager_name),
                                                  99)
         self._enhanced_mode = await self.get_devicesettings_value('enhanced_mode_quest', False)
@@ -271,7 +271,7 @@ class MITMBase(WorkerBase):
             return True
         await self._mitm_mapper.set_injection_status(self._origin, False)
         started_pogo: bool = await super()._start_pogo()
-        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+        if not await self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
         else:
             return started_pogo

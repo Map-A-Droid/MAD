@@ -224,6 +224,7 @@ class PogoWindows:
                           round(factor, 2))
             click_y = int(click_y)
             origin_logger.debug('lookForButton: found Button - click on it')
+            # TODO: Async...
             communicator.click(click_x, click_y)
             time.sleep(4)
             return True

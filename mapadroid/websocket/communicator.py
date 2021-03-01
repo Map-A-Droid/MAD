@@ -1,6 +1,8 @@
 import asyncio
 from typing import Optional
 
+from aiofile import async_open
+
 from mapadroid.utils.collections import Location
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
@@ -67,7 +69,7 @@ class Communicator(AbstractCommunicator):
         return await self.__run_and_ok("more start {}\r\n".format(package_name), self.__command_timeout)
 
     async def stop_app(self, package_name: str) -> bool:
-        if not self.__run_and_ok("more stop {}\r\n".format(package_name), self.__command_timeout):
+        if not await self.__run_and_ok("more stop {}\r\n".format(package_name), self.__command_timeout):
             self.logger.error("Failed stopping {}, please check if SU has been granted", package_name)
             return False
         else:
@@ -130,7 +132,7 @@ class Communicator(AbstractCommunicator):
         if screenshot_type == ScreenshotType.PNG:
             screenshot_type_str = "png"
 
-        encoded = self.__run_get_gesponse("screen capture {} {}\r\n".format(screenshot_type_str, quality))
+        encoded = await self.__run_get_gesponse("screen capture {} {}\r\n".format(screenshot_type_str, quality))
         if encoded is None:
             return False
         elif isinstance(encoded, str):
@@ -144,8 +146,9 @@ class Communicator(AbstractCommunicator):
             return False
         else:
             self.logger.debug("Storing screenshot...")
-            with open(path, "wb") as fh:
-                fh.write(encoded)
+            # TODO: Async write...
+            async with async_open(path, "wb") as fh:
+                await fh.write(encoded)
             self.logger.debug2("Done storing, returning")
             return True
 

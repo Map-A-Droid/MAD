@@ -7,16 +7,13 @@ import sys
 import time
 from asyncio import Task
 from functools import wraps
-from multiprocessing import JoinableQueue, Process
-from threading import RLock
+from multiprocessing import JoinableQueue
 from typing import Any, Dict, Optional, Union
 
 from aiofile import async_open
-from flask import Response, request, send_file
-# Temporary... TODO: Replace with aiohttp
-from quart import Quart
-
 from gevent.pywsgi import WSGIServer
+# Temporary... TODO: Replace with aiohttp
+from quart import Quart, Response, request, send_file
 
 from mapadroid.data_manager.dm_exceptions import UpdateIssue
 from mapadroid.mad_apk import (APKType, lookup_package_info, parse_frontend,
@@ -34,14 +31,14 @@ logger = get_logger(LoggerEnums.mitm)
 
 def validate_accepted(func) -> Any:
     @wraps(func)
-    def decorated(self, *args, **kwargs):
+    async def decorated(self, *args, **kwargs):
         try:
             session_id: Optional[int] = kwargs.get('session_id', None)
             session_id = int(session_id)
             sql = "SELECT `status`\n"\
                   "FROM `autoconfig_registration`\n"\
                   "WHERE `session_id` = %s AND `instance_id` = %s"
-            accepted = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
+            accepted = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.instance_id))
             if accepted is None:
                 return Response(status=404, response="")
             if accepted == 0:
@@ -54,14 +51,14 @@ def validate_accepted(func) -> Any:
 
 def validate_session(func) -> Any:
     @wraps(func)
-    def decorated(self, *args, **kwargs):
+    async def decorated(self, *args, **kwargs):
         try:
             session_id: Optional[int] = kwargs.get('session_id', None)
             session_id = int(session_id)
             sql = "SELECT `status`\n"\
                   "FROM `autoconfig_registration`\n"\
                   "WHERE `session_id` = %s AND `instance_id` = %s"
-            exists = self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
+            exists = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.instance_id))
             if exists is None:
                 return Response(status=404, response="")
             return func(self, *args, **kwargs)
@@ -74,7 +71,7 @@ class EndpointAction(object):
 
     def __init__(self, action, application_args, mapping_manager: MappingManager, data_manager):
         self.action = action
-        self.response = Response(status=200, headers={})
+        self.response = Response("", status=200, headers={})
         self.application_args = application_args
         self.mapping_manager: MappingManager = mapping_manager
         self.__data_manager = data_manager
@@ -88,50 +85,50 @@ class EndpointAction(object):
             auth = request.headers.get('Authorization', False)
             if self.application_args.mitm_status_password != "" and \
                     (not auth or auth != self.application_args.mitm_status_password):
-                self.response = Response(status=500, headers={})
+                self.response = Response("", status=500, headers={})
                 abort = True
             else:
                 abort = False
         elif 'autoconfig/' in str(request.url):
             auth = request.headers.get('Authorization', None)
-            if not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
+            if not check_auth(logger, auth, self.application_args, await self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
-                self.response = Response(status=403, headers={})
+                self.response = Response("", status=403, headers={})
                 abort = True
             if 'mymac' in str(request.url):
                 devs = self.__data_manager.search('device', params={'origin': origin})
                 if not devs:
                     abort = False
                     origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
-                    self.response = Response(status=403, headers={})
+                    self.response = Response("", status=403, headers={})
         elif str(request.url_rule) == '/origin_generator':
             auth = request.headers.get('Authorization', None)
-            if not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
+            if not check_auth(logger, auth, self.application_args, await self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
-                self.response = Response(status=403, headers={})
+                self.response = Response("", status=403, headers={})
                 abort = True
         elif 'download' in request.url:
             auth = request.headers.get('Authorization', None)
-            if not check_auth(logger, auth, self.application_args, self.mapping_manager.get_auths()):
+            if not check_auth(logger, auth, self.application_args, await self.mapping_manager.get_auths()):
                 origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
-                self.response = Response(status=403, headers={})
+                self.response = Response("", status=403, headers={})
                 abort = True
         else:
             if origin is None:
                 origin_logger.warning("Missing Origin header in request")
-                self.response = Response(status=500, headers={})
+                self.response = Response("", status=500, headers={})
                 abort = True
             elif (await self.mapping_manager.get_all_devicemappings()).keys() is not None and \
                     origin not in (await self.mapping_manager.get_all_devicemappings()).keys():
                 origin_logger.warning("MITMReceiver request without Origin or disallowed Origin")
-                self.response = Response(status=403, headers={})
+                self.response = Response("", status=403, headers={})
                 abort = True
-            elif self.mapping_manager.get_auths() is not None:
+            elif await self.mapping_manager.get_auths() is not None:
                 auth = request.headers.get('Authorization', None)
                 if auth is None or not check_auth(origin_logger, auth, self.application_args,
-                                                  self.mapping_manager.get_auths()):
+                                                  await self.mapping_manager.get_auths()):
                     origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
-                    self.response = Response(status=403, headers={})
+                    self.response = Response("", status=403, headers={})
                     abort = True
 
         if not abort:
@@ -140,11 +137,11 @@ class EndpointAction(object):
                 if content_encoding and content_encoding == "gzip":
                     # we need to unpack the data first
                     # https://stackoverflow.com/questions/28304515/receiving-gzip-with-flask
-                    compressed_data = io.BytesIO(request.data)
+                    compressed_data = io.BytesIO(await request.data)
                     text_data = gzip.GzipFile(fileobj=compressed_data, mode='r')
                     request_data = json.loads(text_data.read())
                 else:
-                    request_data = request.data
+                    request_data = await request.data
 
                 content_type = request.headers.get('Content-Type', None)
                 if content_type and content_type == "application/json":
@@ -157,11 +154,11 @@ class EndpointAction(object):
                 if type(response_payload) is Response:
                     self.response = response_payload
                 else:
-                    self.response = Response(status=200, headers={"Content-Type": "application/json"})
+                    self.response = Response(response={}, status=200, headers={"Content-Type": "application/json"})
                     self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
                 origin_logger.warning("Could not get JSON data from request: {}", e)
-                self.response = Response(status=500, headers={})
+                self.response = Response("", status=500, headers={})
         return self.response
 
 
@@ -176,7 +173,6 @@ class MITMReceiver():
         self.__listen_port = listen_port
         self.__mitm_mapper: MitmMapper = mitm_mapper
         self.__data_manager = data_manager
-        self.__hopper_mutex = RLock()
         self._db_wrapper = db_wrapper
         self.__storage_obj = storage_obj
         self._data_queue: JoinableQueue = data_queue
@@ -250,9 +246,10 @@ class MITMReceiver():
         if methods_passed is None:
             logger.error("Invalid REST method specified")
             sys.exit(1)
-        self.app.add_url_rule(endpoint, endpoint_name,
-                              EndpointAction(handler, self.__application_args, self.__mapping_manager,
-                                             self.__data_manager),
+        self.app.add_url_rule(rule=endpoint, endpoint=endpoint_name,
+                              view_func=EndpointAction(handler, self.__application_args, self.__mapping_manager,
+                                             self.__data_manager).__call__,
+                              # view_func=handler,
                               methods=methods_passed)
 
     async def proto_endpoint(self, origin: str, data: Union[dict, list]):
@@ -384,7 +381,7 @@ class MITMReceiver():
                 return Response(status=406, response='Supported version not installed')
             return Response(status=status_code, response=msg.version)
         else:
-            return Response(status=status_code)
+            return Response("", status=status_code)
 
     async def origin_generator_endpoint(self, *args, **kwargs):
         # TODO: async
@@ -431,21 +428,21 @@ class MITMReceiver():
                   "FROM `settings_device` sd\n"\
                   "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
                   "WHERE ar.`session_id` = %s AND ar.`instance_id` = %s"
-            origin = await self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
+            origin = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.instance_id))
             if operation in ['pd', 'rgc']:
                 if operation == 'pd':
                     config = PDConfig(self._db_wrapper, self.__application_args, self.__data_manager)
                 else:
                     config = RGCConfig(self._db_wrapper, self.__application_args, self.__data_manager)
                 # TODO: Ensure async
-                return send_file(config.generate_config(origin), as_attachment=True, attachment_filename='conf.xml',
+                return await send_file(config.generate_config(origin), as_attachment=True, attachment_filename='conf.xml',
                                  mimetype='application/xml')
             elif operation in ['google']:
                 sql = "SELECT ag.`username`, ag.`password`\n"\
                       "FROM `settings_pogoauth` ag\n"\
                       "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n"\
                       "WHERE ar.`session_id` = %s and ag.`instance_id` = %s and ag.`login_type` = %s"
-                login = await self._db_wrapper.autofetch_row(sql, (session_id, self._db_wrapper.instance_id, 'google'))
+                login = await self._db_wrapper.autofetch_row_async(sql, (session_id, self._db_wrapper.instance_id, 'google'))
                 if login:
                     return Response(status=200, response='\n'.join([login['username'], login['password']]))
                 else:
@@ -462,7 +459,7 @@ class MITMReceiver():
             level = kwargs['level']
             msg = kwargs['msg']
         except KeyError:
-            level, msg = str(request.data, 'utf-8').split(',', 1)
+            level, msg = str(await request.data, 'utf-8').split(',', 1)
         info = {
             'session_id': session_id,
             'instance_id': self._db_wrapper.instance_id,
@@ -492,7 +489,7 @@ class MITMReceiver():
     async def autoconf_mymac(self, *args, **kwargs) -> Response:
         origin = request.headers.get('Origin')
         if origin is None:
-            return Response(status=404)
+            return Response("", status=404)
         devs = self.__data_manager.search('device', params={'origin': origin})
         device = None
         for _, dev in devs.items():
@@ -531,7 +528,7 @@ class MITMReceiver():
                     await self.autoconfig_log(**log_data)
                 return Response(status=200, response="")
         elif request.method == 'POST':
-            data = str(request.data, 'utf-8')
+            data = str(await request.data, 'utf-8')
             if log_data:
                 log_data['msg'] = 'Device is requesting a new MAC address be set, {}'.format(data)
                 await self.autoconfig_log(**log_data)
@@ -543,11 +540,11 @@ class MITMReceiver():
             try:
                 device['mac_address'] = data
                 device.save()
-                return Response(status=200)
+                return Response("", status=200)
             except UpdateIssue:
-                return Response(status=422)
+                return Response("", status=422)
         else:
-            return Response(status=405)
+            return Response("", status=405)
 
     @validate_session
     async def autoconfig_operation(self, *args, **kwargs) -> Response:
@@ -614,7 +611,7 @@ class MITMReceiver():
             'instance_id': self._db_wrapper.instance_id
         }
         await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
-        return Response(status=200)
+        return Response("", status=200)
 
 
 def get_actual_ip(request):

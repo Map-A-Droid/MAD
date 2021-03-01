@@ -550,7 +550,7 @@ class WorkerBase(AbstractWorker):
         screen_type: ScreenType = ScreenType.UNDEFINED
         while not self._stop_worker_event.is_set():
             # TODO: Make this not block the loop somehow... asyncio waiting for a thread?
-            screen_type: ScreenType = self._WordToScreenMatching.detect_screentype()
+            screen_type: ScreenType = await self._WordToScreenMatching.detect_screentype()
             if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
                 self._last_screen_type = screen_type
                 self._loginerrorcounter = 0
@@ -670,7 +670,7 @@ class WorkerBase(AbstractWorker):
         if pogo_topmost:
             return True
 
-        if not self._communicator.is_screen_on():
+        if not await self._communicator.is_screen_on():
             await self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
             self.logger.info("Turning screen on")
             await self._communicator.turn_screen_on()
@@ -759,7 +759,7 @@ class WorkerBase(AbstractWorker):
             return None
 
         self.logger.debug2("_get_trash_positions: checking screen")
-        trashes = self._pogoWindowManager.get_trash_click_positions(self._origin, self.get_screenshot_path(),
+        trashes = self._pogoWindowManager.get_trash_click_positions(self._origin, await self.get_screenshot_path(),
                                                                     full_screen=full_screen)
 
         return trashes
@@ -777,7 +777,7 @@ class WorkerBase(AbstractWorker):
 
         screenshot_quality: int = await self.get_devicesettings_value("screenshot_quality", 80)
 
-        take_screenshot = await self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
+        take_screenshot = await self._communicator.get_screenshot(await self.get_screenshot_path(fileaddon=errorscreen),
                                                                   screenshot_quality, screenshot_type)
 
         if self._lastScreenshotTaken and time_since_last_screenshot < 0.5:
@@ -805,7 +805,7 @@ class WorkerBase(AbstractWorker):
                 return False
         attempts = 0
 
-        screenshot_path = self.get_screenshot_path()
+        screenshot_path = await self.get_screenshot_path()
         if os.path.isdir(screenshot_path):
             self.logger.error("_check_pogo_main_screen: screenshot.png/.jpg is not a file/corrupted")
             return False
@@ -819,7 +819,7 @@ class WorkerBase(AbstractWorker):
                                     max_attempts)
                 return False
 
-            found = self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path(),
+            found = self._pogoWindowManager.check_close_except_nearby_button(await self.get_screenshot_path(),
                                                                              self._origin,
                                                                              self._communicator,
                                                                              close_raid=True)
@@ -854,19 +854,19 @@ class WorkerBase(AbstractWorker):
             self.logger.debug("checkPogoButton: Failed getting screenshot")
             return False
         # TODO: os operation asyncio?
-        if os.path.isdir(self.get_screenshot_path()):
+        if os.path.isdir(await self.get_screenshot_path()):
             self.logger.error("checkPogoButton: screenshot.png is not a file/corrupted")
             return False
 
         self.logger.debug("checkPogoButton: checking for buttons")
         # TODO: need to be non-blocking
-        found = self._pogoWindowManager.look_for_button(self._origin, self.get_screenshot_path(), 2.20, 3.01,
+        found = self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 2.20, 3.01,
                                                         self._communicator)
         if found:
             await asyncio.sleep(1)
             self.logger.debug("checkPogoButton: Found button (small)")
 
-        if not found and self._pogoWindowManager.look_for_button(self._origin, self.get_screenshot_path(), 1.05, 2.20,
+        if not found and self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 1.05, 2.20,
                                                                  self._communicator):
             self.logger.debug("checkPogoButton: Found button (big)")
             found = True

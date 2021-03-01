@@ -120,7 +120,7 @@ class WordToScreenMatching(object):
 
         return np.asarray(sort_lines, dtype=np.int32)
 
-    def __evaluate_topmost_app(self, topmost_app: str) -> Tuple[ScreenType, dict, int]:
+    async def __evaluate_topmost_app(self, topmost_app: str) -> Tuple[ScreenType, dict, int]:
         returntype: ScreenType = ScreenType.UNDEFINED
         global_dict: dict = {}
         diff = 1
@@ -142,7 +142,7 @@ class WordToScreenMatching(object):
             self._logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:
-            if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1),
+            if not await self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1),
                                          delay_after=2):
                 self._logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR, global_dict, diff
@@ -445,13 +445,13 @@ class WordToScreenMatching(object):
         self._communicator.click(click_x, click_y)
         time.sleep(1)
 
-    def detect_screentype(self) -> ScreenType:
-        topmostapp = self._communicator.topmost_app()
+    async def detect_screentype(self) -> ScreenType:
+        topmostapp = await self._communicator.topmost_app()
         if not topmostapp:
             self._logger.warning("Failed getting the topmost app!")
             return ScreenType.ERROR
 
-        screentype, global_dict, diff = self.__evaluate_topmost_app(topmost_app=topmostapp)
+        screentype, global_dict, diff = await self.__evaluate_topmost_app(topmost_app=topmostapp)
         self._logger.info("Processing Screen: {}", str(ScreenType(screentype)))
         return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
@@ -595,7 +595,7 @@ class WordToScreenMatching(object):
         return os.path.join(
             self._applicationArgs.temp_path, screenshot_filename)
 
-    def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
+    async def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
         self._logger.debug("Taking screenshot...")
         time.sleep(delay_before)
 
@@ -606,7 +606,7 @@ class WordToScreenMatching(object):
 
         screenshot_quality: int = 80
 
-        take_screenshot = self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
+        take_screenshot = await self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
                                                             screenshot_quality, screenshot_type)
 
         if not take_screenshot:

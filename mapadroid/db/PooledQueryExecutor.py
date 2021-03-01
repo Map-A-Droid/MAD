@@ -177,7 +177,7 @@ class PooledQueryExecutor:
             if not self._async_db_initiated:
                 await self._db_accessor.setup()
                 self._async_db_initiated = True
-
+        return await self._db_accessor.execute(sql, args, commit, **kwargs)
 
     # ===================================================
     # =============== DB Helper Functions ===============
@@ -273,6 +273,13 @@ class PooledQueryExecutor:
         """ Fetch all data and have it returned as a dictionary """
         return self.execute(sql, args=args, get_dict=True, raise_exc=True, **kwargs)
 
+    async def autofetch_value_async(self, sql, args=(), **kwargs):
+        """ Fetch the first value from the first row """
+        data = await self.execute_async(sql, args=args, raise_exc=True, **kwargs)
+        if not data or len(data) == 0:
+            return None
+        return data[0][0]
+
     def autofetch_value(self, sql, args=(), **kwargs):
         """ Fetch the first value from the first row """
         # TODO: Async
@@ -280,6 +287,14 @@ class PooledQueryExecutor:
         if not data or len(data) == 0:
             return None
         return data[0][0]
+
+    async def autofetch_row_async(self, sql, args=(), **kwargs):
+        """ Fetch the first row and have it return as a dictionary """
+        # TODO - Force LIMIT 1
+        data = await self.execute_async(sql, args=args, get_dict=True, raise_exc=True, **kwargs)
+        if not data or len(data) == 0:
+            return {}
+        return data[0]
 
     def autofetch_row(self, sql, args=(), **kwargs):
         """ Fetch the first row and have it return as a dictionary """
