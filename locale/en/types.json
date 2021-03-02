@@ -143,6 +143,10 @@
     "prototext": "QUEST_BUDDY_YATTA",
     "text": ""
   },
+  "39": {
+    "prototext": "QUEST_USE_INCENSE",
+    "text": "Use an Incense"
+  },
   "43": {
     "prototext": "QUEST_MEGA_EVOLVE",
     "text": "Mega Evolve {0} Pokemon"
