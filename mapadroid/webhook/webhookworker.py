@@ -188,10 +188,9 @@ class WebhookWorker:
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
         if a_quest_reward_type == 7:
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
-            a_quest_reward["info"]["pokemon_form"] = int(quest["pokemon_form"])
-            a_quest_reward["info"]["pokemon_costume"] = int(quest.get("pokemon_costume", '0'))
+            a_quest_reward["info"]["form_id"] = int(quest["pokemon_form"])
+            a_quest_reward["info"]["costume_id"] = int(quest.get("pokemon_costume", '0'))
             a_quest_reward["info"]["shiny"] = 0
-            a_quest_reward["info"]["form"] = int(quest["pokemon_form"])
         elif a_quest_reward_type == 12:
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
