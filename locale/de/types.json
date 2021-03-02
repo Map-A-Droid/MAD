@@ -147,6 +147,10 @@
     "prototext": "QUEST_MEGA_EVOLVE",
     "text": "Mega Entwickle {0} Pokemon"
   },
+  "39": {
+    "prototext": "QUEST_USE_INCENSE",
+    "text": "Verwende einen Rauch"
+  },
   "46": {
     "protoext": "GEOTARGETED_AR_SCAN",
     "text": "Pok\u00e9stop scannen"
