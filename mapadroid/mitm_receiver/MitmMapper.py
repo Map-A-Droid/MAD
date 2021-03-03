@@ -109,7 +109,7 @@ class MitmMapper(object):
         if device_routemananger is None:
             return False
 
-        if self.__mapping_manager.routemanager_get_level(device_routemananger):
+        if await self.__mapping_manager.routemanager_get_level(device_routemananger):
             return True
 
         return False
@@ -190,14 +190,14 @@ class MitmMapper(object):
     async def get_injection_status(self, origin):
         return self.__injected.get(origin, False)
 
-    def run_stats_collector(self, origin: str):
+    async def run_stats_collector(self, origin: str):
         if not self.__application_args.game_stats:
             pass
 
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug2("Running stats collector")
         if self.__playerstats.get(origin, None) is not None:
-            self.__playerstats.get(origin).stats_collector()
+            await self.__playerstats.get(origin).stats_collector()
 
     async def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, positiontype,
                                rec_timestamp: float, walker, transporttype):
@@ -218,13 +218,13 @@ class MitmMapper(object):
         else:
             return -1
 
-    def collect_raid_stats(self, origin: str, gym_id: str):
+    async def collect_raid_stats(self, origin: str, gym_id: str):
         if self.__playerstats.get(origin, None) is not None:
-            self.__playerstats.get(origin).stats_collect_raid(gym_id)
+            await self.__playerstats.get(origin).stats_collect_raid(gym_id)
 
-    def collect_mon_stats(self, origin: str, encounter_id: str):
+    async def collect_mon_stats(self, origin: str, encounter_id: str):
         if self.__playerstats.get(origin, None) is not None:
-            self.__playerstats.get(origin).stats_collect_mon(encounter_id)
+            await self.__playerstats.get(origin).stats_collect_mon(encounter_id)
 
     def collect_mon_iv_stats(self, origin: str, encounter_id: str, shiny: int):
         if self.__playerstats.get(origin, None) is not None:

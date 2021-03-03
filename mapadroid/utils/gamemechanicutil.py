@@ -11,7 +11,7 @@ def calculate_mon_level(cp_multiplier):
 
 
 def gen_despawn_timestamp(known_despawn, timestamp):
-    if known_despawn is False:
+    if not known_despawn:
         # just set despawn time to now + 3 minutes
         # after that round down to full minutes to fix
         # possible re-scan issue updating the seconds
@@ -29,7 +29,7 @@ def gen_despawn_timestamp(known_despawn, timestamp):
             minutes=known_despawn.minute - datatime.minute,
             seconds=known_despawn.second - datatime.second,
         )
-    elif datatime.minute > known_despawn.minute:
+    else:
         despawn = (datatime + timedelta(hours=1) - timedelta(minutes=(datatime.minute - known_despawn.minute),
                                                              seconds=datatime.second - known_despawn.second))
 

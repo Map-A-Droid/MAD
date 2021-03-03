@@ -14,12 +14,14 @@ class DbAccessor:
         self.__db_engine: Optional[AsyncEngine] = None
         self.__connection_data: str = connection_data
         self.__pool_size: int = pool_size
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        self.__setup_lock = asyncio.Lock()
-        self.__db_access_semaphore: asyncio.Semaphore = asyncio.Semaphore(value=pool_size)
+        self.__setup_lock = None
+        self.__db_access_semaphore = None
 
     async def setup(self):
+        if not self.__setup_lock:
+            self.__setup_lock = asyncio.Lock()
+            self.__db_access_semaphore: asyncio.Semaphore = asyncio.Semaphore(value=self.__pool_size)
+
         async with self.__setup_lock:
             if self.__db_engine is not None:
                 return
@@ -37,17 +39,23 @@ class DbAccessor:
         return self.__db_engine
 
     async def run_in_session(self, coroutine, **kw):
+        if not self.__db_access_semaphore:
+            await self.setup()
         async with self.__db_access_semaphore:
             async with AsyncSession(self.__db_engine, autocommit=False, autoflush=True) as session:
                 return await coroutine(session, **kw)
 
     async def immediate_save(self, instance: Base):
+        if not self.__db_access_semaphore:
+            await self.setup()
         async with self.__db_access_semaphore:
             async with AsyncSession(self.__db_engine, autocommit=False, autoflush=True) as session:
                 session.add(instance)
-                session.commit()
+                await session.commit()
 
     async def execute(self, sql, args=(), commit=False, **kwargs):
+        if not self.__db_access_semaphore:
+            await self.setup()
         has_binary = False
         disp_args = []
         if args and type(args) is tuple:

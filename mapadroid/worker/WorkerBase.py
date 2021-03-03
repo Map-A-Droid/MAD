@@ -282,7 +282,7 @@ class WorkerBase(AbstractWorker):
         # check if pogo is topmost and start if necessary
         self.logger.debug4("_internal_health_check: Calling _start_pogo routine to check if pogo is topmost")
         pogo_started = False
-        with self._work_mutex:
+        async with self._work_mutex:
             self.logger.debug2("_internal_health_check: worker lock acquired")
             self.logger.debug4("Checking if we need to restart pogo")
             # Restart pogo every now and then...
@@ -336,7 +336,7 @@ class WorkerBase(AbstractWorker):
         while not self._stop_worker_event.is_set():
             try:
                 # TODO: consider getting results of health checks and aborting the entire worker?
-                walkercheck = self.check_walker()
+                walkercheck = await self.check_walker()
                 if not walkercheck:
                     await self.set_devicesettings_value('finished', True)
                     break
@@ -421,7 +421,8 @@ class WorkerBase(AbstractWorker):
 
     async def update_scanned_location(self, latitude, longitude, timestamp):
         try:
-            await self._db_wrapper.set_scanned_location(str(latitude), str(longitude))
+            await self._db_wrapper._db_exec._db_accessor.run_in_session(self._db_wrapper.set_scanned_location,
+                                                                        lat=float(latitude), lng=float(longitude))
         except Exception as e:
             self.logger.error("Failed updating scanned location: {}", e)
             return
@@ -772,7 +773,7 @@ class WorkerBase(AbstractWorker):
 
         # TODO: area settings for jpg/png and quality?
         screenshot_type: ScreenshotType = ScreenshotType.JPEG
-        if self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
+        if await self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
             screenshot_type = ScreenshotType.PNG
 
         screenshot_quality: int = await self.get_devicesettings_value("screenshot_quality", 80)

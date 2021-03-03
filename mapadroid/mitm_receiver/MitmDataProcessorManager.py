@@ -1,6 +1,8 @@
+import asyncio
 import threading
 import time
-from multiprocessing import JoinableQueue
+from asyncio import Task
+from typing import List
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -13,9 +15,9 @@ logger = get_logger(LoggerEnums.mitm)
 
 class MitmDataProcessorManager():
     def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper):
-        self._worker_threads = []
+        self._worker_threads: List[Task] = []
         self._args = args
-        self._mitm_data_queue: JoinableQueue = JoinableQueue()
+        self._mitm_data_queue: asyncio.Queue = asyncio.Queue()
         self._mitm_mapper: MitmMapper = mitm_mapper
         self._db_wrapper: DbWrapper = db_wrapper
         self._queue_check_thread = None
@@ -25,7 +27,7 @@ class MitmDataProcessorManager():
         self._queue_check_thread.daemon = True
         self._queue_check_thread.start()
 
-    def get_queue(self):
+    def get_queue(self) -> asyncio.Queue:
         return self._mitm_data_queue
 
     def get_queue_size(self):
@@ -47,7 +49,8 @@ class MitmDataProcessorManager():
 
             time.sleep(3)
 
-    def launch_processors(self):
+    async def launch_processors(self):
+        loop = asyncio.get_event_loop()
         for i in range(self._args.mitmreceiver_data_workers):
             data_processor: SerializedMitmDataProcessor = SerializedMitmDataProcessor(
                 self._mitm_data_queue,
@@ -55,18 +58,15 @@ class MitmDataProcessorManager():
                 self._mitm_mapper,
                 self._db_wrapper,
                 name="SerialiedMitmDataProcessor-%s" % str(i))
+            self._worker_threads.append(loop.create_task(data_processor.run()))
 
-            data_processor.start()
-            self._worker_threads.append(data_processor)
-
-    def shutdown(self):
+    async def shutdown(self):
+        # TODO: Stop accepting data in the queue...
         self._stop_queue_check_thread = True
+        if self._mitm_data_queue is not None:
+            await self._mitm_data_queue.join()
 
         logger.info("Stopping {} MITM data processors", len(self._worker_threads))
         for worker_thread in self._worker_threads:
-            worker_thread.terminate()
-            worker_thread.join()
+            worker_thread.cancel()
         logger.info("Stopped MITM data processors")
-
-        if self._mitm_data_queue is not None:
-            self._mitm_data_queue.close()

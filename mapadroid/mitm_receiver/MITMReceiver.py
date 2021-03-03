@@ -164,7 +164,7 @@ class EndpointAction(object):
 
 class MITMReceiver():
     def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager: MappingManager,
-                 db_wrapper, data_manager, storage_obj, data_queue: JoinableQueue,
+                 db_wrapper, data_manager, storage_obj, data_queue: asyncio.Queue,
                  name=None, enable_configmode: Optional[bool] = False):
         # Process.__init__(self, name=name)
         self.__application_args = args_passed
@@ -175,7 +175,7 @@ class MITMReceiver():
         self.__data_manager = data_manager
         self._db_wrapper = db_wrapper
         self.__storage_obj = storage_obj
-        self._data_queue: JoinableQueue = data_queue
+        self._data_queue: asyncio.Queue = data_queue
         self.app = Quart("MITMReceiver")
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
                           handler=self.get_addresses,
@@ -292,11 +292,11 @@ class MITMReceiver():
                                          timestamp_received_receiver=time.time(), key=proto_type, values_dict=data,
                                          location=location_of_data)
         origin_logger.debug2("Placing data received to data_queue")
-        self._add_to_queue((timestamp, data, origin))
+        await self._add_to_queue((timestamp, data, origin))
 
-    def _add_to_queue(self, data):
+    async def _add_to_queue(self, data):
         if self._data_queue:
-            self._data_queue.put(data)
+            await self._data_queue.put(data)
 
     async def get_latest(self, origin, data):
         injected_settings = await self.__mitm_mapper.request_latest(

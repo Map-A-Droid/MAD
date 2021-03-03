@@ -59,7 +59,7 @@ class Gym(Base):
     is_ar_scan_eligible = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
 
 
-class Gymdetail(Base):
+class GymDetail(Base):
     __tablename__ = 'gymdetails'
 
     gym_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True)
@@ -287,7 +287,7 @@ class TrsQuest(Base):
     quest_pokemon_costume_id = Column(SMALLINT(6), nullable=False, server_default=text("'0'"))
 
 
-class TrsS2cell(Base):
+class TrsS2Cell(Base):
     __tablename__ = 'trs_s2cells'
 
     id = Column(BIGINT(20), primary_key=True)

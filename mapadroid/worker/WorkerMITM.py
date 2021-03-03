@@ -67,9 +67,9 @@ class WorkerMITM(MITMBase):
             # the time we will take as a starting point to wait for data...
             timestamp_to_use = math.floor(time.time())
 
-            delay_used = self.get_devicesettings_value('post_teleport_delay', 0)
+            delay_used = await self.get_devicesettings_value('post_teleport_delay', 0)
             # Test for cooldown / teleported distance TODO: check this block...
-            if self.get_devicesettings_value('cool_down_sleep', False):
+            if await self.get_devicesettings_value('cool_down_sleep', False):
                 if distance > 10000:
                     delay_used = 15
                 elif distance > 5000:
@@ -84,7 +84,7 @@ class WorkerMITM(MITMBase):
             self.logger.info("main: Walking...")
             timestamp_to_use = self._walk_to_location(speed)
 
-            delay_used = self.get_devicesettings_value('post_walk_delay', 0)
+            delay_used = await self.get_devicesettings_value('post_walk_delay', 0)
         self.logger.debug2("Sleeping for {}s", delay_used)
         await asyncio.sleep(float(delay_used))
         await self.set_devicesettings_value("last_location", self.current_location)
@@ -121,12 +121,14 @@ class WorkerMITM(MITMBase):
             scanmode = "mons"
             routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_name)
             if routemanager_settings is not None:
-                ids_iv = await self._mapping_manager.get_monlist(self._routemanager_name)
+                # TODO: Moving to async
+                ids_iv = self._mapping_manager.get_monlist(self._routemanager_name)
         elif routemanager_mode == "raids_mitm":
             scanmode = "raids"
             routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_name)
             if routemanager_settings is not None:
-                ids_iv = await self._mapping_manager.get_monlist(self._routemanager_name)
+                # TODO: Moving to async
+                ids_iv = self._mapping_manager.get_monlist(self._routemanager_name)
         elif routemanager_mode == "iv_mitm":
             scanmode = "ivs"
             ids_iv = await self._mapping_manager.routemanager_get_encounter_ids_left(self._routemanager_name)

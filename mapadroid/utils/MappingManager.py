@@ -150,7 +150,7 @@ class MappingManager:
     async def get_areas(self) -> Optional[dict]:
         return self._areas
 
-    async def get_monlist(self, area_id):
+    def get_monlist(self, area_id):
         try:
             return self.__areamons[area_id]
         except KeyError:

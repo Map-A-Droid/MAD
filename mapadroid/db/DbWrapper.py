@@ -5,6 +5,8 @@ from datetime import datetime, timedelta, timezone
 from functools import reduce
 from typing import Dict, List, Optional, Tuple
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
@@ -12,6 +14,7 @@ from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
+from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
 from mapadroid.db.model import Scannedlocation
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
@@ -138,12 +141,13 @@ class DbWrapper:
         logger.debug4("Latest Q: {}", data)
         return data
 
-    async def set_scanned_location(self, lat, lng):
+    async def set_scanned_location(self, session: AsyncSession, lat, lng):
         """
         Update scannedlocation (in RM) of a given lat/lng
         """
         logger.debug3("DbWrapper::set_scanned_location called")
         cell_id = int(S2Helper.lat_lng_to_cell_id(float(lat), float(lng), 16))
+        scanned_location: Optional[Scannedlocation] = await ScannedLocationHelper.get(session, cell_id)
         scanned_location: Scannedlocation = Scannedlocation()
         scanned_location.cellid = cell_id
         scanned_location.latitude = lat
@@ -157,7 +161,7 @@ class DbWrapper:
         scanned_location.band5 = -1
         scanned_location.midpoint = -1
         scanned_location.width = 0
-        await self._db_accessor.immediate_save(scanned_location)
+        # await self._db_exec._db_accessor.immediate_save(scanned_location)
 
     async def check_stop_quest(self, latitude, longitude):
         """

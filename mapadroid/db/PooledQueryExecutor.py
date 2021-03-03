@@ -1,5 +1,4 @@
 from multiprocessing import Lock, Semaphore
-from multiprocessing.managers import SyncManager
 from typing import Optional
 
 import mysql
@@ -12,8 +11,8 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 logger = get_logger(LoggerEnums.database)
 
 
-class PooledQuerySyncManager(SyncManager):
-    pass
+#class PooledQuerySyncManager(SyncManager):
+#    pass
 
 
 class PooledQueryExecutor:

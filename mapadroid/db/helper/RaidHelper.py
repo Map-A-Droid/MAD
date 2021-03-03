@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,12 @@ from mapadroid.utils.collections import Location
 
 
 class RaidHelper:
+    @staticmethod
+    async def get(session: AsyncSession, gym_id: str) -> Optional[Raid]:
+        stmt = select(Raid).where(Raid.gym_id == gym_id)
+        result = await session.execute(stmt)
+        return result.scalars().first()
+
     @staticmethod
     async def get_next_hatches(session: AsyncSession, geofence_helper: GeofenceHelper = None) -> List[Tuple[float, Location]]:
         db_time_to_check = datetime.utcfromtimestamp(time.time())

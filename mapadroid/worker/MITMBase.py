@@ -115,7 +115,7 @@ class MITMBase(WorkerBase):
         # Cut off decimal places of timestamp as PD also does that...
         timestamp = int(timestamp)
         if timeout is None:
-            timeout = self.get_devicesettings_value("mitm_wait_timeout", FALLBACK_MITM_WAIT_TIMEOUT)
+            timeout = await self.get_devicesettings_value("mitm_wait_timeout", FALLBACK_MITM_WAIT_TIMEOUT)
 
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         self.logger.info('Waiting for data after {}',
@@ -166,7 +166,7 @@ class MITMBase(WorkerBase):
                                   str(latest_location))
                 check_data = False
             elif proto_to_wait_for == ProtoIdentifier.GMO:
-                check_data = self._is_location_within_allowed_range(latest_location)
+                check_data = await self._is_location_within_allowed_range(latest_location)
 
             if check_data:
                 type_of_data_returned, data = await self._check_for_data_content(
@@ -227,7 +227,7 @@ class MITMBase(WorkerBase):
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1,
                                                  self._waittime_without_delays,
                                                  position_type, time.time(),
-                                                 self._mapping_manager.routemanager_get_mode(
+                                                 await self._mapping_manager.routemanager_get_mode(
                                                      self._routemanager_name), self._transporttype)
 
     async def raise_stop_worker_if_applicable(self):
@@ -402,7 +402,7 @@ class MITMBase(WorkerBase):
         self.logger.debug('Reboot Option: {}', await self.get_devicesettings_value("reboot", True))
         self.logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
         self.logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
-        routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
+        routemanager_status = await self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
                                                                                  self._origin)
         if routemanager_status is None:
             self.logger.warning("Routemanager of {} not available to update stats", self._origin)
@@ -429,7 +429,7 @@ class MITMBase(WorkerBase):
         if self._rec_data_time:
             save_data['lastProtoDateTime'] = 'NOW()'
             self._rec_data_time = None
-        await self._db_wrapper.save_status(save_data)
+        self._db_wrapper.save_status(save_data) # TODO async
 
     async def _worker_specific_setup_stop(self):
         self.logger.info("Stopping pogodroid")

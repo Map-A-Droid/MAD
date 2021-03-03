@@ -185,7 +185,7 @@ async def start():
                      " -or    ---- only calculate routes")
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
-    db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
+    db_wrapper, db_exec = DbFactory.get_wrapper(args)
     try:
         instance_id = db_wrapper.get_instance_id()
     except Exception:
@@ -229,7 +229,7 @@ async def start():
 
     # TODO: Enable and properly integrate...
     mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper)
-    #mitm_data_processor_manager.launch_processors()
+    await mitm_data_processor_manager.launch_processors()
 
     mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                          mitm_mapper, args, mapping_manager, db_wrapper,
@@ -373,9 +373,9 @@ async def start():
             if storage_manager is not None:
                 logger.debug('Stopping storage manager')
                 storage_manager.shutdown()
-            if db_pool_manager is not None:
+            if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
-                db_pool_manager.shutdown()
+                db_exec.shutdown()
                 logger.debug("Done shutting down db_pool_manager")
         except Exception:
             logger.opt(exception=True).critical("An unhanded exception occurred during shutdown!")
@@ -399,4 +399,3 @@ if __name__ == "__main__":
     except (KeyboardInterrupt, Exception) as e:
         #shutdown(loop_being_run)
         logger.info(f"Shutting down. {e}")
-

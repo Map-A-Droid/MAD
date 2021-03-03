@@ -82,7 +82,7 @@ class WorkerFactory:
         while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
                 and walker_index < len(walker_area_array):
             origin_logger.info('not using area {} - Walkervalue out of range',
-                               self.__mapping_manager.routemanager_get_name(walker_area_name))
+                               await self.__mapping_manager.routemanager_get_name(walker_area_name))
             if walker_index >= len(walker_area_array) - 1:
                 origin_logger.warning('Cannot find any active area defined for current time. Check Walker entries')
                 walker_index = 0
