@@ -67,7 +67,7 @@ class DbPogoProtoSubmit:
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
 
-                mitm_mapper.collect_mon_stats(origin, str(encounter_id))
+                await mitm_mapper.collect_mon_stats(origin, str(encounter_id))
 
                 now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 

@@ -207,7 +207,7 @@ class WorkerQuests(MITMBase):
             delay_used = -1
 
         if await self.get_devicesettings_value('screendetection', True) and \
-                self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
+                await self._word_to_screen_matching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
                 and await self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
             # Waiting time to long and more then one account - switch! (not level mode!!)
             self.logger.info('Could use more then 1 account - switch & no cooldown')

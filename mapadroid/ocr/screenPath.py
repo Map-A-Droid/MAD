@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import time
@@ -12,6 +13,7 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Login_GGL, Login_PTC
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import ScreenshotType
+from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 
 logger = get_logger(LoggerEnums.ocr)
 
@@ -23,7 +25,9 @@ class LoginType(Enum):
 
 
 class WordToScreenMatching(object):
-    def __init__(self, communicator, pogo_win_manager, origin, resocalc, mapping_mananger: MappingManager, args):
+    def __init__(self, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
+                 mapping_mananger: MappingManager, args):
+        # TODO: Somehow prevent call from elsewhere? Raise exception and only init in WordToScreenMatching.create?
         self.origin = origin
         self._logger = get_origin_logger(logger, origin=origin)
         self._applicationArgs = args
@@ -34,23 +38,33 @@ class WordToScreenMatching(object):
         self._PTC_accounts: List[Login_PTC] = []
         self._GGL_accounts: List[Login_GGL] = []
         self._accountcount: int = 0
-        self._accountindex: int = self.get_devicesettings_value('accountindex', 0)
-        self._screenshot_y_offset: int = self.get_devicesettings_value('screenshot_y_offset', 0)
+        self._accountindex: int = 0
+        self._screenshot_y_offset: int = 0
         self._nextscreen: ScreenType = ScreenType.UNDEFINED
 
         self._pogoWindowManager = pogo_win_manager
-        self._communicator = communicator
+        self._communicator: AbstractCommunicator = communicator
         self._resocalc = resocalc
         self._logger.info("Starting Screendetector")
         self._width: int = 0
         self._height: int = 0
-        self.get_login_accounts()
 
-    def get_login_accounts(self):
-        self._logintype = LoginType[self.get_devicesettings_value('logintype', 'google')]
+    @classmethod
+    async def create(cls, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
+                 mapping_mananger: MappingManager, args):
+        self = WordToScreenMatching(communicator=communicator, pogo_win_manager=pogo_win_manager,
+                                    origin=origin, resocalc=resocalc, mapping_mananger=mapping_mananger,
+                                    args=args)
+        self._accountindex = await self.get_devicesettings_value('accountindex', 0)
+        self._screenshot_y_offset = await self.get_devicesettings_value('screenshot_y_offset', 0)
+        await self.get_login_accounts()
+        return self
+
+    async def get_login_accounts(self) -> None:
+        self._logintype = LoginType[await self.get_devicesettings_value('logintype', 'google')]
         self._logger.info("Set logintype: {}", self._logintype)
         if self._logintype == LoginType.ptc:
-            temp_accounts = self.get_device_value('ptc_login', [])
+            temp_accounts = await self.get_device_value('ptc_login', [])
             if not temp_accounts:
                 self._logger.warning('No PTC Accounts are set - hope we are login and never logout!')
                 self._accountcount = 0
@@ -59,7 +73,7 @@ class WordToScreenMatching(object):
                 self._PTC_accounts.append(Login_PTC(username, password))
             self._accountcount = len(self._PTC_accounts)
         else:
-            temp_accounts = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
+            temp_accounts = await self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
             if not temp_accounts:
                 self._logger.warning('No GGL Accounts are set - using first @gmail.com Account')
             temp_accounts = temp_accounts.replace(' ', '').split('|')
@@ -69,9 +83,8 @@ class WordToScreenMatching(object):
             self._accountcount = len(self._GGL_accounts)
 
         self._logger.info('Added {} account(s) to memory', self._accountcount)
-        return
 
-    def get_next_account(self):
+    async def get_next_account(self):
         if self._accountcount == 0:
             self._logger.info('Cannot return new account - no one is set')
             return None
@@ -82,7 +95,7 @@ class WordToScreenMatching(object):
             self._logger.info('Request next Account - Restarting with Nr. 1')
             self._accountindex = 0
 
-        self.set_devicesettings_value('accountindex', self._accountindex)
+        await self.set_devicesettings_value('accountindex', self._accountindex)
 
         if self._logintype == LoginType.ptc:
             self._logger.info('Using PTC Account: {}',
@@ -93,9 +106,10 @@ class WordToScreenMatching(object):
                               self.censor_account(self._GGL_accounts[self._accountindex - 1].username))
             return self._GGL_accounts[self._accountindex - 1]
 
-    def return_memory_account_count(self):
+    async def return_memory_account_count(self):
         return self._accountcount
 
+    # TODO: unused?
     def check_lines(self, lines, height):
         temp_lines = []
         sort_lines = []
@@ -138,18 +152,18 @@ class WordToScreenMatching(object):
         elif self._nextscreen != ScreenType.UNDEFINED:
             # TODO: how can the nextscreen be known in the current? o.O
             return self._nextscreen, global_dict, diff
-        elif not self.get_devicesettings_value('screendetection', True):
+        elif not await self.get_devicesettings_value('screendetection', True):
             self._logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:
-            if not await self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1),
+            if not await self._take_screenshot(delay_before=await self.get_devicesettings_value("post_screenshot_delay", 1),
                                          delay_after=2):
                 self._logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR, global_dict, diff
 
-            screenpath = self.get_screenshot_path()
+            screenpath = await self.get_screenshot_path()
 
-            result = self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self.origin)
+            result = await self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self.origin)
             if result is None:
                 self._logger.error("Failed analyzing screen")
                 return ScreenType.ERROR, global_dict, diff
@@ -172,7 +186,7 @@ class WordToScreenMatching(object):
 
         return returntype, global_dict, diff
 
-    def __handle_login_screen(self, global_dict: dict, diff: int) -> None:
+    async def __handle_login_screen(self, global_dict: dict, diff: int) -> None:
         temp_dict: dict = {}
         n_boxes = len(global_dict['text'])
         self._logger.debug("Selecting login with: {}", global_dict)
@@ -187,85 +201,85 @@ class WordToScreenMatching(object):
             if 'Google' in (global_dict['text'][i]):
                 temp_dict['Google'] = global_dict['top'][i] / diff
 
-            if self.get_devicesettings_value('logintype', 'google') == 'ptc':
+            if await self.get_devicesettings_value('logintype', 'google') == 'ptc':
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
-                    self._click_center_button(diff, global_dict, i)
-                    time.sleep(5)
+                    await self._click_center_button(diff, global_dict, i)
+                    await asyncio.sleep(5)
                     return
 
                 # alternative select - calculate down from Facebook button
                 elif 'Facebook' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + 2 * self._height / 10.11)
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(5)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(5)
                     return
 
                 # alternative select - calculate down from Google button
                 elif 'Google' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Google'] + self._height / 10.11)
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(5)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(5)
                     return
 
             else:
                 self._nextscreen = ScreenType.UNDEFINED
                 if 'Google' in (global_dict['text'][i]):
-                    self._click_center_button(diff, global_dict, i)
-                    time.sleep(5)
+                    await self._click_center_button(diff, global_dict, i)
+                    await asyncio.sleep(5)
                     return
 
                 # alternative select
                 elif 'Facebook' in temp_dict and 'CLUB' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + ((temp_dict['CLUB'] - temp_dict['Facebook']) / 2))
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(5)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(5)
                     return
 
                 # alternative select
                 elif 'Facebook' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + self._height / 10.11)
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(5)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(5)
                     return
 
                 # alternative select
                 elif 'CLUB' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['CLUB'] - self._height / 10.11)
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(5)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(5)
                     return
 
-    def _click_center_button(self, diff, global_dict, i) -> None:
+    async def _click_center_button(self, diff, global_dict, i) -> None:
         (x, y, w, h) = (global_dict['left'][i], global_dict['top'][i],
                         global_dict['width'][i], global_dict['height'][i])
         self._logger.debug("Diff: {}", diff)
         click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
-        self._communicator.click(click_x, click_y)
+        await self._communicator.click(click_x, click_y)
 
-    def __handle_screentype(self, screentype: ScreenType,
+    async def __handle_screentype(self, screentype: ScreenType,
                             global_dict: Optional[dict] = None, diff: int = -1) -> ScreenType:
         if screentype == ScreenType.UNDEFINED:
             self._logger.warning("Undefined screentype, abandon ship...")
         elif screentype == ScreenType.BIRTHDATE:
-            self.__handle_birthday_screen()
+            await self.__handle_birthday_screen()
         elif screentype == ScreenType.RETURNING:
-            self.__handle_returning_player_or_wrong_credentials()
+            await self.__handle_returning_player_or_wrong_credentials()
         elif screentype == ScreenType.LOGINSELECT:
-            self.__handle_login_screen(global_dict, diff)
+            await self.__handle_login_screen(global_dict, diff)
         elif screentype == ScreenType.PTC:
-            return self.__handle_ptc_login()
+            return await self.__handle_ptc_login()
         elif screentype == ScreenType.FAILURE:
-            self.__handle_failure_screen()
+            await self.__handle_failure_screen()
         elif screentype == ScreenType.RETRY:
-            self.__handle_retry_screen(diff, global_dict)
+            await self.__handle_retry_screen(diff, global_dict)
         elif screentype == ScreenType.WRONG:
-            self.__handle_returning_player_or_wrong_credentials()
+            await self.__handle_returning_player_or_wrong_credentials()
             screentype = ScreenType.ERROR
         elif screentype == ScreenType.GAMEDATA:
             self._nextscreen = ScreenType.UNDEFINED
@@ -276,7 +290,7 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.CREDENTIALS:
             screentype = self.__handle_permissions_screen(screentype)
         elif screentype == ScreenType.MARKETING:
-            self.__handle_marketing_screen(diff, global_dict)
+            await self.__handle_marketing_screen(diff, global_dict)
         elif screentype == ScreenType.CONSENT:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.SN:
@@ -286,7 +300,7 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.NOGGL:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.STRIKE:
-            self.__handle_strike_screen(diff, global_dict)
+            await self.__handle_strike_screen(diff, global_dict)
         elif screentype == ScreenType.SUSPENDED:
             self._nextscreen = ScreenType.UNDEFINED
             self._logger.warning('Account temporarily banned!')
@@ -296,7 +310,7 @@ class WordToScreenMatching(object):
             self._logger.error('Account permabanned!')
             screentype = ScreenType.ERROR
         elif screentype == ScreenType.POGO:
-            screentype = self.__check_pogo_screen_ban_or_loading(screentype)
+            screentype = await self.__check_pogo_screen_ban_or_loading(screentype)
         elif screentype == ScreenType.QUEST:
             self._logger.warning("Already on quest screen")
             # TODO: consider closing quest window?
@@ -315,8 +329,8 @@ class WordToScreenMatching(object):
 
         return screentype
 
-    def __check_pogo_screen_ban_or_loading(self, screentype) -> ScreenType:
-        backgroundcolor = self._pogoWindowManager.most_frequent_colour(self.get_screenshot_path(), self.origin)
+    async def __check_pogo_screen_ban_or_loading(self, screentype) -> ScreenType:
+        backgroundcolor = await self._pogoWindowManager.most_frequent_colour(await self.get_screenshot_path(), self.origin)
         if backgroundcolor is not None and (
                 backgroundcolor[0] == 0 and
                 backgroundcolor[1] == 0 and
@@ -331,59 +345,59 @@ class WordToScreenMatching(object):
             screentype = ScreenType.STRIKE
         return screentype
 
-    def __handle_strike_screen(self, diff, global_dict) -> None:
+    async def __handle_strike_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
         self._logger.warning('Got a black strike warning!')
         click_text = 'GOT IT,ALLES KLAR'
         n_boxes = len(global_dict['text'])
         for i in range(n_boxes):
             if any(elem.lower() in (global_dict['text'][i].lower()) for elem in click_text.split(",")):
-                self._click_center_button(diff, global_dict, i)
-                time.sleep(2)
+                await self._click_center_button(diff, global_dict, i)
+                await asyncio.sleep(2)
 
-    def __handle_marketing_screen(self, diff, global_dict) -> None:
+    async def __handle_marketing_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.POGO
         click_text = 'ERLAUBEN,ALLOW,AUTORISER'
         n_boxes = len(global_dict['text'])
         for i in range(n_boxes):
             if any(elem.lower() in (global_dict['text'][i].lower()) for elem in click_text.split(",")):
-                self._click_center_button(diff, global_dict, i)
-                time.sleep(2)
+                await self._click_center_button(diff, global_dict, i)
+                await asyncio.sleep(2)
 
-    def __handle_permissions_screen(self, screentype) -> ScreenType:
+    async def __handle_permissions_screen(self, screentype) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
-        if not self.parse_permission(self._communicator.uiautomator()):
+        if not await self.parse_permission(await self._communicator.uiautomator()):
             screentype = ScreenType.ERROR
-        time.sleep(2)
+        await asyncio.sleep(2)
         return screentype
 
-    def __handle_google_login(self, screentype) -> ScreenType:
+    async def __handle_google_login(self, screentype) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
         if self._logintype == LoginType.ptc:
             self._logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
-            username = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
+            username = await self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
         else:
-            ggl_login = self.get_next_account()
+            ggl_login = await self.get_next_account()
             username = ggl_login.username
-        if self.parse_ggl(self._communicator.uiautomator(), username):
+        if await self.parse_ggl(await self._communicator.uiautomator(), username):
             self._logger.info("Sleeping 50 seconds - please wait!")
-            time.sleep(50)
+            await asyncio.sleep(50)
         else:
             screentype = ScreenType.ERROR
         return screentype
 
-    def __handle_retry_screen(self, diff, global_dict) -> None:
+    async def __handle_retry_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
         click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
         n_boxes = len(global_dict['text'])
         for i in range(n_boxes):
             if any(elem in (global_dict['text'][i]) for elem in click_text.split(",")):
-                self._click_center_button(diff, global_dict, i)
-                time.sleep(2)
+                await self._click_center_button(diff, global_dict, i)
+                await asyncio.sleep(2)
 
-    def __handle_ptc_login(self) -> ScreenType:
+    async def __handle_ptc_login(self) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
-        ptc = self.get_next_account()
+        ptc = await self.get_next_account()
         if not ptc:
             self._logger.error('No PTC Username and Password is set')
             return ScreenType.ERROR
@@ -403,47 +417,47 @@ class WordToScreenMatching(object):
             self._logger.error("Unhandled ratio, unlikely to be the case. Do open a github issue")
             return ScreenType.ERROR
         # username
-        self._communicator.click(self._width / 2, username_y)
-        time.sleep(.5)
-        self._communicator.enter_text(ptc.username)
-        self._communicator.click(100, 100)
-        time.sleep(2)
+        await self._communicator.click(int(self._width / 2), int(username_y))
+        await asyncio.sleep(.5)
+        await self._communicator.enter_text(ptc.username)
+        await self._communicator.click(100, 100)
+        await asyncio.sleep(2)
         # password
-        self._communicator.click(self._width / 2, password_y)
-        time.sleep(.5)
-        self._communicator.enter_text(ptc.password)
-        self._communicator.click(100, 100)
-        time.sleep(2)
+        await self._communicator.click(int(self._width / 2), int(password_y))
+        await asyncio.sleep(.5)
+        await self._communicator.enter_text(ptc.password)
+        await self._communicator.click(100, 100)
+        await asyncio.sleep(2)
         # button
-        self._communicator.click(self._width / 2, button_y)
+        await self._communicator.click(int(self._width / 2), int(button_y))
         self._logger.info("Sleeping 50 seconds - please wait!")
-        time.sleep(50)
+        await asyncio.sleep(50)
         return ScreenType.PTC
 
-    def __handle_failure_screen(self) -> None:
-        self.__handle_returning_player_or_wrong_credentials()
+    async def __handle_failure_screen(self) -> None:
+        await self.__handle_returning_player_or_wrong_credentials()
 
-    def __handle_returning_player_or_wrong_credentials(self) -> None:
+    async def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        self._pogoWindowManager.look_for_button(self.origin, self.get_screenshot_path(), 2.20, 3.01, self._communicator,
-                                                upper=True)
-        time.sleep(2)
+        await self._pogoWindowManager.look_for_button(self.origin, await self.get_screenshot_path(), 2.20, 3.01,
+                                                      self._communicator, upper=True)
+        await asyncio.sleep(2)
 
-    def __handle_birthday_screen(self) -> None:
+    async def __handle_birthday_screen(self) -> None:
         self._nextscreen = ScreenType.RETURNING
-        click_x = (self._width / 2) + (self._width / 4)
-        click_y = (self._height / 1.69) + self._screenshot_y_offset
-        self._communicator.click(click_x, click_y)
-        self._communicator.touch_and_hold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
-        time.sleep(1)
-        self._communicator.touch_and_hold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
-        time.sleep(1)
-        self._communicator.click(click_x, click_y)
-        time.sleep(1)
-        click_x = self._width / 2
-        click_y = click_y + (self._height / 8.53)
-        self._communicator.click(click_x, click_y)
-        time.sleep(1)
+        click_x = int((self._width / 2) + (self._width / 4))
+        click_y = int((self._height / 1.69) + self._screenshot_y_offset)
+        await self._communicator.click(click_x, click_y)
+        await self._communicator.touch_and_hold(click_x, click_y, click_x, int(click_y - (self._height / 2)), 200)
+        await asyncio.sleep(1)
+        await self._communicator.touch_and_hold(click_x, click_y, click_x, int(click_y - (self._height / 2)), 200)
+        await asyncio.sleep(1)
+        await self._communicator.click(click_x, click_y)
+        await asyncio.sleep(1)
+        click_x = int(self._width / 2)
+        click_y = int(click_y + (self._height / 8.53))
+        await self._communicator.click(click_x, click_y)
+        await asyncio.sleep(1)
 
     async def detect_screentype(self) -> ScreenType:
         topmostapp = await self._communicator.topmost_app()
@@ -453,13 +467,13 @@ class WordToScreenMatching(object):
 
         screentype, global_dict, diff = await self.__evaluate_topmost_app(topmost_app=topmostapp)
         self._logger.info("Processing Screen: {}", str(ScreenType(screentype)))
-        return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
+        return await self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
-    def check_quest(self, screenpath: str) -> ScreenType:
+    async def check_quest(self, screenpath: str) -> ScreenType:
         if screenpath is None or len(screenpath) == 0:
             self._logger.error("Invalid screen path: {}", screenpath)
             return ScreenType.ERROR
-        globaldict = self._pogoWindowManager.get_screen_text(screenpath, self.origin)
+        globaldict = await self._pogoWindowManager.get_screen_text(screenpath, self.origin)
 
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         if not globaldict:
@@ -469,16 +483,16 @@ class WordToScreenMatching(object):
         for i in range(n_boxes):
             if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
                 self._logger.info('Found research menu')
-                self._communicator.click(100, 100)
+                await self._communicator.click(100, 100)
                 return ScreenType.QUEST
 
         self._logger.info('Listening to Dr. blabla - please wait')
 
-        self._communicator.back_button()
-        time.sleep(3)
+        await self._communicator.back_button()
+        await asyncio.sleep(3)
         return ScreenType.UNDEFINED
 
-    def parse_permission(self, xml) -> bool:
+    async def parse_permission(self, xml) -> bool:
         if xml is None:
             self._logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
@@ -497,18 +511,18 @@ class WordToScreenMatching(object):
 
                     click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
                     click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(2)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(2)
                     return True
         except Exception as e:
             self._logger.error('Something wrong while parsing xml: {}', e)
             return False
 
-        time.sleep(2)
+        await asyncio.sleep(2)
         self._logger.warning('Could not find any button...')
         return False
 
-    def parse_ggl(self, xml, mail: str) -> bool:
+    async def parse_ggl(self, xml, mail: str) -> bool:
         if xml is None:
             self._logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
@@ -523,24 +537,24 @@ class WordToScreenMatching(object):
                     match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
                     click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
                     click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(2)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(2)
                     return True
         except Exception as e:
             self._logger.error('Something wrong while parsing xml: {}', e)
             return False
 
-        time.sleep(2)
+        await asyncio.sleep(2)
         self._logger.warning('Dont find any mailaddress...')
         return False
 
-    def set_devicesettings_value(self, key: str, value) -> None:
-        self._mapping_manager.set_devicesetting_value_of(self.origin, key, value)
+    async def set_devicesettings_value(self, key: str, value) -> None:
+        await self._mapping_manager.set_devicesetting_value_of(self.origin, key, value)
 
-    def get_devicesettings_value(self, key: str, default_value: object = None):
+    async def get_devicesettings_value(self, key: str, default_value: object = None):
         self._logger.debug2("Fetching devicemappings")
         try:
-            devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of_sync(self.origin)
+            devicemappings: Optional[dict] = await self._mapping_manager.get_devicemappings_of(self.origin)
         except (EOFError, FileNotFoundError) as e:
             self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
             return None
@@ -548,10 +562,10 @@ class WordToScreenMatching(object):
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
 
-    def get_device_value(self, key: str, default_value: object = None):
+    async def get_device_value(self, key: str, default_value: object = None) -> Optional[List]:
         self._logger.debug2("Fetching devicemappings")
         try:
-            devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self.origin)
+            devicemappings: Optional[dict] = await self._mapping_manager.get_devicemappings_of(self.origin)
         except (EOFError, FileNotFoundError) as e:
             self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
             return None
@@ -578,10 +592,10 @@ class WordToScreenMatching(object):
                 return ("*" * len(user) + "@" + domain)
         return emailaddress
 
-    def get_screenshot_path(self, fileaddon: bool = False) -> str:
+    async def get_screenshot_path(self, fileaddon: bool = False) -> str:
         screenshot_ending: str = ".jpg"
         addon: str = ""
-        if self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
+        if await self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
             screenshot_ending = ".png"
 
         if fileaddon:
@@ -597,16 +611,16 @@ class WordToScreenMatching(object):
 
     async def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
         self._logger.debug("Taking screenshot...")
-        time.sleep(delay_before)
+        await asyncio.sleep(delay_before)
 
         # TODO: area settings for jpg/png and quality?
         screenshot_type: ScreenshotType = ScreenshotType.JPEG
-        if self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
+        if await self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
             screenshot_type = ScreenshotType.PNG
 
         screenshot_quality: int = 80
 
-        take_screenshot = await self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
+        take_screenshot = await self._communicator.get_screenshot(await self.get_screenshot_path(fileaddon=errorscreen),
                                                             screenshot_quality, screenshot_type)
 
         if not take_screenshot:
@@ -616,5 +630,5 @@ class WordToScreenMatching(object):
         else:
             self._logger.debug("Success retrieving screenshot")
             self._lastScreenshotTaken = time.time()
-            time.sleep(delay_after)
+            await asyncio.sleep(delay_after)
             return True

@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Dict, Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screen_type import ScreenType
@@ -23,6 +24,7 @@ from mapadroid.utils.resolution import Resocalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
+from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.worker)
 
@@ -53,13 +55,9 @@ class WorkerBase(AbstractWorker):
         self._origin: str = origin
         self._applicationArgs = args
         self._last_known_state = last_known_state
-        self._work_mutex = asyncio.Lock()
         self._location_count = 0
-        self._init: bool = self._mapping_manager.routemanager_get_init(self._routemanager_name)
         self._walker: Dict = walker
-
         self._lastScreenshotTaken = 0
-        self._stop_worker_event = asyncio.Event()
         self._db_wrapper: DbWrapper = db_wrapper
         self._resocalc = Resocalculator
         self._screen_x = 0
@@ -73,20 +71,18 @@ class WorkerBase(AbstractWorker):
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
         self._loginerrorcounter: int = 0
         self._wait_again: int = 0
-        # TODO: Move to init to use asyncio
-        self._mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
-        self._levelmode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
-        self._geofencehelper = self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name)
-
         self.current_location = Location(0.0, 0.0)
-
         self.last_location = Location(0.0, 0.0)
-
         self.workerstart = None
-        self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager,
-                                                          self._origin,
-                                                          self._resocalc, mapping_manager,
-                                                          self._applicationArgs)
+
+        # Async relevant variables that are initiated in start_worker
+        self._work_mutex: Optional[asyncio.Lock] = None
+        self._init: bool = False
+        self._stop_worker_event: Optional[asyncio.Event] = None
+        self._mode: WorkerType = WorkerType.UNDEFINED
+        self._levelmode: bool = False
+        self._geofencehelper: Optional[GeofenceHelper] = None
+        self._word_to_screen_matching: Optional[WordToScreenMatching] = None
 
     async def set_devicesettings_value(self, key: str, value):
         await self._mapping_manager.set_devicesetting_value_of(self._origin, key, value)
@@ -203,15 +199,26 @@ class WorkerBase(AbstractWorker):
 
         """
         loop = asyncio.get_event_loop()
-        self.last_location = await self.get_devicesettings_value("last_location", None)
 
+        self._work_mutex: asyncio.Lock = asyncio.Lock()
+        self._init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_name)
+        self._stop_worker_event: asyncio.Event = asyncio.Event()
+        self._mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._routemanager_name)
+        self._levelmode: bool = await self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        self._geofencehelper: Optional[GeofenceHelper] = await self._mapping_manager.routemanager_get_geofence_helper(
+            self._routemanager_name)
+        self.last_location = await self.get_devicesettings_value("last_location", None)
+        self._word_to_screen_matching = await WordToScreenMatching.create(self._communicator, self._pogoWindowManager,
+                                                                          self._origin,
+                                                                          self._resocalc, self._mapping_manager,
+                                                                          self._applicationArgs)
         if await self.get_devicesettings_value('last_mode', None) is not None and \
                 await self.get_devicesettings_value('last_mode') in ("raids_mitm", "mon_mitm", "iv_mitm"):
             # Reset last_location - no useless waiting delays (otherwise stop mode)
             self.last_location = Location(0.0, 0.0)
 
-        await self.set_devicesettings_value("last_mode",
-                                      await self._mapping_manager.routemanager_get_mode(self._routemanager_name))
+        await self.set_devicesettings_value("last_mode", await self._mapping_manager.routemanager_get_mode(
+            self._routemanager_name))
         return loop.create_task(self._main_work_thread())
 
     async def stop_worker(self):
@@ -551,7 +558,7 @@ class WorkerBase(AbstractWorker):
         screen_type: ScreenType = ScreenType.UNDEFINED
         while not self._stop_worker_event.is_set():
             # TODO: Make this not block the loop somehow... asyncio waiting for a thread?
-            screen_type: ScreenType = await self._WordToScreenMatching.detect_screentype()
+            screen_type: ScreenType = await self._word_to_screen_matching.detect_screentype()
             if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
                 self._last_screen_type = screen_type
                 self._loginerrorcounter = 0
@@ -760,7 +767,7 @@ class WorkerBase(AbstractWorker):
             return None
 
         self.logger.debug2("_get_trash_positions: checking screen")
-        trashes = self._pogoWindowManager.get_trash_click_positions(self._origin, await self.get_screenshot_path(),
+        trashes = await self._pogoWindowManager.get_trash_click_positions(self._origin, await self.get_screenshot_path(),
                                                                     full_screen=full_screen)
 
         return trashes
@@ -812,7 +819,7 @@ class WorkerBase(AbstractWorker):
             return False
 
         self.logger.debug("_check_pogo_main_screen: checking mainscreen")
-        while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._origin):
+        while not await self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._origin):
             self.logger.info("_check_pogo_main_screen: not on Mainscreen...")
             if attempts == max_attempts:
                 # could not reach raidtab in given max_attempts
@@ -820,19 +827,19 @@ class WorkerBase(AbstractWorker):
                                     max_attempts)
                 return False
 
-            found = self._pogoWindowManager.check_close_except_nearby_button(await self.get_screenshot_path(),
+            found = await self._pogoWindowManager.check_close_except_nearby_button(await self.get_screenshot_path(),
                                                                              self._origin,
                                                                              self._communicator,
                                                                              close_raid=True)
             if found:
                 self.logger.debug("_check_pogo_main_screen: Found (X) button (except nearby)")
 
-            if not found and self._pogoWindowManager.look_for_button(self._origin, screenshot_path, 2.20, 3.01,
+            if not found and await self._pogoWindowManager.look_for_button(self._origin, screenshot_path, 2.20, 3.01,
                                                                      self._communicator):
                 self.logger.debug("_check_pogo_main_screen: Found button (small)")
                 found = True
 
-            if not found and self._pogoWindowManager.look_for_button(self._origin, screenshot_path, 1.05, 2.20,
+            if not found and await self._pogoWindowManager.look_for_button(self._origin, screenshot_path, 1.05, 2.20,
                                                                      self._communicator):
                 self.logger.debug("_check_pogo_main_screen: Found button (big)")
                 await asyncio.sleep(5)
@@ -861,13 +868,13 @@ class WorkerBase(AbstractWorker):
 
         self.logger.debug("checkPogoButton: checking for buttons")
         # TODO: need to be non-blocking
-        found = self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 2.20, 3.01,
+        found = await self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 2.20, 3.01,
                                                         self._communicator)
         if found:
             await asyncio.sleep(1)
             self.logger.debug("checkPogoButton: Found button (small)")
 
-        if not found and self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 1.05, 2.20,
+        if not found and await self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 1.05, 2.20,
                                                                  self._communicator):
             self.logger.debug("checkPogoButton: Found button (big)")
             found = True
@@ -898,7 +905,8 @@ class WorkerBase(AbstractWorker):
                 self.logger.debug("checkPogoClose: Could not get screenshot")
                 return False
 
-        if os.path.isdir(self.get_screenshot_path()):
+        # TODO: Async...
+        if os.path.isdir(await self.get_screenshot_path()):
             self.logger.error("checkPogoClose: screenshot.png is not a file/corrupted")
             return False
 

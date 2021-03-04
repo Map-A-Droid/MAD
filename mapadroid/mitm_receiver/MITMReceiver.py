@@ -7,11 +7,9 @@ import sys
 import time
 from asyncio import Task
 from functools import wraps
-from multiprocessing import JoinableQueue
 from typing import Any, Dict, Optional, Union
 
 from aiofile import async_open
-from gevent.pywsgi import WSGIServer
 # Temporary... TODO: Replace with aiohttp
 from quart import Quart, Response, request, send_file
 
@@ -231,16 +229,6 @@ class MITMReceiver():
     async def run_async(self) -> Task:
         loop = asyncio.get_event_loop()
         return loop.create_task(self.app.run_task(host=self.__listen_ip, port=int(self.__listen_port)))
-
-    def run(self):
-        # TODO: Probably gotta replace that with the ordinary app.run...
-        httpsrv = WSGIServer((self.__listen_ip, int(
-            self.__listen_port)), self.app.asgi_app, log=LogLevelChanger)
-        try:
-            httpsrv.serve_forever()
-        except KeyboardInterrupt:
-            httpsrv.close()
-            logger.info("Received STOP signal in MITMReceiver")
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, methods_passed=None):
         if methods_passed is None:
