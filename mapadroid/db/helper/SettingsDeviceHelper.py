@@ -1,0 +1,44 @@
+from sqlalchemy.future import select
+from typing import Dict, List
+
+from sqlalchemy import and_, update, func
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from mapadroid.db.model import SettingsDevice
+from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+logger = get_logger(LoggerEnums.database)
+
+
+# noinspection PyComparisonWithNone
+class SettingsDeviceHelper:
+    @staticmethod
+    async def save_last_walker_position(session: AsyncSession, instance_id: int, origin: str,
+                                        location: Location) -> None:
+        stmt = update(SettingsDevice).where(and_(SettingsDevice.instance_id == instance_id,
+                                                 SettingsDevice.name == origin)
+                                            .values(startcoords_of_walker=f"{location.lat}, {location.lng}"))
+        await session.execute(stmt)
+
+    @staticmethod
+    async def get_duplicate_mac_entries(session: AsyncSession) -> Dict[str, List[SettingsDevice]]:
+        """
+        Used to be called in MADmin-constructor...
+        Returns: Dictionary with MAC-addresses as keys and all devices that have that MAC assigned. There are only
+        entries inserted IF there is more than one device for the given MAC...
+        """
+        stmt = select("mac_address", SettingsDevice)\
+            .select_from(SettingsDevice)\
+            .group_by(SettingsDevice.mac_address)\
+            .having(and_(func.count("*") > 1,
+                         SettingsDevice.mac_address != None))
+        result = await session.execute(stmt)
+        duplicates: Dict[str, List[SettingsDevice]] = {}
+        for mac_address, device in result:
+            logger.warning("Duplicate MAC `{}` detected on devices {}", mac_address, device.name)
+            if mac_address not in duplicates:
+                duplicates[mac_address] = []
+            duplicates[mac_address].append(device)
+        return duplicates

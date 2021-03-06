@@ -1,4 +1,5 @@
 import sys
+from typing import Tuple
 
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -29,7 +30,7 @@ class GeofenceHelper:
             logger.debug2("Loaded {} geofenced and {} excluded areas.", len(self.geofenced_areas),
                           len(self.excluded_areas))
 
-    def get_polygon_from_fence(self):
+    def get_polygon_from_fence(self) -> Tuple[float, float, float, float]:
         max_lat, min_lat, max_lon, min_lon = -90, 90, -180, 180
         if self.geofenced_areas:
             for va in self.geofenced_areas:
@@ -55,8 +56,8 @@ class GeofenceHelper:
             return True
         return False
 
+    # TODO: Async/Threaded?
     def get_geofenced_coordinates(self, coordinates):
-
         # Import: We are working with n-tuples in some functions be carefull
         # and do not break compatibility
         logger.debug('Using matplotlib: {}.', self.use_matplotlib)

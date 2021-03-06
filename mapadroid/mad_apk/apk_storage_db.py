@@ -7,8 +7,9 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKType
-from .custom_types import MADPackage, MADPackages
+from .custom_types import MADPackages
 from .utils import generate_filename
+from ..db.helper.MadApkHelper import MadApkHelper
 
 logger = get_logger(LoggerEnums.storage)
 
@@ -36,21 +37,11 @@ class APKStorageDatabase(AbstractAPKStorage):
             package (APKType): Package to lookup
             architecture (APKArch): Architecture of the package to lookup
         """
-        filestore_id_sql: str = "SELECT `filestore_id` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
-        filestore_id: Optional[int] = self.dbc.autofetch_value(filestore_id_sql,
-                                                               args=(package.value, architecture.value,))
-        if filestore_id:
-            delete_data = {
-                'filestore_id': filestore_id
-            }
-            self.dbc.autoexec_delete('filestore_meta', delete_data)
-            return True
-        return False
+        return await MadApkHelper.delete_file(session, package, architecture)
 
     def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
         "Get the currently installed version of the package / architecture"
-        sql: str = "SELECT `version` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
-        return self.dbc.autofetch_value(sql, (package.value, architecture.value))
+        return await MadApkHelper.get_current_version(session, package, architecture)
 
     def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
         """ Get the current information for a given package.  If the package exists in the configuration but not the
@@ -62,19 +53,7 @@ class APKStorageDatabase(AbstractAPKStorage):
         Returns:
             None if no package is found.  MADPackages if the package lookup is successful
         """
-        data = MADPackages()
-        sql = "SELECT ma.`version`, ma.`arch`, fm.`filename`, fm.`size`, fm.`mimetype`\n"\
-              "FROM `mad_apks` ma\n"\
-              "INNER JOIN `filestore_meta` fm ON fm.`filestore_id` = ma.`filestore_id`\n"\
-              "WHERE ma.`usage` = %s"
-        for row in self.dbc.autofetch_all(sql, (package.value)):
-            arch = row['arch']
-            row['arch_disp'] = APKArch(arch).name
-            row['usage_disp'] = APKType(package).name
-            data[APKArch(arch)] = MADPackage(APKType(package), APKArch(arch), **row)
-        if data:
-            return data
-        return None
+        return await MadApkHelper.get_current_package_info(session, package)
 
     def get_storage_type(self) -> str:
         return 'db'

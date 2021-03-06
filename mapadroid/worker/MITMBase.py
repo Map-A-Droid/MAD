@@ -429,6 +429,7 @@ class MITMBase(WorkerBase):
         if self._rec_data_time:
             save_data['lastProtoDateTime'] = 'NOW()'
             self._rec_data_time = None
+        # TODO: TrsStatusHelper.get() and then update accordingly...
         self._db_wrapper.save_status(save_data) # TODO async
 
     async def _worker_specific_setup_stop(self):

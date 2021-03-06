@@ -612,6 +612,7 @@ class MADminStatistics(object):
             'lastPogoReboot': 0,
 
         }
+        TrsStatusHelper.reset_status(device_id=deviceid)
         self._db.save_status(save_data)
         return jsonify({'status': 'success'})
 
@@ -673,6 +674,7 @@ class MADminStatistics(object):
         area_id = request.args.get('area_id', None)
         event_id = request.args.get('event_id', None)
         event = request.args.get('event', None)
+        # TODO: GODDAMN... just fetch the event and check the datetime instance...
         if self._db.check_if_event_is_active(event_id):
             flash('Event is still active - cannot convert this spawnpoint now.')
             return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)

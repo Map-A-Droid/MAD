@@ -1,10 +1,13 @@
 from multiprocessing import Lock, Semaphore
-from typing import Optional
+from typing import Optional, Union
 
+import aioredis as aioredis
 import mysql
+from aioredis import Redis
 from mysql.connector import ProgrammingError
 from mysql.connector.pooling import MySQLConnectionPool
 
+from mapadroid.cache import NoopCache
 from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -16,7 +19,9 @@ logger = get_logger(LoggerEnums.database)
 
 
 class PooledQueryExecutor:
-    def __init__(self, host, port, username, password, database, poolsize=1):
+    def __init__(self, args, host, port, username, password, database, poolsize=1):
+        # TODO: Create redis cache elsewhere...
+        self.args = args
         self.host = host
         self.port = port
         self.user = username
@@ -30,7 +35,24 @@ class PooledQueryExecutor:
         self._connection_semaphore = Semaphore(poolsize)
         self._db_accessor: Optional[DbAccessor] = None
         self._async_db_initiated = False
+        self._redis_cache: Optional[Union[Redis, NoopCache]] = None
         self._init_pool()
+
+    async def setup(self):
+        # TODO: Shutdown...
+        with self._pool_mutex:
+            if self.args.enable_cache:
+                self._redis_cache: Redis = await aioredis.create_redis_pool(address=(self.args.cache_host,
+                                                                                     self.args.cache_port),
+                                                                            password=self.args.cache_password,
+                                                                            db=self.args.cache_database)
+            else:
+                self._redis_cache: NoopCache = NoopCache()
+
+    async def get_cache(self) -> Optional[Union[Redis, NoopCache]]:
+        if self._redis_cache is None:
+            await self.setup()
+        return self._redis_cache
 
     def _init_pool(self):
         logger.info("Connecting to DB")

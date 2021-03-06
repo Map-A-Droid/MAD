@@ -733,7 +733,7 @@ class SettingsDevice(Base):
     walker = relationship('SettingsWalker')
 
 
-class TrsStatu(SettingsDevice):
+class TrsStatus(SettingsDevice):
     __tablename__ = 'trs_status'
 
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)

@@ -74,10 +74,6 @@ class JoinQueue(object):
         self._joinqueue.put(item)
 
 
-# class MappingManagerManager(SyncManager):
-#    pass
-
-
 class MappingManager:
     def __init__(self, db_wrapper: DbWrapper, args, data_manager, configmode: bool = False):
         self.__db_wrapper: DbWrapper = db_wrapper
@@ -94,7 +90,7 @@ class MappingManager:
         self.__shutdown_event: Event = Event()
         self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
         self.__mappings_mutex: Lock = Lock()
-
+        self.__paused_devices: List[int] = []
         self.update(full_lock=True)
 
         self.__devicesettings_setter_queue: Queue = Queue()
@@ -108,6 +104,19 @@ class MappingManager:
 
     async def get_auths(self) -> Optional[dict]:
         return self._auths
+
+    def set_device_state(self, device_id: int, active: int) -> None:
+        if active == 1:
+            try:
+                self.__paused_devices.remove(device_id)
+            except ValueError:
+                pass
+        else:
+            if device_id not in self.__paused_devices:
+                self.__paused_devices.append(device_id)
+
+    def is_device_active(self, device_id: int) -> bool:
+        return device_id not in self.__paused_devices
 
     def get_devicemappings_of_sync(self, device_name: str) -> Optional[dict]:
         # Async method since we may move the logic to a different host

@@ -32,7 +32,7 @@ class Auth(Resource):
 
     def get_dependencies(self) -> List[Tuple[str, int]]:
         sql = 'SELECT `name`, `data` FROM `autoconfig_file` WHERE `instance_id` = %s'
-        files = self._dbc.autofetch_all(sql, args=(self._dbc.instance_id,))
+        #files = self._dbc.autofetch_all(sql, args=(self._dbc.instance_id,))
         dependencies = []
         for row in files:
             data = json.loads(row['data'])

@@ -24,9 +24,10 @@ class DbFactory:
         #PooledQuerySyncManager.register("PooledQueryExecutor", PooledQueryExecutor)
         #db_pool_manager = PooledQuerySyncManager()
         #db_pool_manager.start()
-        db_exec = PooledQueryExecutor(host=args.dbip, port=args.dbport,
+        db_exec = PooledQueryExecutor(args, host=args.dbip, port=args.dbport,
                                                       username=args.dbusername, password=args.dbpassword,
                                                       database=args.dbname, poolsize=args.db_poolsize)
-        db_wrapper = DbWrapper(db_exec=db_exec, args=args)
+        # TODO...
+        db_wrapper = DbWrapper(db_exec=db_exec, args=args, cache)
 
         return db_wrapper, db_exec

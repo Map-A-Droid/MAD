@@ -1,11 +1,14 @@
 import logging
 import os
+from typing import Dict, List
 
 from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.model import SettingsDevice
 from mapadroid.madmin.api import APIEntry
 from mapadroid.madmin.reverseproxy import ReverseProxied
 from mapadroid.madmin.routes.apks import APKManager
@@ -55,21 +58,11 @@ class MADmin(object):
                  device_updater, jobstatus, storage_obj):
         app.add_template_global(name='app_config_mode', f=args.config_mode)
         # Determine if there are duplicate MACs
-        sql = "SELECT count(*) > 0\n"\
-              "FROM `settings_device`\n"\
-              "GROUP BY `mac_address`\n"\
-              "HAVING count(*) > 1 AND `mac_address` IS NOT NULL"
-        dupe_mac = db_wrapper.autofetch_value(sql)
-        if dupe_mac:
-            sql = "SELECT `mac_address`, GROUP_CONCAT(`name`) AS 'origins'\n"\
-                  "FROM `settings_device`\n"\
-                  "GROUP BY `mac_address`\n"\
-                  "HAVING count(*) > 1 AND `mac_address` IS NOT NULL"
-            macs = db_wrapper.autofetch_all(sql)
-            for mac in macs:
-                logger.warning("Duplicate MAC `{}` detected on devices {}", mac["mac_address"], mac["origins"])
-            app.add_template_global(name='app_dupe_macs_devs', f=macs)
-        app.add_template_global(name='app_dupe_macs', f=bool(dupe_mac))
+        # TODO: Async init...
+        duplicate_macs: Dict[str, List[SettingsDevice]] = await SettingsDeviceHelper.get_duplicate_mac_entries(session)
+        if len(duplicate_macs) > 0:
+            app.add_template_global(name='app_dupe_macs_devs', f=duplicate_macs)
+        app.add_template_global(name='app_dupe_macs', f=bool(len(duplicate_macs) > 0))
         self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
         self._app = app

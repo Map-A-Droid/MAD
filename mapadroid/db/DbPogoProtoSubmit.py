@@ -2,8 +2,9 @@ import json
 import math
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
+from aioredis import Redis
 from bitstring import BitArray
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,15 +41,16 @@ class DbPogoProtoSubmit:
     default_spawndef = 240
     # TODO: Redis Cache access needs to be async...
 
-    def __init__(self, db_exec: PooledQueryExecutor, args):
+    def __init__(self, db_exec: PooledQueryExecutor, args, cache: Union[Redis, NoopCache]):
         self._db_exec: PooledQueryExecutor = db_exec
         self._args = args
+        self._cache: Union[Redis, NoopCache] = cache
 
     async def mons(self, session: AsyncSession, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
         """
         Update/Insert mons from a map_proto dict
         """
-        cache = get_cache(self._args)
+        cache = await self._db_exec.get_cache()
 
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::mons called with data received")
@@ -85,7 +87,7 @@ class DbPogoProtoSubmit:
                                          despawn_time.strftime("%Y-%m-%d %H:%M:%S"), spawnid)
 
                 cache_key = "mon{}".format(encounter_id)
-                if cache.exists(cache_key):
+                if await cache.exists(cache_key):
                     continue
                 mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
                 if not mon:
@@ -110,7 +112,7 @@ class DbPogoProtoSubmit:
 
                 cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                 if cache_time > 0:
-                    cache.set(cache_key, 1, ex=cache_time)
+                    await cache.set(cache_key, 1, ex=cache_time)
         return True
 
     async def mon_iv(self, session: AsyncSession, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
@@ -226,6 +228,7 @@ class DbPogoProtoSubmit:
 
         spawndef: Dict[int, TrsSpawn] = await self._get_spawndef(session, spawn_ids)
         current_event: Optional[TrsEvent] = await TrsEventHelper.get_current_event(session, True)
+        spawns_do_add: List[TrsSpawn] = []
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
@@ -279,7 +282,8 @@ class DbPogoProtoSubmit:
                         spawn.spawndef = newspawndef
                         spawn.eventid = current_event.id if current_event else 1
                     spawn.last_non_scanned = datetime.utcnow()
-                session.add(spawn)
+                spawns_do_add.append(spawn)
+        session.add_all(spawns_do_add)
 
     async def stops(self, session: AsyncSession, origin: str, map_proto: dict):
         """

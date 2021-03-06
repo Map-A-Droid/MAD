@@ -1,4 +1,9 @@
+from typing import List, Tuple
+
 from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
+from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import LoginType, SettingsPogoauthHelper
+from mapadroid.db.model import AutoconfigRegistration, SettingsPogoauth
 from mapadroid.utils.autoconfig import (AutoConfIssue, AutoConfIssueGenerator,
                                         PDConfig, RGCConfig, origin_generator)
 
@@ -43,20 +48,12 @@ class APIAutoConf(AutoConfHandler):
         self.dbc.autoexec_delete('autoconfig_registration', del_info)
         return (None, 200)
 
-    def autoconf_status(self, session_id: int = None):
-        sql = "SELECT *\n"\
-              "FROM `autoconfig_registration`\n"\
-              "WHERE `instance_id` = %s"
-        if session_id is None:
-            response_data = self.dbc.autofetch_all(sql, (self.dbc.instance_id))
-            return (response_data, 200)
+    def autoconf_status(self, session_id: int = None) -> Tuple[List[AutoconfigRegistration], int]:
+        entries: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper.get_all_of_instance(session, instance_id, session_id)
+        if len(entries) > 0:
+            return entries, 200
         else:
-            sql += " AND `session_id` = %s"
-            response_data = self.dbc.autofetch_row(sql, (self.dbc.instance_id, session_id))
-            if not response_data:
-                return (None, 404)
-            else:
-                return (response_data, 200)
+            return [], 404
 
     def autoconf_set_status(self, session_id: int):
         status = 2
@@ -93,25 +90,23 @@ class APIAutoConf(AutoConfHandler):
             search = {
                 'device_id': update['device_id']
             }
+            # TODO: Replace with SQLAlch
             has_auth = self._data_manager.search('pogoauth', params=search)
             if not self._args.autoconfig_no_auth and (not has_auth):
                 device = self._data_manager.get_resource('device', update['device_id'])
                 try:
-                    auth_type = device['settings']['logintype']
+                    auth_type = LoginType(device['settings']['logintype'])
                 except KeyError:
-                    auth_type = 'google'
+                    auth_type = LoginType('google')
                 # Find one that matches authtype
-                sql = "SELECT ag.`account_id`\n"\
-                      "FROM `settings_pogoauth` ag\n"\
-                      "WHERE ag.`device_id` IS NULL AND ag.`instance_id` = %s AND ag.`login_type` = %s"
-                account_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id, auth_type))
-                if account_id is None:
-                    return ('No configured emails', 400)
-                auth = self._data_manager.get_resource('pogoauth', account_id)
-                auth['device_id'] = device.identifier
+                unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_unassigned(session, instance_id, auth_type)
+                if not unassigned_accounts:
+                    return 'No configured emails', 400
+                auth: SettingsPogoauth = unassigned_accounts.pop()
+                auth.device_id = device.identifier
                 if is_hopper and auth_type != 'google':
-                    auth['login_type'] = auth_type
-                auth.save()
+                    auth.login_type = auth_type.value
+                session.add(auth)
         where = {
             'session_id': session_id,
             'instance_id': self.dbc.instance_id

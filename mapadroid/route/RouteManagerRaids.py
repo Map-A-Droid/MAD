@@ -40,6 +40,7 @@ class RouteManagerRaids(RouteManagerBase):
         return False
 
     def _get_coords_post_init(self):
+        # TODO: GymHelper.get_locations_in_fence
         coords = self.db_wrapper.gyms_from_db(self.geofence_helper)
         including_stops = self._data_manager.get_resource('area', self.area_id).get('including_stops', False)
         if including_stops:
