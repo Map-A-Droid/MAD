@@ -252,6 +252,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.name if routemanager is not None else None
 
+    def routemanager_get_routecalc_id(self, routemanager_name: str) -> Optional[int]:
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        return routemanager.get_routecalc_id() if routemanager is not None else None
+
     def routemanager_get_encounter_ids_left(self, routemanager_name: str) -> Optional[List[int]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         if routemanager is not None and isinstance(routemanager, RouteManagerIV.RouteManagerIV):

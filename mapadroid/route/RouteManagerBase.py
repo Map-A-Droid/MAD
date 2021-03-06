@@ -1074,6 +1074,9 @@ class RouteManagerBase(ABC):
     def get_calc_type(self):
         return self._calctype
 
+    def get_routecalc_id(self):
+        return self._route_resource.identifier
+
     def redo_stop(self, worker, lat, lon):
         route_logger = routelogger_set_origin(self.logger, origin=worker)
         route_logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
