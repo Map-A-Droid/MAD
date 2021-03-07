@@ -1,5 +1,5 @@
 from sqlalchemy.future import select
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from sqlalchemy import and_, update, func
 
@@ -42,3 +42,9 @@ class SettingsDeviceHelper:
                 duplicates[mac_address] = []
             duplicates[mac_address].append(device)
         return duplicates
+
+    @staticmethod
+    async def get(session: AsyncSession, device_id: int) -> Optional[SettingsDevice]:
+        stmt = select(SettingsDevice).where(SettingsDevice.device_id == device_id)
+        result = await session.execute(stmt)
+        return result.scalars().first()

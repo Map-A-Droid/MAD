@@ -1,9 +1,10 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import LoginType, SettingsPogoauthHelper
-from mapadroid.db.model import AutoconfigRegistration, SettingsPogoauth
+from mapadroid.db.model import AutoconfigRegistration, SettingsPogoauth, SettingsDevice
 from mapadroid.utils.autoconfig import (AutoConfIssue, AutoConfIssueGenerator,
                                         PDConfig, RGCConfig, origin_generator)
 
@@ -74,11 +75,11 @@ class APIAutoConf(AutoConfHandler):
             # Set the device id.  If it was not requested use the origin hopper to create one
             try:
                 dev_id = self.api_req.data['device_id'].split('/')[-1]
-                try:
-                    self._data_manager.get_resource('device', dev_id)
-                    update['device_id'] = dev_id
-                except UnknownIdentifier:
-                    return ('Unknown device ID', 400)
+                # First check if a device entry was created
+                device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get(session, dev_id)
+                if not device_entry:
+                    return 'Unknown device ID', 400
+                update['device_id'] = dev_id
             except (AttributeError, KeyError):
                 hopper_name = 'madrom'
                 hopper_response = origin_generator(self._data_manager, self.dbc, OriginBase=hopper_name)
@@ -92,6 +93,9 @@ class APIAutoConf(AutoConfHandler):
             }
             # TODO: Replace with SQLAlch
             has_auth = self._data_manager.search('pogoauth', params=search)
+            unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_unassigned(session,
+                                                                                                      instance_id,
+                                                                                                      dev_id)
             if not self._args.autoconfig_no_auth and (not has_auth):
                 device = self._data_manager.get_resource('device', update['device_id'])
                 try:

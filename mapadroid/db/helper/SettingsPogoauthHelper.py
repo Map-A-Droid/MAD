@@ -26,3 +26,11 @@ class SettingsPogoauthHelper:
             stmt = stmt.where(SettingsPogoauth.login_type == auth_type.value)
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def get_assigned_to_device(session: AsyncSession, instance_id: int,
+                                     device_id: int) -> Optional[SettingsPogoauth]:
+        stmt = select(SettingsPogoauth).where(and_(SettingsPogoauth.instance_id == instance_id,
+                                                   SettingsPogoauth.device_id == device_id))
+        result = await session.execute(stmt)
+        return result.scalars().first()

@@ -2,13 +2,21 @@ import copy
 import json
 from enum import IntEnum
 from io import BytesIO
-from typing import Any, Dict, List, NoReturn, Tuple
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List, NoReturn, Tuple, Union, Optional
 from xml.sax.saxutils import escape
 
 from flask import Response, url_for
 
-from mapadroid.data_manager.modules import MAPPINGS
 from mapadroid.data_manager.modules.resource import USER_READABLE_ERRORS
+from mapadroid.db.helper.AutoconfigFileHelper import AutoconfigFileHelper
+from mapadroid.db.helper.OriginHopperHelper import OriginHopperHelper
+from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
+from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
+from mapadroid.db.model import SettingsWalker, SettingsDevice, OriginHopper, SettingsDevicepool, SettingsPogoauth, \
+    AutoconfigFile
 from mapadroid.mad_apk import get_apk_status
 
 
@@ -25,12 +33,12 @@ class AutoConfIssueGenerator(object):
     def __init__(self, db, data_manager, args, storage_obj):
         self.warnings: List[AutoConfIssues] = []
         self.critical: List[AutoConfIssues] = []
-        sql = "SELECT count(*)\n" \
-              "FROM `settings_pogoauth` ag\n" \
-              "WHERE ag.`instance_id` = %s AND ag.`device_id` IS NULL"
-        if db.autofetch_value(sql, (db.instance_id)) == 0 and not args.autoconfig_no_auth:
+
+        # TODO: Move to async start/init/create
+        pogoauth_entries: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_unassigned(session, instance_id)
+        if len(pogoauth_entries) == 0 and not args.autoconfig_no_auth:
             self.warnings.append(AutoConfIssues.no_ggl_login)
-        if not validate_hopper_ready(data_manager):
+        if not validate_hopper_ready(session, instance_id):
             self.critical.append(AutoConfIssues.origin_hopper_not_ready)
         if not data_manager.get_root_resource('auth'):
             self.warnings.append(AutoConfIssues.auth_not_configured)
@@ -89,60 +97,61 @@ class AutoConfIssueGenerator(object):
         return len(self.critical) > 0
 
 
-def validate_hopper_ready(data_manager):
-    walkers = data_manager.get_root_resource('walker')
-    if len(walkers) == 0:
-        return Response(status=400, response='No walkers configured')
-    return True
+async def validate_hopper_ready(session: AsyncSession, instance_id: int) -> bool:
+    walkers: List[SettingsWalker] = await SettingsWalkerHelper.get_all(session, instance_id)
+    return len(walkers) > 0
 
 
-def origin_generator(data_manager, dbc, *args, **kwargs):
+# TODO: Singleton for the instance ID?
+async def origin_generator(session: AsyncSession, instance_id: int, *args, **kwargs) -> Union[SettingsDevice, object]:
     origin = kwargs.get('OriginBase', None)
     walker_id = kwargs.get('walker', None)
-    pool_id = kwargs.get('pool', None)
-    device = MAPPINGS['device'](data_manager)
-    is_ready = validate_hopper_ready(data_manager)
-    if not is_ready:
-        return is_ready
-    if origin is None:
-        return Response(status=400, response='Please specify an Origin Prefix')
-    last_id_sql = "SELECT `last_id` FROM `origin_hopper` WHERE `origin` = %s"
-    last_id = dbc.autofetch_value(last_id_sql, (origin,))
-    if last_id is None:
-        last_id = 0
-    walkers = data_manager.get_root_resource('walker')
     if walker_id is not None:
         try:
-            walker_id = int(walker_id)
-            walkers[walker_id]
-        except KeyError:
-            return Response(404, response='Walker ID not found')
+            walker_id: int = int(walker_id)
         except ValueError:
-            return Response(status=404, response='Walker must be an integer')
-    else:
-        walker_id = next(iter(walkers))
-    device['walker'] = walker_id
+            return Response(status=404, response='"walker" value must be an integer')
+    pool_id = kwargs.get('pool', None)
     if pool_id is not None:
-        pools = data_manager.get_root_resource('devicepool')
         try:
-            pool_id = int(pool_id)
-            pools[pool_id]
-        except KeyError:
-            return Response(404, response='Walker ID not found')
+            pool_id: int = int(pool_id)
         except ValueError:
-            return Response(status=404, response='Walker must be an integer')
-        device['pool'] = pool_id
-    next_id = last_id + 1
-    data = {
-        'origin': origin,
-        'last_id': next_id,
-    }
+            return Response(status=404, response='"pool" value must be an integer')
+    is_ready = validate_hopper_ready(session, instance_id)
+    if not is_ready:
+        return Response(status=404, response='Unable to verify hopper. Likely no walkers have been configured at all.')
+    if origin is None:
+        return Response(status=400, response='Please specify an Origin Prefix')
+    walkers: List[SettingsWalker] = await SettingsWalkerHelper.get_all(session, instance_id)
+    walker: Optional[SettingsWalker] = None
+    if walker_id is not None:
+        for possible_walker in walkers:
+            if possible_walker.walker_id == walker_id:
+                walker = possible_walker
+                break
+        if walker is None:
+            return Response(status=404, response='Walker ID not found')
+    else:
+        walker = walkers[0]
+    if pool_id is not None:
+        pool: Optional[SettingsDevicepool] = await SettingsDevicepoolHelper.get(session, pool_id)
+        if pool is None:
+            return Response(status=404, response='Devicepool not found')
+    origin_hopper: Optional[OriginHopper] = await OriginHopperHelper.get(session, origin)
+    if not origin_hopper:
+        origin_hopper = OriginHopper()
+        origin_hopper.origin = origin
+    next_id = origin_hopper.last_id + 1 if origin_hopper is not None else 0
+    origin_hopper.last_id = next_id
+    session.add(origin_hopper)
+
     origin = '%s%03d' % (origin, next_id,)
-    dbc.autoexec_insert('origin_hopper', data, optype="ON DUPLICATE")
-    device['walker'] = walker_id
-    device['origin'] = origin
-    device.save()
-    return (device['origin'], device.identifier)
+    device: SettingsDevice = SettingsDevice()
+    device.pool_id = pool_id
+    device.walker_id = walker.walker_id
+    device.name = origin
+    session.add(device)
+    return device
 
 
 class AutoConfIssue(Exception):
@@ -188,6 +197,7 @@ class AutoConfigCreator:
                     xml_elem += ">{}</{}>".format(value, elem_type)
                 conv_xml.append('    {}'.format(xml_elem))
         conv_xml.append('</map>')
+        # TODO: Threaded exec needed?
         return BytesIO('\n'.join(conv_xml).encode('utf-8'))
 
     def get_config(self) -> dict:
@@ -204,14 +214,11 @@ class AutoConfigCreator:
             tmp_config['auth_password'] = ""
         return tmp_config
 
-    def load_config(self) -> NoReturn:
-        sql = "SELECT `data`\n"\
-              "FROM `autoconfig_file`\n"\
-              "WHERE `name` = %s AND `instance_id` = %s"
+    async def load_config(self) -> NoReturn:
         try:
-            db_conf = self._db.autofetch_value(sql, (self.source, self._db.instance_id))
-            if db_conf:
-                self.contents = json.loads(db_conf)
+            config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(session, instance_id, source)
+            if config is not None:
+                self.contents = json.loads(config.data)
                 self.configured = True
             else:
                 self.contents = {}
@@ -225,12 +232,7 @@ class AutoConfigCreator:
 
     def save_config(self, user_vals: dict) -> NoReturn:
         self.validate(user_vals)
-        save = {
-            "name": self.source,
-            "data": json.dumps(self.contents),
-            "instance_id": self._db.instance_id
-        }
-        self._db.autoexec_insert("autoconfig_file", save, optype="ON DUPLICATE")
+        await AutoconfigFileHelper.insert_or_update(session, instance_id, source, json.dumps(self.contents))
 
     def validate(self, user_vals: dict) -> bool:
         processed = []
