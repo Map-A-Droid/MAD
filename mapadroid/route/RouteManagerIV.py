@@ -39,9 +39,9 @@ class RouteManagerIV(RouteManagerBase):
     def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info
         latest_priorities = self.db_wrapper.get_to_be_encountered(geofence_helper=self.geofence_helper,
-                                                                  min_time_left_seconds=self.settings.get(
+                                                                  min_time_left_seconds=self._settings.get(
                                                                       "min_time_left_seconds", None),
-                                                                  eligible_mon_ids=self.settings.get(
+                                                                  eligible_mon_ids=self._settings.get(
                                                                       "mon_ids_iv_raw", None))
         # extract the encounterIDs and set them in the routeManager...
         new_list = []

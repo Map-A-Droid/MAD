@@ -1,9 +1,8 @@
-from sqlalchemy.future import select
 from typing import Dict, List, Optional
 
-from sqlalchemy import and_, update, func
-
+from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from mapadroid.db.model import SettingsDevice
 from mapadroid.utils.collections import Location
@@ -44,7 +43,7 @@ class SettingsDeviceHelper:
         return duplicates
 
     @staticmethod
-    async def get(session: AsyncSession, device_id: int) -> Optional[SettingsDevice]:
+    async def get(session: AsyncSession, instance_id: int, device_id: int) -> Optional[SettingsDevice]:
         stmt = select(SettingsDevice).where(SettingsDevice.device_id == device_id)
         result = await session.execute(stmt)
         return result.scalars().first()

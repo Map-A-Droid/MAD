@@ -3,9 +3,12 @@ import glob
 import os
 from functools import update_wrapper, wraps
 from math import floor
+from typing import Optional
 
 from flask import make_response, request
 
+from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
+from mapadroid.db.model import SettingsGeofence
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.functions import creation_date
 from mapadroid.utils.walkerArgs import parse_args
@@ -111,14 +114,16 @@ def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=No
     for area_id, area in areas.items():
         if area_id_req is not None and int(area_id) is not int(area_id_req):
             continue
-        geo_include = data_manager.get_resource('geofence', identifier=area["geofence_included"])
+        geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id, area["geofence_included"])
         geo_exclude_id = area.get("geofence_excluded", None)
-        geo_exclude = None
+        geofence_excluded: Optional[SettingsGeofence] = None
         if geo_exclude_id is not None:
-            geo_exclude = data_manager.get_resource('geofence', identifier=geo_exclude_id)
+            geofence_excluded: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
+                                                                                             geo_exclude_id)
         if fence_type is not None and area['mode'] != fence_type:
             continue
-        area_geofences = GeofenceHelper(geo_include, geo_exclude, area['name'])
+        # TODO: json.loads?
+        area_geofences = GeofenceHelper(geofence_included.fence_data, geofence_excluded.fence_data, area['name'])
         include = {}
         exclude = {}
         for fences in area_geofences.geofenced_areas:

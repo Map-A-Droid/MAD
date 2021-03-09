@@ -14,12 +14,17 @@ from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
-from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
-from mapadroid.db.model import Scannedlocation
-from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.db.helper.SettingsAreaIdleHelper import SettingsAreaIdleHelper
+from mapadroid.db.helper.SettingsAreaIvMitm import SettingsAreaIvMitmHelper
+from mapadroid.db.helper.SettingsAreaMonMitmHelper import \
+    SettingsAreaMonMitmHelper
+from mapadroid.db.helper.SettingsAreaPokestopHelper import \
+    SettingsAreaPokestopHelper
+from mapadroid.db.helper.SettingsAreaRaidsMitm import \
+    SettingsAreaRaidsMitmHelper
+from mapadroid.db.model import SettingsArea
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.database)
 
@@ -45,6 +50,14 @@ class DbWrapper:
             self.instance_id = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
                            'installed, this message is safe to ignore')
+
+    async def __aenter__(self):
+        # TODO: Start AsyncSession within a semaphore and return it, aexit needs to close the session
+        return None
+
+    async def __aexit__(self, type_, value, traceback):
+        # TODO await self.close()
+        pass
 
     def set_event_id(self, eventid: int):
         self._event_id = eventid
@@ -544,6 +557,16 @@ class DbWrapper:
             res = self._db_exec.autoexec_insert('madmin_instance', instance_data)
             self.instance_id = res
         return self.instance_id
+
+    async def get_all_areas(self, session: AsyncSession) -> Dict[int, SettingsArea]:
+        areas: Dict[int, SettingsArea] = {}
+        areas.update(await SettingsAreaIdleHelper.get_all(session, self.instance_id))
+        areas.update(await SettingsAreaIvMitmHelper.get_all(session, self.instance_id))
+        areas.update(await SettingsAreaMonMitmHelper.get_all(session, self.instance_id))
+        areas.update(await SettingsAreaPokestopHelper.get_all(session, self.instance_id))
+        areas.update(await SettingsAreaRaidsMitmHelper.get_all(session, self.instance_id))
+        return areas
+
 
 def adjust_tz_to_utc(column: str, as_name: str = None) -> str:
     # I would like to use convert_tz but this may not be populated.  Use offsets instead

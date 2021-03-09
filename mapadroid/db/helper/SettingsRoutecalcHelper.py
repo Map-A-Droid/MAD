@@ -1,6 +1,8 @@
-from sqlalchemy import update
+from typing import Optional
 
+from sqlalchemy import and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from mapadroid.db.model import SettingsRoutecalc
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -24,3 +26,10 @@ class SettingsRoutecalcHelper:
         stmt = update(SettingsRoutecalc).where(SettingsRoutecalc.instance_id == instance_id) \
             .values(recalc_status=0)
         await session.execute(stmt)
+
+    @staticmethod
+    async def get(session: AsyncSession, instance_id: int, routecalc_id: int) -> Optional[SettingsRoutecalc]:
+        stmt = select(SettingsRoutecalc).where(and_(SettingsRoutecalc.instance_id == instance_id,
+                                                    SettingsRoutecalc.routecalc_id == routecalc_id))
+        result = await session.execute(stmt)
+        return result.scalars().first()

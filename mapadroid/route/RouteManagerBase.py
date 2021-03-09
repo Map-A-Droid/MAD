@@ -11,10 +11,8 @@ from typing import Dict, List, Optional, Set, Tuple
 import numpy as np
 from dataclasses import dataclass
 
-from mapadroid.data_manager import DataManager
-from mapadroid.data_manager.modules.geofence import GeoFence
-from mapadroid.data_manager.modules.routecalc import RouteCalc
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
@@ -46,39 +44,38 @@ class RoutePoolEntry:
 
 
 class RouteManagerBase(ABC):
-    def __init__(self, db_wrapper: DbWrapper, dbm: DataManager, area_id: str, coords: List[Location],
+    def __init__(self, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
                  max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: GeoFence,
-                 path_to_exclude_geofence: GeoFence,
-                 routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown",
-                 settings: dict = None,
-                 level: bool = False, calctype: str = "route", use_s2: bool = False, s2_level: int = 15,
+                 max_coords_within_radius: int,
+                 geofence_helper: GeofenceHelper,
+                 routecalc: SettingsRoutecalc,
+                 use_s2: bool = False, s2_level: int = 15,
                  joinqueue=None):
-        self.logger = get_logger(LoggerEnums.routemanager, name=str(name))
+        self.logger = get_logger(LoggerEnums.routemanager, name=str(area.name))
         self.db_wrapper: DbWrapper = db_wrapper
-        self.init: bool = init
-        self.name: str = name
-        self._data_manager = dbm
+        self.init: bool = area.init if area.mode in ("mon_mitm", "raids_mitm", "pokestop") and area.init else False
+        self.name: str = area.name
         self.useS2: bool = use_s2
         self.S2level: int = s2_level
-        self.area_id = area_id
+        self.area_id = area.area_id
 
         self._coords_unstructured: List[Location] = coords
-        self.geofence_helper: GeofenceHelper = GeofenceHelper(
-            path_to_include_geofence, path_to_exclude_geofence)
-        self._route_resource = routefile
+        self.geofence_helper: GeofenceHelper = geofence_helper
+        self._routecalc: SettingsRoutecalc = routecalc
         self._max_radius: float = max_radius
         self._max_coords_within_radius: int = max_coords_within_radius
-        self.settings: dict = settings
-        self.mode: WorkerType = mode
+        # TODO For better typing, we can assign the type with the following if/else. Ugly but better to work with?
+        #  Or move usages of self.settings to the classes inheriting...
+        self._settings: SettingsArea = area
+        self._mode: WorkerType = WorkerType(area.mode)
         self._is_started: bool = False
         self._first_started = False
         self._current_route_round_coords: List[Location] = []
         self._start_calc: bool = False
         self._positiontyp = {}
         self._coords_to_be_ignored = set()
-        self._level = level
-        self._calctype = calctype
+        self._level = area.level if area.mode == "pokestop" else False
+        self._calctype = area.route_calc_algorithm if area.mode == "pokestop" else "route"
         self._overwrite_calculation: bool = False
         self._stops_not_processed: Dict[Location, int] = {}
         self._routepool: Dict[str, RoutePoolEntry] = {}
@@ -96,27 +93,28 @@ class RouteManagerBase(ABC):
         self._route: List[Location] = []
 
         if coords is not None:
-            if init:
+            if self.init:
                 fenced_coords = coords
             else:
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
+            # TODO.... adjust
             new_coords = self._route_resource.get_json_route(fenced_coords, int(max_radius),
                                                              max_coords_within_radius,
-                                                             algorithm=calctype, route_name=self.name,
+                                                             algorithm=self._calctype, route_name=self.name,
                                                              in_memory=False)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
 
-        if self.settings is not None:
-            self.delay_after_timestamp_prio = self.settings.get(
+        if self._settings is not None:
+            self.delay_after_timestamp_prio = self._settings.get(
                 "delay_after_prio_event", None)
-            self.starve_route = self.settings.get("starve_route", False)
-            if mode == "mon_mitm":
-                self.remove_from_queue_backlog = self.settings.get(
+            self.starve_route = self._settings.get("starve_route", False)
+            if self._mode == WorkerType.MON_MITM:
+                self.remove_from_queue_backlog = self._settings.get(
                     "remove_from_queue_backlog", 300)
             else:
-                self.remove_from_queue_backlog = self.settings.get(
+                self.remove_from_queue_backlog = self._settings.get(
                     "remove_from_queue_backlog", 0)
         else:
             self.delay_after_timestamp_prio = None
@@ -130,8 +128,8 @@ class RouteManagerBase(ABC):
         self._stop_update_thread = Event()
 
     def get_ids_iv(self) -> Optional[List[int]]:
-        if self.settings is not None:
-            return self.settings.get("mon_ids_iv_raw", [])
+        if self._settings is not None:
+            return self._settings.get("mon_ids_iv_raw", [])
         else:
             return None
 
@@ -232,13 +230,14 @@ class RouteManagerBase(ABC):
                 self.stop_routemanager()
 
     def _start_priority_queue(self):
-        if (self.delay_after_timestamp_prio is not None or self.mode == "iv_mitm") and not self.mode == "pokestops":
+        if (self.delay_after_timestamp_prio is not None or self._mode == WorkerType.IV_MITM) \
+                and not self._mode == WorkerType.STOPS:
             if self._stop_update_thread.is_set():
                 self._stop_update_thread.clear()
             self._prio_queue = []
-            if self.mode not in ["iv_mitm", "pokestops"]:
-                if self.mode == "mon_mitm" and self.settings is not None:
-                    max_clustering = self.settings.get(
+            if self._mode not in [WorkerType.IV_MITM, WorkerType.STOPS]:
+                if self._mode == WorkerType.IV_MITM and self._settings is not None:
+                    max_clustering = self._settings.get(
                         "max_clustering", self._max_coords_within_radius)
                     if max_clustering == 0:
                         max_clustering = self._max_coords_within_radius
@@ -276,6 +275,7 @@ class RouteManagerBase(ABC):
         if calctype is None:
             calctype = self._calctype
         if len(coords) > 0:
+            # TODO: Adjust
             new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
                                                                  delete_old_route, calctype, self.useS2,
                                                                  self.S2level,
@@ -328,7 +328,11 @@ class RouteManagerBase(ABC):
         calc_coords = []
         for coord in new_route:
             calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
-        self._route_resource['routefile'] = calc_coords
+        async with self.db_wrapper as session:
+            self._routecalc.routefile = calc_coords
+            self._routecalc.last_updated = datetime.utcnow()
+            await session.commit()
+        # TODO: Session with commit...
         self._route_resource.save(update_time=True)
         with self._workers_registered_mutex:
             connected_worker_count = len(self._workers_registered)
@@ -359,7 +363,7 @@ class RouteManagerBase(ABC):
                 new_queue = list(new_queue)
                 self.logger.info("Got {} new events", len(new_queue))
                 # TODO: verify if this procedure is good for other modes, too
-                if self.mode == "mon_mitm":
+                if self._mode == WorkerType.MON_MITM:
                     new_queue = self._filter_priority_queue_internal(new_queue)
                     self.logger.debug2("Merging existing Q of {} events with {} clustered new events",
                                        len(self._prio_queue), len(new_queue))
@@ -480,11 +484,11 @@ class RouteManagerBase(ABC):
         _cluster_priority_queue_criteria
         :return:
         """
-        if self.mode == "iv_mitm":
+        if self._mode == WorkerType.IV_MITM:
             # exclude IV prioQ to also pass encounterIDs since we do not pass additional information through when
             # clustering
             return latest
-        if self.mode == "mon_mitm" and self.remove_from_queue_backlog == 0:
+        if self._mode == WorkerType.MON_MITM and self.remove_from_queue_backlog == 0:
             self.logger.warning("You are running in mon_mitm mode with priority queue enabled and "
                                 "remove_from_queue_backlog set to 0. This may result in building up a significant "
                                 "queue "
@@ -496,7 +500,7 @@ class RouteManagerBase(ABC):
             delete_before = time.time() - self.remove_from_queue_backlog
         else:
             delete_before = 0
-        if self.mode == "mon_mitm":
+        if self._mode == WorkerType.MON_MITM:
             delete_after = time.time() + 600
             latest = [to_keep for to_keep in latest if
                       not to_keep[0] < delete_before and not to_keep[0] > delete_after]
@@ -545,7 +549,7 @@ class RouteManagerBase(ABC):
                     route_logger.info("Failed updating routepools after adding a worker to it")
                     return None
 
-            elif self._routepool[origin].has_prio_event and self.mode != 'iv_mitm':
+            elif self._routepool[origin].has_prio_event and self._mode != WorkerType.IV_MITM:
                 prioevent = self._routepool[origin].prio_coords
                 route_logger.info('getting a nearby prio event {}', prioevent)
                 self._routepool[origin].has_prio_event = False
@@ -558,7 +562,7 @@ class RouteManagerBase(ABC):
         while not got_location and self._is_started and not self.init:
             route_logger.debug("Checking if a location is available...")
             with self._manager_mutex:
-                if self.mode == "iv_mitm":
+                if self._mode == WorkerType.IV_MITM:
                     got_location = self._prio_queue is not None and len(self._prio_queue) > 0
                     if not got_location:
                         time.sleep(1)
@@ -584,7 +588,7 @@ class RouteManagerBase(ABC):
                 # Problem: delete_seconds_passed = 0 makes sense in _filter_priority_queue_internal,
                 # because it will remove past events only at the moment of prioQ calculation,
                 # but here it would skip ALL events, because events can only be due when they are in the past
-                if self.mode == "mon_mitm":
+                if self._mode == WorkerType.MON_MITM:
                     if self.remove_from_queue_backlog not in [None, 0]:
                         delete_before = time.time() - self.remove_from_queue_backlog
                     else:
@@ -635,7 +639,7 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].rounds += 1
 
             # Check if we are in init:
-            if self.init and self._check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
+            if self.init and self._check_worker_rounds() >= int(self._settings.get("init_mode_rounds", 1)) and \
                     len(self._routepool[origin].queue) == 0:
                 # we are done with init, let's calculate a new route
                 self.logger.warning("Init done, it took {}, calculating new route...",
@@ -660,7 +664,7 @@ class RouteManagerBase(ABC):
                 # only quest could hit this else!
                 route_logger.info("finished subroute, updating all subroutes if necessary")
 
-                if self.mode == 'pokestops' and not self.init:
+                if self._mode == WorkerType.STOPS and not self.init:
                     # check for coords not in other workers to get a real open coord list
                     if not self._get_coords_after_finish_route():
                         route_logger.info("No more coords available - dont update routepool")
@@ -806,10 +810,10 @@ class RouteManagerBase(ABC):
         workers: int = 0
         if not self._is_started:
             return True
-        if self.mode not in ("iv_mitm", "idle") and len(self._current_route_round_coords) == 0:
+        if self._mode not in (WorkerType.IV_MITM, WorkerType.IDLE) and len(self._current_route_round_coords) == 0:
             self.logger.info("No more coords - breakup")
             return False
-        if self.mode in ("iv_mitm", "idle"):
+        if self._mode in (WorkerType.IV_MITM, WorkerType.IDLE):
             self.logger.info('Not updating routepools in iv_mitm mode')
             return True
         with self._manager_mutex and self._workers_registered_mutex:
@@ -1057,10 +1061,10 @@ class RouteManagerBase(ABC):
         return self.init
 
     def get_mode(self) -> WorkerType:
-        return self.mode
+        return self._mode
 
     def get_settings(self) -> Optional[dict]:
-        return self.settings
+        return self._settings
 
     def get_current_route(self) -> Tuple[list, Dict[str, RoutePoolEntry]]:
         return self._route, self._routepool

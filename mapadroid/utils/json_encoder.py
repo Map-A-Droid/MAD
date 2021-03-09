@@ -1,6 +1,5 @@
 import json
 
-from mapadroid.data_manager.modules.resource import Resource
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
 from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
 
@@ -27,8 +26,6 @@ class MADEncoder(json.JSONEncoder):
             return obj.value
         elif isinstance(obj, APKType):
             return obj.value
-        elif isinstance(obj, Resource):
-            return obj.get_resource()
         elif isinstance(obj, MADapks):
             return json.JSONEncoder.default(self, obj)
         return json.JSONEncoder.default(self, obj)

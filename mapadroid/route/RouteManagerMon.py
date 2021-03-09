@@ -48,8 +48,8 @@ class RouteManagerMon(RouteManagerBase):
         return coords
 
     def _cluster_priority_queue_criteria(self):
-        if self.settings is not None:
-            return self.settings.get("priority_queue_clustering_timedelta", 300)
+        if self._settings is not None:
+            return self._settings.get("priority_queue_clustering_timedelta", 300)
         else:
             return 300
 

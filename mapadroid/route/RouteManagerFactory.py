@@ -1,5 +1,9 @@
-from typing import Optional
+from typing import List, Optional
 
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import (SettingsArea, SettingsAreaRaidsMitm,
+                                SettingsRoutecalc)
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.route.RouteManagerLeveling import RouteManagerLeveling
 from mapadroid.route.RouteManagerLevelingRoutefree import \
@@ -7,25 +11,22 @@ from mapadroid.route.RouteManagerLevelingRoutefree import \
 from mapadroid.route.RouteManagerMon import RouteManagerMon
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.route.RouteManagerRaids import RouteManagerRaids
+from mapadroid.utils.collections import Location
 from mapadroid.worker.WorkerType import WorkerType
 
 
 class RouteManagerFactory:
     @staticmethod
-    def get_routemanager(db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                         path_to_include_geofence,
-                         path_to_exclude_geofence: Optional[int], routefile: str,
-                         mode: WorkerType = WorkerType.UNDEFINED,
-                         init: bool = False, name: str = "unknown", settings=None,
-                         coords_spawns_known: bool = True,
-                         level: bool = False, calctype: str = "route", use_s2: bool = False,
+    def get_routemanager(db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
+                         max_radius: int, max_coords_within_radius: int,
+                         geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc, use_s2: bool = False,
                          s2_level: int = 15, joinqueue=None, include_event_id=None):
 
-        if mode == WorkerType.RAID_MITM.value:
-            route_manager = RouteManagerRaids(db_wrapper, dbm, area_id, coords, max_radius,
-                                              max_coords_within_radius,
-                                              path_to_include_geofence, path_to_exclude_geofence, routefile,
-                                              mode=mode, settings=settings, init=init, name=name,
+        if area.mode == WorkerType.RAID_MITM.value:
+            area: SettingsAreaRaidsMitm = area
+            route_manager = RouteManagerRaids(db_wrapper=db_wrapper, area=area, coords=coords, max_radius=max_radius,
+                                              max_coords_within_radius=max_coords_within_radius,
+                                              geofence_helper=geofence_helper, routecalc=routecalc,
                                               joinqueue=joinqueue,
                                               use_s2=use_s2, s2_level=s2_level
                                               )

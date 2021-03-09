@@ -1,21 +1,22 @@
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import SettingsAreaRaidsMitm, SettingsRoutecalc
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerRaids(RouteManagerBase):
-    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                 path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, settings=None, init=False,
-                 name="unknown", joinqueue=None, use_s2: bool = False, s2_level: int = 15):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+    def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaRaidsMitm, coords, max_radius, max_coords_within_radius,
+                 geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
+                 joinqueue=None, use_s2: bool = False, s2_level: int = 15):
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, use_s2=True, s2_level=s2_level,
+                                  geofence_helper=geofence_helper,
+                                  routecalc=routecalc, use_s2=True, s2_level=s2_level,
                                   joinqueue=joinqueue
                                   )
 
@@ -50,8 +51,8 @@ class RouteManagerRaids(RouteManagerBase):
         return coords
 
     def _cluster_priority_queue_criteria(self):
-        if self.settings is not None:
-            return self.settings.get("priority_queue_clustering_timedelta", 600)
+        if self._settings is not None:
+            return self._settings.get("priority_queue_clustering_timedelta", 600)
         else:
             return 600
 
@@ -60,7 +61,7 @@ class RouteManagerRaids(RouteManagerBase):
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
-                if self.mode != "idle":
+                if self._mode != WorkerType.IDLE:
                     self._start_priority_queue()
                     self._start_check_routepools()
                     self._init_route_queue()

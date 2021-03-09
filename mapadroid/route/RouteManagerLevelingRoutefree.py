@@ -46,7 +46,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                                                                                   lat=current_worker_pos.lat,
                                                                                   lon=current_worker_pos.lng,
                                                                                   limit=30,
-                                                                                  ignore_spinned=self.settings.get(
+                                                                                  ignore_spinned=self._settings.get(
                                                                                       "ignore_spinned_stops", True),
                                                                                   maxdistance=5)
                 if len(unvisited_stops) == 0:

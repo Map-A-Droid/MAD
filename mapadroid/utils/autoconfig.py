@@ -2,21 +2,24 @@ import copy
 import json
 from enum import IntEnum
 from io import BytesIO
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any, Dict, List, NoReturn, Tuple, Union, Optional
+from typing import Any, Dict, List, NoReturn, Optional, Tuple, Union
 from xml.sax.saxutils import escape
 
 from flask import Response, url_for
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_manager.modules.resource import USER_READABLE_ERRORS
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigFileHelper import AutoconfigFileHelper
 from mapadroid.db.helper.OriginHopperHelper import OriginHopperHelper
-from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
+from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
+from mapadroid.db.helper.SettingsDevicepoolHelper import \
+    SettingsDevicepoolHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
-from mapadroid.db.model import SettingsWalker, SettingsDevice, OriginHopper, SettingsDevicepool, SettingsPogoauth, \
-    AutoconfigFile
+from mapadroid.db.model import (AutoconfigFile, OriginHopper, SettingsAuth,
+                                SettingsDevice, SettingsDevicepool,
+                                SettingsPogoauth, SettingsWalker)
 from mapadroid.mad_apk import get_apk_status
 
 
@@ -40,7 +43,8 @@ class AutoConfIssueGenerator(object):
             self.warnings.append(AutoConfIssues.no_ggl_login)
         if not validate_hopper_ready(session, instance_id):
             self.critical.append(AutoConfIssues.origin_hopper_not_ready)
-        if not data_manager.get_root_resource('auth'):
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db.instance_id)
+        if len(auths) == 0:
             self.warnings.append(AutoConfIssues.auth_not_configured)
         if not PDConfig(db, args, data_manager).configured:
             self.critical.append(AutoConfIssues.pd_not_configured)
@@ -163,20 +167,17 @@ class AutoConfIssue(Exception):
 class AutoConfigCreator:
     origin_field: str = None
 
-    def __init__(self, db, args, data_manager):
-        self._db = db
+    def __init__(self, db: DbWrapper, args):
+        self._db: DbWrapper = db
         self._args = args
-        self._data_manager = data_manager
         self.contents: dict[str, Any] = {}
         self.configured: bool = False
         self.load_config()
 
     def delete(self):
-        del_info = {
-            "name": self.source,
-            "instance_id": self._db.instance_id
-        }
-        self._db.autoexec_delete('autoconfig_file', del_info)
+        config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(session, self.source, instace_id)
+        if config is not None:
+            session.delete(config)
 
     def generate_config(self, origin: str) -> str:
         origin_config = self.get_config()
@@ -200,15 +201,19 @@ class AutoConfigCreator:
         # TODO: Threaded exec needed?
         return BytesIO('\n'.join(conv_xml).encode('utf-8'))
 
-    def get_config(self) -> dict:
+    async def get_config(self) -> dict:
         tmp_config: dict = copy.copy(self.contents)
+        auth: Optional[SettingsAuth] = None
         try:
-            auth = self._data_manager.get_resource('auth', tmp_config['mad_auth'])
+            auth: Optional[SettingsAuth] = await SettingsAuthHelper.get(session, tmp_config['mad_auth'])
             del tmp_config['mad_auth']
-            tmp_config['auth_username'] = auth['username']
-            tmp_config['auth_password'] = auth['password']
-            tmp_config['switch_enable_auth_header'] = True
         except KeyError:
+            auth = None
+        if auth is not None:
+            tmp_config['auth_username'] = auth.username
+            tmp_config['auth_password'] = auth.password
+            tmp_config['switch_enable_auth_header'] = True
+        else:
             tmp_config['switch_enable_auth_header'] = False
             tmp_config['auth_username'] = ""
             tmp_config['auth_password'] = ""
@@ -232,7 +237,7 @@ class AutoConfigCreator:
 
     def save_config(self, user_vals: dict) -> NoReturn:
         self.validate(user_vals)
-        await AutoconfigFileHelper.insert_or_update(session, instance_id, source, json.dumps(self.contents))
+        await AutoconfigFileHelper.insert_or_update(session, self._db.instance_id, self.source, json.dumps(self.contents))
 
     def validate(self, user_vals: dict) -> bool:
         processed = []
@@ -449,8 +454,8 @@ class RGCConfig(AutoConfigCreator):
         super().load_config()
         if self.contents['websocket_uri'] in ['ws://', '']:
             self.contents['websocket_uri'] = 'ws://{}:{}'.format(self._args.ws_ip, self._args.ws_port)
-        auths = self._data_manager.get_root_resource('auth')
-        if auths:
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db.instance_id)
+        if len(auths) > 0:
             self.sections['Socket']['mad_auth']['required'] = True
 
 
@@ -728,11 +733,11 @@ class PDConfig(AutoConfigCreator):
         }
     }
 
-    def load_config(self) -> NoReturn:
-        super().load_config()
+    async def load_config(self) -> NoReturn:
+        await super().load_config()
         if self.contents['post_destination'] in ['http://', '']:
             self.contents['post_destination'] = 'http://{}:{}'.format(self._args.mitmreceiver_ip,
                                                                       self._args.mitmreceiver_port)
-        auths = self._data_manager.get_root_resource('auth')
-        if auths:
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db.instance_id)
+        if len(auths) > 0:
             self.sections['External Communication']['mad_auth']['required'] = True

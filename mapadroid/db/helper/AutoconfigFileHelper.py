@@ -1,5 +1,6 @@
-from sqlalchemy import and_
 from typing import Optional
+
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -24,4 +25,3 @@ class AutoconfigFileHelper:
             config.name = name
         config.data = data
         session.add(config)
-    

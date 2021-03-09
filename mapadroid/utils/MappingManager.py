@@ -4,9 +4,14 @@ from multiprocessing import Event, Lock
 from multiprocessing.pool import ThreadPool
 from queue import Empty, Queue
 from threading import Thread
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper import SettingsRoutecalcHelper
+from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
+from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
+from mapadroid.db.model import (SettingsArea, SettingsGeofence,
+                                SettingsRoutecalc)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
@@ -343,94 +348,95 @@ class MappingManager:
             inheritsettings[device_setting] = devicesettings[device_setting]
         return inheritsettings
 
-    def __get_latest_routemanagers(self) -> Optional[Dict[str, dict]]:
+    async def __get_latest_routemanagers(self) -> Dict[int, RouteManagerBase]:
+        # TODO: Use a factory for the iterations...
         global mode_mapping
-        areas: Optional[Dict[str, dict]] = {}
+        areas: Dict[int, SettingsArea] = {}
 
         if self.__configmode:
             return areas
 
-        raw_areas = self.__data_manager.get_root_resource('area')
-
-        # TODO: use amount of CPUs...
+        areas = await self.__db_wrapper.get_all_areas(session)
+        # TODO: use amount of CPUs, use process pool?
         thread_pool = ThreadPool(processes=4)
-
+        routemanagers: Dict[int, RouteManagerBase] = {}
         areas_procs = {}
-        for area_id, area_true in raw_areas.items():
-            area = area_true.get_resource()
-            if area["geofence_included"] is None:
+        for area_id, area in areas.items():
+            if area.geofence_included is None:
                 raise RuntimeError("Cannot work without geofence_included")
 
             try:
-                geofence_included = self.__data_manager.get_resource('geofence', identifier=area["geofence_included"])
+                geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
+                                                                                                 area.geofence_included)
             except Exception:
                 raise RuntimeError("geofence_included for area '{}' is specified but does not exist ('{}').".format(
-                                   area["name"], geofence_included))
+                                   area.name, area.geofence_included))
 
-            geofence_excluded_raw_path = area.get("geofence_excluded", None)
-            try:
-                if geofence_excluded_raw_path is not None:
-                    geofence_excluded = self.__data_manager.get_resource('geofence',
-                                                                         identifier=geofence_excluded_raw_path)
-                else:
-                    geofence_excluded = None
-            except Exception:
-                raise RuntimeError(
-                    "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
-                        area["name"], geofence_excluded_raw_path
+            geofence_excluded: Optional[SettingsGeofence] = None
+            if area.mode in ("iv_mitm", "mon_mitm", 'pokestops', 'raids_mitm'):
+                try:
+                    if area.geofence_excluded is not None:
+                        geofence_excluded = await SettingsGeofenceHelper.get(session, instance_id,
+                                                                             int(area.geofence_excluded))
+                except Exception:
+                    raise RuntimeError(
+                        "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
+                            area.name, area.geofence_excluded
+                        )
                     )
-                )
-
-            area_dict = {"mode": area_true.area_type,
-                         "geofence_included": geofence_included,
-                         "geofence_excluded": geofence_excluded,
-                         "routecalc": area["routecalc"],
-                         "name": area['name']}
             # also build a routemanager for each area...
 
             # grab coords
             # first check if init is false, if so, grab the coords from DB
             geofence_helper = GeofenceHelper(geofence_included, geofence_excluded)
-            mode = area_true.area_type
             # build routemanagers
 
-            # map iv list to ids
-            if area.get('settings', None) is not None and 'mon_ids_iv' in area['settings']:
-                # replace list name
-                area['settings']['mon_ids_iv_raw'] = \
-                    self.get_monlist(area_id)
-            route_resource = self.__data_manager.get_resource('routecalc', identifier=area["routecalc"])
+            # TODO: Fill with all settings...
+            area_settings: Dict[str, Any] = {}
 
-            calc_type: str = area.get("route_calc_algorithm", "route")
+            # map iv list to ids
+            if area.mode in ("iv_mitm", "mon_mitm", "raids_mitm") and area.monlist_id:
+                # replace list name
+                area_settings['mon_ids_iv_raw'] = self.get_monlist(area_id)
+            init_area: bool = False
+            if area.mode in ("mon_mitm", "raids_mitm", "pokestop") and area.init:
+                init_area: bool = area.init
+            spawns_known: bool = area.coords_spawns_known if area.mode == "mon_mitm" else True
+            routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, instance_id,
+                                                                                            area.routecalc)
+
+            calc_type: str = area.route_calc_algorithm if area.mode == "pokestop" else "route"
+            including_event_id: bool = area.including_stops if area.mode == "raids_mitm" else False
+            level_mode: bool = area.level if area.mode == "pokestop" else False
+            # TODO: Refactor most of the code in here moving it to the factory
             route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager,
                                                                  area_id, None,
-                                                                 mode_mapping.get(mode, {}).get("range", 0),
-                                                                 mode_mapping.get(mode, {}).get("max_count",
-                                                                                                99999999),
+                                                                 mode_mapping.get(area.mode, {}).get("range", 0),
+                                                                 mode_mapping.get(area.mode, {}).get("max_count",
+                                                                                                     99999999),
                                                                  geofence_included,
                                                                  path_to_exclude_geofence=geofence_excluded,
-                                                                 mode=mode,
-                                                                 settings=area.get("settings", None),
-                                                                 init=area.get("init", False),
-                                                                 name=area.get("name", "unknown"),
-                                                                 level=area.get("level", False),
-                                                                 coords_spawns_known=area.get(
-                                                                     "coords_spawns_known", True),
-                                                                 routefile=route_resource,
+                                                                 mode=area.mode,
+                                                                 settings=area,
+                                                                 init=init_area,
+                                                                 name=area.name,
+                                                                 level=level_mode,
+                                                                 coords_spawns_known=spawns_known,
+                                                                 routecalc=routecalc,
                                                                  calctype=calc_type,
                                                                  joinqueue=self.join_routes_queue,
-                                                                 s2_level=mode_mapping.get(mode, {}).get(
+                                                                 s2_level=mode_mapping.get(area.mode, {}).get(
                                                                      "s2_cell_level", 30),
                                                                  include_event_id=area.get(
                                                                      "settings", {}).get("include_event_id", None)
                                                                  )
             logger.info("Initializing area {}", area["name"])
-            if mode not in ("iv_mitm", "idle") and calc_type != "routefree":
-                coords = self.__fetch_coords(mode, geofence_helper,
-                                             coords_spawns_known=area.get("coords_spawns_known", True),
-                                             init=area.get("init", False),
-                                             range_init=mode_mapping.get(mode, {}).get("range_init", 630),
-                                             including_stops=area.get("including_stops", False),
+            if area.mode not in ("iv_mitm", "idle") and calc_type != "routefree":
+                coords = self.__fetch_coords(area.mode, geofence_helper,
+                                             coords_spawns_known=spawns_known,
+                                             init=init_area,
+                                             range_init=mode_mapping.get(area.mode, {}).get("range_init", 630),
+                                             including_stops=including_event_id,
                                              include_event_id=area.get("settings", {}).get("include_event_id", None))
 
                 route_manager.add_coords_list(coords)
@@ -450,24 +456,23 @@ class MappingManager:
                         for loc in coords:
                             calc_coord = '%s,%s' % (str(loc.lat), str(loc.lng))
                             calc_coords.append(calc_coord)
-                        route_resource['routefile'] = calc_coords
-                        route_resource.save()
+                        routecalc.routefile = calc_coords
+                        session.add(routecalc)
                     # gotta feed the route to routemanager... TODO: without recalc...
                     # TODO: proper usage in asnycio loop
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
                                                                                      0, False))
                     areas_procs[area_id] = proc
 
-            area_dict["routemanager"] = route_manager
-            areas[area_id] = area_dict
-
+            routemanagers[area.area_id] = route_manager
         for area in areas_procs.keys():
+            # TODO: Async executors...
             to_be_checked = areas_procs[area]
             to_be_checked.get()
 
         thread_pool.close()
         thread_pool.join()
-        return areas
+        return routemanagers
 
     def __get_latest_devicemappings(self) -> dict:
         # returns mapping of devises to areas
