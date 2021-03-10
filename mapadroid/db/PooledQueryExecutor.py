@@ -14,10 +14,6 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 logger = get_logger(LoggerEnums.database)
 
 
-#class PooledQuerySyncManager(SyncManager):
-#    pass
-
-
 class PooledQueryExecutor:
     def __init__(self, args, host, port, username, password, database, poolsize=1):
         # TODO: Create redis cache elsewhere...

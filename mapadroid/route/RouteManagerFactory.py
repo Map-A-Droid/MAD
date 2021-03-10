@@ -1,9 +1,10 @@
 from typing import List, Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.model import (SettingsArea, SettingsAreaRaidsMitm,
-                                SettingsRoutecalc)
+from mapadroid.db.model import (SettingsArea, SettingsAreaPokestop,
+                                SettingsAreaRaidsMitm, SettingsRoutecalc)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.route.RouteManagerLeveling import RouteManagerLeveling
 from mapadroid.route.RouteManagerLevelingRoutefree import \
@@ -20,65 +21,57 @@ class RouteManagerFactory:
     def get_routemanager(db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
                          max_radius: int, max_coords_within_radius: int,
                          geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc, use_s2: bool = False,
-                         s2_level: int = 15, joinqueue=None, include_event_id=None):
-
+                         s2_level: int = 15, joinqueue=None, mon_ids_iv: Optional[List[int]] = None) -> RouteManagerBase:
         if area.mode == WorkerType.RAID_MITM.value:
             area: SettingsAreaRaidsMitm = area
             route_manager = RouteManagerRaids(db_wrapper=db_wrapper, area=area, coords=coords, max_radius=max_radius,
                                               max_coords_within_radius=max_coords_within_radius,
                                               geofence_helper=geofence_helper, routecalc=routecalc,
                                               joinqueue=joinqueue,
-                                              use_s2=use_s2, s2_level=s2_level
+                                              use_s2=use_s2, s2_level=s2_level, mon_ids_iv=mon_ids_iv
                                               )
-        elif mode == WorkerType.MON_MITM.value:
-            route_manager = RouteManagerMon(db_wrapper, dbm, area_id, coords, max_radius,
-                                            max_coords_within_radius,
-                                            path_to_include_geofence, path_to_exclude_geofence, routefile,
-                                            mode=mode, settings=settings, init=init, name=name,
-                                            joinqueue=joinqueue,
-                                            coords_spawns_known=coords_spawns_known,
-                                            include_event_id=include_event_id
+        elif area.mode == WorkerType.MON_MITM.value:
+            route_manager = RouteManagerMon(db_wrapper=db_wrapper, area=area, coords=coords, max_radius=max_radius,
+                                            max_coords_within_radius=max_coords_within_radius,
+                                            geofence_helper=geofence_helper, routecalc=routecalc,
+                                            joinqueue=joinqueue, use_s2=use_s2, s2_level=s2_level,
+                                            mon_ids_iv=mon_ids_iv
                                             )
-        elif mode == WorkerType.IV_MITM.value:
-            route_manager = RouteManagerIV(db_wrapper, dbm, area_id, coords, 0, 99999999,
-                                           path_to_include_geofence, path_to_exclude_geofence, routefile,
-                                           mode=mode, settings=settings, init=False, name=name,
-                                           joinqueue=joinqueue
+        elif area.mode == WorkerType.IV_MITM.value:
+            route_manager = RouteManagerIV(db_wrapper=db_wrapper, area=area, coords=coords, max_radius=max_radius,
+                                           max_coords_within_radius=max_coords_within_radius,
+                                           geofence_helper=geofence_helper, routecalc=routecalc,
+                                           joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                            )
-        elif mode == WorkerType.IDLE.value:
-            route_manager = RouteManagerRaids(db_wrapper, dbm, area_id, coords, max_radius,
-                                              max_coords_within_radius,
-                                              path_to_include_geofence, path_to_exclude_geofence, routefile,
-                                              mode=mode, settings=settings, init=init, name=name,
-                                              joinqueue=joinqueue
+        elif area.mode == WorkerType.IDLE.value:
+            route_manager = RouteManagerRaids(db_wrapper=db_wrapper, area=area, coords=coords, max_radius=max_radius,
+                                              max_coords_within_radius=max_coords_within_radius,
+                                              geofence_helper=geofence_helper, routecalc=routecalc,
+                                              joinqueue=joinqueue,
+                                              use_s2=use_s2, s2_level=s2_level, mon_ids_iv=mon_ids_iv
                                               )
-        elif mode == WorkerType.STOPS.value:
-            if level and calctype == 'routefree':
-                route_manager = RouteManagerLevelingRoutefree(db_wrapper, dbm, area_id, coords, max_radius,
-                                                              max_coords_within_radius,
-                                                              path_to_include_geofence, path_to_exclude_geofence,
-                                                              routefile,
-                                                              mode=mode, settings=settings, init=init, name=name,
-                                                              level=True,
-                                                              calctype=calctype, joinqueue=joinqueue
+        elif area.mode == WorkerType.STOPS.value:
+            area: SettingsAreaPokestop = area
+            if area.level and area.calctype == 'routefree':
+                route_manager = RouteManagerLevelingRoutefree(db_wrapper=db_wrapper, area=area, coords=coords,
+                                                              max_radius=max_radius,
+                                                              max_coords_within_radius=max_coords_within_radius,
+                                                              geofence_helper=geofence_helper, routecalc=routecalc,
+                                                              joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                                               )
-            elif level:
-                route_manager = RouteManagerLeveling(db_wrapper, dbm, area_id, coords, max_radius,
-                                                     max_coords_within_radius,
-                                                     path_to_include_geofence, path_to_exclude_geofence,
-                                                     routefile,
-                                                     mode=mode, settings=settings, init=init, name=name,
-                                                     level=True,
-                                                     calctype=calctype, joinqueue=joinqueue
+            elif area.level:
+                route_manager = RouteManagerLeveling(db_wrapper=db_wrapper, area=area, coords=coords,
+                                                     max_radius=max_radius,
+                                                     max_coords_within_radius=max_coords_within_radius,
+                                                     geofence_helper=geofence_helper, routecalc=routecalc,
+                                                     joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                                      )
             else:
-                route_manager = RouteManagerQuests(db_wrapper, dbm, area_id, coords, max_radius,
-                                                   max_coords_within_radius,
-                                                   path_to_include_geofence, path_to_exclude_geofence,
-                                                   routefile,
-                                                   mode=mode, settings=settings, init=init, name=name,
-                                                   level=level,
-                                                   calctype=calctype, joinqueue=joinqueue
+                route_manager = RouteManagerQuests(db_wrapper=db_wrapper, area=area, coords=coords,
+                                                   max_radius=max_radius,
+                                                   max_coords_within_radius=max_coords_within_radius,
+                                                   geofence_helper=geofence_helper, routecalc=routecalc,
+                                                   joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                                    )
         else:
             raise RuntimeError("Invalid mode found in mapping parser.")

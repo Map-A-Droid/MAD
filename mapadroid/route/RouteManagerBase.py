@@ -50,10 +50,14 @@ class RouteManagerBase(ABC):
                  geofence_helper: GeofenceHelper,
                  routecalc: SettingsRoutecalc,
                  use_s2: bool = False, s2_level: int = 15,
-                 joinqueue=None):
+                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        if mon_ids_iv is None:
+            mon_ids_iv = []
+
         self.logger = get_logger(LoggerEnums.routemanager, name=str(area.name))
         self.db_wrapper: DbWrapper = db_wrapper
-        self.init: bool = area.init if area.mode in ("mon_mitm", "raids_mitm", "pokestop") and area.init else False
+        # self.init: bool = area.init if area.mode in ("mon_mitm", "raids_mitm", "pokestop") and area.init else False
+        self.init: bool = False
         self.name: str = area.name
         self.useS2: bool = use_s2
         self.S2level: int = s2_level
@@ -74,8 +78,10 @@ class RouteManagerBase(ABC):
         self._start_calc: bool = False
         self._positiontyp = {}
         self._coords_to_be_ignored = set()
-        self._level = area.level if area.mode == "pokestop" else False
-        self._calctype = area.route_calc_algorithm if area.mode == "pokestop" else "route"
+        # self._level = area.level if area.mode == "pokestop" else False
+        # self._calctype = area.route_calc_algorithm if area.mode == "pokestop" else "route"
+        self._level = False
+        self._calctype = "route"
         self._overwrite_calculation: bool = False
         self._stops_not_processed: Dict[Location, int] = {}
         self._routepool: Dict[str, RoutePoolEntry] = {}
@@ -105,33 +111,20 @@ class RouteManagerBase(ABC):
                                                              in_memory=False)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
-
-        if self._settings is not None:
-            self.delay_after_timestamp_prio = self._settings.get(
-                "delay_after_prio_event", None)
-            self.starve_route = self._settings.get("starve_route", False)
-            if self._mode == WorkerType.MON_MITM:
-                self.remove_from_queue_backlog = self._settings.get(
-                    "remove_from_queue_backlog", 300)
-            else:
-                self.remove_from_queue_backlog = self._settings.get(
-                    "remove_from_queue_backlog", 0)
-        else:
-            self.delay_after_timestamp_prio = None
-            self.starve_route = False
-            self.remove_from_queue_backlog = None
-
+        self._max_clustering: int = self._max_coords_within_radius
+        self.delay_after_timestamp_prio: int = 0
+        self.starve_route: bool = False
+        self.remove_from_queue_backlog: int = 0
+        self.init_mode_rounds: int = 1
+        self._mon_ids_iv: List[int] = mon_ids_iv
         # initialize priority queue variables
         self._prio_queue = None
         self._update_prio_queue_thread = None
         self._check_routepools_thread = None
         self._stop_update_thread = Event()
 
-    def get_ids_iv(self) -> Optional[List[int]]:
-        if self._settings is not None:
-            return self._settings.get("mon_ids_iv_raw", [])
-        else:
-            return None
+    def get_ids_iv(self) -> List[int]:
+        return self._mon_ids_iv
 
     def get_max_radius(self):
         return self._max_radius
@@ -236,15 +229,8 @@ class RouteManagerBase(ABC):
                 self._stop_update_thread.clear()
             self._prio_queue = []
             if self._mode not in [WorkerType.IV_MITM, WorkerType.STOPS]:
-                if self._mode == WorkerType.IV_MITM and self._settings is not None:
-                    max_clustering = self._settings.get(
-                        "max_clustering", self._max_coords_within_radius)
-                    if max_clustering == 0:
-                        max_clustering = self._max_coords_within_radius
-                else:
-                    max_clustering = self._max_coords_within_radius
                 self.clustering_helper = ClusteringHelper(self._max_radius,
-                                                          max_clustering,
+                                                          self._max_clustering,
                                                           self._cluster_priority_queue_criteria())
             self._update_prio_queue_thread = Thread(name=self.name + "- prio_queue_update",
                                                     target=self._update_priority_queue_loop)
@@ -289,7 +275,7 @@ class RouteManagerBase(ABC):
 
     def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                             delete_old_route: bool = False):
-        if not self._route_resource['routefile']:
+        if not self._routecalc.routefile:
             self.recalc_route(max_radius, max_coords_within_radius, num_procs,
                               delete_old_route=delete_old_route,
                               in_memory=True,
@@ -331,9 +317,9 @@ class RouteManagerBase(ABC):
         async with self.db_wrapper as session:
             self._routecalc.routefile = calc_coords
             self._routecalc.last_updated = datetime.utcnow()
+            # TODO: First update the resource or simply set using helper which fetches the object first?
+            await session.merge(self._routecalc)
             await session.commit()
-        # TODO: Session with commit...
-        self._route_resource.save(update_time=True)
         with self._workers_registered_mutex:
             connected_worker_count = len(self._workers_registered)
             if connected_worker_count > 0:
@@ -520,7 +506,7 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].last_access = time.time()
                 self._routepool[origin].worker_sleeping = 0
 
-    def get_next_location(self, origin: str) -> Optional[Location]:
+    async def get_next_location(self, origin: str) -> Optional[Location]:
         route_logger = routelogger_set_origin(self.logger, origin=origin)
         route_logger.debug4("get_next_location called")
         if not self._is_started:
@@ -639,7 +625,7 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].rounds += 1
 
             # Check if we are in init:
-            if self.init and self._check_worker_rounds() >= int(self._settings.get("init_mode_rounds", 1)) and \
+            if self.init and self._check_worker_rounds() >= self.init_mode_rounds and \
                     len(self._routepool[origin].queue) == 0:
                 # we are done with init, let's calculate a new route
                 self.logger.warning("Init done, it took {}, calculating new route...",
@@ -655,7 +641,7 @@ class RouteManagerBase(ABC):
                 self.logger.debug("Route being calculated")
                 self._recalc_route_workertype()
                 self.init = False
-                self._change_init_mapping()
+                await self._change_init_mapping()
                 self._start_calc = False
                 self.logger.debug("Initroute is finished - restart worker")
                 return None
@@ -1033,10 +1019,12 @@ class RouteManagerBase(ABC):
             #   the new route, remove the old rest of it (or just fetch the first coord of the next subroute and
             #   remove the coords of that coord onward)
 
-    def _change_init_mapping(self):
-        area = self._data_manager.get_resource('area', self.area_id)
-        area['init'] = False
-        area.save()
+    @abstractmethod
+    async def _change_init_mapping(self) -> None:
+        """
+        Used to adjust the init flag of areas if applicable...
+        """
+        pass
 
     def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route and origin in self._routepool:
@@ -1063,7 +1051,7 @@ class RouteManagerBase(ABC):
     def get_mode(self) -> WorkerType:
         return self._mode
 
-    def get_settings(self) -> Optional[dict]:
+    def get_settings(self) -> Optional[SettingsArea]:
         return self._settings
 
     def get_current_route(self) -> Tuple[list, Dict[str, RoutePoolEntry]]:

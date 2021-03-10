@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsAreaRaidsMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -11,14 +13,20 @@ logger = get_logger(LoggerEnums.routemanager)
 class RouteManagerRaids(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaRaidsMitm, coords, max_radius, max_coords_within_radius,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
-                 joinqueue=None, use_s2: bool = False, s2_level: int = 15):
+                 joinqueue=None, use_s2: bool = False, s2_level: int = 15, mon_ids_iv: Optional[List[int]] = None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   geofence_helper=geofence_helper,
-                                  routecalc=routecalc, use_s2=True, s2_level=s2_level,
-                                  joinqueue=joinqueue
+                                  routecalc=routecalc, use_s2=use_s2, s2_level=s2_level,
+                                  joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                   )
+        self._settings: SettingsAreaRaidsMitm = area
+        self.remove_from_queue_backlog = area.remove_from_queue_backlog
+        self.delay_after_timestamp_prio = area.delay_after_prio_event
+        self.starve_route = area.starve_route
+        self.init_mode_rounds = area.init_mode_rounds
+        self.init = area.init
 
     def _priority_queue_update_interval(self):
         return 300
@@ -43,18 +51,15 @@ class RouteManagerRaids(RouteManagerBase):
     def _get_coords_post_init(self):
         # TODO: GymHelper.get_locations_in_fence
         coords = self.db_wrapper.gyms_from_db(self.geofence_helper)
-        including_stops = self._data_manager.get_resource('area', self.area_id).get('including_stops', False)
-        if including_stops:
+        if self._settings.including_stops:
             self.logger.info("Include stops in coords list too!")
             coords.extend(self.db_wrapper.stops_from_db(self.geofence_helper))
 
         return coords
 
-    def _cluster_priority_queue_criteria(self):
-        if self._settings is not None:
-            return self._settings.get("priority_queue_clustering_timedelta", 600)
-        else:
-            return 600
+    def _cluster_priority_queue_criteria(self) -> float:
+        return self._settings.priority_queue_clustering_timedelta \
+            if self._settings.priority_queue_clustering_timedelta is not None else 600
 
     def _start_routemanager(self):
         with self._manager_mutex:
@@ -74,3 +79,8 @@ class RouteManagerRaids(RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
+
+    async def _change_init_mapping(self) -> None:
+        self._settings.init = False
+        # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
+        await session.merge(self._settings)

@@ -1,32 +1,34 @@
 import collections
 import time
-from typing import List
+from typing import List, Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
-Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
 class RouteManagerQuests(RouteManagerBase):
-    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "route", joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+    def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
+                 max_radius: int, max_coords_within_radius: int,
+                 geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
+                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, level=level, calctype=calctype,
-                                  joinqueue=joinqueue
+                                  geofence_helper=geofence_helper,
+                                  routecalc=routecalc, joinqueue=joinqueue, use_s2=False,
+                                  mon_ids_iv=mon_ids_iv
                                   )
+        self._settings: SettingsAreaPokestop = area
+        self._calctype = area.route_calc_algorithm
         self.starve_route = False
         self._stoplist: List[Location] = []
-
+        self.init = area.init
         self._shutdown_route: bool = False
         self._routecopy: List[Location] = []
         self._tempinit: bool = False
@@ -222,3 +224,8 @@ class RouteManagerQuests(RouteManagerBase):
             return False
         self.logger.info('Getting new Stop')
         return True
+
+    async def _change_init_mapping(self) -> None:
+        self._settings.init = False
+        # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
+        await session.merge(self._settings)

@@ -1,9 +1,12 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
+from mapadroid.route.RouteManagerLeveling import RouteManagerLeveling
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -11,19 +14,19 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 logger = get_logger(LoggerEnums.routemanager)
 
 
-class RouteManagerLevelingRoutefree(RouteManagerQuests):
-    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "route", joinqueue=None):
-        RouteManagerQuests.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+class RouteManagerLevelingRoutefree(RouteManagerLeveling):
+    def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
+                 max_radius: int, max_coords_within_radius: int,
+                 geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
+                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        # TODO: Verify... used to be quests directly
+        RouteManagerLeveling.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                     max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
-                                    path_to_include_geofence=path_to_include_geofence,
-                                    path_to_exclude_geofence=path_to_exclude_geofence,
-                                    routefile=routefile, init=init,
-                                    name=name, settings=settings, mode=mode, level=level, calctype=calctype,
-                                    joinqueue=joinqueue
+                                    geofence_helper=geofence_helper, routecalc=routecalc,
+                                    joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                     )
+        self._level = True
+        self.init = area.init
 
     def _worker_changed_update_routepools(self):
         with self._manager_mutex and self._workers_registered_mutex:
@@ -46,8 +49,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                                                                                   lat=current_worker_pos.lat,
                                                                                   lon=current_worker_pos.lng,
                                                                                   limit=30,
-                                                                                  ignore_spinned=self._settings.get(
-                                                                                      "ignore_spinned_stops", True),
+                                                                                  ignore_spinned=self._settings.ignore_spinned_stops,
                                                                                   maxdistance=5)
                 if len(unvisited_stops) == 0:
                     self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)

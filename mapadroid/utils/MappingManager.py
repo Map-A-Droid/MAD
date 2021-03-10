@@ -11,7 +11,7 @@ from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import (SettingsArea, SettingsGeofence,
-                                SettingsRoutecalc)
+                                SettingsPogoauth, SettingsRoutecalc)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
@@ -164,7 +164,7 @@ class MappingManager:
     async def get_areas(self) -> Optional[dict]:
         return self._areas
 
-    def get_monlist(self, area_id):
+    def get_monlist(self, area_id) -> List[int]:
         try:
             return self.__areamons[area_id]
         except KeyError:
@@ -287,7 +287,7 @@ class MappingManager:
         routemanager = await self.__fetch_routemanager(routemanager_name)
         return routemanager.get_current_prioroute() if routemanager is not None else None
 
-    async def routemanager_get_settings(self, routemanager_name: str) -> Optional[dict]:
+    async def routemanager_get_settings(self, routemanager_name: str) -> Optional[SettingsArea]:
         routemanager = await self.__fetch_routemanager(routemanager_name)
         return routemanager.get_settings() if routemanager is not None else None
 
@@ -406,29 +406,23 @@ class MappingManager:
                                                                                             area.routecalc)
 
             calc_type: str = area.route_calc_algorithm if area.mode == "pokestop" else "route"
-            including_event_id: bool = area.including_stops if area.mode == "raids_mitm" else False
+            including_stops: bool = area.including_stops if area.mode == "raids_mitm" else False
             level_mode: bool = area.level if area.mode == "pokestop" else False
             # TODO: Refactor most of the code in here moving it to the factory
-            route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager,
-                                                                 area_id, None,
-                                                                 mode_mapping.get(area.mode, {}).get("range", 0),
-                                                                 mode_mapping.get(area.mode, {}).get("max_count",
-                                                                                                     99999999),
-                                                                 geofence_included,
-                                                                 path_to_exclude_geofence=geofence_excluded,
-                                                                 mode=area.mode,
-                                                                 settings=area,
-                                                                 init=init_area,
-                                                                 name=area.name,
-                                                                 level=level_mode,
-                                                                 coords_spawns_known=spawns_known,
+            # TODO: Use use_s2 ?
+            route_manager = RouteManagerFactory.get_routemanager(db_wrapper=self.__db_wrapper,
+                                                                 area=area, coords=None,
+                                                                 max_radius=mode_mapping.get(area.mode,
+                                                                                             {}).get("range", 0),
+                                                                 max_coords_within_radius=
+                                                                    mode_mapping.get(area.mode, {}).get("max_count",
+                                                                                                        99999999),
+                                                                 geofence_helper=geofence_helper,
                                                                  routecalc=routecalc,
-                                                                 calctype=calc_type,
                                                                  joinqueue=self.join_routes_queue,
                                                                  s2_level=mode_mapping.get(area.mode, {}).get(
                                                                      "s2_cell_level", 30),
-                                                                 include_event_id=area.get(
-                                                                     "settings", {}).get("include_event_id", None)
+                                                                 mon_ids_iv=self.get_monlist(area_id)
                                                                  )
             logger.info("Initializing area {}", area["name"])
             if area.mode not in ("iv_mitm", "idle") and calc_type != "routefree":
@@ -436,7 +430,7 @@ class MappingManager:
                                              coords_spawns_known=spawns_known,
                                              init=init_area,
                                              range_init=mode_mapping.get(area.mode, {}).get("range_init", 630),
-                                             including_stops=including_event_id,
+                                             including_stops=including_stops,
                                              include_event_id=area.get("settings", {}).get("include_event_id", None))
 
                 route_manager.add_coords_list(coords)
@@ -496,8 +490,9 @@ class MappingManager:
             pool = device.get("pool", None)
             device_dict['ptc_login'] = []
             for account_id in device.get("ptc_login", []):
-                account = self.__data_manager.get_resource('pogoauth', identifier=account_id)
-                device_dict['ptc_login'].append((account['username'], account['password']))
+                account: SettingsPogoauth = await SettingsPogoauthHelper.get_assigned_to_device(session, instance_id,
+                                                                                                account_id)
+                device_dict['ptc_login'].append((account.username, account.password))
             settings = device.get("settings", None)
             try:
                 device_dict["settings"] = self.__inherit_device_settings(settings,

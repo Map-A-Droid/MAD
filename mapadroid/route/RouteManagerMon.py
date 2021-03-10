@@ -1,24 +1,37 @@
+from typing import List, Optional
+
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import SettingsAreaMonMitm, SettingsRoutecalc
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerMon(RouteManagerBase):
-    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                 path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=True, init=False,
-                 name="unknown", settings=None, joinqueue=None, include_event_id=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+    def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaMonMitm, coords: Optional[List[Location]],
+                 max_radius: int, max_coords_within_radius: int,
+                 geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
+                 use_s2: bool = False, s2_level: int = 15,
+                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
+                                  geofence_helper=geofence_helper, joinqueue=joinqueue,
+                                  use_s2=use_s2, s2_level=s2_level, routecalc=routecalc,
+                                  mon_ids_iv=mon_ids_iv
                                   )
-        self.coords_spawns_known = coords_spawns_known
-        self.include_event_id = include_event_id
+        self._settings: SettingsAreaMonMitm = area
+        self.coords_spawns_known = area.coords_spawns_known
+        self.include_event_id = area.include_event_id
+        self.init = area.init
+        self.remove_from_queue_backlog = area.remove_from_queue_backlog
+        self.delay_after_timestamp_prio = area.delay_after_prio_event
+        self.starve_route = area.starve_route
+        self._max_clustering = area.max_clustering
+        self.init_mode_rounds = area.init_mode_rounds
 
     def _priority_queue_update_interval(self):
         return 600
@@ -48,10 +61,7 @@ class RouteManagerMon(RouteManagerBase):
         return coords
 
     def _cluster_priority_queue_criteria(self):
-        if self._settings is not None:
-            return self._settings.get("priority_queue_clustering_timedelta", 300)
-        else:
-            return 300
+        return self._settings.priority_queue_clustering_timedelta
 
     def _start_routemanager(self):
         with self._manager_mutex:
@@ -74,3 +84,8 @@ class RouteManagerMon(RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
+
+    async def _change_init_mapping(self) -> None:
+        self._settings.init = False
+        # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
+        await session.merge(self._settings)

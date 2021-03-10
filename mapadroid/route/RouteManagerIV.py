@@ -1,28 +1,33 @@
 import heapq
-from typing import List
+from typing import List, Optional
 
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import SettingsAreaIvMitm, SettingsRoutecalc
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerIV(RouteManagerBase):
-    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                 path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, init=False,
-                 name="unknown", settings=None, joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+    def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaIvMitm, coords: Optional[List[Location]],
+                 max_radius: int, max_coords_within_radius: int,
+                 geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
+                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
+                                  geofence_helper=geofence_helper, joinqueue=joinqueue,
+                                  routecalc=routecalc, mon_ids_iv=mon_ids_iv
                                   )
+        self._settings: SettingsAreaIvMitm = area
         self.encounter_ids_left: List[int] = []
         self.starve_route = True
-        if self.delay_after_timestamp_prio is None:
+        self.remove_from_queue_backlog = area.remove_from_queue_backlog
+        self.delay_after_timestamp_prio = area.delay_after_prio_event
+        if self.delay_after_timestamp_prio is None or self.delay_after_timestamp_prio == 0:
             # just set a value to enable the queue
             self.delay_after_timestamp_prio = 5
 
@@ -39,10 +44,8 @@ class RouteManagerIV(RouteManagerBase):
     def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info
         latest_priorities = self.db_wrapper.get_to_be_encountered(geofence_helper=self.geofence_helper,
-                                                                  min_time_left_seconds=self._settings.get(
-                                                                      "min_time_left_seconds", None),
-                                                                  eligible_mon_ids=self._settings.get(
-                                                                      "mon_ids_iv_raw", None))
+                                                                  min_time_left_seconds=self._settings.min_time_left_seconds,
+                                                                  eligible_mon_ids=self._mon_ids_iv)
         # extract the encounterIDs and set them in the routeManager...
         new_list = []
         for prio in latest_priorities:
