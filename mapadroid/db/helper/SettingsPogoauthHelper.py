@@ -1,11 +1,11 @@
-from sqlalchemy.future import select
-from typing import Optional, List
-
-from sqlalchemy import update, and_
-from sqlalchemy.ext.asyncio import AsyncSession
 from enum import Enum
+from typing import List, Optional
 
-from mapadroid.db.model import SettingsRoutecalc, SettingsPogoauth
+from sqlalchemy import and_, update
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from mapadroid.db.model import SettingsPogoauth, SettingsRoutecalc
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -29,8 +29,8 @@ class SettingsPogoauthHelper:
 
     @staticmethod
     async def get_assigned_to_device(session: AsyncSession, instance_id: int,
-                                     device_id: int) -> Optional[SettingsPogoauth]:
+                                     device_id: int) -> List[SettingsPogoauth]:
         stmt = select(SettingsPogoauth).where(and_(SettingsPogoauth.instance_id == instance_id,
                                                    SettingsPogoauth.device_id == device_id))
         result = await session.execute(stmt)
-        return result.scalars().first()
+        return result.scalars().all()

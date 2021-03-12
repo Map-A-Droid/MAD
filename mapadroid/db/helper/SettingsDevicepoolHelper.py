@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Dict, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -11,3 +12,21 @@ class SettingsDevicepoolHelper:
         stmt = select(SettingsDevicepool).where(SettingsDevicepool.pool_id == pool_id)
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsDevicepool]:
+        """
+
+        Args:
+            session:
+            instance_id:
+
+        Returns: Dict mapping pool_id to SettingsDevicepool
+
+        """
+        stmt = select(SettingsDevicepool).where(SettingsDevicepool.instance_id == instance_id)
+        result = await session.execute(stmt)
+        mapped: Dict[int, SettingsDevicepool] = {}
+        for pool in result:
+            mapped[pool.pool_id] = pool
+        return mapped

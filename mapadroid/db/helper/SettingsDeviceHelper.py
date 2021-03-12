@@ -44,6 +44,13 @@ class SettingsDeviceHelper:
 
     @staticmethod
     async def get(session: AsyncSession, instance_id: int, device_id: int) -> Optional[SettingsDevice]:
-        stmt = select(SettingsDevice).where(SettingsDevice.device_id == device_id)
+        stmt = select(SettingsDevice).where(and_(SettingsDevice.instance_id == instance_id,
+                                                 SettingsDevice.device_id == device_id))
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsDevice]:
+        stmt = select(SettingsDevice).where(SettingsDevice.instance_id == instance_id)
+        result = await session.execute(stmt)
+        return result.scalars().all()

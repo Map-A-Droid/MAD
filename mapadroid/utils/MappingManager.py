@@ -7,11 +7,22 @@ from threading import Thread
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper import SettingsRoutecalcHelper
-from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.SettingsDevicepoolHelper import \
+    SettingsDevicepoolHelper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
-from mapadroid.db.model import (SettingsArea, SettingsGeofence,
-                                SettingsPogoauth, SettingsRoutecalc)
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
+from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
+from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
+from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
+    SettingsWalkerToWalkerareaHelper
+from mapadroid.db.model import (SettingsArea, SettingsDevice,
+                                SettingsDevicepool, SettingsGeofence,
+                                SettingsPogoauth, SettingsRoutecalc,
+                                SettingsWalker, SettingsWalkerarea,
+                                SettingsWalkerToWalkerarea)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
@@ -48,6 +59,13 @@ mode_mapping = {
         "max_count": 999999
     }
 }
+
+
+class DeviceMappingsEntry:
+    device_settings: SettingsDevice = None
+    ptc_logins: List[SettingsPogoauth] = []
+    pool_settings: SettingsDevicepool = None
+    walker_areas: List[SettingsWalkerarea] = []
 
 
 class JoinQueue(object):
@@ -131,7 +149,7 @@ class MappingManager:
         # Async method since we may move the logic to a different host
         return self._devicemappings.get(device_name, None)
 
-    async def get_devicesettings_of(self, device_name: str) -> Optional[dict]:
+    async def get_devicesettings_of(self, device_name: str) -> Optional[SettingsDevice]:
         return self._devicemappings.get(device_name, None).get('settings', None)
 
     def __devicesettings_setter_consumer(self):
@@ -434,8 +452,8 @@ class MappingManager:
                                              include_event_id=area.get("settings", {}).get("include_event_id", None))
 
                 route_manager.add_coords_list(coords)
-                max_radius = mode_mapping[mode]["range"]
-                max_count_in_radius = mode_mapping[mode]["max_count"]
+                max_radius = mode_mapping[area.mode]["range"]
+                max_count_in_radius = mode_mapping[area.mode]["max_count"]
                 if not area.get("init", False):
                     # TODO: proper usage in asnycio loop
                     proc = thread_pool.apply_async(route_manager.initial_calculation,
@@ -468,48 +486,41 @@ class MappingManager:
         thread_pool.join()
         return routemanagers
 
-    def __get_latest_devicemappings(self) -> dict:
+    async def __get_latest_devicemappings(self) -> Dict[str, DeviceMappingsEntry]:
         # returns mapping of devises to areas
-        devices = {}
-        devices.clear()
+        devices: Dict[str, DeviceMappingsEntry] = {}
 
-        raw_devices = self.__data_manager.get_root_resource('device')
-        raw_walkers = self.__data_manager.get_root_resource('walker')
-        raw_pools = self.__data_manager.get_root_resource('devicepool')
-        raw_walkerareas = self.__data_manager.get_root_resource('walkerarea')
+        devices_of_instance: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
 
-        if raw_devices is None:
+        if not devices_of_instance:
             return devices
 
-        for device_id, device in raw_devices.items():
-            device_dict = {}
-            device_dict.clear()
-            device_dict['device_id'] = device_id
-            walker = int(device["walker"])
-            device_dict["adb"] = device.get("adbname", None)
-            pool = device.get("pool", None)
-            device_dict['ptc_login'] = []
-            for account_id in device.get("ptc_login", []):
-                account: SettingsPogoauth = await SettingsPogoauthHelper.get_assigned_to_device(session, instance_id,
-                                                                                                account_id)
-                device_dict['ptc_login'].append((account.username, account.password))
-            settings = device.get("settings", None)
-            try:
-                device_dict["settings"] = self.__inherit_device_settings(settings,
-                                                                         raw_pools[int(pool)].get('settings',
-                                                                                                  []))
-            except (KeyError, AttributeError, TypeError):
-                device_dict["settings"] = device.get("settings", None)
+        all_walkers: Dict[int, SettingsWalker] = await SettingsWalkerHelper.get_all_mapped(session, instance_id)
+        all_walkerareas: Dict[int, SettingsWalkerarea] = await SettingsWalkerareaHelper.get_all_mapped(session,
+                                                                                                       instance_id)
+        all_walkers_to_walkerareas: Dict[int, List[SettingsWalkerToWalkerarea]] = \
+            await SettingsWalkerToWalkerareaHelper.get_all_mapped(session, instance_id)
+        all_pools: Dict[int, SettingsDevicepool] = await SettingsDevicepoolHelper.get_all_mapped(session, instance_id)
 
-            try:
-                workerareas = []
-                for walkerarea_id in raw_walkers[walker].get('setup', []):
-                    workerareas.append(raw_walkerareas[walkerarea_id].get_resource())
-                device_dict["walker"] = workerareas
-            except (KeyError, AttributeError):
-                device_dict["walker"] = []
+        for device in devices_of_instance:
+            device_entry: DeviceMappingsEntry = DeviceMappingsEntry()
+            device_entry.device_settings = device
 
-            devices[device["origin"]] = device_dict
+            # Fetch the logins that are assigned to this device...
+            accounts_assigned: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(session, instance_id,
+                                                                                            account_id)
+            device_entry.ptc_logins.extend(accounts_assigned)
+
+            if device.pool_id is not None:
+                device_entry.pool_settings = all_pools.get(device.pool_id, None)
+
+            walker: SettingsWalker = all_walkers.get(device.walker_id, None)
+            if walker:
+                walkerarea_mappings_of_walker: List[SettingsWalkerToWalkerarea] = all_walkers_to_walkerareas\
+                    .get(walker.walker_id, [])
+                for walker_to_walkerareas in walkerarea_mappings_of_walker:
+                    device_entry.walker_areas.append(all_walkerareas.get(walker_to_walkerareas.walkerarea_id))
+
         return devices
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = True,
@@ -622,7 +633,7 @@ class MappingManager:
             areamons[area_id] = mon_list
         return areamons
 
-    def update(self, full_lock=False):
+    async def update(self, full_lock=False):
         """
         Updates the internal mappings and routemanagers
         :return:
@@ -668,8 +679,8 @@ class MappingManager:
                 self._monlists = self.__get_latest_monlists()
                 self._areas = self.__get_latest_areas()
                 self.__areamons = self.__get_latest_areamons(self._areas)
-                self._routemanagers = self.__get_latest_routemanagers()
-                self._devicemappings = self.__get_latest_devicemappings()
+                self._routemanagers = await self.__get_latest_routemanagers()
+                self._devicemappings = await self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
 
         logger.info("Mappings have been updated")
