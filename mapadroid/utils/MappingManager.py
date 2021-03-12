@@ -7,10 +7,13 @@ from threading import Thread
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.GymHelper import GymHelper
+from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsDevicepoolHelper import \
     SettingsDevicepoolHelper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
+from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import \
@@ -18,11 +21,12 @@ from mapadroid.db.helper.SettingsWalkerareaHelper import \
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
+from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import (SettingsArea, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
                                 SettingsPogoauth, SettingsRoutecalc,
                                 SettingsWalker, SettingsWalkerarea,
-                                SettingsWalkerToWalkerarea)
+                                SettingsWalkerToWalkerarea, TrsSpawn)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
@@ -68,6 +72,14 @@ class DeviceMappingsEntry:
     walker_areas: List[SettingsWalkerarea] = []
 
 
+class AreaEntry:
+    settings: SettingsArea = None
+    routecalc: SettingsRoutecalc = None
+    geofence_included: int = None
+    geofence_excluded: int = None
+    init: bool = False
+
+
 class JoinQueue(object):
     def __init__(self, stop_trigger, mapping_manager):
         self._joinqueue: Queue = Queue()
@@ -109,7 +121,7 @@ class MappingManager:
         self._routemanagers: Optional[Dict[str, dict]] = None
         self._auths: Optional[dict] = None
         self.__areamons: Optional[Dict[int, List[int]]] = {}
-        self._monlists: Optional[dict] = None
+        self._monlists: Optional[Dict[int, List[int]]] = None
         self.__shutdown_event: Event = Event()
         self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
         self.__mappings_mutex: Lock = Lock()
@@ -444,12 +456,12 @@ class MappingManager:
                                                                  )
             logger.info("Initializing area {}", area["name"])
             if area.mode not in ("iv_mitm", "idle") and calc_type != "routefree":
-                coords = self.__fetch_coords(area.mode, geofence_helper,
-                                             coords_spawns_known=spawns_known,
-                                             init=init_area,
-                                             range_init=mode_mapping.get(area.mode, {}).get("range_init", 630),
-                                             including_stops=including_stops,
-                                             include_event_id=area.get("settings", {}).get("include_event_id", None))
+                coords = await self.__fetch_coords(area.mode, geofence_helper,
+                                                 coords_spawns_known=spawns_known,
+                                                 init=init_area,
+                                                 range_init=mode_mapping.get(area.mode, {}).get("range_init", 630),
+                                                 including_stops=including_stops,
+                                                 include_event_id=area.get("settings", {}).get("include_event_id", None))
 
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area.mode]["range"]
@@ -523,7 +535,7 @@ class MappingManager:
 
         return devices
 
-    def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = True,
+    async def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = True,
                        init: bool = False, range_init: int = 630, including_stops: bool = False,
                        include_event_id=None) -> List[Location]:
         coords: List[Location] = []
@@ -531,23 +543,26 @@ class MappingManager:
             # grab data from DB depending on mode
             # TODO: move routemanagers to factory
             if mode == "raids_mitm":
-                coords = self.__db_wrapper.gyms_from_db(geofence_helper)
+                coords = await GymHelper.get_locations_in_fence(session, geofence_helper)
                 if including_stops:
                     try:
-                        stops = self.__db_wrapper.stops_from_db(geofence_helper)
+                        stops = await PokestopHelper.get_locations_in_fence(session, geofence_helper)
                         if stops:
                             coords.extend(stops)
                     except Exception:
                         pass
             elif mode == "mon_mitm":
+                spawns: List[TrsSpawn] = []
                 if coords_spawns_known:
                     logger.debug("Reading known Spawnpoints from DB")
-                    coords = self.__db_wrapper.get_detected_spawns(geofence_helper, include_event_id)
+                    spawns = await TrsSpawnHelper.get_known_of_area(session, geofence_helper, include_event_id)
                 else:
                     logger.debug("Reading unknown Spawnpoints from DB")
-                    coords = self.__db_wrapper.get_undetected_spawns(geofence_helper, include_event_id)
+                    spawns = await TrsSpawnHelper.get_known_without_despawn_of_area(session, geofence_helper, include_event_id)
+                for spawn in spawns:
+                    coords.append(Location(spawn.latitude, spawn.longitude))
             elif mode == "pokestops":
-                coords = self.__db_wrapper.stops_from_db(geofence_helper)
+                coords = await PokestopHelper.get_locations_in_fence(session, geofence_helper)
             else:
                 logger.fatal("Mode not implemented yet: {}", mode)
                 exit(1)
@@ -556,77 +571,72 @@ class MappingManager:
             coords = S2Helper._generate_locations(range_init, geofence_helper)
         return coords
 
-    def __get_latest_auths(self) -> Optional[dict]:
+    def __get_latest_auths(self) -> Dict[str, str]:
         """
         Reads current self.__raw_json mappings dict and checks if auth directive is present.
         :return: Dict of username : password
         """
-        raw_auths = self.__data_manager.get_root_resource('auth')
-        if raw_auths is None or len(raw_auths) == 0:
-            return None
+        all_auths: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_all(session, instance_id)
+        if all_auths is None or len(all_auths) == 0:
+            return {}
 
         auths = {}
-        for _, auth in raw_auths.items():
-            auths[auth["username"]] = auth["password"]
+        for auth in all_auths:
+            auths[auth.username] = auth.password
         return auths
 
-    def __get_latest_areas(self) -> dict:
-        areas = {}
-        raw_areas = self.__data_manager.get_root_resource('area')
+    def __get_latest_areas(self) -> Dict[int, AreaEntry]:
+        areas: Dict[int, AreaEntry] = {}
 
-        if raw_areas is None:
+        all_areas: Dict[int, SettingsArea] = await self.__db_wrapper.get_all_areas(session)
+
+        if all_areas is None:
             return areas
 
-        for area_id, area in raw_areas.items():
-            area_dict = {}
-            area_dict['routecalc'] = area.get('routecalc', None)
-            area_dict['mode'] = area.area_type
-            area_dict['geofence_included'] = area.get(
-                'geofence_included', None)
-            area_dict['geofence_excluded'] = area.get(
-                'geofence_excluded', None)
-            area_dict['init'] = area.get('init', False)
-            area_dict['name'] = area['name']
-            areas[area_id] = area_dict
+        for area_id, area in all_areas.items():
+            area_entry: AreaEntry = AreaEntry()
+            area_entry.settings = area
+
+            area_entry.routecalc = await SettingsRoutecalcHelper.get(session, instance_id, area.routecalc)
+            # getattr to avoid checking modes individually...
+            area_entry.geofence_included = getattr(area, "geofence_included", None)
+            area_entry.geofence_excluded = getattr(area, "geofence_excluded", None)
+            area_entry.init = getattr(area, "init", None)
+
+            areas[area_id] = area_entry
         return areas
 
-    def __get_latest_monlists(self) -> dict:
-        monlist = {}
-        monivs = self.__data_manager.get_root_resource('monivlist')
+    async def __get_latest_monlists(self) -> Dict[int, List[int]]:
+        return await SettingsMonivlistHelper.get_mapped_lists(session, instance_id)
 
-        if monivs is None:
-            return monlist
+    async def __get_latest_areamons(self, areas: Dict[int, AreaEntry]) -> Dict[int, List[int]]:
+        """
 
-        for moniv_id, elem in monivs.items():
-            monlist[moniv_id] = elem.get('mon_ids_iv', None)
-        return monlist
+        Args:
+            areas:
 
-    def __get_latest_areamons(self, areas):
-        areamons = {}
+        Returns: Dict with area ID (keys) and raw mon ID lists (values)
+
+        """
+        areamons: Dict[int, List[int]] = {}
         for area_id, area in areas.items():
-            area = self.__data_manager.get_resource('area', area_id)
-            try:
-                mon_iv_list = area["settings"]["mon_ids_iv"]
-            except KeyError:
-                mon_iv_list = None
-            try:
-                all_mons = area['settings']['all_mons']
-            except KeyError:
-                all_mons = False
+            mon_iv_list_id: Optional[int] = getattr(area.settings, "monlist_id", None)
+            all_mons: bool = getattr(area.settings, "all_mons", False)
+
             mon_list = []
             try:
-                mon_list = copy.copy(self._monlists[int(mon_iv_list)])
+                mon_list = copy.copy(self._monlists[int(mon_iv_list_id)])
             except (KeyError, TypeError):
                 if not all_mons:
                     logger.warning(
                         "IV list '{}' has been used in area '{}' but does not exist. Using empty IV list"
-                        "instead.", mon_iv_list, area["name"]
+                        "instead.", mon_iv_list_id, area.settings.name
                     )
                     areamons[area_id] = mon_list
                     continue
             if all_mons:
-                logger.debug("Area {} is configured for all mons", area["name"])
-                for mon_id in get_mon_ids():
+                logger.debug("Area {} is configured for all mons", area.settings.name)
+                for mon_id in await get_mon_ids():
                     if mon_id in mon_list:
                         continue
                     mon_list.append(int(mon_id))
@@ -685,9 +695,9 @@ class MappingManager:
 
         logger.info("Mappings have been updated")
 
-    def get_all_devices(self):
+    async def get_all_devices(self):
         devices = []
-        devices_raw = self.__data_manager.get_root_resource('device')
-        for _device_id, device in devices_raw.items():
-            devices.append(device['origin'])
+        all_devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
+        for device in all_devices:
+            devices.append(device.name)
         return devices

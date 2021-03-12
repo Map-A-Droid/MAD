@@ -34,3 +34,9 @@ class SettingsPogoauthHelper:
                                                    SettingsPogoauth.device_id == device_id))
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsPogoauth]:
+        stmt = select(SettingsPogoauth).where(SettingsPogoauth.instance_id == instance_id)
+        result = await session.execute(stmt)
+        return result.scalars().all()

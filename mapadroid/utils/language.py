@@ -1,13 +1,15 @@
 import json
 import os
 
+from aiofile import async_open
 
-def open_json_file(jsonfile):
+
+async def open_json_file(jsonfile):
     try:
-        with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json', encoding='utf8') as f:
+        async with async_open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json', encoding='utf8', mode="r") as f:
             file_open = json.load(f)
     except (OSError, json.decoder.JSONDecodeError):
-        with open('locale/en/' + jsonfile + '.json') as f:
+        async with async_open('locale/en/' + jsonfile + '.json', mode="r") as f:
             file_open = json.load(f)
 
     return file_open
@@ -24,8 +26,8 @@ def i8ln(word):
     return word
 
 
-def get_mon_name(mon_id):
-    mons_file = open_json_file('pokemon')
+async def get_mon_name(mon_id):
+    mons_file = await open_json_file('pokemon')
     str_id = str(mon_id)
     if str_id in mons_file:
         if os.environ['LANGUAGE'] != "en":
@@ -36,6 +38,6 @@ def get_mon_name(mon_id):
         return "No-name-in-pokemon-json"
 
 
-def get_mon_ids():
-    mons_file = open_json_file('pokemon')
+async def get_mon_ids():
+    mons_file = await open_json_file('pokemon')
     return list(mons_file.keys())
