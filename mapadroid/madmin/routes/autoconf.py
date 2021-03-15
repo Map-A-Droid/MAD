@@ -1,19 +1,26 @@
 from io import BytesIO
+from typing import Optional, List, Tuple
 
 from flask import (Response, jsonify, redirect, render_template, send_file,
                    url_for)
 
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogHelper
+from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
+from mapadroid.db.model import SettingsAuth, AutoconfigRegistration, SettingsDevice, SettingsPogoauth, AutoconfigLog
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.autoconfig import (AutoConfIssueGenerator, PDConfig,
                                         RGCConfig)
 
 
 class AutoConfigManager(object):
-    def __init__(self, db, app, data_manager, args, storage_obj):
-        self._db = db
+    def __init__(self, app, db_wrapper: DbWrapper, args, storage_obj):
+        self._db_wrapper = db_wrapper
         self._app = app
         self._args = args
-        self._data_manager = data_manager
         self._storage_obj = storage_obj
 
     def add_route(self):
@@ -39,17 +46,19 @@ class AutoConfigManager(object):
         self.add_route()
 
     @auth_required
-    def autoconfig_download_file(self):
-        ac_issues = AutoConfIssueGenerator(self._db, self._data_manager, self._args, self._storage_obj)
+    async def autoconfig_download_file(self):
+        ac_issues = AutoConfIssueGenerator(self._db_wrapper, self._args, self._storage_obj)
         if ac_issues.has_blockers():
             return Response('Basic requirements not met', status=406, headers=ac_issues.get_headers())
-        pd_conf = PDConfig(self._db, self._args, self._data_manager)
+        pd_conf = PDConfig(self._db_wrapper, self._args)
         config_file = BytesIO()
         info = [pd_conf.contents['post_destination']]
         try:
             if pd_conf.contents['mad_auth'] is not None:
-                auth = self._data_manager.get_resource('auth', pd_conf.contents['mad_auth'])
-                info.append(f"{auth['username']}:{auth['password']}")
+                auth: Optional[SettingsAuth] = await SettingsAuthHelper.get(session, instance_id,
+                                                                            pd_conf.contents['mad_auth'])
+                if auth is not None:
+                    info.append(f"{auth.username}:{auth.password}")
         except KeyError:
             # No auth defined for RGC so theres probably no auth for the system
             pass
@@ -59,12 +68,11 @@ class AutoConfigManager(object):
                          mimetype='text/plain')
 
     @auth_required
-    def autoconf_logs(self, session_id):
-        sql = "SELECT *\n"\
-              "FROM `autoconfig_registration`\n"\
-              "WHERE `session_id` = %s AND `instance_id` = %s"
-        session = self._db.autofetch_row(sql, (session_id, self._db.instance_id))
-        if not session:
+    async def autoconf_logs(self, session_id):
+        sessions: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+            .get_all_of_instance(session, instance_id=self._db_wrapper.instance_id, session_id=session_id)
+
+        if not sessions:
             return redirect(url_for('autoconfig_pending'), code=302)
         return render_template('autoconfig_logs.html',
                                subtab="autoconf_dev",
@@ -73,24 +81,19 @@ class AutoConfigManager(object):
                                )
 
     @auth_required
-    def autoconf_logs_get(self, session_id):
-        sql = "SELECT *\n"\
-              "FROM `autoconfig_registration`\n"\
-              "WHERE `session_id` = %s AND `instance_id` = %s"
-        session = self._db.autofetch_row(sql, (session_id, self._db.instance_id))
-        if not session:
+    async def autoconf_logs_get(self, session_id):
+        sessions: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+            .get_all_of_instance(session, instance_id=self._db_wrapper.instance_id, session_id=session_id)
+        if not sessions:
             return Response('', status=302)
-        sql = "SELECT UNIX_TIMESTAMP(`log_time`) as 'log_time', `level`, `msg`\n"\
-              "FROM `autoconfig_logs`\n"\
-              "WHERE `instance_id` = %s AND `session_id` = %s\n"\
-              "ORDER BY `log_time` ASC"
-        logs = self._db.autofetch_all(sql, (self._db.instance_id, session_id))
+        logs: List[Tuple[int, int, str]] = await AutoconfigLogHelper.get_transformed(session,
+                                                                                     self._db_wrapper.instance_id)
         return jsonify(logs)
 
     @auth_required
-    def autoconf_pd(self):
-        config = PDConfig(self._db, self._args, self._data_manager)
-        auths = self._data_manager.get_root_resource('auth')
+    async def autoconf_pd(self):
+        config = PDConfig(self._db_wrapper, self._args)
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db_wrapper.instance_id)
         uri = url_for('api_autoconf_pd')
         return render_template('autoconfig_config_editor.html',
                                subtab="autoconf_pd",
@@ -102,62 +105,40 @@ class AutoConfigManager(object):
 
     @auth_required
     def autoconfig_pending(self):
-        sql = "SELECT count(*)\n"\
-              "FROM `settings_pogoauth` ag\n"\
-              "LEFT JOIN `settings_device` sd ON sd.`account_id` = ag.`account_id`\n"\
-              "WHERE ag.`instance_id` = %s AND sd.`device_id` IS NULL"
-        ac_issues = AutoConfIssueGenerator(self._db, self._data_manager, self._args, self._storage_obj)
+        ac_issues = AutoConfIssueGenerator(self._db_wrapper, self._args, self._storage_obj)
         issues_warning, issues_critical = ac_issues.get_issues()
-        pending = {}
-        sql = "SELECT ar.`session_id`, ar.`ip`, sd.`device_id`, sd.`name` AS 'origin', ar.`status`"\
-              "FROM `autoconfig_registration` ar\n"\
-              "LEFT JOIN `settings_device` sd ON sd.`device_id` = ar.`device_id`\n"\
-              "WHERE ar.`instance_id` = %s"
-        data = self._db.autofetch_all(sql, (self._db.instance_id))
-        for row in data:
-            if row['status'] == 0:
-                row['status_hr'] = 'Pending'
-            elif row['status'] == 1:
-                row['status_hr'] = 'Accepted'
-            elif row['status'] == 2:
-                row['status_hr'] = 'In-Progress with errors'
-            elif row['status'] == 3:
-                row['status_hr'] = 'Completed with errors'
-            else:
-                row['status_hr'] = 'Rejected'
-            pending[row['session_id']] = row
+        pending_entries: List[Tuple[AutoconfigRegistration, SettingsDevice]] = \
+            await AutoconfigRegistrationHelper.get_pending(session, self._db_wrapper.instance_id)
+
         return render_template('autoconfig_pending.html',
                                subtab="autoconf_dev",
-                               pending=pending,
+                               pending=pending_entries,
                                issues_warning=issues_warning,
                                issues_critical=issues_critical
                                )
 
     @auth_required
-    def autoconfig_pending_dev(self, session_id):
-        sql = "SELECT *\n"\
-              "FROM `autoconfig_registration`\n"\
-              "WHERE `session_id` = %s AND `instance_id` = %s"
-        session = self._db.autofetch_row(sql, (session_id, self._db.instance_id))
-        if not session:
+    async def autoconfig_pending_dev(self, session_id):
+        sessions: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+            .get_all_of_instance(session, instance_id=self._db_wrapper.instance_id, session_id=session_id)
+        if not sessions:
             return redirect(url_for('autoconfig_pending'), code=302)
-        sql = "SELECT ag.`account_id`, ag.`username`\n"\
-              "FROM `settings_pogoauth` ag\n"\
-              "LEFT JOIN `settings_device` sd ON sd.`device_id` = ag.`device_id`\n"\
-              "WHERE ag.`instance_id` = %s AND (sd.`device_id` IS NULL OR sd.`device_id` = %s)"
-        ac_issues = AutoConfIssueGenerator(self._db, self._data_manager, self._args, self._storage_obj)
+        ac_issues = AutoConfIssueGenerator(self._db_wrapper, self._args, self._storage_obj)
         _, issues_critical = ac_issues.get_issues()
         if issues_critical:
             redirect(url_for('autoconfig_pending'), code=302)
-        google_addresses = self._db.autofetch_all(sql, (self._db.instance_id, session['device_id']))
-        devices = self._data_manager.get_root_resource('device')
+        registration_session: AutoconfigRegistration = sessions[0]
+        pogoauths: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_of_autoconfig(session,
+                                                                                           self._db_wrapper.instance_id,
+                                                                                           registration_session.device_id)
+        devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, self._db_wrapper.instance_id)
         uri = "{}/{}".format(url_for('api_autoconf'), session_id)
         redir_uri = url_for('autoconfig_pending')
         return render_template('autoconfig_pending_dev.html',
                                subtab="autoconf_dev",
-                               element=session,
+                               element=registration_session,
                                devices=devices,
-                               accounts=google_addresses,
+                               accounts=pogoauths,
                                uri=uri,
                                redirect=redir_uri,
                                method='POST'
@@ -165,8 +146,8 @@ class AutoConfigManager(object):
 
     @auth_required
     def autoconf_rgc(self):
-        config = RGCConfig(self._db, self._args, self._data_manager)
-        auths = self._data_manager.get_root_resource('auth')
+        config = RGCConfig(self._db_wrapper, self._args)
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db_wrapper.instance_id)
         uri = url_for('api_autoconf_rgc')
         return render_template('autoconfig_config_editor.html',
                                subtab="autoconf_rgc",

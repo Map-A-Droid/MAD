@@ -6,6 +6,7 @@ from mapadroid.mad_apk import AbstractAPKStorage
 from mapadroid.madmin.functions import auth_required
 
 from . import apiException, apiRequest, apiResponse, global_variables
+from ...db.DbWrapper import DbWrapper
 
 
 class APIHandler(object):
@@ -15,18 +16,16 @@ class APIHandler(object):
         logger (loguru.logger): MADmin debug logger
         app (flask.app): Flask web-app used for MADmin
         api_base (str): Base entrypoint of the api URI
-        data_manager (data_manager): Manager for interacting with the datasource
         mapping_manager (mapping_manager): MAD mapping manager
         ws_server (websocketserver): WebSocket server
     """
 
-    def __init__(self, logger, app, api_base, data_manager, mapping_manager, ws_server, config_mode,
+    def __init__(self, logger, app, api_base, db_wrapper: DbWrapper, mapping_manager, ws_server, config_mode,
                  storage_obj: AbstractAPKStorage, args):
         self._logger = logger
         self._app = app
         self._base = api_base
-        self._data_manager = data_manager
-        self.dbc = self._data_manager.dbc
+        self._db_wrapper: DbWrapper = db_wrapper
         self._mapping_manager = mapping_manager
         self._ws_server = ws_server
         self._config_mode = config_mode

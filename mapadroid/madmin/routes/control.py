@@ -544,7 +544,7 @@ class MADminControl(object):
             flash('No File or Type selected')
             return redirect(url_for('install_status'), code=302)
 
-        devices = self._mapping_manager.get_all_devices()
+        devices = self._mapping_manager.get_all_devicenames()
         for device in devices:
             self._device_updater.preadd_job(device, jobname, int(time.time()), job_type)
             time.sleep(1)
@@ -573,7 +573,7 @@ class MADminControl(object):
 
     @auth_required
     def get_all_workers(self):
-        devices = self._mapping_manager.get_all_devices()
+        devices = self._mapping_manager.get_all_devicenames()
         devicesreturn = []
         for device in devices:
             devicesreturn.append({'worker': device})

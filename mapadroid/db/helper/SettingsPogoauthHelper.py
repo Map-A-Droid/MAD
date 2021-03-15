@@ -1,14 +1,15 @@
 from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import and_, update
+from sqlalchemy import and_, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import SettingsPogoauth, SettingsRoutecalc
+from mapadroid.db.model import SettingsPogoauth, SettingsRoutecalc, SettingsDevice
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
+
 
 class LoginType(Enum):
     GOOGLE = "google"
@@ -38,5 +39,17 @@ class SettingsPogoauthHelper:
     @staticmethod
     async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsPogoauth]:
         stmt = select(SettingsPogoauth).where(SettingsPogoauth.instance_id == instance_id)
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_of_autoconfig(session: AsyncSession, instance_id: int, device_id: int) -> List[SettingsPogoauth]:
+        # LEFT JOIN...
+        stmt = select(SettingsPogoauth)\
+            .select_from(SettingsPogoauth)\
+            .join(SettingsDevice, SettingsDevice.device_id == SettingsPogoauth.device_id, isouter=True)\
+            .where(and_(SettingsPogoauth.instance_id == instance_id,
+                        or_(SettingsDevice.device_id == None,
+                            SettingsDevice.device_id == device_id)))
         result = await session.execute(stmt)
         return result.scalars().all()

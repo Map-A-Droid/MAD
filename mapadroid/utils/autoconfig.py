@@ -8,7 +8,6 @@ from xml.sax.saxutils import escape
 from flask import Response, url_for
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_manager.modules.resource import USER_READABLE_ERRORS
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigFileHelper import AutoconfigFileHelper
 from mapadroid.db.helper.OriginHopperHelper import OriginHopperHelper
@@ -23,6 +22,15 @@ from mapadroid.db.model import (AutoconfigFile, OriginHopper, SettingsAuth,
 from mapadroid.mad_apk import get_apk_status
 
 
+USER_READABLE_ERRORS = {
+    str: 'string (MapADroid)',
+    int: 'Integer (1,2,3)',
+    float: 'Decimal (1.0, 1.5)',
+    list: 'Comma-delimited list',
+    bool: 'True|False'
+}
+
+
 class AutoConfIssues(IntEnum):
     no_ggl_login: int = 1
     origin_hopper_not_ready: int = 2
@@ -33,7 +41,7 @@ class AutoConfIssues(IntEnum):
 
 
 class AutoConfIssueGenerator(object):
-    def __init__(self, db, data_manager, args, storage_obj):
+    def __init__(self, db_wrapper: DbWrapper, args, storage_obj):
         self.warnings: List[AutoConfIssues] = []
         self.critical: List[AutoConfIssues] = []
 
@@ -43,12 +51,12 @@ class AutoConfIssueGenerator(object):
             self.warnings.append(AutoConfIssues.no_ggl_login)
         if not validate_hopper_ready(session, instance_id):
             self.critical.append(AutoConfIssues.origin_hopper_not_ready)
-        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db.instance_id)
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self.db_wrapper.instance_id)
         if len(auths) == 0:
             self.warnings.append(AutoConfIssues.auth_not_configured)
-        if not PDConfig(db, args, data_manager).configured:
+        if not PDConfig(db_wrapper, args).configured:
             self.critical.append(AutoConfIssues.pd_not_configured)
-        if not RGCConfig(db, args, data_manager).configured:
+        if not RGCConfig(db_wrapper, args).configured:
             self.critical.append(AutoConfIssues.rgc_not_configured)
         missing_packages = []
         for _, apkpackages in get_apk_status(storage_obj).items():
@@ -107,7 +115,7 @@ async def validate_hopper_ready(session: AsyncSession, instance_id: int) -> bool
 
 
 # TODO: Singleton for the instance ID?
-async def origin_generator(session: AsyncSession, instance_id: int, *args, **kwargs) -> Union[SettingsDevice, object]:
+async def origin_generator(session: AsyncSession, instance_id: int, *args, **kwargs) -> Union[SettingsDevice, Response]:
     origin = kwargs.get('OriginBase', None)
     walker_id = kwargs.get('walker', None)
     if walker_id is not None:

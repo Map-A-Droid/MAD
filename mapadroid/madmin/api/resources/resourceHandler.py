@@ -10,7 +10,6 @@ from mapadroid.data_manager.dm_exceptions import (DependencyError,
                                                   ModeUnknown, SaveIssue,
                                                   UnknownIdentifier,
                                                   UpdateIssue)
-from mapadroid.data_manager.modules import MAPPINGS
 from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
 from mapadroid.madmin.functions import auth_required
 

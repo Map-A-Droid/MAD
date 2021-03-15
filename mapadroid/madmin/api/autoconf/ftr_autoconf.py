@@ -1,6 +1,5 @@
 from typing import List, Optional, Tuple
 
-from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
 from mapadroid.db.helper.AutoconfigRegistrationHelper import \
     AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
@@ -21,33 +20,33 @@ class APIAutoConf(AutoConfHandler):
     uri_base = 'autoconf'
 
     def autoconf_config_pd(self):
-        conf = PDConfig(self.dbc, self._args, self._data_manager)
+        conf = PDConfig(self._db_wrapper, self._args)
         try:
             conf.save_config(self.api_req.data)
         except AutoConfIssue as err:
-            return (err.issues, 400)
-        return (None, 200)
+            return err.issues, 400
+        return None, 200
 
     def autoconf_config_rgc(self):
-        conf = RGCConfig(self.dbc, self._args, self._data_manager)
+        conf = RGCConfig(self._db_wrapper, self._args)
         try:
             conf.save_config(self.api_req.data)
         except AutoConfIssue as err:
-            return (err.issues, 400)
-        return (None, 200)
+            return err.issues, 400
+        return None, 200
 
     def autoconf_delete_pd(self):
-        PDConfig(self.dbc, self._args, self._data_manager).delete()
-        return (None, 200)
+        PDConfig(self._db_wrapper, self._args).delete()
+        return None, 200
 
     def autoconf_delete_rgc(self):
-        RGCConfig(self.dbc, self._args, self._data_manager).delete()
-        return (None, 200)
+        RGCConfig(self._db_wrapper, self._args).delete()
+        return None, 200
 
     def autoconf_delete_session(self, session_id: int):
         del_info = {
             'session_id': session_id,
-            'instance_id': self.dbc.instance_id
+            'instance_id': self._db_wrapper.instance_id
         }
         self.dbc.autoexec_delete('autoconfig_registration', del_info)
         return (None, 200)
@@ -66,13 +65,10 @@ class APIAutoConf(AutoConfHandler):
                 status = 1
         except KeyError:
             return (None, 400)
-        update = {
-            'status': status
-        }
-        device = None
+
         if status == 1:
             is_hopper = False
-            ac_issues = AutoConfIssueGenerator(self.dbc, self._data_manager, self._args, self.storage_obj)
+            ac_issues = AutoConfIssueGenerator(self._db_wrapper, self._args, self.storage_obj)
             if ac_issues.has_blockers():
                 return ac_issues.get_issues(), 406, {"headers": ac_issues.get_headers()}
             # Set the device id.  If it was not requested use the origin hopper to create one
@@ -82,27 +78,20 @@ class APIAutoConf(AutoConfHandler):
                 device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get(session, instance_id, dev_id)
                 if not device_entry:
                     return 'Unknown device ID', 400
-                update['device_id'] = dev_id
             except (AttributeError, KeyError):
                 hopper_name = 'madrom'
-                hopper_response = origin_generator(self._data_manager, self.dbc, OriginBase=hopper_name)
-                if type(hopper_response) != tuple:
+                hopper_response = await origin_generator(session, self._db_wrapper.instance_id, OriginBase=hopper_name)
+                if type(hopper_response) != SettingsDevice:
                     return hopper_response
                 else:
-                    update['device_id'] = hopper_response[1]
+                    device_entry = hopper_response
                     is_hopper = True
-            search = {
-                'device_id': update['device_id']
-            }
-            # TODO: Replace with SQLAlch
-            has_auth = self._data_manager.search('pogoauth', params=search)
-            unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_unassigned(session,
+            assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(session,
                                                                                                       instance_id,
-                                                                                                      dev_id)
-            if not self._args.autoconfig_no_auth and (not has_auth):
-                device: Optional[SettingsDevice] = await SettingsDeviceHelper.get(session, instance_id, update['device_id'])
+                                                                                                      device_entry.device_id)
+            if not self._args.autoconfig_no_auth and (not assigned_to_device):
                 try:
-                    auth_type = LoginType(device['settings']['logintype'])
+                    auth_type = LoginType(device_entry.logintype)
                 except KeyError:
                     auth_type = LoginType('google')
                 # Find one that matches authtype
@@ -110,23 +99,20 @@ class APIAutoConf(AutoConfHandler):
                 if not unassigned_accounts:
                     return 'No configured emails', 400
                 auth: SettingsPogoauth = unassigned_accounts.pop()
-                auth.device_id = device.identifier
+                auth.device_id = device_entry.device_id
                 if is_hopper and auth_type != 'google':
                     auth.login_type = auth_type.value
                 session.add(auth)
-        where = {
-            'session_id': session_id,
-            'instance_id': self.dbc.instance_id
-        }
-        self.dbc.autoexec_update('autoconfig_registration', update, where_keyvals=where)
-        return (None, 200)
+
+        await AutoconfigRegistrationHelper.update_status(session, instance_id, session_id, status)
+        return None, 200
 
     def get_config(self, conf_type: str):
         data: dict = {}
         if conf_type == 'rgc':
-            data = RGCConfig(self.dbc, self._args, self._data_manager).contents
+            data = RGCConfig(self._db_wrapper, self._args).contents
         elif conf_type == 'pd':
-            data = PDConfig(self.dbc, self._args, self._data_manager).contents
+            data = PDConfig(self._db_wrapper, self._args).contents
         else:
             return (None, 404)
         return (data, 200)

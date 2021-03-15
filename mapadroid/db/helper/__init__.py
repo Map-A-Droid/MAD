@@ -4,7 +4,7 @@ from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from sqlalchemy import text
 
-logger = get_logger(LoggerEnums.data_manager)
+logger = get_logger(LoggerEnums.database)
 
 valid_area_modes = {"idle", "iv_mitm", "mon_mitm", "pokestops", "raids_mitm"}
 

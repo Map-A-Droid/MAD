@@ -8,6 +8,9 @@ from .autoconf import ftr_autoconf
 from .resources import (
     ftr_area, ftr_auth, ftr_device, ftr_devicesetting, ftr_geofence,
     ftr_monlist, ftr_pogoauth, ftr_routecalc, ftr_walker, ftr_walkerarea)
+from ...db.DbWrapper import DbWrapper
+from ...utils.MappingManager import MappingManager
+from ...websocket.WebsocketServer import WebsocketServer
 
 BASE_URI = '/api'
 valid_resources = {
@@ -41,13 +44,14 @@ class APIEntry(object):
         _resources (dict): Dictionary of APIHandlers for referring to the other API sections
     """
 
-    def __init__(self, logger, app, data_manager, mapping_manager, ws_server, config_mode, storage_obj, args):
+    def __init__(self, logger, app, db_wrapper: DbWrapper, mapping_manager: MappingManager, ws_server: WebsocketServer,
+                 config_mode, storage_obj, args):
         self._logger = logger
         self._app = app
         self._resources = {}
         self._app.route(BASE_URI, methods=['GET'])(self.process_request)
         for _, module in valid_resources.items():
-            tmp = module(logger, app, BASE_URI, data_manager, mapping_manager, ws_server, config_mode, storage_obj,
+            tmp = module(logger, app, BASE_URI, db_wrapper, mapping_manager, ws_server, config_mode, storage_obj,
                          args)
             self._resources[tmp.uri_base] = tmp.description
 

@@ -7,9 +7,11 @@ from typing import Optional
 
 from flask import make_response, request
 
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.functions import creation_date
 from mapadroid.utils.walkerArgs import parse_args
 
@@ -108,8 +110,9 @@ def generate_device_logcat_zip_path(origin: str, args: dict):
     return os.path.join(args.temp_path, filename)
 
 
-def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=None):
-    areas = mapping_manager.get_areas()
+async def get_geofences(mapping_manager: MappingManager, db_wrapper: DbWrapper, fence_type=None, area_id_req=None):
+    # TODO: Request the geofence instances from the MappingManager directly?
+    areas = await mapping_manager.get_areas()
     geofences = {}
     for area_id, area in areas.items():
         if area_id_req is not None and int(area_id) is not int(area_id_req):
@@ -144,9 +147,9 @@ def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=No
     return geofences
 
 
-def generate_coords_from_geofence(mapping_manager, data_manager, fence):
+async def generate_coords_from_geofence(mapping_manager: MappingManager, db_wrapper: DbWrapper, fence):
     fence_string = []
-    geofences = get_geofences(mapping_manager, data_manager)
+    geofences = await get_geofences(mapping_manager, db_wrapper)
     coordinates = []
     for fences in geofences.values():
         for fname, coords in fences.get('include').items():
@@ -161,11 +164,11 @@ def generate_coords_from_geofence(mapping_manager, data_manager, fence):
     return ",".join(fence_string)
 
 
-def get_quest_areas(mapping_manager, data_manager):
+async def get_quest_areas(mapping_manager: MappingManager, db_wrapper: DbWrapper):
     stop_fences = []
     stop_fences.append('All')
-    possible_fences = get_geofences(mapping_manager, data_manager, 'pokestops')
-    for possible_fence in get_geofences(mapping_manager, data_manager, 'pokestops'):
+    possible_fences = await get_geofences(mapping_manager, db_wrapper, 'pokestops')
+    for possible_fence in possible_fences:
         for subfence in possible_fences[possible_fence]['include']:
             if subfence in stop_fences:
                 continue

@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import time
 from multiprocessing import Event, Lock
@@ -9,6 +10,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
+from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsDevicepoolHelper import \
     SettingsDevicepoolHelper
@@ -26,7 +28,7 @@ from mapadroid.db.model import (SettingsArea, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
                                 SettingsPogoauth, SettingsRoutecalc,
                                 SettingsWalker, SettingsWalkerarea,
-                                SettingsWalkerToWalkerarea, TrsSpawn)
+                                SettingsWalkerToWalkerarea, TrsSpawn, SettingsAuth)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
@@ -82,20 +84,21 @@ class AreaEntry:
 
 class JoinQueue(object):
     def __init__(self, stop_trigger, mapping_manager):
-        self._joinqueue: Queue = Queue()
+        self._joinqueue: asyncio.Queue = asyncio.Queue()
         self.__shutdown_event = stop_trigger
         self._mapping_mananger = mapping_manager
+
         self.__route_join_thread: Thread = Thread(name='system', target=self.__route_join)
         self.__route_join_thread.daemon = True
         self.__route_join_thread.start()
 
-    def __route_join(self):
+    async def __route_join(self):
         logger.info("Starting Route join Thread - safemode")
         while not self.__shutdown_event.is_set():
             try:
                 routejoin = self._joinqueue.get_nowait()
             except Empty:
-                time.sleep(1)
+                await asyncio.sleep(1)
                 continue
             except (EOFError, KeyboardInterrupt):
                 logger.info("Route join thread noticed shutdown")
@@ -110,21 +113,22 @@ class JoinQueue(object):
 
 
 class MappingManager:
-    def __init__(self, db_wrapper: DbWrapper, args, data_manager, configmode: bool = False):
+    def __init__(self, db_wrapper: DbWrapper, args, configmode: bool = False):
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__args = args
         self.__configmode: bool = configmode
-        self.__data_manager = data_manager
 
-        self._devicemappings: Optional[dict] = None
-        self._areas: Optional[dict] = None
+        self._devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = None
+        self._areas: Optional[Dict[int, AreaEntry]] = None
         self._routemanagers: Optional[Dict[str, dict]] = None
-        self._auths: Optional[dict] = None
+        self._auths: Optional[Dict[str, str]] = None
         self.__areamons: Optional[Dict[int, List[int]]] = {}
         self._monlists: Optional[Dict[int, List[int]]] = None
         self.__shutdown_event: Event = Event()
         self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
-        self.__mappings_mutex: Lock = Lock()
+
+        # TODO: Move to init or call __init__ differently...
+        self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
         self.__paused_devices: List[int] = []
         self.update(full_lock=True)
 
@@ -137,7 +141,7 @@ class MappingManager:
     def shutdown(self):
         logger.fatal("MappingManager exiting")
 
-    async def get_auths(self) -> Optional[dict]:
+    async def get_auths(self) -> Optional[Dict[str, str]]:
         return self._auths
 
     def set_device_state(self, device_id: int, active: int) -> None:
@@ -153,24 +157,28 @@ class MappingManager:
     def is_device_active(self, device_id: int) -> bool:
         return device_id not in self.__paused_devices
 
-    def get_devicemappings_of_sync(self, device_name: str) -> Optional[dict]:
+    def get_devicemappings_of_sync(self, device_name: str) -> Optional[DeviceMappingsEntry]:
         # Async method since we may move the logic to a different host
         return self._devicemappings.get(device_name, None)
 
-    async def get_devicemappings_of(self, device_name: str) -> Optional[dict]:
+    async def get_devicemappings_of(self, device_name: str) -> Optional[DeviceMappingsEntry]:
         # Async method since we may move the logic to a different host
         return self._devicemappings.get(device_name, None)
 
-    async def get_devicesettings_of(self, device_name: str) -> Optional[SettingsDevice]:
-        return self._devicemappings.get(device_name, None).get('settings', None)
+    async def get_devicesettings_of(self, device_name: str) -> Optional[Tuple[SettingsDevice, SettingsDevicepool]]:
+        devicemapping_entry: Optional[DeviceMappingsEntry] = self._devicemappings.get(device_name, None)
+        if not devicemapping_entry:
+            return None
+        else:
+            return devicemapping_entry.device_settings, devicemapping_entry.pool_settings
 
-    def __devicesettings_setter_consumer(self):
+    async def __devicesettings_setter_consumer(self):
         logger.info("Starting Devicesettings consumer Thread")
         while not self.__shutdown_event.is_set():
             try:
                 set_settings = self.__devicesettings_setter_queue.get_nowait()
             except Empty:
-                time.sleep(0.2)
+                await asyncio.sleep(0.2)
                 continue
             except (EOFError, KeyboardInterrupt):
                 logger.info("Devicesettings setter thread noticed shutdown")
@@ -178,7 +186,8 @@ class MappingManager:
 
             if set_settings is not None:
                 device_name, key, value = set_settings
-                with self.__mappings_mutex:
+                async with self.__mappings_mutex:
+                    # TODO: This will likely not work anymore and require specific tasks...
                     if self._devicemappings.get(device_name, None) is not None:
                         if self._devicemappings[device_name].get("settings", None) is None:
                             self._devicemappings[device_name]["settings"] = {}
@@ -571,12 +580,12 @@ class MappingManager:
             coords = S2Helper._generate_locations(range_init, geofence_helper)
         return coords
 
-    def __get_latest_auths(self) -> Dict[str, str]:
+    async def __get_latest_auths(self) -> Dict[str, str]:
         """
         Reads current self.__raw_json mappings dict and checks if auth directive is present.
         :return: Dict of username : password
         """
-        all_auths: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_all(session, instance_id)
+        all_auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, instance_id)
         if all_auths is None or len(all_auths) == 0:
             return {}
 
@@ -585,7 +594,7 @@ class MappingManager:
             auths[auth.username] = auth.password
         return auths
 
-    def __get_latest_areas(self) -> Dict[int, AreaEntry]:
+    async def __get_latest_areas(self) -> Dict[int, AreaEntry]:
         areas: Dict[int, AreaEntry] = {}
 
         all_areas: Dict[int, SettingsArea] = await self.__db_wrapper.get_all_areas(session)
@@ -649,12 +658,12 @@ class MappingManager:
         :return:
         """
         if not full_lock:
-            self._monlists = self.__get_latest_monlists()
-            areas_tmp = self.__get_latest_areas()
-            self.__areamons = self.__get_latest_areamons(areas_tmp)
-            devicemappings_tmp = self.__get_latest_devicemappings()
-            routemanagers_tmp = self.__get_latest_routemanagers()
-            auths_tmp = self.__get_latest_auths()
+            self._monlists = await self.__get_latest_monlists()
+            areas_tmp = await self.__get_latest_areas()
+            self.__areamons = await self.__get_latest_areamons(areas_tmp)
+            devicemappings_tmp = await self.__get_latest_devicemappings()
+            routemanagers_tmp = await self.__get_latest_routemanagers()
+            auths_tmp = await self.__get_latest_auths()
 
             for area in self._routemanagers:
                 logger.info("Stopping all routemanagers and join threads")
@@ -686,16 +695,16 @@ class MappingManager:
         else:
             logger.debug("Acquiring lock to update mappings,full")
             with self.__mappings_mutex:
-                self._monlists = self.__get_latest_monlists()
-                self._areas = self.__get_latest_areas()
-                self.__areamons = self.__get_latest_areamons(self._areas)
+                self._monlists = await self.__get_latest_monlists()
+                self._areas = await self.__get_latest_areas()
+                self.__areamons = await self.__get_latest_areamons(self._areas)
                 self._routemanagers = await self.__get_latest_routemanagers()
                 self._devicemappings = await self.__get_latest_devicemappings()
-                self._auths = self.__get_latest_auths()
+                self._auths = await self.__get_latest_auths()
 
         logger.info("Mappings have been updated")
 
-    async def get_all_devices(self):
+    async def get_all_devicenames(self) -> List[str]:
         devices = []
         all_devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
         for device in all_devices:

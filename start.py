@@ -3,7 +3,6 @@ import calendar
 import datetime
 import gc
 import os
-import signal
 import sys
 import time
 import unittest
@@ -14,7 +13,6 @@ from typing import Optional
 import pkg_resources
 import psutil
 
-from mapadroid.data_manager import DataManager
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import (AbstractAPKStorage, StorageSyncManager,
                                get_storage_obj)
@@ -151,7 +149,6 @@ def check_dependencies():
 
 
 async def start():
-    data_manager: DataManager = None
     device_updater: DeviceUpdater = None
     event: Event = None
     jobstatus: dict = {}
@@ -190,7 +187,6 @@ async def start():
         instance_id = db_wrapper.get_instance_id()
     except Exception:
         instance_id = None
-    data_manager = DataManager(db_wrapper, instance_id)
     MADPatcher(args, data_manager)
     data_manager.clear_on_boot()
     data_manager.fix_routecalc_on_boot()
@@ -203,7 +199,6 @@ async def start():
     # mapping_manager_manager.start()
     mapping_manager: MappingManager = MappingManager(db_wrapper,
                                                      args,
-                                                     data_manager,
                                                      configmode=args.config_mode)
     # TODO: Call init of mapping_manager properly rather than in constructor...
 
@@ -233,7 +228,7 @@ async def start():
 
     mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                          mitm_mapper, args, mapping_manager, db_wrapper,
-                                         data_manager, storage_elem,
+                                         storage_elem,
                                          mitm_data_processor_manager.get_queue(),
                                          enable_configmode=args.config_mode)
     # mitm_receiver_process.start()

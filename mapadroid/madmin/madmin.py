@@ -21,6 +21,7 @@ from mapadroid.madmin.routes.path import MADminPath
 from mapadroid.madmin.routes.statistics import MADminStatistics
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
+from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 logger = get_logger(LoggerEnums.madmin)
@@ -54,8 +55,8 @@ def internal_error(self, exception):
 
 
 class MADmin(object):
-    def __init__(self, args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
-                 device_updater, jobstatus, storage_obj):
+    def __init__(self, args, db_wrapper: DbWrapper, ws_server: WebsocketServer, mapping_manager: MappingManager,
+                 device_updater: DeviceUpdater, jobstatus, storage_obj):
         app.add_template_global(name='app_config_mode', f=args.config_mode)
         # Determine if there are duplicate MACs
         # TODO: Async init...
@@ -68,27 +69,23 @@ class MADmin(object):
         self._app = app
         self._mapping_manager: MappingManager = mapping_manager
         self._storage_obj = storage_obj
-        self._device_updater = device_updater
+        self._device_updater: DeviceUpdater = device_updater
         self._ws_server: WebsocketServer = ws_server
-        self._data_manager = data_manager
         self._jobstatus = jobstatus
         self._plugin_hotlink: list = []
         self.path = MADminPath(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
-                               self._data_manager, self._plugin_hotlink)
-        self.map = MADminMap(self._db_wrapper, self._args, self._mapping_manager, self._app, self._data_manager)
-        self.statistics = MADminStatistics(self._db_wrapper, self._args, app, self._mapping_manager, self._data_manager)
+                               self._plugin_hotlink)
+        self.map = MADminMap(self._db_wrapper, self._args, self._mapping_manager, self._app)
+        self.statistics = MADminStatistics(self._db_wrapper, self._args, app, self._mapping_manager)
         self.control = MADminControl(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
                                      self._app, self._device_updater)
-        self.APIEntry = APIEntry(logger, self._app, self._data_manager, self._mapping_manager, self._ws_server,
+        self.APIEntry = APIEntry(logger, self._app, self._mapping_manager, self._ws_server,
                                  self._args.config_mode, self._storage_obj, self._args)
-        self.config = MADminConfig(self._db_wrapper, self._args, logger, self._app, self._mapping_manager,
-                                   self._data_manager)
+        self.config = MADminConfig(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
         self.apk_manager = APKManager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
                                       self._storage_obj)
-        self.event = MADminEvent(self._db_wrapper, self._args, logger, self._app, self._mapping_manager,
-                                 self._data_manager)
-        self.autoconf = AutoConfigManager(self._db_wrapper, self._app, self._data_manager, self._args,
-                                          self._storage_obj)
+        self.event = MADminEvent(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
+        self.autoconf = AutoConfigManager(self._db_wrapper, self._app, self._args, self._storage_obj)
 
     @logger.catch()
     def madmin_start(self):

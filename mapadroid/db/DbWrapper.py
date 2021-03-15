@@ -14,6 +14,7 @@ from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
+from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
 from mapadroid.db.helper.SettingsAreaIdleHelper import SettingsAreaIdleHelper
 from mapadroid.db.helper.SettingsAreaIvMitm import SettingsAreaIvMitmHelper
 from mapadroid.db.helper.SettingsAreaMonMitmHelper import \
@@ -25,6 +26,7 @@ from mapadroid.db.helper.SettingsAreaRaidsMitm import \
 from mapadroid.db.model import SettingsArea
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.database)
 
@@ -566,6 +568,31 @@ class DbWrapper:
         areas.update(await SettingsAreaPokestopHelper.get_all(session, self.instance_id))
         areas.update(await SettingsAreaRaidsMitmHelper.get_all(session, self.instance_id))
         return areas
+
+    async def get_area(self, session: AsyncSession, area_id: int) -> Optional[SettingsArea]:
+        """
+
+        Args:
+            area_id:
+            session:
+
+        Returns: the first matching area subclass-instance
+        """
+        area_base: Optional[SettingsArea] = await SettingsAreaHelper.get(session, self.instance_id, area_id)
+        if not area_base:
+            return None
+        elif area_base.mode == WorkerType.IDLE.value:
+            return await SettingsAreaIdleHelper.get(session, self.instance_id, area_id)
+        elif area_base.mode == WorkerType.IV_MITM.value:
+            return await SettingsAreaIvMitmHelper.get(session, self.instance_id, area_id)
+        elif area_base.mode == WorkerType.MON_MITM.value:
+            return await SettingsAreaMonMitmHelper.get(session, self.instance_id, area_id)
+        elif area_base.mode == WorkerType.STOPS.value:
+            return await SettingsAreaPokestopHelper.get(session, self.instance_id, area_id)
+        elif area_base.mode == WorkerType.RAID_MITM.value:
+            return await SettingsAreaRaidsMitmHelper.get(session, self.instance_id, area_id)
+        else:
+            return None
 
 
 def adjust_tz_to_utc(column: str, as_name: str = None) -> str:

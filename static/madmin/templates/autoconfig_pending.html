@@ -146,11 +146,12 @@ $(document).ready(function () {
           <th style="width: 30%" class="text-right align-middle">Status</th>
         </tr>
       </thead>
-      {% if pending is none %}
+      {% if pending is none or len(pending) == 0 %}
         <div id='no-configured-elements' class="alert alert-info">No pending devices</div>
       {% else %}
       <tbody>
-        {% for session_id, session in pending.items() %}
+        {% for autoconf_reg, settings_dev in pending.items() %}
+            TODO: Adjust loop for instances passed
         <tr>
           <td><input type="checkbox" class="bulk_sel" data-identifier="{{ session_id }}"></td>
           <td class="align-middle">
@@ -167,7 +168,18 @@ $(document).ready(function () {
             {{ session.origin if session.origin is not none else '' }}
           {% endif %}
           </td>
-          <td class="text-right align-middle">{{ session.status_hr }}
+          <td class="text-right align-middle">
+            {% if session.status == 0 %}
+              Pending
+            {% elif session.status == 1 %}
+              Accepted
+            {% elif session.status == 2 %}
+                In-progress with errors
+            {% elif session.status == 3 %}
+                Completed with errors
+            {% else %}
+                Rejected
+            {% endif %}
             {% if session.status == 0 %}
               {% if not issues_warning %}
                   <button data-identifier='{{ session_id }}' type="button" class="reg_status accept btn btn-success btn-sm" data-toggle="tooltip" title="Accept"><i class="fa fa-check-circle"></i>

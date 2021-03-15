@@ -1,6 +1,7 @@
 import sys
 from typing import Tuple
 
+from mapadroid.db.model import SettingsGeofence
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.system)
@@ -85,12 +86,12 @@ class GeofenceHelper:
         return self.geofenced_areas or self.excluded_areas
 
     @staticmethod
-    def parse_geofences_file(geo_resource, excluded, fence_fallback=None):
+    def parse_geofences_file(settings: SettingsGeofence, excluded, fence_fallback=None):
         geofences = []
         # Read coordinates of excluded areas from file.
-        if geo_resource:
+        if settings:
             first_line = True
-            for line in geo_resource['fence_data']:
+            for line in settings.fence_data:
                 line = line.strip()
                 if len(line) == 0:  # Empty line.
                     continue

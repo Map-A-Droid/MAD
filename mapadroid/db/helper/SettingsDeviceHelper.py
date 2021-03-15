@@ -50,6 +50,13 @@ class SettingsDeviceHelper:
         return result.scalars().first()
 
     @staticmethod
+    async def get_by_origin(session: AsyncSession, instance_id: int, origin: str) -> Optional[SettingsDevice]:
+        stmt = select(SettingsDevice).where(and_(SettingsDevice.instance_id == instance_id,
+                                                 SettingsDevice.name == origin))
+        result = await session.execute(stmt)
+        return result.scalars().first()
+
+    @staticmethod
     async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsDevice]:
         stmt = select(SettingsDevice).where(SettingsDevice.instance_id == instance_id)
         result = await session.execute(stmt)

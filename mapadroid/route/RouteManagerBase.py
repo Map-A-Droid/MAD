@@ -1,3 +1,4 @@
+import asyncio
 import collections
 import heapq
 import math
@@ -43,7 +44,7 @@ class RoutePoolEntry:
     last_round_prio_event: bool = False
 
 
-class RouteManagerBase(ABC):
+class RouteManagerBase(object, ABC):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
                  max_radius: float,
                  max_coords_within_radius: int,
@@ -98,19 +99,20 @@ class RouteManagerBase(ABC):
         self._round_started_time = None
         self._route: List[Location] = []
 
-        if coords is not None:
-            if self.init:
-                fenced_coords = coords
-            else:
-                fenced_coords = self.geofence_helper.get_geofenced_coordinates(
-                    coords)
-            # TODO.... adjust
-            new_coords = self._route_resource.get_json_route(fenced_coords, int(max_radius),
-                                                             max_coords_within_radius,
-                                                             algorithm=self._calctype, route_name=self.name,
-                                                             in_memory=False)
-            for coord in new_coords:
-                self._route.append(Location(coord["lat"], coord["lng"]))
+        # TOOD: Only allow this in some classmethod...
+        # if coords is not None:
+        #     if self.init:
+        #         fenced_coords = coords
+        #     else:
+        #         fenced_coords = self.geofence_helper.get_geofenced_coordinates(
+        #             coords)
+        #     # TODO.... adjust
+        #     new_coords = self._route_resource.get_json_route(fenced_coords, int(max_radius),
+        #                                                      max_coords_within_radius,
+        #                                                      algorithm=self._calctype, route_name=self.name,
+        #                                                      in_memory=False)
+        #     for coord in new_coords:
+        #         self._route.append(Location(coord["lat"], coord["lng"]))
         self._max_clustering: int = self._max_coords_within_radius
         self.delay_after_timestamp_prio: int = 0
         self.starve_route: bool = False
@@ -121,7 +123,19 @@ class RouteManagerBase(ABC):
         self._prio_queue = None
         self._update_prio_queue_thread = None
         self._check_routepools_thread = None
-        self._stop_update_thread = Event()
+        self._stop_update_thread: asyncio.Event = asyncio.Event()
+
+    @classmethod
+    async def create(cls, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
+                 max_radius: float,
+                 max_coords_within_radius: int,
+                 geofence_helper: GeofenceHelper,
+                 routecalc: SettingsRoutecalc,
+                 use_s2: bool = False, s2_level: int = 15,
+                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        self = RouteManagerBase
+        if mon_ids_iv is None:
+            mon_ids_iv = []
 
     def get_ids_iv(self) -> List[int]:
         return self._mon_ids_iv
@@ -256,18 +270,28 @@ class RouteManagerBase(ABC):
             to_be_appended[i][1] = float(list_coords[i].lng)
         self.add_coords_numpy(to_be_appended)
 
-    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0,
+    # TODO: Really go async or just use threading in routemanagers and make all calls towards it async in executors?
+    async def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0,
                             in_memory=False, calctype=None):
         if calctype is None:
             calctype = self._calctype
         if len(coords) > 0:
-            # TODO: Adjust
-            new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
-                                                                 delete_old_route, calctype, self.useS2,
-                                                                 self.S2level,
-                                                                 num_procs=0,
-                                                                 overwrite_calculation=self._overwrite_calculation,
-                                                                 in_memory=in_memory, route_name=self.name)
+            if self._overwrite_calculation:
+                calctype = 'route'
+            self.set_recalc_status(True)
+            if in_memory is False:
+                if delete_old_route:
+                    logger.debug("Deleting routefile...")
+                    self._routecalc.routefile = None
+                    await session.merge(self._routecalc)
+                    await session.commit()
+            # TODO: Move to util class running calculation in a thread/executor...
+            new_route = RoutecalcUtil.get_json_route(coords, max_radius, max_coords_within_radius, in_memory,
+                                            num_processes=num_procs,
+                                            algorithm=calctype, use_s2=self.useS2, s2_level=self.S2level,
+                                            route_name=self.name)
+            self.set_recalc_status(False)
+
             if self._overwrite_calculation:
                 self._overwrite_calculation = False
             return new_route

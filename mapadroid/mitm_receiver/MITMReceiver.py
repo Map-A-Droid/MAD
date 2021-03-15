@@ -14,6 +14,9 @@ from aiofile import async_open
 from quart import Quart, Response, request, send_file
 
 from mapadroid.data_manager.dm_exceptions import UpdateIssue
+from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.model import SettingsDevice, AutoconfigRegistration
 from mapadroid.mad_apk import (APKType, lookup_package_info, parse_frontend,
                                stream_package, supported_pogo_version)
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -162,7 +165,7 @@ class EndpointAction(object):
 
 class MITMReceiver():
     def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager: MappingManager,
-                 db_wrapper, data_manager, storage_obj, data_queue: asyncio.Queue,
+                 db_wrapper, storage_obj, data_queue: asyncio.Queue,
                  name=None, enable_configmode: Optional[bool] = False):
         # Process.__init__(self, name=name)
         self.__application_args = args_passed
@@ -170,7 +173,6 @@ class MITMReceiver():
         self.__listen_ip = listen_ip
         self.__listen_port = listen_port
         self.__mitm_mapper: MitmMapper = mitm_mapper
-        self.__data_manager = data_manager
         self._db_wrapper = db_wrapper
         self.__storage_obj = storage_obj
         self._data_queue: asyncio.Queue = data_queue
@@ -419,9 +421,9 @@ class MITMReceiver():
             origin = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.instance_id))
             if operation in ['pd', 'rgc']:
                 if operation == 'pd':
-                    config = PDConfig(self._db_wrapper, self.__application_args, self.__data_manager)
+                    config = PDConfig(self._db_wrapper, self.__application_args)
                 else:
-                    config = RGCConfig(self._db_wrapper, self.__application_args, self.__data_manager)
+                    config = RGCConfig(self._db_wrapper, self.__application_args)
                 # TODO: Ensure async
                 return await send_file(config.generate_config(origin), as_attachment=True, attachment_filename='conf.xml',
                                  mimetype='application/xml')
@@ -459,41 +461,31 @@ class MITMReceiver():
             info['level'] = 0
             logger.warning('Unable to parse level for autoconfig log')
         await self._db_wrapper.autoexec_insert('autoconfig_logs', info)
-        sql = "SELECT `status`\n"\
-              "FROM `autoconfig_registration`\n"\
-              "WHERE `instance_id` = %s AND `session_id` = %s"
-        status = await self._db_wrapper.autofetch_value(sql, (self._db_wrapper.instance_id, session_id))
-        if int(level) == 4 and status == 1:
-            update_data = {
-                'status': 3
-            }
-            where = {
-                'session_id': session_id,
-                'instance_id': self._db_wrapper.instance_id
-            }
-            await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
-        return Response(status=201)
+
+        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper.get_by_session_id(session,
+                                                                                                      instance_id,
+                                                                                                      session_id)
+        if int(level) == 4 and autoconf is not None and autoconf.status == 1:
+            autoconf.status = 3
+            await session.add(autoconf)
+            # TODO: Depending on design of responses...
+            await session.commit()
+        return Response(status=201, response="")
 
     async def autoconf_mymac(self, *args, **kwargs) -> Response:
         origin = request.headers.get('Origin')
         if origin is None:
             return Response("", status=404)
-        devs = self.__data_manager.search('device', params={'origin': origin})
-        device = None
-        for _, dev in devs.items():
-            if origin == dev['origin']:
-                device = dev
-                break
+        device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session, instance_id, origin)
         if not device:
             return Response(status=404, response="")
-        sql = "SELECT `session_id`\n"\
-              "FROM `autoconfig_registration`\n"\
-              "WHERE `device_id` = %s"
-        session_id = await self._db_wrapper.autofetch_value(sql, device.identifier)
+        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper.get_of_device(session,
+                                                                                                      instance_id,
+                                                                                                      device.device_id)
         log_data = {}
-        if session_id is not None:
+        if autoconf is not None:
             log_data = {
-                'session_id': session_id,
+                'session_id': autoconf.session_id,
                 'instance_id': self._db_wrapper.instance_id,
                 'level': 2
             }

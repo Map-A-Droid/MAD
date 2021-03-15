@@ -6,9 +6,7 @@ from typing import List, Tuple
 from flask import Response, redirect, render_template, request, url_for
 from flask_caching import Cache
 
-from mapadroid.data_manager import DataManagerException
-from mapadroid.data_manager.dm_exceptions import ModeNotSpecified, ModeUnknown
-from mapadroid.data_manager.modules.pogoauth import PogoAuth
+from mapadroid.data_manager.dm_exceptions import ModeNotSpecified, ModeUnknown, DataManagerException
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file
@@ -20,7 +18,7 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class MADminConfig(object):
-    def __init__(self, db, args, logger, app, mapping_manager: MappingManager, data_manager):
+    def __init__(self, db, args, logger, app, mapping_manager: MappingManager):
         self._db = db
         self._args = args
         if self._args.madmin_time == "12":
@@ -30,7 +28,6 @@ class MADminConfig(object):
         self._adb_connect = ADBConnect(self._args)
         self._ws_connected_phones: list = []
         self._logger = logger
-        self._data_manager = data_manager
         self._app = app
         self._app.config["TEMPLATES_AUTO_RELOAD"] = True
         cache.init_app(self._app)
@@ -59,8 +56,8 @@ class MADminConfig(object):
     def start_modul(self):
         self.add_route()
 
-    def get_pokemon(self):
-        mondata = open_json_file('pokemon')
+    async def get_pokemon(self):
+        mondata = await open_json_file('pokemon')
         # Why o.O
         stripped_mondata = {}
         for mon_id in mondata:
@@ -78,11 +75,11 @@ class MADminConfig(object):
 
     @auth_required
     @logger.catch
-    def monsearch(self):
+    async def monsearch(self):
         search = request.args.get('search')
         pokemon = []
         if search or (search and len(search) >= 3):
-            all_pokemon = self.get_pokemon()
+            all_pokemon = await self.get_pokemon()
             mon_search_compiled = re.compile('.*%s.*' % (re.escape(search)), re.IGNORECASE)
             mon_names = list(filter(mon_search_compiled.search, all_pokemon['locale'].keys()))
             for name in sorted(mon_names):
