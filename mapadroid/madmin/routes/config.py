@@ -10,13 +10,16 @@ from mapadroid.data_manager.dm_exceptions import (DataManagerException,
                                                   ModeNotSpecified,
                                                   ModeUnknown)
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
 from mapadroid.db.helper.SettingsWalkerareaHelper import \
     SettingsWalkerareaHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.model import (SettingsArea, SettingsDevice, SettingsWalker,
-                                SettingsWalkerarea)
+                                SettingsWalkerarea, SettingsPogoauth, SettingsGeofence, SettingsRoutecalc)
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file
@@ -175,19 +178,22 @@ class MADminConfig(object):
     @auth_required
     def recalc_status(self):
         recalc = []
-        areas = self._data_manager.get_root_resource('area')
+        areas: Dict[int, SettingsArea] = await self._db_wrapper.get_all_areas(session)
+        routecalcs: Dict[int, SettingsRoutecalc] = await SettingsRoutecalcHelper.get_all(session, instance_id)
         for area_id, area in areas.items():
-            if area.recalc_status:
+            # TODO: Fetch recalcs...
+            routecalc_id: Optional[int] = getattr(area, "routecalc", None)
+            if routecalc_id and routecalc_id in routecalcs:
                 recalc.append(area_id)
         return Response(json.dumps(recalc), mimetype='application/json')
 
     @logger.catch
     @auth_required
-    def settings_areas(self):
+    async def settings_areas(self):
         fences = {}
-        raw_fences = self._data_manager.get_root_resource('geofence')
-        for fence_id, fence_data in raw_fences.items():
-            fences[fence_id] = fence_data['name']
+        raw_fences: Dict[int, SettingsGeofence] = await SettingsGeofenceHelper.get_all_mapped(session, instance_id)
+        for fence_id, fence in raw_fences.items():
+            fences[fence_id] = fence.name
 
         # check if we can use ortools and if it's installed
         ortools_info = False
@@ -248,15 +254,16 @@ class MADminConfig(object):
             int(identifier)
         except (TypeError, ValueError):
             pass
-        ggl_accounts = PogoAuth.get_avail_accounts(self._data_manager,
-                                                   'google',
-                                                   device_id=identifier)
+        ggl_accounts: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(session,
+                                                                                                    instance_id,
+                                                                                                    LoginType.GOOGLE)
+        ptc_accounts_mapped: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(session,
+                                                                                                    instance_id,
+                                                                                                    LoginType.PTC)
         ptc_accounts = []
-        for account_id, account in PogoAuth.get_avail_accounts(self._data_manager,
-                                                               'ptc',
-                                                               device_id=identifier).items():
+        for account_id, pogoauth in ptc_accounts_mapped.items():
             ptc_accounts.append({
-                'text': account['username'],
+                'text': pogoauth.username,
                 'id': account_id
             })
         required_data = {
@@ -327,7 +334,7 @@ class MADminConfig(object):
 
     @logger.catch
     @auth_required
-    def settings_pogoauth(self):
+    async def settings_pogoauth(self):
         devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
         devs_google: List[Tuple[int, str]] = []
         devs_ptc: List[Tuple[int, str]] = []
@@ -336,12 +343,14 @@ class MADminConfig(object):
             identifier = int(current_id)
         except (TypeError, ValueError):
             identifier = None
-        for dev_id, dev in PogoAuth.get_avail_devices(self._data_manager,
-                                                      auth_id=identifier).items():
-            devs_google.append((dev_id, dev['origin']))
-        for dev_id, dev in PogoAuth.get_avail_devices(self._data_manager,
-                                                      auth_id=identifier).items():
-            devs_ptc.append((dev_id, dev['origin']))
+        available_devices: Dict[int, SettingsDevice] = await SettingsPogoauthHelper.get_available_devices(session,
+                                                                                                          instance_id,
+                                                                                                          identifier)
+        # TODO: Does this make sense?
+        for dev_id, dev in available_devices.items():
+            devs_google.append((dev_id, dev.name))
+        for dev_id, dev in available_devices.items():
+            devs_ptc.append((dev_id, dev.name))
         required_data = {
             'identifier': 'id',
             'base_uri': 'api_pogoauth',

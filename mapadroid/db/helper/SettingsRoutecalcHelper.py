@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 
 from sqlalchemy import and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,3 +33,12 @@ class SettingsRoutecalcHelper:
                                                     SettingsRoutecalc.routecalc_id == routecalc_id))
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def get_all(session: AsyncSession, instance_id: int) -> Dict[int, SettingsRoutecalc]:
+        stmt = select(SettingsRoutecalc).where(SettingsRoutecalc.instance_id == instance_id)
+        result = await session.execute(stmt)
+        routecalcs: Dict[int, SettingsRoutecalc] = {}
+        for routecalc in result:
+            routecalcs[routecalc.routecalc_id] = routecalc
+        return routecalcs

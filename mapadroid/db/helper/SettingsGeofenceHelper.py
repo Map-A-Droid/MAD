@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,3 +14,12 @@ class SettingsGeofenceHelper:
                                                  SettingsGeofence.geofence_id == geofence_id))
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsGeofence]:
+        mapped: Dict[int, SettingsGeofence] = {}
+        stmt = select(SettingsGeofence).where(SettingsGeofence.instance_id == instance_id)
+        result = await session.execute(stmt)
+        for fence in result:
+            mapped[fence.geofence_id] = fence
+        return mapped
