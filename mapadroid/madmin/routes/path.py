@@ -1,6 +1,7 @@
 from flask import (jsonify, redirect, render_template, request,
                    send_from_directory, url_for)
 
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import auth_required, get_quest_areas
 from mapadroid.utils import MappingManager
 from mapadroid.utils.functions import generate_path
@@ -10,8 +11,8 @@ logger = get_logger(LoggerEnums.madmin)
 
 
 class MADminPath(object):
-    def __init__(self, db, args, app, mapping_manager: MappingManager, jobstatus, data_manager, plugin_hotlink):
-        self._db = db
+    def __init__(self, db_wrapper: DbWrapper, args, app, mapping_manager: MappingManager, jobstatus, plugin_hotlink):
+        self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
         self._app = app
         self._jobstatus = jobstatus
@@ -20,7 +21,6 @@ class MADminPath(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self._mapping_manager = mapping_manager
-        self._data_manager = data_manager
         self._plugin_hotlink = plugin_hotlink
 
     def add_route(self):
@@ -55,17 +55,17 @@ class MADminPath(object):
 
     @auth_required
     @logger.catch()
-    def quest(self):
+    async def quest(self):
         fence = request.args.get("fence", None)
-        stop_fences = get_quest_areas(self._mapping_manager, self._data_manager)
+        stop_fences = await get_quest_areas(self._mapping_manager, self._db_wrapper)
         return render_template('quests.html', pub=False,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", fence=fence, stop_fences=stop_fences)
 
     @auth_required
-    def quest_pub(self):
+    async def quest_pub(self):
         fence = request.args.get("fence", None)
-        stop_fences = get_quest_areas(self._mapping_manager, self._data_manager)
+        stop_fences = await get_quest_areas(self._mapping_manager, self._db_wrapper)
         return render_template('quests.html', pub=True,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", fence=fence, stop_fences=stop_fences)

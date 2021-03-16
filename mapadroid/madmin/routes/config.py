@@ -1,12 +1,22 @@
 import json
 import os
 import re
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from flask import Response, redirect, render_template, request, url_for
 from flask_caching import Cache
 
-from mapadroid.data_manager.dm_exceptions import ModeNotSpecified, ModeUnknown, DataManagerException
+from mapadroid.data_manager.dm_exceptions import (DataManagerException,
+                                                  ModeNotSpecified,
+                                                  ModeUnknown)
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
+from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
+from mapadroid.db.model import (SettingsArea, SettingsDevice, SettingsWalker,
+                                SettingsWalkerarea)
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file
@@ -18,8 +28,8 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class MADminConfig(object):
-    def __init__(self, db, args, logger, app, mapping_manager: MappingManager):
-        self._db = db
+    def __init__(self, db_wrapper: DbWrapper, args, logger, app, mapping_manager: MappingManager):
+        self._db_wrapper = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
@@ -286,13 +296,13 @@ class MADminConfig(object):
 
     @logger.catch
     @auth_required
-    def settings_ivlists(self):
+    async def settings_ivlists(self):
         try:
             identifier = request.args.get('id')
-            current_mons = self._data_manager.get_resource('monivlist', identifier)['mon_ids_iv']
+            current_mons: Optional[List[int]] = await SettingsMonivlistHelper.get_list(session, instance_id, identifier)
         except Exception:
             current_mons = []
-        all_pokemon = self.get_pokemon()
+        all_pokemon = await self.get_pokemon()
         mondata = all_pokemon['mondata']
         current_mons_list = []
         for mon_id in current_mons:
@@ -318,7 +328,7 @@ class MADminConfig(object):
     @logger.catch
     @auth_required
     def settings_pogoauth(self):
-        devices = self._data_manager.get_root_resource('device')
+        devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
         devs_google: List[Tuple[int, str]] = []
         devs_ptc: List[Tuple[int, str]] = []
         current_id = request.args.get('id', None)
@@ -369,8 +379,8 @@ class MADminConfig(object):
     def settings_routecalc(self):
         try:
             area_id = request.args.get('area_id')
-            area = self._data_manager.get_resource('area', identifier=area_id)
-            if area['routecalc'] != int(request.args.get('id')):
+            area: Optional[SettingsArea] = await self._db_wrapper.get_area(session, area_id)
+            if not area or getattr(area, "routecalc", None) != int(request.args.get('id')):
                 return redirect(url_for('settings_areas'), code=302)
         except DataManagerException:
             return redirect(url_for('settings_areas'), code=302)
@@ -384,7 +394,7 @@ class MADminConfig(object):
             'subtab': 'area',
             'section': 'routecalc',
             'passthrough': {
-                'areaname': area['name']
+                'areaname': area.name
             }
         }
         return self.process_element(**required_data)
@@ -417,19 +427,21 @@ class MADminConfig(object):
         # Only pull this if its set.  When creating a new walkerarea it will be empty
         if walkerarea_id is not None:
             walkerarea_uri = '%s/%s' % (url_for('api_walkerarea'), walkerarea_id)
-            walkerareaconfig = self._data_manager.get_resource('walkerarea', identifier=walkerarea_id)
+
+            walkerarea: Optional[SettingsWalkerarea] = await SettingsWalkerareaHelper.get(session, instance_id,
+                                                                                          walkerarea_id)
         else:
             walkerarea_uri = url_for('api_walkerarea')
-            walkerareaconfig = {}
-        walkerconfig = self._data_manager.get_resource('walker', identifier=walker_id)
-        areaconfig = self._data_manager.get_root_resource('area')
+            walkerarea: Optional[SettingsWalkerarea] = None
+        walker_settings: Optional[SettingsWalker] = await SettingsWalkerHelper.get(session, instance_id, walker_id)
+        areas: Dict[int, SettingsArea] = await self._db_wrapper.get_all_areas(session)
         walkertypes = ['coords', 'countdown', 'idle', 'period', 'round', 'timer']
         mappings = {
             'uri': walkerarea_uri,
-            'element': walkerareaconfig,
-            'walker': walkerconfig,
+            'element': walkerarea,
+            'walker': walker_settings,
             'walkeruri': walker_id,
-            'areas': areaconfig,
+            'areas': areas,
             'walkertypes': walkertypes,
             'redirect': url_for('settings_walkers')
         }

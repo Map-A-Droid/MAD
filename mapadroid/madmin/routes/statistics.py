@@ -6,6 +6,7 @@ from flask import flash, jsonify, redirect, render_template, request, url_for
 
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.madmin.functions import (auth_required,
                                         generate_coords_from_geofence,
                                         get_geofences)
@@ -13,18 +14,18 @@ from mapadroid.utils.gamemechanicutil import calculate_iv, calculate_mon_level
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.language import get_mon_name
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.MappingManager import MappingManager
 
 logger = get_logger(LoggerEnums.madmin)
 
 
 class MADminStatistics(object):
-    def __init__(self, db: DbWrapper, args, app, mapping_manager, data_manager):
-        self._db: DbWrapper = db
+    def __init__(self, db_wrapper: DbWrapper, args, app, mapping_manager: MappingManager):
+        self._db_wrapper: DbWrapper = db_wrapper
         self._db_stats_reader: DbStatsReader = db.stats_reader
         self._args = args
         self._app = app
         self._mapping_manager = mapping_manager
-        self._data_manager = data_manager
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
@@ -543,7 +544,8 @@ class MADminStatistics(object):
         stats = []
         stats_process = []
         processed_fences = []
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type="pokestops")
+        possible_fences = await get_geofences(self._mapping_manager, db_wrapper=self._db_wrapper,
+                                              fence_type="pokestops")
         wanted_fences = []
         if self._args.quest_stats_fences != "":
             wanted_fences = [item.lower().replace(" ", "") for item in self._args.quest_stats_fences.split(",")]
@@ -602,7 +604,7 @@ class MADminStatistics(object):
 
     @auth_required
     @logger.catch()
-    def reset_status_entry(self):
+    async def reset_status_entry(self):
         deviceid = request.args.get('deviceid', None)
         save_data = {
             'device_id': deviceid,
@@ -612,7 +614,7 @@ class MADminStatistics(object):
             'lastPogoReboot': 0,
 
         }
-        TrsStatusHelper.reset_status(device_id=deviceid)
+        await TrsStatusHelper.reset_status(session, instance_id, device_id=deviceid)
         self._db.save_status(save_data)
         return jsonify({'status': 'success'})
 
@@ -792,8 +794,8 @@ class MADminStatistics(object):
 
     @auth_required
     @logger.catch()
-    def get_spawnpoints_stats_summary(self):
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
+    async def get_spawnpoints_stats_summary(self):
+        possible_fences = await get_geofences(self._mapping_manager, self._db_wrapper)
         events = self._db.get_events()
         spawnpoints_total = self._db_stats_reader.get_all_spawnpoints_count()
         stats = {'fences': possible_fences, 'events': events, 'spawnpoints_count': spawnpoints_total}

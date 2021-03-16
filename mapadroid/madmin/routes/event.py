@@ -3,6 +3,7 @@ from datetime import datetime
 from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_caching import Cache
 
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.MappingManager import MappingManager
 
@@ -10,15 +11,14 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class MADminEvent(object):
-    def __init__(self, db, args, logger, app, mapping_manager: MappingManager, data_manager):
-        self._db = db
+    def __init__(self, db_wrapper: DbWrapper, args, logger, app, mapping_manager: MappingManager):
+        self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self._ws_connected_phones: list = []
-        self._data_manager = data_manager
         self._app = app
         self._app.config["TEMPLATES_AUTO_RELOAD"] = True
         cache.init_app(self._app)

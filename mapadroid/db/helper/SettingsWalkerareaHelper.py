@@ -1,5 +1,6 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -29,3 +30,10 @@ class SettingsWalkerareaHelper:
         for walkerarea in all_walkerareas:
             mapped[walkerarea.walkerarea_id] = walkerarea
         return mapped
+
+    @staticmethod
+    def get(session: AsyncSession, instance_id: int, walkerarea_id) -> Optional[SettingsWalkerarea]:
+        stmt = select(SettingsWalkerarea).where(and_(SettingsWalkerarea.instance_id == instance_id,
+                                                     SettingsWalkerarea.walkerarea_id == walkerarea_id))
+        result = await session.execute(stmt)
+        return result.scalars().first()

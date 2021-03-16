@@ -4,7 +4,6 @@ from typing import List, Optional
 from flask import jsonify, redirect, render_template, request, url_for
 from flask_caching import Cache
 
-from mapadroid.data_manager import DataManagerException
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.madmin.functions import (auth_required,
@@ -24,8 +23,8 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class MADminMap:
-    def __init__(self, db: DbWrapper, args, mapping_manager: MappingManager, app, data_manager):
-        self._db: DbWrapper = db
+    def __init__(self, db_wrapper: DbWrapper, args, mapping_manager: MappingManager, app):
+        self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
         self._app = app
         if self._args.madmin_time == "12":
@@ -34,7 +33,6 @@ class MADminMap:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
 
         self._mapping_manager: MappingManager = mapping_manager
-        self._data_manager = data_manager
 
         cache.init_app(self._app)
 
