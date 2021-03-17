@@ -1,5 +1,5 @@
 import sys
-from typing import Tuple
+from typing import Optional, Tuple
 
 from mapadroid.db.model import SettingsGeofence
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -19,7 +19,8 @@ except ImportError:
 
 
 class GeofenceHelper:
-    def __init__(self, include_geofence, exclude_geofence, fence_name=None):
+    def __init__(self, include_geofence: SettingsGeofence, exclude_geofence: Optional[SettingsGeofence],
+                 fence_name=None):
         self.geofenced_areas = []
         self.excluded_areas = []
         self.use_matplotlib = 'matplotlib' in sys.modules

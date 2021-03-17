@@ -1,10 +1,12 @@
 import json
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from flask import jsonify, redirect, render_template, request, url_for
 from flask_caching import Cache
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
+from mapadroid.db.model import SettingsGeofence
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.madmin.functions import (auth_required,
                                         generate_coords_from_geofence,
@@ -83,18 +85,18 @@ class MADminMap:
         return jsonify(positions)
 
     @auth_required
-    def get_geofences(self):
-        geofences = self._data_manager.get_root_resource("geofence")
+    async def get_geofences(self):
+        geofences: Dict[int, SettingsGeofence] = await SettingsGeofenceHelper.get_all_mapped(session, instance_id)
         export = []
 
         for geofence_id, geofence in geofences.items():
-            geofence_helper = GeofenceHelper(geofence, None, geofence["name"])
+            geofence_helper = GeofenceHelper(geofence, None, geofence.name)
             if len(geofence_helper.geofenced_areas) == 1:
                 geofenced_area = geofence_helper.geofenced_areas[0]
                 if "polygon" in geofenced_area:
                     export.append({
                         "id": geofence_id,
-                        "name": geofence["name"],
+                        "name": geofence.name,
                         "coordinates": geofenced_area["polygon"]
                     })
 
@@ -104,7 +106,7 @@ class MADminMap:
     def get_areas(self):
         areas = self._mapping_manager.get_areas()
         areas_sorted = sorted(areas, key=lambda x: areas[x]['name'])
-        geofences = get_geofences(self._mapping_manager, self._data_manager)
+        geofences = await get_geofences(self._mapping_manager, self._db_wrapper)
         geofencexport = []
         for area_id in areas_sorted:
             fences = geofences[area_id]
@@ -250,7 +252,7 @@ class MADminMap:
 
         fence = request.args.get("fence", None)
         if fence not in (None, 'None', 'All'):
-            fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, fence)
+            fence = generate_coords_from_geofence(self._mapping_manager, self._db_wrapper, fence)
         else:
             fence = None
 
@@ -363,19 +365,19 @@ class MADminMap:
         if not name and not coords:
             return redirect(url_for('map'), code=302)
 
-        resource = self._data_manager.get_resource('geofence')
         # Enforce 128 character limit
         if len(name) > 128:
             name = name[len(name) - 128:]
-        update_data = {
-            'name': name,
-            'fence_type': 'polygon',
-            'fence_data': coords.split("|")
-        }
-        resource.update(update_data)
+        geofence: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get_by_name(session, instance_id, name)
+        if not geofence:
+            geofence = SettingsGeofence()
+            geofence.name = name
+        geofence.fence_type = "polygon"
+        geofence.fence_data = coords.split("|")
         try:
-            resource.save()
-        except DataManagerException:
+            session.add(geofence)
+            # TODO: Commit (tho that will be resolved with proper class-style endpoints)
+        except Exception:
             # TODO - present the user with an issue.  probably fence-name already exists
             pass
         return redirect(url_for('map'), code=302)

@@ -13,7 +13,6 @@ class LoggerEnums(IntEnum):
     system: int = 1
     database: int = 2
     madmin: int = 3
-    data_manager: int = 4
     patcher: int = 5
     websocket: int = 6
     webhook: int = 7

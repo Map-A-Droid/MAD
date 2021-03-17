@@ -1,13 +1,13 @@
 from enum import Enum
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
-from sqlalchemy import and_, update, or_
+from sqlalchemy import and_, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.model import SettingsPogoauth, SettingsRoutecalc, SettingsDevice
+from mapadroid.db.model import (SettingsDevice, SettingsPogoauth,
+                                SettingsRoutecalc)
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -65,7 +65,7 @@ class SettingsPogoauthHelper:
         pogoauths: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_all(session, instance_id)
         try:
             identifier = int(auth_id)
-        except (ValueError, TypeError, UnknownIdentifier):
+        except (ValueError, TypeError):
             pass
         else:
             for auth in pogoauths:
@@ -96,7 +96,7 @@ class SettingsPogoauthHelper:
 
         try:
             identifier = int(device_id)
-        except (ValueError, TypeError, UnknownIdentifier):
+        except (ValueError, TypeError):
             identifier = None
         # Find all unassigned accounts
         for pogoauth in result:

@@ -6,20 +6,19 @@ from typing import Dict, List, Optional, Tuple
 from flask import Response, redirect, render_template, request, url_for
 from flask_caching import Cache
 
-from mapadroid.data_manager.dm_exceptions import (DataManagerException,
-                                                  ModeNotSpecified,
-                                                  ModeUnknown)
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
+from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
+                                                        SettingsPogoauthHelper)
 from mapadroid.db.helper.SettingsWalkerareaHelper import \
     SettingsWalkerareaHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
-from mapadroid.db.model import (SettingsArea, SettingsDevice, SettingsWalker,
-                                SettingsWalkerarea, SettingsPogoauth, SettingsGeofence, SettingsRoutecalc)
+from mapadroid.db.model import (SettingsArea, SettingsDevice, SettingsGeofence,
+                                SettingsPogoauth, SettingsRoutecalc,
+                                SettingsWalker, SettingsWalkerarea)
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file

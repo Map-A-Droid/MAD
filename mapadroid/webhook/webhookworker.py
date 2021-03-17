@@ -6,6 +6,7 @@ from typing import List, Optional
 import requests
 
 from mapadroid.db.DbWebhookReader import DbWebhookReader
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
@@ -21,12 +22,11 @@ class WebhookWorker:
     __IV_MON: List[int] = List[int]
     __excluded_areas = {}
 
-    def __init__(self, args, data_manager, mapping_manager: MappingManager, rarity,
+    def __init__(self, args, db_wrapper: DbWrapper, mapping_manager: MappingManager, rarity,
                  db_webhook_reader: DbWebhookReader):
         self.__worker_interval_sec = 10
         self.__args = args
-        self.__data_manager = data_manager
-        self.__db_wrapper = self.__data_manager.dbc
+        self.__db_wrapper: DbWrapper = db_wrapper
         self._db_reader = db_webhook_reader
         self.__rarity = rarity
         self.__last_check = int(time.time())

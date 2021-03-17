@@ -24,11 +24,11 @@ from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
-from mapadroid.db.model import (SettingsArea, SettingsDevice,
+from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
                                 SettingsPogoauth, SettingsRoutecalc,
                                 SettingsWalker, SettingsWalkerarea,
-                                SettingsWalkerToWalkerarea, TrsSpawn, SettingsAuth)
+                                SettingsWalkerToWalkerarea, TrsSpawn)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
@@ -154,7 +154,7 @@ class MappingManager:
             if device_id not in self.__paused_devices:
                 self.__paused_devices.append(device_id)
 
-    def is_device_active(self, device_id: int) -> bool:
+    async def is_device_active(self, device_id: int) -> bool:
         return device_id not in self.__paused_devices
 
     def get_devicemappings_of_sync(self, device_name: str) -> Optional[DeviceMappingsEntry]:
@@ -200,7 +200,7 @@ class MappingManager:
     async def get_all_devicemappings(self) -> Optional[dict]:
         return self._devicemappings
 
-    async def get_areas(self) -> Optional[dict]:
+    async def get_areas(self) -> Optional[Dict[int, AreaEntry]]:
         return self._areas
 
     def get_monlist(self, area_id) -> List[int]:
@@ -376,8 +376,6 @@ class MappingManager:
             logger.opt(exception=True).error('Unable to start recalculation')
         return successful
 
-    def data_manager_is_device_active(self, device_id: int):
-        return self.__data_manager.is_device_active(device_id)
 
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}

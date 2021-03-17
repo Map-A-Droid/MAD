@@ -13,10 +13,11 @@ from aiofile import async_open
 # Temporary... TODO: Replace with aiohttp
 from quart import Quart, Response, request, send_file
 
-from mapadroid.data_manager.dm_exceptions import UpdateIssue
-from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.AutoconfigRegistrationHelper import \
+    AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.model import SettingsDevice, AutoconfigRegistration
+from mapadroid.db.model import AutoconfigRegistration, SettingsDevice
 from mapadroid.mad_apk import (APKType, lookup_package_info, parse_frontend,
                                stream_package, supported_pogo_version)
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -70,12 +71,12 @@ def validate_session(func) -> Any:
 
 class EndpointAction(object):
 
-    def __init__(self, action, application_args, mapping_manager: MappingManager, data_manager):
+    def __init__(self, action, application_args, mapping_manager: MappingManager, db_wrapper: DbWrapper):
         self.action = action
         self.response = Response("", status=200, headers={})
         self.application_args = application_args
         self.mapping_manager: MappingManager = mapping_manager
-        self.__data_manager = data_manager
+        self._db_wrapper: DbWrapper = db_wrapper
 
     async def __call__(self, *args, **kwargs):
         logger.debug2("HTTP Request from {}", request.remote_addr)
@@ -97,8 +98,9 @@ class EndpointAction(object):
                 self.response = Response("", status=403, headers={})
                 abort = True
             if 'mymac' in str(request.url):
-                devs = self.__data_manager.search('device', params={'origin': origin})
-                if not devs:
+                device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session, instance_id,
+                                                                                            origin)
+                if not device:
                     abort = False
                     origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
                     self.response = Response("", status=403, headers={})
@@ -238,7 +240,7 @@ class MITMReceiver():
             sys.exit(1)
         self.app.add_url_rule(rule=endpoint, endpoint=endpoint_name,
                               view_func=EndpointAction(handler, self.__application_args, self.__mapping_manager,
-                                             self.__data_manager).__call__,
+                                             self._db_wrapper).__call__,
                               # view_func=handler,
                               methods=methods_passed)
 
@@ -375,7 +377,7 @@ class MITMReceiver():
 
     async def origin_generator_endpoint(self, *args, **kwargs):
         # TODO: async
-        return origin_generator(self.__data_manager, self._db_wrapper, **kwargs)
+        return await origin_generator(session, self._db_wrapper.instance_id, **kwargs)
 
     # ========================================
     # ============== AutoConfig ==============
@@ -521,7 +523,7 @@ class MITMReceiver():
                 device['mac_address'] = data
                 device.save()
                 return Response("", status=200)
-            except UpdateIssue:
+            except Exception:
                 return Response("", status=422)
         else:
             return Response("", status=405)

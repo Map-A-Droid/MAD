@@ -8,7 +8,6 @@ from mapadroid.data_manager.dm_exceptions import (DependencyError,
                                                   InvalidSection,
                                                   ModeNotSpecified,
                                                   ModeUnknown, SaveIssue,
-                                                  UnknownIdentifier,
                                                   UpdateIssue)
 from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
 from mapadroid.madmin.functions import auth_required
@@ -260,7 +259,7 @@ class ResourceHandler(apiHandler.APIHandler):
             return (error, 400)
         except UpdateIssue as err:
             return (err.issues, 422)
-        except UnknownIdentifier:
+        except Exception:
             return (None, 404)
 
     def delete(self, identifier, *args, **kwargs):
@@ -298,7 +297,7 @@ class ResourceHandler(apiHandler.APIHandler):
             if resource_def.configuration:
                 resource = self.translate_data_for_response(resource)
             return (resource, 200)
-        except UnknownIdentifier:
+        except Exception:
             return (None, 404)
 
     def patch(self, identifier, data, resource_def, resource_info, *args, **kwargs):
@@ -308,7 +307,7 @@ class ResourceHandler(apiHandler.APIHandler):
             resource = resource_def(self._data_manager, identifier=identifier)
             resource.update(data, append=append)
             resource.save()
-        except UnknownIdentifier:
+        except Exception:
             return (None, 404)
         else:
             headers = {
@@ -321,6 +320,7 @@ class ResourceHandler(apiHandler.APIHandler):
         resource = resource_def(self._data_manager)
         if identifier is None:
             try:
+                # TODO: iterate the data dict and use setattr?
                 resource.update(data)
                 resource.save()
                 identifier = resource.identifier
@@ -348,7 +348,7 @@ class ResourceHandler(apiHandler.APIHandler):
             resource.update(data)
             resource.identifier = identifier
             resource.save()
-        except UnknownIdentifier:
+        except Exception:
             headers = {
                 'X-Status': 'Object does not exist to update'
             }

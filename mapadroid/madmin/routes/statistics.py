@@ -459,7 +459,7 @@ class MADminStatistics(object):
 
     @auth_required
     @logger.catch()
-    def get_spawnpoints_stats(self):
+    async def get_spawnpoints_stats(self):
 
         geofence_type = request.args.get('type', 'mon_mitm')
         geofence_id = int(request.args.get('fence', -1))
@@ -475,9 +475,9 @@ class MADminStatistics(object):
         eventidhelper = {}
 
         if geofence_id != -1:
-            possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=geofence_id)
+            possible_fences = await get_geofences(self._mapping_manager, self._db_wrapper, area_id_req=geofence_id)
         else:
-            possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type=geofence_type)
+            possible_fences = await get_geofences(self._mapping_manager, self._db_wrapper, fence_type=geofence_type)
 
         for possible_fence in possible_fences:
             mode = possible_fences[possible_fence]['mode']
@@ -488,7 +488,7 @@ class MADminStatistics(object):
                 if subfence in processed_fences:
                     continue
                 processed_fences.append(subfence)
-                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
+                fence = await generate_coords_from_geofence(self._mapping_manager, self._db_wrapper, subfence)
                 known.clear()
                 unknown.clear()
                 events.clear()
@@ -540,7 +540,7 @@ class MADminStatistics(object):
 
     @logger.catch()
     @auth_required
-    def get_stop_quest_stats(self):
+    async def get_stop_quest_stats(self):
         stats = []
         stats_process = []
         processed_fences = []
@@ -561,7 +561,7 @@ class MADminStatistics(object):
                         continue
 
                 processed_fences.append(subfence)
-                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
+                fence = await generate_coords_from_geofence(self._mapping_manager, self._db_wrapper, subfence)
 
                 stops = len(self._db.stops_from_db(fence=fence))
                 quests = len(self._db.quests_from_db(fence=fence))
@@ -686,10 +686,10 @@ class MADminStatistics(object):
 
     @auth_required
     @logger.catch()
-    def get_spawnpoints_from_id(self, spawn_id, eventid, todayonly=False, olderthanxdays=None, index=0):
+    async def get_spawnpoints_from_id(self, spawn_id, eventid, todayonly=False, olderthanxdays=None, index=0):
         spawns = []
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=spawn_id)
-        fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager,
+        possible_fences = await get_geofences(self._mapping_manager, self._db_wrapper, area_id_req=spawn_id)
+        fence = await generate_coords_from_geofence(self._mapping_manager, self._db_wrapper,
                                               str(list(possible_fences[int(spawn_id)]['include'].keys())[int(index)]))
 
         data = json.loads(
@@ -732,10 +732,10 @@ class MADminStatistics(object):
         return jsonify(self.get_spawn_details_helper(areaid=area_id, eventid=event_id, olderthanxdays=olderthanxdays,
                                                      todayonly=todayonly, index=index))
 
-    def get_spawn_details_helper(self, areaid, eventid, todayonly=False, olderthanxdays=None, sumonly=False, index=0):
+    async def get_spawn_details_helper(self, areaid, eventid, todayonly=False, olderthanxdays=None, sumonly=False, index=0):
         active_spawns: list = []
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=areaid)
-        fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager,
+        possible_fences = await get_geofences(self._mapping_manager, self._db_wrapper, area_id_req=areaid)
+        fence = await generate_coords_from_geofence(self._mapping_manager, self._db_wrapper,
                                               str(list(possible_fences[int(areaid)]['include'].keys())[int(index)]))
         data = json.loads(
             self._db.download_spawns(
@@ -773,13 +773,13 @@ class MADminStatistics(object):
     def delete_unfenced_spawns(self):
         processed_fences = []
         spawns = []
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
+        possible_fences = await get_geofences(self._mapping_manager, self._db_wrapper)
         for possible_fence in possible_fences:
             for subfence in possible_fences[possible_fence]['include']:
                 if subfence in processed_fences:
                     continue
                 processed_fences.append(subfence)
-                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
+                fence = await generate_coords_from_geofence(self._mapping_manager, self._db_wrapper, subfence)
                 data = json.loads(
                     self._db.download_spawns(
                         fence=fence

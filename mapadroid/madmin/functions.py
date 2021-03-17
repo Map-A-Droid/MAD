@@ -3,7 +3,7 @@ import glob
 import os
 from functools import update_wrapper, wraps
 from math import floor
-from typing import Optional
+from typing import Dict, Optional
 
 from flask import make_response, request
 
@@ -11,8 +11,8 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.functions import creation_date
+from mapadroid.utils.MappingManager import AreaEntry, MappingManager
 from mapadroid.utils.walkerArgs import parse_args
 
 mapping_args = parse_args()
@@ -112,9 +112,9 @@ def generate_device_logcat_zip_path(origin: str, args: dict):
 
 async def get_geofences(mapping_manager: MappingManager, db_wrapper: DbWrapper, fence_type=None, area_id_req=None):
     # TODO: Request the geofence instances from the MappingManager directly?
-    areas = await mapping_manager.get_areas()
+    areas: Dict[int, AreaEntry] = await mapping_manager.get_areas()
     geofences = {}
-    for area_id, area in areas.items():
+    for area_id, area_entry in areas.items():
         if area_id_req is not None and int(area_id) is not int(area_id_req):
             continue
         geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id, area["geofence_included"])
@@ -123,10 +123,11 @@ async def get_geofences(mapping_manager: MappingManager, db_wrapper: DbWrapper, 
         if geo_exclude_id is not None:
             geofence_excluded: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
                                                                                              geo_exclude_id)
-        if fence_type is not None and area['mode'] != fence_type:
+        if fence_type is not None and area.settings.mode != fence_type:
             continue
         # TODO: json.loads?
-        area_geofences = GeofenceHelper(geofence_included.fence_data, geofence_excluded.fence_data, area['name'])
+        # area_geofences = GeofenceHelper(geofence_included.fence_data, geofence_excluded.fence_data, area['name'])
+        area_geofences = GeofenceHelper(geofence_included, geofence_excluded, area.name)
         include = {}
         exclude = {}
         for fences in area_geofences.geofenced_areas:

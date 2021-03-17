@@ -9,8 +9,9 @@ from typing import Coroutine, Dict, List, Optional, Set, Tuple
 
 import websockets
 
-from mapadroid.data_manager import DataManager
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.model import SettingsDevice
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.authHelper import check_auth
@@ -36,12 +37,11 @@ logger = get_logger(LoggerEnums.websocket)
 
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper, mapping_manager: MappingManager,
-                 pogo_window_manager: PogoWindows, data_manager: DataManager, event, enable_configmode: bool = False):
+                 pogo_window_manager: PogoWindows, event, enable_configmode: bool = False):
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__mapping_manager: MappingManager = mapping_manager
         self.__pogo_window_manager: PogoWindows = pogo_window_manager
-        self.__data_manager: DataManager = data_manager
         self.__mitm_mapper: MitmMapper = mitm_mapper
         self.__enable_configmode: bool = enable_configmode
 
@@ -181,14 +181,11 @@ class WebsocketServer(object):
         async with self.__current_users_mutex:
             origin_logger.debug("Checking if an entry is already present")
             entry = self.__current_users.get(origin, None)
-            device = None
+            device: Optional[SettingsDevice] = None
             use_configmode = self.__enable_configmode
             if not self.__enable_configmode:
-                for _, dev in self.__data_manager.search('device', params={'origin': origin}).items():
-                    if dev['origin'] == origin:
-                        device = dev
-                        break
-                if not self.__data_manager.is_device_active(device.identifier):
+                device = await SettingsDeviceHelper.get_by_origin(session, instance_id, origin)
+                if not await self.__mapping_manager.is_device_active(device.device_id):
                     origin_logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
                     use_configmode = True
             if entry is None or use_configmode:
@@ -286,7 +283,8 @@ class WebsocketServer(object):
                                   "'APPLY SETTINGS'")
             return origin, False
         elif origin not in (await self.__mapping_manager.get_all_devicemappings()).keys():
-            if self.__data_manager.search('device', params={'origin': origin}):
+            device = await SettingsDeviceHelper.get_by_origin(session, instance_id, origin)
+            if device:
                 origin_logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
             else:
                 origin_logger.warning("Register attempt of unknown origin.  Please create the device in MADmin and "
