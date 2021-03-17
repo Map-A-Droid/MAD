@@ -17,7 +17,7 @@ class VersionHelper:
     async def update_mad_version(session: AsyncSession, version_to_set: int) -> None:
         version: Optional[Version] = await VersionHelper.get_mad_version(session)
         if not version:
+            version = Version()
             version.key = "mad_version"
         version.val = version_to_set
         session.add(version)
-

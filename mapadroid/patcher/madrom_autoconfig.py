@@ -12,7 +12,7 @@ class Patch(PatchBase):
         # master sql so we need to re-run that patch that applied them
         patch_base = importlib.import_module('mapadroid.patcher.patch_30')
         try:
-            patch = patch_base.Patch(self._logger, self._db, self._data_manager, self._application_args)
+            patch = patch_base.Patch(self._logger, self._db, self._application_args)
             if patch.completed and not patch.issues:
                 self._logger.success('Validating / Installed patch_30 was applied')
             else:

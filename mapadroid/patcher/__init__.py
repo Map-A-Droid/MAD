@@ -5,38 +5,21 @@ import shutil
 import sys
 from collections import OrderedDict
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+
 import mysql.connector
 
 from mapadroid.db import DbSchemaUpdater
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.VersionHelper import VersionHelper
+from mapadroid.db.model import Version
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.patcher)
 
 # OrderedDict containing all required updates with their filename reference.  The dict is stored as (version, filename)
 MAD_UPDATES = OrderedDict([
-    (1, 'patch_1'),
-    (2, 'patch_2'),
-    (7, 'patch_7'),
-    (8, 'patch_8'),
-    (9, 'patch_9'),
-    (10, 'patch_10'),
-    (11, 'patch_11'),
-    (12, 'patch_12'),
-    (13, 'patch_13'),
-    (14, 'patch_14'),
-    (15, 'patch_15'),
-    (16, 'patch_16'),
-    (17, 'patch_17'),
-    (18, 'patch_18'),
-    (21, 'patch_21'),
-    (23, 'patch_23'),
-    (24, 'patch_24'),
-    (25, 'patch_25'),
-    (26, 'patch_26'),
-    (27, 'patch_27'),
-    (28, 'patch_28'),
-    (29, 'patch_29'),
-    (30, 'patch_30'),
     (31, 'trs_status_lastProtoDateTime_fix'),
     (32, 'reset_routecalc_algo'),
     (33, 'routecalc_rename'),
@@ -53,20 +36,19 @@ MAD_UPDATES = OrderedDict([
 
 
 class MADPatcher(object):
-    def __init__(self, args, data_manager):
+    def __init__(self, args, db_wrapper: DbWrapper):
         self._application_args = args
-        self.data_manager = data_manager
-        self.dbwrapper = self.data_manager.dbc
-        self._schema_updater: DbSchemaUpdater = self.dbwrapper.schema_updater
+        self._db_wrapper: DbWrapper = db_wrapper
+        self._schema_updater: DbSchemaUpdater = self._db_wrapper.schema_updater
         self._madver = list(MAD_UPDATES.keys())[-1]
-        self._installed_ver = None
+        self._installed_ver: Optional[Version] = None
         self.__validate_versions_schema()
         # If the versions table does not exist we have to install the schema.  When the schema is set, we are then on
         # the latest table so none of these checks are required
         if self._installed_ver is None:
             self.__convert_mappings()
-            self.__get_installed_version()
-            if self._installed_ver in [23, 24]:
+            self._installed_ver = self.__get_installed_version()
+            if self._installed_ver.val in [23, 24]:
                 self.__validate_trs_schema()
             self._schema_updater.ensure_unversioned_tables_exist()
             self._schema_updater.ensure_unversioned_columns_exist()
@@ -88,9 +70,9 @@ class MADPatcher(object):
         else:
             # Execute the patch and catch any errors for logging
             try:
-                patch = patch_base.Patch(logger, self.dbwrapper, self.data_manager, self._application_args)
+                patch = patch_base.Patch(logger, self.dbwrapper, self._application_args)
                 if patch.completed and not patch.issues:
-                    self.__set_installed_ver(patch_ver)
+                    await self.__set_installed_ver(session, patch_ver)
                     logger.success('Successfully applied patch')
                 else:
                     logger.fatal('Patch was unsuccessful.  Exiting')
@@ -155,29 +137,35 @@ class MADPatcher(object):
             logger.exception('Unknown issue during migration. Exiting')
             sys.exit(1)
 
-    def __get_installed_version(self):
+    def __get_installed_version(self) -> Version:
         try:
-            self._installed_ver = self.dbwrapper.get_mad_version()
-            if self._installed_ver:
-                logger.info("Internal MAD version in DB is {}", self._installed_ver)
+            installed_ver: Optional[Version] = await VersionHelper.get_mad_version(session)
+            if installed_ver:
+                logger.info("Internal MAD version in DB is {}", installed_ver.val)
             else:
+                installed_ver = Version()
+                installed_ver.key = "mad_version"
                 logger.info('Partial schema detected.  Additional steps required')
+                # TODO: Properly setup with await...
                 self.__install_instance_table()
                 # Attempt to read the old version.json file to get the latest install version in the database
                 try:
+                    # TODO: Update properly... using asyncio
                     with open('version.json') as f:
-                        self._installed_ver = json.load(f)['version']
+                        installed_ver.val = json.load(f)['version']
                     logger.success("Moving internal MAD version to database")
-                    self.__set_installed_ver(self._installed_ver)
                 except FileNotFoundError:
                     logger.info('New installation detected with a partial schema detected.  Updates will be attempted')
-                    self._installed_ver = 0
-                    self.__set_installed_ver(self._installed_ver)
-                reload_instance_id(self.data_manager)
-                logger.success("Moved internal MAD version to database as version {}", self._installed_ver)
-        except Exception:
+                    installed_ver.val = 0
+                await session.merge(installed_ver)
+                # TODO: Commit?
+                await reload_instance_id(self._db_wrapper, session)
+                logger.success("Moved internal MAD version to database as version {}", installed_ver.val)
+            return installed_ver
+        except Exception as e:
             logger.opt(exception=True).critical('Unknown exception occurred during getting the MAD DB version.'
                                                 '  Exiting')
+            raise e
 
     def __install_instance_table(self):
         sql = "CREATE TABLE `madmin_instance` (\n"\
@@ -203,18 +191,14 @@ class MADPatcher(object):
                     install_cmd = '%s;%s;%s'
                     args = ('SET FOREIGN_KEY_CHECKS=0', 'SET NAMES utf8mb4', table)
                     self.dbwrapper.execute(install_cmd % args, commit=True)
-            self.__set_installed_ver(self._madver)
+            await self.__set_installed_ver(session, self._madver)
             logger.success('Successfully installed MAD version {} to the database', self._installed_ver)
             self.__add_default_event()
-            reload_instance_id(self.data_manager)
+            await reload_instance_id(self._db_wrapper, session)
         except Exception:
             logger.opt(exception=True).critical('Unable to install default MAD schema.  Please install the schema from '
                                                 'scripts/SQL/rocketmap.sql')
             sys.exit(1)
-
-    def __set_installed_ver(self, version):
-        self._installed_ver = version
-        self.dbwrapper.update_mad_version(version)
 
     def __update_mad(self):
         if self._madver < self._installed_ver:
@@ -288,7 +272,7 @@ class MADPatcher(object):
             # tables have not been created
             install_schema(self.dbwrapper)
             add_default_event(self.dbwrapper)
-            reload_instance_id(self.data_manager)
+            await reload_instance_id(self._db_wrapper, session)
         else:
             for column in columns:
                 if column['Field'] != 'key':
@@ -310,6 +294,11 @@ class MADPatcher(object):
                             logger.success('Successfully de-duplicated versions table and set each key to the '
                                            'maximum value from the table')
                             self.__update_versions_table()
+
+    async def __set_installed_ver(self, session: AsyncSession, patch_ver: int):
+        self._installed_ver.val = patch_ver
+        await session.merge(self._installed_ver)
+        await session.commit()
 
 
 def install_schema(dbwrapper):
@@ -338,6 +327,5 @@ def add_default_event(dbwrapper):
     dbwrapper.execute(sql, commit=True, suppress_log=True)
 
 
-def reload_instance_id(data_manager):
-    data_manager.dbc.get_instance_id()
-    data_manager.instance_id = data_manager.dbc.instance_id
+async def reload_instance_id(db_wrapper: DbWrapper, session: AsyncSession):
+    await db_wrapper.get_instance_id(session)

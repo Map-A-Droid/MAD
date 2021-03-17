@@ -14,6 +14,7 @@ from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
+from mapadroid.db.helper.MadminInstanceHelper import MadminInstanceHelper
 from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
 from mapadroid.db.helper.SettingsAreaIdleHelper import SettingsAreaIdleHelper
 from mapadroid.db.helper.SettingsAreaIvMitm import SettingsAreaIvMitmHelper
@@ -23,7 +24,7 @@ from mapadroid.db.helper.SettingsAreaPokestopHelper import \
     SettingsAreaPokestopHelper
 from mapadroid.db.helper.SettingsAreaRaidsMitm import \
     SettingsAreaRaidsMitmHelper
-from mapadroid.db.model import SettingsArea
+from mapadroid.db.model import SettingsArea, MadminInstance
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType
@@ -46,10 +47,11 @@ class DbWrapper:
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec, args)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
+        self.instance_id: Optional[int] = None
         try:
-            self.get_instance_id()
+            self.get_instance_id(session)
         except Exception:
-            self.instance_id = None
+            self.instance_id: int = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
                            'installed, this message is safe to ignore')
 
@@ -544,21 +546,18 @@ class DbWrapper:
 
         return cells
 
-    def deprecated_get_instance_id(self, instance_name=None):
-        # TODO: Use MadminInstanceHelper::get_by_name accordingly
+    async def get_instance_id(self, session: AsyncSession, instance_name: Optional[str] = None) -> MadminInstance:
         if instance_name is None:
             instance_name = self.application_args.status_name
-        sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = %s"
-        res = self._db_exec.autofetch_value(sql, args=(instance_name,), suppress_log=True)
-        if res:
-            self.instance_id = res
-        else:
-            instance_data = {
-                'name': instance_name
-            }
-            res = self._db_exec.autoexec_insert('madmin_instance', instance_data)
-            self.instance_id = res
-        return self.instance_id
+        instance: Optional[MadminInstance] = await MadminInstanceHelper.get_by_name(session, instance_name)
+        if not instance:
+            instance = MadminInstance()
+            instance.name = instance_name
+            # TODO: Fetch again as it's an autoincrement?
+            instance = await session.merge(instance)
+            await session.commit()
+        self.instance_id = instance.instance_id
+        return instance
 
     async def get_all_areas(self, session: AsyncSession) -> Dict[int, SettingsArea]:
         areas: Dict[int, SettingsArea] = {}
