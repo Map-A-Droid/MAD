@@ -47,7 +47,10 @@ class DbPogoProtoSubmit:
             "weather_boosted_condition, last_modified, costume, form) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
             "%s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time)"
+            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
+            "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=VALUES(pokemon_id), latitude=VALUES(latitude), "
+            "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), VALUES(form), "
+            "weather_boosted_condition=VALUES(weather_boosted_condition)"
         )
 
         mon_args = []
@@ -58,6 +61,12 @@ class DbPogoProtoSubmit:
                 lon = wild_mon["longitude"]
                 mon_id = wild_mon["pokemon_data"]["id"]
                 encounter_id = wild_mon["encounter_id"]
+
+                pokemon_display = wild_mon.get("pokemon_data", {}).get("display", {})
+                weather_boosted = pokemon_display.get('weather_boosted_value')
+                gender = pokemon_display.get('gender_value')
+                costume = pokemon_display.get('costume_value')
+                form = pokemon_display.get('form_value')
 
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
@@ -78,21 +87,16 @@ class DbPogoProtoSubmit:
                     origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
                                          despawn_time, spawnid)
 
-                cache_key = "mon{}".format(encounter_id)
+                cache_key = "mon{}-{}".format(encounter_id, mon_id)
                 if cache.exists(cache_key):
                     continue
 
                 mon_args.append(
                     (
                         encounter_id, spawnid, mon_id, lat, lon,
-                        despawn_time,
-                        # TODO: consider .get("XXX", None)  # noqa: E800
-                        None, None, None, None, None, None, None, None, None,
-                        wild_mon["pokemon_data"]["display"]["gender_value"],
-                        None, None, None, None, None,
-                        wild_mon["pokemon_data"]["display"]["weather_boosted_value"],
-                        now, wild_mon["pokemon_data"]["display"]["costume_value"],
-                        wild_mon["pokemon_data"]["display"]["form_value"]
+                        despawn_time, None, None, None, None, None, None,
+                        None, None, None, gender, None, None, None, None,
+                        None, weather_boosted, now, costume, form
                     )
                 )
 
@@ -100,7 +104,46 @@ class DbPogoProtoSubmit:
                 if cache_time > 0:
                     cache.set(cache_key, 1, ex=cache_time)
 
+            query_nearby = (
+                "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
+                "disappear_time, gender, weather_boosted_condition, last_modified, costume, form) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            )
+
+            nearby_args = []
+            for nearby_mon in cell["nearby_pokemon"]:
+                stopid = nearby_mon["fort_id"]
+                if not stopid:
+                    continue
+
+                mon_id = nearby_mon["id"]
+                encounter_id = nearby_mon["encounter_id"]
+
+                if encounter_id < 0:
+                    encounter_id = encounter_id + 2 ** 64
+                # Hotfix for a PD issue.
+
+                display = nearby_mon["display"]
+                form = display["form_value"]
+                costume = display["costume_value"]
+                gender = display["gender_value"]
+                weather_boosted = display["weather_boosted_value"]
+                now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+
+                cache_key = "monnear{}".format(encounter_id)
+                if cache.exists(cache_key):
+                    continue
+
+                nearby_args.append(
+                    (
+                        encounter_id, 0, mon_id, stopid, gender, weather_boosted,
+                        now, costume, form
+                    )
+                )
+                cache.set(cache_key, 1, ex=60*60)
+
         self._db_exec.executemany(query_mons, mon_args, commit=True)
+        self._db_exec.executemany(query_nearby, nearby_args, commit=True)
         return True
 
     def mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
@@ -126,15 +169,16 @@ class DbPogoProtoSubmit:
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
+        mon_id = pokemon_data.get("id")
         encounter_id = wild_pokemon["encounter_id"]
-        shiny = wild_pokemon["pokemon_data"]["display"].get("is_shiny", 0)
         pokemon_display = pokemon_data.get("display", {})
-        weather_boosted = pokemon_display.get('weather_boosted_value', None)
+        shiny = pokemon_display.get("is_shiny", 0)
+        weather_boosted = pokemon_display.get('weather_boosted_value')
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
-        cache_key = "moniv{}{}".format(encounter_id, weather_boosted)
+        cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
         if cache.exists(cache_key):
             return
 
@@ -161,7 +205,6 @@ class DbPogoProtoSubmit:
             move_2 = 133
             form = 0
         else:
-            mon_id = pokemon_data.get("id")
             gender = pokemon_display.get("gender_value", None)
             move_1 = pokemon_data.get("move_1")
             move_2 = pokemon_data.get("move_2")
