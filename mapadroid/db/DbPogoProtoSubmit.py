@@ -106,7 +106,8 @@ class DbPogoProtoSubmit:
 
             query_nearby = (
                 "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
-                "disappear_time, gender, weather_boosted_condition, last_modified, costume, form) "
+                "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
+                "latitude, longitude)"
                 "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             )
 
@@ -134,10 +135,29 @@ class DbPogoProtoSubmit:
                 if cache.exists(cache_key):
                     continue
 
+                disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
+
+                stop_query = (
+                    "SELECT latitude, longitude "
+                    "FROM pokestop "
+                    "WHERE pokestop_id=%s"
+                )
+                gym_query = (
+                    "SELECT latitude, longitude "
+                    "FROM gym "
+                    "WHERE gym_id=%s"
+                )
+
+                stop = self._db_exec.execute(stop_query, (stopid))
+                if stop and len(stop) > 0 and stop[0][0]:
+                    stop = self._db_exec.execute(gym_query, (stopid))
+                
+                lat, lon = stop[0]
+
                 nearby_args.append(
                     (
-                        encounter_id, 0, mon_id, stopid, gender, weather_boosted,
-                        now, costume, form
+                        encounter_id, 0, mon_id, stopid, disappear_time, gender,
+                        weather_boosted, now, costume, form, lat, lon
                     )
                 )
                 cache.set(cache_key, 1, ex=60*60)
