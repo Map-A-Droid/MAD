@@ -86,6 +86,10 @@ class SerializedMitmDataProcessor(Process):
                 self.__db_submit.mons(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                 mons_time = self.get_time_ms() - mons_time_start
 
+                nearby_mons_time_start = self.get_time_ms()
+                self.__db_submit.nearby_mons(origin, received_timestamp, data["payload"], self.__mitm_mapper)
+                nearby_mons_time = self.get_time_ms() - nearby_mons_time_start
+
                 cells_time_start = self.get_time_ms()
                 self.__db_submit.cells(origin, data["payload"])
                 cells_time = self.get_time_ms() - cells_time_start
@@ -97,9 +101,9 @@ class SerializedMitmDataProcessor(Process):
                 full_time = self.get_time_ms() - start_time
 
                 origin_logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
-                                    "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
+                                    "spawnpoints={}ms, mons={}ms, nearby_mons={}, cells={}ms, gmo_loc={}ms)",
                                     full_time, weather_time, stops_time, gyms_time, raids_time,
-                                    spawnpoints_time, mons_time, cells_time, gmo_loc_time)
+                                    spawnpoints_time, mons_time, nearby_mons_time, cells_time, gmo_loc_time)
             elif data_type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:

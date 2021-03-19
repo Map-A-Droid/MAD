@@ -104,14 +104,30 @@ class DbPogoProtoSubmit:
                 if cache_time > 0:
                     cache.set(cache_key, 1, ex=cache_time)
 
-            query_nearby = (
+        self._db_exec.executemany(query_mons, mon_args, commit=True)
+        return True
+
+    def nearby_mon(self, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
+        """
+        Insert nearby mons
+        """
+        cache = get_cache(self._args)
+
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug3("DbPogoProtoSubmit::nearby_mons called with data received")
+        cells = map_proto.get("cells", None)
+        if cells is None:
+            return False
+
+        query_nearby = (
                 "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
                 "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
                 "latitude, longitude)"
                 "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             )
 
-            nearby_args = []
+        nearby_args = []
+        for cell in cells:
             for nearby_mon in cell["nearby_pokemon"]:
                 stopid = nearby_mon["fort_id"]
                 if not stopid:
@@ -162,9 +178,9 @@ class DbPogoProtoSubmit:
                 )
                 cache.set(cache_key, 1, ex=60*60)
 
-        self._db_exec.executemany(query_mons, mon_args, commit=True)
         self._db_exec.executemany(query_nearby, nearby_args, commit=True)
         return True
+
 
     def mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         """
