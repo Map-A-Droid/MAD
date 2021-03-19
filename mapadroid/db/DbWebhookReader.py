@@ -178,8 +178,7 @@ class DbWebhookReader:
             "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
             "weather_boosted_condition, pokemon.last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
             "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, fort_id, "
-            "pokestop.name as stop_name, pokestop.image as stop_url, gymdetails.name as gym_name, "
-            "gymdetails.url as gym_url "
+            "pokestop.name, pokestop.image, gymdetails.name, gymdetails.url, "
             "FROM pokemon "
             "INNER JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint "
             "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
@@ -195,7 +194,7 @@ class DbWebhookReader:
              individual_defense, individual_stamina, move_1, move_2,
              cp, cp_multiplier, weight, height, gender, form, costume,
              weather_boosted_condition, last_modified, catch_prob_1, catch_prob_2, catch_prob_3,
-             verified) in res:
+             verified, fort_id, stop_name, stop_url, gym_name, gym_url) in res:
             ret.append({
                 "encounter_id": encounter_id,
                 "pokemon_id": pokemon_id,
@@ -220,6 +219,11 @@ class DbWebhookReader:
                 "base_catch": catch_prob_1,
                 "great_catch": catch_prob_2,
                 "ultra_catch": catch_prob_3,
-                "spawn_verified": verified == 1
+                "spawn_verified": verified == 1,
+                "fort_id": fort_id,
+                "stop_name": stop_name,
+                "stop_url": stop_url,
+                "gym_name": gym_name,
+                "gym_url": gym_url
             })
         return ret
