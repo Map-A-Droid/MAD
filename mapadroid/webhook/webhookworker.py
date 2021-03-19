@@ -425,7 +425,16 @@ class WebhookWorker:
                     mon_payload["weather"] = mon["weather_boosted_condition"]
 
             if mon["fort_id"] is not None:
-                mon_payload["pokestop_id"] = mon["fort_id"]
+                mon_payload["fort_id"] = mon["fort_id"]
+                if mon["stop_name"] or mon["stop_url"]:
+                    mon_payload["fort_name"] = mon["stop_name"]
+                    mon_payload["fort_url"] = mon["stop_url"]
+                elif mon["gym_name"] or mon["gym_url"]:
+                    mon_payload["fort_name"] = mon["gym_name"]
+                    mon_payload["fort_url"] = mon["gym_url"]
+                else:
+                    mon_payload["fort_name"] = None
+                    mon_payload["fort_url"] = None
 
             entire_payload = {"type": "pokemon", "message": mon_payload}
             ret.append(entire_payload)
