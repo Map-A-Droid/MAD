@@ -184,7 +184,7 @@ class DbWebhookReader:
             "INNER JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint "
             "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
             "LEFT JOIN gymdetails on pokemon.fort_id = gymdetails.gym_id "
-            "WHERE last_modified >= %s"
+            "WHERE pokemon.last_modified >= %s"
         )
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         res = self._db_exec.execute(query, (tsdt,))
