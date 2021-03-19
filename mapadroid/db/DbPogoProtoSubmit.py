@@ -120,11 +120,11 @@ class DbPogoProtoSubmit:
             return False
 
         query_nearby = (
-                "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
-                "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
-                "latitude, longitude)"
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-            )
+            "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
+            "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
+            "latitude, longitude)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        )
 
         nearby_args = []
         for cell in cells:
@@ -145,13 +145,16 @@ class DbPogoProtoSubmit:
                 costume = display["costume_value"]
                 gender = display["gender_value"]
                 weather_boosted = display["weather_boosted_value"]
-                now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+                now = datetime.utcfromtimestamp(time.time())
 
                 cache_key = "monnear{}".format(encounter_id)
                 if cache.exists(cache_key):
                     continue
 
                 disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
+
+                now = now.strftime("%Y-%m-%d %H:%M:%S")
+                disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
 
                 stop_query = (
                     "SELECT latitude, longitude "
