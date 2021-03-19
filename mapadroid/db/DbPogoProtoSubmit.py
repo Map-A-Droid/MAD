@@ -123,7 +123,7 @@ class DbPogoProtoSubmit:
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
             "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
             "latitude, longitude)"
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
         )
 
         nearby_args = []
@@ -171,7 +171,10 @@ class DbPogoProtoSubmit:
                 if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
                     stop = self._db_exec.execute(gym_query, (stopid))
                 
-                lat, lon = stop[0]
+                if len(stop) > 0:
+                    lat, lon = stop[0]
+                else:
+                    lat, lon = (1, 1)
 
                 nearby_args.append(
                     (
