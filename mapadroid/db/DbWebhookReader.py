@@ -179,7 +179,7 @@ class DbWebhookReader:
             "weather_boosted_condition, last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
             "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, fort_id, "
             "pokestop.name as stop_name, pokestop.image as stop_url, gymdetails.name as gym_name, "
-            "gymdetails.url as gym_url"
+            "gymdetails.url as gym_url "
             "FROM pokemon "
             "INNER JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint "
             "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
