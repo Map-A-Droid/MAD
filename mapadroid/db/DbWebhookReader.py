@@ -176,7 +176,7 @@ class DbWebhookReader:
             "SELECT encounter_id, spawnpoint_id, pokemon_id, pokemon.latitude, pokemon.longitude, "
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
             "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
-            "weather_boosted_condition, last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
+            "weather_boosted_condition, pokemon.last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
             "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, fort_id, "
             "pokestop.name as stop_name, pokestop.image as stop_url, gymdetails.name as gym_name, "
             "gymdetails.url as gym_url "
