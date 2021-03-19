@@ -50,7 +50,7 @@ class DbPogoProtoSubmit:
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
             "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=VALUES(pokemon_id), latitude=VALUES(latitude), "
             "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), VALUES(form), "
-            "weather_boosted_condition=VALUES(weather_boosted_condition)"
+            "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL"
         )
 
         mon_args = []
@@ -244,7 +244,7 @@ class DbPogoProtoSubmit:
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id)"
+            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id), fort_id=NULL"
         )
         insert_values = (
             encounter_id,
