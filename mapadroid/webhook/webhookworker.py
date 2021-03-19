@@ -424,6 +424,9 @@ class WebhookWorker:
                 if self.__args.quest_webhook_flavor == "poracle":
                     mon_payload["weather"] = mon["weather_boosted_condition"]
 
+            if mon["fort_id"] is not None:
+                mon_payload["pokestop_id"] = mon["fort_id"]
+
             entire_payload = {"type": "pokemon", "message": mon_payload}
             ret.append(entire_payload)
 
