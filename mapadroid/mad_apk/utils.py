@@ -2,12 +2,14 @@ import io
 import json
 import zipfile
 from distutils.version import LooseVersion
-from typing import Generator, Tuple, Union
+from typing import Generator, Tuple, Union, Optional, List, AsyncGenerator
 
 import apkutils
 import requests
+from aiofile import async_open
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from flask import Response, stream_with_context
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -15,11 +17,13 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKPackage, APKType
 from .custom_types import MADapks, MADPackage, MADPackages
+from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
+from ..db.helper.MadApkHelper import MadApkHelper
 
 logger = get_logger(LoggerEnums.package_mgr)
 
 
-def convert_to_backend(req_type: str, req_arch: str) -> Tuple[APKType, APKArch]:
+def convert_to_backend(req_type: str, req_arch: str) -> Tuple[Optional[APKType], Optional[APKArch]]:
     """ Converts front-end input into backend enums
 
     Args:
@@ -29,23 +33,23 @@ def convert_to_backend(req_type: str, req_arch: str) -> Tuple[APKType, APKArch]:
     Returns (tuple):
         Returns a tuple of (APKType, APKArch) enums
     """
-    backend_type: APKType = None
-    backend_arch: APKArch = None
+    backend_type: Optional[APKType] = None
+    backend_arch: Optional[APKArch] = None
     try:
         if req_type is not None:
             backend_type = lookup_apk_enum(req_type)
     except (TypeError, ValueError):
-        pass
+        raise ValueError('Invalid Type.  Valid types are {}'.format([e.name for e in APKPackage]))
     try:
         if req_arch is None:
             req_arch = APKArch.noarch
         backend_arch: APKArch = lookup_arch_enum(req_arch)
     except (TypeError, ValueError):
-        pass
-    return (backend_type, backend_arch)
+        raise ValueError('Invalid Architecture.  Valid types are {}'.format([e.name for e in APKArch]))
+    return backend_type, backend_arch
 
 
-def file_generator(db, storage_obj, package: APKType, architecture: APKArch) -> Union[Generator, Response]:
+async def file_generator(db, storage_obj, package: APKType, architecture: APKArch) -> AsyncGenerator:
     """ Create a generator for retrieving the stored package
 
     Args:
@@ -55,18 +59,20 @@ def file_generator(db, storage_obj, package: APKType, architecture: APKArch) -> 
     Returns:
         Generator for retrieving the package
     """
-    package_info: Tuple[str, int] = lookup_package_info(storage_obj, package, architecture)
-    if package_info[1] == 404:
-        return Response(status=404, response=package_info[0])
-    file_info = package_info[0]
-    if storage_obj.get_storage_type() == 'fs':
-        gen_func = generator_from_filesystem(storage_obj.get_package_path(file_info.filename))
+    package_info: Union[MADPackage, MADPackages] = lookup_package_info(storage_obj, package, architecture)
+    if isinstance(package_info, MADPackage):
+        filename = package_info.filename
     else:
-        gen_func = generator_from_db(db, package, architecture)
+        package: MADPackage = package_info.get(architecture)
+        filename = package.filename
+    if storage_obj.get_storage_type() == 'fs':
+        gen_func = _generator_from_filesystem(storage_obj.get_package_path(filename))
+    else:
+        gen_func = _generator_from_db(db, package, architecture)
     return gen_func
 
 
-def generator_from_db(dbc, package: APKType, architecture: APKArch) -> Generator:
+async def _generator_from_db(session: AsyncSession, package: APKType, architecture: APKArch) -> AsyncGenerator:
     """ Create a generator for retrieving the stored package from the database
 
     Args:
@@ -76,17 +82,16 @@ def generator_from_db(dbc, package: APKType, architecture: APKArch) -> Generator
     Returns:
         Generator for retrieving the package
     """
-    filestore_id_sql = "SELECT `filestore_id` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
-    filestore_id = dbc.autofetch_value(filestore_id_sql,
-                                       args=(package.value, architecture.value,))
-    sql = "SELECT `chunk_id` FROM `filestore_chunks` WHERE `filestore_id` = %s"
-    data_sql = "SELECT `data` FROM `filestore_chunks` WHERE `chunk_id` = %s"
-    chunk_ids = dbc.autofetch_column(sql, args=(filestore_id,))
-    for chunk_id in chunk_ids:
-        yield dbc.autofetch_value(data_sql, args=(chunk_id))
+    filestore_id: Optional[int] = await MadApkHelper.get_filestore_id(session, package, architecture)
+    if not filestore_id:
+        raise ValueError("Package appears to not be present in the database")
+    chunk_ids: List[int] = await FilestoreChunkHelper.get_chunk_ids(session, filestore_id)
+    if not chunk_ids:
+        raise ValueError("Could not locate chunks in DB, something is broken.")
+    return await FilestoreChunkHelper.get_chunk_data_generator(session, chunk_ids)
 
 
-def generator_from_filesystem(full_path) -> Generator:
+async def _generator_from_filesystem(full_path) -> AsyncGenerator:
     """ Create a generator for retrieving the stored package from the disk
 
     Args:
@@ -94,9 +99,9 @@ def generator_from_filesystem(full_path) -> Generator:
     Returns:
         Generator for retrieving the package
     """
-    with open(full_path, 'rb') as fh:
+    async with async_open(full_path, 'rb') as fh:
         while True:
-            data = fh.read(CHUNK_MAX_SIZE)
+            data = await fh.read(CHUNK_MAX_SIZE)
             if not data:
                 break
             yield data
@@ -146,9 +151,9 @@ def generate_filename(package: APKType, architecture: APKArch, version: str, mim
     return '{}__{}__{}.{}'.format(friendlyname, version, architecture.name, ext)
 
 
-def get_apk_info(downloaded_file: io.BytesIO) -> Tuple[str, str]:
-    package_version: str = None
-    package_name: str = None
+def get_apk_info(downloaded_file: io.BytesIO) -> Tuple[Optional[str], Optional[str]]:
+    package_version: Optional[str] = None
+    package_name: Optional[str] = None
     try:
         apk = apkutils.APK(downloaded_file)
     except:  # noqa: E722 B001
@@ -227,7 +232,7 @@ def lookup_arch_enum(name: str) -> APKArch:
 
 
 def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
-                        architecture: APKArch = None) -> Tuple[Union[MADPackage, MADPackages], int]:
+                        architecture: APKArch = None) -> Union[MADPackage, MADPackages]:
     """ Retrieve the information about the package.  If no architecture is specified, it will return MAD_PACKAGES
         containing all relevant architectures
 
@@ -237,69 +242,50 @@ def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
         architecture (APKArch): Architecture of the package to loopup
 
     Returns:
-        Tuple containing (Package or Packages info, status code)
+        Package or Packages info
     """
-    package_info: MADPackages = None
+    package_info: Optional[MADPackages] = None
     try:
         package_info = storage_obj.get_current_package_info(package)
     except AttributeError:
         pass
     if package_info is None:
-        return (None, 404)
+        raise ValueError("Unable to find package {}".format(package.value))
     if architecture is None:
-        return (package_info, 200)
+        return package_info
     else:
         try:
-            status_code: int = 200
             fileinfo = package_info[architecture]
             if package == APKType.pogo and not supported_pogo_version(architecture, fileinfo.version):
-                status_code = 410
-            return (fileinfo, status_code)
+                raise ValueError("Version is not supported anymore.")
+            return fileinfo
         except KeyError:
-            return (None, 404)
+            raise ValueError("Unable to find package {} for arch {}".format(package.value, architecture.value))
 
 
-def parse_frontend(**kwargs) -> Union[Tuple[APKType, APKArch], Response]:
-    """ Converts front-end input into backend enums
-
-    Args:
-        req_type (str): User-input for APKType
-        req_arch (str): User-input for APKArch
-
-    Returns (tuple):
-        Returns a tuple of (APKType, APKArch) enums or a flask.Response stating what is invalid
-    """
-    apk_type_o = kwargs.get('apk_type', None)
-    apk_arch_o = kwargs.get('apk_arch', None)
-    package, architecture = convert_to_backend(apk_type_o, apk_arch_o)
-    if apk_type_o is not None and package is None:
-        resp_msg = 'Invalid Type.  Valid types are {}'.format([e.name for e in APKPackage])
-        return Response(status=404, response=resp_msg)
-    if architecture is None and apk_arch_o is not None:
-        resp_msg = 'Invalid Architecture.  Valid types are {}'.format([e.name for e in APKArch])
-        return Response(status=404, response=resp_msg)
-    return (package, architecture)
-
-
-def stream_package(db, storage_obj, package: APKType, architecture: APKArch) -> Response:
+def stream_package(session: AsyncSession, storage_obj,
+                   package: APKType, architecture: APKArch) -> Tuple[AsyncGenerator, str, str]:
     """ Stream the package to the user
 
     Args:
         storage_obj (AbstractAPKStorage): Storage interface for grabbing the package
         package (APKType): Package to lookup
         architecture (APKArch): Architecture of the package to lookup
+
+    Returns:
+        Tuple consisting of generator to fetch the bytes of the apk, the mimetype and filetype
     """
-    package_info: MADPackage = lookup_package_info(storage_obj, package, architecture)[0]
-    gen_func: Generator = file_generator(db, storage_obj, package, architecture)
-    if isinstance(gen_func, Response):
-        return gen_func
-    return Response(
-        stream_with_context(gen_func),
-        content_type=package_info.mimetype,
-        headers={
-            'Content-Disposition': 'attachment; filename={}'.format(package_info.filename)
-        }
-    )
+    package_info: Union[MADPackage, MADPackages] = lookup_package_info(storage_obj, package, architecture)
+    if isinstance(package_info, MADPackage):
+        mimetype = package_info.mimetype
+        filename = package_info.filename
+    else:
+        package: MADPackage = package_info.get(architecture)
+        mimetype = package.mimetype
+        filename = package.filename
+
+    gen_func: AsyncGenerator = await file_generator(session, storage_obj, package, architecture)
+    return gen_func, mimetype, filename
 
 
 def supported_pogo_version(architecture: APKArch, version: str) -> bool:

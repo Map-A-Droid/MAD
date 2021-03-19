@@ -73,7 +73,7 @@ class APKWizard(object):
         self.find_latest_rgc(APKArch.noarch)
         self.find_latest_pd(APKArch.noarch)
 
-    def apk_download(self, package: APKType, architecture: APKArch) -> NoReturn:
+    async def apk_download(self, package: APKType, architecture: APKArch) -> NoReturn:
         """Download a specific package
 
         Args:

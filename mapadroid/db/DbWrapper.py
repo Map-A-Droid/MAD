@@ -55,7 +55,7 @@ class DbWrapper:
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
                            'installed, this message is safe to ignore')
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> AsyncSession:
         # TODO: Start AsyncSession within a semaphore and return it, aexit needs to close the session
         return None
 

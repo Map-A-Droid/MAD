@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import NoReturn, Optional
+from typing import Optional
 
 from .apk_enums import APKArch, APKType
 from .custom_types import MADPackages
@@ -8,7 +8,7 @@ from .custom_types import MADPackages
 
 class AbstractAPKStorage(ABC):
     @abstractmethod
-    def delete_file(self, package: APKType, architecture: APKArch) -> bool:
+    async def delete_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Remove the package and update the configuration
 
         Args:
@@ -18,12 +18,12 @@ class AbstractAPKStorage(ABC):
         pass
 
     @abstractmethod
-    def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
+    async def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
         "Get the currently installed version of the package / architecture"
         pass
 
     @abstractmethod
-    def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
+    async def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
         """ Get the current information for a given package.  If the package exists in the configuration but not the
             filesystem it will be removed from the configuration
 
@@ -39,11 +39,11 @@ class AbstractAPKStorage(ABC):
     def get_storage_type(self) -> str:
         pass
 
-    def reload(self) -> NoReturn:
+    async def reload(self) -> None:
         pass
 
     @abstractmethod
-    def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
+    async def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
         """ Save the package to the storage interface.  Remove the old version if it existed
 
@@ -61,6 +61,6 @@ class AbstractAPKStorage(ABC):
         pass
 
     @abstractmethod
-    def shutdown(self) -> NoReturn:
+    async def shutdown(self) -> None:
         "Perform any required steps to safely shutdown the interface"
         pass

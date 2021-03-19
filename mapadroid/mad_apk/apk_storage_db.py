@@ -1,6 +1,6 @@
 from io import BytesIO
 from threading import RLock
-from typing import NoReturn, Optional
+from typing import Optional
 
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -30,7 +30,7 @@ class APKStorageDatabase(AbstractAPKStorage):
         self.file_lock: RLock = RLock()
         self.dbc = dbc
 
-    def delete_file(self, package: APKType, architecture: APKArch) -> bool:
+    async def delete_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Remove the package and update the configuration
 
         Args:
@@ -39,11 +39,11 @@ class APKStorageDatabase(AbstractAPKStorage):
         """
         return await MadApkHelper.delete_file(session, package, architecture)
 
-    def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
+    async def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
         "Get the currently installed version of the package / architecture"
         return await MadApkHelper.get_current_version(session, package, architecture)
 
-    def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
+    async def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
         """ Get the current information for a given package.  If the package exists in the configuration but not the
             filesystem it will be removed from the configuration
 
@@ -58,10 +58,10 @@ class APKStorageDatabase(AbstractAPKStorage):
     def get_storage_type(self) -> str:
         return 'db'
 
-    def reload(self) -> NoReturn:
+    async def reload(self) -> None:
         pass
 
-    def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
+    async def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
         """ Save the package to the database.  Remove the old version if it existed
 
@@ -76,8 +76,9 @@ class APKStorageDatabase(AbstractAPKStorage):
         Returns (bool):
             Save was successful
         """
+        # TODO: Async DB accesses...
         try:
-            self.delete_file(package, architecture)
+            await self.delete_file(package, architecture)
             file_length: int = data.getbuffer().nbytes
             filename: str = generate_filename(package, architecture, version, mimetype)
             insert_data = {
@@ -109,5 +110,5 @@ class APKStorageDatabase(AbstractAPKStorage):
             logger.opt(exception=True).critical('Unable to upload APK')
         return False
 
-    def shutdown(self) -> NoReturn:
+    async def shutdown(self) -> None:
         pass

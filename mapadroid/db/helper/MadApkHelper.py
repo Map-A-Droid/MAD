@@ -21,11 +21,31 @@ class MadApkHelper:
         Returns:
 
         """
+        apk: Optional[MadApk] = await MadApkHelper.get(session, package, architecture)
+        return apk.version if apk is not None else None
+
+    @staticmethod
+    async def get_filestore_id(session: AsyncSession, package: APKType, architecture: APKArch) -> Optional[int]:
+        """
+        Get the filestore ID of the package / architecture
+        Args:
+            session:
+            package:
+            architecture:
+
+        Returns:
+
+        """
+        apk: Optional[MadApk] = await MadApkHelper.get(session, package, architecture)
+        return apk.filestore_id if apk is not None else None
+
+    @staticmethod
+    async def get(session: AsyncSession, package: APKType, architecture: APKArch) -> Optional[MadApk]:
         stmt = select(MadApk).where(and_(MadApk.usage == package.value,
                                          MadApk.arch == architecture.value))
         result = await session.execute(stmt)
         apk: Optional[MadApk] = result.scalars().first()
-        return apk.version if apk is not None else None
+        return apk
 
     @staticmethod
     async def get_current_package_info(session: AsyncSession, package: APKType) -> Optional[MADPackages]:

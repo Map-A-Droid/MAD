@@ -5,8 +5,9 @@ from copy import copy
 from functools import wraps
 from io import BytesIO
 from threading import RLock
-from typing import Any, ClassVar, NamedTuple, NoReturn, Optional
+from typing import Any, ClassVar, NamedTuple, Optional
 
+from aiofile import async_open
 from flask import Response
 
 from mapadroid.utils.json_encoder import MADEncoder
@@ -82,7 +83,8 @@ class APKStorageFilesystem(AbstractAPKStorage):
             self.create_config(delete_config=True)
 
     @ensure_config_file
-    def create_config(self, delete_config: bool = False) -> NoReturn:
+    def create_config(self, delete_config: bool = False) -> None:
+        # TODO:.. async
         """ Creates and saves the configuration
 
         Examines the contents from self.config_apk_dir and builds out the configuration based off each available file.
@@ -141,8 +143,9 @@ class APKStorageFilesystem(AbstractAPKStorage):
                 if updated:
                     self.save_configuration()
 
-    def create_structure(self) -> NoReturn:
+    def create_structure(self) -> None:
         "Creates the filestructure required for saving packages and configuration"
+        # todo async...
         with self.file_lock:
             if not os.path.isdir(self.config_apk_dir):
                 logger.debug('Creating APK directory')
@@ -150,7 +153,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     @ensure_config_file
     @ensure_exists
-    def delete_file(self, package: APKType, architecture: APKArch) -> bool:
+    async def delete_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Remove the package and update the configuration
 
         Args:
@@ -160,7 +163,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         apk_info: MADPackage = self.apks[package][architecture]
         os.unlink(self.get_package_path(apk_info.filename))
         del self.apks[package][architecture]
-        self.save_configuration()
+        await self.save_configuration()
         return True
 
     def get_package_path(self, filename: str):
@@ -169,14 +172,14 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     @ensure_config_file
     @ensure_exists
-    def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
+    async def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
         "Get the currently installed version of the package / architecture"
         apk_info: MADPackage = self.apks[package][architecture]
         version = apk_info.version
         return version
 
     @ensure_config_file
-    def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
+    async def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
         """ Get the current information for a given package.  If the package exists in the configuration but not the
             filesystem it will be removed from the configuration
 
@@ -186,6 +189,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         Returns:
             None if no package is found.  MADPackages if the package lookup is successful
         """
+        # TODO: Async handling
         data = None
         with self.file_lock:
             try:
@@ -206,24 +210,26 @@ class APKStorageFilesystem(AbstractAPKStorage):
     def get_storage_type(self) -> str:
         return 'fs'
 
-    def reload(self) -> NoReturn:
+    async def reload(self) -> None:
+        # TODO: Async...
         with self.file_lock:
             self.create_structure()
             self.create_config(delete_config=True)
 
-    def save_configuration(self) -> NoReturn:
+    async def save_configuration(self) -> None:
         "Save the current configuration to the filesystem with human-readable indentation"
         with self.file_lock:
-            with open(self.config_filepath, 'w+') as fh:
+            async with async_open(self.config_filepath, 'w+') as fh:
+                # TODO: pass async read data to dump
                 json.dump(self.apks, fh, indent=2, cls=MADEncoder)
 
     @ensure_config_file
-    def shutdown(self) -> NoReturn:
+    async def shutdown(self) -> None:
         "Save the configuration prior to shutdown"
-        self.save_configuration()
+        await self.save_configuration()
 
     @ensure_config_file
-    def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
+    async def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
         """ Save the package to the filesystem.  Remove the old version if it existed
 
