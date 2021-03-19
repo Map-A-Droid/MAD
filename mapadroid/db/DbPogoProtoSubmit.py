@@ -107,7 +107,7 @@ class DbPogoProtoSubmit:
         self._db_exec.executemany(query_mons, mon_args, commit=True)
         return True
 
-    def nearby_mon(self, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
+    def nearby_mons(self, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
         """
         Insert nearby mons
         """
