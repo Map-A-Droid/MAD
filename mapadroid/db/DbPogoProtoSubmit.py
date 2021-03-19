@@ -49,7 +49,7 @@ class DbPogoProtoSubmit:
             "%s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
             "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=VALUES(pokemon_id), latitude=VALUES(latitude), "
-            "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), VALUES(form), "
+            "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), form=VALUES(form), "
             "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL"
         )
 
@@ -168,7 +168,7 @@ class DbPogoProtoSubmit:
                 )
 
                 stop = self._db_exec.execute(stop_query, (stopid))
-                if stop and len(stop) > 0 and stop[0][0]:
+                if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
                     stop = self._db_exec.execute(gym_query, (stopid))
                 
                 lat, lon = stop[0]
