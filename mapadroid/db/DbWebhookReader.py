@@ -182,7 +182,7 @@ class DbWebhookReader:
             "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint {}"
             "WHERE pokemon.last_modified >= %s"
         )
-        if self._db_wrapper.application_args.do_nearby_scans:
+        if self._db_wrapper.application_args.pokemon_webhook_nearby:
             nearby_select = "fort_id, pokestop.name, pokestop.image, gymdetails.name, gymdetails.url "
             nearby_joins = (
                 "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "

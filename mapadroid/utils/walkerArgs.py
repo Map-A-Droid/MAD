@@ -212,6 +212,8 @@ def parse_args():
                              'webhook')
     parser.add_argument('-pwhn', '--pokemon_webhook_nonivs', action='store_true', default=False,
                         help='Send non-IVd pokemon even if they are on Global Mon List')
+    parser.add_argument('-pwhnb', '--pokemon_webhook_nearby', action='store_true', default=False,
+                        help='Send nearby pokemon via webhook')
     parser.add_argument('-qwhf', '--quest_webhook_flavor', choices=['default', 'poracle'], default='default',
                         help='Webhook format for Quests: default or poracle compatible')
     parser.add_argument('-whst', '--webhook_start_time', default=0,
