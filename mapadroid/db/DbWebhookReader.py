@@ -177,23 +177,23 @@ class DbWebhookReader:
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
             "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
             "weather_boosted_condition, pokemon.last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
-            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, %s"
+            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, {}"
             "FROM pokemon "
-            "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint %s"
+            "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint {}"
             "WHERE pokemon.last_modified >= %s"
         )
         if no_nearby:
-            nearby_select = "NULL, NULL, NULL, NULL, NULL "
-            nearby_joins = ""
+            query = query.format("NULL, NULL, NULL, NULL, NULL ", "")
         else:
             nearby_select = "fort_id, pokestop.name, pokestop.image, gymdetails.name, gymdetails.url "
             nearby_joins = (
                 "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
                 "LEFT JOIN gymdetails on pokemon.fort_id = gymdetails.gym_id "
             )
+            query = query.format(nearby_select, nearby_joins)
 
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
-        res = self._db_exec.execute(query, (nearby_select, nearby_joins, tsdt))
+        res = self._db_exec.execute(query, (tsdt,))
 
         ret = []
         for (encounter_id, spawnpoint_id, pokemon_id, latitude,
