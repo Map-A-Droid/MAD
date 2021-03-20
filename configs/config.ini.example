@@ -55,7 +55,7 @@
 #ocr_thread_count             # Amount of threads/processes to be used for screenshot-analysis. Default: 2
 #only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
 #config_mode                  # Run in ConfigMode. Default: False
-#no_nearby_scans              # Disable nearby mon scans completely
+#do_nearby_scans              # Enable nearby mon scans
 #status-name:                 # Setup name for this instance - if not set: PID of the process will be used
 #no_event_checker             # Disable event checker task
 

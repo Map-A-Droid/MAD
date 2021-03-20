@@ -614,7 +614,7 @@ class WebhookWorker:
             # mon
             if 'pokemon' in self.__webhook_types:
                 mon = self.__prepare_mon_data(
-                    self._db_reader.get_mon_changed_since(self.__last_check, self.__args.no_nearby_scans)
+                    self._db_reader.get_mon_changed_since(self.__last_check)
                 )
                 full_payload += mon
         except Exception:

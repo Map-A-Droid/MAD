@@ -94,12 +94,12 @@ class SerializedMitmDataProcessor(Process):
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 gmo_loc_time = self.get_time_ms() - gmo_loc_start
 
-                if self.__application_args.no_nearby_scans:
-                    nearby_mons_time = 0
-                else:
+                if self.__application_args.do_nearby_scans:
                     nearby_mons_time_start = self.get_time_ms()
                     self.__db_submit.nearby_mons(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                     nearby_mons_time = self.get_time_ms() - nearby_mons_time_start
+                else:
+                    nearby_mons_time = 0
 
                 full_time = self.get_time_ms() - start_time
 

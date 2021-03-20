@@ -170,7 +170,7 @@ class DbWebhookReader:
             })
         return ret
 
-    def get_mon_changed_since(self, timestamp, no_nearby=False):
+    def get_mon_changed_since(self, timestamp):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
         query = (
             "SELECT encounter_id, spawnpoint_id, pokemon_id, pokemon.latitude, pokemon.longitude, "
@@ -182,15 +182,15 @@ class DbWebhookReader:
             "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint {}"
             "WHERE pokemon.last_modified >= %s"
         )
-        if no_nearby:
-            query = query.format("NULL, NULL, NULL, NULL, NULL ", "")
-        else:
+        if self._db_wrapper.application_args.do_nearby_scans:
             nearby_select = "fort_id, pokestop.name, pokestop.image, gymdetails.name, gymdetails.url "
             nearby_joins = (
                 "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
                 "LEFT JOIN gymdetails on pokemon.fort_id = gymdetails.gym_id "
             )
             query = query.format(nearby_select, nearby_joins)
+        else:
+            query = query.format("NULL, NULL, NULL, NULL, NULL ", "")
 
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         res = self._db_exec.execute(query, (tsdt,))
