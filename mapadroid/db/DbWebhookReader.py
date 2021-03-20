@@ -170,23 +170,30 @@ class DbWebhookReader:
             })
         return ret
 
-    def get_mon_changed_since(self, timestamp):
+    def get_mon_changed_since(self, timestamp, no_nearby):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
         query = (
             "SELECT encounter_id, spawnpoint_id, pokemon_id, pokemon.latitude, pokemon.longitude, "
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
             "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
             "weather_boosted_condition, pokemon.last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
-            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, fort_id, "
-            "pokestop.name, pokestop.image, gymdetails.name, gymdetails.url "
+            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, %s"
             "FROM pokemon "
-            "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint "
-            "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
-            "LEFT JOIN gymdetails on pokemon.fort_id = gymdetails.gym_id "
+            "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint %s"
             "WHERE pokemon.last_modified >= %s"
         )
+        if no_nearby:
+            nearby_select = "NULL, NULL, NULL, NULL, NULL "
+            nearby_joins = ""
+        else:
+            nearby_select = "fort_id, pokestop.name, pokestop.image, gymdetails.name, gymdetails.url "
+            nearby_joins = (
+                "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
+                "LEFT JOIN gymdetails on pokemon.fort_id = gymdetails.gym_id "
+            )
+
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
-        res = self._db_exec.execute(query, (tsdt,))
+        res = self._db_exec.execute(query, (nearby_select, nearby_joins, tsdt))
 
         ret = []
         for (encounter_id, spawnpoint_id, pokemon_id, latitude,
