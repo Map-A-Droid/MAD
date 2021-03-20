@@ -123,7 +123,7 @@
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
 #webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
 #pokemon_webhook_nonivs      # By default MAD will not send mons without IV checked if they are on ANY Global Mon List. Enable this to have them (sometimes) send twice
-                             # once without IV, once with IV. Make sure your webhook reciever can work with the same encounter send twice. This does not include nearby mons
+                             # once without IV, once with IV. Make sure your webhook reciever can work with the same encounter send twice. This will not affect nearby mons
 #pokemon_webhook_nearby      # Similiar to pokemon_webhook_nonivs: By default, MAD would exclude nearby mons from pokemon webhooks. This option enables this. 
 #quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
 #webhook_start_time          # Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.
