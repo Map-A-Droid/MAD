@@ -146,6 +146,7 @@ class DbPogoProtoSubmit:
         )
 
         nearby_args = []
+        processed_stops = {}
         for cell in cells:
             for nearby_mon in cell["nearby_pokemon"]:
                 stopid = nearby_mon["fort_id"]
@@ -183,7 +184,13 @@ class DbPogoProtoSubmit:
                 disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
 
                 if self._args.nearby_spawn_matching:
-                    possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
+                    processed_spawns = processed_stops.get(stopid)
+                    if processed_spawns:
+                        possible_spawns = processed_spawns
+                    else:
+                        possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
+                        processed_stops[stopid] = possible_spawns
+
                     likely_spawns = []
                     if possible_spawns:
                         for _, mon, spawndef, endminsec, s_lat, s_lon in possible_spawns:
