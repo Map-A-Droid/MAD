@@ -189,6 +189,7 @@ class DbPogoProtoSubmit:
                             continue
                         if not endminsec:
                             likely_spawns.append((disappear_time, s_lat, s_lon))
+                            continue
                         despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp())
                         despawn_time = datetime.fromtimestamp(despawn_time_unix)
                         spawn_time = despawn_time - timedelta(minutes=30)
