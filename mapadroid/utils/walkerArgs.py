@@ -111,6 +111,8 @@ def parse_args():
                         help='Run in ConfigMode')
     parser.add_argument('-ns', '--do_nearby_scans', action='store_true', default=False,
                         help='Enable nearby mon scans')
+    parser.add_argument('-nsm', '--nearby_spawn_matching', action='store_true', default=False,
+                        help='TODO')
     parser.add_argument("-sn", "--status-name", default="mad",
                         help=("Enable status page database update using"
                               " STATUS_NAME as main worker name."))

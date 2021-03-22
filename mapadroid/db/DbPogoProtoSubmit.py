@@ -180,23 +180,25 @@ class DbPogoProtoSubmit:
                     lat, lon = (0, 0)
 
                 spawnpoint = 0
-                possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
-                likely_spawns = []
                 disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
-                if possible_spawns:
-                    for _, mon, spawndef, endminsec, s_lat, s_lon in possible_spawns:
-                        if mon is not None:
-                            continue
-                        if not endminsec:
-                            likely_spawns.append((disappear_time, s_lat, s_lon))
-                            continue
-                        despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp())
-                        despawn_time = datetime.fromtimestamp(despawn_time_unix)
-                        spawn_time = despawn_time - timedelta(minutes=30)
-                        if spawndef == 15 or now > spawn_time:
-                            likely_spawns.append((despawn_time, s_lat, s_lon))
-                    if len(likely_spawns) == 1:
-                        disappear_time, lat, lon = likely_spawns[0]
+
+                if self._args.nearby_spawn_matching:
+                    possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
+                    likely_spawns = []
+                    if possible_spawns:
+                        for _, mon, spawndef, endminsec, s_lat, s_lon in possible_spawns:
+                            if mon is not None:
+                                continue
+                            if not endminsec:
+                                likely_spawns.append((disappear_time, s_lat, s_lon))
+                                continue
+                            despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp())
+                            despawn_time = datetime.fromtimestamp(despawn_time_unix)
+                            spawn_time = despawn_time - timedelta(minutes=30)
+                            if spawndef == 15 or now > spawn_time:
+                                likely_spawns.append((despawn_time, s_lat, s_lon))
+                        if len(likely_spawns) == 1:
+                            disappear_time, lat, lon = likely_spawns[0]
 
                 disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
                 now = now.strftime("%Y-%m-%d %H:%M:%S")

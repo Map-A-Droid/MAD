@@ -56,6 +56,7 @@
 #only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
 #config_mode                  # Run in ConfigMode. Default: False
 #do_nearby_scans              # Enable nearby mon scans
+#nearby_spawn_matching
 #status-name:                 # Setup name for this instance - if not set: PID of the process will be used
 #no_event_checker             # Disable event checker task
 
