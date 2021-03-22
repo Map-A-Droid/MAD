@@ -187,7 +187,7 @@ class DbPogoProtoSubmit:
                     for _, mon, spawndef, endminsec in possible_spawns:
                         if mon is not None:
                             continue
-                        despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp)
+                        despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp())
                         despawn_time = datetime.fromtimestamp(despawn_time_unix)
                         spawn_time = despawn_time - timedelta(minutes=30)
                         if spawndef == 15 or now > spawn_time:
