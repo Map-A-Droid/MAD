@@ -112,7 +112,7 @@ def parse_args():
     parser.add_argument('-ns', '--do_nearby_scans', action='store_true', default=False,
                         help='Enable nearby mon scans')
     parser.add_argument('-nsm', '--nearby_spawn_matching', action='store_true', default=False,
-                        help='TODO')
+                        help='Searches for active spawnpoints around Pokestops to match nearby mons with them')
     parser.add_argument("-sn", "--status-name", default="mad",
                         help=("Enable status page database update using"
                               " STATUS_NAME as main worker name."))
