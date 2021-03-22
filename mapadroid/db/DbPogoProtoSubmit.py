@@ -132,7 +132,7 @@ class DbPogoProtoSubmit:
             "(SELECT pokemon_id FROM pokemon p WHERE p.spawnpoint_id = ts.spawnpoint "
             "AND p.disappear_time > UTC_TIMESTAMP()) AS mon, spawndef, calc_endminsec "
             "FROM trs_spawn ts WHERE ts.eventid in (select id FROM trs_event WHERE now() "
-            "BETWEEN event_start AND event_end) AND mon IS NULL HAVING distance < 0.05"
+            "BETWEEN event_start AND event_end) HAVING distance < 0.05"
         )
         stop_query = (
             "SELECT latitude, longitude "
@@ -184,7 +184,9 @@ class DbPogoProtoSubmit:
                 likely_spawns = []
                 disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
                 if possible_spawns:
-                    for _, _, spawndef, endminsec in possible_spawns:
+                    for _, mon, spawndef, endminsec in possible_spawns:
+                        if mon is not None:
+                            continue
                         despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp)
                         despawn_time = datetime.fromtimestamp(despawn_time_unix)
                         spawn_time = despawn_time - timedelta(minutes=30)
