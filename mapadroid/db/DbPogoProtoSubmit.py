@@ -182,16 +182,16 @@ class DbPogoProtoSubmit:
                 spawnpoint = 0
                 possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
                 likely_spawns = []
-                for _, _, spawndef, endminsec in possible_spawns:
-                    despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp)
-                    despawn_time = datetime.fromtimestamp(despawn_time_unix)
-                    spawn_time = despawn_time - timedelta(minutes=30)
-                    if spawndef == 15 or now > spawn_time:
-                        likely_spawns.append(despawn_time)
-                if len(likely_spawns) == 1:
-                    disappear_time = likely_spawns[0]
-                else:
-                    disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
+                disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
+                if possible_spawns:
+                    for _, _, spawndef, endminsec in possible_spawns:
+                        despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp)
+                        despawn_time = datetime.fromtimestamp(despawn_time_unix)
+                        spawn_time = despawn_time - timedelta(minutes=30)
+                        if spawndef == 15 or now > spawn_time:
+                            likely_spawns.append(despawn_time)
+                    if len(likely_spawns) == 1:
+                        disappear_time = likely_spawns[0]
 
                 disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
                 now = now.strftime("%Y-%m-%d %H:%M:%S")
