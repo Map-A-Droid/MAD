@@ -125,15 +125,6 @@ class DbPogoProtoSubmit:
             "latitude, longitude)"
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
         )
-        query_spawns = (
-            "SELECT 111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(ts.latitude)) "
-            "* COS(RADIANS({lat})) * COS(RADIANS(ts.longitude - {lon})) "
-            "+ SIN(RADIANS(ts.latitude)) * SIN(RADIANS({lat}))))) AS distance, "
-            "(SELECT pokemon_id FROM pokemon p WHERE p.spawnpoint_id = ts.spawnpoint "
-            "AND p.disappear_time > UTC_TIMESTAMP()) AS mon, spawndef, calc_endminsec, latitude, longitude "
-            "FROM trs_spawn ts WHERE ts.eventid in (select id FROM trs_event WHERE now() "
-            "BETWEEN event_start AND event_end) HAVING distance < 0.05"
-        )
         stop_query = (
             "SELECT latitude, longitude "
             "FROM pokestop "
@@ -164,7 +155,6 @@ class DbPogoProtoSubmit:
                 costume = display["costume_value"]
                 gender = display["gender_value"]
                 weather_boosted = display["weather_boosted_value"]
-                now = datetime.utcfromtimestamp(time.time())
 
                 cache_key = "monnear{}".format(encounter_id)
                 if cache.exists(cache_key):
@@ -180,26 +170,41 @@ class DbPogoProtoSubmit:
                     lat, lon = (0, 0)
 
                 spawnpoint = 0
+                now = datetime.utcfromtimestamp(time.time())
                 disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
 
+                """
                 if self._args.nearby_spawn_matching:
-                    possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
+                    #possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
+                    query_spawns = (
+                        "SELECT last_non_scanned, "
+                        "spawndef, calc_endminsec, latitude, longitude, spawnpoint "
+                        "FROM trs_spawn ts WHERE nearby_stop = '{}' AND "
+                        "ts.eventid in (select id FROM trs_event WHERE now() "
+                        "BETWEEN event_start AND event_end)"
+                    )
+                    possible_spawns = self._db_exec.execute(query_spawns.format(stopid))
 
                     likely_spawns = []
                     if possible_spawns:
-                        for _, mon, spawndef, endminsec, s_lat, s_lon in possible_spawns:
-                            if mon is not None:
-                                continue
-                            if not endminsec:
-                                likely_spawns.append((disappear_time, s_lat, s_lon))
+                        for last_scanned, spawndef, endminsec, s_lat, s_lon, s_id in possible_spawns:
+                            if not endminsec or not last_scanned:
+                                likely_spawns.append((now, disappear_time, s_lat, s_lon, s_id))
                                 continue
                             despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp())
                             despawn_time = datetime.fromtimestamp(despawn_time_unix)
                             spawn_time = despawn_time - timedelta(minutes=30)
+                            if last_scanned > spawn_time:
+                                continue
                             if spawndef == 15 or now > spawn_time:
-                                likely_spawns.append((despawn_time, s_lat, s_lon))
+                                likely_spawns.append((spawn_time, despawn_time, s_lat, s_lon, s_id))
+                        
                         if len(likely_spawns) == 1:
-                            disappear_time, lat, lon = likely_spawns[0]
+                            _, disappear_time, lat, lon, spawnpoint = likely_spawns[0]
+                        elif len(likely_spawns) > 1:
+                            _, disappear_time, lat, lon, spawnpoint = max(likely_spawns, key=lambda s: s[0])
+                """
+                # possible TODO: nearby spawn matching. See https://github.com/Map-A-Droid/MAD/pull/1120
 
                 disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
                 now = now.strftime("%Y-%m-%d %H:%M:%S")

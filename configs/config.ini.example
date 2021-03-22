@@ -56,8 +56,6 @@
 #only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
 #config_mode                  # Run in ConfigMode. Default: False
 #do_nearby_scans              # Enable nearby mon scans
-#nearby_spawn_matching        # Searches for active spawnpoints around Pokestops to match nearby mons with them
-                              # Warning: This takes a bit of processing and your MITM workers may fall behind!
 #status-name:                 # Setup name for this instance - if not set: PID of the process will be used
 #no_event_checker             # Disable event checker task
 
