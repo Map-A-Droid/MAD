@@ -130,7 +130,7 @@ class DbPogoProtoSubmit:
             "* COS(RADIANS({lat})) * COS(RADIANS(ts.longitude - {lon})) "
             "+ SIN(RADIANS(ts.latitude)) * SIN(RADIANS({lat}))))) AS distance, "
             "(SELECT pokemon_id FROM pokemon p WHERE p.spawnpoint_id = ts.spawnpoint "
-            "AND p.disappear_time > UTC_TIMESTAMP()) AS mon, spawndef, calc_endminsec "
+            "AND p.disappear_time > UTC_TIMESTAMP()) AS mon, spawndef, calc_endminsec, latitude, longitude "
             "FROM trs_spawn ts WHERE ts.eventid in (select id FROM trs_event WHERE now() "
             "BETWEEN event_start AND event_end) HAVING distance < 0.05"
         )
@@ -184,16 +184,18 @@ class DbPogoProtoSubmit:
                 likely_spawns = []
                 disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
                 if possible_spawns:
-                    for _, mon, spawndef, endminsec in possible_spawns:
+                    for _, mon, spawndef, endminsec, s_lat, s_lon in possible_spawns:
                         if mon is not None:
                             continue
+                        if not endminsec:
+                            likely_spawns.append((disappear_time, s_lat, s_lon))
                         despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp())
                         despawn_time = datetime.fromtimestamp(despawn_time_unix)
                         spawn_time = despawn_time - timedelta(minutes=30)
                         if spawndef == 15 or now > spawn_time:
-                            likely_spawns.append(despawn_time)
+                            likely_spawns.append((despawn_time, s_lat, s_lon))
                     if len(likely_spawns) == 1:
-                        disappear_time = likely_spawns[0]
+                        disappear_time, lat, lon = likely_spawns[0]
 
                 disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
                 now = now.strftime("%Y-%m-%d %H:%M:%S")
