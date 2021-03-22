@@ -427,6 +427,7 @@ class WebhookWorker:
 
             if mon["fort_id"] is not None:
                 mon_payload["fort_id"] = mon["fort_id"]
+                mon_payload["verified"] = False
                 if mon["stop_name"] or mon["stop_url"]:
                     mon_payload["fort_name"] = mon["stop_name"]
                     mon_payload["fort_url"] = mon["stop_url"]

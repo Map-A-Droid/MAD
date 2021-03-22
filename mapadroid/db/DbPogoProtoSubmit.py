@@ -125,6 +125,25 @@ class DbPogoProtoSubmit:
             "latitude, longitude)"
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
         )
+        query_spawns = (
+            "SELECT 111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(ts.latitude)) "
+            "* COS(RADIANS({lat})) * COS(RADIANS(ts.longitude - {lon})) "
+            "+ SIN(RADIANS(ts.latitude)) * SIN(RADIANS({lat}))))) AS distance, "
+            "(SELECT pokemon_id FROM pokemon p WHERE p.spawnpoint_id = ts.spawnpoint "
+            "AND p.disappear_time > UTC_TIMESTAMP()) AS mon, spawndef, calc_endminsec "
+            "FROM trs_spawn ts WHERE ts.eventid in (select id FROM trs_event WHERE now() "
+            "BETWEEN event_start AND event_end) AND mon IS NULL HAVING distance < 0.05"
+        )
+        stop_query = (
+            "SELECT latitude, longitude "
+            "FROM pokestop "
+            "WHERE pokestop_id=%s"
+        )
+        gym_query = (
+            "SELECT latitude, longitude "
+            "FROM gym "
+            "WHERE gym_id=%s"
+        )
 
         nearby_args = []
         for cell in cells:
@@ -151,22 +170,6 @@ class DbPogoProtoSubmit:
                 if cache.exists(cache_key):
                     continue
 
-                disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
-
-                now = now.strftime("%Y-%m-%d %H:%M:%S")
-                disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
-
-                stop_query = (
-                    "SELECT latitude, longitude "
-                    "FROM pokestop "
-                    "WHERE pokestop_id=%s"
-                )
-                gym_query = (
-                    "SELECT latitude, longitude "
-                    "FROM gym "
-                    "WHERE gym_id=%s"
-                )
-
                 stop = self._db_exec.execute(stop_query, (stopid))
                 if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
                     stop = self._db_exec.execute(gym_query, (stopid))
@@ -174,11 +177,28 @@ class DbPogoProtoSubmit:
                 if len(stop) > 0:
                     lat, lon = stop[0]
                 else:
-                    lat, lon = (1, 1)
+                    lat, lon = (0, 0)
+
+                spawnpoint = 0
+                possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
+                likely_spawns = []
+                for _, _, spawndef, endminsec in possible_spawns:
+                    despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp)
+                    despawn_time = datetime.fromtimestamp(despawn_time_unix)
+                    spawn_time = despawn_time - timedelta(minutes=30)
+                    if spawndef == 15 or now > spawn_time:
+                        likely_spawns.append(despawn_time)
+                if len(likely_spawns) == 1:
+                    disappear_time = likely_spawns[0]
+                else:
+                    disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
+
+                disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
+                now = now.strftime("%Y-%m-%d %H:%M:%S")
 
                 nearby_args.append(
                     (
-                        encounter_id, 0, mon_id, stopid, disappear_time, gender,
+                        encounter_id, spawnpoint, mon_id, stopid, disappear_time, gender,
                         weather_boosted, now, costume, form, lat, lon
                     )
                 )
