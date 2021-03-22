@@ -5,13 +5,15 @@ import re
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from multiprocessing import Queue, Event
+from multiprocessing import Event, Queue
 from queue import Empty
 from threading import RLock, Thread
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APKType, file_generator, lookup_arch_enum, \
-    APKPackage, APKArch, supported_pogo_version, MADPackages
 
+from mapadroid.mad_apk import (AbstractAPKStorage, APKArch, APKPackage,
+                               APKType, MADPackages, file_generator,
+                               is_newer_version, lookup_arch_enum,
+                               supported_pogo_version)
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
 
@@ -173,15 +175,12 @@ class DeviceUpdater(object):
                 job_id = item
                 origin = self._log[str(job_id)]['origin']
 
-                self._update_mutex.acquire()
-                try:
+                with self._update_mutex:
                     if origin in self._current_job_device:
                         self._update_queue.put(str(job_id))
                         continue
 
                     self._current_job_device.append(origin)
-                finally:
-                    self._update_mutex.release()
 
                 file_ = self._log[str(job_id)]['file']
                 counter = self._log[str(job_id)]['counter']
@@ -430,8 +429,7 @@ class DeviceUpdater(object):
         self._update_queue.put(str(job_id))
 
     def write_status_log(self, job_id, field=None, value=None, delete=False):
-        self._update_mutex.acquire()
-        try:
+        with self._update_mutex:
             if delete:
                 if field is None:
                     del self._log[str(job_id)]
@@ -445,8 +443,6 @@ class DeviceUpdater(object):
                     self._log[str(job_id)][field] = value
                 else:
                     self._log[str(job_id)] = field
-        finally:
-            self._update_mutex.release()
 
         self.update_status_log()
 
@@ -578,7 +574,7 @@ class DeviceUpdater(object):
                     '|') or not self._args.job_dt_wh:
                 return
 
-            from discord_webhook import DiscordWebhook, DiscordEmbed
+            from discord_webhook import DiscordEmbed, DiscordWebhook
             _webhook = DiscordWebhook(url=self._args.job_dt_wh_url)
 
             origin = self._log[str(job_id)]['origin']

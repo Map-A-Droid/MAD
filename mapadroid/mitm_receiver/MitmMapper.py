@@ -2,14 +2,14 @@ import time
 from multiprocessing import Lock, Queue
 from multiprocessing.managers import SyncManager
 from queue import Empty
-from threading import Thread, Event
+from threading import Event, Thread
 from typing import Dict
 
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
-from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
+from mapadroid.utils.MappingManager import MappingManager
 
 logger = get_logger(LoggerEnums.mitm)
 
@@ -164,10 +164,13 @@ class MitmMapper(object):
                 if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
                     del self.__mapping[origin][key]
                 self.__mapping[origin][key] = {}
-                self.__mapping[origin]["location"] = location
-                self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
-                self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
-                self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
+                if location is not None:
+                    self.__mapping[origin]["location"] = location
+                if timestamp_received_raw is not None:
+                    self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
+                    self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
+                if timestamp_received_receiver is not None:
+                    self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
                 self.__mapping[origin][key]["values"] = values_dict
                 updated = True
             else:

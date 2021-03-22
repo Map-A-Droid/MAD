@@ -1,17 +1,19 @@
-from flask import Response, url_for
 import copy
-from enum import IntEnum
 import json
+from enum import IntEnum
 from io import BytesIO
 from typing import Any, Dict, List, NoReturn, Tuple
 from xml.sax.saxutils import escape
+
+from flask import Response, url_for
+
 from mapadroid.data_manager.modules import MAPPINGS
-from mapadroid.mad_apk import get_apk_status
 from mapadroid.data_manager.modules.resource import USER_READABLE_ERRORS
+from mapadroid.mad_apk import get_apk_status
 
 
 class AutoConfIssues(IntEnum):
-    no_ggl_login: int = 1
+    no_login: int = 1
     origin_hopper_not_ready: int = 2
     auth_not_configured: int = 3
     pd_not_configured: int = 4
@@ -23,11 +25,9 @@ class AutoConfIssueGenerator(object):
     def __init__(self, db, data_manager, args, storage_obj):
         self.warnings: List[AutoConfIssues] = []
         self.critical: List[AutoConfIssues] = []
-        sql = "SELECT count(*)\n" \
-              "FROM `settings_pogoauth` ag\n" \
-              "WHERE ag.`instance_id` = %s AND ag.`device_id` IS NULL"
-        if db.autofetch_value(sql, (db.instance_id)) == 0 and not args.autoconfig_no_auth:
-            self.warnings.append(AutoConfIssues.no_ggl_login)
+        any_login = get_available_login(db)
+        if not any_login and not args.autoconfig_no_auth:
+            self.warnings.append(AutoConfIssues.no_login)
         if not validate_hopper_ready(data_manager):
             self.critical.append(AutoConfIssues.origin_hopper_not_ready)
         if not data_manager.get_root_resource('auth'):
@@ -55,10 +55,10 @@ class AutoConfIssueGenerator(object):
         issues_warning = []
         issues_critical = []
         # Warning messages
-        if AutoConfIssues.no_ggl_login in self.warnings:
+        if AutoConfIssues.no_login in self.warnings:
             link = url_for('settings_pogoauth')
             anchor = f"<a class=\"alert-link\" href=\"{link}\">PogoAuth</a>"
-            issues_warning.append("No available Google logins for auto creation of devices. Configure through "
+            issues_warning.append("No available PogoAuth logins for auto creation of devices. Configure through "
                                   f"{anchor}")
         if AutoConfIssues.auth_not_configured in self.warnings:
             link = url_for('settings_auth')
@@ -85,6 +85,17 @@ class AutoConfIssueGenerator(object):
 
     def has_blockers(self) -> bool:
         return len(self.critical) > 0
+
+
+def get_available_login(db, login_type=None) -> dict:
+    sql = "SELECT *\n" \
+          "FROM `settings_pogoauth` ag\n" \
+          "WHERE ag.`instance_id` = %s AND ag.`device_id` IS NULL"
+    args = [db.instance_id]
+    if login_type:
+        sql += "AND ag.`login_type` = %s"
+        args.append(login_type)
+    return db.autofetch_row(sql, tuple(args))
 
 
 def validate_hopper_ready(data_manager):
@@ -234,7 +245,7 @@ class AutoConfigCreator:
         processed = []
         missing: List[str] = []
         invalid: List[str] = []
-        for section, sect_conf in self.sections.items():
+        for sect_conf in self.sections.values():
             for key, elem in sect_conf.items():
                 processed.append(key)
                 if elem['required'] and key not in user_vals:

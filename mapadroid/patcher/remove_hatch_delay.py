@@ -1,6 +1,6 @@
-from ._patch_base import PatchBase
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
+from ._patch_base import PatchBase
 
 logger = get_logger(LoggerEnums.patcher)
 

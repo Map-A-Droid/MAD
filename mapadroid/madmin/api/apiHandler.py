@@ -1,8 +1,11 @@
-import flask
 from threading import current_thread
-from mapadroid.madmin.functions import auth_required
-from . import apiResponse, apiRequest, apiException, global_variables
+
+import flask
+
 from mapadroid.mad_apk import AbstractAPKStorage
+from mapadroid.madmin.functions import auth_required
+
+from . import apiException, apiRequest, apiResponse, global_variables
 
 
 class APIHandler(object):
@@ -93,5 +96,5 @@ class APIHandler(object):
             self._logger.debug2('Formatting error: {}', headers)
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
         except Exception:
-            self._logger.opt(exception=True).critical("An unhanded exception occurred!")
+            self._logger.opt(exception=True).critical("An unhandled exception occurred!")
             return apiResponse.APIResponse(self._logger, self.api_req)('', 500)

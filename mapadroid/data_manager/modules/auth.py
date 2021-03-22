@@ -1,5 +1,6 @@
 import json
 from typing import List, Tuple
+
 from .resource import Resource
 
 

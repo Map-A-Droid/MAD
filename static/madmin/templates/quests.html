@@ -30,8 +30,11 @@ function setGrid(tableGridHtmlId, gridData) {
             {
                 "targets": [0],
                 "render": function (data, type, row) {
-                    var url = row.url.replace('http://', 'https://')
-                    var img = `<img class='lazy pokestopimg mr-3' data-original='${url}' width=100>`;
+                    var img = '';
+                    if (row.url !== null) {
+                        var url = row.url.replace('http://', 'https://')
+                        img = `<img class='lazy pokestopimg mr-3' data-original='${url}' width=100>`;
+                    }
                     var name = build_name(row)
                     return `<div class="media">${img}<div class="media-body">${name}</div></div>`
                 }

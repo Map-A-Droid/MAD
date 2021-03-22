@@ -1,19 +1,21 @@
+import copy
 import time
-from multiprocessing import Lock, Event
+from multiprocessing import Event, Lock
 from multiprocessing.managers import SyncManager
 from multiprocessing.pool import ThreadPool
 from queue import Empty, Queue
 from threading import Thread
-from typing import Optional, List, Dict, Tuple, Set
+from typing import Dict, List, Optional, Set, Tuple
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route import RouteManagerIV, RouteManagerBase
+from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.utils.collections import Location
+from mapadroid.utils.language import get_mon_ids
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.utils)
 
@@ -88,6 +90,7 @@ class MappingManager:
         self._areas: Optional[dict] = None
         self._routemanagers: Optional[Dict[str, dict]] = None
         self._auths: Optional[dict] = None
+        self.__areamons: Optional[Dict[int, list[int]]] = {}
         self._monlists: Optional[dict] = None
         self.__shutdown_event: Event = Event()
         self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
@@ -143,18 +146,10 @@ class MappingManager:
     def get_areas(self) -> Optional[dict]:
         return self._areas
 
-    def get_monlist(self, listname, areaname):
-        if type(listname) is list:
-            logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json.'
-                         ' Using empty list instead.', areaname)
-            return []
-        if listname is not None and int(listname) in self._monlists:
-            return self._monlists[int(listname)]
-        elif listname is None:
-            return []
-        else:
-            logger.warning("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
-                           listname, areaname)
+    def get_monlist(self, area_id):
+        try:
+            return self.__areamons[area_id]
+        except KeyError:
             return []
 
     def get_all_routemanager_names(self):
@@ -256,6 +251,10 @@ class MappingManager:
     def routemanager_get_name(self, routemanager_name: str) -> Optional[str]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.name if routemanager is not None else None
+
+    def routemanager_get_routecalc_id(self, routemanager_name: str) -> Optional[int]:
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        return routemanager.get_routecalc_id() if routemanager is not None else None
 
     def routemanager_get_encounter_ids_left(self, routemanager_name: str) -> Optional[List[int]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
@@ -388,7 +387,7 @@ class MappingManager:
             if area.get('settings', None) is not None and 'mon_ids_iv' in area['settings']:
                 # replace list name
                 area['settings']['mon_ids_iv_raw'] = \
-                    self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
+                    self.get_monlist(area_id)
             route_resource = self.__data_manager.get_resource('routecalc', identifier=area["routecalc"])
 
             calc_type: str = area.get("route_calc_algorithm", "route")
@@ -527,7 +526,7 @@ class MappingManager:
             elif mode == "pokestops":
                 coords = self.__db_wrapper.stops_from_db(geofence_helper)
             else:
-                logger.error("Mode not implemented yet: {}", mode)
+                logger.fatal("Mode not implemented yet: {}", mode)
                 exit(1)
         else:
             # calculate all level N cells (mapping back from mapping above linked to mode)
@@ -579,6 +578,38 @@ class MappingManager:
             monlist[moniv_id] = elem.get('mon_ids_iv', None)
         return monlist
 
+    def __get_latest_areamons(self, areas):
+        areamons = {}
+        for area_id, area in areas.items():
+            area = self.__data_manager.get_resource('area', area_id)
+            try:
+                mon_iv_list = area["settings"]["mon_ids_iv"]
+            except KeyError:
+                mon_iv_list = None
+            try:
+                all_mons = area['settings']['all_mons']
+            except KeyError:
+                all_mons = False
+            mon_list = []
+            try:
+                mon_list = copy.copy(self._monlists[int(mon_iv_list)])
+            except (KeyError, TypeError):
+                if not all_mons:
+                    logger.warning(
+                        "IV list '{}' has been used in area '{}' but does not exist. Using empty IV list"
+                        "instead.", mon_iv_list, area["name"]
+                    )
+                    areamons[area_id] = mon_list
+                    continue
+            if all_mons:
+                logger.debug("Area {} is configured for all mons", area["name"])
+                for mon_id in get_mon_ids():
+                    if mon_id in mon_list:
+                        continue
+                    mon_list.append(int(mon_id))
+            areamons[area_id] = mon_list
+        return areamons
+
     def update(self, full_lock=False):
         """
         Updates the internal mappings and routemanagers
@@ -587,6 +618,7 @@ class MappingManager:
         if not full_lock:
             self._monlists = self.__get_latest_monlists()
             areas_tmp = self.__get_latest_areas()
+            self.__areamons = self.__get_latest_areamons(areas_tmp)
             devicemappings_tmp = self.__get_latest_devicemappings()
             routemanagers_tmp = self.__get_latest_routemanagers()
             auths_tmp = self.__get_latest_auths()
@@ -622,8 +654,9 @@ class MappingManager:
             logger.debug("Acquiring lock to update mappings,full")
             with self.__mappings_mutex:
                 self._monlists = self.__get_latest_monlists()
-                self._routemanagers = self.__get_latest_routemanagers()
                 self._areas = self.__get_latest_areas()
+                self.__areamons = self.__get_latest_areamons(self._areas)
+                self._routemanagers = self.__get_latest_routemanagers()
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
 
@@ -632,6 +665,6 @@ class MappingManager:
     def get_all_devices(self):
         devices = []
         devices_raw = self.__data_manager.get_root_resource('device')
-        for device_id, device in devices_raw.items():
+        for _device_id, device in devices_raw.items():
             devices.append(device['origin'])
         return devices

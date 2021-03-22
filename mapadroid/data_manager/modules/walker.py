@@ -1,4 +1,5 @@
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
+
 from ..dm_exceptions import DataManagerException
 from .resource import Resource
 from .walkerarea import WalkerArea
@@ -65,7 +66,9 @@ class Walker(Resource):
         mons = self._dbc.autofetch_column(mon_query, args=(self.identifier))
         self._data['fields']['setup'] = mons
 
-    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = None) -> int:
+        if ignore_issues is None:
+            ignore_issues = []
         self.presave_validation(ignore_issues=ignore_issues)
         core_data = {
             'walkername': self._data['fields']['walkername']

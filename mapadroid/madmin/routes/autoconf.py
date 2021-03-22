@@ -1,7 +1,11 @@
 from io import BytesIO
-from flask import jsonify, render_template, redirect, url_for, Response, send_file
+
+from flask import (Response, jsonify, redirect, render_template, send_file,
+                   url_for)
+
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils.autoconfig import AutoConfIssueGenerator, RGCConfig, PDConfig
+from mapadroid.utils.autoconfig import (AutoConfIssueGenerator, PDConfig,
+                                        RGCConfig)
 
 
 class AutoConfigManager(object):

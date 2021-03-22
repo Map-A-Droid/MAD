@@ -1,9 +1,8 @@
-from typing import Optional, List
-
 from datetime import datetime, timedelta
-from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
+from typing import List, Optional
 
+from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 
 logger = get_logger(LoggerEnums.database)
 

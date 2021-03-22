@@ -1,10 +1,11 @@
 import time
 from datetime import datetime
-from multiprocessing import Queue, Process
+from multiprocessing import Process, Queue
+
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 
 logger = get_logger(LoggerEnums.mitm)
 
@@ -48,6 +49,16 @@ class SerializedMitmDataProcessor(Process):
 
             origin_logger.debug4("Received data: {}", data)
             start_time = self.get_time_ms()
+
+            threshold_seconds = self.__application_args.mitm_ignore_proc_time_thresh
+            if threshold_seconds > 0:
+                minimum_timestamp = (start_time / 1000) - threshold_seconds
+                if received_timestamp < minimum_timestamp:
+                    origin_logger.debug(
+                        "Data received at {} is older than configured threshold of {}s ({}). Ignoring data.",
+                        processed_timestamp, threshold_seconds, datetime.fromtimestamp(minimum_timestamp))
+                    return
+
             if data_type == 106:
                 origin_logger.info("Processing GMO. Received at {}", processed_timestamp)
 

@@ -3,9 +3,9 @@
 #Add  execution rights to file 777
 #MAD Script
 #Control scan MAD
-#Start, Stop and Status exemples 
-#./scan.bash start 
-#./scan.bash stop 
+#Start, Stop and Status exemples
+#./scan.bash start
+#./scan.bash stop
 #./scan.bash status
 
 

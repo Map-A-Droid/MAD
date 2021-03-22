@@ -3,18 +3,18 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
-from typing import List, Optional
-from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
+from typing import Dict, List, Optional, Tuple
+
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
+from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.database)
 
@@ -30,7 +30,7 @@ class DbWrapper:
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec)
+        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec, args)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
@@ -70,10 +70,16 @@ class DbWrapper:
         """
         return self._db_exec.autofetch_column(sql, args=args, **kwargs)
 
-    def autoexec_delete(self, table, keyvals, literals=[], where_append=[], **kwargs):
+    def autoexec_delete(self, table, keyvals, literals=None, where_append=None, **kwargs):
+        if where_append is None:
+            where_append = []
+        if literals is None:
+            literals = []
         return self._db_exec.autoexec_delete(table, keyvals, literals=literals, where_append=where_append, **kwargs)
 
-    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT", **kwargs):
+    def autoexec_insert(self, table, keyvals, literals=None, optype="INSERT", **kwargs):
+        if literals is None:
+            literals = []
         return self._db_exec.autoexec_insert(table, keyvals, literals=literals, optype=optype, **kwargs)
 
     def autoexec_update(self, table, set_keyvals, **kwargs):
@@ -205,6 +211,8 @@ class DbWrapper:
         if geofence_helper is None:
             logger.error("No geofence_helper! Not fetching encounters.")
             return 0, {}
+        if latest == 0:
+            latest = time.time() - 15 * 60
 
         logger.debug3("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
@@ -236,7 +244,7 @@ class DbWrapper:
         logger.debug3("Got {} encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, "
                       "last_modified): {}", len(encounter_id_coords), params)
         encounter_id_infos = {}
-        for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
+        for (_latitude, _longitude, encounter_id, disappear_time, _last_modified) in encounter_id_coords:
             encounter_id_infos[encounter_id] = disappear_time
 
         return latest, encounter_id_infos
@@ -293,7 +301,7 @@ class DbWrapper:
             "trs_quest.quest_pokemon_costume_id, trs_quest.quest_reward_type, "
             "trs_quest.quest_item_id, trs_quest.quest_item_amount, pokestop.name, pokestop.image, "
             "trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
-            "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template "
+            "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template, pokestop.is_ar_scan_eligible "
             "FROM pokestop INNER JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
         )
@@ -328,7 +336,7 @@ class DbWrapper:
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id,
              quest_pokemon_form_id, quest_pokemon_costume_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
-             quest_timestamp, quest_task, quest_reward, quest_template) in res:
+             quest_timestamp, quest_task, quest_reward, quest_template, is_ar_scan_eligible) in res:
             mon = "%03d" % quest_pokemon_id
             form_id = "%02d" % quest_pokemon_form_id
             costume_id = "%02d" % quest_pokemon_costume_id
@@ -341,7 +349,9 @@ class DbWrapper:
                 'quest_item_amount': quest_item_amount, 'name': name, 'image': image,
                 'quest_target': quest_target,
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
-                'task': quest_task, 'quest_reward': quest_reward, 'quest_template': quest_template})
+                'task': quest_task, 'quest_reward': quest_reward, 'quest_template': quest_template,
+                'is_ar_scan_eligible': is_ar_scan_eligible
+            })
 
         return questinfo
 
@@ -393,7 +403,7 @@ class DbWrapper:
         results = self.execute(query, sql_args, commit=False)
 
         next_to_encounter = []
-        for latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, _ in results:
+        for latitude, longitude, encounter_id, _spawnpoint_id, pokemon_id, _ in results:
             if pokemon_id not in eligible_mon_ids:
                 continue
             elif latitude is None or longitude is None:
@@ -417,13 +427,16 @@ class DbWrapper:
             i += 1
         return to_be_encountered
 
-    def stop_from_db_without_quests(self, geofence_helper):
+    def stop_from_db_without_quests(self, geofence_helper, latlng=True):
         logger.debug3("DbWrapper::stop_from_db_without_quests called")
+        fields = "pokestop.latitude, pokestop.longitude"
 
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
+        if not latlng:
+            fields = "pokestop.pokestop_id"
 
         query = (
-            "SELECT pokestop.latitude, pokestop.longitude "
+            "SELECT " + fields + " "
             "FROM pokestop "
             "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
@@ -434,6 +447,12 @@ class DbWrapper:
 
         res = self.execute(query)
         list_of_coords: List[Location] = []
+
+        if not latlng:
+            list_of_ids: List = []
+            for stopid in res:
+                list_of_ids.append(''.join(stopid))
+            return list_of_ids
 
         for (latitude, longitude) in res:
             list_of_coords.append(Location(latitude, longitude))
@@ -696,6 +715,15 @@ class DbWrapper:
             pokestop['has_quest'] = pokestop['pokestop_id'] in quests
         return pokestops
 
+    def update_pokestop_location(self, fort_id: str, latitude: float, longitude: float) -> None:
+        query = (
+            "UPDATE pokestop "
+            "SET latitude = %s, longitude = %s "
+            "WHERE pokestop_id = %s"
+        )
+        update_vars = (latitude, longitude, fort_id)
+        self.execute(query, update_vars, commit=True)
+
     def delete_stop(self, latitude: float, longitude: float):
         logger.debug3('Deleting stop from db')
         query = (
@@ -853,7 +881,7 @@ class DbWrapper:
         res = self.execute(query)
 
         for (spawnid, ) in res:
-            spawn.append(spawnid)
+            spawn.append(str(spawnid))
 
         return spawn
 
@@ -975,8 +1003,40 @@ class DbWrapper:
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
 
+    def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.5) \
+            -> Dict[str, Tuple[Location, datetime]]:
+        """
+        Fetch the IDs and the stops' locations from DB around the given location with a radius of distance passed
+        Args:
+            location:
+            max_distance: Radius around location to return stops within (in kilometers)
+
+        Returns:
+
+        """
+        if max_distance < 0:
+            logger.warning("Cannot search for stops at negative range...")
+            return {}
+
+        query = (
+            "SELECT pokestop_id, latitude, longitude, last_updated "
+            "FROM pokestop "
+            "WHERE SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} "
+        ).format(location.lat, location.lng, max_distance)
+        res = self.execute(query)
+
+        if not res:
+            logger.warning("No stops found closeby to {} in range of {}m", str(location), max_distance)
+            return {}
+
+        stops: Dict[str, Tuple[Location, datetime]] = dict()
+        for (pokestop_id, latitude, longitude, last_updated) in res:
+            stops[pokestop_id] = (Location(latitude, longitude), last_updated)
+
+        return stops
+
     def get_nearest_stops_from_position(self, geofence_helper, origin: str, lat, lon, limit: int = 20,
-                                        ignore_spinned: bool = True, maxdistance: int = 1):
+                                        ignore_spinned: bool = True, maxdistance: int = 1) -> List[Location]:
         """
         Retrieve the nearest stops from lat / lon (optional with limit)
         :return:
@@ -999,7 +1059,7 @@ class DbWrapper:
 
             loopcount += 1
             if loopcount >= 10:
-                logger.error("Not getting any new stop - abort")
+                logger.warning("Not getting any new stop - abort")
                 return []
 
             query = (
@@ -1018,7 +1078,7 @@ class DbWrapper:
 
             # getting 0 new locations - more distance!
             if len(res) == 0 or len(res) < limit:
-                logger.warning("No location found or getting not enough locations - need more distance")
+                logger.debug("No location found or not getting enough locations - increasing distance")
                 maxdistance += 2
 
             else:
@@ -1027,14 +1087,14 @@ class DbWrapper:
 
                 stops: List[Location] = []
 
-                for (latitude, longitude, distance) in res:
+                for (latitude, longitude, _distance) in res:
                     stops.append(Location(latitude, longitude))
 
                 if geofence_helper is not None:
                     geofenced_coords = geofence_helper.get_geofenced_coordinates(stops)
                     if len(geofenced_coords) == limit:
                         return geofenced_coords
-                    logger.warning("The coords are out of the fence - increase distance")
+                    logger.debug("The coords are out of the fence - increasing distance")
                     if loopcount >= 5:
                         # setting middle of fence as new startposition
                         lat, lon = geofence_helper.get_middle_from_fence()
@@ -1043,7 +1103,7 @@ class DbWrapper:
                 else:
                     return stops
 
-        logger.error("Not getting any new stop - abort")
+        logger.warning("Not getting any new stop - abort")
         return []
 
     def save_last_walker_position(self, origin, lat, lng):

@@ -1,10 +1,13 @@
 import copy
 from collections import UserDict
-import mysql
-from ..dm_exceptions import DependencyError, SaveIssue, UnknownIdentifier, UpdateIssue
-from ..resource_search import get_search, SearchType
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
+import mysql
+
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from ..dm_exceptions import (DependencyError, SaveIssue, UnknownIdentifier,
+                             UpdateIssue)
+from ..resource_search import SearchType, get_search
 
 logger = get_logger(LoggerEnums.data_manager)
 
@@ -19,7 +22,9 @@ USER_READABLE_ERRORS = {
 
 
 class ResourceTracker(UserDict):
-    def __init__(self, config, data_manager, initialdata={}):
+    def __init__(self, config, data_manager, initialdata=None):
+        if initialdata is None:
+            initialdata = {}
         self.__config = config
         self._data_manager = data_manager
         self.issues = {
@@ -30,6 +35,8 @@ class ResourceTracker(UserDict):
         }
         self.removal = []
         self.completed = False
+        if initialdata is None:
+            initialdata = {}
         super().__init__(initialdata)
         for key, entry in self.__config.items():
             try:
@@ -70,64 +77,20 @@ class ResourceTracker(UserDict):
             'missing': False,
             'unknown': False
         }
-        if key not in self.__config:
-            this_iteration['unknown'] = True
-            if key not in self.issues['unknown']:
-                self.issues['unknown'].append(key)
+        if not self.check_known_key(key):
             return
-        expected = self.__config[key]['settings'].get('expected', str)
-        required = self.__config[key]['settings'].get('require', False)
-        resource = self.__config[key]['settings'].get('data_source', None)
+        lookups = self.get_lookups(key)
         try:
-            empty = self.__config[key]['settings']['empty']
-            has_empty = True
-        except KeyError:
-            has_empty = False
-        if not isinstance(value, expected):
-            try:
-                if value is None and required is False:
-                    pass
-                else:
-                    try:
-                        if expected is list:
-                            raise ValueError
-                        value = self.format_value(value, expected)
-                    except Exception:
-                        if has_empty and (value == empty or value is None):
-                            if value != empty and value is None:
-                                value = empty
-                        else:
-                            this_iteration['invalid'] = True
-                            self.issues['invalid'].append((key, USER_READABLE_ERRORS[expected]))
-            except KeyError:
-                pass
-        try:
-            if len(value) == 0 and required:
-                if has_empty:
-                    value = empty
-                else:
-                    this_iteration['missing'] = True
-                    if key not in self.issues['missing']:
-                        self.issues['missing'].append(key)
-        except TypeError:
-            pass
-        # We only want to check sub-resources if we have finished the load from the DB
-        if resource and self.completed:
-            tmp = value
-            if type(value) != list:
-                tmp = [value]
-            invalid = []
-            for identifier in tmp:
-                try:
-                    self._data_manager.get_resource(resource, identifier=identifier)
-                except UnknownIdentifier:
-                    invalid.append((key, resource, identifier))
-            if invalid:
-                this_iteration['invalud_uri'] = True
-                if type(value) != list:
-                    self.issues['invalid_uri'].append(invalid[0])
-                else:
-                    self.issues['invalid_uri'].append(invalid)
+            value = self.process_format_value(lookups, key, value)
+        except ValueError:
+            this_iteration['invalid'] = True
+        if not self.check_required(lookups, key, value):
+            this_iteration['missing'] = True
+        # We only want to check sub-resources if we have finished the load from the DB. This is useful
+        # during DB migration when things arent fully updated yet
+        if lookups["resource"] and self.completed:
+            if not self.check_dependencies(lookups, key, value):
+                this_iteration['invalid_uri'] = True
         super().__setitem__(key, value)
         try:
             self.removal.remove(key)
@@ -142,10 +105,64 @@ class ResourceTracker(UserDict):
             except ValueError:
                 pass
 
-    def format_value(self, value, expected):
+    def check_dependencies(self, lookups, key, value):
+        tmp = value
+        if type(value) != list:
+            tmp = [value]
+        invalid = []
+        for identifier in tmp:
+            try:
+                self._data_manager.get_resource(lookups["resource"], identifier=identifier)
+            except UnknownIdentifier:
+                invalid.append((key, lookups["resource"], identifier))
+        if invalid:
+            if type(value) != list:
+                self.issues['invalid_uri'].append(invalid[0])
+            else:
+                self.issues['invalid_uri'].extend(invalid)
+            return False
+        return True
+
+    def check_known_key(self, key):
+        """ Determines if the key is valid for the config
+
+        :param str key: Key to check if it exists in the configuration
+
+        :return: If the key is valid
+        :rtype: bool
+        """
+        if key not in self.__config:
+            if key not in self.issues['unknown']:
+                self.issues['unknown'].append(key)
+            return False
+        return True
+
+    def check_required(self, lookups, key, value):
+        try:
+            if len(value) == 0 and lookups["required"]:
+                if not lookups["has_empty"]:
+                    if key not in self.issues['missing']:
+                        self.issues['missing'].append(key)
+                    return False
+        except TypeError:
+            pass
+        return True
+
+    @classmethod
+    def format_value(cls, value, expected):
         if expected == bool:
             if type(value) is str:
-                value = True if value.lower() == "true" else False
+                try:
+                    value = bool(int(value))
+                except ValueError as err:
+                    value = value.lower().strip()
+                    if value not in ["true", "false"]:
+                        raise ValueError from err
+                    value = True if value == "true" else False
+                except TypeError as err:
+                    raise ValueError from err
+            elif value is None:
+                raise ValueError
             else:
                 value = bool(value)
         elif expected == float:
@@ -154,6 +171,46 @@ class ResourceTracker(UserDict):
             value = int(value)
         elif expected == str:
             value = value.strip()
+        return value
+
+    def get_lookups(self, key):
+        """ Lookup required values and return as a dict"""
+        expected = self.__config[key]['settings'].get('expected', str)
+        required = self.__config[key]['settings'].get('require', False)
+        resource = self.__config[key]['settings'].get('data_source', None)
+        try:
+            empty = self.__config[key]['settings']['empty']
+            has_empty = True
+        except KeyError:
+            empty = None
+            has_empty = False
+        return {
+            "expected": expected,
+            "required": required,
+            "resource": resource,
+            "has_empty": has_empty,
+            "empty": empty
+        }
+
+    def process_format_value(self, lookups, key, value):
+        if not isinstance(value, lookups["expected"]):
+            try:
+                if value is None and lookups["required"] is False:
+                    pass
+                else:
+                    try:
+                        if lookups["expected"] is list:
+                            raise ValueError
+                        value = ResourceTracker.format_value(value, lookups["expected"])
+                    except Exception:  # noqa
+                        if lookups["has_empty"] and (value == lookups["empty"] or value is None):
+                            if value != lookups["empty"] and value is None:
+                                value = lookups["empty"]
+                        else:
+                            self.issues['invalid'].append((key, USER_READABLE_ERRORS[lookups["expected"]]))
+                            raise ValueError
+            except KeyError:
+                pass
         return value
 
 
@@ -355,10 +412,14 @@ class Resource(object):
             except TypeError:
                 continue
 
-    def presave_validation(self, ignore_issues=[]):
+    def presave_validation(self, ignore_issues=None):
+        if ignore_issues is None:
+            ignore_issues = []
         # Validate required data has been set
         top_levels = ['fields', 'settings']
         issues = {}
+        if ignore_issues is None:
+            ignore_issues = []
         for top_level in top_levels:
             try:
                 for issue_section, issue in self._data[top_level].issues.items():
@@ -385,7 +446,9 @@ class Resource(object):
                            issues)
             raise UpdateIssue(**issues)
 
-    def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
+    def save(self, core_data=None, force_insert=False, ignore_issues=None, **kwargs):
+        if ignore_issues is None:
+            ignore_issues = []
         self.presave_validation(ignore_issues=ignore_issues)
         if core_data is None:
             data = self.get_core(clear=True)

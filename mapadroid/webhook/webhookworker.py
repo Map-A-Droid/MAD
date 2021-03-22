@@ -1,16 +1,17 @@
 import json
 import time
-from typing import Optional, List
+from typing import List, Optional
+
 import requests
+
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.webhook)
 
@@ -164,6 +165,7 @@ class WebhookWorker:
                 "quest_task": quest["quest_task"],
                 "quest_condition": quest["quest_condition"].replace("'", '"').lower(),
                 "quest_template": quest["quest_template"],
+                "is_ar_scan_eligible": quest["is_ar_scan_eligible"],
             }
 
         # Other known type is Poracle/RDM compatible.
@@ -441,6 +443,7 @@ class WebhookWorker:
                 "team_id": gym["team_id"],
                 "name": gym["name"],
                 "slots_available": gym["slots_available"],
+                "is_ar_scan_eligible": gym["is_ar_scan_eligible"]
             }
 
             if gym.get("description", None) is not None:
@@ -502,7 +505,7 @@ class WebhookWorker:
             url = webhook.strip()
 
             if url.startswith("["):
-                end_index = webhook.rindex("]")
+                end_index = webhook.index("]")
                 end_index += 1
                 sub_types = webhook[:end_index]
                 url = url[end_index:]

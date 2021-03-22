@@ -23,6 +23,7 @@ configs/coords/*
 status.json
 update_log.json
 commands.json
+.tox/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

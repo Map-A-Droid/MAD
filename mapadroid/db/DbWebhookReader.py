@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
+from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
 
@@ -102,7 +102,7 @@ class DbWebhookReader:
         query = (
             "SELECT name, description, url, gym.gym_id, team_id, guard_pokemon_id, slots_available, "
             "latitude, longitude, total_cp, is_in_battle, weather_boosted_condition, "
-            "last_modified, gym.last_scanned, gym.is_ex_raid_eligible "
+            "last_modified, gym.last_scanned, gym.is_ex_raid_eligible, gym.is_ar_scan_eligible "
             "FROM gym "
             "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
             "WHERE gym.last_scanned >= %s"
@@ -113,7 +113,7 @@ class DbWebhookReader:
         ret = []
         for (name, description, url, gym_id, team_id, guard_pokemon_id, slots_available,
              latitude, longitude, total_cp, is_in_battle, weather_boosted_condition,
-             last_modified, last_scanned, is_ex_raid_eligible) in res:
+             last_modified, last_scanned, is_ex_raid_eligible, is_ar_scan_eligible) in res:
             ret.append({
                 "gym_id": gym_id,
                 "team_id": team_id,
@@ -129,7 +129,8 @@ class DbWebhookReader:
                 "name": name,
                 "url": url,
                 "description": description,
-                "is_ex_raid_eligible": is_ex_raid_eligible
+                "is_ex_raid_eligible": is_ex_raid_eligible,
+                "is_ar_scan_eligible": is_ar_scan_eligible
             })
         return ret
 

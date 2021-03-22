@@ -1,6 +1,9 @@
-from .autoconfHandler import AutoConfHandler
-from mapadroid.utils.autoconfig import origin_generator, RGCConfig, PDConfig, AutoConfIssue, AutoConfIssueGenerator
 from mapadroid.data_manager.dm_exceptions import UnknownIdentifier
+from mapadroid.utils.autoconfig import (AutoConfIssue, AutoConfIssueGenerator,
+                                        PDConfig, RGCConfig,
+                                        get_available_login, origin_generator)
+
+from .autoconfHandler import AutoConfHandler
 
 
 class APIAutoConf(AutoConfHandler):
@@ -97,14 +100,27 @@ class APIAutoConf(AutoConfHandler):
                 try:
                     auth_type = device['settings']['logintype']
                 except KeyError:
-                    auth_type = 'google'
-                # Find one that matches authtype
-                sql = "SELECT ag.`account_id`\n"\
-                      "FROM `settings_pogoauth` ag\n"\
-                      "WHERE ag.`device_id` IS NULL AND ag.`instance_id` = %s AND ag.`login_type` = %s"
-                account_id = self.dbc.autofetch_value(sql, (self.dbc.instance_id, auth_type))
+                    login = get_available_login(self.dbc)
+                    try:
+                        auth_type = login['login_type']
+                    except KeyError:
+                        return ('No available logins for auto-config', 400)
+                    else:
+                        account_id = login['account_id']
+                else:
+                    login = get_available_login(self.dbc, auth_type)
+                    try:
+                        account_id = login['account_id']
+                    except KeyError:
+                        return ('No available logins for {}'.format(auth_type), 400)
                 if account_id is None:
-                    return ('No configured emails', 400)
+                    if is_hopper:
+                        device = self._data_manager.get_resource('device', update['device_id'])
+                        device.delete()
+                    return ('No configured Pogoauth', 400)
+                else:
+                    device["logintype"] = auth_type
+                    device.save()
                 auth = self._data_manager.get_resource('pogoauth', account_id)
                 auth['device_id'] = device.identifier
                 if is_hopper and auth_type != 'google':

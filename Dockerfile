@@ -1,9 +1,10 @@
 ############################
 # MAD
 ############################
-FROM python:3.7-slim
+FROM python:3.7-slim AS mad-core
 # Working directory for the application
 WORKDIR /usr/src/app
+
 
 # copy requirements only, to reduce image size and improve cache usage
 COPY requirements.txt /usr/src/app/
@@ -25,7 +26,7 @@ wget \
 && mkdir /usr/local/share/tessdata/ \
 && mv -v eng.traineddata /usr/local/share/tessdata/ \
 # python reqs
-&& python3 -m pip install --no-cache-dir -r requirements.txt ortools \
+&& python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
 # cleanup
 && apt-get remove -y wget \
 && apt-get remove -y build-essential \

@@ -1,12 +1,13 @@
 import time
 from typing import List
+
 import numpy as np
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 
@@ -105,9 +106,7 @@ class RouteManagerLeveling(RouteManagerQuests):
         self._init_route_queue()
 
     def _get_coords_after_finish_route(self) -> bool:
-        self._manager_mutex.acquire()
-        try:
-
+        with self._manager_mutex:
             if self._shutdown_route:
                 self.logger.info('Other worker shutdown route - leaving it')
                 return False
@@ -134,8 +133,6 @@ class RouteManagerLeveling(RouteManagerQuests):
             self._worker_changed_update_routepools()
             self._start_calc = False
             return True
-        finally:
-            self._manager_mutex.release()
 
     def _restore_original_route(self):
         if not self._tempinit:
@@ -144,18 +141,13 @@ class RouteManagerLeveling(RouteManagerQuests):
                 self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
-        self._manager_mutex.acquire()
-
-        try:
+        with self._manager_mutex:
             # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
             # least one origin is connected to it.
             return self._stoplist
-        finally:
-            self._manager_mutex.release()
 
     def _start_routemanager(self):
-        self._manager_mutex.acquire()
-        try:
+        with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
@@ -196,7 +188,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                     self.logger.info('There are less stops without quest than route positions - recalc')
                     self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
-                    self.logger.warning("Something wrong with area: it have many new stops - you should delete "
+                    self.logger.warning("Something wrong with area: it has a lot of new stops - you should delete the "
                                         "routefile!!")
                     self.logger.info("Recalc new route for area")
                     self._recalc_stop_route(stops)
@@ -205,10 +197,6 @@ class RouteManagerLeveling(RouteManagerQuests):
 
                 self.logger.info('Getting {} positions', len(self._route))
                 return True
-
-        finally:
-            self._manager_mutex.release()
-
         return True
 
     def _recalc_stop_route(self, stops):

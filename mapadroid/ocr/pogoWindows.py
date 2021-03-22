@@ -3,16 +3,17 @@ import os
 import os.path
 import time
 from multiprocessing.pool import ThreadPool
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
+
 import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
 from pytesseract import Output
+
 from mapadroid.ocr.matching_trash import trash_image_matching
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
-
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 
 logger = get_logger(LoggerEnums.ocr)
 
@@ -102,8 +103,7 @@ class PogoWindows:
             # convert the (x, y) coordinates and radius of the circles to integers
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
-            for (pos_x, pos_y, radius) in circles:
-
+            for (pos_x, pos_y, _) in circles:
                 if not xcord:
                     circle += 1
                     if click:
@@ -484,7 +484,7 @@ class PogoWindows:
                                    maxRadius=radius_max)
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
-            for (pos_x, pos_y, radius) in circles:
+            for (pos_x, _, _) in circles:
                 if pos_x < width_ - width_ / 3:
                     mainscreen += 1
 

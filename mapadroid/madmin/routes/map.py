@@ -1,21 +1,22 @@
 import json
 from typing import List, Optional
-from flask import (jsonify, render_template, request, redirect, url_for)
+
+from flask import jsonify, render_template, request
 from flask_caching import Cache
-from mapadroid.data_manager import DataManagerException
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.madmin.functions import (
-    auth_required, get_coord_float, get_bound_params, get_geofences, generate_coords_from_geofence
-)
+from mapadroid.madmin.functions import (auth_required,
+                                        generate_coords_from_geofence,
+                                        get_bound_params, get_coord_float,
+                                        get_geofences)
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_name
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
 
 logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
@@ -49,8 +50,7 @@ class MADminMap:
             ("/get_quests", self.get_quests),
             ("/get_map_mons", self.get_map_mons),
             ("/get_cells", self.get_cells),
-            ("/get_stops", self.get_stops),
-            ("/savefence", self.savefence)
+            ("/get_stops", self.get_stops)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -116,24 +116,50 @@ class MADminMap:
 
     @auth_required
     def get_route(self):
-        routeexport = []
-
+        routeinfo_by_id = {}
         routemanager_names = self._mapping_manager.get_all_routemanager_names()
 
         for routemanager in routemanager_names:
+            (memory_route, workers) = self._mapping_manager.routemanager_get_current_route(routemanager)
+            if memory_route is None:
+                continue
+
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
             name = self._mapping_manager.routemanager_get_name(routemanager)
-            (route, workers) = self._mapping_manager.routemanager_get_current_route(routemanager)
+            routecalc_id = self._mapping_manager.routemanager_get_routecalc_id(routemanager)
+            routeinfo_by_id[routecalc_id] = routeinfo = {
+                "id": routecalc_id,
+                "route": memory_route,
+                "name": name,
+                "mode": mode,
+                "subroutes": []
+            }
 
-            if route is None:
-                continue
-            routeexport.append(get_routepool_route(name, mode, route))
             if len(workers) > 1:
                 for worker, worker_route in workers.items():
-                    disp_name = '%s - %s' % (name, worker,)
-                    routeexport.append(get_routepool_route(disp_name, mode, worker_route))
+                    routeinfo["subroutes"].append({
+                        "id": "%d_sub_%s" % (routecalc_id, worker),
+                        "route": worker_route,
+                        "name": "%s - %s" % (routeinfo["name"], worker),
+                        "tag": "subroute"
+                    })
 
-        return jsonify(routeexport)
+        if len(routeinfo_by_id) > 0:
+            routecalcs = self._data_manager.get_root_resource("routecalc")
+            for routecalc_id, routecalc in routecalcs.items():
+                if routecalc_id in routeinfo_by_id:
+                    routeinfo = routeinfo_by_id[routecalc_id]
+                    db_route = list(map(lambda coord: Location(coord["lat"], coord["lng"]),
+                                        routecalc.get_saved_json_route()))
+                    if db_route != routeinfo["route"]:
+                        routeinfo["subroutes"].append({
+                            "id": "%d_unapplied" % routeinfo["id"],
+                            "route": db_route,
+                            "name": "%s (unapplied)" % routeinfo["name"],
+                            "tag": "unapplied"
+                        })
+
+        return jsonify(list(map(lambda route: get_routepool_route(route), routeinfo_by_id.values())))
 
     @auth_required
     def get_prioroute(self):
@@ -295,7 +321,7 @@ class MADminMap:
 
         mons_raw = {}
 
-        for index, mon in enumerate(data):
+        for index, _ in enumerate(data):
             try:
                 mon_id = data[index]["mon_id"]
                 if str(mon_id) in mons_raw:
@@ -354,47 +380,27 @@ class MADminMap:
         )
         return jsonify(data)
 
-    @logger.catch()
-    @auth_required
-    def savefence(self):
-        # TODO - Modify madmin.js to use the API
-        name = request.args.get('name', False)
-        coords = request.args.get('coords', False)
-        if not name and not coords:
-            return redirect(url_for('map'), code=302)
 
-        resource = self._data_manager.get_resource('geofence')
-        # Enforce 128 character limit
-        if len(name) > 128:
-            name = name[len(name) - 128:]
-        update_data = {
-            'name': name,
-            'fence_type': 'polygon',
-            'fence_data': coords.split("|")
-        }
-        resource.update(update_data)
-        try:
-            resource.save()
-        except DataManagerException:
-            # TODO - present the user with an issue.  probably fence-name already exists
-            pass
-        return redirect(url_for('map'), code=302)
-
-
-def get_routepool_route(name, mode, coords):
-    parsed_coords = get_routepool_coords(coords, mode)
+def get_routepool_route(route):
     return {
-        "name": name,
-        "mode": mode,
-        "coordinates": parsed_coords,
+        "id": route["id"],
+        "name": route["name"],
+        "mode": route["mode"],
+        "coordinates": get_routepool_coords(route["route"]),
+        "subroutes": list(map(lambda subroute: {
+            "id": subroute["id"],
+            "name": subroute["name"],
+            "tag": subroute["tag"],
+            "coordinates": get_routepool_coords(subroute["route"])
+        }, route["subroutes"]))
     }
 
 
-def get_routepool_coords(coord_list, mode):
+def get_routepool_coords(coord_list):
     route_serialized = []
     prepared_coords = coord_list
     if isinstance(coord_list, RoutePoolEntry):
         prepared_coords = coord_list.subroute
     for location in prepared_coords:
         route_serialized.append([get_coord_float(location.lat), get_coord_float(location.lng)])
-    return (route_serialized)
+    return route_serialized

@@ -179,7 +179,7 @@ function translate_ptc() {
     <div class="form-group">
       <label for="mac_address">mac</label>
       <input type="input" class="form-control" id="mac_address" name="mac_address" value="{{ element.mac_address if element.mac_address else '' }}" data-default="{{ element.mac_address }}">
-      <small class="form-text text-muted">MAC address of the device</small>
+      <small class="form-text text-muted">MAC address of the device (format: 01:23:45:67:89:ab)</small>
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
     <button type="button" id="clearLevelup" class="btn btn-danger btn-lg btn-block">Clear levelup data</button>
@@ -187,4 +187,3 @@ function translate_ptc() {
 </div>
 {% endif %}
 {% endblock %}
-

@@ -1,0 +1,36 @@
+version: "3.4"
+
+volumes:
+  pre-commit-cache:
+    name: pre-commit-cache
+
+services:
+  mapadroid-dev:
+    image: mapadroid-dev
+    build:
+      context: ../.
+      dockerfile: docker/Dockerfile-dev
+    # Use an empty entrypoint and mount local sources into container so that a simple
+    # `docker-compose run --service-ports python3 start.py` can be used to test current
+    # development in a defined environment.
+    # `docker-compose run bash` launch a shell inside the container.
+    entrypoint: ""
+    volumes:
+      - ../:/usr/src/app:rw
+      - pre-commit-cache:/home/${DOCKER_USER}/.cache/pre-commit
+    depends_on:
+      - mariadb
+    ports:
+      - "5000:5000"
+      - "8000:8000"
+      - "8080:8080"
+    env_file:
+      - .dev.env
+    tty: true
+    command: ["/usr/src/app/.tox/py37/bin/python", "/usr/src/app/start.py", "-ut"]
+
+  mariadb:
+    image: mariadb:10.3
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    env_file:
+      - .dev.env

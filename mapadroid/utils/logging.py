@@ -1,9 +1,11 @@
-from enum import IntEnum
 import logging
 import os
 import sys
-from loguru import logger
+from enum import IntEnum
 from functools import wraps
+from typing import Union
+
+from loguru import logger
 
 
 class LoggerEnums(IntEnum):
@@ -105,7 +107,7 @@ def init_logging(args):
         logger.configure(**logconfig)
         init_custom(logger)
     except ValueError:
-        logger.error("Logging parameters/configuration is invalid.")
+        logger.fatal("Logging parameters/configuration is invalid.")
         sys.exit(1)
     logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
 
@@ -235,7 +237,7 @@ def get_bind_name(logger_type: LoggerEnums, name: str) -> str:
 
 
 @apply_custom
-def get_logger(logger_type: LoggerEnums, name: str = None, filter_func: callable = None) -> logger:
+def get_logger(logger_type: Union[LoggerEnums, int], name: str = None, filter_func: callable = None) -> logger:
     """ Creates a new logger with the MAD-required featureset """
     try:
         if isinstance(logger_type, LoggerEnums):

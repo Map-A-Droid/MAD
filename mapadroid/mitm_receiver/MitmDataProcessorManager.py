@@ -1,11 +1,12 @@
-import time
 import threading
+import time
 from multiprocessing import JoinableQueue
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.mitm_receiver.SerializedMitmDataProcessor import SerializedMitmDataProcessor
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.mitm_receiver.SerializedMitmDataProcessor import \
+    SerializedMitmDataProcessor
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.mitm)
 

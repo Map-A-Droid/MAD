@@ -1,13 +1,17 @@
 import json
+import math
 import time
 from datetime import datetime, timedelta
+
 from bitstring import BitArray
+
+from mapadroid.cache import get_cache
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
-from mapadroid.utils.gamemechanicutil import gen_despawn_timestamp, is_mon_ditto
+from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
+                                              is_mon_ditto)
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
-
 
 logger = get_logger(LoggerEnums.database)
 
@@ -20,13 +24,16 @@ class DbPogoProtoSubmit:
     """
     default_spawndef = 240
 
-    def __init__(self, db_exec: PooledQueryExecutor):
+    def __init__(self, db_exec: PooledQueryExecutor, args):
         self._db_exec: PooledQueryExecutor = db_exec
+        self._args = args
 
     def mons(self, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
         """
         Update/Insert mons from a map_proto dict
         """
+        cache = get_cache(self._args)
+
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::mons called with data received")
         cells = map_proto.get("cells", None)
@@ -71,6 +78,10 @@ class DbPogoProtoSubmit:
                     origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
                                          despawn_time, spawnid)
 
+                cache_key = "mon{}".format(encounter_id)
+                if cache.exists(cache_key):
+                    continue
+
                 mon_args.append(
                     (
                         encounter_id, spawnid, mon_id, lat, lon,
@@ -85,6 +96,10 @@ class DbPogoProtoSubmit:
                     )
                 )
 
+                cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
+                if cache_time > 0:
+                    cache.set(cache_key, 1, ex=cache_time)
+
         self._db_exec.executemany(query_mons, mon_args, commit=True)
         return True
 
@@ -92,6 +107,7 @@ class DbPogoProtoSubmit:
         """
         Update/Insert a mon with IVs
         """
+        cache = get_cache(self._args)
         origin_logger = get_origin_logger(logger, origin=origin)
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None or wild_pokemon.get("encounter_id", 0) == 0 or not str(wild_pokemon["spawnpoint_id"]):
@@ -112,9 +128,15 @@ class DbPogoProtoSubmit:
         pokemon_data = wild_pokemon.get("pokemon_data")
         encounter_id = wild_pokemon["encounter_id"]
         shiny = wild_pokemon["pokemon_data"]["display"].get("is_shiny", 0)
+        pokemon_display = pokemon_data.get("display", {})
+        weather_boosted = pokemon_display.get('weather_boosted_value', None)
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
+
+        cache_key = "moniv{}{}".format(encounter_id, weather_boosted)
+        if cache.exists(cache_key):
+            return
 
         mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
@@ -129,8 +151,6 @@ class DbPogoProtoSubmit:
         capture_probability_list = capture_probability.get("capture_probability_list")
         if capture_probability_list is not None:
             capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
-
-        pokemon_display = pokemon_data.get("display", {})
 
         # ditto detector
         if is_mon_ditto(origin_logger, pokemon_data):
@@ -182,13 +202,16 @@ class DbPogoProtoSubmit:
             float(capture_probability_list[1]),
             float(capture_probability_list[2]),
             None, None,
-            pokemon_display.get('weather_boosted_value', None),
+            weather_boosted,
             now,
             pokemon_display.get("costume_value", None),
             form
         )
 
         self._db_exec.execute(query, insert_values, commit=True)
+        cache_time = int(despawn_time_unix - datetime.now().timestamp())
+        if cache_time > 0:
+            cache.set(cache_key, 1, ex=int(cache_time))
         origin_logger.debug3("Done updating mon in DB")
         return True
 
@@ -283,6 +306,7 @@ class DbPogoProtoSubmit:
         """
         Update/Insert pokestops from a map_proto dict
         """
+        cache = get_cache(self._args)
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::stops called with data received")
         cells = map_proto.get("cells", None)
@@ -291,20 +315,27 @@ class DbPogoProtoSubmit:
 
         query_stops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
-            "last_updated, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "last_updated, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type, "
+            "is_ar_scan_eligible) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
             "active_fort_modifier=VALUES(active_fort_modifier), incident_start=VALUES(incident_start), "
-            "incident_expiration=VALUES(incident_expiration), incident_grunt_type=VALUES(incident_grunt_type)"
+            "incident_expiration=VALUES(incident_expiration), incident_grunt_type=VALUES(incident_grunt_type), "
+            "is_ar_scan_eligible=VALUES(is_ar_scan_eligible) "
         )
 
         stops_args = []
         for cell in cells:
             for fort in cell["forts"]:
                 if fort["type"] == 1:
-                    stops_args.append(
-                        self._extract_args_single_stop(fort))
+                    stop = self._extract_args_single_stop(fort)
+                    alt_modified_time = int(math.ceil(datetime.utcnow().timestamp() / 1000)) * 1000
+                    cache_key = "stop{}{}".format(fort["id"], fort.get("last_modified_timestamp_ms", alt_modified_time))
+                    if cache.exists(cache_key):
+                        continue
+                    cache.set(cache_key, 1, ex=900)
+                    stops_args.append(stop)
 
         self._db_exec.executemany(query_stops, stops_args, commit=True)
         return True
@@ -315,6 +346,7 @@ class DbPogoProtoSubmit:
         :param stop_proto:
         :return:
         """
+        cache = get_cache(self._args)
         logger.debug3("DbPogoProtoSubmit::pokestops_details called")
 
         query_stops = (
@@ -326,8 +358,13 @@ class DbPogoProtoSubmit:
         )
 
         stop_args = self._extract_args_single_stop_details(stop_proto)
-
         if stop_args is not None:
+            alt_modified_time = int(math.ceil(datetime.utcnow().timestamp() / 1000)) * 1000
+            cache_key = "stopdetail{}{}".format(stop_proto["fort_id"],
+                                                stop_proto.get("last_modified_timestamp_ms", alt_modified_time))
+            if cache.exists(cache_key):
+                return
+            cache.set(cache_key, 1, ex=900)
             self._db_exec.execute(query_stops, stop_args, commit=True)
         return True
 
@@ -402,6 +439,7 @@ class DbPogoProtoSubmit:
         """
         Update/Insert gyms from a map_proto dict
         """
+        cache = get_cache(self._args)
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::gyms called with data received from")
         cells = map_proto.get("cells", None)
@@ -414,13 +452,13 @@ class DbPogoProtoSubmit:
 
         query_gym = (
             "INSERT INTO gym (gym_id, team_id, guard_pokemon_id, slots_available, enabled, latitude, longitude, "
-            "total_cp, is_in_battle, last_modified, last_scanned, is_ex_raid_eligible) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "total_cp, is_in_battle, last_modified, last_scanned, is_ex_raid_eligible, is_ar_scan_eligible) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE "
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
             "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible)"
+            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible), is_ar_scan_eligible=VALUES(is_ar_scan_eligible)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
@@ -442,6 +480,11 @@ class DbPogoProtoSubmit:
                     last_modified = datetime.utcfromtimestamp(
                         last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
+                    is_ar_scan_eligible = gym["is_ar_scan_eligible"]
+
+                    cache_key = "gym{}{}".format(gymid, last_modified_ts)
+                    if cache.exists(cache_key):
+                        continue
 
                     gym_args.append(
                         (
@@ -452,16 +495,18 @@ class DbPogoProtoSubmit:
                             0,  # is_in_battle
                             last_modified,  # last_modified
                             now,  # last_scanned
-                            is_ex_raid_eligible
+                            is_ex_raid_eligible,
+                            is_ar_scan_eligible
                         )
                     )
 
                     gym_details_args.append(
                         (gym["id"], "unknown", gym["image_url"], now)
                     )
+
+                    cache.set(cache_key, 1, ex=900)
         self._db_exec.executemany(query_gym, gym_args, commit=True)
         self._db_exec.executemany(query_gym_details, gym_details_args, commit=True)
-        origin_logger.debug3("submit_gyms done")
         return True
 
     def gym(self, origin: str, map_proto: dict):
@@ -510,6 +555,7 @@ class DbPogoProtoSubmit:
         """
         Update/Insert raids from a map_proto dict
         """
+        cache = get_cache(self._args)
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::raids called with data received")
         cells = map_proto.get("cells", None)
@@ -542,7 +588,7 @@ class DbPogoProtoSubmit:
                         form = raid_info["raid_pokemon"]["display"]["form_value"]
                         gender = raid_info["raid_pokemon"]["display"]["gender_value"]
                         costume = raid_info["raid_pokemon"]["display"]["costume_value"]
-                        evolution = raid_info["raid_pokemon"]["display"].get("pokemon_evolution", 0)
+                        evolution = raid_info["raid_pokemon"]["display"].get("current_temp_evolution", 0)
                     else:
                         pokemon_id = None
                         cp = 0
@@ -573,6 +619,10 @@ class DbPogoProtoSubmit:
                     origin_logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, level,
                                          raidend_date)
 
+                    cache_key = "raid{}{}{}".format(gymid, pokemon_id, raid_end_sec)
+                    if cache.exists(cache_key):
+                        continue
+
                     raid_args.append(
                         (
                             gymid,
@@ -588,6 +638,9 @@ class DbPogoProtoSubmit:
                             evolution
                         )
                     )
+
+                    cache.set(cache_key, 1, ex=900)
+
         self._db_exec.executemany(query_raid, raid_args, commit=True)
         origin_logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
         return True
@@ -596,6 +649,7 @@ class DbPogoProtoSubmit:
         """
         Update/Insert weather from a map_proto dict
         """
+        cache = get_cache(self._args)
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::weather called with data received")
         cells = map_proto.get("cells", None)
@@ -616,10 +670,15 @@ class DbPogoProtoSubmit:
         list_of_weather_args = []
         for client_weather in map_proto["client_weather"]:
             time_of_day = map_proto.get("time_of_day_value", 0)
-            list_of_weather_args.append(
-                self._extract_args_single_weather(
-                    client_weather, time_of_day, received_timestamp)
-            )
+            weather = self._extract_args_single_weather(client_weather, time_of_day, received_timestamp)
+
+            cache_key = "weather{}{}{}{}{}{}{}".format(weather[0], weather[4], weather[5], weather[6],
+                                                       weather[7], weather[8], weather[9])
+            if cache.exists(cache_key):
+                continue
+
+            list_of_weather_args.append(weather)
+            cache.set(cache_key, 1, ex=900)
         self._db_exec.executemany(query_weather, list_of_weather_args, commit=True)
         return True
 
@@ -647,7 +706,7 @@ class DbPogoProtoSubmit:
 
     def _extract_args_single_stop(self, stop_data):
         if stop_data["type"] != 1:
-            logger.warning("{} is not a pokestop", stop_data)
+            logger.info("{} is not a pokestop", stop_data)
             return None
 
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
@@ -659,6 +718,7 @@ class DbPogoProtoSubmit:
         incident_start = None
         incident_expiration = None
         incident_grunt_type = None
+        is_ar_scan_eligible = stop_data["is_ar_scan_eligible"]
 
         if len(stop_data["active_fort_modifier"]) > 0:
             # get current lure duration
@@ -704,7 +764,7 @@ class DbPogoProtoSubmit:
 
         return (stop_data["id"], 1, stop_data["latitude"], stop_data["longitude"],
                 last_modified, lure, now, active_fort_modifier,
-                incident_start, incident_expiration, incident_grunt_type
+                incident_start, incident_expiration, incident_grunt_type, is_ar_scan_eligible
                 )
 
     def _extract_args_single_stop_details(self, stop_data):

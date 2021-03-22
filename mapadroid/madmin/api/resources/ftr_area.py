@@ -1,4 +1,5 @@
 from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
+
 from .resourceHandler import ResourceHandler
 
 

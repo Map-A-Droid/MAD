@@ -1,12 +1,16 @@
-from apkutils.apkfile import BadZipFile, LargeZipFile
-import flask
 import io
 from threading import Thread
-from .apkHandler import APKHandler
-from mapadroid.mad_apk import APKArch, APKType, stream_package, APKWizard, get_apk_status, MADapks, \
-    PackageImporter, WizardError
+
+import flask
+from apkutils.apkfile import BadZipFile, LargeZipFile
+
+from mapadroid.mad_apk import (APKArch, APKType, APKWizard, MADapks,
+                               PackageImporter, WizardError, get_apk_status,
+                               stream_package)
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
+
+from .apkHandler import APKHandler
 
 
 class APIMadAPK(APKHandler):
@@ -78,7 +82,7 @@ class APIMadAPK(APKHandler):
                 self._logger.warning(err)
                 return (str(err), 406)
             except Exception:
-                self._logger.opt(exception=True).critical("An unhanded exception occurred!")
+                self._logger.opt(exception=True).critical("An unhandled exception occurred!")
                 return (None, 500)
         else:
             try:

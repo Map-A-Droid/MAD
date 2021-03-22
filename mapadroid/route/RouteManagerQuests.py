@@ -1,10 +1,10 @@
 import collections
 import time
 from typing import List
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.utils.logging import get_logger, LoggerEnums
-
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 Location = collections.namedtuple('Location', ['lat', 'lng'])
@@ -62,8 +62,7 @@ class RouteManagerQuests(RouteManagerBase):
         self._init_route_queue()
 
     def _get_coords_after_finish_route(self) -> bool:
-        self._manager_mutex.acquire()
-        try:
+        with self._manager_mutex:
             if self._shutdown_route:
                 self.logger.info('Other worker shutdown - leaving it')
                 return False
@@ -93,8 +92,6 @@ class RouteManagerQuests(RouteManagerBase):
                 self._restore_original_route()
                 return False
             return True
-        finally:
-            self._manager_mutex.release()
 
     def _restore_original_route(self):
         if not self._tempinit:
@@ -102,9 +99,7 @@ class RouteManagerQuests(RouteManagerBase):
             self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
-        self._manager_mutex.acquire()
-
-        try:
+        with self._manager_mutex:
             list_of_stops_to_return: List[Location] = []
 
             if len(self._stoplist) == 0:
@@ -122,21 +117,18 @@ class RouteManagerQuests(RouteManagerBase):
                     self.logger.info("Location {} is no longer in our stoplist and will be ignored", stop)
                     self._coords_to_be_ignored.add(stop)
                 elif error_count < 4:
-                    self.logger.warning("Found stop not processed yet: {}", stop)
+                    self.logger.info("Found stop not processed yet: {}", stop)
                     list_of_stops_to_return.append(stop)
                 else:
-                    self.logger.error("Stop {} has not been processed thrice in a row, please check your DB", stop)
+                    self.logger.warning("Stop {} has not been processed thrice in a row, please check your DB", stop)
                     self._coords_to_be_ignored.add(stop)
 
             if len(list_of_stops_to_return) > 0:
                 self.logger.info("Found stops not yet processed, retrying those in the next round")
             return list_of_stops_to_return
-        finally:
-            self._manager_mutex.release()
 
     def _start_routemanager(self):
-        self._manager_mutex.acquire()
-        try:
+        with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
@@ -169,7 +161,7 @@ class RouteManagerQuests(RouteManagerBase):
                 new_stops = list(set(stops) - set(self._route))
                 if len(new_stops) > 0:
                     for stop in new_stops:
-                        self.logger.warning("Stop with coords {} seems new and not in route.", stop)
+                        self.logger.info("Stop with coords {} seems new and not in route.", stop)
 
                 if len(stops) == 0:
                     self.logger.info('No unprocessed Stops detected in route - quit worker')
@@ -184,7 +176,8 @@ class RouteManagerQuests(RouteManagerBase):
                     self.logger.info('There are less stops without quest than routepositions - recalc')
                     self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
-                    self.logger.warning("Something wrong with area: it have many new stops - better recalc route!")
+                    self.logger.warning("Something wrong with area: it contains a lot of new stops - "
+                                        "better recalc the route!")
                     self.logger.info("Recalc new route for area")
                     self._recalc_stop_route(stops)
                 else:
@@ -192,10 +185,6 @@ class RouteManagerQuests(RouteManagerBase):
 
                 self.logger.info('Getting {} positions in route', len(self._route))
                 return True
-
-        finally:
-            self._manager_mutex.release()
-
         return True
 
     def _recalc_stop_route(self, stops):
@@ -228,7 +217,7 @@ class RouteManagerQuests(RouteManagerBase):
             return True
         stop = Location(lat, lng)
         self.logger.info('Checking Stop with ID {}', stop)
-        if stop not in self._stoplist:
+        if stop not in self._stoplist and stop not in self._coords_to_be_ignored:
             self.logger.info('Already got this Stop')
             return False
         self.logger.info('Getting new Stop')
