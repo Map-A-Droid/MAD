@@ -102,8 +102,8 @@ class WebhookWorker:
                     )
 
                     if response.status_code != 200:
-                        logger.warning("Got status code other than 200 OK from webhook destination: {}",
-                                       response.status_code)
+                        logger.warning("Webhook destination {} returned status code other than 200 OK: {}",
+                                       webhook.get('url'), response.status_code)
                     else:
                         if len(self.__webhook_receivers) > 1:
                             whcount_text = " [wh {}/{}]".format(current_wh_num, len(self.__webhook_receivers))
