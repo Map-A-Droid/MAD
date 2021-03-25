@@ -114,7 +114,7 @@ CREATE TABLE `pokemon` (
     `rating_defense` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `weather_boosted_condition` smallint(6) DEFAULT NULL,
     `last_modified` datetime DEFAULT NULL,
-    `fort_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+    `fort_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     PRIMARY KEY (`encounter_id`),
     KEY `pokemon_spawnpoint_id` (`spawnpoint_id`),
     KEY `pokemon_pokemon_id` (`pokemon_id`),
