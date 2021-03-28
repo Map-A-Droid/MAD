@@ -93,7 +93,7 @@ def get_available_login(db, login_type=None) -> dict:
           "WHERE ag.`instance_id` = %s AND ag.`device_id` IS NULL"
     args = [db.instance_id]
     if login_type:
-        sql += "AND ag.`login_type` = %s"
+        sql += " AND ag.`login_type` = %s"
         args.append(login_type)
     return db.autofetch_row(sql, tuple(args))
 
