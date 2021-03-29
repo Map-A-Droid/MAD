@@ -16,3 +16,14 @@ class Patch(PatchBase):
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
+
+        remove_encounter_id = """
+            ALTER TABLE `pokestop`
+            DROP COLUMN `encounter_id`;
+        """
+        try:
+            if self._schema_updater.check_column_exists("pokestop", "encounter_id"):
+                self._db.execute(remove_encounter_id, commit=True, raise_exec=True)
+        except Exception as e:
+            self._logger.exception("Unexpected error: {}", e)
+            self.issues = True
