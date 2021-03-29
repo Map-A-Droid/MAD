@@ -163,7 +163,7 @@ class DbPogoProtoSubmit:
                 stop = self._db_exec.execute(stop_query, (stopid))
                 if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
                     stop = self._db_exec.execute(gym_query, (stopid))
-                
+
                 if len(stop) > 0:
                     lat, lon = stop[0]
                 else:
@@ -198,7 +198,7 @@ class DbPogoProtoSubmit:
                                 continue
                             if spawndef == 15 or now > spawn_time:
                                 likely_spawns.append((spawn_time, despawn_time, s_lat, s_lon, s_id))
-                        
+
                         if len(likely_spawns) == 1:
                             _, disappear_time, lat, lon, spawnpoint = likely_spawns[0]
                         elif len(likely_spawns) > 1:
