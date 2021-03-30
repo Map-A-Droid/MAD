@@ -6,6 +6,7 @@ from typing import Generator, Tuple, Union
 
 import apkutils
 import requests
+from apksearch.search import HEADERS
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from flask import Response, stream_with_context
 
@@ -317,14 +318,40 @@ def supported_pogo_version(architecture: APKArch, version: str) -> bool:
     composite_key = '%s_%s' % (version, bits,)
     try:
         with open('configs/version_codes.json') as fh:
-            json.load(fh)[composite_key]
-            return True
-    except KeyError:
-        try:
-            requests.get(VERSIONCODES_URL).json()[composite_key]
-            return True
-        except KeyError:
-            pass
+            valid = composite_key in json.load(fh)
+    except (IOError, json.decoder.JSONDecodeError):
+        pass
     if not valid:
-        logger.info('Current version of PoGo [{}] is not supported', composite_key)
+        try:
+            raw_resp = requests.get(VERSIONCODES_URL)
+            raw_resp.raise_for_status()
+        except Exception:
+            # Requests error, socket timeout
+            supported_versions = {}
+            logger.exception("Unable to query GitHub")
+        else:
+            try:
+                supported_versions = raw_resp.json()
+            except json.decoder.JSONDecodeError:
+                logger.exception("Invalid JSON received from GH")
+                supported_versions = {}
+        valid = composite_key in supported_versions
+    if not valid:
+        logger.info("Current version of PoGo [{}] is not supported", composite_key)
     return valid
+
+
+def perform_http_download(url: str, retries: int = 3) -> requests.Response:
+    attempt = 0
+    while attempt < retries:
+        try:
+            logger.info("Starting download of {}", url)
+            data = requests.get(url, allow_redirects=True, headers=HEADERS)
+            data.raise_for_status()
+            logger.info("Download completed for {}", url)
+            return data
+        except Exception as err:
+            logger.warning("Unable to download PoGo. Retry {} of {}. {}", attempt, retries, err)
+            attempt += 1
+            continue
+    return None
