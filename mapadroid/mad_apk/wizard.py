@@ -14,7 +14,6 @@ from apksearch.entities import PackageBase, PackageVariant, PackageVersion
 from apkutils.apkfile import BadZipFile, LargeZipFile
 
 from mapadroid.utils import global_variables
-from mapadroid.utils.gplay_connector import GPlayConnector
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 from .abstract_apk_storage import AbstractAPKStorage
@@ -51,16 +50,13 @@ class APKWizard(object):
 
     Attributes:
         dbc: Database wrapper
-        gpconn: Object for interacting with google play
         storage: Abstract storage element for interacting with storage medium
     """
-    gpconn: GPlayConnector
     storage: AbstractAPKStorage
 
     def __init__(self, dbc, storage: AbstractAPKStorage):
         self.storage: AbstractAPKStorage = storage
         self.dbc = dbc
-        self.gpconn = None
 
     def apk_all_actions(self) -> NoReturn:
         "Search and download all required packages"
