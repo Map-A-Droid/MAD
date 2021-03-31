@@ -102,8 +102,8 @@ class WebhookWorker:
                     )
 
                     if response.status_code != 200:
-                        logger.warning("Got status code other than 200 OK from webhook destination: {}",
-                                       response.status_code)
+                        logger.warning("Webhook destination {} returned status code other than 200 OK: {}",
+                                       webhook.get('url'), response.status_code)
                     else:
                         if len(self.__webhook_receivers) > 1:
                             whcount_text = " [wh {}/{}]".format(current_wh_num, len(self.__webhook_receivers))
@@ -188,49 +188,104 @@ class WebhookWorker:
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
         if a_quest_reward_type == 7:
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
-            a_quest_reward["info"]["pokemon_form"] = int(quest["pokemon_form"])
-            a_quest_reward["info"]["pokemon_costume"] = int(quest.get("pokemon_costume", '0'))
+            a_quest_reward["info"]["form_id"] = int(quest["pokemon_form"])
+            a_quest_reward["info"]["costume_id"] = int(quest.get("pokemon_costume", '0'))
             a_quest_reward["info"]["shiny"] = 0
-            a_quest_reward["info"]["form"] = int(quest["pokemon_form"])
         elif a_quest_reward_type == 12:
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
 
         for a_quest_condition in quest_conditions:
-            # Quest condition for special type of pokemon.
+            # condition for special type of pokemon (type = 1)
             if "with_pokemon_type" in a_quest_condition:
                 a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_type")
                 a_quest_condition["info"]["pokemon_type_ids"] = a_quest_condition[
                     "info"
                 ].pop("pokemon_type")
-            # Quest condition for raid level(s).
+            # condition for catching specific mon category (type = 2)
+            if "with_pokemon_category" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_category")
+
+            # Condition for mons with weather boost (type = 3) holds no additional info.
+            # Condition for being first catch of the day (type = 4) holds no additional info.
+            # Condition for being first spin of the day (type = 5) holds no additional info.
+            # Condition for raid status (type= 6) holds no addition info, (means we have to win the raid)
+
+            # Quest condition for raid level(s). (type = 7)
             if "with_raid_level" in a_quest_condition:
                 a_quest_condition["info"] = a_quest_condition.pop("with_raid_level")
                 a_quest_condition["info"]["raid_levels"] = a_quest_condition[
                     "info"
                 ].pop("raid_level")
-            # Quest condition for throw type.
+            # Quest condition for throw type. (type = 8 and type = 14)
             if "with_throw_type" in a_quest_condition:
                 a_quest_condition["info"] = a_quest_condition.pop("with_throw_type")
                 a_quest_condition["info"]["throw_type_id"] = a_quest_condition[
                     "info"
                 ].pop("throw_type")
-            # Quest condition for use of special items
+
+            # Quest condition for Winning the gym battle (type = 9) has no additional info
+            # Quest condition for using a super effective charge attack (type = 10) has no additional info
+
+            # Quest condition for use of items (type = 11)
             if "with_item" in a_quest_condition:
                 a_quest_condition["info"] = a_quest_condition.pop("with_item")
                 a_quest_condition["info"]["item_id"] = a_quest_condition["info"].pop(
                     "item"
                 )
-            # Quest condition for catching specific mons.
-            if "with_pokemon_category" in a_quest_condition:
-                a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_category")
+
+            # Quest condition that pokestop has to be new (type = 12) has no additional info
+
+            # Quest condition for quest context (type 13) is only used for flagging story/challenge quests
+
+            # Quest condition for throws in a row (type = 14) is the same as for type 8 handled above
+
+            # Quest condition for curveballs (type = 15) has no additional info
+
+            # Quest condition for badge types (type = 16)
+
+            # Quest condition for player level (type = 17)
+
+            # Quest condition for battle status (type = 18)
+
+            # Quest condition for new friends (type = 19)
+
+            # Quest condition for number of days in a row (type = 20) (so far only used in special research)
+
+            # Quest condition for unique pokemons (type = 21)
+
+            # Quest condition for npc combat (type = 22) has no additional info (that we care of)
+
+            # Quest condition for battling another trainer (type = 23)
+            if "with_pvp_combat" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_pvp_combat']
+
+            # Quest condition for location (type = 24) is unused
+
+            # Quest condition for distance (type = 25)
+            if "with_distance" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_distance']
+                a_quest_condition['info']['distance'] = a_quest_condition['info'].pop('distance_km')
+
+            # Quest condition for pokemon alignment (shadow/purified) (type = 26)
+            if "with_pokemon_alignment" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_pokemon_alignment']
+
+            # Quest condition for grunts, rocket leaders and other friends (type = 27)
+            if "with_invasion_character" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_invasion_character']
+                a_quest_condition['info']['character_category_ids'] = a_quest_condition['info'].pop('category')
+
+            # Quest condition for snapshots with buddy (type = 28)
+            if "with_buddy" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_buddy']
 
             quest_condition.append(a_quest_condition)
 
         return {
             "pokestop_id": quest["pokestop_id"],
-            "pokestop_name": quest["name"].replace('"', '\\"').replace("\n", "\\n"),
             "template": quest["quest_template"],
+            "pokestop_name": quest["name"].replace("\n", "\\n"),
             "pokestop_url": quest["url"],
             "conditions": quest_condition,
             "type": quest["quest_type_raw"],
@@ -238,7 +293,7 @@ class WebhookWorker:
             "longitude": quest["longitude"],
             "rewards": quest_rewards,
             "target": quest["quest_target"],
-            "timestamp": quest["timestamp"],
+            "updated": quest["timestamp"],
             "quest_task": quest["quest_task"],
         }
 
