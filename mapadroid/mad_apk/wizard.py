@@ -1,6 +1,5 @@
 import asyncio
 import io
-import json
 import zipfile
 from threading import Thread
 from typing import Dict, NoReturn, Optional, Tuple
@@ -14,6 +13,7 @@ from apksearch.entities import PackageBase, PackageVariant, PackageVersion
 from apkutils.apkfile import BadZipFile, LargeZipFile
 
 from mapadroid.utils import global_variables
+from mapadroid.utils.functions import get_version_codes
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 from .abstract_apk_storage import AbstractAPKStorage
@@ -265,7 +265,7 @@ class APKWizard(object):
             architecture (APKArch): Architecture of the package to check
         """
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
-        available_versions = self.get_available_versions()
+        available_versions = get_available_versions()
         latest_supported = APKWizard.get_latest_supported(architecture, available_versions)
         current_version_str = self.storage.get_current_version(APKType.pogo, architecture)
         if current_version_str:
@@ -282,7 +282,7 @@ class APKWizard(object):
                     url=latest_supported[1].download_url
                 )
             elif current_version_code == latest_vc:
-                logger.info("Already have the latest version %s", latest_vc)
+                logger.info("Already have the latest version {}", latest_vc)
             else:
                 logger.warning("Unable to find a supported version")
         return latest_supported
@@ -308,30 +308,6 @@ class APKWizard(object):
         """
         sql = "SELECT `version`, `url` FROM `mad_apk_autosearch` WHERE `usage` = %s AND `arch` = %s"
         return self.dbc.autofetch_row(sql, args=(package.value, architecture.value))
-
-    def get_supported_versions(self) -> Dict[str, int]:
-        """Read from a supported config file to determine the latest supported version"""
-        # Attempt to grab the info locally
-        try:
-            with open('configs/version_codes-dev.json', 'r') as fh:
-                data: Dict[str, int] = json.load(fh.read())
-        except (FileNotFoundError, json.decoder.JSONDecodeError):
-            # Fallback to GH
-            data: Dict[str, int] = requests.get(global_variables.VERSIONCODES_URL).json()
-        return self.parse_version_codes(data)
-
-    @cachetools.func.ttl_cache(maxsize=1, ttl=10 * 60)
-    def get_available_versions(self) -> Dict[str, PackageVersion]:
-        """Query apkmirror for the available packages"""
-        try:
-            asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        logger.info("Querying APKMirror for the latest releases")
-        available = package_search(["com.nianticlabs.pokemongo"])
-        logger.info("Successfully queried APKMirror to get the latest releases")
-        return available["Pokemon GO"]
 
     @staticmethod
     def get_latest_supported(architecture: APKArch,
@@ -373,7 +349,7 @@ class APKWizard(object):
     def lookup_version_code(self, version_code: str, arch: APKArch) -> Optional[int]:
         named_arch = '32' if arch == APKArch.armeabi_v7a else '64'
         latest_version = f"{version_code}_{named_arch}"
-        data = self.get_supported_versions()
+        data = get_version_codes(force_gh=True)
         if data:
             try:
                 return data[latest_version]
@@ -483,3 +459,17 @@ class PackageImporter(object):
         if not self.package_version:
             raise InvalidFile('Unable to extract information from file')
         self._data = pruned_zip
+
+
+@cachetools.func.ttl_cache(maxsize=1, ttl=10 * 60)
+def get_available_versions() -> Dict[str, PackageVersion]:
+    """Query apkmirror for the available packages"""
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    logger.info("Querying APKMirror for the latest releases")
+    available = package_search(["com.nianticlabs.pokemongo"])
+    logger.info("Successfully queried APKMirror to get the latest releases")
+    return available["Pokemon GO"]

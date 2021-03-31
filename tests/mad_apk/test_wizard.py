@@ -24,7 +24,7 @@ mock_json_resp = {"0.123.0_32": 1, "0.123.1_32": 3, "0.123.1_64": 4}
     ])
 @responses.activate
 def test_supported_pogo_version(file_resp, gh_resp, arch, version, supported):
-    with mock.patch("mapadroid.mad_apk.utils.open", new_callable=mock.mock_open, read_data=file_resp):
+    with mock.patch("mapadroid.utils.functions.open", new_callable=mock.mock_open, read_data=file_resp):
         responses.add(
             responses.GET,
             url=VERSIONCODES_URL,
@@ -67,7 +67,7 @@ supported_b = """{"0.123.0_32": 1, "0.123.1_32": 3, "0.123.1_64": 4}"""
     (pkg_version, APKArch.arm64_v8a, "0.123.1", var_c, supported_b)
 ])
 def test_get_latest_supported(avail_versions, arch, exp_ver, package, file_resp):
-    with mock.patch("mapadroid.mad_apk.utils.open", new_callable=mock.mock_open, read_data=file_resp):
+    with mock.patch("mapadroid.utils.functions.open", new_callable=mock.mock_open, read_data=file_resp):
         assert wizard.APKWizard.get_latest_supported(arch, avail_versions) == (exp_ver, package)
 
 
@@ -76,17 +76,21 @@ def test_get_latest_supported(avail_versions, arch, exp_ver, package, file_resp)
     (("0.123.0", var_a), "0.123.0", 1, APKArch.armeabi_v7a, "Already have the latest version"),
     (("0.123.0", var_a), "0.123.0", 10, APKArch.armeabi_v7a, "Unable to find a supported version")
 ])
-@mock.patch("mapadroid.mad_apk.wizard.APKWizard.get_available_versions")
+@mock.patch("mapadroid.mad_apk.wizard.get_available_versions")
 @mock.patch("mapadroid.mad_apk.wizard.APKWizard.get_latest_supported")
 @mock.patch("mapadroid.mad_apk.wizard.APKWizard.lookup_version_code")
-def tests_find_latest_pogo(lvc, gls, gav, gls_v, sto_v, lvc_v, arch, msg, caplog):
+def tests_find_latest_pogo(lvc, gls, gav, gls_v, sto_v, lvc_v, arch, msg, caplog, wiz_instance):
     gav.return_value = None
     gls.return_value = gls_v
     lvc.return_value = lvc_v
-    dbc_mock = mock.Mock()
-    storage_mock = mock.Mock()
-    storage_mock.get_current_version.return_value = sto_v
-    wiz = wizard.APKWizard(dbc_mock, storage_mock)
-    results = wiz.find_latest_pogo(arch)
+    wiz_instance.storage.get_current_version.return_value = sto_v
+    results = wiz_instance.find_latest_pogo(arch)
     assert results == ("0.123.0", var_a)
     assert msg in caplog.text
+
+
+@mock.patch("mapadroid.mad_apk.wizard.package_search")
+def test_ensure_cache_for_download(psearch):
+    wizard.get_available_versions()
+    wizard.get_available_versions()
+    psearch.assert_called_once()

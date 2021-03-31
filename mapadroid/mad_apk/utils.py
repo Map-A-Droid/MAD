@@ -1,5 +1,4 @@
 import io
-import json
 import zipfile
 from distutils.version import LooseVersion
 from typing import Generator, Tuple, Union
@@ -10,7 +9,8 @@ from apksearch.search import HEADERS
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from flask import Response, stream_with_context
 
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
+from mapadroid.utils.functions import get_version_codes
+from mapadroid.utils.global_variables import CHUNK_MAX_SIZE
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 from .abstract_apk_storage import AbstractAPKStorage
@@ -316,28 +316,11 @@ def supported_pogo_version(architecture: APKArch, version: str) -> bool:
     else:
         bits = '64'
     composite_key = '%s_%s' % (version, bits,)
-    try:
-        with open('configs/version_codes.json') as fh:
-            valid = composite_key in json.load(fh)
-    except (IOError, json.decoder.JSONDecodeError):
-        pass
+    valid = composite_key in get_version_codes(force_gh=False)
     if not valid:
-        try:
-            raw_resp = requests.get(VERSIONCODES_URL)
-            raw_resp.raise_for_status()
-        except Exception:
-            # Requests error, socket timeout
-            supported_versions = {}
-            logger.exception("Unable to query GitHub")
-        else:
-            try:
-                supported_versions = raw_resp.json()
-            except json.decoder.JSONDecodeError:
-                logger.exception("Invalid JSON received from GH")
-                supported_versions = {}
-        valid = composite_key in supported_versions
+        valid = composite_key in get_version_codes(force_gh=True)
     if not valid:
-        logger.info("Current version of PoGo [{}] is not supported", composite_key)
+        logger.debug("PoGo [{}] is not supported", composite_key)
     return valid
 
 
