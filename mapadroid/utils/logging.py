@@ -237,7 +237,7 @@ def get_bind_name(logger_type: LoggerEnums, name: str) -> str:
 
 
 @apply_custom
-def get_logger(logger_type: Union[LoggerEnums, int], name: str = None, filter_func: callable = None) -> logger:
+def get_logger(logger_type: Union[LoggerEnums, int], identifier: str = None, filter_func: callable = None) -> logger:
     """ Creates a new logger with the MAD-required featureset """
     try:
         if isinstance(logger_type, LoggerEnums):
@@ -248,7 +248,7 @@ def get_logger(logger_type: Union[LoggerEnums, int], name: str = None, filter_fu
             log_id = LoggerEnums.unknown
     except ValueError:
         log_id = LoggerEnums.unknown
-    parsed_name = get_bind_name(log_id, name)
+    parsed_name = get_bind_name(log_id, identifier)
     new_logger = logger.bind(identifier=parsed_name)
     if filter_func:
         new_logger.patch(filter_func)
