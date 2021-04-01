@@ -470,6 +470,14 @@ def get_available_versions() -> Dict[str, PackageVersion]:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     logger.info("Querying APKMirror for the latest releases")
-    available = package_search(["com.nianticlabs.pokemongo"])
-    logger.info("Successfully queried APKMirror to get the latest releases")
-    return available["Pokemon GO"]
+    try:
+        available = package_search(["com.nianticlabs.pokemongo"])
+    except IndexError:
+        logger.warning(
+            "Unable to query APKMirror. There is probably a recaptcha that needs to be solved and that "
+            "functionality is not currently implemented. Please manually download and upload to the wizard"
+        )
+        return {}
+    else:
+        logger.info("Successfully queried APKMirror to get the latest releases")
+        return available["Pokemon GO"]

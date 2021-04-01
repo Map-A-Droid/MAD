@@ -91,6 +91,15 @@ def tests_find_latest_pogo(lvc, gls, gav, gls_v, sto_v, lvc_v, arch, msg, caplog
 
 @mock.patch("mapadroid.mad_apk.wizard.package_search")
 def test_ensure_cache_for_download(psearch):
+    wizard.get_available_versions.cache_clear()
     wizard.get_available_versions()
     wizard.get_available_versions()
     psearch.assert_called_once()
+
+
+@mock.patch("mapadroid.mad_apk.wizard.package_search")
+def test_parsing_error(psearch, caplog):
+    wizard.get_available_versions.cache_clear()
+    psearch.side_effect = mock.Mock(side_effect=IndexError)
+    wizard.get_available_versions()
+    assert "Unable to query APKMirror" in caplog.text
