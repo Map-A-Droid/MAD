@@ -15,7 +15,7 @@ logger = get_logger(LoggerEnums.mitm)
 class PlayerStats(object):
     def __init__(self, origin, application_args, mitm_mapper_parent: MitmMapper):
         self._id = origin
-        self._logger = get_logger(LoggerEnums.mitm, name=self._id)
+        self._logger = get_logger(LoggerEnums.mitm, identifier=self._id)
         self.__application_args = application_args
         self._level: int = 0
         self.__stats_collected: dict = {}

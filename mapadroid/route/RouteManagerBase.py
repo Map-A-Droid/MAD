@@ -54,7 +54,7 @@ class RouteManagerBase(ABC):
                  settings: dict = None,
                  level: bool = False, calctype: str = "route", use_s2: bool = False, s2_level: int = 15,
                  joinqueue=None):
-        self.logger = get_logger(LoggerEnums.routemanager, name=str(name))
+        self.logger = get_logger(LoggerEnums.routemanager, identifier=str(name))
         self.db_wrapper: DbWrapper = db_wrapper
         self.init: bool = init
         self.name: str = name

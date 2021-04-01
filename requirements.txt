@@ -18,6 +18,7 @@ requests~=2.22
 s2sphere~=0.2
 websockets>=7
 numpy~=1.18.0
-apkutils~=0.6.6
-matlink-gpapi~=0.4.4.5
+apkutils>=0.8.3
 greenlet<0.4.17
+apkmirror-search
+cachetools
