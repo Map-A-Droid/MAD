@@ -1,12 +1,20 @@
-from typing import Optional
+import json
+from typing import Optional, Any
 
 from aiohttp import web
 from aiohttp.abc import Request
+from aiohttp.helpers import sentinel
+from aiohttp.typedefs import LooseHeaders
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import Base
 from mapadroid.mad_apk import AbstractAPKStorage
+from mapadroid.madmin.api import apiException
+from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.utils.json_encoder import MADEncoder
+from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 
 class RootEndpoint(web.View):
@@ -44,6 +52,24 @@ class RootEndpoint(web.View):
             raise web.HTTPFound("/")
         return response
 
+    def _save(self, instance: Base):
+        """
+        Creates or updates
+        :return:
+        """
+        self._commit_trigger = True
+        self._session.add(instance)
+        # await self._session.flush(instance)
+
+    def _delete(self, instance: Base):
+        """
+        Deletes the instance from the DB
+        :param instance:
+        :return:
+        """
+        self._commit_trigger = True
+        self._session.delete(instance)
+
     def _get_request_address(self) -> str:
         if "CF-Connecting-IP" in self.request.headers:
             address = self.request.headers["CF-Connecting-IP"]
@@ -65,3 +91,41 @@ class RootEndpoint(web.View):
 
     def _get_storage_obj(self) -> AbstractAPKStorage:
         return self.request.app['storage_obj']
+
+    def _get_mad_args(self):
+        return self.request.app['mad_args']
+
+    def _get_mapping_manager(self) -> MappingManager:
+        return self.request.app['mapping_manager']
+
+    def _get_ws_server(self) -> WebsocketServer:
+        return self.request.app['websocket_server']
+
+    def _convert_to_json_string(self, content) -> str:
+        try:
+            return json.dumps(content, cls=MADEncoder)
+        except Exception as err:
+            raise apiException.FormattingError(err)
+
+    def _get_instance_id(self):
+        db_wrapper: DbWrapper = self._get_db_wrapper()
+        return db_wrapper.get_instance_id()
+
+    def _json_response(self, data: Any = sentinel, *, text: Optional[str] = None, body: Optional[bytes] = None,
+                       status: int = 200, reason: Optional[str] = None, headers: Optional[LooseHeaders] = None,
+                       content_type: str = "application/json") -> web.Response:
+        if data is not sentinel:
+            if text or body:
+                raise ValueError("only one of data, text, or body should be specified")
+            else:
+                text = json.dumps(data, indent=None, cls=MADEncoder)
+        return web.Response(
+            text=text,
+            body=body,
+            status=status,
+            reason=reason,
+            headers=headers,
+            content_type=content_type,
+        )
+
+

@@ -1,6 +1,6 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from sqlalchemy import and_
+from sqlalchemy import and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -33,5 +33,32 @@ class SettingsWalkerToWalkerareaHelper:
         for walkerarea_mapping in all_walkerarea_mappings:
             if walkerarea_mapping.walker_id not in mapped:
                 mapped[walkerarea_mapping.walker_id] = []
-            mapped[walkerarea_mapping.walker_id] = walkerarea_mapping
+            mapped[walkerarea_mapping.walker_id].append(walkerarea_mapping)
         return mapped
+
+    @staticmethod
+    async def get(session: AsyncSession, instance_id: int,
+                  walker_id: int) -> Optional[List[SettingsWalkerToWalkerarea]]:
+        stmt = select(SettingsWalkerToWalkerarea) \
+            .select_from(SettingsWalkerToWalkerarea) \
+            .join(SettingsWalker, and_(SettingsWalkerToWalkerarea.walker_id == SettingsWalker.walker_id,
+                                       SettingsWalker.instance_id == instance_id), isouter=True) \
+            .where(SettingsWalker.walker_id == walker_id) \
+            .order_by(SettingsWalkerToWalkerarea.area_order)
+        result = await session.execute(stmt)
+        all_of_walker: List[SettingsWalkerToWalkerarea] = []
+        for walker_mapping in result:
+            all_of_walker.append(walker_mapping)
+        return all_of_walker if len(all_of_walker) > 0 else None
+
+    @staticmethod
+    async def set(session: AsyncSession, settings_walker: SettingsWalker, walker_areas: List[int]) -> None:
+        del_stmt = delete(SettingsWalkerToWalkerarea) \
+            .where(SettingsWalkerToWalkerarea.walker_id == settings_walker.walker_id)
+        await session.execute(del_stmt)
+        for ind, walkerarea_id in enumerate(walker_areas):
+            entry = SettingsWalkerToWalkerarea()
+            entry.walker_id = settings_walker.walker_id
+            entry.area_order = ind
+            entry.walkerarea_id = walkerarea_id
+            session.add(entry)

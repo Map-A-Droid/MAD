@@ -37,7 +37,7 @@ def test_clear_on_boot(data_manager):
     data_manager.clear_on_boot()
     assert data_manager.dbc.mock_calls[0] == call.autoexec_update('settings_routecalc', {'recalc_status': 0},
                                                                   where_keyvals={'instance_id': 1})
-    data_manager.instance_id = 1234
+    data_manager.__instance_id = 1234
     data_manager.clear_on_boot()
     assert data_manager.dbc.mock_calls[1] == call.autoexec_update('settings_routecalc', {'recalc_status': 0},
                                                                   where_keyvals={'instance_id': 1234})

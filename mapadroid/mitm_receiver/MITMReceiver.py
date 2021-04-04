@@ -40,7 +40,7 @@ def validate_accepted(func) -> Any:
             sql = "SELECT `status`\n"\
                   "FROM `autoconfig_registration`\n"\
                   "WHERE `session_id` = %s AND `instance_id` = %s"
-            accepted = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.instance_id))
+            accepted = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.__instance_id))
             if accepted is None:
                 return Response(status=404, response="")
             if accepted == 0:
@@ -60,7 +60,7 @@ def validate_session(func) -> Any:
             sql = "SELECT `status`\n"\
                   "FROM `autoconfig_registration`\n"\
                   "WHERE `session_id` = %s AND `instance_id` = %s"
-            exists = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.instance_id))
+            exists = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.__instance_id))
             if exists is None:
                 return Response(status=404, response="")
             return func(self, *args, **kwargs)
@@ -377,7 +377,7 @@ class MITMReceiver():
 
     async def origin_generator_endpoint(self, *args, **kwargs):
         # TODO: async
-        return await origin_generator(session, self._db_wrapper.instance_id, **kwargs)
+        return await origin_generator(session, self._db_wrapper.__instance_id, **kwargs)
 
     # ========================================
     # ============== AutoConfig ==============
@@ -388,12 +388,12 @@ class MITMReceiver():
         try:
             info = {
                 'session_id': session_id,
-                'instance_id': self._db_wrapper.instance_id
+                'instance_id': self._db_wrapper.__instance_id
             }
             sql = "SELECT MAX(`level`)\n"\
                   "FROM `autoconfig_logs`\n"\
                   "WHERE `session_id` = %s AND `instance_id` = %s"
-            max_msg = await self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.instance_id))
+            max_msg = await self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.__instance_id))
             if max_msg and max_msg == 4:
                 logger.warning('Unable to clear session due to a failure.  Manual deletion required')
                 update_data = {
@@ -401,7 +401,7 @@ class MITMReceiver():
                 }
                 where = {
                     'session_id': session_id,
-                    'instance_id': self._db_wrapper.instance_id
+                    'instance_id': self._db_wrapper.__instance_id
                 }
                 await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
                 return Response(status=400, response="")
@@ -420,7 +420,7 @@ class MITMReceiver():
                   "FROM `settings_device` sd\n"\
                   "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
                   "WHERE ar.`session_id` = %s AND ar.`instance_id` = %s"
-            origin = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.instance_id))
+            origin = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.__instance_id))
             if operation in ['pd', 'rgc']:
                 if operation == 'pd':
                     config = PDConfig(self._db_wrapper, self.__application_args)
@@ -434,7 +434,7 @@ class MITMReceiver():
                       "FROM `settings_pogoauth` ag\n"\
                       "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n"\
                       "WHERE ar.`session_id` = %s and ag.`instance_id` = %s and ag.`login_type` = %s"
-                login = await self._db_wrapper.autofetch_row_async(sql, (session_id, self._db_wrapper.instance_id, 'google'))
+                login = await self._db_wrapper.autofetch_row_async(sql, (session_id, self._db_wrapper.__instance_id, 'google'))
                 if login:
                     return Response(status=200, response='\n'.join([login['username'], login['password']]))
                 else:
@@ -454,7 +454,7 @@ class MITMReceiver():
             level, msg = str(await request.data, 'utf-8').split(',', 1)
         info = {
             'session_id': session_id,
-            'instance_id': self._db_wrapper.instance_id,
+            'instance_id': self._db_wrapper.__instance_id,
             'msg': msg
         }
         try:
@@ -488,7 +488,7 @@ class MITMReceiver():
         if autoconf is not None:
             log_data = {
                 'session_id': autoconf.session_id,
-                'instance_id': self._db_wrapper.instance_id,
+                'instance_id': self._db_wrapper.__instance_id,
                 'level': 2
             }
         if request.method == 'GET':
@@ -536,7 +536,7 @@ class MITMReceiver():
             return Response(status=404, response="")
         log_data = {
             'session_id': session_id,
-            'instance_id': self._db_wrapper.instance_id,
+            'instance_id': self._db_wrapper.__instance_id,
             'level': 2
         }
         if request.method == 'GET':
@@ -570,12 +570,12 @@ class MITMReceiver():
         register_data = {
             'status': status,
             'ip': get_actual_ip(request),
-            'instance_id': self._db_wrapper.instance_id
+            'instance_id': self._db_wrapper.__instance_id
         }
         session_id = await self._db_wrapper.autoexec_insert('autoconfig_registration', register_data)
         log_data = {
             'session_id': session_id,
-            'instance_id': self._db_wrapper.instance_id,
+            'instance_id': self._db_wrapper.__instance_id,
             'level': 2,
             'msg': 'Registration request from {}'.format(get_actual_ip(request))
         }
@@ -590,7 +590,7 @@ class MITMReceiver():
         }
         where = {
             'session_id': session_id,
-            'instance_id': self._db_wrapper.instance_id
+            'instance_id': self._db_wrapper.__instance_id
         }
         await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
         return Response("", status=200)

@@ -1,6 +1,7 @@
 import json
 
-import flask
+from aiohttp import web
+from loguru import logger
 
 from mapadroid.utils.json_encoder import MADEncoder
 
@@ -8,15 +9,14 @@ from . import apiException
 
 
 class APIResponse(object):
-    def __init__(self, logger, request, **kwargs):
-        self.logger = logger
+    def __init__(self, request: web.Request, **kwargs):
         self.request = request
         self.headers = self.request.headers
-        self.mimetype = self.request.accept
+        self.mimetype = self.request.content_type
 
-    def __call__(self, content, status_code, **kwargs):
+    def __call__(self, content, status_code, **kwargs) -> web.Response:
         converted_data = self.convert_to_format(content)
-        resp = flask.Response(converted_data, mimetype=self.mimetype)
+        resp = web.Response(body=converted_data, content_type=self.mimetype)
         resp.status_code = status_code
         for key, value in kwargs.items():
             if key == 'headers':
@@ -24,8 +24,8 @@ class APIResponse(object):
                     resp.headers.add(header_key, header_val)
             else:
                 setattr(resp, key, value)
-        self.logger.debug4('Return Data: {}', converted_data)
-        self.logger.debug4('Return Headers: {}', resp.headers)
+        logger.debug4('Return Data: {}', converted_data)
+        logger.debug4('Return Headers: {}', resp.headers)
         return resp
 
     def convert_to_format(self, content):

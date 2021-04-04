@@ -107,7 +107,7 @@ async def _generator_from_filesystem(full_path) -> AsyncGenerator:
             yield data
 
 
-def get_apk_status(storage_obj: AbstractAPKStorage) -> MADapks:
+async def get_apk_status(storage_obj: AbstractAPKStorage) -> MADapks:
     """ Returns all required packages and their status
 
     Args:
@@ -122,12 +122,12 @@ def get_apk_status(storage_obj: AbstractAPKStorage) -> MADapks:
         data[package] = MADPackages()
         if package == APKType.pogo:
             for arch in [APKArch.armeabi_v7a, APKArch.arm64_v8a]:
-                (package_info, status_code) = lookup_package_info(storage_obj, package, arch)
+                (package_info, status_code) = await lookup_package_info(storage_obj, package, arch)
                 if package_info is None:
                     package_info = MADPackage(package, arch)
                 data[package][arch] = package_info
         if package in [APKType.pd, APKType.rgc]:
-            (package_info, status_code) = lookup_package_info(storage_obj, package, APKArch.noarch)
+            (package_info, status_code) = await lookup_package_info(storage_obj, package, APKArch.noarch)
             if package_info is None:
                 package_info = MADPackage(package, APKArch.noarch)
             data[package][APKArch.noarch] = package_info
@@ -231,8 +231,8 @@ def lookup_arch_enum(name: str) -> APKArch:
     raise ValueError('No defined lookup for %s' % (name,))
 
 
-def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
-                        architecture: APKArch = None) -> Union[MADPackage, MADPackages]:
+async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
+                              architecture: APKArch = None) -> Union[MADPackage, MADPackages]:
     """ Retrieve the information about the package.  If no architecture is specified, it will return MAD_PACKAGES
         containing all relevant architectures
 
@@ -246,7 +246,7 @@ def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
     """
     package_info: Optional[MADPackages] = None
     try:
-        package_info = storage_obj.get_current_package_info(package)
+        package_info = await storage_obj.get_current_package_info(package)
     except AttributeError:
         pass
     if package_info is None:

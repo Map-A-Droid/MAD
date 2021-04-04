@@ -328,4 +328,4 @@ def add_default_event(dbwrapper):
 
 
 async def reload_instance_id(db_wrapper: DbWrapper, session: AsyncSession):
-    await db_wrapper.get_instance_id(session)
+    await db_wrapper.update_instance_id(session)

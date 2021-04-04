@@ -24,7 +24,8 @@ from mapadroid.db.helper.SettingsAreaPokestopHelper import \
     SettingsAreaPokestopHelper
 from mapadroid.db.helper.SettingsAreaRaidsMitm import \
     SettingsAreaRaidsMitmHelper
-from mapadroid.db.model import SettingsArea, MadminInstance
+from mapadroid.db.model import SettingsArea, MadminInstance, SettingsAreaIdle, SettingsAreaIvMitm, SettingsAreaMonMitm, \
+    SettingsAreaPokestop, SettingsAreaRaidsMitm
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType
@@ -47,13 +48,16 @@ class DbWrapper:
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec, args)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
-        self.instance_id: Optional[int] = None
+        self.__instance_id: Optional[int] = None
         try:
-            self.get_instance_id(session)
+            self.update_instance_id(session)
         except Exception:
-            self.instance_id: int = None
+            self.__instance_id = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
                            'installed, this message is safe to ignore')
+
+    def get_instance_id(self) -> Optional[int]:
+        return self.__instance_id
 
     async def __aenter__(self) -> AsyncSession:
         # TODO: Start AsyncSession within a semaphore and return it, aexit needs to close the session
@@ -503,7 +507,7 @@ class DbWrapper:
     def save_status(self, data):
         logger.debug3("dbWrapper::save_status")
         literals = ['currentPos', 'lastPos', 'lastProtoDateTime']
-        data['instance_id'] = self.instance_id
+        data['instance_id'] = self.__instance_id
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
     def get_cells_in_rectangle(self, ne_lat, ne_lon, sw_lat, sw_lon,
@@ -546,7 +550,7 @@ class DbWrapper:
 
         return cells
 
-    async def get_instance_id(self, session: AsyncSession, instance_name: Optional[str] = None) -> MadminInstance:
+    async def update_instance_id(self, session: AsyncSession, instance_name: Optional[str] = None) -> MadminInstance:
         if instance_name is None:
             instance_name = self.application_args.status_name
         instance: Optional[MadminInstance] = await MadminInstanceHelper.get_by_name(session, instance_name)
@@ -556,16 +560,16 @@ class DbWrapper:
             # TODO: Fetch again as it's an autoincrement?
             instance = await session.merge(instance)
             await session.commit()
-        self.instance_id = instance.instance_id
+        self.__instance_id = instance.instance_id
         return instance
 
     async def get_all_areas(self, session: AsyncSession) -> Dict[int, SettingsArea]:
         areas: Dict[int, SettingsArea] = {}
-        areas.update(await SettingsAreaIdleHelper.get_all(session, self.instance_id))
-        areas.update(await SettingsAreaIvMitmHelper.get_all(session, self.instance_id))
-        areas.update(await SettingsAreaMonMitmHelper.get_all(session, self.instance_id))
-        areas.update(await SettingsAreaPokestopHelper.get_all(session, self.instance_id))
-        areas.update(await SettingsAreaRaidsMitmHelper.get_all(session, self.instance_id))
+        areas.update(await SettingsAreaIdleHelper.get_all(session, self.__instance_id))
+        areas.update(await SettingsAreaIvMitmHelper.get_all(session, self.__instance_id))
+        areas.update(await SettingsAreaMonMitmHelper.get_all(session, self.__instance_id))
+        areas.update(await SettingsAreaPokestopHelper.get_all(session, self.__instance_id))
+        areas.update(await SettingsAreaRaidsMitmHelper.get_all(session, self.__instance_id))
         return areas
 
     async def get_area(self, session: AsyncSession, area_id: int) -> Optional[SettingsArea]:
@@ -577,19 +581,33 @@ class DbWrapper:
 
         Returns: the first matching area subclass-instance
         """
-        area_base: Optional[SettingsArea] = await SettingsAreaHelper.get(session, self.instance_id, area_id)
+        area_base: Optional[SettingsArea] = await SettingsAreaHelper.get(session, self.__instance_id, area_id)
         if not area_base:
             return None
         elif area_base.mode == WorkerType.IDLE.value:
-            return await SettingsAreaIdleHelper.get(session, self.instance_id, area_id)
+            return await SettingsAreaIdleHelper.get(session, self.__instance_id, area_id)
         elif area_base.mode == WorkerType.IV_MITM.value:
-            return await SettingsAreaIvMitmHelper.get(session, self.instance_id, area_id)
+            return await SettingsAreaIvMitmHelper.get(session, self.__instance_id, area_id)
         elif area_base.mode == WorkerType.MON_MITM.value:
-            return await SettingsAreaMonMitmHelper.get(session, self.instance_id, area_id)
+            return await SettingsAreaMonMitmHelper.get(session, self.__instance_id, area_id)
         elif area_base.mode == WorkerType.STOPS.value:
-            return await SettingsAreaPokestopHelper.get(session, self.instance_id, area_id)
+            return await SettingsAreaPokestopHelper.get(session, self.__instance_id, area_id)
         elif area_base.mode == WorkerType.RAID_MITM.value:
-            return await SettingsAreaRaidsMitmHelper.get(session, self.instance_id, area_id)
+            return await SettingsAreaRaidsMitmHelper.get(session, self.__instance_id, area_id)
+        else:
+            return None
+
+    def create_area_instance(self, mode: WorkerType) -> Optional[SettingsArea]:
+        if mode == WorkerType.IDLE:
+            return SettingsAreaIdle()
+        elif mode == WorkerType.IV_MITM:
+            return SettingsAreaIvMitm()
+        elif mode == WorkerType.MON_MITM:
+            return SettingsAreaMonMitm()
+        elif mode == WorkerType.STOPS:
+            return SettingsAreaPokestop()
+        elif mode == WorkerType.RAID_MITM:
+            return SettingsAreaRaidsMitm()
         else:
             return None
 

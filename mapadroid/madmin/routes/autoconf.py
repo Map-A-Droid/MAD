@@ -70,7 +70,7 @@ class AutoConfigManager(object):
     @auth_required
     async def autoconf_logs(self, session_id):
         sessions: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
-            .get_all_of_instance(session, instance_id=self._db_wrapper.instance_id, session_id=session_id)
+            .get_all_of_instance(session, instance_id=self._db_wrapper.__instance_id, session_id=session_id)
 
         if not sessions:
             return redirect(url_for('autoconfig_pending'), code=302)
@@ -83,17 +83,17 @@ class AutoConfigManager(object):
     @auth_required
     async def autoconf_logs_get(self, session_id):
         sessions: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
-            .get_all_of_instance(session, instance_id=self._db_wrapper.instance_id, session_id=session_id)
+            .get_all_of_instance(session, instance_id=self._db_wrapper.__instance_id, session_id=session_id)
         if not sessions:
             return Response('', status=302)
         logs: List[Tuple[int, int, str]] = await AutoconfigLogHelper.get_transformed(session,
-                                                                                     self._db_wrapper.instance_id)
+                                                                                     self._db_wrapper.__instance_id)
         return jsonify(logs)
 
     @auth_required
     async def autoconf_pd(self):
         config = PDConfig(self._db_wrapper, self._args)
-        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db_wrapper.instance_id)
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db_wrapper.__instance_id)
         uri = url_for('api_autoconf_pd')
         return render_template('autoconfig_config_editor.html',
                                subtab="autoconf_pd",
@@ -108,7 +108,7 @@ class AutoConfigManager(object):
         ac_issues = AutoConfIssueGenerator(self._db_wrapper, self._args, self._storage_obj)
         issues_warning, issues_critical = ac_issues.get_issues()
         pending_entries: List[Tuple[AutoconfigRegistration, SettingsDevice]] = \
-            await AutoconfigRegistrationHelper.get_pending(session, self._db_wrapper.instance_id)
+            await AutoconfigRegistrationHelper.get_pending(session, self._db_wrapper.__instance_id)
 
         return render_template('autoconfig_pending.html',
                                subtab="autoconf_dev",
@@ -120,7 +120,7 @@ class AutoConfigManager(object):
     @auth_required
     async def autoconfig_pending_dev(self, session_id):
         sessions: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
-            .get_all_of_instance(session, instance_id=self._db_wrapper.instance_id, session_id=session_id)
+            .get_all_of_instance(session, instance_id=self._db_wrapper.__instance_id, session_id=session_id)
         if not sessions:
             return redirect(url_for('autoconfig_pending'), code=302)
         ac_issues = AutoConfIssueGenerator(self._db_wrapper, self._args, self._storage_obj)
@@ -129,9 +129,9 @@ class AutoConfigManager(object):
             redirect(url_for('autoconfig_pending'), code=302)
         registration_session: AutoconfigRegistration = sessions[0]
         pogoauths: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_of_autoconfig(session,
-                                                                                           self._db_wrapper.instance_id,
+                                                                                           self._db_wrapper.__instance_id,
                                                                                            registration_session.device_id)
-        devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, self._db_wrapper.instance_id)
+        devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, self._db_wrapper.__instance_id)
         uri = "{}/{}".format(url_for('api_autoconf'), session_id)
         redir_uri = url_for('autoconfig_pending')
         return render_template('autoconfig_pending_dev.html',
@@ -147,7 +147,7 @@ class AutoConfigManager(object):
     @auth_required
     def autoconf_rgc(self):
         config = RGCConfig(self._db_wrapper, self._args)
-        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db_wrapper.instance_id)
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db_wrapper.__instance_id)
         uri = url_for('api_autoconf_rgc')
         return render_template('autoconfig_config_editor.html',
                                subtab="autoconf_rgc",

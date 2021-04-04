@@ -4,7 +4,7 @@ from mapadroid.mad_apk import convert_to_backend, stream_package
 from mapadroid.madmin.RootEndpoint import RootEndpoint
 
 
-class Download(RootEndpoint):
+class MadApkDownloadEndpoint(RootEndpoint):
     # TODO: Require auth
     async def get(self):
         response = web.StreamResponse()

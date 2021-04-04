@@ -39,10 +39,25 @@ class SettingsPogoauthHelper:
         return result.scalars().all()
 
     @staticmethod
+    async def get(session: AsyncSession, instance_id: int, identifier: int) -> Optional[SettingsPogoauth]:
+        stmt = select(SettingsPogoauth).where(and_(SettingsPogoauth.instance_id == instance_id,
+                                                   SettingsPogoauth.account_id == identifier))
+        result = await session.execute(stmt)
+        return result.scalars().first()
+
+    @staticmethod
     async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsPogoauth]:
         stmt = select(SettingsPogoauth).where(SettingsPogoauth.instance_id == instance_id)
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsPogoauth]:
+        listed: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_all(session, instance_id)
+        mapped: Dict[int, SettingsPogoauth] = {}
+        for auth in listed:
+            mapped[auth.account_id] = auth
+        return mapped
 
     @staticmethod
     async def get_of_autoconfig(session: AsyncSession, instance_id: int, device_id: int) -> List[SettingsPogoauth]:

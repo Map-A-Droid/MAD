@@ -46,7 +46,7 @@ class APIAutoConf(AutoConfHandler):
     def autoconf_delete_session(self, session_id: int):
         del_info = {
             'session_id': session_id,
-            'instance_id': self._db_wrapper.instance_id
+            'instance_id': self._db_wrapper.__instance_id
         }
         self.dbc.autoexec_delete('autoconfig_registration', del_info)
         return (None, 200)
@@ -80,7 +80,7 @@ class APIAutoConf(AutoConfHandler):
                     return 'Unknown device ID', 400
             except (AttributeError, KeyError):
                 hopper_name = 'madrom'
-                hopper_response = await origin_generator(session, self._db_wrapper.instance_id, OriginBase=hopper_name)
+                hopper_response = await origin_generator(session, self._db_wrapper.__instance_id, OriginBase=hopper_name)
                 if type(hopper_response) != SettingsDevice:
                     return hopper_response
                 else:

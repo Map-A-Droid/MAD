@@ -17,6 +17,7 @@ from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKPackage, APKType
 from .utils import (get_apk_info, is_newer_version, lookup_arch_enum,
                     lookup_package_info, supported_pogo_version)
+from ..db.DbWrapper import DbWrapper
 
 logger = get_logger(LoggerEnums.package_mgr)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -53,27 +54,28 @@ class APKWizard(object):
     gpconn: GPlayConnector
     storage: AbstractAPKStorage
 
-    def __init__(self, dbc, storage: AbstractAPKStorage):
+    def __init__(self, db_wrapper: DbWrapper, storage: AbstractAPKStorage):
         self.storage: AbstractAPKStorage = storage
-        self.dbc = dbc
+        self._db_wrapper: DbWrapper = db_wrapper
         self.gpconn = None
 
-    def apk_all_actions(self) -> NoReturn:
+    async def apk_all_actions(self) -> None:
         "Search and download all required packages"
-        self.apk_all_download()
+        await self.apk_all_download()
 
-    def apk_all_download(self) -> NoReturn:
+    async def apk_all_download(self) -> None:
         "Download all packages in a non-blocking fashion"
+        # TODO... async
         Thread(target=self.apk_nonblocking_download).start()
 
-    def apk_all_search(self) -> NoReturn:
+    def apk_all_search(self) -> None:
         "Search for updates for any required package"
         self.find_latest_pogo(APKArch.armeabi_v7a)
         self.find_latest_pogo(APKArch.arm64_v8a)
         self.find_latest_rgc(APKArch.noarch)
         self.find_latest_pd(APKArch.noarch)
 
-    async def apk_download(self, package: APKType, architecture: APKArch) -> NoReturn:
+    async def apk_download(self, package: APKType, architecture: APKArch) -> None:
         """Download a specific package
 
         Args:
@@ -87,7 +89,7 @@ class APKWizard(object):
         elif package == APKType.pd:
             self.download_pd(architecture)
 
-    def apk_nonblocking_download(self) -> NoReturn:
+    def apk_nonblocking_download(self) -> None:
         "Download all packages"
         for arch in APKArch:
             if arch == APKArch.noarch:
@@ -101,13 +103,14 @@ class APKWizard(object):
         if self.find_latest_pd(APKArch.noarch):
             self.download_pd(APKArch.noarch)
 
-    def apk_search(self, package: APKType, architecture: APKArch) -> NoReturn:
+    async def apk_search(self, package: APKType, architecture: APKArch) -> None:
         """ Search for a specific package
 
         Args:
             package (APKType): Package to search
             architecture (APKArch): Architecture of the package to search
         """
+        # TODO: Async calls
         if package == APKType.pogo:
             self.find_latest_pogo(architecture)
         elif package == APKType.rgc:
@@ -115,7 +118,7 @@ class APKWizard(object):
         elif package == APKType.pd:
             self.find_latest_pd(architecture)
 
-    def download_pogo(self, architecture: APKArch) -> NoReturn:
+    def download_pogo(self, architecture: APKArch) -> None:
         """ Download the package com.nianticlabs.pokemongo
 
         Determine if theres a newer version of com.nianticlabs.pokemongo.  If a new version exists, validate it is
@@ -169,7 +172,7 @@ class APKWizard(object):
                     update_data['download_status'] = 0
                     self.dbc.autoexec_update('mad_apk_autosearch', update_data, where_keyvals=where)
 
-    def download_pd(self, architecture: APKArch) -> NoReturn:
+    def download_pd(self, architecture: APKArch) -> None:
         """ Download the package com.mad.pogodroid
 
         Args:
@@ -178,7 +181,7 @@ class APKWizard(object):
         logger.info("Downloading latest PogoDroid")
         self.__download_simple(APKType.pd, architecture)
 
-    def __download_simple(self, package: APKType, architecture: APKArch) -> NoReturn:
+    def __download_simple(self, package: APKType, architecture: APKArch) -> None:
         """ Downloads the package via requests
 
         Determine if there is a newer version of the package.  If there is a newer version, download and save to the
@@ -229,7 +232,7 @@ class APKWizard(object):
                 update_data['download_status'] = 0
                 self.dbc.autoexec_update('mad_apk_autosearch', update_data, where_keyvals=where)
 
-    def download_rgc(self, architecture: APKArch) -> NoReturn:
+    def download_rgc(self, architecture: APKArch) -> None:
         """ Download the package de.grennith.rgc.remotegpscontroller
 
         Args:
@@ -414,7 +417,7 @@ class APKWizard(object):
         return None
 
     def set_last_searched(self, package: APKType, architecture: APKArch, version: str = None,
-                          url: str = None) -> NoReturn:
+                          url: str = None) -> None:
         """ Updates the last search information for the package / architecture
 
         Args:

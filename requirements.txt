@@ -31,3 +31,5 @@ GeoAlchemy2~=0.8.4
 
 aiounittest~=1.4.0
 aiofile~=3.4.0
+aiohttp~=3.7.4.post0
+yarl~=1.6.3

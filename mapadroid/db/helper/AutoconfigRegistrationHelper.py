@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 
-from sqlalchemy import and_, update
+from sqlalchemy import and_, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -64,3 +64,10 @@ class AutoconfigRegistrationHelper:
             .where(AutoconfigRegistration.instance_id == instance_id)
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def delete(session: AsyncSession, instance_id: int, session_id: int) -> None:
+        stmt = delete(AutoconfigRegistration)\
+            .where(and_(AutoconfigRegistration.instance_id == instance_id,
+                        AutoconfigRegistration.session_id == session_id))
+        await session.execute(stmt)

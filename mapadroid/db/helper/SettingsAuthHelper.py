@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,3 +20,11 @@ class SettingsAuthHelper:
             stmt = select(SettingsAuth).where(SettingsAuth.instance_id == instance_id)
             result = await session.execute(stmt)
             return result.scalars().all()
+
+    @staticmethod
+    async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsAuth]:
+        listed: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, instance_id)
+        mapped: Dict[int, SettingsAuth] = {}
+        for device in listed:
+            mapped[device.device_id] = device
+        return mapped

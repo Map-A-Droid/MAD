@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import and_
+from sqlalchemy import and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -23,14 +23,8 @@ class SettingsMonivlistHelper:
         result = await session.execute(stmt)
         mapped: Dict[int, List[int]] = {}
         for mon_iv_list in result:
-            stmt = select(SettingsMonivlistToMon)\
-                .where(SettingsMonivlistToMon.monlist_id == mon_iv_list.monlist_id)\
-                .order_by(SettingsMonivlistToMon.mon_order)
-            mon_ids = await session.execute(stmt)
-            mon_ids_raw: List[int] = []
-            for mon_id_entry in mon_ids:
-                mon_ids_raw.append(mon_id_entry.mon_id)
-            mapped[mon_iv_list.monlist_id] = mon_ids_raw
+            mapped[mon_iv_list.monlist_id] = await SettingsMonivlistHelper.get_list(session, instance_id,
+                                                                                    mon_iv_list.monlist_id)
         return mapped
 
     @staticmethod
@@ -46,10 +40,7 @@ class SettingsMonivlistHelper:
         with that ID, None is returned.
 
         """
-        stmt = select(SettingsMonivlist).where(and_(SettingsMonivlist.instance_id == instance_id,
-                                                    SettingsMonivlist.monlist_id == monlist_id))
-        mon_iv_list_result = await session.execute(stmt)
-        mon_iv_list: Optional[SettingsMonivlist] = mon_iv_list_result.scalars().first()
+        mon_iv_list: Optional[SettingsMonivlist] = await SettingsMonivlistHelper.get_entry(session, instance_id, monlist_id)
         if not mon_iv_list:
             return None
         stmt = select(SettingsMonivlistToMon) \
@@ -60,3 +51,32 @@ class SettingsMonivlistHelper:
         for mon_id_entry in mon_ids:
             mon_ids_raw.append(mon_id_entry.mon_id)
         return mon_ids_raw
+
+    @staticmethod
+    async def get_entry(session: AsyncSession, instance_id: int, monlist_id: int) -> Optional[SettingsMonivlist]:
+        stmt = select(SettingsMonivlist).where(and_(SettingsMonivlist.instance_id == instance_id,
+                                                    SettingsMonivlist.monlist_id == monlist_id))
+        mon_iv_list_result = await session.execute(stmt)
+        return mon_iv_list_result.scalars().first()
+
+    @staticmethod
+    async def get_entries_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsMonivlist]:
+        stmt = select(SettingsMonivlist).where(SettingsMonivlist.instance_id == instance_id)
+        result = await session.execute(stmt)
+        mapped: Dict[int, SettingsMonivlist] = {}
+        for mon_iv_list in result:
+            mapped[mon_iv_list.monlist_id] = mon_iv_list
+        return mapped
+
+    @staticmethod
+    async def set_mon_ids(session: AsyncSession, monlist_id: int, ids: List[int]) -> None:
+        del_stmt = delete(SettingsMonivlistToMon) \
+            .where(SettingsMonivlistToMon.monlist_id == monlist_id)
+        await session.execute(del_stmt)
+        for ind, mon_id in enumerate(ids):
+            entry = SettingsMonivlistToMon()
+            entry.monlist_id = monlist_id
+            entry.mon_id = mon_id
+            entry.mon_order = ind
+            session.add(entry)
+

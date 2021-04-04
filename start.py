@@ -184,7 +184,7 @@ async def start():
     # Elements that should initialized regardless of the functionality being used
     db_wrapper, db_exec = DbFactory.get_wrapper(args)
     try:
-        instance_id = db_wrapper.get_instance_id()
+        instance_id = db_wrapper.update_instance_id()
     except Exception:
         instance_id = None
     MADPatcher(args, data_manager)
