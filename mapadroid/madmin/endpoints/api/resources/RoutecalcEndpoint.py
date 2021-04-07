@@ -1,8 +1,10 @@
-from typing import Optional, Dict, Set
+from typing import Dict, Optional, Set
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.model import Base, SettingsRoutecalc
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint
+from mapadroid.db.resource_definitions.Routecalc import Routecalc
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
+    AbstractResourceEndpoint
 
 
 class RoutecalcEndpoint(AbstractResourceEndpoint):
@@ -13,8 +15,7 @@ class RoutecalcEndpoint(AbstractResourceEndpoint):
         return await SettingsRoutecalcHelper.get_all(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:
-        # TODO...
-        return {}
+        return Routecalc.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
         return await SettingsRoutecalcHelper.get(self._session, self._get_instance_id(), identifier)

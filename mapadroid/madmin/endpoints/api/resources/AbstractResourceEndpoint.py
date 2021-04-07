@@ -1,6 +1,6 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Dict, Set
+from typing import Dict, Optional, Set
 
 from aiohttp import web
 from sqlalchemy import Column
@@ -65,7 +65,7 @@ class AbstractResourceEndpoint(RootEndpoint, ABC):
             else:
                 found_entries[identifier] = entry
         for identifier in found_entries.keys():
-            found_entries[identifier] = vars(found_entries[identifier])
+            found_entries[identifier] = self._translate_object_for_response(found_entries[identifier])
             additional_keys: Dict = await self._get_additional_keys(identifier)
             found_entries[identifier].update(additional_keys)
         result["results"] = found_entries
@@ -130,7 +130,7 @@ class AbstractResourceEndpoint(RootEndpoint, ABC):
     #  If nullable=True (not present basically) and foreign key => "empty"=None
     #  If nullable=False and foreign key
     #  Set containing columns to be hidden?
-    # TODO for now:
+    # for now:
     #  parse resource def for URIs and set the key to the according resource URI
     def _translate_object_for_response(self, obj: Base) -> Dict:
         translated: Dict = {}
@@ -148,12 +148,9 @@ class AbstractResourceEndpoint(RootEndpoint, ABC):
     def _api_uri_for_column(self, key: str, col: Column) -> Optional[URL]:
         resource_def: Dict = self._resource_info()
         fields: Dict = resource_def.get("fields", {})
-        settings: Dict = resource_def.get("settings", {})
         settings_of_attr: Optional[Dict] = None
         if key in fields:
             settings_of_attr: Optional[Dict] = fields.get("")
-        elif key in settings:
-            settings_of_attr: Optional[Dict] = settings.get("")
         if not settings_of_attr:
             return None
         uri: Optional[bool] = settings_of_attr.get("uri")

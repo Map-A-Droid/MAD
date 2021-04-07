@@ -1,18 +1,15 @@
-from typing import Optional, Dict, Set, List
-
-from aiohttp import web
-from sqlalchemy import Column
+from typing import Dict, List, Optional, Set
 
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
-from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import SettingsWalkerToWalkerareaHelper
+from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
+    SettingsWalkerToWalkerareaHelper
 from mapadroid.db.model import Base, SettingsWalker
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint, \
-    DataHandlingMethodology
+from mapadroid.db.resource_definitions.Walker import Walker
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
+    AbstractResourceEndpoint
 
 
 class WalkerEndpoint(AbstractResourceEndpoint):
-    # TODO: Needs to handle walkerareas accordingly in get and update similar to monivlist...
-    #
     def _attributes_to_ignore(self) -> Set[str]:
         return {"walker_id", "guid"}
 
@@ -20,8 +17,7 @@ class WalkerEndpoint(AbstractResourceEndpoint):
         return await SettingsWalkerHelper.get_all_mapped(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:
-        # TODO...
-        return {}
+        return Walker.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
         return await SettingsWalkerHelper.get(self._session, self._get_instance_id(), identifier)

@@ -1,10 +1,16 @@
-from typing import Optional, Dict, Set, List
+from typing import Dict, Optional, Set
 
 from aiohttp import web
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
-from mapadroid.db.model import SettingsArea, SettingsRoutecalc, Base
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint
+from mapadroid.db.model import Base, SettingsArea, SettingsRoutecalc
+from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
+from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
+from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
+from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
+from mapadroid.db.resource_definitions.AreaRaidsMitm import AreaRaidsMitm
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
+    AbstractResourceEndpoint
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -21,9 +27,21 @@ class AreaEndpoint(AbstractResourceEndpoint):
     async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
         return await self._get_db_wrapper().get_all_areas(self._session)
 
-    def _resource_info(self) -> Dict:
-        # TODO
-        pass
+    def _resource_info(self, db_entry: Optional[SettingsArea] = None) -> Dict:
+        if not db_entry:
+            return {}
+        elif db_entry.mode == WorkerType.IDLE:
+            return AreaIdle.configuration
+        elif db_entry.mode == WorkerType.IV_MITM:
+            return AreaIvMitm.configuration
+        elif db_entry.mode == WorkerType.MON_MITM:
+            return AreaMonMitm.configuration
+        elif db_entry.mode == WorkerType.STOPS:
+            return AreaPokestops.configuration
+        elif db_entry.mode == WorkerType.RAID_MITM:
+            return AreaRaidsMitm.configuration
+        else:
+            return {}
 
     def _attributes_to_ignore(self) -> Set[str]:
         return {"area_id", "mode", "guid"}
@@ -42,7 +60,7 @@ class AreaEndpoint(AbstractResourceEndpoint):
         if self.request.content_type == 'application/json-rpc':
             try:
                 call = api_request_data['call']
-                args = api_request_data.get('args', {})
+                # args = api_request_data.get('args', {})
                 if call == 'recalculate':
                     return await self._recalc_area(identifier)
                 else:

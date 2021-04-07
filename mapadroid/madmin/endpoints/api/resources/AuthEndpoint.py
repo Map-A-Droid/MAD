@@ -1,8 +1,10 @@
-from typing import Optional, Dict, List, Set
+from typing import Dict, Optional, Set
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
-from mapadroid.db.model import SettingsAuth, Base
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint
+from mapadroid.db.model import Base, SettingsAuth
+from mapadroid.db.resource_definitions.Auth import Auth
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
+    AbstractResourceEndpoint
 
 
 class AuthEndpoint(AbstractResourceEndpoint):
@@ -13,8 +15,7 @@ class AuthEndpoint(AbstractResourceEndpoint):
         return await SettingsAuthHelper.get_all_mapped(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:
-        # TODO...
-        return {}
+        return Auth.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
         auth: Optional[SettingsAuth] = await SettingsAuthHelper.get(self._session, self._get_instance_id(),

@@ -1,12 +1,13 @@
-from typing import Optional, Dict, Set, List, Any
+from typing import Any, Dict, List, Optional, Set
 
 from aiohttp import web
 from sqlalchemy import Column
 
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import Base, SettingsMonivlist
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint, \
-    DataHandlingMethodology
+from mapadroid.db.resource_definitions.MonIvList import MonIvList
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
+    AbstractResourceEndpoint, DataHandlingMethodology)
 
 
 class MonIvListEndpoint(AbstractResourceEndpoint):
@@ -17,8 +18,7 @@ class MonIvListEndpoint(AbstractResourceEndpoint):
         return await SettingsMonivlistHelper.get_mapped_lists(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:
-        # TODO...
-        return {}
+        return MonIvList.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
         return await SettingsMonivlistHelper.get_list(self._session, self._get_instance_id(), identifier)

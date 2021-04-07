@@ -1,8 +1,10 @@
-from typing import Optional, Dict, Set
+from typing import Dict, Optional, Set
 
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import Base, SettingsPogoauth
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint
+from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
+    AbstractResourceEndpoint
 
 
 class PogoauthEndpoint(AbstractResourceEndpoint):
@@ -13,8 +15,7 @@ class PogoauthEndpoint(AbstractResourceEndpoint):
         return await SettingsPogoauthHelper.get_all_mapped(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:
-        # TODO...
-        return {}
+        return Pogoauth.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
         return await SettingsPogoauthHelper.get(self._session, self._get_instance_id(), identifier)

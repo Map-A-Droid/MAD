@@ -1,10 +1,15 @@
-from typing import Optional, Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
-from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
-from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
-from mapadroid.db.model import SettingsAuth, Base, SettingsDevicepool, SettingsWalkerarea
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint
+from mapadroid.db.helper.SettingsDevicepoolHelper import \
+    SettingsDevicepoolHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
+from mapadroid.db.model import (Base, SettingsAuth, SettingsDevicepool,
+                                SettingsWalkerarea)
+from mapadroid.db.resource_definitions.Walkerarea import Walkerarea
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
+    AbstractResourceEndpoint
 
 
 class WalkerareaEndpoint(AbstractResourceEndpoint):
@@ -15,8 +20,7 @@ class WalkerareaEndpoint(AbstractResourceEndpoint):
         return await SettingsWalkerareaHelper.get_all_mapped(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:
-        # TODO...
-        return {}
+        return Walkerarea.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
         return await SettingsWalkerareaHelper.get(self._session, self._get_instance_id(), identifier)

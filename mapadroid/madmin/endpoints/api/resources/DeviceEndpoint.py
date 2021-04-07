@@ -1,12 +1,13 @@
-from typing import Optional, Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 from aiohttp import web
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
-from mapadroid.db.model import SettingsDevice, Base
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint, \
-    DataHandlingMethodology
+from mapadroid.db.model import Base, SettingsDevice
+from mapadroid.db.resource_definitions.Device import Device
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
+    AbstractResourceEndpoint, DataHandlingMethodology)
 
 
 class DeviceEndpoint(AbstractResourceEndpoint):
@@ -17,8 +18,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
         return await SettingsDeviceHelper.get_all_mapped(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:
-        # TODO
-        pass
+        return Device.configuration
 
     # TODO: '%s/<string:identifier>' optionally at the end of the route
     # TODO: ResourceEndpoint class that loads the identifier accordingly before patch/post etc are called (populate_mode)
@@ -65,4 +65,3 @@ class DeviceEndpoint(AbstractResourceEndpoint):
         device.instance_id = self._get_instance_id()
         device.device_id = identifier
         return device
-

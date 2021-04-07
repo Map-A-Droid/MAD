@@ -1,9 +1,11 @@
-from typing import Optional, Dict, List, Set
+from typing import Dict, Optional, Set
 
-from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
-from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
-from mapadroid.db.model import SettingsAuth, Base, SettingsDevicepool
-from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import AbstractResourceEndpoint
+from mapadroid.db.helper.SettingsDevicepoolHelper import \
+    SettingsDevicepoolHelper
+from mapadroid.db.model import Base, SettingsDevicepool
+from mapadroid.db.resource_definitions.Devicepool import Devicepool
+from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
+    AbstractResourceEndpoint
 
 
 class DevicepoolEndpoint(AbstractResourceEndpoint):
@@ -14,8 +16,7 @@ class DevicepoolEndpoint(AbstractResourceEndpoint):
         return await SettingsDevicepoolHelper.get_all_mapped(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:
-        # TODO...
-        return {}
+        return Devicepool.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
         return await SettingsDevicepoolHelper.get(self._session, identifier)
