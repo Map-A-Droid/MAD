@@ -67,17 +67,14 @@ class Resocalculator(object):
         return click_x + self._x_offset, click_y + self._y_offset
 
     def get_click_item_minus(self):
+        click_x = int(self._screen_x) / 3.7
         if float(self._xyratio) > 2:
-            click_x = int(self._screen_x) / 3.7
             click_y = int(self._screen_y) - (int(self._screen_x) / 0.90)
         elif float(self._xyratio) >= 1.9:
-            click_x = int(self._screen_x) / 3.7
             click_y = int(self._screen_y) - (int(self._screen_x) / 0.94)
         elif float(self._xyratio) >= 1.7:
-            click_x = int(self._screen_x) / 3.7
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.02)
         elif float(self._xyratio) < 1.7:
-            click_x = int(self._screen_x) / 3.7
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.12)
         return click_x, click_y
 
