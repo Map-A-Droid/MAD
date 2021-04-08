@@ -433,6 +433,7 @@ class WordToScreenMatching(object):
 
         self._nextscreen = ScreenType.UNDEFINED
         self._communicator.click(520, 1185)
+        time.sleep(10)
 
     def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
