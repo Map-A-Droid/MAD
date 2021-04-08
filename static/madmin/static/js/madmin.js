@@ -1774,11 +1774,24 @@ new Vue({
                 layer.setStyle({ opacity: 1.0 });
                 layer.pm.enable({ snappable: false, allowSelfIntersection: allowSelfIntersection });
 
+                let dragging = false
+
                 layer.on("pm:markerdragstart", function() {
+                    if (dragging) {
+                        // ignore multiple drag starts (left + right mouse buttons at the same time)
+                        return;
+                    }
+
+                    dragging = true;
                     mouseEventsIgnore.enableIgnore();
                 });
 
                 layer.on("pm:markerdragend", function() {
+                    if (!dragging) {
+                        return;
+                    }
+
+                    dragging = false;
                     mouseEventsIgnore.disableIgnore();
                 });
             }
