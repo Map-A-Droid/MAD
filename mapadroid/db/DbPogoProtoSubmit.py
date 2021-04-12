@@ -50,7 +50,7 @@ class DbPogoProtoSubmit:
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
             "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=VALUES(pokemon_id), latitude=VALUES(latitude), "
             "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), form=VALUES(form), "
-            "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL"
+            "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL, cell_id=NULL"
         )
 
         mon_args = []
@@ -120,10 +120,10 @@ class DbPogoProtoSubmit:
             return False
 
         query_nearby = (
-            "INSERT IGNORE pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
+            "INSERT IGNORE pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, cell_id, "
             "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
             "latitude, longitude)"
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
         )
         stop_query = (
             "SELECT latitude, longitude "
@@ -138,10 +138,9 @@ class DbPogoProtoSubmit:
 
         nearby_args = []
         for cell in cells:
+            cellid = cell.get("id")
             for nearby_mon in cell["nearby_pokemon"]:
                 stopid = nearby_mon["fort_id"]
-                if not stopid:
-                    continue
 
                 mon_id = nearby_mon["id"]
                 encounter_id = nearby_mon["encounter_id"]
@@ -160,14 +159,20 @@ class DbPogoProtoSubmit:
                 if cache.exists(cache_key):
                     continue
 
-                stop = self._db_exec.execute(stop_query, (stopid))
-                if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
-                    stop = self._db_exec.execute(gym_query, (stopid))
-
-                if len(stop) > 0:
-                    lat, lon = stop[0]
+                if stopid == "" and cellid is not None:
+                    lat, lon, _ = S2Helper.get_position_from_cell(cellid)
+                    stopid = None
+                    db_cell = cellid
                 else:
-                    lat, lon = (0, 0)
+                    db_cell = None
+                    stop = self._db_exec.execute(stop_query, (stopid))
+                    if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
+                        stop = self._db_exec.execute(gym_query, (stopid))
+
+                    if len(stop) > 0:
+                        lat, lon = stop[0]
+                    else:
+                        lat, lon = (0, 0)
 
                 spawnpoint = 0
                 now = datetime.utcfromtimestamp(time.time())
@@ -211,8 +216,8 @@ class DbPogoProtoSubmit:
 
                 nearby_args.append(
                     (
-                        encounter_id, spawnpoint, mon_id, stopid, disappear_time, gender,
-                        weather_boosted, now, costume, form, lat, lon
+                        encounter_id, spawnpoint, mon_id, stopid, db_cell, disappear_time,
+                        gender, weather_boosted, now, costume, form, lat, lon
                     )
                 )
                 cache.set(cache_key, 1, ex=60*60)
@@ -299,7 +304,7 @@ class DbPogoProtoSubmit:
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id), fort_id=NULL, "
+            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id), fort_id=NULL, cell_id=NULL, "
             "latitude=VALUES(latitude), longitude=VALUES(longitude), spawnpoint_id=VALUES(spawnpoint_id)"
         )
         insert_values = (
