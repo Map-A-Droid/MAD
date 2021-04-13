@@ -598,7 +598,7 @@ class WebhookWorker:
             if "pokemon" in self.__webhook_types:
                 self.__pokemon_types.add("encounter")
             if len(self.__pokemon_types) > 0:
-                self.__webhook_types.add("pokemon")
+                sub_types += "pokemon"
 
             self.__webhook_receivers.append({
                 "url": url,
