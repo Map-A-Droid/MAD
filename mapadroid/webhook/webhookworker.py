@@ -30,8 +30,14 @@ class WebhookWorker:
         self.__rarity = rarity
         self.__last_check = int(time.time())
         self.__webhook_receivers = []
-        self.__webhook_types = []
-        self.__valid_types = ['pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop']
+        self.__webhook_types = set()
+        self.__pokemon_types = set()
+        self.__valid_types = [
+            'pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop'
+        ]
+        self.__valid_mon_types = [
+            'encounter', 'wild', 'nearby_stop', 'nearby_cell', 'lure_wild', 'lure_encounter'
+        ]
 
         self.__build_webhook_receivers()
         self.__build_ivmon_list(mapping_manager)
@@ -580,12 +586,17 @@ class WebhookWorker:
                 url = url[end_index:]
 
                 for vtype in self.__valid_types:
-                    if vtype not in self.__webhook_types and vtype in sub_types:
-                        self.__webhook_types.append(vtype)
+                    if vtype in sub_types:
+                        self.__webhook_types.add(vtype)
+                for vmtype in self.__valid_mon_types:
+                    if vmtype in sub_types:
+                        self.__pokemon_types.add(vmtype)
             else:
-                for vtype in self.__valid_types:
-                    if vtype not in self.__webhook_types:
-                        self.__webhook_types.append(vtype)
+                for vtype in self.__valid_types + self.__valid_mon_types:
+                    self.__webhook_types.add(vtype)
+
+            if "pokemon" in self.__webhook_types:
+                self.__pokemon_types.add("encounter")
 
             self.__webhook_receivers.append({
                 "url": url,
@@ -669,9 +680,11 @@ class WebhookWorker:
                 full_payload += pokestops
 
             # mon
-            if 'pokemon' in self.__webhook_types:
+            if len(self.__pokemon_types) > 0:
                 mon = self.__prepare_mon_data(
-                    self._db_reader.get_mon_changed_since(self.__last_check)
+                    self._db_reader.get_mon_changed_since(
+                        self.__last_check, self.__pokemon_types
+                    )
                 )
                 full_payload += mon
         except Exception:
