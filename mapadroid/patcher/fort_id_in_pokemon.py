@@ -27,3 +27,18 @@ class Patch(PatchBase):
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
+
+
+        add_enums_cell = (
+            "ALTER TABLE `pokemon` "
+            "ADD COLUMN `cell_id` bigint(20) unsigned DEFAULT NULL, "
+            "ADD COLUMN `seen_type` enum('wild', 'encounter', "
+            "'nearby_stop', 'nearby_cell', 'lure_wild', 'lure_encounter');"
+        )
+
+        try:
+            if self._schema_updater.check_column_exists("pokemon", "seen_type"):
+                self._db.execute(add_enums_cell, commit=True, raise_exec=True)
+        except Exception as e:
+            self._logger.exception("Unexpected error: {}", e)
+            self.issues = True
