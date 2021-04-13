@@ -414,12 +414,14 @@ class WebhookWorker:
             if self.__is_in_excluded_area([mon["latitude"], mon["longitude"]]):
                 continue
 
+            """
             if not self.__args.pokemon_webhook_nonivs \
                and mon["pokemon_id"] in self.__IV_MON \
                and (mon["individual_attack"] is None) \
                and (mon["fort_id"] is None):
                 # skipping this mon since IV has not been scanned yet
                 continue
+            """
 
             mon_payload = {
                 "encounter_id": mon["encounter_id"],
