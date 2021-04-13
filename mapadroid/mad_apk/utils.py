@@ -1,15 +1,16 @@
 import io
-import json
 import zipfile
 from distutils.version import LooseVersion
 from typing import Generator, Tuple, Union
 
 import apkutils
 import requests
+from apksearch.search import HEADERS
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from flask import Response, stream_with_context
 
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
+from mapadroid.utils.functions import get_version_codes
+from mapadroid.utils.global_variables import CHUNK_MAX_SIZE
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 from .abstract_apk_storage import AbstractAPKStorage
@@ -315,16 +316,25 @@ def supported_pogo_version(architecture: APKArch, version: str) -> bool:
     else:
         bits = '64'
     composite_key = '%s_%s' % (version, bits,)
-    try:
-        with open('configs/version_codes.json') as fh:
-            json.load(fh)[composite_key]
-            return True
-    except KeyError:
-        try:
-            requests.get(VERSIONCODES_URL).json()[composite_key]
-            return True
-        except KeyError:
-            pass
+    valid = composite_key in get_version_codes(force_gh=False)
     if not valid:
-        logger.info('Current version of PoGo [{}] is not supported', composite_key)
+        valid = composite_key in get_version_codes(force_gh=True)
+    if not valid:
+        logger.debug("PoGo [{}] is not supported", composite_key)
     return valid
+
+
+def perform_http_download(url: str, retries: int = 3) -> requests.Response:
+    attempt = 0
+    while attempt < retries:
+        try:
+            logger.info("Starting download of {}", url)
+            data = requests.get(url, allow_redirects=True, headers=HEADERS)
+            data.raise_for_status()
+            logger.info("Download completed for {}", url)
+            return data
+        except Exception as err:
+            logger.warning("Unable to download PoGo. Retry {} of {}. {}", attempt, retries, err)
+            attempt += 1
+            continue
+    return None
