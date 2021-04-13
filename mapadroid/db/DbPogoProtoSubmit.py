@@ -44,13 +44,14 @@ class DbPogoProtoSubmit:
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
             "weight, height, gender, catch_prob_1, catch_prob_2, catch_prob_3, rating_attack, rating_defense, "
-            "weather_boosted_condition, last_modified, costume, form) "
+            "weather_boosted_condition, last_modified, costume, form, seen_type) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-            "%s, %s, %s, %s, %s) "
+            "%s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
             "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=VALUES(pokemon_id), latitude=VALUES(latitude), "
             "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), form=VALUES(form), "
-            "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL, cell_id=NULL"
+            "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL, cell_id=NULL, "
+            "seen_type=VALUES(seen_type)"
         )
 
         mon_args = []
@@ -96,7 +97,7 @@ class DbPogoProtoSubmit:
                         encounter_id, spawnid, mon_id, lat, lon,
                         despawn_time, None, None, None, None, None, None,
                         None, None, None, gender, None, None, None, None,
-                        None, weather_boosted, now, costume, form
+                        None, weather_boosted, now, costume, form, "wild"
                     )
                 )
 
@@ -122,8 +123,8 @@ class DbPogoProtoSubmit:
         query_nearby = (
             "INSERT IGNORE pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, cell_id, "
             "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
-            "latitude, longitude)"
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "latitude, longitude, seen_type)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
         )
         stop_query = (
             "SELECT latitude, longitude "
@@ -163,8 +164,10 @@ class DbPogoProtoSubmit:
                     lat, lon, _ = S2Helper.get_position_from_cell(cellid)
                     stopid = None
                     db_cell = cellid
+                    seen_type = "nearby_cell"
                 else:
                     db_cell = None
+                    seen_type = "nearby_stop"
                     stop = self._db_exec.execute(stop_query, (stopid))
                     if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
                         stop = self._db_exec.execute(gym_query, (stopid))
@@ -294,9 +297,9 @@ class DbPogoProtoSubmit:
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
             "weight, height, gender, catch_prob_1, catch_prob_2, catch_prob_3, rating_attack, rating_defense, "
-            "weather_boosted_condition, last_modified, costume, form) "
+            "weather_boosted_condition, last_modified, costume, form, seen_type) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-            "%s, %s, %s, %s, %s) "
+            "%s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
             "individual_attack=VALUES(individual_attack), individual_defense=VALUES(individual_defense), "
             "individual_stamina=VALUES(individual_stamina), move_1=VALUES(move_1), move_2=VALUES(move_2), "
@@ -305,7 +308,8 @@ class DbPogoProtoSubmit:
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
             "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id), fort_id=NULL, cell_id=NULL, "
-            "latitude=VALUES(latitude), longitude=VALUES(longitude), spawnpoint_id=VALUES(spawnpoint_id)"
+            "latitude=VALUES(latitude), longitude=VALUES(longitude), spawnpoint_id=VALUES(spawnpoint_id), "
+            "seen_type=VALUES(seen_type)"
         )
         insert_values = (
             encounter_id,
@@ -329,7 +333,8 @@ class DbPogoProtoSubmit:
             weather_boosted,
             now,
             pokemon_display.get("costume_value", None),
-            form
+            form,
+            "encounter"
         )
 
         self._db_exec.execute(query, insert_values, commit=True)

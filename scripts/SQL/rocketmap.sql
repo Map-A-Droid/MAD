@@ -115,6 +115,8 @@ CREATE TABLE `pokemon` (
     `weather_boosted_condition` smallint(6) DEFAULT NULL,
     `last_modified` datetime DEFAULT NULL,
     `fort_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `cell_id` bigint(20) unsigned DEFAULT NULL,
+    `seen_type` enum('wild', 'encounter', 'nearby_stop', 'nearby_cell', 'lure_wild', 'lure_encounter'),
     PRIMARY KEY (`encounter_id`),
     KEY `pokemon_spawnpoint_id` (`spawnpoint_id`),
     KEY `pokemon_pokemon_id` (`pokemon_id`),
