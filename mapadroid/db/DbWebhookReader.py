@@ -180,7 +180,7 @@ class DbWebhookReader:
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
             "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
             "weather_boosted_condition, pokemon.last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
-            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, {}"
+            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, seen_type, {}"
             "FROM pokemon "
             "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint {}"
             "WHERE pokemon.last_modified >= %s "
@@ -212,7 +212,7 @@ class DbWebhookReader:
              individual_defense, individual_stamina, move_1, move_2,
              cp, cp_multiplier, weight, height, gender, form, costume,
              weather_boosted_condition, last_modified, catch_prob_1, catch_prob_2, catch_prob_3,
-             verified, fort_id, stop_name, stop_url, cell_id) in res:
+             verified, seen_type, fort_id, stop_name, stop_url, cell_id) in res:
             ret.append({
                 "encounter_id": encounter_id,
                 "pokemon_id": pokemon_id,
@@ -241,6 +241,7 @@ class DbWebhookReader:
                 "fort_id": fort_id,
                 "stop_name": stop_name,
                 "stop_url": stop_url,
-                "cell_id": cell_id
+                "cell_id": cell_id,
+                "seen_type": seen_type
             })
         return ret

@@ -429,6 +429,7 @@ class WebhookWorker:
                 "longitude": mon["longitude"],
                 "disappear_time": mon["disappear_time"],
                 "verified": mon["spawn_verified"],
+                "seen_type": mon["seen_type"]
             }
 
             # get rarity
@@ -486,20 +487,13 @@ class WebhookWorker:
                 if self.__args.quest_webhook_flavor == "poracle":
                     mon_payload["weather"] = mon["weather_boosted_condition"]
 
-            if mon["fort_id"] is not None:
+            if mon["seen_type"] == "nearby_stop":
                 mon_payload["fort_id"] = mon["fort_id"]
                 mon_payload["verified"] = False
-                if mon["stop_name"] or mon["stop_url"]:
-                    mon_payload["fort_name"] = mon["stop_name"]
-                    mon_payload["fort_url"] = mon["stop_url"]
-                elif mon["gym_name"] or mon["gym_url"]:
-                    mon_payload["fort_name"] = mon["gym_name"]
-                    mon_payload["fort_url"] = mon["gym_url"]
-                else:
-                    mon_payload["fort_name"] = None
-                    mon_payload["fort_url"] = None
+                mon_payload["fort_name"] = mon.get("stop_name")
+                mon_payload["fort_url"] = mon.get("stop_url")
             
-            if mon["cell_id"] is not None:
+            if mon["seen_type"] == "nearby_cell":
                 mon_payload["cell_coords"] = S2Helper.coords_of_cell(
                     mon["cell_id"]
                 )
