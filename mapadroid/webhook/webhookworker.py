@@ -498,6 +498,12 @@ class WebhookWorker:
                 else:
                     mon_payload["fort_name"] = None
                     mon_payload["fort_url"] = None
+            
+            if mon["cell_id"] is not None:
+                mon_payload["cell_coords"] = S2Helper.coords_of_cell(
+                    mon["cell_id"]
+                )
+                mon_payload["cell_id"] = mon["cell_id"]
 
             entire_payload = {"type": "pokemon", "message": mon_payload}
             ret.append(entire_payload)

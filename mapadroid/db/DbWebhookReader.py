@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.database)
 
@@ -185,15 +186,20 @@ class DbWebhookReader:
         query_mon_types = ["'" + t + "'" for t in mon_types]
         query += "AND seen_type in (" + ",".join(query_mon_types) + ")"
 
+        extra_select = ""
+        extra_join = ""
         if "nearby_stop" in mon_types:
-            nearby_select = "fort_id, pokestop.name, pokestop.image, gymdetails.name, gymdetails.url "
-            nearby_joins = (
-                "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
-                "LEFT JOIN gymdetails on pokemon.fort_id = gymdetails.gym_id "
-            )
-            query = query.format(nearby_select, nearby_joins)
+            extra_select += "fort_id, pokestop.name, pokestop.image, "
+            extra_join +="LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
         else:
-            query = query.format("NULL, NULL, NULL, NULL, NULL ", "")
+            extra_select += "NULL, NULL, NULL, "
+
+        if "nearby_cell" in mon_types:
+            extra_select += "cell_id "
+        else:
+            extra_select += "NULL "
+
+        query = query.format(extra_select, extra_join)
 
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         res = self._db_exec.execute(query, (tsdt,))
@@ -204,7 +210,7 @@ class DbWebhookReader:
              individual_defense, individual_stamina, move_1, move_2,
              cp, cp_multiplier, weight, height, gender, form, costume,
              weather_boosted_condition, last_modified, catch_prob_1, catch_prob_2, catch_prob_3,
-             verified, fort_id, stop_name, stop_url, gym_name, gym_url) in res:
+             verified, fort_id, stop_name, stop_url, cell_id) in res:
             ret.append({
                 "encounter_id": encounter_id,
                 "pokemon_id": pokemon_id,
@@ -233,7 +239,6 @@ class DbWebhookReader:
                 "fort_id": fort_id,
                 "stop_name": stop_name,
                 "stop_url": stop_url,
-                "gym_name": gym_name,
-                "gym_url": gym_url
+                "cell_id": cell_id
             })
         return ret
