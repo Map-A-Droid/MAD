@@ -220,7 +220,7 @@ class DbPogoProtoSubmit:
                 nearby_args.append(
                     (
                         encounter_id, spawnpoint, mon_id, stopid, db_cell, disappear_time,
-                        gender, weather_boosted, now, costume, form, lat, lon
+                        gender, weather_boosted, now, costume, form, lat, lon, seen_type
                     )
                 )
                 cache.set(cache_key, 1, ex=60*60)
