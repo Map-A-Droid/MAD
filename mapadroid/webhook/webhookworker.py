@@ -578,20 +578,20 @@ class WebhookWorker:
                 sub_types = webhook[:end_index]
                 url = url[end_index:]
 
+                if "pokemon" in sub_types:
+                    self.__pokemon_types.add("encounter")
+
                 for vtype in self.__valid_types:
                     if vtype in sub_types:
                         self.__webhook_types.add(vtype)
                 for vmtype in self.__valid_mon_types:
                     if vmtype in sub_types:
                         self.__pokemon_types.add(vmtype)
+                        if not "pokemon" in sub_types:
+                            sub_types += "pokemon"
             else:
                 for vtype in self.__valid_types + self.__valid_mon_types:
                     self.__webhook_types.add(vtype)
-
-            if "pokemon" in self.__webhook_types:
-                self.__pokemon_types.add("encounter")
-            if len(self.__pokemon_types) > 0:
-                sub_types += "pokemon"
 
             self.__webhook_receivers.append({
                 "url": url,
