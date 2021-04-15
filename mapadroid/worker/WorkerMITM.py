@@ -191,7 +191,15 @@ class WorkerMITM(MITMBase):
         if latest_proto_data is None:
             return LatestReceivedType.UNDEFINED, data_found
         latest_proto = latest_proto_data.get("payload")
-        key_to_check: str = "wild_pokemon" if mode in ["mon_mitm", "iv_mitm"] else "forts"
+
+        if mode in ["mon_mitm", "iv_mitm"]:
+            if self._applicationArgs.do_nearby_scans:
+                key_to_check = "nearby_pokemon"
+            else:
+                key_to_check = "wild_pokemon"
+        else:
+            key_to_check = "forts"
+        
         if self._gmo_cells_contain_multiple_of_key(latest_proto, key_to_check):
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GMO
