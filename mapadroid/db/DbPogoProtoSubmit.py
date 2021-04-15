@@ -51,7 +51,7 @@ class DbPogoProtoSubmit:
             "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=VALUES(pokemon_id), latitude=VALUES(latitude), "
             "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), form=VALUES(form), "
             "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL, cell_id=NULL, "
-            "seen_type=VALUES(seen_type)"
+            "seen_type=IF(seen_type='encounter','encounter',VALUES(seen_type))"
         )
 
         mon_args = []
