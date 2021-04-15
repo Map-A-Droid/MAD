@@ -80,6 +80,9 @@ class WebhookWorker:
             if sub_types is not None:
                 for payload in payloads:
                     if payload["type"] in sub_types:
+                        if payload["type"] in self.__valid_mon_types:
+                            payload = payload.copy()
+                            payload["type"] = "pokemon"
                         payload_to_send.append(payload)
             else:
                 payload_to_send = payloads
@@ -492,7 +495,7 @@ class WebhookWorker:
                 )
                 mon_payload["cell_id"] = mon["cell_id"]
 
-            entire_payload = {"type": "pokemon", "message": mon_payload}
+            entire_payload = {"type": str(mon["seen_type"]), "message": mon_payload}
             ret.append(entire_payload)
 
         return ret
@@ -579,7 +582,7 @@ class WebhookWorker:
                 url = url[end_index:]
 
                 if "pokemon" in sub_types:
-                    self.__pokemon_types.add("encounter")
+                    sub_types += "encounter"
 
                 for vtype in self.__valid_types:
                     if vtype in sub_types:
@@ -587,8 +590,6 @@ class WebhookWorker:
                 for vmtype in self.__valid_mon_types:
                     if vmtype in sub_types:
                         self.__pokemon_types.add(vmtype)
-                        if not "pokemon" in sub_types:
-                            sub_types += "pokemon"
             else:
                 for vtype in self.__valid_types + self.__valid_mon_types:
                     self.__webhook_types.add(vtype)
