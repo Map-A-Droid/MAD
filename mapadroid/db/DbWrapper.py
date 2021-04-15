@@ -650,7 +650,7 @@ class DbWrapper:
             
             if "nearby" in seen_type:
                 latitude += random.uniform(-0.0003, 0.0003)
-                longitude += random.uniform(-0.0007, 0.0007)
+                longitude += random.uniform(-0.0005, 0.0005)
             mons.append({
                 "encounter_id": encounter_id,
                 "spawnpoint_id": spawnpoint_id,
