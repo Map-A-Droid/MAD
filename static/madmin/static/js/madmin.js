@@ -1535,6 +1535,23 @@ new Vue({
                 var ivcolor = "red";
             }
 
+            // I have no idea how JS works and i'm sure the below block can be done better
+            if (mon["seen_type"] == "encounter") {
+                var seentype = "in an encounter"
+            } else if (mon["seen_type"] == "wild") {
+                var seentype = "in the wild"
+            } else if (mon["seen_type"] == "nearby_stop") {
+                var seentype = "at a Pokéstop"
+            } else if (mon["seen_type"] == "nearby_cell") {
+                var seentype = "in a L15 S2 cell"
+            } else if (mon["seen_type"] == "lure_wild") {
+                var seentype = "at a lure (no encounter)"
+            } else if (mon["seen_type"] == "lure_encounter") {
+                var seentype = "at a lure (with encounter)"
+            } else {
+                var seentype = "unknown"
+            }
+
             var ivtext = "";
             if (mon["cp"] > 0) {
                 ivtext = `
@@ -1558,7 +1575,7 @@ new Vue({
             <a onclick=copyClipboard("${mon["latitude"].toFixed(6)}|${mon["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
          </div>
           <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified'] * 1000).format("YYYY-MM-DD HH:mm:ss")}</div>
-          <div id="seentype"><i class="fas fa-eye"></i> Seen <strong>${mon['seen_type']}</strong></div>
+          <div id="seentype"><i class="fas fa-eye"></i> Seen <strong>${seentype}</strong></div>
           <br>
           ${ivtext}
         <div class="end"><i class="fas fa-hourglass-end"></i> Despawn: <strong>${end.format("YYYY-MM-DD HH:mm:ss")} (${end.from(moment())})</strong></div>

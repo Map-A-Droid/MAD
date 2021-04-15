@@ -633,15 +633,6 @@ class DbWrapper:
 
         res = self.execute(query + query_where)
 
-        seen_translations = {
-            "encounter": "in an encounter",
-            "wild": "in the wild",
-            "nearby_stop": "at a Pokéstop",
-            "nearby_cell": "in a L15 S2 cell",
-            "lure_wild": "at a lure (no encounter)",
-            "lure_encounter": "at a lure (with encounter)"
-        }
-
         for (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
              disappear_time, individual_attack, individual_defense,
              individual_stamina, move_1, move_2, cp,
@@ -671,7 +662,7 @@ class DbWrapper:
                 "costume": costume,
                 "weather_boosted_condition": weather_boosted_condition,
                 "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
-                "seen_type": seen_translations.get(seen_type, "unknown")
+                "seen_type": seen_type
             })
 
         return mons
