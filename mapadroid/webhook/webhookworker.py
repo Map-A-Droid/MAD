@@ -80,7 +80,7 @@ class WebhookWorker:
             if sub_types is not None:
                 for payload in payloads:
                     if payload["type"] in sub_types or \
-                       (payload["message"].get("seen_type") in sub_types):
+                       (payload["message"].get("seen_type", "waddup?!") in sub_types):
                         payload_to_send.append(payload)
             else:
                 payload_to_send = payloads
