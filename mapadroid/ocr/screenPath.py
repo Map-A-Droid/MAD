@@ -191,9 +191,9 @@ class WordToScreenMatching(object):
                 temp_dict['Google'] = global_dict['top'][i] / diff
 
             if self.get_devicesettings_value('logintype', 'google') == 'ptc':
-                self._logger.info("ScreenType.LOGINSELECT using PTC (logintype in device settings)")
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
+                    self._logger.info("ScreenType.LOGINSELECT (c) using PTC (logintype in Device Settings)")
                     self._click_center_button(diff, global_dict, i)
                     time.sleep(5)
                     return
@@ -202,6 +202,7 @@ class WordToScreenMatching(object):
                 elif 'Facebook' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + 2 * self._height / 10.11)
+                    self._logger.info("ScreenType.LOGINSELECT (f) using PTC (logintype in Device Settings)")
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
@@ -210,14 +211,15 @@ class WordToScreenMatching(object):
                 elif 'Google' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Google'] + self._height / 10.11)
+                    self._logger.info("ScreenType.LOGINSELECT (g) using PTC (logintype in Device Settings)")
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
 
             else:
-                self._logger.info("ScreenType.LOGINSELECT using Google Account (logintype in device settings)")
                 self._nextscreen = ScreenType.UNDEFINED
                 if 'Google' in (global_dict['text'][i]):
+                    self._logger.info("ScreenType.LOGINSELECT (g) using Google Account (logintype in Device Settings)")
                     self._click_center_button(diff, global_dict, i)
                     time.sleep(5)
                     return
@@ -226,6 +228,7 @@ class WordToScreenMatching(object):
                 elif 'Facebook' in temp_dict and 'CLUB' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + ((temp_dict['CLUB'] - temp_dict['Facebook']) / 2))
+                    self._logger.info("ScreenType.LOGINSELECT (fc) using Google Account (logintype in Device Settings)")
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
@@ -234,6 +237,7 @@ class WordToScreenMatching(object):
                 elif 'Facebook' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + self._height / 10.11)
+                    self._logger.info("ScreenType.LOGINSELECT (f) using Google Account (logintype in Device Settings)")
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
@@ -242,6 +246,7 @@ class WordToScreenMatching(object):
                 elif 'CLUB' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['CLUB'] - self._height / 10.11)
+                    self._logger.info("ScreenType.LOGINSELECT (c) using Google Account (logintype in Device Settings)")
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
