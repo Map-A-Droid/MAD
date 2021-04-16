@@ -749,6 +749,41 @@ class DbWrapper:
                                                                           str(longitude))
         self.execute(query, commit=True)
 
+    def get_cells_with_pokemon(self, geofence_helper, init) -> List[Location]:
+        logger.debug3("DbWrapper::get_cells_with_pokemon called")
+        min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
+
+        if init:
+            has_mon = "0"
+        else:
+            has_mon = "1"
+
+        query = (
+            "SELECT center_latitude, center_longitude "
+            "FROM trs_s2cells "
+            "WHERE (center_latitude >= {} AND center_longitude >= {} "
+            "AND center_latitude <= {} AND center_longitude <= {}) and "
+            "has_pokemon = {}"
+        ).format(min_lat, min_lon, max_lat, max_lon, has_mon)
+
+        list_of_coords: List[Location] = []
+        logger.debug3("DbWrapper::get_cells_with_pokemon executing select query")
+        res = self.execute(query)
+        logger.debug4("DbWrapper::get_cells_with_pokemon result of query: {}", res)
+        for (latitude, longitude) in res:
+            list_of_coords.append(Location(latitude, longitude))
+
+        if geofence_helper is not None:
+            logger.debug3("DbWrapper::get_cells_with_pokemon applying geofence")
+            geofenced_coords = geofence_helper.get_geofenced_coordinates(
+                list_of_coords)
+            logger.debug4(geofenced_coords)
+            return geofenced_coords
+        else:
+            logger.debug3("DbWrapper::get_cells_with_pokemon converting to numpy")
+            return list_of_coords
+
+
     def get_detected_spawns(self, geofence_helper, include_event_id) -> List[Location]:
         logger.debug3("DbWrapper::get_detected_spawns called")
 

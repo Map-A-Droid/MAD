@@ -8,13 +8,19 @@ class RouteManagerMon(RouteManagerBase):
     def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
                  path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=True, init=False,
-                 name="unknown", settings=None, joinqueue=None, include_event_id=None):
+                 name="unknown", settings=None, joinqueue=None, include_event_id=None,
+                 nearby_cell_mode=False):
+        
+        if nearby_cell_mode:
+            use_s2 = True
+        else:
+            use_s2 = False
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
+                                  routefile=routefile, init=init, use_s2=use_s2,
                                   name=name, settings=settings, mode=mode, joinqueue=joinqueue
                                   )
         self.coords_spawns_known = coords_spawns_known

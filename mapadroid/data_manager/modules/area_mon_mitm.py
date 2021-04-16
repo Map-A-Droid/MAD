@@ -188,6 +188,15 @@ class AreaMonMITM(Area):
                                    "Pokemon species to reach a near 100% IV-rate. This will slow down route progress!",
                     "expected": bool
                 }
+            },
+            "nearby_cell_mode": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [False, True],
+                    "description": "If turned on, the area will cover Level 15 S2 cells instead of spawnpoints.",
+                    "expected": bool
+                }
             }
         }
     }

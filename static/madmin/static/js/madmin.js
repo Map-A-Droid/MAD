@@ -1235,9 +1235,9 @@ new Vue({
             var cell = this.cellupdates[marker.options.id];
 
             if (cell["has_pokemon"] == 1) {
-                var has_mon = `<i class="fas fa-check"></i> Has nearby_cell Pokémon`;
+                var has_mon = `<i class="fa fa-check"></i> Has nearby_cell Pokémon`;
             } else {
-                var has_mon = `<i class="fas fa-times"></i> Doesn't have nearby_cell Pokémon`;
+                var has_mon = `<i class="fa fa-times"></i> Doesn't have nearby_cell Pokémon`;
             }
 
             return `

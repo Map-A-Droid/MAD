@@ -32,6 +32,12 @@ mode_mapping = {
         "range_init": 145,
         "max_count": 100000
     },
+    "nearby_cells": {
+        "s2_cell_level": 15,
+        "range": 180,
+        "range_init": 360,
+        "max_count": 100000
+    },
     "pokestops": {
         "s2_cell_level": 13,
         "range": 0.001,
@@ -390,13 +396,21 @@ class MappingManager:
                     self.get_monlist(area_id)
             route_resource = self.__data_manager.get_resource('routecalc', identifier=area["routecalc"])
 
+            # nearby mode for mon_mitm
+            nearby_cell_mode = area.get("settings", {}).get("nearby_cell_mode", False)
+            if nearby_cell_mode:
+                mode_mapping_key = "nearby_cells"
+            else:
+                mode_mapping_key = mode
+
+            range_ = mode_mapping.get(mode_mapping_key, {}).get("range", 0)
+            max_count = mode_mapping.get(mode_mapping_key, {}).get("max_count", 99999999)
+            s2_level = mode_mapping.get(mode_mapping_key, {}).get("s2_cell_level", 30)
+
             calc_type: str = area.get("route_calc_algorithm", "route")
             route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager,
                                                                  area_id, None,
-                                                                 mode_mapping.get(mode, {}).get("range", 0),
-                                                                 mode_mapping.get(mode, {}).get("max_count",
-                                                                                                99999999),
-                                                                 geofence_included,
+                                                                 range_, max_count, geofence_included,
                                                                  path_to_exclude_geofence=geofence_excluded,
                                                                  mode=mode,
                                                                  settings=area.get("settings", None),
@@ -408,23 +422,25 @@ class MappingManager:
                                                                  routefile=route_resource,
                                                                  calctype=calc_type,
                                                                  joinqueue=self.join_routes_queue,
-                                                                 s2_level=mode_mapping.get(mode, {}).get(
-                                                                     "s2_cell_level", 30),
+                                                                 s2_level=s2_level,
                                                                  include_event_id=area.get(
-                                                                     "settings", {}).get("include_event_id", None)
+                                                                     "settings", {}).get("include_event_id", None),
+                                                                 nearby_cell_mode=nearby_cell_mode
                                                                  )
             logger.info("Initializing area {}", area["name"])
             if mode not in ("iv_mitm", "idle") and calc_type != "routefree":
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", True),
                                              init=area.get("init", False),
-                                             range_init=mode_mapping.get(mode, {}).get("range_init", 630),
+                                             range_init=mode_mapping.get(
+                                                 mode_mapping_key, {}).get("range_init", 630),
                                              including_stops=area.get("including_stops", False),
-                                             include_event_id=area.get("settings", {}).get("include_event_id", None))
+                                             include_event_id=area.get("settings", {}).get("include_event_id", None),
+                                             nearby_cell_mode=area.get("nearby_cell_mode", False))
 
                 route_manager.add_coords_list(coords)
-                max_radius = mode_mapping[mode]["range"]
-                max_count_in_radius = mode_mapping[mode]["max_count"]
+                max_radius = mode_mapping[mode_mapping_key]["range"]
+                max_count_in_radius = mode_mapping[mode_mapping_key]["max_count"]
                 if not area.get("init", False):
 
                     proc = thread_pool.apply_async(route_manager.initial_calculation,
@@ -502,7 +518,7 @@ class MappingManager:
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = True,
                        init: bool = False, range_init: int = 630, including_stops: bool = False,
-                       include_event_id=None) -> List[Location]:
+                       include_event_id=None, nearby_cell_mode: bool = False) -> List[Location]:
         coords: List[Location] = []
         if not init:
             # grab data from DB depending on mode
@@ -517,20 +533,26 @@ class MappingManager:
                     except Exception:
                         pass
             elif mode == "mon_mitm":
-                if coords_spawns_known:
-                    logger.debug("Reading known Spawnpoints from DB")
-                    coords = self.__db_wrapper.get_detected_spawns(geofence_helper, include_event_id)
+                if nearby_cell_mode:
+                    coords = self.__db_wrapper.get_cells_with_pokemon(geofence_helper, init=False)
                 else:
-                    logger.debug("Reading unknown Spawnpoints from DB")
-                    coords = self.__db_wrapper.get_undetected_spawns(geofence_helper, include_event_id)
+                    if coords_spawns_known:
+                        logger.debug("Reading known Spawnpoints from DB")
+                        coords = self.__db_wrapper.get_detected_spawns(geofence_helper, include_event_id)
+                    else:
+                        logger.debug("Reading unknown Spawnpoints from DB")
+                        coords = self.__db_wrapper.get_undetected_spawns(geofence_helper, include_event_id)
             elif mode == "pokestops":
                 coords = self.__db_wrapper.stops_from_db(geofence_helper)
             else:
                 logger.fatal("Mode not implemented yet: {}", mode)
                 exit(1)
         else:
-            # calculate all level N cells (mapping back from mapping above linked to mode)
-            coords = S2Helper._generate_locations(range_init, geofence_helper)
+            if nearby_cell_mode:
+                coords = self.__db_wrapper.get_cells_with_pokemon(geofence_helper, init=True)
+            else:
+                # calculate all level N cells (mapping back from mapping above linked to mode)
+                coords = S2Helper._generate_locations(range_init, geofence_helper)
         return coords
 
     def __get_latest_auths(self) -> Optional[dict]:
