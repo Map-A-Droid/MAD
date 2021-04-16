@@ -819,7 +819,7 @@ class DbPogoProtoSubmit:
             "has_pokemon) "
             "VALUES (%s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), "
-            "has_pokemon=IF(has_pokemon=1, 1, 0)"
+            "has_pokemon=IF(has_pokemon=1, 1, VALUES(has_pokemon))"
         )
 
         cells = []
