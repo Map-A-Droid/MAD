@@ -191,6 +191,7 @@ class WordToScreenMatching(object):
                 temp_dict['Google'] = global_dict['top'][i] / diff
 
             if self.get_devicesettings_value('logintype', 'google') == 'ptc':
+                self._logger.info("ScreenType.LOGINSELECT using PTC (logintype in device settings)")
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
                     self._click_center_button(diff, global_dict, i)
@@ -214,6 +215,7 @@ class WordToScreenMatching(object):
                     return
 
             else:
+                self._logger.info("ScreenType.LOGINSELECT using Google Account (logintype in device settings)")
                 self._nextscreen = ScreenType.UNDEFINED
                 if 'Google' in (global_dict['text'][i]):
                     self._click_center_button(diff, global_dict, i)
