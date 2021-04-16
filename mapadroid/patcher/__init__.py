@@ -50,7 +50,8 @@ MAD_UPDATES = OrderedDict([
     (41, 'dynamic_iv_list'),
     (42, 'add_encounter_all'),
     (43, 'remove_tap_duration'),
-    (44, 'fort_id_in_pokemon')
+    (44, 'fort_id_in_pokemon'),
+    (45, 'has_pokemon_in_cell')
 ])
 
 

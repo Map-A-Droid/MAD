@@ -815,9 +815,11 @@ class DbPogoProtoSubmit:
         protocells = map_proto.get("cells", [])
 
         query = (
-            "INSERT INTO trs_s2cells (id, level, center_latitude, center_longitude, updated) "
-            "VALUES (%s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE updated=VALUES(updated)"
+            "INSERT INTO trs_s2cells (id, level, center_latitude, center_longitude, updated, "
+            "has_pokemon) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), "
+            "has_pokemon=IF(has_pokemon=1, 1, 0)"
         )
 
         cells = []
@@ -829,7 +831,13 @@ class DbPogoProtoSubmit:
 
             lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
 
-            cells.append((cell_id, 15, lat, lng, cell["current_timestamp"] / 1000))
+            has_mon = 0
+            for mon in cell.get("nearby_pokemon", []):
+                if mon.get("fort_id") == "":
+                    has_mon = 1
+                    break
+
+            cells.append((cell_id, 15, lat, lng, cell["current_timestamp"] / 1000, has_mon))
 
         self._db_exec.executemany(query, cells, commit=True)
 

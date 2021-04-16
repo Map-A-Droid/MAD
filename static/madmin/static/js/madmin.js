@@ -1234,10 +1234,17 @@ new Vue({
         build_cell_popup(marker) {
             var cell = this.cellupdates[marker.options.id];
 
+            if (cell["has_pokemon"] == 1) {
+                var has_mon = `<i class="fas fa-check"></i> Has nearby_cell Pokémon`;
+            } else {
+                var has_mon = `<i class="fas fa-times"></i> Doesn't have nearby_cell Pokémon`;
+            }
+
             return `
         <div class="content">
           <div class="id"><i class="fa fa-fingerprint"></i> <span>${cell["id"]}</span></div>
           <div id="updated"><i class="fa fa-clock"></i> Updated: ${moment(cell['updated'] * 1000).format("YYYY-MM-DD HH:mm:ss")}</div>
+          <div id="has_mon">${has_mon}</div>
         </div>`;
         },
         build_prioq_popup(marker) {

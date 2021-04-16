@@ -1271,7 +1271,7 @@ class DbWrapper:
     def get_cells_in_rectangle(self, ne_lat, ne_lon, sw_lat, sw_lon,
                                o_ne_lat=None, o_ne_lon=None, o_sw_lat=None, o_sw_lon=None, timestamp=None):
         query = (
-            "SELECT id, level, center_latitude, center_longitude, updated "
+            "SELECT id, level, center_latitude, center_longitude, updated, has_pokemon "
             "FROM trs_s2cells "
         )
 
@@ -1297,13 +1297,14 @@ class DbWrapper:
         res = self.execute(query + query_where)
 
         cells = []
-        for (cell_id, level, center_latitude, center_longitude, updated) in res:
+        for (cell_id, level, center_latitude, center_longitude, updated, has_mon) in res:
             cells.append({
                 "cell_id": cell_id,
                 "level": level,
                 "center_latitude": center_latitude,
                 "center_longitude": center_longitude,
-                "updated": updated
+                "updated": updated,
+                "has_pokemon": has_mon
             })
 
         return cells
