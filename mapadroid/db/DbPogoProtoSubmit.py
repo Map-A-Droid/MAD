@@ -150,15 +150,15 @@ class DbPogoProtoSubmit:
                     encounter_id = encounter_id + 2 ** 64
                 # Hotfix for a PD issue.
 
+                cache_key = "monnear{}".format(encounter_id)
+                if cache.exists(cache_key):
+                    continue
+
                 display = nearby_mon["display"]
                 form = display["form_value"]
                 costume = display["costume_value"]
                 gender = display["gender_value"]
                 weather_boosted = display["weather_boosted_value"]
-
-                cache_key = "monnear{}".format(encounter_id)
-                if cache.exists(cache_key):
-                    continue
 
                 if stopid == "" and cellid is not None:
                     lat, lon, _ = S2Helper.get_position_from_cell(cellid)
@@ -342,6 +342,65 @@ class DbPogoProtoSubmit:
         if cache_time > 0:
             cache.set(cache_key, 1, ex=int(cache_time))
         origin_logger.debug3("Done updating mon in DB")
+        return True
+
+    def mon_lure_noiv(self, origin: str, map_proto: dict):
+        """
+        Update/Insert Lure mons from a map_proto dict
+        """
+        cache = get_cache(self._args)
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug3("DbPogoProtoSubmit::mon_lure_noiv called with data received")
+        cells = map_proto.get("cells", None)
+        if cells is None:
+            return False
+
+        query_lures = (
+            "INSERT IGNORE pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
+            "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
+            "latitude, longitude, seen_type)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        )
+
+        lure_args = []
+        for cell in cells:
+            for fort in cell["forts"]:
+                lure_mon = fort.get("active_pokemon", {})
+                mon_id = lure_mon.get("id", 0)
+                if fort["type"] == 1 and mon_id > 0:
+                    encounter_id = lure_mon["encounter_id"]
+
+                    if encounter_id < 0:
+                        encounter_id = encounter_id + 2 ** 64
+                    
+                    cache_key = "monlurenoiv{}".format(encounter_id)
+                    if cache.exists(cache_key):
+                        continue
+
+                    lat = fort["latitude"]
+                    lon = fort["longitude"]
+                    stopid = fort["id"]
+                    disappear_time = datetime.utcfromtimestamp(
+                        lure_mon["expiration_timestamp"] / 1000)
+
+                    disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
+                    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+                    display = lure_mon["display"]
+                    form = display["form_value"]
+                    costume = display["costume_value"]
+                    gender = display["gender_value"]
+                    weather_boosted = display["weather_boosted_value"]
+
+                    cache.set(cache_key, 1, ex=60*5)
+                    lure_args.append(
+                        (
+                            encounter_id, 0, mon_id, stopid, disappear_time, gender,
+                            weather_boosted, now, costume, form, lat, lon, "lure_wild"
+                        )
+                    )
+
+        self._db_exec.executemany(query_lures, lure_args, commit=True)
         return True
 
     def spawnpoints(self, origin: str, map_proto: dict, proto_dt: datetime):

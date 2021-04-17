@@ -94,6 +94,10 @@ class SerializedMitmDataProcessor(Process):
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 gmo_loc_time = self.get_time_ms() - gmo_loc_start
 
+                lurenoiv_start = self.get_time_ms()
+                self.__db_submit.mon_lure_noiv(origin, data["payload"])
+                lurenoiv_time = self.get_time_ms() - lurenoiv_start
+
                 if self.__application_args.do_nearby_scans:
                     nearby_mons_time_start = self.get_time_ms()
                     self.__db_submit.nearby_mons(origin, received_timestamp, data["payload"], self.__mitm_mapper)
@@ -104,9 +108,11 @@ class SerializedMitmDataProcessor(Process):
                 full_time = self.get_time_ms() - start_time
 
                 origin_logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
-                                    "spawnpoints={}ms, mons={}ms, nearby_mons={}, cells={}ms, gmo_loc={}ms)",
+                                    "spawnpoints={}ms, mons={}ms, nearby_mons={}, lure_noiv={}, cells={}ms, " +
+                                    "gmo_loc={}ms)",
                                     full_time, weather_time, stops_time, gyms_time, raids_time,
-                                    spawnpoints_time, mons_time, nearby_mons_time, cells_time, gmo_loc_time)
+                                    spawnpoints_time, mons_time, nearby_mons_time, lurenoiv_time,
+                                    cells_time, gmo_loc_time)
             elif data_type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
