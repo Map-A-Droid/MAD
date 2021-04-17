@@ -2,7 +2,7 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Add has_pokemon to trs_s2cells'
+    name = 'Add has_pokemon to trs_s2cells and nearby_cell_mode to settings_area_mon_mitm'
     descr = 'Used to refine routes for use with nearby_cell mons'
 
     def _execute(self):
