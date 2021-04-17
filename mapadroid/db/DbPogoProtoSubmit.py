@@ -359,7 +359,7 @@ class DbPogoProtoSubmit:
             "INSERT IGNORE pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
             "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
             "latitude, longitude, seen_type)"
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
         )
 
         lure_args = []
