@@ -1577,12 +1577,12 @@ new Vue({
           <div class="name"><strong>${mon["name"]}</strong> #${mon["mon_id"]} ${mon["gender"] == 1 ? '<i class="fas fa-mars"></i>' : '<i class="fas fa-venus"></i>'}</div>
           <div class="id"><i class="fa fa-fingerprint"></i> <span>${mon["encounter_id"]}</span></div>
           <div class="coords">
-            <i class="fa fa-map-pin"></i>
+            <i class="fa fa-map-pin"></i> 
             <a href="https://maps.google.com/?q=${mon["latitude"]},${mon["longitude"]}">${mon["latitude"].toFixed(6)}, ${mon["longitude"].toFixed(6)}</a>
             <a onclick=copyClipboard("${mon["latitude"].toFixed(6)}|${mon["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
          </div>
           <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified'] * 1000).format("YYYY-MM-DD HH:mm:ss")}</div>
-          <div id="seentype"><i class="fas fa-eye"></i> Seen <strong>${seentype}</strong></div>
+          <div id="seentype"><i class="fa fa-eye"></i> Seen <strong>${seentype}</strong></div>
           <br>
           ${ivtext}
         <div class="end"><i class="fas fa-hourglass-end"></i> Despawn: <strong>${end.format("YYYY-MM-DD HH:mm:ss")} (${end.from(moment())})</strong></div>
