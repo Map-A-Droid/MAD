@@ -32,7 +32,7 @@ class SettingsWalkerareaHelper:
         return mapped
 
     @staticmethod
-    def get(session: AsyncSession, instance_id: int, walkerarea_id) -> Optional[SettingsWalkerarea]:
+    def get(session: AsyncSession, instance_id: int, walkerarea_id: int) -> Optional[SettingsWalkerarea]:
         stmt = select(SettingsWalkerarea).where(and_(SettingsWalkerarea.instance_id == instance_id,
                                                      SettingsWalkerarea.walkerarea_id == walkerarea_id))
         result = await session.execute(stmt)

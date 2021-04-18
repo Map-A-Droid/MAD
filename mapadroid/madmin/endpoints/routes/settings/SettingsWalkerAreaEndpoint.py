@@ -1,0 +1,65 @@
+from typing import Dict, Optional
+
+import aiohttp_jinja2
+from aiohttp import web
+from aiohttp.abc import Request
+from aiohttp_jinja2.helpers import url_for
+
+from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
+from mapadroid.db.model import SettingsWalker, SettingsWalkerarea, SettingsArea
+from mapadroid.madmin.RootEndpoint import RootEndpoint
+
+
+class SettingsWalkerEndpoint(RootEndpoint):
+    """
+    "/settings/walker"
+    """
+
+    def __init__(self, request: Request):
+        super().__init__(request)
+
+    # TODO: Auth
+    async def get(self):
+        identifier: Optional[str] = self.request.query.get("id")
+        if identifier:
+            return await self._render_single_element(identifier=identifier)
+        else:
+            raise web.HTTPFound(url_for("settings_walkers"))
+
+    # TODO: Verify working
+    @aiohttp_jinja2.template('settings_singlewalker.html')
+    async def _render_single_element(self, identifier: str):
+        # Parse the mode to send the correct settings-resource definition accordingly
+        walker: Optional[SettingsWalker] = None
+        if not identifier:
+            raise web.HTTPFound(url_for("settings_walkers"))
+        else:
+            walker: Optional[SettingsWalker] = await SettingsWalkerHelper.get(self._session, self._get_instance_id(),
+                                                                              int(identifier))
+            if not walker:
+                raise web.HTTPFound(url_for("settings_walkers"))
+
+        walkerarea_id: Optional[str] = self.request.query.get("walkerarea")
+        # Only pull this if its set.  When creating a new walkerarea it will be empty
+        walkerarea: Optional[SettingsWalkerarea] = None
+        if walkerarea_id is not None:
+            walkerarea: Optional[SettingsWalkerarea] = await SettingsWalkerareaHelper.get(self._session,
+                                                                                          self._get_instance_id(),
+                                                                                          int(walkerarea_id))
+        areas: Dict[int, SettingsArea] = await self._get_db_wrapper().get_all_areas(self._session)
+        walkertypes = ['coords', 'countdown', 'idle', 'period', 'round', 'timer']
+
+        template_data: Dict = {
+            'identifier': identifier,
+            'base_uri': url_for('api_walker'),
+            'redirect': url_for('settings_walkers'),
+            'subtab': 'walker',
+            'element': walkerarea,
+            'uri': url_for('api_walker') if not walkerarea_id else '%s/%s' % (url_for('api_walker'), walkerarea_id),
+            # TODO: Above is pretty generic in theory...
+            'walkertypes': walkertypes,
+            'areas': areas,
+            'walker': walker,
+        }
+        return template_data

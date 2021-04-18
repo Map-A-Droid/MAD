@@ -188,7 +188,7 @@ def is_newer_version(first_ver: str, second_ver: str) -> bool:
         return True
 
 
-def lookup_apk_enum(name: str) -> APKType:
+def lookup_apk_enum(name: Union[str, int]) -> APKType:
     """ Determine the APKType enum for a given value
 
     Args:
@@ -211,7 +211,7 @@ def lookup_apk_enum(name: str) -> APKType:
     raise ValueError('No defined lookup for %s' % (name,))
 
 
-def lookup_arch_enum(name: str) -> APKArch:
+def lookup_arch_enum(name: Union[int, str]) -> APKArch:
     """ Determine the APKArch enum for a given value
 
     Args:

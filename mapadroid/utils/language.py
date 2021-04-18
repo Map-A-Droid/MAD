@@ -15,7 +15,8 @@ async def open_json_file(jsonfile):
     return file_open
 
 
-def i8ln(word):
+async def i8ln(word):
+    # TODO: Async...
     lang_file = 'locale/' + os.environ['LANGUAGE'] + '/mad.json'
     if os.path.isfile(lang_file):
         with open(lang_file, encoding='utf8') as f:

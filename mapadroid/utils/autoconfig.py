@@ -8,7 +8,6 @@ from xml.sax.saxutils import escape
 from flask import Response, url_for
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigFileHelper import AutoconfigFileHelper
 from mapadroid.db.helper.OriginHopperHelper import OriginHopperHelper
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
@@ -41,33 +40,35 @@ class AutoConfIssues(IntEnum):
 
 
 class AutoConfIssueGenerator(object):
-    def __init__(self, db_wrapper: DbWrapper, args, storage_obj):
+    def __init__(self, session: AsyncSession, instance_id: int, args, storage_obj):
         self.warnings: List[AutoConfIssues] = []
         self.critical: List[AutoConfIssues] = []
 
         # TODO: Move to async start/init/create
-        pogoauth_entries: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_unassigned(session, instance_id)
+        pogoauth_entries: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_unassigned(session, instance_id,
+                                                                                               None)
         if len(pogoauth_entries) == 0 and not args.autoconfig_no_auth:
             self.warnings.append(AutoConfIssues.no_ggl_login)
         if not validate_hopper_ready(session, instance_id):
             self.critical.append(AutoConfIssues.origin_hopper_not_ready)
-        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self.db_wrapper.__instance_id)
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, instance_id)
         if len(auths) == 0:
             self.warnings.append(AutoConfIssues.auth_not_configured)
-        if not PDConfig(db_wrapper, args).configured:
+        if not PDConfig(session, instance_id, args).configured:
             self.critical.append(AutoConfIssues.pd_not_configured)
-        if not RGCConfig(db_wrapper, args).configured:
+        if not RGCConfig(session, instance_id, args).configured:
             self.critical.append(AutoConfIssues.rgc_not_configured)
         missing_packages = []
-        for _, apkpackages in get_apk_status(storage_obj).items():
+        # TODO: Async...
+        for _, apkpackages in (await get_apk_status(storage_obj)).items():
             for _, package in apkpackages.items():
                 if package.version is None:
                     missing_packages.append(package)
         if missing_packages:
             self.critical.append(AutoConfIssues.package_missing)
 
-    def get_headers(self) -> Dict:
-        headers: Dict[str, int] = {
+    def get_headers(self) -> Dict[str, str]:
+        headers: Dict[str, str] = {
             'X-Critical': json.dumps([issue.value for issue in self.critical]),
             'X-Warnings': json.dumps([issue.value for issue in self.warnings])
         }
@@ -174,21 +175,26 @@ class AutoConfIssue(Exception):
 
 class AutoConfigCreator:
     origin_field: str = None
+    source: str = None
+    sections: Dict = {}
+    host_field: str = None
 
-    def __init__(self, args):
+    def __init__(self, session: AsyncSession, instance_id: int, args):
         self._args = args
-        self.contents: dict[str, Any] = {}
+        self.contents: Dict[str, Any] = {}
         self.configured: bool = False
+        self._session: AsyncSession = session
+        self._instance_id: int = instance_id
         # TODO: Load config -> factory method to be awaited for...
         self.load_config()
 
     def delete(self, session: AsyncSession):
-        config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(session, self.source, instace_id)
+        config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(session, self._instance_id, self.source)
         if config is not None:
             session.delete(config)
 
-    def generate_config(self, origin: str) -> str:
-        origin_config = self.get_config()
+    def generate_config(self, origin: str) -> BytesIO:
+        origin_config = await self.get_config()
         origin_config[self.origin_field] = origin
         conv_xml = ["<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?>", "<map>"]
         for _, sect_conf in self.sections.items():
@@ -213,7 +219,8 @@ class AutoConfigCreator:
         tmp_config: dict = copy.copy(self.contents)
         auth: Optional[SettingsAuth] = None
         try:
-            auth: Optional[SettingsAuth] = await SettingsAuthHelper.get(session, tmp_config['mad_auth'])
+            auth: Optional[SettingsAuth] = await SettingsAuthHelper.get(self._session, self._instance_id,
+                                                                        tmp_config['mad_auth'])
             del tmp_config['mad_auth']
         except KeyError:
             auth = None
@@ -229,7 +236,8 @@ class AutoConfigCreator:
 
     async def load_config(self) -> NoReturn:
         try:
-            config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(session, instance_id, source)
+            config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(self._session, self._instance_id,
+                                                                              self.source)
             if config is not None:
                 self.contents = json.loads(config.data)
                 self.configured = True
@@ -243,14 +251,14 @@ class AutoConfigCreator:
                     self.contents[key] = elem['default']
                     continue
 
-    def save_config(self, session: AsyncSession, user_vals: dict) -> NoReturn:
+    def save_config(self, user_vals: dict) -> NoReturn:
         self.validate(user_vals)
-        await AutoconfigFileHelper.insert_or_update(session, self._db.__instance_id, self.source, json.dumps(self.contents))
+        await AutoconfigFileHelper.insert_or_update(self._session, self._instance_id, self.source, json.dumps(self.contents))
 
     def validate(self, user_vals: dict) -> bool:
         processed = []
         missing: List[str] = []
-        invalid: List[str] = []
+        invalid: List[Tuple[str, str]] = []
         for sect_conf in self.sections.values():
             for key, elem in sect_conf.items():
                 processed.append(key)
@@ -262,6 +270,7 @@ class AutoConfigCreator:
                     if key not in self.contents:
                         missing.append(key)
                         continue
+                check_func = ""
                 try:
                     check_func = elem['expected']
                     if elem['expected'] == 'bool':
@@ -458,11 +467,11 @@ class RGCConfig(AutoConfigCreator):
         }
     }
 
-    def load_config(self) -> None:
-        super().load_config()
+    async def load_config(self) -> None:
+        await super().load_config()
         if self.contents['websocket_uri'] in ['ws://', '']:
             self.contents['websocket_uri'] = 'ws://{}:{}'.format(self._args.ws_ip, self._args.ws_port)
-        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db.__instance_id)
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(self._session, self._instance_id)
         if len(auths) > 0:
             self.sections['Socket']['mad_auth']['required'] = True
 
@@ -746,6 +755,6 @@ class PDConfig(AutoConfigCreator):
         if self.contents['post_destination'] in ['http://', '']:
             self.contents['post_destination'] = 'http://{}:{}'.format(self._args.mitmreceiver_ip,
                                                                       self._args.mitmreceiver_port)
-        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self._db.__instance_id)
+        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(self._session, self._instance_id)
         if len(auths) > 0:
             self.sections['External Communication']['mad_auth']['required'] = True
