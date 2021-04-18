@@ -388,7 +388,7 @@ class DbWrapper:
         logger.debug3("Getting mons to be encountered")
         query = (
             "SELECT latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, "
-            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire "
+            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire, seen_type, cell_id "
             "FROM pokemon "
             "WHERE individual_attack IS NULL AND individual_defense IS NULL AND individual_stamina IS NULL "
             "AND encounter_id != 0 "
@@ -404,7 +404,7 @@ class DbWrapper:
         results = self.execute(query, sql_args, commit=False)
 
         next_to_encounter = []
-        for latitude, longitude, encounter_id, _spawnpoint_id, pokemon_id, _ in results:
+        for latitude, longitude, encounter_id, _spawnpoint_id, pokemon_id, _, seen_type, cellid in results:
             if pokemon_id not in eligible_mon_ids:
                 continue
             elif latitude is None or longitude is None:
@@ -416,7 +416,7 @@ class DbWrapper:
                               " fences", latitude, longitude)
                 continue
 
-            next_to_encounter.append((pokemon_id, Location(latitude, longitude), encounter_id))
+            next_to_encounter.append((pokemon_id, Location(latitude, longitude), encounter_id, seen_type, cellid))
 
         # now filter by the order of eligible_mon_ids
         to_be_encountered = []
@@ -424,7 +424,13 @@ class DbWrapper:
         for mon_prio in eligible_mon_ids:
             for mon in next_to_encounter:
                 if mon_prio == mon[0]:
-                    to_be_encountered.append((i, mon[1], mon[2]))
+                    if mon[3] == "nerby_cell":
+                        spawns = self.get_current_spawns_in_cell(mon[4])
+                        for lat, lon in spawns:
+                            to_be_encountered.append((i, Location(lat, lon), mon[2]))
+                            i += 1
+                    else:
+                        to_be_encountered.append((i, mon[1], mon[2]))
             i += 1
         return to_be_encountered
 
@@ -1038,6 +1044,32 @@ class DbWrapper:
             timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
+
+    def get_current_spawns_in_cell(self, cell_id: int):
+        cell_coords = S2Helper.coords_of_cell(cell_id)
+
+        fence = ""
+        for lat, lon in cell_coords:
+            fence += str(lat) + " " + str(lon) + ","
+        fence += str(cell_coords[0][0]) + " " + str(cell_coords[0][1])
+
+        query = (
+            "SELECT latitude, longitude "
+            "FROM trs_spawn "
+            "WHERE evendid in "
+            "  (SELECT id "
+            "  FROM trs_event "
+            "  WHERE event_start < UTC_TIMESTAMP() AND event_end > UTC_TIMESTAMP()) "
+            "AND ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), ",
+            "POINT(latitude, longitude))"
+        ).format(fence)
+        res = self.execute(query)
+
+        if not res:
+            logger.warning("No spawnpoints found for iv_mitm worker in cell {}", str(cell_id))
+            return []
+
+        return res
 
     def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.5) \
             -> Dict[str, Tuple[Location, datetime]]:
