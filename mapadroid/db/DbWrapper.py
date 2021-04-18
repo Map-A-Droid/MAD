@@ -749,22 +749,17 @@ class DbWrapper:
                                                                           str(longitude))
         self.execute(query, commit=True)
 
-    def get_cells_with_pokemon(self, geofence_helper, init) -> List[Location]:
+    def get_cells_with_pokemon(self, geofence_helper) -> List[Location]:
         logger.debug3("DbWrapper::get_cells_with_pokemon called")
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
-
-        if init:
-            has_mon = "0"
-        else:
-            has_mon = "1"
 
         query = (
             "SELECT center_latitude, center_longitude "
             "FROM trs_s2cells "
             "WHERE (center_latitude >= {} AND center_longitude >= {} "
             "AND center_latitude <= {} AND center_longitude <= {}) and "
-            "has_pokemon = {}"
-        ).format(min_lat, min_lon, max_lat, max_lon, has_mon)
+            "has_pokemon = 1"
+        ).format(min_lat, min_lon, max_lat, max_lon)
 
         list_of_coords: List[Location] = []
         logger.debug3("DbWrapper::get_cells_with_pokemon executing select query")

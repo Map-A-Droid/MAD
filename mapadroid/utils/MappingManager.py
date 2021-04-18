@@ -398,6 +398,8 @@ class MappingManager:
 
             # nearby mode for mon_mitm
             nearby_cell_mode = area.get("settings", {}).get("nearby_cell_mode", False)
+            if area.get("init", False):
+                nearby_cell_mode = False
             if nearby_cell_mode:
                 mode_mapping_key = "nearby_cells"
             else:
@@ -548,11 +550,8 @@ class MappingManager:
                 logger.fatal("Mode not implemented yet: {}", mode)
                 exit(1)
         else:
-            if nearby_cell_mode:
-                coords = self.__db_wrapper.get_cells_with_pokemon(geofence_helper, init=True)
-            else:
-                # calculate all level N cells (mapping back from mapping above linked to mode)
-                coords = S2Helper._generate_locations(range_init, geofence_helper)
+            # calculate all level N cells (mapping back from mapping above linked to mode)
+            coords = S2Helper._generate_locations(range_init, geofence_helper)
         return coords
 
     def __get_latest_auths(self) -> Optional[dict]:
