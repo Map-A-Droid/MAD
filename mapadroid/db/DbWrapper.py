@@ -645,7 +645,7 @@ class DbWrapper:
              weight, height, gender, form, costume,
              weather_boosted_condition, last_modified, seen_type) in res:
             
-            if "nearby" in seen_type:
+            if seen_type is not None and "nearby" in seen_type:
                 latitude += random.uniform(-0.0003, 0.0003)
                 longitude += random.uniform(-0.0005, 0.0005)
             mons.append({
