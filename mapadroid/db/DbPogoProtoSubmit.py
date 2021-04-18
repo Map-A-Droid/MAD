@@ -150,7 +150,7 @@ class DbPogoProtoSubmit:
                     encounter_id = encounter_id + 2 ** 64
                 # Hotfix for a PD issue.
 
-                cache_key = "monnear{}".format(encounter_id)
+                cache_key = "monnear{}-{}".format(encounter_id, mon_id)
                 if cache.exists(cache_key):
                     continue
 
