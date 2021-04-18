@@ -426,9 +426,12 @@ class DbWrapper:
                 if mon_prio == mon[0]:
                     if mon[3] == "nerby_cell":
                         spawns = self.get_current_spawns_in_cell(mon[4])
-                        for lat, lon in spawns:
-                            to_be_encountered.append((i, Location(lat, lon), mon[2]))
-                            i += 1
+                        if len(spawns) == 0:
+                            to_be_encountered.append((i, mon[1], mon[2]))
+                        else:
+                            for lat, lon in spawns:
+                                to_be_encountered.append((i, Location(lat, lon), mon[2]))
+                                i += 1
                     else:
                         to_be_encountered.append((i, mon[1], mon[2]))
             i += 1
