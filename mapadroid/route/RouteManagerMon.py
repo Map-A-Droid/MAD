@@ -25,6 +25,7 @@ class RouteManagerMon(RouteManagerBase):
                                   )
         self.coords_spawns_known = coords_spawns_known
         self.include_event_id = include_event_id
+        self.nearby_cell_mode = nearby_cell_mode
 
     def _priority_queue_update_interval(self):
         return 600
@@ -42,15 +43,18 @@ class RouteManagerMon(RouteManagerBase):
         return self.db_wrapper.retrieve_next_spawns(self.geofence_helper)
 
     def _get_coords_post_init(self):
-        if self.coords_spawns_known:
-            self.logger.info("Reading known Spawnpoints from DB")
-            coords = self.db_wrapper.get_detected_spawns(
-                self.geofence_helper, self.include_event_id)
+        if self.nearby_cell_mode:
+            coords = self.db_wrapper.get_cells_with_pokemon(self.geofence_helper)
         else:
-            self.logger.info("Reading unknown Spawnpoints from DB")
-            coords = self.db_wrapper.get_undetected_spawns(
-                self.geofence_helper, self.include_event_id)
-        self._start_priority_queue()
+            if self.coords_spawns_known:
+                self.logger.info("Reading known Spawnpoints from DB")
+                coords = self.db_wrapper.get_detected_spawns(
+                    self.geofence_helper, self.include_event_id)
+            else:
+                self.logger.info("Reading unknown Spawnpoints from DB")
+                coords = self.db_wrapper.get_undetected_spawns(
+                    self.geofence_helper, self.include_event_id)
+            self._start_priority_queue()
         return coords
 
     def _cluster_priority_queue_criteria(self):

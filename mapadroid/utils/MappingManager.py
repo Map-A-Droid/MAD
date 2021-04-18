@@ -536,7 +536,7 @@ class MappingManager:
                         pass
             elif mode == "mon_mitm":
                 if nearby_cell_mode:
-                    coords = self.__db_wrapper.get_cells_with_pokemon(geofence_helper, init=False)
+                    coords = self.__db_wrapper.get_cells_with_pokemon(geofence_helper)
                 else:
                     if coords_spawns_known:
                         logger.debug("Reading known Spawnpoints from DB")
