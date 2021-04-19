@@ -10,6 +10,7 @@ with open(os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates/phone.tpl'),
     phone_template = file.read().replace('\n', '')
 
 
+# TODO: Async
 def creation_date(path_to_file):
     return os.path.getmtime(path_to_file)
 
@@ -18,7 +19,8 @@ def generate_path(path):
     return os.path.join(os.path.join(mapadroid.MAD_ROOT, path))
 
 
-def image_resize(image, savepath, width=None, height=None):
+async def image_resize(image, savepath, width=None, height=None):
+    # TODO: Async exec
     basewidth = width
     filename = os.path.basename(image)
     with Image.open(image) as img:

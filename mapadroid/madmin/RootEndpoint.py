@@ -1,23 +1,26 @@
 import json
-from typing import Optional, Any
+from abc import ABC
+from typing import Any, Optional
 
 from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiohttp_session import get_session
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import Base
 from mapadroid.mad_apk import AbstractAPKStorage
 from mapadroid.madmin.api import apiException
-from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.json_encoder import MADEncoder
+from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 
-class RootEndpoint(web.View):
+class RootEndpoint(web.View, ABC):
     # TODO: Add security etc in here (abstract) to enforce security true/false
     # If we really need more methods, we can just define them abstract...
     def __init__(self, request: Request):
@@ -79,11 +82,16 @@ class RootEndpoint(web.View):
             address = self.request.remote
         return address
 
-    async def _redirect(self, redirect_to: str, session: AsyncSession, commit: bool = False):
+    async def _add_notice_message(self, message: str) -> None:
+        # TODO: Handle accordingly
+        session = await get_session(self.request)
+        session["notice"] = message
+
+    async def _redirect(self, redirect_to: str, commit: bool = False):
         if commit:
-            await session.commit()
+            await self._session.commit()
         else:
-            await session.rollback()
+            await self._session.rollback()
         raise web.HTTPFound(redirect_to)
 
     def _get_db_wrapper(self) -> DbWrapper:
@@ -111,6 +119,9 @@ class RootEndpoint(web.View):
         db_wrapper: DbWrapper = self._get_db_wrapper()
         return db_wrapper.get_instance_id()
 
+    def _get_device_updater(self) -> DeviceUpdater:
+        return self.request.app['device_updater']
+
     def _json_response(self, data: Any = sentinel, *, text: Optional[str] = None, body: Optional[bytes] = None,
                        status: int = 200, reason: Optional[str] = None, headers: Optional[LooseHeaders] = None,
                        content_type: str = "application/json") -> web.Response:
@@ -127,5 +138,3 @@ class RootEndpoint(web.View):
             headers=headers,
             content_type=content_type,
         )
-
-

@@ -49,7 +49,8 @@ class ADBConnect(object):
             logger.exception('MADmin: Exception occurred while getting adb clients: {}.', e)
         return []
 
-    def send_shell_command(self, adb, origin, command):
+    async def send_shell_command(self, adb, origin, command):
+        # TODO: Async exec
         origin_logger = get_origin_logger(logger, origin=origin)
         try:
             device = self._client.device(adb)

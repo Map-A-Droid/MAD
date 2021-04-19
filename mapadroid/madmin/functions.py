@@ -12,7 +12,8 @@ from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.functions import creation_date
-from mapadroid.utils.MappingManager import AreaEntry, MappingManager
+from mapadroid.utils.MappingManager import (AreaEntry, DeviceMappingsEntry,
+                                            MappingManager)
 from mapadroid.utils.walkerArgs import parse_args
 
 mapping_args = parse_args()
@@ -39,7 +40,7 @@ def auth_required(func):
 
 
 def allowed_file(filename):
-    allowed_extensions = set(['apk', 'txt'])
+    allowed_extensions = {'apk', 'txt'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 
@@ -97,15 +98,15 @@ def get_coord_float(coordinate):
     return floor(float(coordinate) * (10 ** 5)) / float(10 ** 5)
 
 
-def generate_device_screenshot_path(phone_name: str, device_mappings: dict, args: dict):
+def generate_device_screenshot_path(phone_name: str, device_mappings: DeviceMappingsEntry, args):
     screenshot_ending: str = ".jpg"
-    if device_mappings[phone_name].get("screenshot_type", "jpeg") == "png":
+    if device_mappings.device_settings.screenshot_type == "png":
         screenshot_ending = ".png"
     screenshot_filename = "screenshot_{}{}".format(phone_name, screenshot_ending)
     return os.path.join(args.temp_path, screenshot_filename)
 
 
-def generate_device_logcat_zip_path(origin: str, args: dict):
+def generate_device_logcat_zip_path(origin: str, args):
     filename = "logcat_{}.zip".format(origin)
     return os.path.join(args.temp_path, filename)
 

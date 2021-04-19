@@ -1,3 +1,4 @@
+import asyncio
 import glob
 import json
 import os
@@ -8,6 +9,7 @@ from enum import Enum
 from multiprocessing import Event, Queue
 from queue import Empty
 from threading import RLock, Thread
+from typing import Optional
 
 from mapadroid.mad_apk import (AbstractAPKStorage, APKArch, APKPackage,
                                APKType, MADPackages, file_generator,
@@ -83,14 +85,14 @@ class DeviceUpdater(object):
         for thread in self.t_updater:
             thread.join()
 
-    def init_jobs(self):
+    async def init_jobs(self):
+        # TODO: Async exec
         self._commands = {}
         if os.path.exists('commands.json'):
             with open('commands.json') as cmdfile:
                 self._commands = json.loads(cmdfile.read())
 
         # load personal commands
-
         for command_file in glob.glob(os.path.join("personal_commands", "*.json")):
             try:
                 with open(command_file) as personal_command:
@@ -108,7 +110,8 @@ class DeviceUpdater(object):
         return self._commands
 
     @logger.catch()
-    def restart_job(self, job_id: int):
+    async def restart_job(self, job_id: int):
+        # TODO: Async exec
         if (job_id) in self._log:
             origin = self._log[job_id]['origin']
             file_ = self._log[job_id]['file']
@@ -379,10 +382,10 @@ class DeviceUpdater(object):
         logger.info("Updater thread stopped")
 
     @logger.catch()
-    def preadd_job(self, origin, job, job_id, job_type, globalid=None):
+    async def preadd_job(self, origin: str, job: str, job_id: int, job_type: str, globalid: Optional[int] = None):
         logger.info('Adding Job {} for Device {} - File/Job: {} (ID: {})', job_type, origin, job, job_id)
 
-        globalid = globalid if globalid is not None else job_id
+        globalid: int = globalid if globalid is not None else job_id
 
         if globalid not in self._globaljoblog:
             self._globaljoblog[globalid] = {}
@@ -398,7 +401,7 @@ class DeviceUpdater(object):
                              job_type=subjob['TYPE'], waittime=subjob.get('WAITTIME', 0),
                              redo=self._globaljoblog[globalid].get('redo', False),
                              fieldname=subjob.get('FIELDNAME', 'unknown'), jobname=job)
-                time.sleep(1)
+                await asyncio.sleep(1)
         else:
             self.add_job(globalid, origin, job, job_id=int(job_id), job_type=job_type)
 
@@ -428,6 +431,7 @@ class DeviceUpdater(object):
 
         self._update_queue.put(str(job_id))
 
+    # TODO: Async...
     def write_status_log(self, job_id, field=None, value=None, delete=False):
         with self._update_mutex:
             if delete:
@@ -553,7 +557,8 @@ class DeviceUpdater(object):
             logger.error('Error while getting response from device - Reason: {}', e)
         return False
 
-    def delete_log(self, onlysuccess=False):
+    async def delete_log(self, onlysuccess=False):
+        # TODO: Async exec
         if onlysuccess:
             for job in self._log.copy():
                 if self._log[job]['status'] in ['success', 'not required'] and not self._log[job].get('redo',

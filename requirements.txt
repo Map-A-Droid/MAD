@@ -33,4 +33,5 @@ aiounittest~=1.4.0
 aiofile~=3.4.0
 aiohttp~=3.7.4.post0
 aiohttp-jinja2==1.4.2
+aiohttp-session==2.9.0
 yarl~=1.6.3

@@ -400,8 +400,5 @@ class WebsocketServer(object):
             else:
                 origin_logger.warning("Unable to signal to stop, not present")
 
-    def force_disconnect(self, origin) -> None:
-        future = asyncio.run_coroutine_threadsafe(
-            self.__close_and_signal_stop(origin),
-            self.__loop)
-        future.result()
+    async def force_disconnect(self, origin) -> None:
+        await self.__close_and_signal_stop(origin)

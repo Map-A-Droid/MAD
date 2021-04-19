@@ -197,7 +197,7 @@ class MappingManager:
         if self._devicemappings.get(device_name, None) is not None:
             self.__devicesettings_setter_queue.put((device_name, key, value))
 
-    async def get_all_devicemappings(self) -> Optional[dict]:
+    async def get_all_devicemappings(self) -> Optional[Dict[str, DeviceMappingsEntry]]:
         return self._devicemappings
 
     async def get_areas(self) -> Optional[Dict[int, AreaEntry]]:
