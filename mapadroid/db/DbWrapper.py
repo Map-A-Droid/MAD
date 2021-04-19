@@ -422,18 +422,28 @@ class DbWrapper:
         to_be_encountered = []
         i = 0
         for mon_prio in eligible_mon_ids:
-            for mon in next_to_encounter:
-                if mon_prio == mon[0]:
-                    if mon[3] == "nerby_cell":
-                        spawns = self.get_current_spawns_in_cell(mon[4])
+            for mon_id, location, encounter_id, seen_type, cell_id in next_to_encounter:
+                if mon_prio == mon_id:
+                    if seen_type == "nearby_cell":
+                        cell_coords = S2Helper.coords_of_cell(cell_id)
+
+                        geohelper_data = {
+                            "fence_data": [
+                                str(lat) + "," + str(lon) for lat, lon in cell_coords
+                            ]
+                        }
+                        spawns = self.retrieve_next_spawns(
+                            GeofenceHelper(geohelper_data, None)
+                        )
+
                         if len(spawns) == 0:
-                            to_be_encountered.append((i, mon[1], mon[2]))
+                            to_be_encountered.append((i, location, encounter_id))
                         else:
-                            for lat, lon in spawns:
-                                to_be_encountered.append((i, Location(lat, lon), mon[2]))
+                            for _, spawn_location in spawns:
+                                to_be_encountered.append((i, spawn_location, encounter_id))
                                 i += 1
                     else:
-                        to_be_encountered.append((i, mon[1], mon[2]))
+                        to_be_encountered.append((i, location, encounter_id))
             i += 1
         return to_be_encountered
 
@@ -1047,32 +1057,6 @@ class DbWrapper:
             timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
             next_up.append((timestamp, Location(latitude, longitude)))
         return next_up
-
-    def get_current_spawns_in_cell(self, cell_id: int):
-        cell_coords = S2Helper.coords_of_cell(cell_id)
-
-        fence = ""
-        for lat, lon in cell_coords:
-            fence += str(lat) + " " + str(lon) + ","
-        fence += str(cell_coords[0][0]) + " " + str(cell_coords[0][1])
-
-        query = (
-            "SELECT latitude, longitude "
-            "FROM trs_spawn "
-            "WHERE evendid in "
-            "  (SELECT id "
-            "  FROM trs_event "
-            "  WHERE event_start < UTC_TIMESTAMP() AND event_end > UTC_TIMESTAMP()) "
-            "AND ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), ",
-            "POINT(latitude, longitude))"
-        ).format(fence)
-        res = self.execute(query)
-
-        if not res:
-            logger.warning("No spawnpoints found for iv_mitm worker in cell {}", str(cell_id))
-            return []
-
-        return res
 
     def get_stop_ids_and_locations_nearby(self, location: Location, max_distance: int = 0.5) \
             -> Dict[str, Tuple[Location, datetime]]:
