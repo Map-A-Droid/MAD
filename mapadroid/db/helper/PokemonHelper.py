@@ -110,5 +110,27 @@ class PokemonHelper:
             i += 1
         return to_be_encountered
 
+    @staticmethod
+    async def get_mons_in_rectangle(session: AsyncSession,
+                                    ne_corner: Optional[Location] = None, sw_corner: Optional[Location] = None,
+                                    old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
+                                    timestamp: Optional[int] = None) -> List[Pokemon]:
+        stmt = select(Pokemon)
+        where_conditions = []
+        where_conditions.append(Pokemon.disappear_time > datetime.datetime.utcnow())
+        if ne_corner and sw_corner:
+            where_conditions.append(and_(Pokemon.latitude >= sw_corner.lat,
+                                         Pokemon.longitude >= sw_corner.lng,
+                                         Pokemon.latitude <= ne_corner.lat,
+                                         Pokemon.longitude <= ne_corner.lng))
+        if old_ne_corner and old_sw_corner:
+            where_conditions.append(and_(Pokemon.latitude >= old_sw_corner.lat,
+                                         Pokemon.longitude >= old_sw_corner.lng,
+                                         Pokemon.latitude <= old_ne_corner.lat,
+                                         Pokemon.longitude <= old_ne_corner.lng))
+        if timestamp:
+            where_conditions.append(Pokemon.last_modified >= datetime.datetime.utcfromtimestamp(timestamp))
 
-
+        stmt = stmt.where(and_(*where_conditions))
+        result = await session.execute(stmt)
+        return result.scalars().all()

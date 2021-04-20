@@ -27,6 +27,10 @@ class RootEndpoint(web.View, ABC):
         super().__init__(request)
         self._commit_trigger: bool = False
         self._session: Optional[AsyncSession] = None
+        if self._get_mad_args().madmin_time == "12":
+            self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
+        else:
+            self._datetimeformat = '%Y-%m-%d %H:%M:%S'
 
     async def _iter(self):
         db_wrapper: DbWrapper = self._get_db_wrapper()

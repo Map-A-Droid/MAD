@@ -1,0 +1,26 @@
+from typing import Optional, Dict
+
+from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
+    AbstractControlEndpoint
+from mapadroid.utils.MappingManager import DeviceMappingsEntry
+
+
+class GetWorkersEndpoint(AbstractControlEndpoint):
+    """
+    "/get_workers"
+    """
+
+    # TODO: Auth
+    async def get(self):
+        positions = []
+        devicemappings: Optional[
+            Dict[str, DeviceMappingsEntry]] = await self._get_mapping_manager().get_all_devicemappings()
+        for name, device_mapping_entry in devicemappings.items():
+            worker = {
+                "name": name,
+                "lat": device_mapping_entry.last_location.lat,
+                "lon": device_mapping_entry.last_location.lng
+            }
+            positions.append(worker)
+
+        return self._json_response(positions)

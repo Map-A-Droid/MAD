@@ -72,6 +72,8 @@ class DeviceMappingsEntry:
     ptc_logins: List[SettingsPogoauth] = []
     pool_settings: SettingsDevicepool = None
     walker_areas: List[SettingsWalkerarea] = []
+    # TODO: Ensure those values are being set properly from whereever...
+    last_location: Location = Location(0, 0)
 
 
 class AreaEntry:

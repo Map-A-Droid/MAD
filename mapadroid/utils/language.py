@@ -27,7 +27,7 @@ async def i8ln(word):
     return word
 
 
-async def get_mon_name(mon_id):
+async def get_mon_name(mon_id: int):
     mons_file = await open_json_file('pokemon')
     str_id = str(mon_id)
     if str_id in mons_file:

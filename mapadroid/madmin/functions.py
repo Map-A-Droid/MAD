@@ -6,6 +6,7 @@ from math import floor
 from typing import Dict, Optional
 
 from flask import make_response, request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
@@ -111,24 +112,25 @@ def generate_device_logcat_zip_path(origin: str, args):
     return os.path.join(args.temp_path, filename)
 
 
-async def get_geofences(mapping_manager: MappingManager, db_wrapper: DbWrapper, fence_type=None, area_id_req=None):
+async def get_geofences(mapping_manager: MappingManager, session: AsyncSession, instance_id: int,
+                        fence_type=None, area_id_req=None):
     # TODO: Request the geofence instances from the MappingManager directly?
     areas: Dict[int, AreaEntry] = await mapping_manager.get_areas()
     geofences = {}
     for area_id, area_entry in areas.items():
         if area_id_req is not None and int(area_id) is not int(area_id_req):
             continue
-        geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id, area["geofence_included"])
-        geo_exclude_id = area.get("geofence_excluded", None)
+        geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
+                                                                                         area_entry.geofence_included)
         geofence_excluded: Optional[SettingsGeofence] = None
-        if geo_exclude_id is not None:
+        if area_entry.geofence_excluded is not None:
             geofence_excluded: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
-                                                                                             geo_exclude_id)
-        if fence_type is not None and area.settings.mode != fence_type:
+                                                                                             area_entry.geofence_excluded)
+        if fence_type is not None and area_entry.settings.mode != fence_type:
             continue
         # TODO: json.loads?
         # area_geofences = GeofenceHelper(geofence_included.fence_data, geofence_excluded.fence_data, area['name'])
-        area_geofences = GeofenceHelper(geofence_included, geofence_excluded, area.name)
+        area_geofences = GeofenceHelper(geofence_included, geofence_excluded, area_entry.settings.name)
         include = {}
         exclude = {}
         for fences in area_geofences.geofenced_areas:
@@ -142,16 +144,17 @@ async def get_geofences(mapping_manager: MappingManager, db_wrapper: DbWrapper, 
         geofences[area_id] = {
             'include': include,
             'exclude': exclude,
-            'mode': area['mode'],
+            'mode': area_entry.settings.mode,
             'area_id': area_id,
-            'name': area['name']
+            'name': area_entry.settings.name
         }
     return geofences
 
 
-async def generate_coords_from_geofence(mapping_manager: MappingManager, db_wrapper: DbWrapper, fence):
+async def generate_coords_from_geofence(mapping_manager: MappingManager, session: AsyncSession, instance_id: int,
+                                        fence):
     fence_string = []
-    geofences = await get_geofences(mapping_manager, db_wrapper)
+    geofences = await get_geofences(mapping_manager, session=session, instance_id=instance_id)
     coordinates = []
     for fences in geofences.values():
         for fname, coords in fences.get('include').items():

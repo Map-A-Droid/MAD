@@ -2,6 +2,7 @@ import gettext
 import json
 import re
 
+from mapadroid.db.model import TrsQuest, Pokestop
 from mapadroid.utils.gamemechanicutil import form_mapper
 from mapadroid.utils.language import i8ln, open_json_file
 
@@ -10,15 +11,15 @@ lang = gettext.translation('quest', localedir='locale', fallback=True)
 lang.install()
 
 
-def generate_quest(quest):
+def generate_quest(stop: Pokestop, quest: TrsQuest):
     gettext.find('quest', 'locales', all=True)
     lang = gettext.translation('quest', localedir='locale', fallback=True)
     lang.install()
 
-    quest_reward_type = questreward(quest['quest_reward_type'])
-    quest_type = questtype(quest['quest_type'])
+    quest_reward_type = questreward(quest.quest_reward_type)
+    quest_type = questtype(quest.quest_type)
     if '{0}' in quest_type:
-        quest_type = quest_type.replace('{0}', str(quest['quest_target']))
+        quest_type = quest_type.replace('{0}', str(quest.quest_target))
 
     item_id = 0
     item_amount = 1
@@ -30,42 +31,42 @@ def generate_quest(quest):
     pokemon_asset_bundle = '00'
 
     if quest_reward_type == _('Item'):
-        item_amount = quest['quest_item_amount']
-        item_type = rewarditem(quest['quest_item_id'])
-        item_id = quest['quest_item_id']
+        item_amount = quest.quest_item_amount
+        item_type = rewarditem(quest.quest_item_id)
+        item_id = quest.quest_item_id
     elif quest_reward_type == _('Stardust'):
-        item_amount = quest['quest_stardust']
+        item_amount = quest.quest_stardust
         item_type = _('Stardust')
     elif quest_reward_type == _('Pokemon'):
         item_type = 'Pokemon'
-        pokemon_name = i8ln(pokemonname(str(quest['quest_pokemon_id'])))
-        pokemon_id = quest['quest_pokemon_id']
-        pokemon_form = quest['quest_pokemon_form_id']
-        pokemon_costume = quest['quest_pokemon_costume_id']
+        pokemon_name = i8ln(pokemonname(str(quest.quest_pokemon_id)))
+        pokemon_id = quest.quest_pokemon_id
+        pokemon_form = quest.quest_pokemon_form_id
+        pokemon_costume = quest.quest_pokemon_costume_id
         if pokemon_form != '00':
             pokemon_asset_bundle = form_mapper(int(pokemon_id), pokemon_form)
     elif quest_reward_type == _('Energy'):
         item_type = _('Mega Energy')
-        if quest['quest_pokemon_id'] and int(quest['quest_pokemon_id']) > 0:
-            pokemon_name = i8ln(pokemonname(str(quest['quest_pokemon_id'])))
-            pokemon_id = quest['quest_pokemon_id']
+        if quest.quest_pokemon_id and quest.quest_pokemon_id > 0:
+            pokemon_name = i8ln(pokemonname(str(quest.quest_pokemon_id)))
+            pokemon_id = quest.quest_pokemon_id
         else:
             pokemon_name = ''
-        item_amount = quest['quest_item_amount']
+        item_amount = quest.quest_item_amount
 
-    if not quest['task']:
+    if not quest.quest_task:
         quest_task = questtask(
-            quest['quest_type'], quest['quest_condition'], quest['quest_target'], quest['quest_template'])
+            quest.quest_type, quest.quest_condition, quest.quest_target, quest.quest_template)
     else:
-        quest_task = quest['task']
+        quest_task = quest.quest_task
 
     quest_raw = ({
-        'pokestop_id': quest['pokestop_id'],
-        'name': quest['name'],
-        'url': quest['image'],
-        'latitude': quest['latitude'],
-        'longitude': quest['longitude'],
-        'timestamp': quest['quest_timestamp'],
+        'pokestop_id': stop.pokestop_id,
+        'name': stop.name,
+        'url': stop.image,
+        'latitude': stop.latitude,
+        'longitude': stop.longitude,
+        'timestamp': quest.quest_timestamp,
         'item_id': item_id,
         'item_amount': item_amount,
         'item_type': item_type,
@@ -75,7 +76,7 @@ def generate_quest(quest):
         'pokemon_asset_bundle_id': pokemon_asset_bundle,
         'pokemon_costume': pokemon_costume,
         'quest_type': quest_type,
-        'quest_type_raw': quest['quest_type'],
+        'quest_type_raw': quest.quest_type,
         'quest_reward_type': quest_reward_type,
         'quest_reward_type_raw': quest['quest_reward_type'],
         'quest_task': quest_task,

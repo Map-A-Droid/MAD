@@ -1,10 +1,11 @@
-from typing import Optional, List, Dict
+from datetime import datetime
+from typing import Optional, List, Dict, Tuple
 
 from sqlalchemy import and_, join
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from mapadroid.db.model import Pokestop, TrsVisited
+from mapadroid.db.model import Pokestop, TrsVisited, TrsQuest
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -175,3 +176,73 @@ class PokestopHelper:
                 max_distance += 2
         return stops_retrieved
 
+    @staticmethod
+    async def get_with_quests(session: AsyncSession,
+                              ne_corner: Optional[Location] = None, sw_corner: Optional[Location] = None,
+                              old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
+                              timestamp: Optional[int] = None,
+                              fence: Optional[str] = None) -> Dict[int, Tuple[Pokestop, TrsQuest]]:
+        """
+        quests_from_db
+        Args:
+            session:
+            ne_corner:
+            sw_corner:
+            old_ne_corner:
+            old_sw_corner:
+            timestamp:
+            fence:
+
+        Returns:
+
+        """
+        stmt = select(Pokestop, TrsQuest)\
+            .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=False)
+        where_conditions = []
+        # TODO: Verify this works for all timezones...
+        where_conditions.append(TrsQuest.quest_timestamp > datetime.today().timestamp())
+
+        if ne_corner and sw_corner:
+            where_conditions.append(and_(Pokestop.latitude >= sw_corner.lat,
+                                         Pokestop.longitude >= sw_corner.lng,
+                                         Pokestop.latitude <= ne_corner.lat,
+                                         Pokestop.longitude <= ne_corner.lng))
+        if old_ne_corner and old_sw_corner:
+            where_conditions.append(and_(Pokestop.latitude >= old_sw_corner.lat,
+                                         Pokestop.longitude >= old_sw_corner.lng,
+                                         Pokestop.latitude <= old_ne_corner.lat,
+                                         Pokestop.longitude <= old_ne_corner.lng))
+        if timestamp:
+            where_conditions.append(TrsQuest.last_scanned >= datetime.utcfromtimestamp(timestamp))
+
+        if fence:
+            where_conditions.append(func.ST_Contains(func.ST_GeomFromText(fence),
+                                                     func.POINT(Pokestop.latitude, Pokestop.longitude)))
+        stmt = stmt.where(and_(*where_conditions))
+        result = await session.execute(stmt)
+        stop_with_quest: Dict[int, Tuple[Pokestop, TrsQuest]] = {}
+        for (stop, quest) in result:
+            stop_with_quest[stop.pokestop_id] = (stop, quest)
+        return stop_with_quest
+
+    @staticmethod
+    async def get_in_rectangle(session: AsyncSession,
+                              ne_corner: Optional[Location], sw_corner: Optional[Location],
+                              old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
+                              timestamp: Optional[int] = None) -> List[Pokestop]:
+        stmt = select(Pokestop)
+        where_conditions = [and_(Pokestop.latitude >= sw_corner.lat,
+                                 Pokestop.longitude >= sw_corner.lng,
+                                 Pokestop.latitude <= ne_corner.lat,
+                                 Pokestop.longitude <= ne_corner.lng)]
+        # TODO: Verify this works for all timezones...
+        if old_ne_corner and old_sw_corner:
+            where_conditions.append(and_(Pokestop.latitude >= old_sw_corner.lat,
+                                         Pokestop.longitude >= old_sw_corner.lng,
+                                         Pokestop.latitude <= old_ne_corner.lat,
+                                         Pokestop.longitude <= old_ne_corner.lng))
+        if timestamp:
+            where_conditions.append(TrsQuest.last_scanned >= datetime.utcfromtimestamp(timestamp))
+        stmt = stmt.where(and_(*where_conditions))
+        result = await session.execute(stmt)
+        return result.scalars().all()

@@ -1,14 +1,13 @@
 import time
-from datetime import datetime
-
 from _datetime import timedelta
-from sqlalchemy import and_, update
-from typing import List, Optional, Tuple
+from datetime import datetime
+from typing import List, Optional, Tuple, Dict
 
+from sqlalchemy import and_, update, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import TrsSpawn
+from mapadroid.db.model import TrsSpawn, TrsEvent
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -119,11 +118,11 @@ class TrsSpawnHelper:
             event_ids.append(additional_event)
 
         stmt = select(TrsSpawn).where(and_(TrsSpawn.eventid.in_(event_ids),
-                               TrsSpawn.latitude >= min_lat,
-                               TrsSpawn.longitude >= min_lon,
-                               TrsSpawn.latitude <= max_lat,
-                               TrsSpawn.longitude <= max_lon,
-                               TrsSpawn.calc_endminsec != None))
+                                           TrsSpawn.latitude >= min_lat,
+                                           TrsSpawn.longitude >= min_lon,
+                                           TrsSpawn.latitude <= max_lat,
+                                           TrsSpawn.longitude <= max_lon,
+                                           TrsSpawn.calc_endminsec != None))
         result = await session.execute(stmt)
         next_up: List[Tuple[int, Location]] = []
         current_time = time.time()
@@ -152,3 +151,48 @@ class TrsSpawnHelper:
             timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
             next_up.append((int(timestamp), Location(spawn.latitude, spawn.longitude)))
         return next_up
+
+    @staticmethod
+    async def download_spawns(session: AsyncSession,
+                              ne_corner: Optional[Location] = None, sw_corner: Optional[Location] = None,
+                              old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
+                              timestamp: Optional[int] = None, fence: Optional[str] = None,
+                              event_id: Optional[int] = None, today_only: bool = False,
+                              older_than_x_days: Optional[int] = None) -> Dict[int, Tuple[TrsSpawn, TrsEvent]]:
+        stmt = select(TrsSpawn, TrsEvent)\
+            .join(TrsEvent, TrsSpawn.eventid == TrsEvent.id, isouter=False)
+        where_conditions = []
+
+        if ne_corner and sw_corner:
+            where_conditions.append(and_(TrsSpawn.latitude >= sw_corner.lat,
+                                         TrsSpawn.longitude >= sw_corner.lng,
+                                         TrsSpawn.latitude <= ne_corner.lat,
+                                         TrsSpawn.longitude <= ne_corner.lng))
+        if old_ne_corner and old_sw_corner:
+            where_conditions.append(and_(TrsSpawn.latitude >= old_sw_corner.lat,
+                                         TrsSpawn.longitude >= old_sw_corner.lng,
+                                         TrsSpawn.latitude <= old_ne_corner.lat,
+                                         TrsSpawn.longitude <= old_ne_corner.lng))
+        if timestamp:
+            where_conditions.append(TrsSpawn.last_scanned >= datetime.utcfromtimestamp(timestamp))
+
+        if fence:
+            where_conditions.append(func.ST_Contains(func.ST_GeomFromText(fence),
+                                                     func.POINT(TrsSpawn.latitude, TrsSpawn.longitude)))
+        if event_id:
+            where_conditions.append(TrsSpawn.eventid == event_id)
+        if today_only:
+            where_conditions.append(or_(datetime.utcnow().today() <= TrsSpawn.last_scanned,
+                                        datetime.utcnow().today() <= TrsSpawn.last_non_scanned))
+        elif older_than_x_days:
+            # elif as it makes no sense to check for older than X days AND today
+            older_than_date: datetime = datetime.utcnow().today() - timedelta(days=older_than_x_days)
+            where_conditions.append(or_(older_than_date <= TrsSpawn.last_scanned,
+                                        older_than_date <= TrsSpawn.last_non_scanned))
+        stmt = stmt.where(and_(*where_conditions))
+        result = await session.execute(stmt)
+        spawns: Dict[int, Tuple[TrsSpawn, TrsEvent]] = {}
+        for (spawn, event) in result:
+            spawns[spawn.spawnpoint] = (spawn, event)
+
+        return spawns

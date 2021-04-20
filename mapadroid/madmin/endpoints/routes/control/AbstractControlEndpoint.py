@@ -23,10 +23,6 @@ class AbstractControlEndpoint(RootEndpoint, ABC):
         super().__init__(request)
         # TODO: ADB-Connect should be instantiated and passed using the aiohttp-server dict...
         self._adb_connect = ADBConnect(self._get_mad_args())
-        if self._get_mad_args().madmin_time == "12":
-            self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
-        else:
-            self._datetimeformat = '%Y-%m-%d %H:%M:%S'
 
     async def _take_screenshot(self):
         origin: Optional[str] = self.request.query.get("origin")
