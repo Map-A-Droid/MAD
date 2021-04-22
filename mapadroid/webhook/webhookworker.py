@@ -416,7 +416,7 @@ class WebhookWorker:
                 continue
 
             mon_payload = {
-                "encounter_id": mon["encounter_id"],
+                "encounter_id": str(mon["encounter_id"]),
                 "pokemon_id": mon["pokemon_id"],
                 "spawnpoint_id": mon["spawnpoint_id"],
                 "latitude": mon["latitude"],
