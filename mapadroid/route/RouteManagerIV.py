@@ -44,10 +44,10 @@ class RouteManagerIV(RouteManagerBase):
                                                                   eligible_mon_ids=self.settings.get(
                                                                       "mon_ids_iv_raw", None))
         # extract the encounterIDs and set them in the routeManager...
-        new_list = []
+        new_list = set()
         for prio in latest_priorities:
-            new_list.append(prio[2])
-        self.encounter_ids_left = new_list
+            new_list.add(prio[2])
+        self.encounter_ids_left = list(new_list)
 
         with self._manager_mutex:
             heapq.heapify(latest_priorities)
