@@ -1,16 +1,16 @@
 import datetime
 import time
 from functools import reduce
-from typing import Optional, Tuple, Dict, List
+from typing import Dict, List, Optional, Set, Tuple
 
-from sqlalchemy import and_, func
+from sqlalchemy import and_, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokemon
+from mapadroid.db.model import Pokemon, TrsStatsDetectMonRaw
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
 
@@ -57,6 +57,7 @@ class PokemonHelper:
         stmt = select(Pokemon.pokemon_id, func.COUNT(Pokemon.pokemon_id)).select_from(Pokemon)
         if hours:
             stmt = stmt.where(Pokemon.disappear_time > datetime.datetime.utcnow() - datetime.timedelta(hours=hours))
+        # TODO: Adjust as group_by may not work - tho we have a count above. TEST IT
         stmt = stmt.group_by(Pokemon.pokemon_id)
         result = await session.execute(stmt)
         results: List = result.all()
@@ -134,3 +135,67 @@ class PokemonHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def get_all_shiny(session: AsyncSession, timestamp_after: Optional[int] = None,
+                            timestamp_before: Optional[int] = None) -> Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]]:
+        """
+        Used to be DbStatsReader::get_shiny_stats_v2
+        Args:
+            session:
+            timestamp_after:
+            timestamp_before:
+
+        Returns:
+
+        """
+        stmt = select(Pokemon, TrsStatsDetectMonRaw)\
+            .join(TrsStatsDetectMonRaw, Pokemon.encounter_id == TrsStatsDetectMonRaw.encounter_id)
+        where_conditions = [TrsStatsDetectMonRaw.is_shiny == 1]
+        if timestamp_after:
+            where_conditions.append(Pokemon.last_modified > datetime.datetime.utcfromtimestamp(timestamp_after))
+        if timestamp_before:
+            where_conditions.append(Pokemon.last_modified < datetime.datetime.utcfromtimestamp(timestamp_before))
+        stmt = stmt.where(and_(*where_conditions))
+        # SQLAlchemy does not handle group by very well it appears so we will do it in python...
+        result = await session.execute(stmt)
+        mapped: Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]] = {}
+        for (mon, stats) in result:
+            if mon.encounter_id not in mapped:
+                mapped[mon.encounter_id] = (mon, [])
+            mapped[mon.encounter_id][1].append(stats)
+
+        return mapped
+
+    @staticmethod
+    async def get_count_iv_scanned_of_mon_ids(session: AsyncSession, mon_ids: Set[int],
+                                              timestamp_after: Optional[int] = None,
+                                              timestamp_before: Optional[int] = None) -> List[Tuple[int, int, int, int, int]]:
+        """
+        used to be DbStatsReader::get_shiny_stats_global_v2
+        Args:
+            session:
+            mon_ids:
+            timestamp_after:
+            timestamp_before:
+
+        Returns: List of tuples consisting of (count('*'), Pokemon.pokemon_id, Pokemon.form, Pokemon.gender, Pokemon.costume)
+            of all mons that have been scanned for IV
+
+        """
+        stmt = select(func.count('*'), Pokemon.pokemon_id, Pokemon.form, Pokemon.gender, Pokemon.costume)\
+            .select_from(Pokemon)
+        where_conditions = [Pokemon.individual_attack != None,
+                            Pokemon.pokemon_id.in_(mon_ids)]
+        if timestamp_after:
+            where_conditions.append(Pokemon.last_modified > datetime.datetime.utcfromtimestamp(timestamp_after))
+        if timestamp_before:
+            where_conditions.append(Pokemon.last_modified < datetime.datetime.utcfromtimestamp(timestamp_before))
+        # Group_by works in this case as we use COUNT
+        stmt = stmt.where(and_(*where_conditions))\
+            .group_by(Pokemon.pokemon_id, Pokemon.form)
+        result = await session.execute(stmt)
+        results = []
+        for res in result:
+            results.append(res)
+        return results
