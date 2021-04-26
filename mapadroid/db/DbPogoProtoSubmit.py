@@ -349,7 +349,7 @@ class DbPogoProtoSubmit:
         if cache_time > 0:
             cache.set(cache_key, 1, ex=int(cache_time))
         origin_logger.debug3("Done updating mon in DB")
-        return (encounter_id, now)
+        return [encounter_id, now]
 
     def mon_lure_noiv(self, origin: str, map_proto: dict):
         """

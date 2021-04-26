@@ -132,7 +132,7 @@ class SerializedMitmDataProcessor(Process):
 
                     if self.__application_args.game_stats:
                         self.__db_submit.update_seen_type_stats(
-                            encounter=[encounter]
+                            encounter=encounter
                         )
 
                     end_time = self.get_time_ms() - start_time
