@@ -430,11 +430,11 @@ class DbPogoProtoSubmit:
             "INSERT INTO trs_stats_detect_seen_type (encounter_id, encounter, wild, nearby_stop, nearby_cell, "
             "lure_encounter, lure_wild) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE (encounter=IFNULL(encounter, VALUES(encounter)), "
+            "ON DUPLICATE KEY UPDATE encounter=IFNULL(encounter, VALUES(encounter)), "
             "wild=IFNULL(wild, VALUES(wild)), nearby_stop=IFNULL(nearby_stop, VALUES(nearby_stop)), "
             "nearby_cell=IFNULL(nearby_cell, VALUES(nearby_cell)), "
             "lure_encounter=IFNULL(lure_encounter, VALUES(lure_encounter)), "
-            "lure_wild=IFNULL(lure_wild, VALUES(lure_wild)))"
+            "lure_wild=IFNULL(lure_wild, VALUES(lure_wild))"
         )
         base_args = []
 
