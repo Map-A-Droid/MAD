@@ -439,12 +439,12 @@ class DbPogoProtoSubmit:
         base_args = []
 
         for encounter_id, values in insert.items():
-            encounter = values.get("encounter", "NULL")
-            wild = values.get("wild", "NULL")
-            nearby_stop = values.get("nearby_stop", "NULL")
-            nearby_cell = values.get("nearby_cell", "NULL")
-            lure_encounter = values.get("lure_encounter", "NULL")
-            lure_wild = values.get("lure_wild", "NULL")
+            encounter = values.get("encounter", None)
+            wild = values.get("wild", None)
+            nearby_stop = values.get("nearby_stop", None)
+            nearby_cell = values.get("nearby_cell", None)
+            lure_encounter = values.get("lure_encounter", None)
+            lure_wild = values.get("lure_wild", None)
 
             base_args.append(
                 (
