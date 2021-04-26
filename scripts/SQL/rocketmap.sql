@@ -635,6 +635,17 @@ CREATE TABLE `trs_stats_detect_raw` (
     KEY `shiny` (`is_shiny`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `trs_stats_detect_seen_type` (
+    `encounter_id` bigint(20) unsigned NOT NULL,
+    `encounter` datetime DEFAULT NULL,
+    `wild` datetime DEFAULT NULL,
+    `nearby_stop` datetime DEFAULT NULL,
+    `nearby_cell` datetime DEFAULT NULL,
+    `lure_encounter` datetime DEFAULT NULL,
+    `lure_wild` datetime DEFAULT NULL,
+    PRIMARY KEY (`encounter_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `trs_stats_location` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `worker` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,

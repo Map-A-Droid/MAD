@@ -163,7 +163,11 @@ class DbPogoProtoSubmit:
                 costume = display["costume_value"]
                 gender = display["gender_value"]
                 weather_boosted = display["weather_boosted_value"]
+
                 now = datetime.utcfromtimestamp(time.time())
+                disappear_time = now + timedelta(minutes=15)  # TODO: Possible config option?
+                disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
+                now = now.strftime("%Y-%m-%d %H:%M:%S")
 
                 if stopid == "" and cellid is not None:
                     lat, lon, _ = S2Helper.get_position_from_cell(cellid)
@@ -186,7 +190,6 @@ class DbPogoProtoSubmit:
                     stop_encounters.append((encounter_id, now))
 
                 spawnpoint = 0
-                disappear_time = now + timedelta(minutes=15) # TODO: Possible config option?
 
                 """
                 if self._args.nearby_spawn_matching:
@@ -220,9 +223,6 @@ class DbPogoProtoSubmit:
                             _, disappear_time, lat, lon, spawnpoint = max(likely_spawns, key=lambda s: s[0])
                 """
                 # possible TODO: nearby spawn matching. See https://github.com/Map-A-Droid/MAD/pull/1120
-
-                disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
-                now = now.strftime("%Y-%m-%d %H:%M:%S")
 
                 nearby_args.append(
                     (
