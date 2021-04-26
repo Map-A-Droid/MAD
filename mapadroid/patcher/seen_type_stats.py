@@ -9,12 +9,12 @@ class Patch(PatchBase):
         query = (
             "CREATE TABLE IF NOT EXISTS `trs_stats_detect_seen_type` ( "
             "`encounter_id` bigint(20) unsigned NOT NULL, "
-            "`encounter` datetime DEFAULT NULL, "
-            "`wild` datetime DEFAULT NULL, "
-            "`nearby_stop` datetime DEFAULT NULL, "
-            "`nearby_cell` datetime DEFAULT NULL, "
-            "`lure_encounter` datetime DEFAULT NULL, "
-            "`lure_wild` datetime DEFAULT NULL, "
+            "`encounter` datetime NULL DEFAULT NULL, "
+            "`wild` datetime NULL DEFAULT NULL, "
+            "`nearby_stop` datetime NULL DEFAULT NULL, "
+            "`nearby_cell` datetime NULL DEFAULT NULL, "
+            "`lure_encounter` datetime NULL DEFAULT NULL, "
+            "`lure_wild` datetime NULL DEFAULT NULL, "
             "PRIMARY KEY (`encounter_id`) "
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
         )
