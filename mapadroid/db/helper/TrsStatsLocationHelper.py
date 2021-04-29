@@ -54,3 +54,31 @@ class TrsStatsLocationHelper:
 
             results[worker][hour_timestamp] = (int(location_count), int(locations_ok), int(locations_nok))
         return results
+
+    @staticmethod
+    async def get_location_info(session: AsyncSession) -> Dict[str, Tuple[int, int, int, float]]:
+        """
+        DbStatsReader::get_location_info
+        Fetches stats per worker:
+        Dict[worker, Tuple[sum_location_count, sum_location_ok, sum_location_not_ok, percentage_nok_as_failure_rate]]
+        Args:
+            session:
+
+        Returns:
+
+        """
+        stmt = select(TrsStatsLocation.worker,
+                      func.sum(TrsStatsLocation.location_count),
+                      func.sum(TrsStatsLocation.location_ok),
+                      func.sum(TrsStatsLocation.location_nok)) \
+            .select_from(TrsStatsLocation) \
+            .group_by(TrsStatsLocation.worker)
+        result = await session.execute(stmt)
+        results: Dict[str, Tuple[int, int, int, float]] = {}
+        for worker, location_count, location_ok, location_nok in result:
+            if location_count > 0:
+                failure_rate = int(location_nok) / int(location_count) * 100
+            else:
+                failure_rate = 0
+            results[worker] = (int(location_count), int(location_ok), int(location_nok), failure_rate)
+        return results

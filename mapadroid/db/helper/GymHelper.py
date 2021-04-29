@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import and_
+from sqlalchemy import and_, case, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -59,3 +59,27 @@ class GymHelper:
         for (gym, gym_detail, raid) in result:
             gyms[gym.gym_id] = (gym, gym_detail, raid)
         return gyms
+
+    @staticmethod
+    async def get_gym_count(session: AsyncSession) -> Dict[str, int]:
+        """
+        DbStatsReader::get_gym_count
+        Args:
+            session:
+
+        Returns: Dict[team_as_str, count]
+
+        """
+        stmt = select(
+                case((Gym.team_id == 0, "WHITE"),
+                     (Gym.team_id == 1, "Blue"),
+                     (Gym.team_id == 2, "Red"),
+                     else_="Yellow"),
+                func.count(Gym.team_id))\
+            .select_from(Gym)\
+            .group_by(Gym.team_id)
+        result = await session.execute(stmt)
+        team_count: Dict[str, int] = {}
+        for team, count in result:
+            team_count[team] = count
+        return team_count

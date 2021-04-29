@@ -199,3 +199,58 @@ class PokemonHelper:
         for res in result:
             results.append(res)
         return results
+
+    @staticmethod
+    async def get_pokemon_count(session: AsyncSession,
+                                include_last_n_minutes: Optional[int] = None) -> List[Tuple[int, int, int]]:
+        """
+        DbStatsReader::get_pokemon_count
+        Args:
+            session:
+            include_last_n_minutes:
+
+        Returns: List[Tuple[timestamp_of_full_hour, count_of_distinct_encounter_ids, iv_scanned_bool]]
+
+        """
+        iv = func.IF(Pokemon.cp == None, 0, 1).label("iv")
+        timestamp = func.unix_timestamp(
+                func.DATE_FORMAT(func.min(Pokemon.last_modified), '%y-%m-%d %k:00:00'))\
+            .label("timestamp")
+        stmt = select(
+            timestamp,
+            func.count(Pokemon.encounter_id.distinct()),
+            iv)\
+            .select_from(Pokemon)
+        if include_last_n_minutes:
+            minutes = datetime.datetime.utcnow().replace(
+                minute=0, second=0, microsecond=0) - datetime.timedelta(minutes=include_last_n_minutes)
+            stmt = stmt.where(Pokemon.last_modified >= minutes)
+        stmt = stmt.group_by(iv,
+                             func.day(func.TIMESTAMP(Pokemon.last_modified)),
+                             func.hour(func.TIMESTAMP(Pokemon.last_modified)))\
+            .order_by(timestamp)
+        result = await session.execute(stmt)
+        results = []
+        for res in result:
+            results.append(res)
+        return results
+
+    @staticmethod
+    async def get_best_pokemon_spawns(session: AsyncSession, limit: Optional[int] = None) -> List[Pokemon]:
+        """
+        DbStatsReader::get_best_pokemon_spawns
+        Args:
+            session:
+            limit: Number of entries to return at most
+
+        Returns: the last seen N "perfect" mons
+
+        """
+        stmt = select(Pokemon).where(and_(Pokemon.individual_attack == 15,
+                                          Pokemon.individual_defense == 15,
+                                          Pokemon.individual_stamina == 15))\
+            .order_by(desc(Pokemon.last_modified))
+        if limit:
+            stmt = stmt.limit(limit)
+        result = await session.execute(stmt)
+        return result.scalars().all()

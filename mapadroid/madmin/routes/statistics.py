@@ -403,14 +403,6 @@ class MADminStatistics(object):
         all_spawns.append({'type': 'Raid', 'amount': int(data[0][4])})
         all_spawns.append({'type': 'Quest', 'amount': int(data[0][5])})
 
-        # raw detection data
-        detections_raw = []
-        data, data2 = self._db_stats_reader.get_detection_raw(minutes=minutes, worker=worker)
-        for dat in data:
-            detections_raw.append({'type': dat[1], 'id': dat[2], 'count': dat[3]})
-        for dat in data2:
-            detections_raw.append({'type': dat[1], 'id': dat[2], 'count': dat[3]})
-
         # location raw
         location_raw = []
         last_lat = 0
@@ -435,7 +427,7 @@ class MADminStatistics(object):
                  'transporttype': dat[8]})
 
         workerstats = {'avg': locations_avg, 'receiving': usage, 'locations': locations,
-                       'ratio': loctionratio, 'allspawns': all_spawns, 'detections_raw': detections_raw,
+                       'ratio': loctionratio, 'allspawns': all_spawns,
                        'location_raw': location_raw}
         return jsonify(workerstats)
 
