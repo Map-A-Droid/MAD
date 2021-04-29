@@ -193,9 +193,6 @@ class WorkerMITM(MITMBase):
         latest_proto = latest_proto_data.get("payload")
 
         if mode in ["mon_mitm", "iv_mitm"]:
-            if self._applicationArgs.do_nearby_scans:
-                key_to_check = "nearby_pokemon"
-            else:
                 key_to_check = "wild_pokemon"
         else:
             key_to_check = "forts"
