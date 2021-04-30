@@ -193,7 +193,11 @@ class WorkerMITM(MITMBase):
         latest_proto = latest_proto_data.get("payload")
 
         if mode in ["mon_mitm", "iv_mitm"]:
-            key_to_check = "wild_pokemon"
+            settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+            if settings.get("nearby_cell_mode", False):
+                key_to_check = "nearby_pokemon"
+            else:
+                key_to_check = "wild_pokemon"
         else:
             key_to_check = "forts"
         
