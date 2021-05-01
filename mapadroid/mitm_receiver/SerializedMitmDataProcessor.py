@@ -94,7 +94,7 @@ class SerializedMitmDataProcessor(Process):
                 gmo_loc_start = self.get_time_ms()
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 gmo_loc_time = self.get_time_ms() - gmo_loc_start
-                
+
                 if self.__application_args.no_lure_mons:
                     lurenoiv_time = 0
                 else:
