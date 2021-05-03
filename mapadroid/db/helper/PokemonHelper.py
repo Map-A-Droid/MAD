@@ -254,3 +254,30 @@ class PokemonHelper:
             stmt = stmt.limit(limit)
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def get_noniv_encounters_count(session: AsyncSession,
+                                         last_n_minutes: Optional[int] = 240) -> List[Tuple[int, Location]]:
+        """
+        DbStatsReader::get_noniv_encounters_count
+        Args:
+            session:
+            last_n_minutes:
+
+        Returns: List of tuples of (the amount of mons not scanned for IV, in a location)
+
+        """
+        stmt = select(func.COUNT("*"),
+                      Pokemon.latitude,
+                      Pokemon.longitude)
+        where_conditions = [Pokemon.cp != None]
+        if last_n_minutes:
+            time_to_check_after = datetime.datetime.utcnow() - datetime.timedelta(minutes=last_n_minutes)
+            where_conditions.append(Pokemon.last_modified > time_to_check_after)
+        stmt = stmt.where(and_(*where_conditions)) \
+            .group_by(Pokemon.latitude, Pokemon.longitude)
+        result = await session.execute(stmt)
+        results: List[Tuple[int, Location]] = []
+        for count, lat, lng in result:
+            results.append((count, Location(lat, lng)))
+        return results

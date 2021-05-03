@@ -196,3 +196,18 @@ class TrsSpawnHelper:
             spawns[spawn.spawnpoint] = (spawn, event)
 
         return spawns
+
+    @staticmethod
+    async def get_all_spawnpoints_count(session: AsyncSession) -> int:
+        """
+        DbStatsReader::get_all_spawnpoints_count
+        Args:
+            session:
+
+        Returns: amount of all spawnpoints known
+
+        """
+        stmt = select(func.COUNT("*"))\
+            .select_from(TrsSpawn)
+        result = await session.execute(stmt)
+        return result.scalar()

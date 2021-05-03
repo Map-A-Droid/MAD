@@ -246,3 +246,29 @@ class PokestopHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def get_stop_quest(session: AsyncSession) -> List[Tuple[str, int]]:
+        """
+        DbStatsReader::get_stop_quest
+        returns list of tuples containing [date label or NO QUEST, count of stops]
+        Args:
+            session:
+
+        Returns:
+
+        """
+        min_quest_timestamp = func.FROM_UNIXTIME(func.MIN(TrsQuest.quest_timestamp), '%y-%m-%d')
+        # LEFT JOIN to fetch stops without quests
+        stmt = select(
+            func.IF(min_quest_timestamp == None, "No quest",
+                    min_quest_timestamp),
+            func.COUNT(Pokestop.pokestop_id)
+        ).select_from(Pokestop)\
+            .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)\
+            .group_by(func.FROM_UNIXTIME(TrsQuest.quest_timestamp, '%y-%m-%d'))
+        result = await session.execute(stmt)
+        results: List[Tuple[str, int]] = []
+        for timestamp_as_str, count in result:
+            results.append((timestamp_as_str, count))
+        return results
