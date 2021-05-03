@@ -133,7 +133,7 @@
   },
   "36": {
     "prototext": "QUEST_BUDDY_LEVEL",
-    "text": ""
+    "text": "Reach {level} Buddy with a Pokémon"
   },
   "37": {
     "prototext": "QUEST_BUDDY_WALK",
