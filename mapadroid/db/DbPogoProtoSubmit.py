@@ -238,7 +238,6 @@ class DbPogoProtoSubmit:
         self._db_exec.executemany(query_nearby, nearby_args, commit=True)
         return cell_encounters, stop_encounters
 
-
     def mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         """
         Update/Insert a mon with IVs
@@ -354,6 +353,82 @@ class DbPogoProtoSubmit:
         origin_logger.debug3("Done updating mon in DB")
         return [(encounter_id, now)]
 
+    def mon_lure_iv(self, origin: str, timestamp: float, data: dict):
+        """
+        Update/Insert a lure mon with IVs
+        """
+        cache = get_cache(self._args)
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug3("Updating IV sent for encounter at {}", timestamp)
+
+        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+
+        pokemon_data = data.get("pokemon", {})
+        mon_id = pokemon_data.get("id")
+
+        display = pokemon_data.get("display", {})
+        weather_boosted = display.get('weather_boosted_value')
+        encounter_id = display.get("display_id", 0)
+
+        if encounter_id < 0:
+            encounter_id = encounter_id + 2 ** 64
+
+        cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
+        if cache.exists(cache_key):
+            return
+
+        # ditto detector
+        if is_mon_ditto(origin_logger, pokemon_data):
+            # mon must be a ditto :D
+            mon_id = 132
+            gender = 3
+            move_1 = 242
+            move_2 = 133
+            form = 0
+        else:
+            gender = display.get("gender_value", None)
+            move_1 = pokemon_data.get("move_1")
+            move_2 = pokemon_data.get("move_2")
+            form = display.get("form_value", None)
+
+        query = (
+            "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
+            "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
+            "weight, height, gender, weather_boosted_condition, last_modified, costume, form, seen_type) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), "
+            "individual_attack=VALUES(individual_attack), individual_defense=VALUES(individual_defense), "
+            "individual_stamina=VALUES(individual_stamina), move_1=VALUES(move_1), move_2=VALUES(move_2), "
+            "cp=VALUES(cp), cp_multiplier=VALUES(cp_multiplier), weight=VALUES(weight), height=VALUES(height), "
+            "seen_type=VALUES(seen_type)"
+        )
+        insert_values = (
+            encounter_id,
+            0,
+            mon_id,
+            0, 0, now,
+            pokemon_data.get("individual_attack"),
+            pokemon_data.get("individual_defense"),
+            pokemon_data.get("individual_stamina"),
+            move_1,
+            move_2,
+            pokemon_data.get("cp"),
+            pokemon_data.get("cp_multiplier"),
+            pokemon_data.get("weight"),
+            pokemon_data.get("height"),
+            gender,
+            weather_boosted,
+            now,
+            display.get("costume_value"),
+            form,
+            "lure_encounter"
+        )
+
+        self._db_exec.execute(query, insert_values, commit=True)
+        cache.set(cache_key, 1, ex=60*3)
+        origin_logger.debug3("Done updating lure mon with iv in DB")
+        return [(encounter_id, now)]
+
     def mon_lure_noiv(self, origin: str, map_proto: dict):
         """
         Update/Insert Lure mons from a map_proto dict
@@ -366,10 +441,13 @@ class DbPogoProtoSubmit:
             return False
 
         query_lures = (
-            "INSERT IGNORE pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
+            "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
             "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
             "latitude, longitude, seen_type)"
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), fort_id=VALUES(fort_id), "
+            "disappear_time=VALUES(disappear_time), latitude=VALUES(latitude), "
+            "longitude=VALUES(longitude)"
         )
 
         lure_args = []
@@ -403,7 +481,7 @@ class DbPogoProtoSubmit:
                     gender = display["gender_value"]
                     weather_boosted = display["weather_boosted_value"]
 
-                    cache.set(cache_key, 1, ex=60*5)
+                    cache.set(cache_key, 1, ex=60*3)
                     lure_args.append(
                         (
                             encounter_id, 0, mon_id, stopid, disappear_time, gender,

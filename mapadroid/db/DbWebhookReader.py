@@ -190,9 +190,9 @@ class DbWebhookReader:
 
         extra_select = ""
         extra_join = ""
-        if "nearby_stop" in mon_types:
+        if {"nearby_stop", "lure_wild", "lure_encounter"} & mon_types:
             extra_select += "fort_id, pokestop.name, pokestop.image, "
-            extra_join +="LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
+            extra_join += "LEFT JOIN pokestop ON pokemon.fort_id = pokestop.pokestop_id "
         else:
             extra_select += "NULL, NULL, NULL, "
 
@@ -213,6 +213,10 @@ class DbWebhookReader:
              cp, cp_multiplier, weight, height, gender, form, costume,
              weather_boosted_condition, last_modified, catch_prob_1, catch_prob_2, catch_prob_3,
              verified, seen_type, fort_id, stop_name, stop_url, cell_id) in res:
+
+            if seen_type == "lure_encounter" and latitude == 0:
+                continue
+
             ret.append({
                 "encounter_id": encounter_id,
                 "pokemon_id": pokemon_id,

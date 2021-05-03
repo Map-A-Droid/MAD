@@ -481,17 +481,22 @@ class WebhookWorker:
                 if self.__args.quest_webhook_flavor == "poracle":
                     mon_payload["weather"] = mon["weather_boosted_condition"]
 
-            if mon["seen_type"] == "nearby_stop":
+            if mon["seen_type"] in ("nearby_stop", "lure_wild", "lure_encounter"):
                 mon_payload["fort_id"] = mon["fort_id"]
-                mon_payload["verified"] = False
                 mon_payload["fort_name"] = mon.get("stop_name")
                 mon_payload["fort_url"] = mon.get("stop_url")
+
+                if mon["seen_type"] == "nearby_stop":
+                    mon_payload["verified"] = False
+                else:
+                    mon_payload["verified"] = True
             
             if mon["seen_type"] == "nearby_cell":
                 mon_payload["cell_coords"] = S2Helper.coords_of_cell(
                     mon["cell_id"]
                 )
                 mon_payload["cell_id"] = mon["cell_id"]
+                mon_payload["verified"] = False
 
             entire_payload = {"type": "pokemon", "message": mon_payload}
             ret.append(entire_payload)

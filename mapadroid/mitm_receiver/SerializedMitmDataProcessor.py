@@ -142,6 +142,24 @@ class SerializedMitmDataProcessor(Process):
                     origin_logger.debug("Done processing encounter in {}ms", end_time)
                 else:
                     origin_logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
+
+            elif data_type == 145:
+                # lure mons with iv
+                playerlevel = self.__mitm_mapper.get_playerlevel(origin)
+                if (not self.__application_args.no_lure_mons) and (playerlevel >= 30):
+                    origin_logger.debug("Processing lure encounter received at {}", processed_timestamp)
+
+                    lure_encounter = self.__db_submit.mon_lure_iv(
+                        origin, received_timestamp, data["payload"])
+
+                    if self.__application_args.game_stats:
+                        self.__db_submit.update_seen_type_stats(
+                            lure_encounter=lure_encounter
+                        )
+
+                    end_time = self.get_time_ms() - start_time
+                    origin_logger.debug("Done processing lure encounter in {}ms", end_time)
+
             elif data_type == 101:
                 origin_logger.debug("Processing proto 101 (FORT_SEARCH)")
                 self.__db_submit.quest(origin, data["payload"], self.__mitm_mapper)
