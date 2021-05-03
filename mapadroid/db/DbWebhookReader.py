@@ -214,7 +214,7 @@ class DbWebhookReader:
              weather_boosted_condition, last_modified, catch_prob_1, catch_prob_2, catch_prob_3,
              verified, seen_type, fort_id, stop_name, stop_url, cell_id) in res:
 
-            if seen_type == "lure_encounter" and latitude == 0:
+            if latitude == 0 and seen_type == "lure_encounter":
                 continue
 
             ret.append({
