@@ -572,17 +572,16 @@ class WebhookWorker:
         return ret
 
     def __build_webhook_receivers(self):
-        webhooks = self.__args.webhook_url.replace(" ", "").split(",")
+        webhooks = self.__args.webhook_url.split(",")
 
         for webhook in webhooks:
             sub_types = None
             url = webhook.strip()
 
             if url.startswith("["):
-                end_index = webhook.index("]")
-                end_index += 1
-                sub_types = webhook[:end_index]
-                url = url[end_index:]
+                raw_sub_types, url = url.split("]")
+                sub_types = raw_sub_types[1:].split(" ")
+                sub_types = [t.replace(" ", "") for t in sub_types]
 
                 if "pokemon" in sub_types:
                     sub_types += "encounter"
@@ -598,7 +597,7 @@ class WebhookWorker:
                     self.__webhook_types.add(vtype)
 
             self.__webhook_receivers.append({
-                "url": url,
+                "url": url.replace(" ", ""),
                 "types": sub_types
             })
 
