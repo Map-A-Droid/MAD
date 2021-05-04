@@ -391,7 +391,7 @@ class DbWrapper:
             "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire, seen_type, cell_id "
             "FROM pokemon "
             "WHERE individual_attack IS NULL AND individual_defense IS NULL AND individual_stamina IS NULL "
-            "AND encounter_id != 0 "
+            "AND encounter_id != 0 AND seen_type != 'nearby_cell' "
             "and (disappear_time BETWEEN DATE_ADD(UTC_TIMESTAMP(), INTERVAL %s SECOND) "
             "and DATE_ADD(UTC_TIMESTAMP(), INTERVAL 60 MINUTE))"
             "ORDER BY expire ASC"
