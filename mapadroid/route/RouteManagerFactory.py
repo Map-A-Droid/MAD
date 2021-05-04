@@ -19,8 +19,7 @@ class RouteManagerFactory:
                          init: bool = False, name: str = "unknown", settings=None,
                          coords_spawns_known: bool = True,
                          level: bool = False, calctype: str = "route", use_s2: bool = False,
-                         s2_level: int = 15, joinqueue=None, include_event_id=None,
-                         nearby_cell_mode: bool = False):
+                         s2_level: int = 15, joinqueue=None, include_event_id=None):
 
         if mode == WorkerType.RAID_MITM.value:
             route_manager = RouteManagerRaids(db_wrapper, dbm, area_id, coords, max_radius,
@@ -37,8 +36,7 @@ class RouteManagerFactory:
                                             mode=mode, settings=settings, init=init, name=name,
                                             joinqueue=joinqueue,
                                             coords_spawns_known=coords_spawns_known,
-                                            include_event_id=include_event_id,
-                                            nearby_cell_mode=nearby_cell_mode
+                                            include_event_id=include_event_id
                                             )
         elif mode == WorkerType.IV_MITM.value:
             route_manager = RouteManagerIV(db_wrapper, dbm, area_id, coords, max_radius, 99999999,
