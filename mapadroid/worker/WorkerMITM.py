@@ -200,7 +200,7 @@ class WorkerMITM(MITMBase):
                 key_to_check = "wild_pokemon"
         else:
             key_to_check = "forts"
-        
+
         if self._gmo_cells_contain_multiple_of_key(latest_proto, key_to_check):
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GMO

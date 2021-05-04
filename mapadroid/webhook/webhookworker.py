@@ -490,7 +490,7 @@ class WebhookWorker:
                     mon_payload["verified"] = False
                 else:
                     mon_payload["verified"] = True
-            
+
             if mon["seen_type"] == "nearby_cell":
                 mon_payload["cell_coords"] = S2Helper.coords_of_cell(
                     mon["cell_id"]

@@ -463,7 +463,7 @@ class DbPogoProtoSubmit:
 
                     if encounter_id < 0:
                         encounter_id = encounter_id + 2 ** 64
-                    
+
                     cache_key = "monlurenoiv{}".format(encounter_id)
                     if cache.exists(cache_key):
                         continue

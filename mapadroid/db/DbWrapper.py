@@ -1,7 +1,7 @@
 import json
+import random
 import re
 import time
-import random
 from datetime import datetime, timedelta, timezone
 from functools import reduce
 from typing import Dict, List, Optional, Tuple
@@ -657,7 +657,7 @@ class DbWrapper:
              individual_stamina, move_1, move_2, cp,
              weight, height, gender, form, costume,
              weather_boosted_condition, last_modified, seen_type) in res:
-            
+
             if seen_type is not None and "nearby" in seen_type:
                 latitude += random.uniform(-0.0003, 0.0003)
                 longitude += random.uniform(-0.0005, 0.0005)
