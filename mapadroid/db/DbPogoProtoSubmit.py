@@ -1023,13 +1023,7 @@ class DbPogoProtoSubmit:
 
             lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
 
-            has_mon = 0
-            for mon in cell.get("nearby_pokemon", []):
-                if mon.get("fort_id") == "":
-                    has_mon = 1
-                    break
-
-            cells.append((cell_id, 15, lat, lng, cell["current_timestamp"] / 1000, has_mon))
+            cells.append((cell_id, 15, lat, lng, cell["current_timestamp"] / 1000))
 
         self._db_exec.executemany(query, cells, commit=True)
 
