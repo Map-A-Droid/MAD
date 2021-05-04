@@ -1009,11 +1009,9 @@ class DbPogoProtoSubmit:
         protocells = map_proto.get("cells", [])
 
         query = (
-            "INSERT INTO trs_s2cells (id, level, center_latitude, center_longitude, updated, "
-            "has_pokemon) "
-            "VALUES (%s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), "
-            "has_pokemon=IF(has_pokemon=1, 1, VALUES(has_pokemon))"
+            "INSERT INTO trs_s2cells (id, level, center_latitude, center_longitude, updated) "
+            "VALUES (%s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE updated=VALUES(updated)"
         )
 
         cells = []

@@ -359,8 +359,7 @@ class MADminMap:
             ret.append({
                 "id": str(cell["cell_id"]),
                 "polygon": S2Helper.coords_of_cell(cell["cell_id"]),
-                "updated": cell["updated"],
-                "has_pokemon": cell["has_pokemon"]
+                "updated": cell["updated"]
             })
 
         return jsonify(ret)

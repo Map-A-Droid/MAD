@@ -768,36 +768,6 @@ class DbWrapper:
                                                                           str(longitude))
         self.execute(query, commit=True)
 
-    def get_cells_with_pokemon(self, geofence_helper) -> List[Location]:
-        logger.debug3("DbWrapper::get_cells_with_pokemon called")
-        min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
-
-        query = (
-            "SELECT center_latitude, center_longitude "
-            "FROM trs_s2cells "
-            "WHERE (center_latitude >= {} AND center_longitude >= {} "
-            "AND center_latitude <= {} AND center_longitude <= {}) and "
-            "has_pokemon = 1"
-        ).format(min_lat, min_lon, max_lat, max_lon)
-
-        list_of_coords: List[Location] = []
-        logger.debug3("DbWrapper::get_cells_with_pokemon executing select query")
-        res = self.execute(query)
-        logger.debug4("DbWrapper::get_cells_with_pokemon result of query: {}", res)
-        for (latitude, longitude) in res:
-            list_of_coords.append(Location(latitude, longitude))
-
-        if geofence_helper is not None:
-            logger.debug3("DbWrapper::get_cells_with_pokemon applying geofence")
-            geofenced_coords = geofence_helper.get_geofenced_coordinates(
-                list_of_coords)
-            logger.debug4(geofenced_coords)
-            return geofenced_coords
-        else:
-            logger.debug3("DbWrapper::get_cells_with_pokemon converting to numpy")
-            return list_of_coords
-
-
     def get_detected_spawns(self, geofence_helper, include_event_id) -> List[Location]:
         logger.debug3("DbWrapper::get_detected_spawns called")
 
@@ -1320,7 +1290,7 @@ class DbWrapper:
     def get_cells_in_rectangle(self, ne_lat, ne_lon, sw_lat, sw_lon,
                                o_ne_lat=None, o_ne_lon=None, o_sw_lat=None, o_sw_lon=None, timestamp=None):
         query = (
-            "SELECT id, level, center_latitude, center_longitude, updated, has_pokemon "
+            "SELECT id, level, center_latitude, center_longitude, updated "
             "FROM trs_s2cells "
         )
 
@@ -1346,14 +1316,13 @@ class DbWrapper:
         res = self.execute(query + query_where)
 
         cells = []
-        for (cell_id, level, center_latitude, center_longitude, updated, has_mon) in res:
+        for (cell_id, level, center_latitude, center_longitude, updated) in res:
             cells.append({
                 "cell_id": cell_id,
                 "level": level,
                 "center_latitude": center_latitude,
                 "center_longitude": center_longitude,
-                "updated": updated,
-                "has_pokemon": has_mon
+                "updated": updated
             })
 
         return cells

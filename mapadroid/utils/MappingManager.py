@@ -33,9 +33,9 @@ mode_mapping = {
         "max_count": 100000
     },
     "nearby_cells": {
-        "s2_cell_level": 15,
-        "range": 180,
-        "range_init": 360,
+        "s2_cell_level": 17,
+        "range": 200,
+        "range_init": 400,
         "max_count": 100000
     },
     "pokestops": {
@@ -426,8 +426,7 @@ class MappingManager:
                                                                  joinqueue=self.join_routes_queue,
                                                                  s2_level=s2_level,
                                                                  include_event_id=area.get(
-                                                                     "settings", {}).get("include_event_id", None),
-                                                                 nearby_cell_mode=nearby_cell_mode
+                                                                     "settings", {}).get("include_event_id", None)
                                                                  )
             logger.info("Initializing area {}", area["name"])
             if mode not in ("iv_mitm", "idle") and calc_type != "routefree":
@@ -437,8 +436,7 @@ class MappingManager:
                                              range_init=mode_mapping.get(
                                                  mode_mapping_key, {}).get("range_init", 630),
                                              including_stops=area.get("including_stops", False),
-                                             include_event_id=area.get("settings", {}).get("include_event_id", None),
-                                             nearby_cell_mode=area.get("nearby_cell_mode", False))
+                                             include_event_id=area.get("settings", {}).get("include_event_id", None))
 
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[mode_mapping_key]["range"]
@@ -520,7 +518,7 @@ class MappingManager:
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = True,
                        init: bool = False, range_init: int = 630, including_stops: bool = False,
-                       include_event_id=None, nearby_cell_mode: bool = False) -> List[Location]:
+                       include_event_id=None) -> List[Location]:
         coords: List[Location] = []
         if not init:
             # grab data from DB depending on mode
@@ -535,15 +533,12 @@ class MappingManager:
                     except Exception:
                         pass
             elif mode == "mon_mitm":
-                if nearby_cell_mode:
-                    coords = self.__db_wrapper.get_cells_with_pokemon(geofence_helper)
+                if coords_spawns_known:
+                    logger.debug("Reading known Spawnpoints from DB")
+                    coords = self.__db_wrapper.get_detected_spawns(geofence_helper, include_event_id)
                 else:
-                    if coords_spawns_known:
-                        logger.debug("Reading known Spawnpoints from DB")
-                        coords = self.__db_wrapper.get_detected_spawns(geofence_helper, include_event_id)
-                    else:
-                        logger.debug("Reading unknown Spawnpoints from DB")
-                        coords = self.__db_wrapper.get_undetected_spawns(geofence_helper, include_event_id)
+                    logger.debug("Reading unknown Spawnpoints from DB")
+                    coords = self.__db_wrapper.get_undetected_spawns(geofence_helper, include_event_id)
             elif mode == "pokestops":
                 coords = self.__db_wrapper.stops_from_db(geofence_helper)
             else:
