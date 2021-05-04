@@ -174,7 +174,7 @@ class DbWebhookReader:
     def get_mon_changed_since(self, timestamp, mon_types=None):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
         if mon_types is None:
-            mon_types = ["encounter"]
+            mon_types = {"encounter"}
         query = (
             "SELECT encounter_id, spawnpoint_id, pokemon_id, pokemon.latitude, pokemon.longitude, "
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
