@@ -152,20 +152,22 @@ class DbPogoProtoSubmit:
 
                 mon_id = nearby_mon["id"]
                 encounter_id = nearby_mon["encounter_id"]
+                display = nearby_mon["display"]
+                weather_boosted = display["weather_boosted_value"]
 
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
                 # Hotfix for a PD issue.
 
                 cache_key = "monnear{}-{}".format(encounter_id, mon_id)
-                if cache.exists(cache_key):
+                encounter_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
+                wild_key = "mon{}-{}".format(encounter_id, mon_id)
+                if cache.exists(cache_key) or cache.exists(encounter_key) or cache.exists(wild_key):
                     continue
 
-                display = nearby_mon["display"]
                 form = display["form_value"]
                 costume = display["costume_value"]
                 gender = display["gender_value"]
-                weather_boosted = display["weather_boosted_value"]
 
                 now = datetime.utcfromtimestamp(time.time())
                 disappear_time = now + timedelta(minutes=15)  # TODO: Possible config option?
