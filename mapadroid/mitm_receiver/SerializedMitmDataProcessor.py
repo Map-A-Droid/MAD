@@ -97,6 +97,7 @@ class SerializedMitmDataProcessor(Process):
 
                 if self.__application_args.no_lure_mons:
                     lurenoiv_time = 0
+                    lure_wild_encounters = []
                 else:
                     lurenoiv_start = self.get_time_ms()
                     lure_wild_encounters = self.__db_submit.mon_lure_noiv(origin, data["payload"])
