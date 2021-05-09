@@ -74,7 +74,7 @@ class TrsStatsLocationRawHelper:
                                              worker: Optional[str] = None) -> Dict[str, Dict[int, List[Tuple[int, int, int, str]]]]:
         """
         Used to be DbStatsReader::get_locations_dataratio
-        Fetches { worker : { timestamp_hour : [count_period, location_type, success, location_type and success readable]}}
+        Fetches { worker : { timestamp_hour : [Tuple(count_period, location_type, success, success_locationtype_readable)]}}
         Args:
             session:
             include_last_n_minutes:

@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Optional, List
 
-from sqlalchemy import and_, asc, delete
+from loguru import logger
+from sqlalchemy import and_, asc, delete, between
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -77,3 +78,23 @@ class TrsEventHelper:
         event.event_end = event_end
         event.event_lure_duration = event_lure_duration
         session.add(event)
+
+    @staticmethod
+    async def is_event_active(session: AsyncSession, event_id: int) -> bool:
+        """
+        Used to be DbWrapper::check_if_event_is_active
+        Args:
+            session:
+            event_id:
+
+        Returns:
+
+        """
+        logger.debug3("DbWrapper::check_if_event_is_active called")
+        if event_id == 1:
+            return False
+        stmt = select(TrsEvent).where(and_(TrsEvent.id == event_id,
+                                           between(datetime.utcnow(), TrsEvent.event_start, TrsEvent.event_end)))
+
+        result = await session.execute(stmt)
+        return result.scalars().first() is not None

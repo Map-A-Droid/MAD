@@ -146,7 +146,7 @@ class PokemonHelper:
             timestamp_after:
             timestamp_before:
 
-        Returns:
+        Returns: Dict of {encounterID : Tuple[Pokemon, List[TrsStatsDetectMonRaw]}
 
         """
         stmt = select(Pokemon, TrsStatsDetectMonRaw)\
