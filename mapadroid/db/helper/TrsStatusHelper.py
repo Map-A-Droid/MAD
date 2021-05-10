@@ -37,7 +37,7 @@ class TrsStatusHelper:
 
     @staticmethod
     async def reset_status(session: AsyncSession, instance_id: int, device_id: int) -> None:
-        status: Optional[TrsStatus] = await TrsStatusHelper.get(device_id)
+        status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
         if not status:
             status.device_id = device_id
             status.instance_id = instance_id

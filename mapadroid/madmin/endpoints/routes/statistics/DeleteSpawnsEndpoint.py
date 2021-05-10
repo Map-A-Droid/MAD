@@ -25,11 +25,12 @@ class DeleteSpawnsEndpoint(AbstractStatisticsRootEndpoint):
         if await TrsEventHelper.is_event_active(self._session, event_id) and older_than_x_days is None:
             return self._json_response({'status': 'event'})
         if area_id is not None and event_id is not None:
-            spawnpoint_ids: List[TrsSpawn] = await self._get_spawnpoints_of_event(area_id, event_id,
-                                                                                  older_than_x_days=older_than_x_days,
-                                                                                  index=index)
-            await self._delete(spawnpoint_ids)
+            spawnpoints: List[TrsSpawn] = await self._get_spawnpoints_of_event(area_id, event_id,
+                                                                               older_than_x_days=older_than_x_days,
+                                                                               index=index)
+            for spawn in spawnpoints:
+                await self._delete(spawn)
         if older_than_x_days is not None:
             await self._add_notice_message('Successfully deleted outdated spawnpoints')
-            await self._redirect(str(url_for('statistics_spawns')))
+            await self._redirect(str(url_for('statistics_spawns')), commit=True)
         return self._json_response({'status': 'success'})

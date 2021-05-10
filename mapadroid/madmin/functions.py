@@ -113,7 +113,7 @@ def generate_device_logcat_zip_path(origin: str, args):
 
 
 async def get_geofences(mapping_manager: MappingManager, session: AsyncSession, instance_id: int,
-                        fence_type=None, area_id_req=None):
+                        fence_type=None, area_id_req=None) -> Dict[int, Dict]:
     # TODO: Request the geofence instances from the MappingManager directly?
     areas: Dict[int, AreaEntry] = await mapping_manager.get_areas()
     geofences = {}

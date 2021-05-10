@@ -29,7 +29,7 @@ class PokestopHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def get_locations_in_fence(session: AsyncSession, geofence_helper: GeofenceHelper,
+    async def get_locations_in_fence(session: AsyncSession, geofence_helper: Optional[GeofenceHelper] = None,
                                      fence=None) -> List[Location]:
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
         if fence is not None:
@@ -49,7 +49,10 @@ class PokestopHelper:
         list_of_coords: List[Location] = []
         for pokestop in result:
             list_of_coords.append(Location(pokestop.latitude, pokestop.longitude))
-        return geofence_helper.get_geofenced_coordinates(list_of_coords)
+        if geofence_helper:
+            return geofence_helper.get_geofenced_coordinates(list_of_coords)
+        else:
+            return list_of_coords
 
     @staticmethod
     async def any_stops_unvisited(session: AsyncSession, geofence_helper: GeofenceHelper, origin: str) -> bool:

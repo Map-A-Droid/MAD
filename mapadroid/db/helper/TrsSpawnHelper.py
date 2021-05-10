@@ -1,9 +1,9 @@
 import time
 from _datetime import timedelta
 from datetime import datetime
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Collection
 
-from sqlalchemy import and_, update, func, or_
+from sqlalchemy import and_, update, func, or_, not_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -211,3 +211,8 @@ class TrsSpawnHelper:
             .select_from(TrsSpawn)
         result = await session.execute(stmt)
         return result.scalar()
+
+    @staticmethod
+    async def delete_all_except(session: AsyncSession, spawns: Collection[int]) -> None:
+        stmt = delete(TrsSpawn).where(not_(TrsSpawn.spawnpoint.in_(spawns)))
+        await session.execute(stmt)
