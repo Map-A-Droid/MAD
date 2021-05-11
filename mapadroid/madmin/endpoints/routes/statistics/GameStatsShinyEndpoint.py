@@ -27,7 +27,7 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
             logger.debug2('using timestamp_from: {}', timestamp_to)
 
         tmp_perworker_v2 = {}
-        data: Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]] = await PokemonHelper\
+        data: Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]] = await PokemonHelper \
             .get_all_shiny(self._session, timestamp_from, timestamp_to)
         found_shiny_mon_id = []
         shiny_count = {}
@@ -70,7 +70,7 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
                                        'form': mon.form, 'mon_id': mon.pokemon_id, 'encounter_id': str(encounter_id)})
 
         global_shiny_stats_v2 = []
-        global_shiny_stats: List[Tuple[int, int, int, int, int]] = await PokemonHelper\
+        global_shiny_stats: List[Tuple[int, int, int, int, int]] = await PokemonHelper \
             .get_count_iv_scanned_of_mon_ids(self._session, set(found_shiny_mon_id),
                                              timestamp_from, timestamp_to)
         for dat in global_shiny_stats:

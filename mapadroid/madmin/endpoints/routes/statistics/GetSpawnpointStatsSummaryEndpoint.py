@@ -1,10 +1,10 @@
-from typing import Optional, Tuple, Dict, List
+from typing import List
 
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
-from mapadroid.db.model import TrsSpawn, TrsEvent
+from mapadroid.db.model import TrsEvent
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
-from mapadroid.madmin.functions import get_geofences, generate_coords_from_geofence
+from mapadroid.madmin.functions import get_geofences
 
 
 class GetSpawnpointStatsSummaryEndpoint(AbstractStatisticsRootEndpoint):

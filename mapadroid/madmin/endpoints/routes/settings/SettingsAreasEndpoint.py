@@ -8,20 +8,21 @@ from loguru import logger
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.model import SettingsGeofence, SettingsArea
+from mapadroid.db.model import SettingsArea
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
 from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
 from mapadroid.db.resource_definitions.AreaRaidsMitm import AreaRaidsMitm
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.worker.WorkerType import WorkerType
 
 
-class SettingsAreasEndpoint(RootEndpoint):
+class SettingsAreasEndpoint(AbstractRootEndpoint):
     """
     "/settings/areas"
     """
+
     def __init__(self, request: Request):
         super().__init__(request)
         # check if we can use ortools and if it's installed

@@ -6,15 +6,15 @@ from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrat
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.utils.autoconfig import AutoConfIssueGenerator, origin_generator
 
 
-class AutoconfStatusEndpoint(RootEndpoint):
+class AutoconfStatusEndpoint(AbstractRootEndpoint):
     async def get(self) -> web.Response:
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']
-        entries: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+        entries: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
             .get_all_of_instance(self._session, self._get_instance_id(), session_id)
         if entries:
             return self._json_response(data=entries)
@@ -53,7 +53,7 @@ class AutoconfStatusEndpoint(RootEndpoint):
                 else:
                     device_entry = hopper_response
                     is_hopper = True
-            assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper\
+            assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
                 .get_assigned_to_device(self._session, self._get_instance_id(), device_entry.device_id)
             if not self._get_mad_args().autoconfig_no_auth and (not assigned_to_device):
                 try:
@@ -61,7 +61,7 @@ class AutoconfStatusEndpoint(RootEndpoint):
                 except KeyError:
                     auth_type = LoginType('google')
                 # Find one that matches authtype
-                unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper\
+                unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper \
                     .get_unassigned(self._session, self._get_instance_id(), auth_type)
                 if not unassigned_accounts:
                     return self._json_response(text="No configured emails", status=400)
@@ -80,4 +80,3 @@ class AutoconfStatusEndpoint(RootEndpoint):
         session_id: int = self.request.match_info['session_id']
         await AutoconfigRegistrationHelper.delete(self._session, self._get_instance_id(), session_id)
         return self._json_response()
-

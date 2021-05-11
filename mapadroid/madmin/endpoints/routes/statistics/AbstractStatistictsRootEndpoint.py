@@ -7,11 +7,11 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import TrsEvent, TrsSpawn
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.madmin.functions import get_geofences, generate_coords_from_geofence
 
 
-class AbstractStatisticsRootEndpoint(RootEndpoint, ABC):
+class AbstractStatisticsRootEndpoint(AbstractRootEndpoint, ABC):
     """
     Used for statistics-related endpoints
     """
@@ -56,13 +56,14 @@ class AbstractStatisticsRootEndpoint(RootEndpoint, ABC):
         return float(ts) - offset
 
     async def _get_spawn_details_helper(self, area_id: int, event_id: int, today_only: bool = False,
-                                       older_than_x_days: Optional[int] = None, sum_only: bool = False, index=0):
+                                        older_than_x_days: Optional[int] = None, sum_only: bool = False, index=0):
         active_spawns: list = []
         possible_fences = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id(),
                                               area_id_req=area_id)
         fence: str = await generate_coords_from_geofence(self._get_mapping_manager(), self._session,
                                                          self._get_instance_id(),
-                                                         str(list(possible_fences[int(area_id)]['include'].keys())[int(index)]))
+                                                         str(list(possible_fences[int(area_id)]['include'].keys())[
+                                                                 int(index)]))
         spawns_and_events: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
             .download_spawns(self._session, fence=fence, event_id=event_id, today_only=today_only,
                              older_than_x_days=older_than_x_days)
@@ -81,7 +82,8 @@ class AbstractStatisticsRootEndpoint(RootEndpoint, ABC):
         possible_fences = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id(),
                                               area_id_req=spawn_id)
         fence = await generate_coords_from_geofence(self._get_mapping_manager(), self._session, self._get_instance_id(),
-                                                    str(list(possible_fences[int(spawn_id)]['include'].keys())[int(index)]))
+                                                    str(list(possible_fences[int(spawn_id)]['include'].keys())[
+                                                            int(index)]))
 
         spawns_and_events: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
             .download_spawns(self._session, fence=fence, event_id=event_id, today_only=today_only,

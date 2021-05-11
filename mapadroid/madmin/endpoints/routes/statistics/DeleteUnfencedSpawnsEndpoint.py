@@ -24,7 +24,7 @@ class DeleteUnfencedSpawnsEndpoint(AbstractStatisticsRootEndpoint):
                 processed_fences.append(subfence)
                 fence = await generate_coords_from_geofence(self._get_mapping_manager(), self._session,
                                                             self._get_instance_id(), subfence)
-                spawns_of_fence: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper\
+                spawns_of_fence: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
                     .download_spawns(self._session, fence=fence)
                 for spawn_id in spawns_of_fence.keys():
                     spawns.add(spawn_id)

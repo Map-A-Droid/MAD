@@ -6,10 +6,10 @@ from mapadroid.db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from mapadroid.db.model import MadApkAutosearch
 from mapadroid.mad_apk import get_apk_status, APKType, lookup_arch_enum, lookup_apk_enum, MADapks, APKArch, \
     is_newer_version
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class ApkUpdateStatusEndpoint(RootEndpoint):
+class ApkUpdateStatusEndpoint(AbstractRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 

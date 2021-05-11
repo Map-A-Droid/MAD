@@ -8,10 +8,10 @@ from aiohttp_jinja2.helpers import url_for
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.model import SettingsWalker
 from mapadroid.db.resource_definitions.Walker import Walker
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsWalkerEndpoint(RootEndpoint):
+class SettingsWalkerEndpoint(AbstractRootEndpoint):
     """
     "/settings/walker"
     """

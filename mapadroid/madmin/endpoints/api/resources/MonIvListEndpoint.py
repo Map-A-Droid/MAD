@@ -1,13 +1,10 @@
-from typing import Any, Dict, List, Optional, Set
-
-from aiohttp import web
-from sqlalchemy import Column
+from typing import Dict, List, Optional, Set
 
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import Base, SettingsMonivlist
 from mapadroid.db.resource_definitions.MonIvList import MonIvList
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
-    AbstractResourceEndpoint, DataHandlingMethodology)
+    AbstractResourceEndpoint)
 
 
 class MonIvListEndpoint(AbstractResourceEndpoint):

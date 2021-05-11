@@ -169,10 +169,10 @@ async def generate_coords_from_geofence(mapping_manager: MappingManager, session
     return ",".join(fence_string)
 
 
-async def get_quest_areas(mapping_manager: MappingManager, db_wrapper: DbWrapper):
+async def get_quest_areas(mapping_manager: MappingManager, session: AsyncSession, instance_id: int):
     stop_fences = []
     stop_fences.append('All')
-    possible_fences = await get_geofences(mapping_manager, db_wrapper, 'pokestops')
+    possible_fences = await get_geofences(mapping_manager, session, instance_id, fence_type='pokestops')
     for possible_fence in possible_fences:
         for subfence in possible_fences[possible_fence]['include']:
             if subfence in stop_fences:

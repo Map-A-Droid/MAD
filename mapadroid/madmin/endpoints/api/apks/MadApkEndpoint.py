@@ -8,10 +8,10 @@ from loguru import logger
 from mapadroid.db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from mapadroid.mad_apk import convert_to_backend, APKArch, APKType, MADapks, get_apk_status, \
     PackageImporter, WizardError, BadZipFile, LargeZipFile, APKWizard
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class MadApkEndpoint(RootEndpoint):
+class MadApkEndpoint(AbstractRootEndpoint):
     # TODO: Require auth
     async def get(self):
         apk_type_raw: str = self.request.match_info['apk_type']

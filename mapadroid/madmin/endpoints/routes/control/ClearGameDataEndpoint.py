@@ -4,7 +4,6 @@ from aiohttp import web
 from aiohttp_jinja2.helpers import url_for
 from loguru import logger
 
-from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.utils.MappingManager import DeviceMappingsEntry

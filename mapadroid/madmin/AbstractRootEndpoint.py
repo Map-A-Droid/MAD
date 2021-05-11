@@ -1,11 +1,11 @@
 import json
 from abc import ABC
-from typing import Any, Optional
+from typing import Any, Optional, List, Dict
 
 from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp.helpers import sentinel
-from aiohttp.typedefs import LooseHeaders
+from aiohttp.typedefs import LooseHeaders, StrOrURL
 from aiohttp_session import get_session
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 
-class RootEndpoint(web.View, ABC):
+class AbstractRootEndpoint(web.View, ABC):
     # TODO: Add security etc in here (abstract) to enforce security true/false
     # If we really need more methods, we can just define them abstract...
     def __init__(self, request: Request):
@@ -91,7 +91,7 @@ class RootEndpoint(web.View, ABC):
         session = await get_session(self.request)
         session["notice"] = message
 
-    async def _redirect(self, redirect_to: str, commit: bool = False):
+    async def _redirect(self, redirect_to: StrOrURL, commit: bool = False):
         if commit:
             await self._session.commit()
         else:
@@ -112,6 +112,9 @@ class RootEndpoint(web.View, ABC):
 
     def _get_ws_server(self) -> WebsocketServer:
         return self.request.app['websocket_server']
+
+    def _get_plugin_hotlinks(self) -> List[Dict]:
+        return self.request.app["plugin_hotlink"]
 
     def _convert_to_json_string(self, content) -> str:
         try:

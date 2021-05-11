@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
 from aiohttp import web
 
@@ -7,7 +7,7 @@ from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
 from mapadroid.db.model import Base, SettingsDevice
 from mapadroid.db.resource_definitions.Device import Device
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
-    AbstractResourceEndpoint, DataHandlingMethodology)
+    AbstractResourceEndpoint)
 
 
 class DeviceEndpoint(AbstractResourceEndpoint):

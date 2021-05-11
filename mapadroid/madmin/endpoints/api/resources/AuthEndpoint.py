@@ -11,7 +11,7 @@ class AuthEndpoint(AbstractResourceEndpoint):
     def _attributes_to_ignore(self) -> Set[str]:
         return {"auth_id", "guid"}
 
-    async def _fetch_all_from_db(self, **kwargs)  -> Dict[int, Base]:
+    async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
         return await SettingsAuthHelper.get_all_mapped(self._session, self._get_instance_id())
 
     def _resource_info(self) -> Dict:

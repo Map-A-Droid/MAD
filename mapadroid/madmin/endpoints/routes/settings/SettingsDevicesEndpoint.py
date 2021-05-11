@@ -10,12 +10,11 @@ from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelpe
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.model import SettingsDevice
-from mapadroid.db.resource_definitions.Auth import Auth
 from mapadroid.db.resource_definitions.Device import Device
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsDevicesEndpoint(RootEndpoint):
+class SettingsDevicesEndpoint(AbstractRootEndpoint):
     """
     "/settings/devices"
     """

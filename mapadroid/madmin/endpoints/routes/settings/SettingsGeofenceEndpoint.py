@@ -8,10 +8,10 @@ from aiohttp_jinja2.helpers import url_for
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
 from mapadroid.db.resource_definitions.Geofence import Geofence
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsGeofencesEndpoint(RootEndpoint):
+class SettingsGeofencesEndpoint(AbstractRootEndpoint):
     """
     "/settings/geofences"
     """

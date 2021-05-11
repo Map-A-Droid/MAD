@@ -1,11 +1,9 @@
-from typing import Optional
-
 import aiohttp_jinja2
 
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class StatisticsSpawnsEndpoint(RootEndpoint):
+class StatisticsSpawnsEndpoint(AbstractRootEndpoint):
     """
     "/statistics_spawns"
     """

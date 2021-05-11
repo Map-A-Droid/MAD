@@ -116,6 +116,7 @@ class JoinQueue(object):
 
 class MappingManager:
     def __init__(self, db_wrapper: DbWrapper, args, configmode: bool = False):
+        self.__jobstatus: Dict = {}
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__args = args
         self.__configmode: bool = configmode
@@ -710,3 +711,6 @@ class MappingManager:
         for device in all_devices:
             devices.append(device.name)
         return devices
+
+    def get_jobstatus(self) -> Dict:
+        return self.__jobstatus

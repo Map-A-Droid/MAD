@@ -6,11 +6,11 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.model import SettingsAuth
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.utils.autoconfig import PDConfig, AutoConfIssueGenerator
 
 
-class AutoconfigDownloadEndpoint(RootEndpoint):
+class AutoconfigDownloadEndpoint(AbstractRootEndpoint):
     """
     "/autoconfig/download"
     """

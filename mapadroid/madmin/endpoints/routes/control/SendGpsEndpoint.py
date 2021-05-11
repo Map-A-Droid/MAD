@@ -5,10 +5,7 @@ from aiohttp import web
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
-from mapadroid.madmin.functions import generate_device_logcat_zip_path
 from mapadroid.utils.collections import Location
-from mapadroid.utils.functions import generate_path
-from mapadroid.utils.MappingManager import DeviceMappingsEntry
 
 
 class SendGpsEndpoint(AbstractControlEndpoint):

@@ -1,5 +1,4 @@
-import os
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -7,16 +6,12 @@ from aiohttp.abc import Request
 from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
-from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.model import SettingsMonivlist, SettingsDevicepool
+from mapadroid.db.model import SettingsDevicepool
 from mapadroid.db.resource_definitions.Devicepool import Devicepool
-
-from mapadroid.db.resource_definitions.MonIvList import MonIvList
-from mapadroid.madmin.RootEndpoint import RootEndpoint
-from mapadroid.utils.language import i8ln, open_json_file
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsPoolEndpoint(RootEndpoint):
+class SettingsPoolEndpoint(AbstractRootEndpoint):
     """
     "/settings/shared"
     """

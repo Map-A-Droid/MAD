@@ -28,7 +28,7 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         quest = []
         usage = []
 
-        data: Dict[str, Dict[int, Tuple[int, int, int, int]]] = await TrsStatsDetectHelper\
+        data: Dict[str, Dict[int, Tuple[int, int, int, int]]] = await TrsStatsDetectHelper \
             .get_detection_count_per_worker(self._session,
                                             include_last_n_minutes=minutes,
                                             worker=worker)
@@ -47,21 +47,22 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         # locations avg
         locations_avg = []
 
-        avg_data_time: Dict[str, Dict[int, List[Tuple[str, int, float, str]]]] = await TrsStatsLocationRawHelper\
+        avg_data_time: Dict[str, Dict[int, List[Tuple[str, int, float, str]]]] = await TrsStatsLocationRawHelper \
             .get_avg_data_time(self._session, include_last_n_minutes=minutes, worker=worker)
         for worker, data_entry in avg_data_time.items():
             for timestamp, list_of_data_of_worker in data_entry.items():
                 for transport_type_readable, count_of_fix_ts, avg_data_ts, walker in list_of_data_of_worker:
                     dtime = datetime.fromtimestamp(timestamp).strftime(self._datetimeformat)
-                    locations_avg.append({'dtime': dtime, 'ok_locations': count_of_fix_ts, 'avg_datareceive': avg_data_ts,
-                                          'transporttype': transport_type_readable, 'type': walker})
+                    locations_avg.append(
+                        {'dtime': dtime, 'ok_locations': count_of_fix_ts, 'avg_datareceive': avg_data_ts,
+                         'transporttype': transport_type_readable, 'type': walker})
 
         # locations
         ok = []
         nok = []
         sumloc = []
         locations = []
-        locations_scanned_by_workers: Dict[str, Dict[int, Tuple[int, int, int]]] = await TrsStatsLocationHelper\
+        locations_scanned_by_workers: Dict[str, Dict[int, Tuple[int, int, int]]] = await TrsStatsLocationHelper \
             .get_locations(self._session, include_last_n_minutes=minutes, worker=worker)
         for worker, data_entry in locations_scanned_by_workers.items():
             for timestamp, list_of_data_of_worker in data_entry.items():
@@ -76,7 +77,7 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
 
         # dataratio
         loctionratio = []
-        location_dataratios: Dict[str, Dict[int, List[Tuple[int, int, int, str]]]] = await TrsStatsLocationRawHelper\
+        location_dataratios: Dict[str, Dict[int, List[Tuple[int, int, int, str]]]] = await TrsStatsLocationRawHelper \
             .get_locations_dataratio(self._session, include_last_n_minutes=minutes, worker=worker)
         if location_dataratios:
             for worker, data_entry in location_dataratios.items():
@@ -88,7 +89,7 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
 
         # all spaws
         all_spawns = []
-        detection_count_not_grouped: Dict[str, Dict[int, Tuple[int, int, int, int]]] = await TrsStatsDetectHelper\
+        detection_count_not_grouped: Dict[str, Dict[int, Tuple[int, int, int, int]]] = await TrsStatsDetectHelper \
             .get_detection_count_per_worker(self._session, hourly=False, worker=worker)
         mon_spawn_count: int = 0
         mon_iv_count: int = 0
@@ -111,7 +112,7 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         last_lat = 0
         last_lng = 0
         distance: float = -1.0
-        raw_location_details: List[Tuple[Location, str, str, int, int, int, str]] = await TrsStatsLocationRawHelper\
+        raw_location_details: List[Tuple[Location, str, str, int, int, int, str]] = await TrsStatsLocationRawHelper \
             .get_location_raw(self._session, include_last_n_minutes=minutes, worker=worker)
         for (location, location_type_str, success_str, timestamp_fix, timestamp_data_or_fix,
              count, transport_type_readable) in raw_location_details:

@@ -3,12 +3,12 @@ from typing import List, Optional, Dict, Tuple
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import Pokestop, TrsQuest
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
 
 
-class GetStopsEndpoint(RootEndpoint):
+class GetStopsEndpoint(AbstractRootEndpoint):
     """
     "/get_stops"
     """

@@ -1,15 +1,14 @@
 import os
 import re
-from typing import Dict, Optional
+from typing import Optional
 
 from aiohttp.abc import Request
 
-from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.utils.language import open_json_file, i8ln
 
 
-class SettingsMonsearchEndpoint(RootEndpoint):
+class SettingsMonsearchEndpoint(AbstractRootEndpoint):
     """
     "/settings/monsearch"
     """

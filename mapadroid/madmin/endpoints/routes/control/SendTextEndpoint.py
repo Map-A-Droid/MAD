@@ -1,14 +1,11 @@
 import asyncio
-from typing import Dict, Optional
+from typing import Optional
 
 from aiohttp import web
 from loguru import logger
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
-from mapadroid.madmin.functions import generate_device_logcat_zip_path
-from mapadroid.utils.collections import Location
-from mapadroid.utils.functions import generate_path
 from mapadroid.utils.MappingManager import DeviceMappingsEntry
 
 
@@ -34,7 +31,7 @@ class SendTextEndpoint(AbstractControlEndpoint):
         # origin_logger.info('MADmin: Send text')
         if useadb == 'True' and self._adb_connect.send_shell_command(devicemapping.device_settings.adbname,
                                                                      origin, 'input text "' + text + '"'):
-            #origin_logger.info('MADmin: Send text successfully')
+            # origin_logger.info('MADmin: Send text successfully')
             pass
         else:
             temp_comm = self._get_ws_server().get_origin_communicator(origin)

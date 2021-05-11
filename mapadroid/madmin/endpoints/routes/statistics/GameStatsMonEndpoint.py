@@ -1,10 +1,8 @@
 from datetime import datetime
-from typing import List, Optional, Tuple, Dict
-
-from loguru import logger
+from typing import List, Optional, Tuple
 
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
-from mapadroid.db.model import Pokemon, TrsStatsDetectMonRaw
+from mapadroid.db.model import Pokemon
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
 from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv
 from mapadroid.utils.language import get_mon_name
@@ -54,7 +52,7 @@ class GameStatsMonEndpoint(AbstractStatisticsRootEndpoint):
                 lvl = calculate_mon_level(mon.cp_multiplier)
 
                 good_spawns.append({'id': mon.pokemon_id, 'iv': round(calculate_iv(mon.individual_attack,
-                                                                      mon.individual_defense,
+                                                                                   mon.individual_defense,
                                                                                    mon.individual_stamina),
                                                                       0),
                                     'lvl': lvl, 'cp': mon.cp, 'img': mon_img,

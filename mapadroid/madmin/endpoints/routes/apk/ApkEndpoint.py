@@ -1,14 +1,11 @@
-import base64
-from typing import List, Optional, Dict
-
 import aiohttp_jinja2
 from aiohttp.abc import Request
 
 from mapadroid.mad_apk import get_apk_status
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class ApkEndpoint(RootEndpoint):
+class ApkEndpoint(AbstractRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 

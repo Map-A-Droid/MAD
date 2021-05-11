@@ -5,11 +5,11 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.utils.autoconfig import AutoConfIssueGenerator
 
 
-class AutoconfigPendingEndpoint(RootEndpoint):
+class AutoconfigPendingEndpoint(AbstractRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 

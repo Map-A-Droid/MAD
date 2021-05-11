@@ -4,10 +4,10 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsEndpoint(RootEndpoint):
+class SettingsEndpoint(AbstractRootEndpoint):
     """
     "/recalc_status"
     """

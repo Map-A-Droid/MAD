@@ -1,9 +1,9 @@
 import asyncio
 from typing import Optional
 
+from PIL import Image
 from aiohttp import web
 from loguru import logger
-from PIL import Image
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint

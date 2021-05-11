@@ -1,12 +1,8 @@
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
-from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
-from mapadroid.db.helper.SettingsDevicepoolHelper import \
-    SettingsDevicepoolHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import \
     SettingsWalkerareaHelper
-from mapadroid.db.model import (Base, SettingsAuth, SettingsDevicepool,
-                                SettingsWalkerarea)
+from mapadroid.db.model import (Base, SettingsWalkerarea)
 from mapadroid.db.resource_definitions.Walkerarea import Walkerarea
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint

@@ -2,14 +2,11 @@ import os
 from typing import List
 
 import aiohttp_jinja2
-from aiohttp.abc import Request
 
 import mapadroid
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
-from mapadroid.madmin.RootEndpoint import RootEndpoint
-from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import generate_phones, image_resize
 
 

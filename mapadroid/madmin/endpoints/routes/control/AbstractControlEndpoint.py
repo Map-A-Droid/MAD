@@ -6,15 +6,15 @@ from typing import Optional
 from aiohttp.abc import Request
 
 import mapadroid
+from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
-from mapadroid.madmin.RootEndpoint import RootEndpoint
+from mapadroid.utils.MappingManager import DeviceMappingsEntry
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType
-from mapadroid.utils.MappingManager import DeviceMappingsEntry
 
 
-class AbstractControlEndpoint(RootEndpoint, ABC):
+class AbstractControlEndpoint(AbstractRootEndpoint, ABC):
     """
     Used for control-related endpoints e.g. screenshot handling of devicecontrol
     """
@@ -52,7 +52,8 @@ class AbstractControlEndpoint(RootEndpoint, ABC):
 
         screenshot_quality: int = mapping_entry.device_settings.screenshot_quality
         temp_comm = self._get_ws_server().get_origin_communicator(mapping_entry.device_settings.name)
-        filename = generate_device_screenshot_path(mapping_entry.device_settings.name, mapping_entry, self._get_mad_args())
+        filename = generate_device_screenshot_path(mapping_entry.device_settings.name, mapping_entry,
+                                                   self._get_mad_args())
         await temp_comm.get_screenshot(filename, screenshot_quality, screenshot_type)
 
         # TODO: Async

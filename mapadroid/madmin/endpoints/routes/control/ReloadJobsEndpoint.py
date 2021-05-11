@@ -1,5 +1,3 @@
-from typing import Optional
-
 from aiohttp_jinja2.helpers import url_for
 from loguru import logger
 
