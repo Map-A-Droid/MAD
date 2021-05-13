@@ -8,7 +8,7 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import WrongAreaInWalker
 from mapadroid.utils.MappingManager import MappingManager
-from mapadroid.utils.routeutil import pre_check_value
+from mapadroid.utils.routeutil import pre_check_value, check_max_walkers_reached
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerConfigmode import WorkerConfigmode
@@ -80,8 +80,9 @@ class WorkerFactory:
         # preckeck walker setting
         walker_area_name = walker_area_array[walker_index]['walkerarea']
         while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
-                and walker_index < len(walker_area_array):
-            origin_logger.info('not using area {} - Walkervalue out of range',
+                and walker_index < len(walker_area_array) \
+                and check_max_walkers_reached(walker_settings, self.__mapping_manager, walker_area_name):
+            origin_logger.info('not using area {} - Walkervalue out of range or max devices reached',
                                self.__mapping_manager.routemanager_get_name(walker_area_name))
             if walker_index >= len(walker_area_array) - 1:
                 origin_logger.warning('Cannot find any active area defined for current time. Check Walker entries')

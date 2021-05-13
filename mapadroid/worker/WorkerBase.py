@@ -21,7 +21,7 @@ from mapadroid.utils.madGlobals import (
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
     WebsocketWorkerTimeoutException)
 from mapadroid.utils.resolution import Resocalculator
-from mapadroid.utils.routeutil import check_walker_value_type
+from mapadroid.utils.routeutil import check_walker_value_type, check_max_walkers_reached
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 
@@ -132,15 +132,6 @@ class WorkerBase(AbstractWorker):
 
         return os.path.join(
             self._applicationArgs.temp_path, screenshot_filename)
-
-    def check_max_walkers_reached(self):
-        walkermax = self._walker.get('walkermax', False)
-        if walkermax is False or (type(walkermax) is str and len(walkermax) == 0):
-            return True
-        reg_workers = self._mapping_manager.routemanager_get_registered_workers(self._routemanager_name)
-        if len(reg_workers) > int(walkermax):
-            return False
-        return True
 
     @abstractmethod
     def _pre_work_loop(self):
@@ -365,7 +356,7 @@ class WorkerBase(AbstractWorker):
             self._internal_cleanup()
             return
 
-        if not self.check_max_walkers_reached():
+        if not check_max_walkers_reached(self._walker, self._mapping_manager, self._routemanager_name):
             self.logger.warning('Max. Walkers in Area {} - closing connections',
                                 self._mapping_manager.routemanager_get_name(self._routemanager_name))
             self.set_devicesettings_value('finished', True)

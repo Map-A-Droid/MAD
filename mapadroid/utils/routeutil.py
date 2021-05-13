@@ -55,3 +55,13 @@ def pre_check_value(walker_settings, eventid):
             return True
         return check_walker_value_type(walkervalue)
     return True
+
+
+def check_max_walkers_reached(walker, mapping_manager, area_name):
+    walkermax = walker.get('walkermax', False)
+    if walkermax is False or (type(walkermax) is str and len(walkermax) == 0):
+        return True
+    reg_workers = mapping_manager.routemanager_get_registered_workers(area_name)
+    if len(reg_workers) > int(walkermax):
+        return False
+    return True
