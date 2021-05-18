@@ -177,13 +177,13 @@ def questtask(typeid, condition, target, quest_template):
                 arr['different'] = _(" different species of")
             elif condition_type == 26:
                 # Condition type 26 is alignment
-                alignment = con.get('alignment', 0)
+                alignment = con.get('with_pokemon_alignment',{}).get('alignment', [])
                 # POKEMON_ALIGNMENT_UNSET = 0;
                 # POKEMON_ALIGNMENT_SHADOW = 1;
                 # POKEMON_ALIGNMENT_PURIFIED = 2;
-                if alignment == 1:
+                if len(alignment) == 1 and alignment[0] == 1:
                     arr['different'] = _(" shadow")
-                elif alignment == 2:
+                elif len(alignment) == 1 and alignment[0] == 2:
                     # AFAIK you can't catch purified pokemon directly, but who knows..
                     arr['different'] = _(" purified")
     elif typeid == 5:
