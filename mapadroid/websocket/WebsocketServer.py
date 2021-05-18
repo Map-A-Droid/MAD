@@ -14,6 +14,7 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
@@ -382,10 +383,10 @@ class WebsocketServer(object):
                 else False)
 
     def set_job_activated(self, origin) -> None:
-        self.__mapping_manager.set_devicesetting_value_of(origin, 'job', True)
+        self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE, True)
 
     def set_job_deactivated(self, origin) -> None:
-        self.__mapping_manager.set_devicesetting_value_of(origin, 'job', False)
+        self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE, False)
 
     async def __close_and_signal_stop(self, origin: str) -> None:
         origin_logger = get_origin_logger(logger, origin=origin)

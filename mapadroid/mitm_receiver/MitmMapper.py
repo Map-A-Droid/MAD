@@ -1,13 +1,14 @@
 import asyncio
 import time
 from queue import Empty
-from typing import Dict
+from typing import Dict, Optional, Tuple, Set
 
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
+from mapadroid.db.model import SettingsDevice, SettingsDevicepool
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
-from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.utils.MappingManager import MappingManager, DeviceMappingsEntry
 
 logger = get_logger(LoggerEnums.mitm)
 
@@ -39,11 +40,11 @@ class MitmMapper(object):
         # self.__playerstats_db_update_consumer: Thread = Thread(**pstat_args)
         # TODO: Move to async init method.......
         if self.__mapping_manager is not None:
-            devicemappings = await self.__mapping_manager.get_all_devicemappings()
+            devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = await self.__mapping_manager.get_all_devicemappings()
             for origin in devicemappings.keys():
                 self.__add_new_device(origin)
 
-    def __add_new_device(self, origin):
+    def __add_new_device(self, origin: str) -> None:
         self.__mapping[origin] = {}
         self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
         self.__playerstats[origin].open_player_stats()
@@ -114,17 +115,16 @@ class MitmMapper(object):
 
         return False
 
-    async def get_safe_items(self, origin):
-        get_devicesettings_of_origin = await self.__mapping_manager.get_devicesettings_of(origin)
-        if get_devicesettings_of_origin is None:
-            return []
+    async def get_safe_items(self, origin) -> Set[int]:
+        devicesettings: Optional[Tuple[SettingsDevice, SettingsDevicepool]] = await self.__mapping_manager.get_devicesettings_of(origin)
+        values: str = ""
+        if not devicesettings:
+            values = "1301, 1401,1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
+        elif devicesettings[1] and devicesettings[1].enhanced_mode_quest_safe_items:
+            values = devicesettings[1].enhanced_mode_quest_safe_items
         else:
-            enhanced_mode_quest_safe_items = \
-                get_devicesettings_of_origin.get("enhanced_mode_quest_safe_items", "1301, 1401,1402, 1403, 1106, "
-                                                 "901, 902, 903, 501, 502, 503,"
-                                                 "504, 301").split(",")
-
-            return list(map(int, enhanced_mode_quest_safe_items))
+            values = devicesettings[0].enhanced_mode_quest_safe_items
+        return set(map(int, values.split(",")))
 
     async def request_latest(self, origin, key=None):
         origin_logger = get_origin_logger(logger, origin=origin)

@@ -10,9 +10,12 @@ from typing import Dict, List, Optional, Tuple, Union
 from s2sphere import CellId
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.PokestopHelper import PokestopHelper
+from mapadroid.db.model import SettingsAreaPokestop
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
+from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.gamemechanicutil import calculate_cooldown
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
@@ -93,13 +96,12 @@ class WorkerQuests(MITMBase):
 
     async def start_worker(self):
         # TODO: own InjectionSettings class
-        self._delay_add = int(await self.get_devicesettings_value("vps_delay", 0))
+        self._delay_add = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.VPS_DELAY, 0))
         self._level_mode = await self._mapping_manager.routemanager_get_level(self._routemanager_name)
-        self._ignore_spinned_stops = await self._mapping_manager.routemanager_get_settings(self._routemanager_name) \
-            .get("ignore_spinned_stops", True)
-        self._rotation_waittime = await self.get_devicesettings_value('rotation_waittime', 300)
-        self._always_cleanup = await self._mapping_manager.routemanager_get_settings(self._routemanager_name) \
-            .get("cleanup_every_spin", False)
+        area_settings: Optional[SettingsAreaPokestop] = await self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+        self._ignore_spinned_stops: bool = False if area_settings.ignore_spinned_stops == 0 else True
+        self._rotation_waittime = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATION_WAITTIME, 300)
+        self._always_cleanup: bool = False if area_settings.cleanup_every_spin == 0 else True
         await super().start_worker()
 
     async def _pre_work_loop(self):
@@ -112,8 +114,9 @@ class WorkerQuests(MITMBase):
         if self._stop_worker_event.is_set() or not await self._wait_for_injection():
             raise InternalStopWorkerException
 
-        if await self.get_devicesettings_value('account_rotation', False) and not \
-                await self.get_devicesettings_value('account_rotation_started', False):
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION, False) and not \
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, False):
+            # TODO: Double check account_rotation_started, it is only set to True and never to be touched again apparently
             # switch to first account if first started and rotation is activated
             if not await self._switch_user():
                 self.logger.error('Something happened during account rotation')
@@ -125,7 +128,7 @@ class WorkerQuests(MITMBase):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
 
-                await self.set_devicesettings_value('account_rotation_started', True)
+                await self.set_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, True)
             await asyncio.sleep(10)
         else:
             reached_main_menu = await self._check_pogo_main_screen(10, True)
@@ -155,12 +158,10 @@ class WorkerQuests(MITMBase):
         await self._update_injection_settings()
 
     async def _move_to_location(self):
-        distance, routemanager_settings = await self._get_route_manager_settings_and_distance_to_current_location()
-
+        distance, area_settings = await self._get_route_manager_settings_and_distance_to_current_location()
+        area_settings: SettingsAreaPokestop = area_settings
         self.logger.debug("Getting time")
-        speed = routemanager_settings.get("speed", 0)
-        max_distance = routemanager_settings.get("max_distance", None)
-        if (speed == 0 or (max_distance and 0 < max_distance < distance)
+        if (area_settings.speed == 0 or (area_settings.max_distance and 0 < area_settings.max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self.logger.debug("main: Teleporting...")
             self._transporttype = 0
@@ -169,7 +170,7 @@ class WorkerQuests(MITMBase):
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
-            delay_used = await self.get_devicesettings_value('post_teleport_delay', 0)
+            delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TELEPORT_DELAY, 0)
             speed = 16.67  # Speed can be 60 km/h up to distances of 3km
 
             if self.last_location.lat == 0.0 and self.last_location.lng == 0.0:
@@ -179,12 +180,12 @@ class WorkerQuests(MITMBase):
             self.logger.debug(
                 "Need more sleep after Teleport: {} seconds!", int(delay_used))
         else:
-            delay_used = distance / (speed / 3.6)  # speed is in kmph , delay_used need mps
+            delay_used = distance / (area_settings.speed / 3.6)  # speed is in kmph , delay_used need mps
             self.logger.info("main: Walking {} m, this will take {} seconds", distance, delay_used)
-            cur_time = self._walk_to_location(speed)
+            cur_time = self._walk_to_location(area_settings.speed)
 
-            delay_used = await self.get_devicesettings_value('post_walk_delay', 0)
-        walk_distance_post_teleport = await self.get_devicesettings_value('walk_after_teleport_distance', 0)
+            delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)
+        walk_distance_post_teleport = await self.get_devicesettings_value(MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE, 0)
         if 0 < walk_distance_post_teleport < distance:
             # TODO: actually use to_walk for distance
             to_walk = await self._walk_after_teleport(walk_distance_post_teleport)
@@ -195,20 +196,20 @@ class WorkerQuests(MITMBase):
         if self._init:
             delay_used = 5
 
-        if await self.get_devicesettings_value('last_action_time', None) is not None:
-            timediff = time.time() - await self.get_devicesettings_value('last_action_time', 0)
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, None) is not None:
+            timediff = time.time() - await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, 0)
             self.logger.info("Timediff between now and last action time: {}", int(timediff))
             delay_used = delay_used - timediff
-        elif await self.get_devicesettings_value('last_action_time', None) is None and not self._level_mode:
+        elif await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, None) is None and not self._level_mode:
             self.logger.info('Starting first time - we wait because of some default pogo delays ...')
             delay_used = 20
         else:
             self.logger.debug("No last action time found - no calculation")
             delay_used = -1
 
-        if await self.get_devicesettings_value('screendetection', True) and \
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True) and \
                 await self._word_to_screen_matching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
-                and await self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
+                and await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION, False) and not self._level_mode:
             # Waiting time to long and more then one account - switch! (not level mode!!)
             self.logger.info('Could use more then 1 account - switch & no cooldown')
             await self.switch_account()
@@ -222,7 +223,7 @@ class WorkerQuests(MITMBase):
             self.logger.info("Real sleep time: {} seconds: next action {}", delay_used,
                              datetime.now() + timedelta(seconds=delay_used))
             cleanupbox: bool = False
-            lastcleanupbox = await self.get_devicesettings_value('last_cleanup_time', None)
+            lastcleanupbox = await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_CLEANUP_TIME, None)
 
             self._current_sleep_time = delay_used
             await self.worker_stats()
@@ -247,7 +248,7 @@ class WorkerQuests(MITMBase):
                 await asyncio.sleep(1)
 
         self._current_sleep_time = 0
-        await self.set_devicesettings_value("last_location", self.current_location)
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION, self.current_location)
         self.last_location = self.current_location
         return cur_time, True
 
@@ -272,7 +273,7 @@ class WorkerQuests(MITMBase):
             self.logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
 
-        if await self.get_devicesettings_value('rotate_on_lvl_30', False) and \
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATE_ON_LVL_30, False) and \
                 await self._mitm_mapper.get_playerlevel(self._origin) >= 30 and self._level_mode:
             # switch if player lvl >= 30
             await self.switch_account()
@@ -348,8 +349,8 @@ class WorkerQuests(MITMBase):
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)
-        click_duration = int(await self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000
-        delrounds_remaining = int(await self.get_devicesettings_value("inventory_clear_rounds", 10))
+        click_duration = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.INVENTORY_CLEAR_ITEM_AMOUNT_TAP_DURATION, 3)) * 1000
+        delrounds_remaining = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.INVENTORY_CLEAR_ROUNDS, 10))
         first_round = True
         delete_allowed = False
         error_counter = 0
@@ -433,7 +434,7 @@ class WorkerQuests(MITMBase):
                             if type_received == LatestReceivedType.CLEAR:
                                 success_counter += 1
                                 self._clear_box_failcount = 0
-                                await self.set_devicesettings_value('last_cleanup_time', time.time())
+                                await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_CLEANUP_TIME, time.time())
                                 delrounds_remaining -= 1
                                 stop_screen_clear.set()
                                 delete_allowed = True
@@ -535,7 +536,7 @@ class WorkerQuests(MITMBase):
 
                 fort_type: int = fort.get("type", 0)
                 if fort_type == 0:
-                    await self._db_wrapper.delete_stop(latitude, longitude)
+                    await PokestopHelper.delete(session, latitude, longitude)
                     self.logger.warning("Tried to open a stop but found a gym instead!")
                     self._spinnable_data_failcount = 0
                     return PositionStopType.GYM
@@ -543,6 +544,7 @@ class WorkerQuests(MITMBase):
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
                     self.logger.info("Level mode: Stop already visited - skipping it")
+                    await PokestopHelper.vis
                     await self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
                     self._spinnable_data_failcount = 0
                     return PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE

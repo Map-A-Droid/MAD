@@ -8,6 +8,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
+from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
@@ -67,9 +68,9 @@ class WorkerMITM(MITMBase):
             # the time we will take as a starting point to wait for data...
             timestamp_to_use = math.floor(time.time())
 
-            delay_used = await self.get_devicesettings_value('post_teleport_delay', 0)
+            delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TELEPORT_DELAY, 0)
             # Test for cooldown / teleported distance TODO: check this block...
-            if await self.get_devicesettings_value('cool_down_sleep', False):
+            if await self.get_devicesettings_value(MappingManagerDevicemappingKey.COOLDOWN_SLEEP, False):
                 if distance > 10000:
                     delay_used = 15
                 elif distance > 5000:
@@ -77,17 +78,17 @@ class WorkerMITM(MITMBase):
                 elif distance > 2500:
                     delay_used = 8
                 self.logger.debug("Need more sleep after Teleport: {} seconds!", delay_used)
-            walk_distance_post_teleport = await self.get_devicesettings_value('walk_after_teleport_distance', 0)
+            walk_distance_post_teleport = await self.get_devicesettings_value(MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE, 0)
             if 0 < walk_distance_post_teleport < distance:
                 await self._walk_after_teleport(walk_distance_post_teleport)
         else:
             self.logger.info("main: Walking...")
             timestamp_to_use = self._walk_to_location(speed)
 
-            delay_used = await self.get_devicesettings_value('post_walk_delay', 0)
+            delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)
         self.logger.debug2("Sleeping for {}s", delay_used)
         await asyncio.sleep(float(delay_used))
-        await self.set_devicesettings_value("last_location", self.current_location)
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION, self.current_location)
         self.last_location = self.current_location
         self._waittime_without_delays = time.time()
         return timestamp_to_use, True

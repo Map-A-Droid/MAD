@@ -8,9 +8,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional, Tuple, Union
 
+from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
+from mapadroid.db.model import SettingsArea
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
+from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_lat_lng_offsets_by_distance)
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -69,12 +72,14 @@ class MITMBase(WorkerBase):
         self._dev_id = dev_id
 
     async def start_worker(self) -> Task:
-        await self._db_wrapper.save_idle_status(self._dev_id, False)
+        async with self._db_wrapper as session:
+            await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
+                                                   self._dev_id, 0)
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 2, 0,
                                                  await self._mapping_manager.routemanager_get_mode(
                                                      self._routemanager_name),
                                                  99)
-        self._enhanced_mode = await self.get_devicesettings_value('enhanced_mode_quest', False)
+        self._enhanced_mode = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST, False)
         return await super().start_worker()
 
     async def _walk_after_teleport(self, walk_distance_post_teleport) -> float:
@@ -115,7 +120,7 @@ class MITMBase(WorkerBase):
         # Cut off decimal places of timestamp as PD also does that...
         timestamp = int(timestamp)
         if timeout is None:
-            timeout = await self.get_devicesettings_value("mitm_wait_timeout", FALLBACK_MITM_WAIT_TIMEOUT)
+            timeout = await self.get_devicesettings_value(MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT, FALLBACK_MITM_WAIT_TIMEOUT)
 
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         self.logger.info('Waiting for data after {}',
@@ -198,17 +203,17 @@ class MITMBase(WorkerBase):
                                                      self._routemanager_name),
                                                  self._transporttype)
         self._restart_count += 1
-        restart_thresh = self.get_devicesettings_value("restart_thresh", 5)
-        reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3)
+        restart_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.RESTART_THRESH, 5)
+        reboot_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT_THRESH, 3)
         if await self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
                                                               self._origin) is not None:
             if self._init:
-                restart_thresh = await self.get_devicesettings_value("restart_thresh", 5) * 2
-                reboot_thresh = await self.get_devicesettings_value("reboot_thresh", 3) * 2
+                restart_thresh = restart_thresh * 2
+                reboot_thresh = reboot_thresh * 2
         if self._restart_count > restart_thresh:
             self._reboot_count += 1
             if self._reboot_count > reboot_thresh \
-                    and self.get_devicesettings_value("reboot", True):
+                    and self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 self.logger.warning("Too many timeouts - Rebooting device")
                 await self._reboot(mitm_mapper=self._mitm_mapper)
                 raise InternalStopWorkerException
@@ -278,10 +283,10 @@ class MITMBase(WorkerBase):
 
     async def _wait_for_injection(self):
         self._not_injected_count = 0
-        reboot = await self.get_devicesettings_value('reboot', True)
+        reboot = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True)
         injection_thresh_reboot = 'Unlimited'
         if reboot:
-            injection_thresh_reboot = int(await self.get_devicesettings_value("injection_thresh_reboot", 20))
+            injection_thresh_reboot = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
         window_check_frequency = 3
         while not await self._mitm_mapper.get_injection_status(self._origin):
             await self._check_for_mad_job()
@@ -342,7 +347,7 @@ class MITMBase(WorkerBase):
             delay_used = math.floor((math.floor(time.time()) + time_before_walk) / 2)
         return delay_used
 
-    async def _get_route_manager_settings_and_distance_to_current_location(self):
+    async def _get_route_manager_settings_and_distance_to_current_location(self) -> Tuple[float, SettingsArea]:
         if not await self._mapping_manager.routemanager_present(self._routemanager_name) \
                 or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
@@ -399,7 +404,7 @@ class MITMBase(WorkerBase):
         self.logger.debug('Routemanager: {} [{}]', self._routemanager_name, self._area_id)
         self.logger.debug('Restart Counter: {}', self._restart_count)
         self.logger.debug('Reboot Counter: {}', self._reboot_count)
-        self.logger.debug('Reboot Option: {}', await self.get_devicesettings_value("reboot", True))
+        self.logger.debug('Reboot Option: {}', await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True))
         self.logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
         self.logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
         routemanager_status = await self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
@@ -422,7 +427,7 @@ class MITMBase(WorkerBase):
             'area_id': self._area_id,
             'rebootCounter': self._reboot_count,
             'init': routemanager_init,
-            'rebootingOption': await self.get_devicesettings_value("reboot", True),
+            'rebootingOption': await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True),
             'restartCounter': self._restart_count,
             'currentSleepTime': self._current_sleep_time
         }

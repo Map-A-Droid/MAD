@@ -1,11 +1,12 @@
 import asyncio
 import copy
-import time
-from multiprocessing import Event, Lock
+from multiprocessing import Event
 from multiprocessing.pool import ThreadPool
 from queue import Empty, Queue
 from threading import Thread
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.GymHelper import GymHelper
@@ -18,11 +19,11 @@ from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
-from mapadroid.db.helper.SettingsWalkerareaHelper import \
-    SettingsWalkerareaHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
@@ -32,6 +33,7 @@ from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
+from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -74,6 +76,11 @@ class DeviceMappingsEntry:
     walker_areas: List[SettingsWalkerarea] = []
     # TODO: Ensure those values are being set properly from whereever...
     last_location: Location = Location(0, 0)
+    last_known_mode: WorkerType = WorkerType.UNDEFINED
+    account_index: int = 0
+    account_rotation_started: bool = False
+    walker_area_index: int = -1
+    finished: bool = False
 
 
 class AreaEntry:
@@ -196,7 +203,7 @@ class MappingManager:
                             self._devicemappings[device_name]["settings"] = {}
                         self._devicemappings[device_name]['settings'][key] = value
 
-    async def set_devicesetting_value_of(self, device_name: str, key: str, value):
+    async def set_devicesetting_value_of(self, device_name: str, key: MappingManagerDevicemappingKey, value):
         if self._devicemappings.get(device_name, None) is not None:
             self.__devicesettings_setter_queue.put((device_name, key, value))
 
@@ -277,7 +284,7 @@ class MappingManager:
         return routemanager.get_rounds(worker_name) if routemanager is not None else None
 
     async def routemanager_redo_stop(self, routemanager_name: str, worker_name: str, lat: float,
-                               lon: float) -> bool:
+                                     lon: float) -> bool:
         routemanager = await self.__fetch_routemanager(routemanager_name)
         return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
 
@@ -321,7 +328,8 @@ class MappingManager:
             return None
 
     async def routemanager_get_current_route(self, routemanager_name: str) -> Optional[Tuple[List[Location],
-                                                                                       Dict[str, List[Location]]]]:
+                                                                                             Dict[
+                                                                                                 str, List[Location]]]]:
         routemanager = await self.__fetch_routemanager(routemanager_name)
         return routemanager.get_current_route() if routemanager is not None else None
 
@@ -334,12 +342,12 @@ class MappingManager:
         return routemanager.get_settings() if routemanager is not None else None
 
     async def routemanager_set_worker_sleeping(self, routemanager_name: str, worker_name: str,
-                                         sleep_duration: float):
+                                               sleep_duration: float):
         routemanager = await self.__fetch_routemanager(routemanager_name)
         routemanager.set_worker_sleeping(worker_name, sleep_duration)
 
     async def set_worker_startposition(self, routemanager_name: str, worker_name: str,
-                                 lat: float, lon: float):
+                                       lat: float, lon: float):
         routemanager = await self.__fetch_routemanager(routemanager_name)
         routemanager.set_worker_startposition(worker_name, lat, lon)
 
@@ -379,7 +387,6 @@ class MappingManager:
             logger.opt(exception=True).error('Unable to start recalculation')
         return successful
 
-
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
         for pool_setting in poolsettings:
@@ -388,14 +395,13 @@ class MappingManager:
             inheritsettings[device_setting] = devicesettings[device_setting]
         return inheritsettings
 
-    async def __get_latest_routemanagers(self) -> Dict[int, RouteManagerBase]:
+    async def __get_latest_routemanagers(self, session: AsyncSession) -> Dict[int, RouteManagerBase]:
         # TODO: Use a factory for the iterations...
         global mode_mapping
         areas: Dict[int, SettingsArea] = {}
 
         if self.__configmode:
             return areas
-
         areas = await self.__db_wrapper.get_all_areas(session)
         # TODO: use amount of CPUs, use process pool?
         thread_pool = ThreadPool(processes=4)
@@ -406,18 +412,18 @@ class MappingManager:
                 raise RuntimeError("Cannot work without geofence_included")
 
             try:
-                geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
-                                                                                                 area.geofence_included)
+                geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper \
+                    .get(session, self.__db_wrapper.get_instance_id(), area.geofence_included)
             except Exception:
                 raise RuntimeError("geofence_included for area '{}' is specified but does not exist ('{}').".format(
-                                   area.name, area.geofence_included))
+                    area.name, area.geofence_included))
 
             geofence_excluded: Optional[SettingsGeofence] = None
             if area.mode in ("iv_mitm", "mon_mitm", 'pokestops', 'raids_mitm'):
                 try:
                     if area.geofence_excluded is not None:
-                        geofence_excluded = await SettingsGeofenceHelper.get(session, instance_id,
-                                                                             int(area.geofence_excluded))
+                        geofence_excluded = await SettingsGeofenceHelper \
+                            .get(session, self.__db_wrapper.get_instance_id(), int(area.geofence_excluded))
                 except Exception:
                     raise RuntimeError(
                         "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
@@ -442,8 +448,8 @@ class MappingManager:
             if area.mode in ("mon_mitm", "raids_mitm", "pokestop") and area.init:
                 init_area: bool = area.init
             spawns_known: bool = area.coords_spawns_known if area.mode == "mon_mitm" else True
-            routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, instance_id,
-                                                                                            area.routecalc)
+            routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper \
+                .get(session, self.__db_wrapper.get_instance_id(), area.routecalc)
 
             calc_type: str = area.route_calc_algorithm if area.mode == "pokestop" else "route"
             including_stops: bool = area.including_stops if area.mode == "raids_mitm" else False
@@ -455,8 +461,8 @@ class MappingManager:
                                                                  max_radius=mode_mapping.get(area.mode,
                                                                                              {}).get("range", 0),
                                                                  max_coords_within_radius=
-                                                                    mode_mapping.get(area.mode, {}).get("max_count",
-                                                                                                        99999999),
+                                                                 mode_mapping.get(area.mode, {}).get("max_count",
+                                                                                                     99999999),
                                                                  geofence_helper=geofence_helper,
                                                                  routecalc=routecalc,
                                                                  joinqueue=self.join_routes_queue,
@@ -466,12 +472,14 @@ class MappingManager:
                                                                  )
             logger.info("Initializing area {}", area["name"])
             if area.mode not in ("iv_mitm", "idle") and calc_type != "routefree":
-                coords = await self.__fetch_coords(area.mode, geofence_helper,
-                                                 coords_spawns_known=spawns_known,
-                                                 init=init_area,
-                                                 range_init=mode_mapping.get(area.mode, {}).get("range_init", 630),
-                                                 including_stops=including_stops,
-                                                 include_event_id=area.get("settings", {}).get("include_event_id", None))
+                coords = await self.__fetch_coords(session, area.mode, geofence_helper,
+                                                   coords_spawns_known=spawns_known,
+                                                   init=init_area,
+                                                   range_init=mode_mapping.get(area.mode, {}).get("range_init",
+                                                                                                  630),
+                                                   including_stops=including_stops,
+                                                   include_event_id=area.get("settings", {}).get("include_event_id",
+                                                                                                 None))
 
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area.mode]["range"]
@@ -508,29 +516,33 @@ class MappingManager:
         thread_pool.join()
         return routemanagers
 
-    async def __get_latest_devicemappings(self) -> Dict[str, DeviceMappingsEntry]:
+    async def __get_latest_devicemappings(self, session: AsyncSession) -> Dict[str, DeviceMappingsEntry]:
         # returns mapping of devises to areas
         devices: Dict[str, DeviceMappingsEntry] = {}
 
-        devices_of_instance: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
+        devices_of_instance: List[SettingsDevice] = await SettingsDeviceHelper \
+            .get_all(session, self.__db_wrapper.get_instance_id())
 
         if not devices_of_instance:
             return devices
 
-        all_walkers: Dict[int, SettingsWalker] = await SettingsWalkerHelper.get_all_mapped(session, instance_id)
-        all_walkerareas: Dict[int, SettingsWalkerarea] = await SettingsWalkerareaHelper.get_all_mapped(session,
-                                                                                                       instance_id)
+        all_walkers: Dict[int, SettingsWalker] = await SettingsWalkerHelper \
+            .get_all_mapped(session, self.__db_wrapper.get_instance_id())
+        all_walkerareas: Dict[int, SettingsWalkerarea] = await SettingsWalkerareaHelper \
+            .get_all_mapped(session, self.__db_wrapper.get_instance_id())
         all_walkers_to_walkerareas: Dict[int, List[SettingsWalkerToWalkerarea]] = \
-            await SettingsWalkerToWalkerareaHelper.get_all_mapped(session, instance_id)
-        all_pools: Dict[int, SettingsDevicepool] = await SettingsDevicepoolHelper.get_all_mapped(session, instance_id)
+            await SettingsWalkerToWalkerareaHelper.get_all_mapped(session, self.__db_wrapper.get_instance_id())
+        all_pools: Dict[int, SettingsDevicepool] = await SettingsDevicepoolHelper \
+            .get_all_mapped(session, self.__db_wrapper.get_instance_id())
 
         for device in devices_of_instance:
             device_entry: DeviceMappingsEntry = DeviceMappingsEntry()
             device_entry.device_settings = device
 
             # Fetch the logins that are assigned to this device...
-            accounts_assigned: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(session, instance_id,
-                                                                                            account_id)
+            accounts_assigned: List[SettingsPogoauth] = await SettingsPogoauthHelper \
+                .get_assigned_to_device(session, self.__db_wrapper.get_instance_id(),
+                                        device_entry.device_settings.device_id)
             device_entry.ptc_logins.extend(accounts_assigned)
 
             if device.pool_id is not None:
@@ -538,16 +550,17 @@ class MappingManager:
 
             walker: SettingsWalker = all_walkers.get(device.walker_id, None)
             if walker:
-                walkerarea_mappings_of_walker: List[SettingsWalkerToWalkerarea] = all_walkers_to_walkerareas\
+                walkerarea_mappings_of_walker: List[SettingsWalkerToWalkerarea] = all_walkers_to_walkerareas \
                     .get(walker.walker_id, [])
                 for walker_to_walkerareas in walkerarea_mappings_of_walker:
                     device_entry.walker_areas.append(all_walkerareas.get(walker_to_walkerareas.walkerarea_id))
 
         return devices
 
-    async def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = True,
-                       init: bool = False, range_init: int = 630, including_stops: bool = False,
-                       include_event_id=None) -> List[Location]:
+    async def __fetch_coords(self, session: AsyncSession, mode: str, geofence_helper: GeofenceHelper,
+                             coords_spawns_known: bool = True,
+                             init: bool = False, range_init: int = 630, including_stops: bool = False,
+                             include_event_id=None) -> List[Location]:
         coords: List[Location] = []
         if not init:
             # grab data from DB depending on mode
@@ -568,7 +581,8 @@ class MappingManager:
                     spawns = await TrsSpawnHelper.get_known_of_area(session, geofence_helper, include_event_id)
                 else:
                     logger.debug("Reading unknown Spawnpoints from DB")
-                    spawns = await TrsSpawnHelper.get_known_without_despawn_of_area(session, geofence_helper, include_event_id)
+                    spawns = await TrsSpawnHelper.get_known_without_despawn_of_area(session, geofence_helper,
+                                                                                    include_event_id)
                 for spawn in spawns:
                     coords.append(Location(spawn.latitude, spawn.longitude))
             elif mode == "pokestops":
@@ -581,12 +595,12 @@ class MappingManager:
             coords = S2Helper._generate_locations(range_init, geofence_helper)
         return coords
 
-    async def __get_latest_auths(self) -> Dict[str, str]:
+    async def __get_latest_auths(self, session: AsyncSession) -> Dict[str, str]:
         """
         Reads current self.__raw_json mappings dict and checks if auth directive is present.
         :return: Dict of username : password
         """
-        all_auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, instance_id)
+        all_auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, self.__db_wrapper.get_instance_id())
         if all_auths is None or len(all_auths) == 0:
             return {}
 
@@ -595,7 +609,7 @@ class MappingManager:
             auths[auth.username] = auth.password
         return auths
 
-    async def __get_latest_areas(self) -> Dict[int, AreaEntry]:
+    async def __get_latest_areas(self, session: AsyncSession) -> Dict[int, AreaEntry]:
         areas: Dict[int, AreaEntry] = {}
 
         all_areas: Dict[int, SettingsArea] = await self.__db_wrapper.get_all_areas(session)
@@ -607,7 +621,8 @@ class MappingManager:
             area_entry: AreaEntry = AreaEntry()
             area_entry.settings = area
 
-            area_entry.routecalc = await SettingsRoutecalcHelper.get(session, instance_id, area.routecalc)
+            area_entry.routecalc = await SettingsRoutecalcHelper.get(session, self.__db_wrapper.get_instance_id(),
+                                                                     area.routecalc)
             # getattr to avoid checking modes individually...
             area_entry.geofence_included = getattr(area, "geofence_included", None)
             area_entry.geofence_excluded = getattr(area, "geofence_excluded", None)
@@ -616,8 +631,8 @@ class MappingManager:
             areas[area_id] = area_entry
         return areas
 
-    async def __get_latest_monlists(self) -> Dict[int, List[int]]:
-        return await SettingsMonivlistHelper.get_mapped_lists(session, instance_id)
+    async def __get_latest_monlists(self, session: AsyncSession) -> Dict[int, List[int]]:
+        return await SettingsMonivlistHelper.get_mapped_lists(session, self.__db_wrapper.get_instance_id())
 
     async def __get_latest_areamons(self, areas: Dict[int, AreaEntry]) -> Dict[int, List[int]]:
         """
@@ -658,59 +673,53 @@ class MappingManager:
         Updates the internal mappings and routemanagers
         :return:
         """
-        if not full_lock:
-            self._monlists = await self.__get_latest_monlists()
-            areas_tmp = await self.__get_latest_areas()
-            self.__areamons = await self.__get_latest_areamons(areas_tmp)
-            devicemappings_tmp = await self.__get_latest_devicemappings()
-            routemanagers_tmp = await self.__get_latest_routemanagers()
-            auths_tmp = await self.__get_latest_auths()
+        async with self.__db_wrapper as session:
+            if not full_lock:
+                self._monlists = await self.__get_latest_monlists(session)
+                areas_tmp = await self.__get_latest_areas(session)
+                self.__areamons = await self.__get_latest_areamons(areas_tmp)
+                devicemappings_tmp: Dict[str, DeviceMappingsEntry] = await self.__get_latest_devicemappings(session)
+                routemanagers_tmp = await self.__get_latest_routemanagers(session)
+                auths_tmp = await self.__get_latest_auths(session)
 
-            for area in self._routemanagers:
-                logger.info("Stopping all routemanagers and join threads")
-                self._routemanagers[area]['routemanager'].stop_routemanager(joinwithqueue=False)
-                self._routemanagers[area]['routemanager'].join_threads()
+                for area in self._routemanagers:
+                    logger.info("Stopping all routemanagers and join threads")
+                    self._routemanagers[area]['routemanager'].stop_routemanager(joinwithqueue=False)
+                    self._routemanagers[area]['routemanager'].join_threads()
 
-            logger.info("Restoring old devicesettings")
-            for dev in self._devicemappings:
-                if "last_location" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["last_location"] = \
-                        self._devicemappings[dev]['settings']["last_location"]
-                if "last_mode" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["last_mode"] = \
-                        self._devicemappings[dev]['settings']["last_mode"]
-                if "accountindex" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["accountindex"] = \
-                        self._devicemappings[dev]['settings']["accountindex"]
-                if "account_rotation_started" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["account_rotation_started"] = \
-                        self._devicemappings[dev]['settings']["account_rotation_started"]
+                logger.info("Restoring old devicesettings")
+                for dev, mapping in self._devicemappings.items():
+                    devicemappings_tmp[dev].last_location = mapping.last_location
+                    devicemappings_tmp[dev].last_known_mode = mapping.last_known_mode
+                    devicemappings_tmp[dev].account_index = mapping.account_index
+                    devicemappings_tmp[dev].account_rotation_started = mapping.account_rotation_started
+                logger.debug("Acquiring lock to update mappings")
+                with self.__mappings_mutex:
+                    self._areas = areas_tmp
+                    self._devicemappings = devicemappings_tmp
+                    self._routemanagers = routemanagers_tmp
+                    self._auths = auths_tmp
 
-            logger.debug("Acquiring lock to update mappings")
-            with self.__mappings_mutex:
-                self._areas = areas_tmp
-                self._devicemappings = devicemappings_tmp
-                self._routemanagers = routemanagers_tmp
-                self._auths = auths_tmp
+            else:
+                logger.debug("Acquiring lock to update mappings,full")
+                with self.__mappings_mutex:
+                    self._monlists = await self.__get_latest_monlists(session)
+                    self._areas = await self.__get_latest_areas(session)
+                    self.__areamons = await self.__get_latest_areamons(self._areas)
+                    self._routemanagers = await self.__get_latest_routemanagers(session)
+                    self._devicemappings = await self.__get_latest_devicemappings(session)
+                    self._auths = await self.__get_latest_auths(session)
 
-        else:
-            logger.debug("Acquiring lock to update mappings,full")
-            with self.__mappings_mutex:
-                self._monlists = await self.__get_latest_monlists()
-                self._areas = await self.__get_latest_areas()
-                self.__areamons = await self.__get_latest_areamons(self._areas)
-                self._routemanagers = await self.__get_latest_routemanagers()
-                self._devicemappings = await self.__get_latest_devicemappings()
-                self._auths = await self.__get_latest_auths()
-
-        logger.info("Mappings have been updated")
+            logger.info("Mappings have been updated")
 
     async def get_all_devicenames(self) -> List[str]:
-        devices = []
-        all_devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
-        for device in all_devices:
-            devices.append(device.name)
-        return devices
+        async with self.__db_wrapper as session:
+            devices = []
+            all_devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session,
+                                                                                   self.__db_wrapper.get_instance_id())
+            for device in all_devices:
+                devices.append(device.name)
+            return devices
 
     def get_jobstatus(self) -> Dict:
         return self.__jobstatus

@@ -10,6 +10,7 @@ import numpy as np
 
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils import MappingManager
+from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Login_GGL, Login_PTC
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import ScreenshotType
@@ -51,17 +52,19 @@ class WordToScreenMatching(object):
 
     @classmethod
     async def create(cls, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
-                 mapping_mananger: MappingManager, args):
+                     mapping_mananger: MappingManager, args):
         self = WordToScreenMatching(communicator=communicator, pogo_win_manager=pogo_win_manager,
                                     origin=origin, resocalc=resocalc, mapping_mananger=mapping_mananger,
                                     args=args)
-        self._accountindex = await self.get_devicesettings_value('accountindex', 0)
-        self._screenshot_y_offset = await self.get_devicesettings_value('screenshot_y_offset', 0)
+        self._accountindex = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_INDEX, 0)
+        self._screenshot_y_offset = await self.get_devicesettings_value(
+            MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
         await self.get_login_accounts()
         return self
 
     async def get_login_accounts(self) -> None:
-        self._logintype = LoginType[await self.get_devicesettings_value('logintype', 'google')]
+        self._logintype = LoginType[
+            await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google')]
         self._logger.info("Set logintype: {}", self._logintype)
         if self._logintype == LoginType.ptc:
             temp_accounts = await self.get_device_value('ptc_login', [])
@@ -73,7 +76,7 @@ class WordToScreenMatching(object):
                 self._PTC_accounts.append(Login_PTC(username, password))
             self._accountcount = len(self._PTC_accounts)
         else:
-            temp_accounts = await self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
+            temp_accounts = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, None)
             if not temp_accounts:
                 self._logger.warning('No GGL Accounts are set - using first @gmail.com Account')
             temp_accounts = temp_accounts.replace(' ', '').split('|')
@@ -95,7 +98,7 @@ class WordToScreenMatching(object):
             self._logger.info('Request next Account - Restarting with Nr. 1')
             self._accountindex = 0
 
-        await self.set_devicesettings_value('accountindex', self._accountindex)
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_INDEX, self._accountindex)
 
         if self._logintype == LoginType.ptc:
             self._logger.info('Using PTC Account: {}',
@@ -152,12 +155,13 @@ class WordToScreenMatching(object):
         elif self._nextscreen != ScreenType.UNDEFINED:
             # TODO: how can the nextscreen be known in the current? o.O
             return self._nextscreen, global_dict, diff
-        elif not await self.get_devicesettings_value('screendetection', True):
+        elif not await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True):
             self._logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:
-            if not await self._take_screenshot(delay_before=await self.get_devicesettings_value("post_screenshot_delay", 1),
-                                         delay_after=2):
+            if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
+                    MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
+                                               delay_after=2):
                 self._logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR, global_dict, diff
 
@@ -201,7 +205,7 @@ class WordToScreenMatching(object):
             if 'Google' in (global_dict['text'][i]):
                 temp_dict['Google'] = global_dict['top'][i] / diff
 
-            if await self.get_devicesettings_value('logintype', 'google') == 'ptc':
+            if await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google') == 'ptc':
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
                     await self._click_center_button(diff, global_dict, i)
@@ -263,7 +267,7 @@ class WordToScreenMatching(object):
         await self._communicator.click(click_x, click_y)
 
     async def __handle_screentype(self, screentype: ScreenType,
-                            global_dict: Optional[dict] = None, diff: int = -1) -> ScreenType:
+                                  global_dict: Optional[dict] = None, diff: int = -1) -> ScreenType:
         if screentype == ScreenType.UNDEFINED:
             self._logger.warning("Undefined screentype, abandon ship...")
         elif screentype == ScreenType.BIRTHDATE:
@@ -330,7 +334,8 @@ class WordToScreenMatching(object):
         return screentype
 
     async def __check_pogo_screen_ban_or_loading(self, screentype) -> ScreenType:
-        backgroundcolor = await self._pogoWindowManager.most_frequent_colour(await self.get_screenshot_path(), self.origin)
+        backgroundcolor = await self._pogoWindowManager.most_frequent_colour(await self.get_screenshot_path(),
+                                                                             self.origin)
         if backgroundcolor is not None and (
                 backgroundcolor[0] == 0 and
                 backgroundcolor[1] == 0 and
@@ -375,7 +380,7 @@ class WordToScreenMatching(object):
         self._nextscreen = ScreenType.UNDEFINED
         if self._logintype == LoginType.ptc:
             self._logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
-            username = await self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
+            username = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, '@gmail.com')
         else:
             ggl_login = await self.get_next_account()
             username = ggl_login.username
@@ -548,10 +553,10 @@ class WordToScreenMatching(object):
         self._logger.warning('Dont find any mailaddress...')
         return False
 
-    async def set_devicesettings_value(self, key: str, value) -> None:
+    async def set_devicesettings_value(self, key: MappingManagerDevicemappingKey, value) -> None:
         await self._mapping_manager.set_devicesetting_value_of(self.origin, key, value)
 
-    async def get_devicesettings_value(self, key: str, default_value: object = None):
+    async def get_devicesettings_value(self, key: MappingManagerDevicemappingKey, default_value: object = None):
         self._logger.debug2("Fetching devicemappings")
         try:
             devicemappings: Optional[dict] = await self._mapping_manager.get_devicemappings_of(self.origin)
@@ -595,7 +600,7 @@ class WordToScreenMatching(object):
     async def get_screenshot_path(self, fileaddon: bool = False) -> str:
         screenshot_ending: str = ".jpg"
         addon: str = ""
-        if await self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_TYPE, "jpeg") == "png":
             screenshot_ending = ".png"
 
         if fileaddon:
@@ -615,13 +620,13 @@ class WordToScreenMatching(object):
 
         # TODO: area settings for jpg/png and quality?
         screenshot_type: ScreenshotType = ScreenshotType.JPEG
-        if await self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_TYPE, "jpeg") == "png":
             screenshot_type = ScreenshotType.PNG
 
         screenshot_quality: int = 80
 
         take_screenshot = await self._communicator.get_screenshot(await self.get_screenshot_path(fileaddon=errorscreen),
-                                                            screenshot_quality, screenshot_type)
+                                                                  screenshot_quality, screenshot_type)
 
         if not take_screenshot:
             self._logger.error("takeScreenshot: Failed retrieving screenshot")
