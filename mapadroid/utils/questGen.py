@@ -127,6 +127,7 @@ def questtask(typeid, condition, target, quest_template):
     items = open_json_file('items')
     throwTypes = {"10": _("Nice"), "11": _("Great"),
                   "12": _("Excellent"), "13": _("Curveball")}
+    buddyLevels = {2: _("Good"), 3: _("Great"), 4: _("Ultra"), 5: _("Best")}
     arr = {}
     arr['0'] = target
     text = questtype(typeid)
@@ -368,6 +369,12 @@ def questtask(typeid, condition, target, quest_template):
                 # Condition type 18 means win a battle
                 # TODO change WIN to Defeat like in-game
                 text = text.replace(_('Battle'), _('Defeat'))
+    elif typeid == 36:
+        arr['level'] = ""
+        for con in condition_dict:
+            if con.get('type', 0) == 28:
+                level = con.get('with_buddy', {}).get('min_buddy_level', 0)
+                arr['level'] = buddyLevels.get(level, level)
 
     quest_templates = open_json_file('quest_templates')
     if quest_template is not None and quest_template in quest_templates:
