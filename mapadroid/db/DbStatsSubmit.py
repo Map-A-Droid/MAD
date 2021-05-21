@@ -78,6 +78,14 @@ class DbStatsSubmit:
         )
         self._db_exec.execute(query, commit=True)
 
+        query = (
+            "DELETE FROM trs_stats_detect_seen_type WHERE encounter < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE OR "
+            "wild < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE OR nearby_stop < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE "
+            "OR nearby_cell < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE OR lure_encounter < UTC_TIMESTAMP() - INTERVAL"
+            " 10800 MINUTE OR lure_wild < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE"
+        )
+        self._db_exec.execute(query, commit=True)
+
         if int(self._args.raw_delete_shiny) > 0:
             query = (
                 "DELETE FROM trs_stats_detect_mon_raw WHERE timestamp_scan < "
