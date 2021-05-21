@@ -482,9 +482,9 @@ class WebhookWorker:
                     mon_payload["weather"] = mon["weather_boosted_condition"]
 
             if mon["seen_type"] in ("nearby_stop", "lure_wild", "lure_encounter"):
-                mon_payload["fort_id"] = mon["fort_id"]
-                mon_payload["fort_name"] = mon.get("stop_name")
-                mon_payload["fort_url"] = mon.get("stop_url")
+                mon_payload["pokestop_id"] = mon["fort_id"]
+                mon_payload["pokestop_name"] = mon.get("stop_name")
+                mon_payload["pokestop_url"] = mon.get("stop_url")
 
                 if mon["seen_type"] == "nearby_stop":
                     mon_payload["verified"] = False
