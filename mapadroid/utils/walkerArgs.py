@@ -109,10 +109,10 @@ def parse_args():
                         help='Only calculate routes, then exit the program. No scanning.')
     parser.add_argument('-cm', '--config_mode', action='store_true', default=False,
                         help='Run in ConfigMode')
-    parser.add_argument('-ns', '--do_nearby_scans', action='store_true', default=False,
-                        help='Enable nearby mon scans')
-    parser.add_argument('-nlm', '--no_lure_mons', action='store_true', default=False,
-                        help='Disable scanning of lured mons')
+    parser.add_argument('-nm', '--scan_nearby_mons', action='store_true', default=False,
+                        help='Enable scanning of nearby mons')
+    parser.add_argument('-lm', '--scan_lured_mons', action='store_true', default=False,
+                        help='Enable scanning of lured mons')
     parser.add_argument("-sn", "--status-name", default="mad",
                         help=("Enable status page database update using"
                               " STATUS_NAME as main worker name."))

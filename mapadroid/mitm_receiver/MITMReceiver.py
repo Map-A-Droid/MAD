@@ -312,10 +312,10 @@ class MITMReceiver(Process):
         if unquest_stops is not None:
             unquest_stops = unquest_stops.get("values", [])
 
-        if self.__application_args.no_lure_mons:
-            check_lured = False
-        else:
+        if self.__application_args.scan_lured_mons:
             check_lured = True
+        else:
+            check_lured = False
 
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
