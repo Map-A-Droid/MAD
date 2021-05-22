@@ -79,10 +79,8 @@ class DbStatsSubmit:
         self._db_exec.execute(query, commit=True)
 
         query = (
-            "DELETE FROM trs_stats_detect_seen_type WHERE encounter < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE OR "
-            "wild < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE OR nearby_stop < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE "
-            "OR nearby_cell < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE OR lure_encounter < UTC_TIMESTAMP() - INTERVAL"
-            " 10800 MINUTE OR lure_wild < UTC_TIMESTAMP() - INTERVAL 10800 MINUTE"
+            "DELETE FROM trs_stats_detect_seen_type WHERE encounter_id NOT IN "
+            "(SELECT encounter_id from pokemon)"
         )
         self._db_exec.execute(query, commit=True)
 
