@@ -235,7 +235,7 @@ class DbPogoProtoSubmit:
                         gender, weather_boosted, now, costume, form, lat, lon, seen_type
                     )
                 )
-                cache.set(cache_key, 1, ex=60*60)
+                cache.set(cache_key, 1, ex=60 * 60)
 
         self._db_exec.executemany(query_nearby, nearby_args, commit=True)
         return cell_encounters, stop_encounters
@@ -427,7 +427,7 @@ class DbPogoProtoSubmit:
         )
 
         self._db_exec.execute(query, insert_values, commit=True)
-        cache.set(cache_key, 1, ex=60*3)
+        cache.set(cache_key, 1, ex=60 * 3)
         origin_logger.debug3("Done updating lure mon with iv in DB")
         return [(encounter_id, now)]
 
@@ -483,7 +483,7 @@ class DbPogoProtoSubmit:
                     gender = display["gender_value"]
                     weather_boosted = display["weather_boosted_value"]
 
-                    cache.set(cache_key, 1, ex=60*3)
+                    cache.set(cache_key, 1, ex=60 * 3)
                     lure_args.append(
                         (
                             encounter_id, 0, mon_id, stopid, disappear_time, gender,
@@ -536,7 +536,6 @@ class DbPogoProtoSubmit:
                 )
             )
         self._db_exec.executemany(base_query, base_args, commit=True)
-
 
     def spawnpoints(self, origin: str, map_proto: dict, proto_dt: datetime):
         origin_logger = get_origin_logger(logger, origin=origin)

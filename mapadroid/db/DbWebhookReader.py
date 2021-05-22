@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.database)
 
