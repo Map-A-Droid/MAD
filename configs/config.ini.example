@@ -56,7 +56,7 @@
 #only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
 #config_mode                  # Run in ConfigMode. Default: False
 #scan_nearby_mons             # Enable scanning of nearby mons - Please make sure you know how this works before turning it on!
-scan_lured_mons               # Enable scanning of lured mons
+#scan_lured_mons               # Enable scanning of lured mons
 #status-name:                 # Setup name for this instance - if not set: PID of the process will be used
 #no_event_checker             # Disable event checker task
 
