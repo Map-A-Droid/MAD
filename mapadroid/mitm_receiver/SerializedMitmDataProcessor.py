@@ -95,13 +95,13 @@ class SerializedMitmDataProcessor(Process):
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 gmo_loc_time = self.get_time_ms() - gmo_loc_start
 
-                if self.__application_args.no_lure_mons:
-                    lurenoiv_time = 0
-                    lure_wild = []
-                else:
+                if self.__application_args.scan_lured_mons:
                     lurenoiv_start = self.get_time_ms()
                     lure_wild = self.__db_submit.mon_lure_noiv(origin, data["payload"])
                     lurenoiv_time = self.get_time_ms() - lurenoiv_start
+                else:
+                    lurenoiv_time = 0
+                    lure_wild = []
 
                 if self.__application_args.scan_nearby_mons:
                     nearby_mons_time_start = self.get_time_ms()
