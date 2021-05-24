@@ -123,10 +123,13 @@ class DbPogoProtoSubmit:
             return False
 
         query_nearby = (
-            "INSERT IGNORE pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, cell_id, "
+            "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, cell_id, "
             "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
             "latitude, longitude, seen_type)"
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE pokemon_id=VALUES(pokemon_id), gender=VALUES(gender), "
+            "weather_boosted_condition=VALUES(weather_boosted_condition), last_modified=VALUES(last_modified), "
+            "costume=VALUES(costume), form=VALUES(form)"
         )
         stop_query = (
             "SELECT latitude, longitude "
