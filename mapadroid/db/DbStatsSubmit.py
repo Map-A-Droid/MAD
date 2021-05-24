@@ -78,12 +78,6 @@ class DbStatsSubmit:
         )
         self._db_exec.execute(query, commit=True)
 
-        query = (
-            "DELETE FROM trs_stats_detect_seen_type WHERE encounter_id NOT IN "
-            "(SELECT encounter_id from pokemon)"
-        )
-        self._db_exec.execute(query, commit=True)
-
         if int(self._args.raw_delete_shiny) > 0:
             query = (
                 "DELETE FROM trs_stats_detect_mon_raw WHERE timestamp_scan < "
