@@ -33,7 +33,7 @@ from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
-from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -81,6 +81,11 @@ class DeviceMappingsEntry:
     account_rotation_started: bool = False
     walker_area_index: int = -1
     finished: bool = False
+    job_active: bool = False
+    last_location_time: Optional[int] = None
+    last_cleanup_time: Optional[int] = None
+    last_action_time: Optional[int] = None
+    last_questclear_time: Optional[int] = None
 
 
 class AreaEntry:
@@ -182,6 +187,7 @@ class MappingManager:
         else:
             return devicemapping_entry.device_settings, devicemapping_entry.pool_settings
 
+    # TODO: Move all devicesettings/mappings functionality/handling to dedicated class
     async def __devicesettings_setter_consumer(self):
         logger.info("Starting Devicesettings consumer Thread")
         while not self.__shutdown_event.is_set():
@@ -197,11 +203,37 @@ class MappingManager:
             if set_settings is not None:
                 device_name, key, value = set_settings
                 async with self.__mappings_mutex:
-                    # TODO: This will likely not work anymore and require specific tasks...
-                    if self._devicemappings.get(device_name, None) is not None:
-                        if self._devicemappings[device_name].get("settings", None) is None:
-                            self._devicemappings[device_name]["settings"] = {}
-                        self._devicemappings[device_name]['settings'][key] = value
+                    await self.__set_devicesetting(device_name, key, value)
+
+    async def __set_devicesetting(self, device_name: str, key: MappingManagerDevicemappingKey, value: Any) -> None:
+        devicemapping_entry: Optional[DeviceMappingsEntry] = self._devicemappings.get(device_name, None)
+        if not devicemapping_entry:
+            return
+        if key == MappingManagerDevicemappingKey.JOB_ACTIVE:
+            devicemapping_entry.job_active = value
+        elif key == MappingManagerDevicemappingKey.WALKER_AREA_INDEX:
+            devicemapping_entry.walker_area_index = value
+        elif key == MappingManagerDevicemappingKey.FINISHED:
+            devicemapping_entry.finished = value
+        elif key == MappingManagerDevicemappingKey.LAST_LOCATION_TIME:
+            devicemapping_entry.last_location_time = value
+        elif key == MappingManagerDevicemappingKey.LAST_CLEANUP_TIME:
+            devicemapping_entry.last_cleanup_time = value
+        elif key == MappingManagerDevicemappingKey.LAST_LOCATION:
+            devicemapping_entry.last_location = value
+        elif key == MappingManagerDevicemappingKey.ACCOUNT_INDEX:
+            devicemapping_entry.account_index = value
+        elif key == MappingManagerDevicemappingKey.LAST_MODE:
+            devicemapping_entry.last_known_mode = value
+        elif key == MappingManagerDevicemappingKey.LAST_ACTION_TIME:
+            devicemapping_entry.last_action_time = value
+        elif key == MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED:
+            devicemapping_entry.account_rotation_started = value
+        elif key == MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME:
+            devicemapping_entry.last_questclear_time = value
+        else:
+            # TODO: Maybe also set DB stuff? async with self.__db_wrapper as session:
+            pass
 
     async def set_devicesetting_value_of(self, device_name: str, key: MappingManagerDevicemappingKey, value):
         if self._devicemappings.get(device_name, None) is not None:

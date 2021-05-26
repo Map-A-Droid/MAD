@@ -14,7 +14,7 @@ from mapadroid.utils.gamemechanicutil import calculate_iv, calculate_mon_level
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.language import get_mon_name
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManager import MappingManager
 
 logger = get_logger(LoggerEnums.madmin)
 

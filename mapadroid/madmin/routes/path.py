@@ -3,7 +3,7 @@ from flask import (jsonify, redirect, render_template, request,
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import auth_required, get_quest_areas
-from mapadroid.utils import MappingManager
+from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.functions import generate_path
 from mapadroid.utils.logging import LoggerEnums, get_logger
 

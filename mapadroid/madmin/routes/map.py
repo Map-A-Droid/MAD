@@ -12,8 +12,7 @@ from mapadroid.madmin.functions import (auth_required,
                                         generate_coords_from_geofence,
                                         get_bound_params, get_coord_float,
                                         get_geofences)
-from mapadroid.route.RouteManagerBase import RoutePoolEntry
-from mapadroid.utils import MappingManager
+from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_name
 from mapadroid.utils.logging import LoggerEnums, get_logger

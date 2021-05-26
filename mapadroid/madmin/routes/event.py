@@ -5,7 +5,7 @@ from flask_caching import Cache
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManager import MappingManager
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 

@@ -26,7 +26,7 @@ from mapadroid.patcher import MADPatcher
 from mapadroid.utils.event import Event
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
 from mapadroid.utils.madGlobals import terminate_mad
-from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.pluginBase import PluginCollection
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater

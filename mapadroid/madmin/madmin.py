@@ -19,7 +19,7 @@ from mapadroid.madmin.routes.event import MADminEvent
 from mapadroid.madmin.routes.map import MADminMap
 from mapadroid.madmin.routes.path import MADminPath
 from mapadroid.madmin.routes.statistics import MADminStatistics
-from mapadroid.utils import MappingManager
+from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer

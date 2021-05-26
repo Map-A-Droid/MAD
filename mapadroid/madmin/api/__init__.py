@@ -9,7 +9,7 @@ from .resources import (
     ftr_area, ftr_auth, ftr_device, ftr_devicesetting, ftr_geofence,
     ftr_monlist, ftr_pogoauth, ftr_routecalc, ftr_walker, ftr_walkerarea)
 from ...db.DbWrapper import DbWrapper
-from ...utils.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManager import MappingManager
 from ...websocket.WebsocketServer import WebsocketServer
 
 BASE_URI = '/api'

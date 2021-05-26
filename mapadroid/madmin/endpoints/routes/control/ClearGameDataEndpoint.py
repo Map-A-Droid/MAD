@@ -6,7 +6,7 @@ from loguru import logger
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
-from mapadroid.utils.MappingManager import DeviceMappingsEntry
+from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
 
 
 class ClearGameDataEndpoint(AbstractControlEndpoint):

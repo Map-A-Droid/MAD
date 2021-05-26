@@ -8,7 +8,7 @@ from mapadroid.db.model import SettingsDevice, SettingsDevicepool
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
-from mapadroid.utils.MappingManager import MappingManager, DeviceMappingsEntry
+from mapadroid.mapping_manager.MappingManager import MappingManager, DeviceMappingsEntry
 
 logger = get_logger(LoggerEnums.mitm)
 

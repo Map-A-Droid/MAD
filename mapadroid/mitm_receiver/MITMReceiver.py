@@ -21,11 +21,11 @@ from mapadroid.db.model import AutoconfigRegistration, SettingsDevice
 from mapadroid.mad_apk import (APKType, lookup_package_info, parse_frontend,
                                stream_package, supported_pogo_version)
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.utils import MappingManager
+from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.autoconfig import PDConfig, RGCConfig, origin_generator
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import (LoggerEnums, LogLevelChanger, get_logger,
+from mapadroid.utils.logging import (LoggerEnums, get_logger,
                                      get_origin_logger)
 
 logger = get_logger(LoggerEnums.mitm)

@@ -8,13 +8,12 @@ from typing import Dict, Optional
 from flask import make_response, request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.functions import creation_date
-from mapadroid.utils.MappingManager import (AreaEntry, DeviceMappingsEntry,
-                                            MappingManager)
+from mapadroid.mapping_manager.MappingManager import (AreaEntry, DeviceMappingsEntry,
+                                                      MappingManager)
 from mapadroid.utils.walkerArgs import parse_args
 
 mapping_args = parse_args()

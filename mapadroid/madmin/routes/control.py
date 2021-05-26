@@ -13,7 +13,7 @@ from mapadroid.madmin.functions import (allowed_file, auth_required,
                                         generate_device_logcat_zip_path,
                                         generate_device_screenshot_path,
                                         nocache, uploaded_files)
-from mapadroid.utils import MappingManager
+from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.collections import Location
 from mapadroid.utils.functions import (creation_date, generate_path,

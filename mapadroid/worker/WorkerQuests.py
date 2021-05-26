@@ -11,11 +11,13 @@ from s2sphere import CellId
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
-from mapadroid.db.model import SettingsAreaPokestop
+from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
+from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
+from mapadroid.db.model import SettingsAreaPokestop, Pokestop
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils import MappingManager
-from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager import MappingManager
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.gamemechanicutil import calculate_cooldown
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
@@ -544,8 +546,7 @@ class WorkerQuests(MITMBase):
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
                     self.logger.info("Level mode: Stop already visited - skipping it")
-                    await PokestopHelper.vis
-                    await self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
+                    await TrsVisitedHelper.mark_visited(session, self.origin, Location(latitude, longitude))
                     self._spinnable_data_failcount = 0
                     return PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE
 
@@ -612,7 +613,7 @@ class WorkerQuests(MITMBase):
             self._stop_process_time = math.floor(time.time())
             self._waittime_without_delays = self._stop_process_time
             await self._click_pokestop_at_current_location(self._delay_add)
-            await self.set_devicesettings_value('last_action_time', time.time())
+            await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
             type_received, proto_entry = await self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_DETAILS, timeout=15)
             if type_received == LatestReceivedType.GYM:
@@ -670,17 +671,15 @@ class WorkerQuests(MITMBase):
                 if self._level_mode:
                     self.logger.info("Saving visitation info...")
                     self._latest_quest = math.floor(time.time())
-                    await self._db_wrapper.submit_pokestop_visited(self._origin,
-                                                             self.current_location.lat,
-                                                             self.current_location.lng)
+                    await TrsVisitedHelper.mark_visited(session, self._origin, self.current_location)
                     # This is leveling mode, it's faster to just ignore spin result and continue ?
                     break
 
                 if data_received == FortSearchResultTypes.COOLDOWN:
                     self.logger.info('Stop is on cooldown.. sleeping 10 seconds but probably should just move on')
                     await asyncio.sleep(10)
-                    if await self._db_wrapper.check_stop_quest(self.current_location.lat,
-                                                         self.current_location.lng):
+
+                    if await TrsQuestHelper.check_stop_has_quest(session, self.current_location):
                         self.logger.info('Quest is done without us noticing. Getting new Quest...')
                     self.clear_thread_task = ClearThreadTasks.QUEST
                     break
@@ -737,8 +736,7 @@ class WorkerQuests(MITMBase):
                     self.logger.info("Got MON data after opening stop. This does not make sense - just retry...")
                 else:
                     self.logger.info("Brief speed lock or we already spun it, trying again")
-                if to > 2 and await self._db_wrapper.check_stop_quest(self.current_location.lat,
-                                                                self.current_location.lng):
+                if to > 2 and await TrsQuestHelper.check_stop_has_quest(session, self.current_location):
                     self.logger.info('Quest is done without us noticing. Getting new Quest...')
                     if not self._enhanced_mode:
                         self.clear_thread_task = ClearThreadTasks.QUEST
@@ -757,7 +755,7 @@ class WorkerQuests(MITMBase):
                 if to > 3:
                     self.logger.warning("giving up spinning after 4 tries in handle_stop loop")
 
-        await self.set_devicesettings_value('last_action_time', time.time())
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
 
     async def _check_for_data_content(self, latest, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
             -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
@@ -784,8 +782,8 @@ class WorkerQuests(MITMBase):
         if proto_to_wait_for in [ProtoIdentifier.FORT_SEARCH, ProtoIdentifier.FORT_DETAILS]:
             potential_replacements = [
                 self._latest_quest,
-                await self.get_devicesettings_value('last_cleanup_time', 0),
-                await self.get_devicesettings_value('last_questclear_time', 0)
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_CLEANUP_TIME, 0),
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME, 0)
             ]
             replacement = max(x for x in potential_replacements if isinstance(x, int) or isinstance(x, float))
             self.logger.debug("timestamp {} being replaced with {} because we're waiting for proto {}",
@@ -863,9 +861,8 @@ class WorkerQuests(MITMBase):
 
     async def _check_if_stop_was_nearby_and_update_location(self, gmo_cells):
         self.logger.info("Checking stops around current location ({}) for deleted stops.", self.current_location)
-        stops: Dict[str, Tuple[Location, datetime]] = await self._db_wrapper.get_stop_ids_and_locations_nearby(
-            self.current_location
-        )
+
+        stops: Dict[str, Pokestop] = await PokestopHelper.get_nearby(session, self.current_location)
         self.logger.debug("Checking if GMO contains location changes or DB has stops that are already deleted. In DB: "
                           "{}. GMO cells: {}", str(stops), gmo_cells)
         # stops may contain multiple stops now. We can check each ID (key of dict) with the IDs in the GMO.
@@ -882,15 +879,14 @@ class WorkerQuests(MITMBase):
                 if not latitude or not longitude or not fort_id:
                     self.logger.warning("Cannot process fort without id, lat or lon")
                     continue
-                location_last_updated: Tuple[Location, datetime] = stops.get(fort_id)
-                if location_last_updated is None:
+                stop: Optional[Pokestop] = stops.get(fort_id)
+                if stop is None:
                     # new stop we have not seen before, MITM processors should take care of that
                     self.logger.debug2("Stop not in DB (in range) with ID {} at {}, {}", fort_id, latitude, longitude)
                     continue
                 else:
                     stops.pop(fort_id)
-                stop_location_known, last_updated = location_last_updated
-                if stop_location_known.lat == latitude and stop_location_known.lng == longitude:
+                if stop.latitude == latitude and stop.longitude == longitude:
                     # Location of fort has not changed
                     self.logger.debug2("Fort {} has not moved", fort_id)
                     continue
@@ -898,32 +894,32 @@ class WorkerQuests(MITMBase):
                     # now we have a location from DB for the given stop we are currently processing but does not equal
                     # the one we are currently processing, thus SAME fort_id
                     # now update the stop
-                    self.logger.warning("Updating fort {} with previous location {} now placed at {}, {}",
-                                        fort_id, str(stop_location_known), latitude, longitude)
-                    await self._db_wrapper.update_pokestop_location(fort_id, latitude, longitude)
+                    self.logger.warning("Updating fort {} with previous location {}, {} now placed at {}, {}",
+                                        fort_id, stop.latitude, stop.longitude, latitude, longitude)
+                    await PokestopHelper.update_location(session, fort_id, Location(latitude, longitude))
 
         timedelta_to_consider_deletion = timedelta(days=3)
-        for fort_id in stops.keys():
+        for fort_id, stop in stops.values():
             # Call delete of stops that have been not been found within 100m range of current position
-            stop_location_known, last_updated = stops[fort_id]
+            stop_location: Location = Location(stop.latitude, stop.longitude)
             self.logger.debug("Considering stop {} at {} (last updated {}) for deletion",
-                              fort_id, stop_location_known, last_updated)
-            if last_updated and last_updated > datetime.now() - timedelta_to_consider_deletion:
+                              fort_id, stop_location, stop.last_updated)
+            if stop.last_updated and stop.last_updated > datetime.now() - timedelta_to_consider_deletion:
                 self.logger.debug3("Stop considered for deletion was last updated recently, not gonna delete it for"
-                                   " now.", last_updated)
+                                   " now.", stop.last_updated)
                 continue
-            distance_to_location = get_distance_of_two_points_in_meters(float(stop_location_known.lat),
-                                                                        float(stop_location_known.lng),
+            distance_to_location = get_distance_of_two_points_in_meters(float(stop_location.lat),
+                                                                        float(stop_location.lng),
                                                                         float(self.current_location.lat),
                                                                         float(self.current_location.lng))
             self.logger.debug("Distance to {} at {} (last updated {})",
-                              fort_id, stop_location_known, last_updated)
+                              fort_id, stop_location, stop.last_updated)
             if distance_to_location < 100:
                 self.logger.warning(
                     "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and within "
                     "100m of worker ({}m) and was last updated more than 3 days ago ()",
-                    fort_id, str(stop_location_known), distance_to_location, last_updated)
-                await self._db_wrapper.delete_stop(stop_location_known.lat, stop_location_known.lng)
+                    fort_id, str(stop_location), distance_to_location, stop.last_updated)
+                await PokestopHelper.delete(session, stop_location)
                 await self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
-                                                                            stop_location_known.lat,
-                                                                            stop_location_known.lng)
+                                                                            stop_location.lat,
+                                                                            stop_location.lng)

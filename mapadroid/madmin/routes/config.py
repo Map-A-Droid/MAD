@@ -23,7 +23,7 @@ from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManager import MappingManager
 
 logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})

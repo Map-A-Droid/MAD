@@ -5,11 +5,11 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsDevice, SettingsDevicepool, SettingsWalkerarea
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import WrongAreaInWalker
-from mapadroid.utils.MappingManager import MappingManager, DeviceMappingsEntry
+from mapadroid.mapping_manager.MappingManager import MappingManager, DeviceMappingsEntry
 from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
@@ -131,7 +131,7 @@ class WorkerFactory:
         if walker_configuration.walker_index >= walker_configuration.total_walkers_allowed_for_assigned_area - 1:
             await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.WALKER_AREA_INDEX, 0)
 
-        if "last_location" not in await self.__mapping_manager.get_devicesettings_of(origin):
+        if not (await self.__mapping_manager.get_devicemappings_of(origin)).last_location:
             # TODO: Validate working
             await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.LAST_LOCATION, Location(0.0, 0.0))
 

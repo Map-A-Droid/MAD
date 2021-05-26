@@ -15,7 +15,7 @@ from mapadroid.db.model import Base
 from mapadroid.mad_apk import AbstractAPKStorage
 from mapadroid.madmin.api import apiException
 from mapadroid.utils.json_encoder import MADEncoder
-from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 

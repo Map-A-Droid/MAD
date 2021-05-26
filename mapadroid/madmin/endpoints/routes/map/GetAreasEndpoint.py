@@ -3,7 +3,7 @@ from typing import Dict, Optional
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import get_geofences
-from mapadroid.utils.MappingManager import AreaEntry
+from mapadroid.mapping_manager.MappingManager import AreaEntry
 
 
 class GetAreasEndpoint(AbstractControlEndpoint):

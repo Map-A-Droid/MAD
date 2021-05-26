@@ -41,3 +41,4 @@ class MappingManagerDevicemappingKey(IntEnum):
     INVENTORY_CLEAR_ROUNDS = 36
     LOGINTYPE = 37
     GGL_LOGIN_MAIL = 38
+    LAST_QUESTCLEAR_TIME = 39

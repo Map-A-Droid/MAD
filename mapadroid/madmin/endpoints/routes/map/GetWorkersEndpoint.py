@@ -2,7 +2,7 @@ from typing import Optional, Dict
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
-from mapadroid.utils.MappingManager import DeviceMappingsEntry
+from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
 
 
 class GetWorkersEndpoint(AbstractControlEndpoint):

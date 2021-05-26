@@ -6,7 +6,8 @@ from mapadroid.mad_apk import (AbstractAPKStorage, APKArch, APKType, MADapks,
                                get_apk_status, is_newer_version,
                                lookup_apk_enum, lookup_arch_enum)
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils import MappingManager, global_variables
+from mapadroid.utils import global_variables
+from mapadroid.mapping_manager import MappingManager
 
 
 class APKManager(object):

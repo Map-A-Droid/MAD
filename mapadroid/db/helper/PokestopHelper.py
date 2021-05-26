@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Tuple
 
-from sqlalchemy import and_, join
+from sqlalchemy import and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
@@ -22,9 +22,9 @@ class PokestopHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def get_at_location(session: AsyncSession, latitude: float, longitude: float) -> Optional[Pokestop]:
-        stmt = select(Pokestop).where(and_(Pokestop.latitude == latitude,
-                                           Pokestop.longitude == longitude))
+    async def get_at_location(session: AsyncSession, location: Location) -> Optional[Pokestop]:
+        stmt = select(Pokestop).where(and_(Pokestop.latitude == location.lat,
+                                           Pokestop.longitude == location.lng))
         result = await session.execute(stmt)
         return result.scalars().first()
 
@@ -76,17 +76,17 @@ class PokestopHelper:
         return unvisited
 
     @staticmethod
-    async def update_location(session: AsyncSession, fort_id: str, latitude: float, longitude: float) -> None:
+    async def update_location(session: AsyncSession, fort_id: str, location: Location) -> None:
         pokestop: Optional[Pokestop] = await PokestopHelper.get(session, fort_id)
         if not pokestop:
             return
-        pokestop.latitude = latitude
-        pokestop.longitude = longitude
+        pokestop.latitude = location.lat
+        pokestop.longitude = location.lng
         session.add(pokestop)
 
     @staticmethod
-    async def delete(session: AsyncSession, latitude: float, longitude: float) -> None:
-        pokestop: Optional[Pokestop] = await PokestopHelper.get_at_location(session, latitude, longitude)
+    async def delete(session: AsyncSession, location: Location) -> None:
+        pokestop: Optional[Pokestop] = await PokestopHelper.get_at_location(session, location)
         if pokestop:
             session.delete(pokestop)
 
@@ -275,3 +275,8 @@ class PokestopHelper:
         for timestamp_as_str, count in result:
             results.append((timestamp_as_str, count))
         return results
+
+    @staticmethod
+    async def submit_pokestop_visited(session: AsyncSession, location: Location) -> None:
+        stmt = update(Pokestop).where(and_(Pokestop.latitude == location.lat,
+                                           Pokestop.longitude == location.lng)).values(Pokestop.vi)

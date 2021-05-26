@@ -7,7 +7,7 @@ from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
-from mapadroid.utils.MappingManager import DeviceMappingsEntry
+from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
 from mapadroid.utils.updater import JobType
 
 

@@ -14,12 +14,12 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
                                      get_origin_logger)
-from mapadroid.utils.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.communicator import Communicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \

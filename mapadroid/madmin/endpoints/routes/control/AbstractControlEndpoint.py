@@ -8,7 +8,7 @@ from aiohttp.abc import Request
 import mapadroid
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
-from mapadroid.utils.MappingManager import DeviceMappingsEntry
+from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsQuest, Pokestop
+from mapadroid.utils.collections import Location
 
 
 class TrsQuestHelper:
@@ -16,10 +17,10 @@ class TrsQuestHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def check_stop_has_quest(session: AsyncSession, latitude: float, longitude: float) -> bool:
+    async def check_stop_has_quest(session: AsyncSession, location: Location) -> bool:
         stmt = select(TrsQuest) \
             .select_from(TrsQuest).join(Pokestop, Pokestop.pokestop_id == TrsQuest.GUID) \
-            .where(and_(Pokestop.latitude == latitude, Pokestop.longitude == longitude))
+            .where(and_(Pokestop.latitude == location.lat, Pokestop.longitude == location.lng))
         result = await session.execute(stmt)
         quest: Optional[TrsQuest] = result.scalars().first()
         # Likely only one stop/quest anyway... this method should be removed because it just hurts to lookup a quest
