@@ -1,10 +1,12 @@
+import asyncio
 import time
 from typing import List, Optional
 
 import numpy as np
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
+from mapadroid.db.helper.PokestopHelper import PokestopHelper
+from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
@@ -25,8 +27,9 @@ class RouteManagerLeveling(RouteManagerQuests):
                                     joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                     )
         self._level = True
+        self._stoplist: List[Location] = []
 
-    def _worker_changed_update_routepools(self):
+    async def _worker_changed_update_routepools(self):
         with self._manager_mutex and self._workers_registered_mutex:
             self.logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
             if len(self._workers_registered) == 0:
@@ -34,54 +37,60 @@ class RouteManagerLeveling(RouteManagerQuests):
                 return False
 
             any_at_all = False
-            for origin in self._routepool:
-                origin_local_list = []
-                entry: RoutePoolEntry = self._routepool[origin]
+            async with self.db_wrapper as session:
+                for origin in self._routepool:
+                    origin_local_list = []
+                    entry: RoutePoolEntry = self._routepool[origin]
 
-                if len(entry.queue) > 0:
-                    self.logger.debug("origin {} already has a queue, do not touch...", origin)
-                    continue
-                unvisited_stops = self.db_wrapper.stops_from_db_unvisited(self.geofence_helper, origin)
-                if len(unvisited_stops) == 0:
-                    self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
-                    continue
-                if len(self._route) > 0:
-                    self.logger.info("Making a subroute of unvisited stops..")
-                    for coord in self._route:
-                        coord_location = Location(coord.lat, coord.lng)
-                        if coord_location in self._coords_to_be_ignored:
-                            self.logger.info('Already tried this Stop but it failed spinnable test, skip it')
-                            continue
-                        if coord_location in unvisited_stops:
-                            origin_local_list.append(coord_location)
-                if len(origin_local_list) == 0:
-                    self.logger.info("None of the stops in original route was unvisited, recalc a route")
-                    new_route = self._local_recalc_subroute(unvisited_stops)
-                    for coord in new_route:
-                        origin_local_list.append(Location(coord["lat"], coord["lng"]))
+                    if len(entry.queue) > 0:
+                        self.logger.debug("origin {} already has a queue, do not touch...", origin)
+                        continue
+                    unvisited_stops: List[Pokestop] = await PokestopHelper.stops_not_visited(session,
+                                                                                             self.geofence_helper,
+                                                                                             origin)
+                    if len(unvisited_stops) == 0:
+                        self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
+                        continue
+                    if len(self._route) > 0:
+                        self.logger.info("Making a subroute of unvisited stops..")
+                        for coord in self._route:
+                            coord_location = Location(coord.lat, coord.lng)
+                            if coord_location in self._coords_to_be_ignored:
+                                self.logger.info('Already tried this Stop but it failed spinnable test, skip it')
+                                continue
+                            for stop in unvisited_stops:
+                                if coord_location == Location(stop.latitude, stop.longitude):
+                                    origin_local_list.append(coord_location)
+                    if len(origin_local_list) == 0:
+                        self.logger.info("None of the stops in original route was unvisited, recalc a route")
+                        new_route = self._local_recalc_subroute(unvisited_stops)
+                        for coord in new_route:
+                            origin_local_list.append(Location(coord["lat"], coord["lng"]))
 
-                # subroute is all stops unvisited
-                self.logger.info("Origin {} has {} unvisited stops for this route", origin, len(origin_local_list))
-                entry.subroute = origin_local_list
-                # let's clean the queue just to make sure
-                entry.queue.clear()
-                [entry.queue.append(i) for i in origin_local_list]
-                any_at_all = len(origin_local_list) > 0 or any_at_all
-            return any_at_all
+                    # subroute is all stops unvisited
+                    self.logger.info("Origin {} has {} unvisited stops for this route", origin, len(origin_local_list))
+                    entry.subroute = origin_local_list
+                    # let's clean the queue just to make sure
+                    entry.queue.clear()
+                    [entry.queue.append(i) for i in origin_local_list]
+                    any_at_all = len(origin_local_list) > 0 or any_at_all
+                return any_at_all
 
-    def _local_recalc_subroute(self, unvisited_stops):
+    def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]):
         to_be_route = np.zeros(shape=(len(unvisited_stops), 2))
         for i in range(len(unvisited_stops)):
-            to_be_route[i][0] = float(unvisited_stops[i].lat)
-            to_be_route[i][1] = float(unvisited_stops[i].lng)
+            to_be_route[i][0] = float(unvisited_stops[i].latitude)
+            to_be_route[i][1] = float(unvisited_stops[i].longitude)
         new_route = self.calculate_new_route(to_be_route, self._max_radius, self._max_coords_within_radius,
                                              False, 1,
                                              True)
         return new_route
 
-    def generate_stop_list(self):
-        time.sleep(5)
-        stops_in_fence = self.db_wrapper.stops_from_db(self.geofence_helper)
+    async def generate_stop_list(self):
+        # TODO: Why is there a sleep here?
+        await asyncio.sleep(5)
+        async with self.db_wrapper as session:
+            stops_in_fence: List[Location] = await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
 
         self.logger.info('Detected stops without quests: {}', len(stops_in_fence))
         self.logger.debug('Detected stops without quests: {}', stops_in_fence)
@@ -90,8 +99,9 @@ class RouteManagerLeveling(RouteManagerQuests):
     def _retrieve_latest_priority_queue(self):
         return None
 
-    def _get_coords_post_init(self):
-        return self.db_wrapper.stops_from_db(self.geofence_helper)
+    async def _get_coords_post_init(self):
+        async with self.db_wrapper as session:
+            return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
 
     def _cluster_priority_queue_criteria(self):
         pass
@@ -104,7 +114,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                           in_memory=True)
         self._init_route_queue()
 
-    def _get_coords_after_finish_route(self) -> bool:
+    async def _get_coords_after_finish_route(self) -> bool:
         with self._manager_mutex:
             if self._shutdown_route:
                 self.logger.info('Other worker shutdown route - leaving it')
@@ -117,10 +127,12 @@ class RouteManagerLeveling(RouteManagerQuests):
             self._restore_original_route()
 
             any_unvisited = False
-            for origin in self._routepool:
-                any_unvisited = self.db_wrapper.any_stops_unvisited(self.geofence_helper, origin)
-                if any_unvisited:
-                    break
+            async with self.db_wrapper as session:
+                for origin in self._routepool:
+                    any_unvisited: bool = await PokestopHelper.any_stops_unvisited(session, self.geofence_helper,
+                                                                                   origin)
+                    if any_unvisited:
+                        break
 
             if not any_unvisited:
                 self.logger.info("Not getting any stops - leaving now.")
@@ -129,7 +141,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                 return False
 
             # Redo individual routes
-            self._worker_changed_update_routepools()
+            await self._worker_changed_update_routepools()
             self._start_calc = False
             return True
 
@@ -145,7 +157,7 @@ class RouteManagerLeveling(RouteManagerQuests):
             # least one origin is connected to it.
             return self._stoplist
 
-    def _start_routemanager(self):
+    async def _start_routemanager(self):
         with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
@@ -155,7 +167,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                     self.logger.info('Other worker shutdown route - leaving it')
                     return False
 
-                self.generate_stop_list()
+                await self.generate_stop_list()
                 stops = self._stoplist
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None

@@ -60,6 +60,16 @@ class PokestopHelper:
 
     @staticmethod
     async def stops_not_visited(session: AsyncSession, geofence_helper: GeofenceHelper, origin: str) -> List[Pokestop]:
+        """
+        stops_from_db_unvisited
+        Args:
+            session:
+            geofence_helper:
+            origin:
+
+        Returns:
+
+        """
         logger.debug3("DbWrapper::any_stops_unvisited called")
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
         stmt = select(Pokestop)\

@@ -6,7 +6,7 @@ import time
 from abc import ABC, abstractmethod
 from datetime import datetime
 from operator import itemgetter
-from threading import Event, RLock, Thread
+from threading import RLock, Thread
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
@@ -95,6 +95,7 @@ class RouteManagerBase(object, ABC):
         self._workers_registered_mutex = RLock()
 
         self._last_round_prio = {}
+        # TODO: Async RLock?
         self._manager_mutex = RLock()
         self._round_started_time = None
         self._route: List[Location] = []
@@ -143,7 +144,8 @@ class RouteManagerBase(object, ABC):
     def get_max_radius(self):
         return self._max_radius
 
-    def _start_check_routepools(self):
+    async def _start_check_routepools(self):
+        # TODO: Transform to asyncio
         self._check_routepools_thread = Thread(name=self.name + " - _check_routepools",
                                                target=self._check_routepools)
         self._check_routepools_thread.daemon = True
@@ -283,6 +285,7 @@ class RouteManagerBase(object, ABC):
                 if delete_old_route:
                     logger.debug("Deleting routefile...")
                     self._routecalc.routefile = None
+                    # TODO: Ensure callstack does not have a session running already...
                     await session.merge(self._routecalc)
                     await session.commit()
             # TODO: Move to util class running calculation in a thread/executor...
@@ -297,10 +300,10 @@ class RouteManagerBase(object, ABC):
             return new_route
         return []
 
-    def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
+    async def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                             delete_old_route: bool = False):
         if not self._routecalc.routefile:
-            self.recalc_route(max_radius, max_coords_within_radius, num_procs,
+            await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
                               delete_old_route=delete_old_route,
                               in_memory=True,
                               calctype='quick')
@@ -311,12 +314,12 @@ class RouteManagerBase(object, ABC):
             }
             Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs).start()
         else:
-            self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
+            await self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
 
-    def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
+    async def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                      delete_old_route: bool = False, in_memory: bool = False, calctype: str = None):
         current_coords = self._coords_unstructured
-        new_route = self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
+        new_route = await self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
                                              delete_old_route, num_procs,
                                              in_memory=in_memory,
                                              calctype=calctype)
@@ -327,12 +330,12 @@ class RouteManagerBase(object, ABC):
             self._current_route_round_coords = self._route.copy()
         return new_route
 
-    def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
+    async def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                            active: bool = False, calctype: str = 'route'):
         self._clear_coords()
         coords = self._get_coords_post_init()
         self.add_coords_list(coords)
-        new_route = self.recalc_route(max_radius, max_coords_within_radius, num_procs,
+        new_route = await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
                                       in_memory=True,
                                       calctype=calctype)
         calc_coords = []
@@ -419,7 +422,7 @@ class RouteManagerBase(object, ABC):
         pass
 
     @abstractmethod
-    def _start_routemanager(self):
+    async def _start_routemanager(self):
         """
         Starts priority queue or whatever the implementations require
         :return:
@@ -451,7 +454,7 @@ class RouteManagerBase(object, ABC):
         pass
 
     @abstractmethod
-    def _recalc_route_workertype(self):
+    async def _recalc_route_workertype(self):
         """
         Return a new route for worker
         :return:
@@ -459,7 +462,7 @@ class RouteManagerBase(object, ABC):
         pass
 
     @abstractmethod
-    def _get_coords_after_finish_route(self) -> bool:
+    async def _get_coords_after_finish_route(self) -> bool:
         """
         Return list of coords to be fetched after finish a route
         :return:
@@ -535,7 +538,7 @@ class RouteManagerBase(object, ABC):
         route_logger.debug4("get_next_location called")
         if not self._is_started:
             route_logger.info("Starting routemanager in get_next_location")
-            if not self._start_routemanager():
+            if not await self._start_routemanager():
                 route_logger.info('No coords available - quit worker')
                 return None
 
@@ -555,7 +558,7 @@ class RouteManagerBase(object, ABC):
 
                 if origin in self._worker_start_position:
                     self._routepool[origin].current_pos = self._worker_start_position[origin]
-                if not self._worker_changed_update_routepools():
+                if not await self._worker_changed_update_routepools():
                     route_logger.info("Failed updating routepools after adding a worker to it")
                     return None
 
@@ -607,13 +610,13 @@ class RouteManagerBase(object, ABC):
                         route_logger.warning("Prio event surpassed the maximum backlog time and will be skipped. Make "
                                              "sure you run enough workers or reduce the size of the area! (event was "
                                              "scheduled for {})", next_readable_time)
-                        return self.get_next_location(origin)
+                        return await self.get_next_location(origin)
                 if self._other_worker_closer_to_prioq(next_coord, origin):
                     self._last_round_prio[origin] = True
                     self._positiontyp[origin] = 1
                     route_logger.info("Prio event scheduled for {} passed to a closer worker.", next_readable_time)
                     # Let's recurse and find another location
-                    return self.get_next_location(origin)
+                    return await self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
                 route_logger.info("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
@@ -621,7 +624,7 @@ class RouteManagerBase(object, ABC):
                 next_coord = self._check_coord_and_maybe_del(next_coord, origin)
                 if next_coord is None:
                     # Coord was not ok, lets recurse
-                    return self.get_next_location(origin)
+                    return await self.get_next_location(origin)
 
                 # Return the prioQ coordinate.
                 return next_coord
@@ -680,7 +683,7 @@ class RouteManagerBase(object, ABC):
                         route_logger.info("No more coords available - dont update routepool")
                         return None
 
-                if not self._worker_changed_update_routepools():
+                if not await self._worker_changed_update_routepools():
                     route_logger.info("Failed updating routepools ...")
                     return None
 
@@ -815,7 +818,7 @@ class RouteManagerBase(object, ABC):
                 if origin in self._routepool:
                     self._routepool[origin].worker_sleeping = sleep_duration
 
-    def _worker_changed_update_routepools(self):
+    async def _worker_changed_update_routepools(self):
         less_coords: bool = False
         workers: int = 0
         if not self._is_started:

@@ -11,7 +11,6 @@ from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
-from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.helper.MadminInstanceHelper import MadminInstanceHelper
