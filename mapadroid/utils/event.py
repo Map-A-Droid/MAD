@@ -1,29 +1,38 @@
-import time
-from threading import Thread
+import asyncio
+from typing import Optional
 
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
+from mapadroid.db.model import TrsEvent
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
 
 
-class Event(object):
-    def __init__(self, args, dbwrapper):
+class Event:
+    def __init__(self, args, db_wrapper: DbWrapper):
         self.args = args
-        self._dbwrapper = dbwrapper
+        self._db_wrapper = db_wrapper
         self._event_id: int = 1
         self._lure_duration: int = 30
 
-    def event_checker(self):
+    async def event_checker(self):
         while True:
-            self._event_id, self._lure_duration = self._dbwrapper.get_current_event()
-            self._dbwrapper.set_event_id(self._event_id)
-            time.sleep(60)
+            async with self._db_wrapper as session:
+                active_event: Optional[TrsEvent] = await TrsEventHelper.get_current_event(session)
+                if active_event:
+                    self._event_id = active_event.id
+                    self._lure_duration = active_event.event_lure_duration
+                else:
+                    self._event_id = 1
+                    self._lure_duration = 30
+                self._db_wrapper.set_event_id(self._event_id)
+            await asyncio.sleep(60)
 
-    def start_event_checker(self):
+    async def start_event_checker(self):
         if not self.args.no_event_checker:
-            event_thread = Thread(name='system', target=self.event_checker)
-            event_thread.daemon = True
-            event_thread.start()
+            loop = asyncio.get_event_loop()
+            loop.create_task(self.event_checker())
 
     def get_current_event_id(self):
         return self._event_id

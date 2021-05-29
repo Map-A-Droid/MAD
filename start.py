@@ -182,6 +182,8 @@ async def start():
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
     db_wrapper, db_exec = DbFactory.get_wrapper(args)
+    await db_exec.setup()
+    await db_wrapper.setup()
     try:
         instance_id = db_wrapper.update_instance_id()
     except Exception:
@@ -190,7 +192,7 @@ async def start():
     #  data_manager.clear_on_boot()
     #  data_manager.fix_routecalc_on_boot()
     event = Event(args, db_wrapper)
-    event.start_event_checker()
+    await event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
     await asyncio.sleep(.1)
     # MappingManagerManager.register('MappingManager', MappingManager)
@@ -199,6 +201,7 @@ async def start():
     mapping_manager: MappingManager = MappingManager(db_wrapper,
                                                      args,
                                                      configmode=args.config_mode)
+    await mapping_manager.setup()
     # TODO: Call init of mapping_manager properly rather than in constructor...
 
     if args.only_routes:

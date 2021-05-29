@@ -15,7 +15,14 @@ class DbAccessor:
         self.__connection_data: str = connection_data
         self.__pool_size: int = pool_size
         self.__setup_lock = None
-        self.__db_access_semaphore = None
+        self.__db_access_semaphore: Optional[asyncio.Semaphore] = None
+
+    async def __aenter__(self) -> AsyncSession:
+        await self.__db_access_semaphore.acquire()
+        return AsyncSession(self.__db_engine)
+
+    async def __aexit__(self, type_, value, traceback):
+        self.__db_access_semaphore.release()
 
     async def setup(self):
         if not self.__setup_lock:

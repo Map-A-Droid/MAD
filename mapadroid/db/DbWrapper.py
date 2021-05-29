@@ -1,16 +1,16 @@
 import re
-import re
 import time
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
-from mapadroid.db.DbSanityCheck import DbSanityCheck
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
+from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.MadminInstanceHelper import MadminInstanceHelper
 from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
 from mapadroid.db.helper.SettingsAreaIdleHelper import SettingsAreaIdleHelper
@@ -31,14 +31,15 @@ logger = get_logger(LoggerEnums.database)
 
 
 class DbWrapper:
-    def __init__(self, db_exec, args):
-        self._db_exec = db_exec
+    def __init__(self, db_exec: PooledQueryExecutor, args):
+        self._db_exec: PooledQueryExecutor = db_exec
         self.application_args = args
         self._event_id: int = 1
 
-        self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
-        self.sanity_check.check_all()
-        self.supports_apks = self.sanity_check.supports_apks
+        # TODO: Restore functionality...
+        # self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
+        # self.sanity_check.check_all()
+        # self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
         self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args)
@@ -60,17 +61,16 @@ class DbWrapper:
 
     async def __aenter__(self) -> AsyncSession:
         # TODO: Start AsyncSession within a semaphore and return it, aexit needs to close the session
-        return None
+        db_accessor: DbAccessor = self._db_exec.get_db_accessor()
+        return await db_accessor.__aenter__()
 
     async def __aexit__(self, type_, value, traceback):
         # TODO await self.close()
-        pass
+        db_accessor: DbAccessor = self._db_exec.get_db_accessor()
+        await db_accessor.__aexit__(type_, value, traceback)
 
     def set_event_id(self, eventid: int):
         self._event_id = eventid
-
-    def close(self, conn, cursor):
-        return self._db_exec.close(conn, cursor)
 
     def __db_timestring_to_unix_timestamp(self, timestring):
         try:
@@ -81,6 +81,7 @@ class DbWrapper:
         return unixtime
 
     def stop_from_db_without_quests(self, geofence_helper, latlng=True):
+        # TODO: Refactor for sqlalchemy
         logger.debug3("DbWrapper::stop_from_db_without_quests called")
         fields = "pokestop.latitude, pokestop.longitude"
 
@@ -115,12 +116,6 @@ class DbWrapper:
             return geofenced_coords
         else:
             return list_of_coords
-
-    def save_status(self, data):
-        logger.debug3("dbWrapper::save_status")
-        literals = ['currentPos', 'lastPos', 'lastProtoDateTime']
-        data['instance_id'] = self.__instance_id
-        self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
     async def update_instance_id(self, session: AsyncSession, instance_name: Optional[str] = None) -> MadminInstance:
         if instance_name is None:

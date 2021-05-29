@@ -30,9 +30,13 @@ class PooledQueryExecutor:
         self._redis_cache: Optional[Union[Redis, NoopCache]] = None
         self._init_pool()
 
+    def get_db_accessor(self) -> DbAccessor:
+        return self._db_accessor
+
     async def setup(self):
         # TODO: Shutdown...
         with self._pool_mutex:
+            await self._db_accessor.setup()
             if self.args.enable_cache:
                 self._redis_cache: Redis = await aioredis.create_redis_pool(address=(self.args.cache_host,
                                                                                      self.args.cache_port),

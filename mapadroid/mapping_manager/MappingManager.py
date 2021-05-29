@@ -1,8 +1,8 @@
 import asyncio
 import copy
+from asyncio import Task, QueueEmpty
 from multiprocessing import Event
 from multiprocessing.pool import ThreadPool
-from queue import Empty, Queue
 from threading import Thread
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -112,7 +112,7 @@ class JoinQueue(object):
         while not self.__shutdown_event.is_set():
             try:
                 routejoin = self._joinqueue.get_nowait()
-            except Empty:
+            except QueueEmpty:
                 await asyncio.sleep(1)
                 continue
             except (EOFError, KeyboardInterrupt):
@@ -144,15 +144,19 @@ class MappingManager:
         self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
 
         # TODO: Move to init or call __init__ differently...
-        self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
         self.__paused_devices: List[int] = []
-        self.update(full_lock=True)
+        self.__devicesettings_setter_queue = None
+        self.__mappings_mutex = None
+        self.__devicesettings_setter_consumer_task: Optional[Task] = None
 
-        self.__devicesettings_setter_queue: Queue = Queue()
-        self.__devicesettings_setter_consumer_thread: Thread = Thread(name='system',
-                                                                      target=self.__devicesettings_setter_consumer, )
-        self.__devicesettings_setter_consumer_thread.daemon = True
-        self.__devicesettings_setter_consumer_thread.start()
+    async def setup(self):
+        self.__devicesettings_setter_queue: asyncio.Queue = asyncio.Queue()
+        self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
+
+        loop = asyncio.get_event_loop()
+        self.__devicesettings_setter_consumer_task = loop.create_task(self.__devicesettings_setter_consumer())
+
+        await self.update(full_lock=True)
 
     def shutdown(self):
         logger.fatal("MappingManager exiting")
@@ -194,7 +198,7 @@ class MappingManager:
         while not self.__shutdown_event.is_set():
             try:
                 set_settings = self.__devicesettings_setter_queue.get_nowait()
-            except Empty:
+            except QueueEmpty:
                 await asyncio.sleep(0.2)
                 continue
             except (EOFError, KeyboardInterrupt):
@@ -305,7 +309,7 @@ class MappingManager:
         routemanager = await self.__fetch_routemanager(routemanager_name)
         if routemanager is not None:
             # TODO... asnycio
-            routemanager.join_threads()
+            await routemanager.join_threads()
 
     async def get_routemanager_name_from_device(self, device_name: str) -> Optional[str]:
         routemanagers = await self.get_all_routemanager_names()
