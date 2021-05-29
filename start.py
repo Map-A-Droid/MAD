@@ -13,9 +13,10 @@ import pkg_resources
 import psutil
 
 from mapadroid.db.DbFactory import DbFactory
-from mapadroid.mad_apk import (AbstractAPKStorage, StorageSyncManager,
-                               get_storage_obj)
-from mapadroid.madmin.madmin import MADmin
+
+# TODO: Get MADmin running
+# from mapadroid.madmin.madmin import MADmin
+from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mitm_receiver.MitmDataProcessorManager import \
     MitmDataProcessorManager
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -25,7 +26,7 @@ from mapadroid.utils.event import Event
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.mapping_manager.MappingManager import MappingManager
-from mapadroid.utils.pluginBase import PluginCollection
+# from mapadroid.utils.pluginBase import PluginCollection
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.utils.walkerArgs import parse_args
@@ -156,7 +157,7 @@ async def start():
     mitm_mapper: Optional[MitmMapper] = None
     pogo_win_manager: Optional[PogoWindows] = None
     storage_elem: Optional[AbstractAPKStorage] = None
-    storage_manager: Optional[StorageSyncManager] = None
+    # storage_manager: Optional[StorageSyncManager] = None
     t_whw: Thread = None  # Thread for WebHooks
     t_ws: Thread = None  # Thread - WebSocket Server
     webhook_worker: Optional[WebhookWorker] = None
@@ -210,7 +211,7 @@ async def start():
         logger.info("Done calculating routes!")
         # TODO: shutdown managers properly...
         sys.exit(0)
-    (storage_manager, storage_elem) = get_storage_obj(args, db_wrapper)
+    # (storage_manager, storage_elem) = get_storage_obj(args, db_wrapper)
     if not args.config_mode:
         pogo_win_manager = PogoWindows(args.temp_path, args.ocr_thread_count)
         mitm_mapper = MitmMapper(args, mapping_manager, db_wrapper.stats_submit)
@@ -223,7 +224,7 @@ async def start():
 
     mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                          mitm_mapper, args, mapping_manager, db_wrapper,
-                                         storage_elem,
+                                         None,
                                          mitm_data_processor_manager.get_queue(),
                                          enable_configmode=args.config_mode)
     mitm_receiver_task = await mitm_receiver.run_async()
@@ -258,7 +259,7 @@ async def start():
             t_usage.daemon = True
             t_usage.start()
 
-    madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
+    # madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
 
     # starting plugin system
     plugin_parts = {
@@ -268,23 +269,24 @@ async def start():
         'event': event,
         'jobstatus': jobstatus,
         'logger': get_logger(LoggerEnums.plugin),
-        'madmin': madmin,
+        # 'madmin': madmin,
         'mapping_manager': mapping_manager,
         'mitm_mapper': mitm_mapper,
         'mitm_receiver_process': mitm_receiver_process,
-        'storage_elem': storage_elem,
+        # 'storage_elem': storage_elem,
         'webhook_worker': webhook_worker,
         'ws_server': ws_server,
         'mitm_data_processor_manager': mitm_data_processor_manager
     }
-    mad_plugins = PluginCollection('plugins', plugin_parts)
-    mad_plugins.apply_all_plugins_on_value()
+    # TODO: Restore functionality
+    # mad_plugins = PluginCollection('plugins', plugin_parts)
+    # mad_plugins.apply_all_plugins_on_value()
 
-    if not args.disable_madmin or args.config_mode:
-        logger.info("Starting Madmin on port {}", str(args.madmin_port))
-        t_madmin = Thread(name="madmin", target=madmin.madmin_start)
-        t_madmin.daemon = True
-        t_madmin.start()
+    # if not args.disable_madmin or args.config_mode:
+    #     logger.info("Starting Madmin on port {}", str(args.madmin_port))
+     #   t_madmin = Thread(name="madmin", target=madmin.madmin_start)
+     #   t_madmin.daemon = True
+     #   t_madmin.start()
 
     logger.info("MAD is now running.....")
     exit_code = 0
@@ -359,9 +361,9 @@ async def start():
                 t_ws.join()
             if mapping_manager is not None:
                 mapping_manager.shutdown()
-            if storage_manager is not None:
-                logger.debug('Stopping storage manager')
-                storage_manager.shutdown()
+            # if storage_manager is not None:
+            #    logger.debug('Stopping storage manager')
+            #    storage_manager.shutdown()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
                 db_exec.shutdown()

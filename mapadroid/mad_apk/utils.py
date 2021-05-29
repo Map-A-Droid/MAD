@@ -2,13 +2,12 @@ import io
 import json
 import zipfile
 from distutils.version import LooseVersion
-from typing import Generator, Tuple, Union, Optional, List, AsyncGenerator
+from typing import Tuple, Union, Optional, List, AsyncGenerator
 
 import apkutils
 import requests
 from aiofile import async_open
 from apkutils.apkfile import BadZipFile, LargeZipFile
-from flask import Response, stream_with_context
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
@@ -59,7 +58,7 @@ async def file_generator(db, storage_obj, package: APKType, architecture: APKArc
     Returns:
         Generator for retrieving the package
     """
-    package_info: Union[MADPackage, MADPackages] = lookup_package_info(storage_obj, package, architecture)
+    package_info: Union[MADPackage, MADPackages] = await lookup_package_info(storage_obj, package, architecture)
     if isinstance(package_info, MADPackage):
         filename = package_info.filename
     else:
@@ -76,7 +75,6 @@ async def _generator_from_db(session: AsyncSession, package: APKType, architectu
     """ Create a generator for retrieving the stored package from the database
 
     Args:
-        dbc: database wrapper
         package (APKType): Package to save
         architecture (APKArch): Architecture of the package to save
     Returns:
@@ -263,7 +261,7 @@ async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
             raise ValueError("Unable to find package {} for arch {}".format(package.value, architecture.value))
 
 
-def stream_package(session: AsyncSession, storage_obj,
+async def stream_package(session: AsyncSession, storage_obj,
                    package: APKType, architecture: APKArch) -> Tuple[AsyncGenerator, str, str]:
     """ Stream the package to the user
 
@@ -275,7 +273,7 @@ def stream_package(session: AsyncSession, storage_obj,
     Returns:
         Tuple consisting of generator to fetch the bytes of the apk, the mimetype and filetype
     """
-    package_info: Union[MADPackage, MADPackages] = lookup_package_info(storage_obj, package, architecture)
+    package_info: Union[MADPackage, MADPackages] = await lookup_package_info(storage_obj, package, architecture)
     if isinstance(package_info, MADPackage):
         mimetype = package_info.mimetype
         filename = package_info.filename

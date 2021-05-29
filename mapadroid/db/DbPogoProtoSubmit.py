@@ -36,15 +36,16 @@ class DbPogoProtoSubmit:
     """
     Hosts all methods related to submitting protocol data to the database.
     TODO: Most of the code is actually unrelated to database stuff and should be
-    moved outside the db package.
+     moved outside the db package.
     """
     default_spawndef = 240
     # TODO: Redis Cache access needs to be async...
 
-    def __init__(self, db_exec: PooledQueryExecutor, args, cache: Union[Redis, NoopCache]):
+    def __init__(self, db_exec: PooledQueryExecutor, args):
         self._db_exec: PooledQueryExecutor = db_exec
         self._args = args
-        self._cache: Union[Redis, NoopCache] = cache
+        self._cache: Optional[Union[Redis, NoopCache]] = None
+        # TODO: Async setup
 
     async def mons(self, session: AsyncSession, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
         """

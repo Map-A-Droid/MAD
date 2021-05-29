@@ -7,7 +7,7 @@ import sys
 import time
 from asyncio import Task
 from functools import wraps
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, Tuple
 
 from aiofile import async_open
 # Temporary... TODO: Replace with aiohttp
@@ -17,13 +17,15 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import \
     AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.model import AutoconfigRegistration, SettingsDevice
-from mapadroid.mad_apk import (APKType, lookup_package_info, parse_frontend,
-                               stream_package, supported_pogo_version)
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, AutoconfigLog
+from mapadroid.mad_apk.apk_enums import APKType, APKArch, APKPackage
+from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.mapping_manager import MappingManager
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.utils.PDConfig import PDConfig
+from mapadroid.utils.RGCConfig import RGCConfig
 from mapadroid.utils.authHelper import check_auth
-from mapadroid.utils.autoconfig import PDConfig, RGCConfig, origin_generator
+from mapadroid.utils.autoconfig import origin_generator
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import (LoggerEnums, get_logger,
                                      get_origin_logger)
@@ -37,8 +39,8 @@ def validate_accepted(func) -> Any:
         try:
             session_id: Optional[int] = kwargs.get('session_id', None)
             session_id = int(session_id)
-            sql = "SELECT `status`\n"\
-                  "FROM `autoconfig_registration`\n"\
+            sql = "SELECT `status`\n" \
+                  "FROM `autoconfig_registration`\n" \
                   "WHERE `session_id` = %s AND `instance_id` = %s"
             accepted = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.__instance_id))
             if accepted is None:
@@ -48,6 +50,7 @@ def validate_accepted(func) -> Any:
             return func(self, *args, **kwargs)
         except (TypeError, ValueError):
             return Response(status=404, response="")
+
     return decorated
 
 
@@ -57,8 +60,8 @@ def validate_session(func) -> Any:
         try:
             session_id: Optional[int] = kwargs.get('session_id', None)
             session_id = int(session_id)
-            sql = "SELECT `status`\n"\
-                  "FROM `autoconfig_registration`\n"\
+            sql = "SELECT `status`\n" \
+                  "FROM `autoconfig_registration`\n" \
                   "WHERE `session_id` = %s AND `instance_id` = %s"
             exists = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.__instance_id))
             if exists is None:
@@ -66,6 +69,7 @@ def validate_session(func) -> Any:
             return func(self, *args, **kwargs)
         except (TypeError, ValueError):
             return Response(status=404, response="")
+
     return decorated
 
 
@@ -98,12 +102,14 @@ class EndpointAction(object):
                 self.response = Response("", status=403, headers={})
                 abort = True
             if 'mymac' in str(request.url):
-                device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session, instance_id,
-                                                                                            origin)
-                if not device:
-                    abort = False
-                    origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
-                    self.response = Response("", status=403, headers={})
+                async with self._db_wrapper as session:
+                    device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session,
+                                                                                                self._db_wrapper.get_instance_id(),
+                                                                                                origin)
+                    if not device:
+                        abort = False
+                        origin_logger.warning("Unauthorized attempt to POST from {}", request.remote_addr)
+                        self.response = Response("", status=403, headers={})
         elif str(request.url_rule) == '/origin_generator':
             auth = request.headers.get('Authorization', None)
             if not check_auth(logger, auth, self.application_args, await self.mapping_manager.get_auths()):
@@ -176,7 +182,8 @@ class MITMReceiver():
         self.__listen_port = listen_port
         self.__mitm_mapper: MitmMapper = mitm_mapper
         self._db_wrapper = db_wrapper
-        self.__storage_obj = storage_obj
+        # TODO: fix...
+        self.__storage_obj: Optional[object] = storage_obj
         self._data_queue: asyncio.Queue = data_queue
         self.app = Quart("MITMReceiver")
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
@@ -240,7 +247,7 @@ class MITMReceiver():
             sys.exit(1)
         self.app.add_url_rule(rule=endpoint, endpoint=endpoint_name,
                               view_func=EndpointAction(handler, self.__application_args, self.__mapping_manager,
-                                             self._db_wrapper).__call__,
+                                                       self._db_wrapper).__call__,
                               # view_func=handler,
                               methods=methods_passed)
 
@@ -281,8 +288,9 @@ class MITMReceiver():
                 location_of_data.lng > 180 or location_of_data.lng < -180):
             location_of_data: Location = Location(0, 0)
         await self.__mitm_mapper.update_latest(origin, timestamp_received_raw=timestamp,
-                                         timestamp_received_receiver=time.time(), key=proto_type, values_dict=data,
-                                         location=location_of_data)
+                                               timestamp_received_receiver=time.time(), key=proto_type,
+                                               values_dict=data,
+                                               location=location_of_data)
         origin_logger.debug2("Placing data received to data_queue")
         await self._add_to_queue((timestamp, data, origin))
 
@@ -343,9 +351,9 @@ class MITMReceiver():
             origin_return[origin] = {}
             origin_return[origin]['injection_status'] = await self.__mitm_mapper.get_injection_status(origin)
             origin_return[origin]['latest_data'] = await self.__mitm_mapper.request_latest(origin,
-                                                                                     'timestamp_last_data')
+                                                                                           'timestamp_last_data')
             origin_return[origin]['mode_value'] = await self.__mitm_mapper.request_latest(origin,
-                                                                                    'injected_settings')
+                                                                                          'injected_settings')
             origin_return[origin][
                 'last_possibly_moved'] = await self.__mitm_mapper.get_last_timestamp_possible_moved(origin)
 
@@ -354,30 +362,52 @@ class MITMReceiver():
         return json.dumps(data_return)
 
     async def mad_apk_download(self, *args, **kwargs):
-        parsed = parse_frontend(**kwargs)
+        parsed = self._parse_frontend(**kwargs)
         if type(parsed) == Response:
             return parsed
         apk_type, apk_arch = parsed
-        # TODO: This is most likely not async...
-        return stream_package(self._db_wrapper, self.__storage_obj, apk_type, apk_arch)
+        return parsed
+        # TODO: Restore functionality
+        # return stream_package(self._db_wrapper, self.__storage_obj, apk_type, apk_arch)
 
     async def mad_apk_info(self, *args, **kwargs) -> Response:
-        parsed = parse_frontend(**kwargs)
+        parsed = self._parse_frontend(**kwargs)
         if type(parsed) == Response:
             return parsed
         apk_type, apk_arch = parsed
-        # TODO: async
-        (msg, status_code) = lookup_package_info(self.__storage_obj, apk_type, apk_arch)
-        if msg:
-            if apk_type == APKType.pogo and not supported_pogo_version(apk_arch, msg.version):
-                return Response(status=406, response='Supported version not installed')
-            return Response(status=status_code, response=msg.version)
-        else:
-            return Response("", status=status_code)
+        # TODO: Restore functionality
+        return parsed
+        # (msg, status_code) = await lookup_package_info(self.__storage_obj, apk_type, apk_arch)
+        # if msg:
+        #     if apk_type == APKType.pogo and not supported_pogo_version(apk_arch, msg.version):
+        #         return Response(status=406, response='Supported version not installed')
+        #     return Response(status=status_code, response=msg.version)
+        # else:
+        #     return Response("", status=status_code)
+
+    def _parse_frontend(**kwargs) -> Union[Tuple[APKType, APKArch], Response]:
+        """ Converts front-end input into backend enums
+        Args:
+            req_type (str): User-input for APKType
+            req_arch (str): User-input for APKArch
+        Returns (tuple):
+            Returns a tuple of (APKType, APKArch) enums or a flask.Response stating what is invalid
+        """
+        apk_type_o = kwargs.get('apk_type', None)
+        apk_arch_o = kwargs.get('apk_arch', None)
+        package, architecture = convert_to_backend(apk_type_o, apk_arch_o)
+        if apk_type_o is not None and package is None:
+            resp_msg = 'Invalid Type.  Valid types are {}'.format([e.name for e in APKPackage])
+            return Response(status=404, response=resp_msg)
+        if architecture is None and apk_arch_o is not None:
+            resp_msg = 'Invalid Architecture.  Valid types are {}'.format([e.name for e in APKArch])
+            return Response(status=404, response=resp_msg)
+        return (package, architecture)
 
     async def origin_generator_endpoint(self, *args, **kwargs):
         # TODO: async
-        return await origin_generator(session, self._db_wrapper.__instance_id, **kwargs)
+        async with self._db_wrapper as session:
+            return await origin_generator(session, self._db_wrapper.__instance_id, **kwargs)
 
     # ========================================
     # ============== AutoConfig ==============
@@ -390,8 +420,8 @@ class MITMReceiver():
                 'session_id': session_id,
                 'instance_id': self._db_wrapper.__instance_id
             }
-            sql = "SELECT MAX(`level`)\n"\
-                  "FROM `autoconfig_logs`\n"\
+            sql = "SELECT MAX(`level`)\n" \
+                  "FROM `autoconfig_logs`\n" \
                   "WHERE `session_id` = %s AND `instance_id` = %s"
             max_msg = await self._db_wrapper.autofetch_value(sql, (session_id, self._db_wrapper.__instance_id))
             if max_msg and max_msg == 4:
@@ -416,9 +446,9 @@ class MITMReceiver():
         session_id: Optional[int] = kwargs.get('session_id', None)
         operation: Optional[str] = kwargs.get('operation', None)
         try:
-            sql = "SELECT sd.`name`\n"\
-                  "FROM `settings_device` sd\n"\
-                  "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n"\
+            sql = "SELECT sd.`name`\n" \
+                  "FROM `settings_device` sd\n" \
+                  "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n" \
                   "WHERE ar.`session_id` = %s AND ar.`instance_id` = %s"
             origin = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._db_wrapper.__instance_id))
             if operation in ['pd', 'rgc']:
@@ -427,14 +457,16 @@ class MITMReceiver():
                 else:
                     config = RGCConfig(self._db_wrapper, self.__application_args)
                 # TODO: Ensure async
-                return await send_file(config.generate_config(origin), as_attachment=True, attachment_filename='conf.xml',
-                                 mimetype='application/xml')
+                return await send_file(config.generate_config(origin), as_attachment=True,
+                                       attachment_filename='conf.xml',
+                                       mimetype='application/xml')
             elif operation in ['google']:
-                sql = "SELECT ag.`username`, ag.`password`\n"\
-                      "FROM `settings_pogoauth` ag\n"\
-                      "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n"\
+                sql = "SELECT ag.`username`, ag.`password`\n" \
+                      "FROM `settings_pogoauth` ag\n" \
+                      "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n" \
                       "WHERE ar.`session_id` = %s and ag.`instance_id` = %s and ag.`login_type` = %s"
-                login = await self._db_wrapper.autofetch_row_async(sql, (session_id, self._db_wrapper.__instance_id, 'google'))
+                login = await self._db_wrapper.autofetch_row_async(sql, (
+                session_id, self._db_wrapper.__instance_id, 'google'))
                 if login:
                     return Response(status=200, response='\n'.join([login['username'], login['password']]))
                 else:
@@ -452,24 +484,24 @@ class MITMReceiver():
             msg = kwargs['msg']
         except KeyError:
             level, msg = str(await request.data, 'utf-8').split(',', 1)
-        info = {
-            'session_id': session_id,
-            'instance_id': self._db_wrapper.__instance_id,
-            'msg': msg
-        }
-        try:
-            info['level'] = int(level)
-        except TypeError:
-            info['level'] = 0
-            logger.warning('Unable to parse level for autoconfig log')
-        await self._db_wrapper.autoexec_insert('autoconfig_logs', info)
 
-        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper.get_by_session_id(session,
-                                                                                                      instance_id,
-                                                                                                      session_id)
-        if int(level) == 4 and autoconf is not None and autoconf.status == 1:
-            autoconf.status = 3
-            await session.add(autoconf)
+        async with self._db_wrapper as session:
+            autoconfig_log: AutoconfigLog = AutoconfigLog()
+            autoconfig_log.session_id = session_id
+            autoconfig_log.instance_id = self._db_wrapper.get_instance_id()
+            autoconfig_log.msg = msg
+            try:
+                autoconfig_log.level = int(level)
+            except TypeError:
+                autoconfig_log.level = 0
+                logger.warning('Unable to parse level for autoconfig log')
+            await session.add(autoconfig_log)
+            autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper.get_by_session_id(session,
+                                                                                                              self._db_wrapper.get_instance_id(),
+                                                                                                              session_id)
+            if int(level) == 4 and autoconf is not None and autoconf.status == 1:
+                autoconf.status = 3
+                await session.add(autoconf)
             # TODO: Depending on design of responses...
             await session.commit()
         return Response(status=201, response="")
@@ -478,17 +510,20 @@ class MITMReceiver():
         origin = request.headers.get('Origin')
         if origin is None:
             return Response("", status=404)
-        device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session, instance_id, origin)
-        if not device:
-            return Response(status=404, response="")
-        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper.get_of_device(session,
-                                                                                                      instance_id,
-                                                                                                      device.device_id)
+        async with self._db_wrapper as session:
+            device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session,
+                                                                                        self._db_wrapper.get_instance_id(),
+                                                                                        origin)
+            if not device:
+                return Response(status=404, response="")
+            autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper.get_of_device(session,
+                                                                                                          self._db_wrapper.get_instance_id(),
+                                                                                                          device.device_id)
         log_data = {}
         if autoconf is not None:
             log_data = {
                 'session_id': autoconf.session_id,
-                'instance_id': self._db_wrapper.__instance_id,
+                'instance_id': self._db_wrapper.get_instance_id(),
                 'level': 2
             }
         if request.method == 'GET':

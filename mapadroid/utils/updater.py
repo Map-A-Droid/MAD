@@ -11,10 +11,10 @@ from queue import Empty
 from threading import RLock, Thread
 from typing import Optional
 
-from mapadroid.mad_apk import (AbstractAPKStorage, APKArch, APKPackage,
-                               APKType, MADPackages, file_generator,
-                               is_newer_version, lookup_arch_enum,
-                               supported_pogo_version)
+from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
+from mapadroid.mad_apk.apk_enums import APKPackage, APKType, APKArch
+from mapadroid.mad_apk.custom_types import MADPackages
+from mapadroid.mad_apk.utils import lookup_arch_enum, supported_pogo_version, is_newer_version, file_generator
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
@@ -467,7 +467,7 @@ class DeviceUpdater(object):
         return [self._log[x] for x in self._log if not self._log[x].get('auto', False)]
 
     @logger.catch()
-    def start_job_type(self, item, jobtype, ws_conn):
+    async def start_job_type(self, item, jobtype, ws_conn):
         try:
             jobtype = JobType[jobtype.split('.')[1]]
             if jobtype == JobType.INSTALLATION:
@@ -502,7 +502,7 @@ class DeviceUpdater(object):
                         return False
                 package = getattr(APKType, APKPackage(package_raw).name)
                 architecture = lookup_arch_enum(architecture_raw)
-                package_all: MADPackages = self._storage_obj.get_current_package_info(package)
+                package_all: MADPackages = await self._storage_obj.get_current_package_info(package)
                 if package_all is None:
                     logger.warning('No MAD APK for {} [{}]', package, architecture.name)
                     return False
@@ -528,7 +528,8 @@ class DeviceUpdater(object):
                     logger.info('Smart Update APK Installation for {} to {}', package.name,
                                 self._log[str(item)]['origin'])
                     apk_file = bytes()
-                    for chunk in file_generator(self._db, self._storage_obj, package, architecture):
+                    # TODO: Fix...
+                    for chunk in await file_generator(self._db, self._storage_obj, package, architecture):
                         apk_file += chunk
                     if mad_apk.mimetype == 'application/zip':
                         returning = ws_conn.install_bundle(300, data=apk_file)

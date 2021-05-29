@@ -59,11 +59,7 @@ class MADmin(object):
                  device_updater: DeviceUpdater, jobstatus, storage_obj):
         app.add_template_global(name='app_config_mode', f=args.config_mode)
         # Determine if there are duplicate MACs
-        # TODO: Async init...
-        duplicate_macs: Dict[str, List[SettingsDevice]] = await SettingsDeviceHelper.get_duplicate_mac_entries(session)
-        if len(duplicate_macs) > 0:
-            app.add_template_global(name='app_dupe_macs_devs', f=duplicate_macs)
-        app.add_template_global(name='app_dupe_macs', f=bool(len(duplicate_macs) > 0))
+
         self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
         self._app = app
@@ -79,17 +75,23 @@ class MADmin(object):
         self.statistics = MADminStatistics(self._db_wrapper, self._args, app, self._mapping_manager)
         self.control = MADminControl(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
                                      self._app, self._device_updater)
-        self.APIEntry = APIEntry(logger, self._app, self._mapping_manager, self._ws_server,
+        self.APIEntry = APIEntry(logger, self._app, self._db_wrapper, self._mapping_manager, self._ws_server,
                                  self._args.config_mode, self._storage_obj, self._args)
         self.config = MADminConfig(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
         self.apk_manager = APKManager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
                                       self._storage_obj)
         self.event = MADminEvent(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
-        self.autoconf = AutoConfigManager(self._db_wrapper, self._app, self._args, self._storage_obj)
+        self.autoconf = AutoConfigManager(self._app, self._db_wrapper, self._args, self._storage_obj)
 
     @logger.catch()
-    def madmin_start(self):
+    async def madmin_start(self):
         try:
+            async with self._db_wrapper as session:
+                duplicate_macs: Dict[str, List[SettingsDevice]] = await SettingsDeviceHelper.get_duplicate_mac_entries(
+                    session)
+                if len(duplicate_macs) > 0:
+                    app.add_template_global(name='app_dupe_macs_devs', f=duplicate_macs)
+                app.add_template_global(name='app_dupe_macs', f=bool(len(duplicate_macs) > 0))
             # load routes
             if self._args.madmin_base_path:
                 self._app.wsgi_app = ReverseProxied(self._app.wsgi_app, script_name=self._args.madmin_base_path)

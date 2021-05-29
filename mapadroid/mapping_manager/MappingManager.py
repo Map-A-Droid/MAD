@@ -31,9 +31,10 @@ from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsWalker, SettingsWalkerarea,
                                 SettingsWalkerToWalkerarea, TrsSpawn)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route import RouteManagerBase, RouteManagerIV
+from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -284,7 +285,7 @@ class MappingManager:
     async def get_all_routemanager_names(self):
         return self._routemanagers.keys()
 
-    async def __fetch_routemanager(self, routemanager_name: str) -> Optional[RouteManagerBase.RouteManagerBase]:
+    async def __fetch_routemanager(self, routemanager_name: str) -> Optional[RouteManagerBase]:
         with self.__mappings_mutex:
             routemanager_dict: dict = self._routemanagers.get(routemanager_name, None)
             if routemanager_dict is not None:
@@ -384,7 +385,7 @@ class MappingManager:
 
     async def routemanager_get_encounter_ids_left(self, routemanager_name: str) -> Optional[List[int]]:
         routemanager = await self.__fetch_routemanager(routemanager_name)
-        if routemanager is not None and isinstance(routemanager, RouteManagerIV.RouteManagerIV):
+        if routemanager is not None and isinstance(routemanager, RouteManagerIV):
             return routemanager.get_encounter_ids_left()
         else:
             return None
@@ -432,7 +433,7 @@ class MappingManager:
                 active = True
                 successful = True
             else:
-                routemanager._start_routemanager()
+                await routemanager._start_routemanager()
                 active = False
                 successful = True
             args = (routemanager._max_radius, routemanager._max_coords_within_radius)
@@ -572,7 +573,7 @@ class MappingManager:
         for area in areas_procs.keys():
             # TODO: Async executors...
             to_be_checked = areas_procs[area]
-            to_be_checked.get()
+            await to_be_checked.get()
 
         thread_pool.close()
         thread_pool.join()
@@ -683,8 +684,7 @@ class MappingManager:
             area_entry: AreaEntry = AreaEntry()
             area_entry.settings = area
 
-            area_entry.routecalc = await SettingsRoutecalcHelper.get(session, self.__db_wrapper.get_instance_id(),
-                                                                     area.routecalc)
+            area_entry.routecalc = await SettingsRoutecalcHelper.get(session, area.routecalc)
             # getattr to avoid checking modes individually...
             area_entry.geofence_included = getattr(area, "geofence_included", None)
             area_entry.geofence_excluded = getattr(area, "geofence_excluded", None)
@@ -744,10 +744,10 @@ class MappingManager:
                 routemanagers_tmp = await self.__get_latest_routemanagers(session)
                 auths_tmp = await self.__get_latest_auths(session)
 
-                for area in self._routemanagers:
+                for area_id, routemanager in self._routemanagers:
                     logger.info("Stopping all routemanagers and join threads")
-                    self._routemanagers[area]['routemanager'].stop_routemanager(joinwithqueue=False)
-                    self._routemanagers[area]['routemanager'].join_threads()
+                    routemanager.stop_routemanager(joinwithqueue=False)
+                    routemanager.join_threads()
 
                 logger.info("Restoring old devicesettings")
                 for dev, mapping in self._devicemappings.items():

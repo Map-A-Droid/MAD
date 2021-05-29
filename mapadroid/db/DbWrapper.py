@@ -1,13 +1,11 @@
-import json
+import re
 import re
 import time
-from datetime import datetime, timedelta, timezone
-from functools import reduce
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
@@ -47,8 +45,11 @@ class DbWrapper:
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec, args)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
         self.__instance_id: Optional[int] = None
+
+    async def setup(self) -> None:
         try:
-            self.update_instance_id(session)
+            async with self as session:
+                await self.update_instance_id(session)
         except Exception:
             self.__instance_id = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
@@ -88,13 +89,13 @@ class DbWrapper:
             fields = "pokestop.pokestop_id"
 
         query = (
-            "SELECT " + fields + " "
-            "FROM pokestop "
-            "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
-            "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
-            "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
-            "AND (DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
-            "OR trs_quest.GUID IS NULL)"
+                "SELECT " + fields + " "
+                                     "FROM pokestop "
+                                     "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
+                                     "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
+                                     "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
+                                     "AND (DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+                                     "OR trs_quest.GUID IS NULL)"
         ).format(min_lat, min_lon, max_lat, max_lon)
 
         res = self.execute(query)

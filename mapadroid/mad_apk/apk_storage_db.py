@@ -9,6 +9,7 @@ from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKType
 from .custom_types import MADPackages
 from .utils import generate_filename
+from ..db.DbWrapper import DbWrapper
 from ..db.helper.MadApkHelper import MadApkHelper
 
 logger = get_logger(LoggerEnums.storage)
@@ -25,10 +26,10 @@ class APKStorageDatabase(AbstractAPKStorage):
         dbc: Database wrapper
         file_lock (RLock): RLock to allow updates to be thread-safe
     """
-    def __init__(self, dbc):
+    def __init__(self, db_wrapper: DbWrapper):
         logger.debug('Initializing Database storage')
         self.file_lock: RLock = RLock()
-        self.dbc = dbc
+        self.db_wrapper = db_wrapper
 
     async def delete_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Remove the package and update the configuration
@@ -37,11 +38,15 @@ class APKStorageDatabase(AbstractAPKStorage):
             package (APKType): Package to lookup
             architecture (APKArch): Architecture of the package to lookup
         """
-        return await MadApkHelper.delete_file(session, package, architecture)
+        async with self.db_wrapper as session:
+            # TODO: Maybe move session further up the call stack for proper transactions?
+            return await MadApkHelper.delete_file(session, package, architecture)
 
     async def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
         "Get the currently installed version of the package / architecture"
-        return await MadApkHelper.get_current_version(session, package, architecture)
+        async with self.db_wrapper as session:
+            # TODO: Maybe move session further up the call stack for proper transactions?
+            return await MadApkHelper.get_current_version(session, package, architecture)
 
     async def get_current_package_info(self, package: APKType) -> Optional[MADPackages]:
         """ Get the current information for a given package.  If the package exists in the configuration but not the
@@ -53,7 +58,9 @@ class APKStorageDatabase(AbstractAPKStorage):
         Returns:
             None if no package is found.  MADPackages if the package lookup is successful
         """
-        return await MadApkHelper.get_current_package_info(session, package)
+        async with self.db_wrapper as session:
+            # TODO: Maybe move session further up the call stack for proper transactions?
+            return await MadApkHelper.get_current_package_info(session, package)
 
     def get_storage_type(self) -> str:
         return 'db'

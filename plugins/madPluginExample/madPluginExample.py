@@ -1,7 +1,5 @@
 import os
 
-from flask import Blueprint, render_template
-
 import mapadroid.utils.pluginBase
 from mapadroid.madmin.functions import auth_required
 

@@ -152,11 +152,12 @@ class RouteManagerBase(ABC):
         self._check_routepools_thread.daemon = True
         self._check_routepools_thread.start()
 
-    def join_threads(self):
+    async def join_threads(self):
         self.logger.info("Shutdown Route Threads")
+        # TODO: Refactor from thread to asyncio task
         if self._update_prio_queue_thread is not None:
             while self._update_prio_queue_thread.isAlive():
-                time.sleep(1)
+                await asyncio.sleep(1)
                 self.logger.debug("Shutdown Prio Queue Thread - waiting...")
                 self._update_prio_queue_thread.join(5)
         self.logger.debug("Shutdown Prio Queue Thread - done...")

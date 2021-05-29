@@ -6,8 +6,7 @@ from typing import List, NoReturn
 
 import mapadroid.tests.test_variables as global_variables
 from mapadroid.db.DbFactory import DbFactory
-from mapadroid.mad_apk import (APKArch, APKType, PackageImporter,
-                               get_storage_obj)
+
 from mapadroid.tests.local_api import LocalAPI
 from mapadroid.utils.walkerArgs import parse_args
 
@@ -129,7 +128,7 @@ class GetStorage(object):
     def __enter__(self):
         self.db_wrapper, self.db_pool_manager = DbFactory.get_wrapper(args)
         args.apk_storage_interface = 'fs'
-        (self.storage_manager, self.storage_elem) = get_storage_obj(args, self.db_wrapper)
+        # (self.storage_manager, self.storage_elem) = get_storage_obj(args, self.db_wrapper)
         self.db_purge()
         self.pogo_versions = {
             APKArch.armeabi_v7a: None,
@@ -147,7 +146,7 @@ class GetStorage(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.storage_manager.shutdown()
+        # self.storage_manager.shutdown()
         self.db_pool_manager.shutdown()
 
     def db_purge(self):

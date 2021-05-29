@@ -5,7 +5,6 @@ from functools import update_wrapper, wraps
 from math import floor
 from typing import Dict, Optional
 
-from flask import make_response, request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
