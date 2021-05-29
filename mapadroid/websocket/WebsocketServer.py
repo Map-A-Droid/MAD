@@ -1,29 +1,28 @@
 import asyncio
-import functools
 import logging
 import queue
 import random as rand
 from asyncio import Task
 from threading import current_thread
-from typing import Coroutine, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
+from mapadroid.mapping_manager.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
-from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
                                      get_origin_logger)
-from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.websocket.communicator import Communicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
+from mapadroid.websocket.communicator import Communicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerFactory import WorkerFactory
 
@@ -31,7 +30,6 @@ logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
 logging.getLogger('websockets.server').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
 logging.getLogger('websockets.protocol').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
-
 
 logger = get_logger(LoggerEnums.websocket)
 
@@ -65,17 +63,6 @@ class WebsocketServer(object):
         self.__server_task = None
         self.__worker_shutdown_queue: asyncio.Queue[Task] = asyncio.Queue()
         self.__internal_worker_join_task: Optional[Task] = None
-
-    def _add_task_to_loop(self, coro: Coroutine):
-        create_task = functools.partial(self.__loop.create_task, coro)
-        if current_thread() == self.__loop_tid:
-            # We can call directly if we're not going between threads.
-            return create_task()
-        else:
-            # We're in a non-event loop thread so we use a Future
-            # to get the task from the event loop thread once
-            # it's ready.
-            return self.__loop.call_soon_threadsafe(create_task)
 
     async def __setup_first_loop(self):
         logger.debug("Device mappings: {}", await self.__mapping_manager.get_all_devicemappings())
@@ -117,10 +104,10 @@ class WebsocketServer(object):
 
         await self.__close_all_connections_and_signal_stop()
         logger.info("Waiting for join-queue to be emptied and threads to be joined")
-        #if not self.__internal_worker_join_task.done():
-            # join the join thread, gotta love the irony
-            # TODO: this is async..
-            # await self.__internal_worker_join_task.join()
+        # if not self.__internal_worker_join_task.done():
+        # join the join thread, gotta love the irony
+        # TODO: this is async..
+        # await self.__internal_worker_join_task.join()
         #    self.__internal_worker_join_task.result()
         # TODO: this could block forever, should we just place a timeout and have daemon = True handle it all anyway?
         await self.__worker_shutdown_queue.join()
@@ -157,15 +144,26 @@ class WebsocketServer(object):
     @logger.catch()
     async def __connection_handler(self, websocket_client_connection: websockets.WebSocketClientProtocol,
                                    path: str) -> None:
+        """
+        In case a new connection is being established, this method is called.
+        Consequently, we are trying to create a worker that should live for as long as the connection is alive.
+        Args:
+            websocket_client_connection:
+            path:
+
+        Returns:
+
+        """
         if self.__stop_server.is_set():
             return
         # check auth and stuff TODO
         origin: Optional[str]
         success: Optional[bool]
         (origin, success) = await self.__authenticate_connection(websocket_client_connection)
-        if success is False:
+        if not success:
             # failed auth, stop connection
             await self.__close_websocket_client_connection(origin, websocket_client_connection)
+            # TODO: Ensure the close is even needed here?
             return
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.info("New connection from {}", websocket_client_connection.remote_address)
@@ -185,7 +183,9 @@ class WebsocketServer(object):
             device: Optional[SettingsDevice] = None
             use_configmode = self.__enable_configmode
             if not self.__enable_configmode:
-                device = await SettingsDeviceHelper.get_by_origin(session, instance_id, origin)
+                async with self.__db_wrapper as session:
+                    device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(),
+                                                                      origin)
                 if not await self.__mapping_manager.is_device_active(device.device_id):
                     origin_logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
                     use_configmode = True
@@ -195,8 +195,7 @@ class WebsocketServer(object):
                 entry = WebsocketConnectedClientEntry(origin=origin,
                                                       websocket_client_connection=websocket_client_connection,
                                                       worker_instance=None,
-                                                      worker_task=None,
-                                                      loop_running=self.__loop)
+                                                      worker_task=None)
                 if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
                     continue_register = False
             else:
@@ -215,6 +214,7 @@ class WebsocketServer(object):
                 elif not entry.worker_task.done():
                     origin_logger.info("Old task is not done but was supposed to stop?! Trying to start a new one")
                     # TODO: entry.worker_task.cancel() or somehow call cleanup&cancel?
+                    #  entry.worker_task.cancel()
                     if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
                         continue_register = False
                 else:
@@ -233,8 +233,8 @@ class WebsocketServer(object):
 
         try:
             if entry.worker_task and not entry.worker_task.done():
-                # TODO...
-                entry.worker_task.start()
+                # TODO..
+                pass
             # TODO: we need to somehow check threads and synchronize connection status with worker status?
             async with self.__users_connecting_mutex:
                 self.__users_connecting.remove(origin)
@@ -284,7 +284,8 @@ class WebsocketServer(object):
                                   "'APPLY SETTINGS'")
             return origin, False
         elif origin not in (await self.__mapping_manager.get_all_devicemappings()).keys():
-            device = await SettingsDeviceHelper.get_by_origin(session, instance_id, origin)
+            async with self.__db_wrapper as session:
+                device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(), origin)
             if device:
                 origin_logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
             else:

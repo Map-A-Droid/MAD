@@ -2,7 +2,7 @@ import asyncio
 import collections
 import math
 import time
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from asyncio import Task
 from datetime import datetime
 from enum import Enum
@@ -49,7 +49,7 @@ class LatestReceivedType(Enum):
     FORT_SEARCH_RESULT = 6
 
 
-class MITMBase(WorkerBase):
+class MITMBase(WorkerBase, ABC):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper, mitm_mapper: MitmMapper,

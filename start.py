@@ -5,7 +5,6 @@ import gc
 import os
 import sys
 import time
-import unittest
 from multiprocessing import Process
 from threading import Thread, active_count
 from typing import Optional
@@ -22,7 +21,6 @@ from mapadroid.mitm_receiver.MitmDataProcessorManager import \
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.patcher import MADPatcher
 from mapadroid.utils.event import Event
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
 from mapadroid.utils.madGlobals import terminate_mad
@@ -187,9 +185,9 @@ async def start():
         instance_id = db_wrapper.update_instance_id()
     except Exception:
         instance_id = None
-    MADPatcher(args, data_manager)
-    data_manager.clear_on_boot()
-    data_manager.fix_routecalc_on_boot()
+    # TODO: MADPatcher(args, data_manager)
+    #  data_manager.clear_on_boot()
+    #  data_manager.fix_routecalc_on_boot()
     event = Event(args, db_wrapper)
     event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
@@ -208,16 +206,13 @@ async def start():
         while recalc_in_progress:
             time.sleep(5)
             sql = "SELECT COUNT(*) > 0 FROM `settings_routecalc` WHERE `recalc_status` = 1"
-            recalc_in_progress = db_wrapper.autofetch_value(sql)
+            # TODO recalc_in_progress = db_wrapper.autofetch_value(sql)
         logger.info("Done calculating routes!")
         # TODO: shutdown managers properly...
         sys.exit(0)
     (storage_manager, storage_elem) = get_storage_obj(args, db_wrapper)
     if not args.config_mode:
         pogo_win_manager = PogoWindows(args.temp_path, args.ocr_thread_count)
-        # MitmMapperManager.register('MitmMapper', MitmMapper)
-        # mitm_mapper_manager = MitmMapperManager()
-        # mitm_mapper_manager.start()
         mitm_mapper = MitmMapper(args, mapping_manager, db_wrapper.stats_submit)
         await mitm_mapper.init()
     logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
@@ -226,20 +221,18 @@ async def start():
     mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper)
     await mitm_data_processor_manager.launch_processors()
 
-    mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
+    mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                          mitm_mapper, args, mapping_manager, db_wrapper,
                                          storage_elem,
                                          mitm_data_processor_manager.get_queue(),
                                          enable_configmode=args.config_mode)
-    # mitm_receiver_process.start()
-    mitm_receiver_task = await mitm_receiver_process.run_async()
+    mitm_receiver_task = await mitm_receiver.run_async()
     logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
     ws_server = WebsocketServer(args=args,
                                 mitm_mapper=mitm_mapper,
                                 db_wrapper=db_wrapper,
                                 mapping_manager=mapping_manager,
                                 pogo_window_manager=pogo_win_manager,
-                                data_manager=data_manager,
                                 event=event,
                                 enable_configmode=args.config_mode)
     # t_ws = Thread(name='system', target=ws_server.start_server)
@@ -252,11 +245,12 @@ async def start():
         if args.webhook:
             rarity = Rarity(args, db_wrapper)
             rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
-            t_whw = Thread(name="system",
-                           target=webhook_worker.run_worker)
-            t_whw.daemon = True
-            t_whw.start()
+            webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity, db_wrapper.webhook_reader)
+            # TODO: Start webhook_worker task
+            # t_whw = Thread(name="system",
+            #               target=webhook_worker.run_worker)
+            #t_whw.daemon = True
+            #t_whw.start()
         if args.statistic:
             logger.info("Starting statistics collector")
             t_usage = Thread(name='system',
@@ -264,12 +258,11 @@ async def start():
             t_usage.daemon = True
             t_usage.start()
 
-    madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, data_manager, device_updater, jobstatus, storage_elem)
+    madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
 
     # starting plugin system
     plugin_parts = {
         'args': args,
-        'data_manager': data_manager,
         'db_wrapper': db_wrapper,
         'device_Updater': device_updater,
         'event': event,
@@ -298,36 +291,37 @@ async def start():
     device_creator = None
     try:
         if args.unit_tests:
-            from mapadroid.tests.local_api import LocalAPI
-            api_ready = False
-            api = LocalAPI()
-            logger.info('Checking API status')
-            if not data_manager.get_root_resource('device').keys():
-                from mapadroid.tests.test_utils import ResourceCreator
-                logger.info('Creating a device')
-                device_creator = ResourceCreator(api, prefix='MADCore')
-                res = device_creator.create_valid_resource('device')[0]
-                mapping_manager.update()
-            max_attempts = 30
-            attempt = 0
-            while not api_ready and attempt < max_attempts:
-                try:
-                    api.get('/api')
-                    api_ready = True
-                    logger.info('API is ready for unit testing')
-                except Exception:
-                    attempt += 1
-                    time.sleep(1)
-            if api_ready:
-                loader = unittest.TestLoader()
-                start_dir = 'mapadroid/tests/'
-                suite = loader.discover(start_dir)
-                runner = unittest.TextTestRunner()
-                result = runner.run(suite)
-                exit_code = 0 if result.wasSuccessful() else 1
-                raise KeyboardInterrupt
-            else:
-                exit_code = 1
+            pass
+            # from mapadroid.tests.local_api import LocalAPI
+            # api_ready = False
+            # api = LocalAPI()
+            # logger.info('Checking API status')
+            # if not data_manager.get_root_resource('device').keys():
+            #     from mapadroid.tests.test_utils import ResourceCreator
+            #     logger.info('Creating a device')
+            #     device_creator = ResourceCreator(api, prefix='MADCore')
+            #     res = device_creator.create_valid_resource('device')[0]
+            #     mapping_manager.update()
+            # max_attempts = 30
+            # attempt = 0
+            # while not api_ready and attempt < max_attempts:
+            #     try:
+            #         api.get('/api')
+            #         api_ready = True
+            #         logger.info('API is ready for unit testing')
+            #     except Exception:
+            #         attempt += 1
+            #         time.sleep(1)
+            # if api_ready:
+            #     loader = unittest.TestLoader()
+            #     start_dir = 'mapadroid/tests/'
+            #     suite = loader.discover(start_dir)
+            #     runner = unittest.TextTestRunner()
+            #     result = runner.run(suite)
+            #     exit_code = 0 if result.wasSuccessful() else 1
+            #     raise KeyboardInterrupt
+            # else:
+            #     exit_code = 1
         else:
             while True:
                 await asyncio.sleep(10)
@@ -352,7 +346,7 @@ async def start():
                 mitm_receiver_task.cancel()
                 logger.debug("MITMReceiver joined")
             if mitm_data_processor_manager is not None:
-                mitm_data_processor_manager.shutdown()
+                await mitm_data_processor_manager.shutdown()
             if device_updater is not None:
                 device_updater.stop_updater()
             if t_whw is not None:

@@ -24,14 +24,16 @@ greenlet<0.4.17
 
 Flask~=1.1.2
 Pillow~=8.1.0
-SQLAlchemy==1.4.0b1
+SQLAlchemy
 Werkzeug~=1.0.1
 urllib3~=1.26.2
-GeoAlchemy2~=0.8.4
+GeoAlchemy2
 
 aiounittest~=1.4.0
-aiofile~=3.4.0
-aiohttp~=3.7.4.post0
-aiohttp-jinja2==1.4.2
-aiohttp-session==2.9.0
+aiofile
+aiohttp
+aiohttp-jinja2
+aiohttp-session
+aioredis
+aiomysql
 yarl~=1.6.3

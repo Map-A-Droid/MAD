@@ -23,8 +23,7 @@ class ReceivedMessageEntry:
 
 class WebsocketConnectedClientEntry:
     def __init__(self, origin: str, worker_task: Optional[Task], worker_instance: Optional[AbstractWorker],
-                 websocket_client_connection: Optional[websockets.WebSocketClientProtocol],
-                 loop_running: asyncio.AbstractEventLoop):
+                 websocket_client_connection: Optional[websockets.WebSocketClientProtocol]):
         self.origin: str = origin
         self.worker_task: Optional[Task] = worker_task
         self.worker_instance: Optional[AbstractWorker] = worker_instance
@@ -48,7 +47,7 @@ class WebsocketConnectedClientEntry:
                 self.last_message_received_at = time.time()
 
     async def send_and_wait(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
-                      byte_command: Optional[int] = None) -> Optional[MessageTyping]:
+                            byte_command: Optional[int] = None) -> Optional[MessageTyping]:
         return await self.send_and_wait_async(message, timeout, worker_instance, byte_command=byte_command)
 
     async def send_and_wait_async(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,

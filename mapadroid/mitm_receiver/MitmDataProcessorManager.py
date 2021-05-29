@@ -58,6 +58,7 @@ class MitmDataProcessorManager():
                 self._mitm_mapper,
                 self._db_wrapper,
                 name="SerialiedMitmDataProcessor-%s" % str(i))
+            # TODO: Own thread/loop?
             self._worker_threads.append(loop.create_task(data_processor.run()))
 
     async def shutdown(self):

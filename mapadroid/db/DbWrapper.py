@@ -33,7 +33,7 @@ logger = get_logger(LoggerEnums.database)
 
 
 class DbWrapper:
-    def __init__(self, db_exec, args, cache):
+    def __init__(self, db_exec, args):
         self._db_exec = db_exec
         self.application_args = args
         self._event_id: int = 1
@@ -43,9 +43,8 @@ class DbWrapper:
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args, cache)
+        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec, args)
-        self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
         self.__instance_id: Optional[int] = None
         try:
@@ -71,49 +70,6 @@ class DbWrapper:
 
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)
-
-    def execute(self, sql, args=None, commit=False, **kwargs):
-        return self._db_exec.execute(sql, args, commit, **kwargs)
-
-    def autofetch_all(self, sql, args=(), **kwargs):
-        """ Fetch all data and have it returned as a dictionary """
-        return self._db_exec.autofetch_all(sql, args=args, **kwargs)
-
-    async def autofetch_value_async(self, sql, args=(), **kwargs):
-        """ Fetch the first value from the first row using asyncio """
-        return await self._db_exec.autofetch_value_async(sql, args=args, **kwargs)
-
-    def autofetch_value(self, sql, args=(), **kwargs):
-        """ Fetch the first value from the first row """
-        return self._db_exec.autofetch_value(sql, args=args, **kwargs)
-
-    async def autofetch_row_async(self, sql, args=(), **kwargs):
-        """ Fetch the first row and have it return as a dictionary """
-        return await self._db_exec.autofetch_row_async(sql, args=args, **kwargs)
-
-    def autofetch_row(self, sql, args=(), **kwargs):
-        """ Fetch the first row and have it return as a dictionary """
-        return self._db_exec.autofetch_row(sql, args=args, **kwargs)
-
-    def autofetch_column(self, sql, args=None, **kwargs):
-        """ get one field for 0, 1, or more rows in a query and return the result in a list
-        """
-        return self._db_exec.autofetch_column(sql, args=args, **kwargs)
-
-    def autoexec_delete(self, table, keyvals, literals=None, where_append=None, **kwargs):
-        if where_append is None:
-            where_append = []
-        if literals is None:
-            literals = []
-        return self._db_exec.autoexec_delete(table, keyvals, literals=literals, where_append=where_append, **kwargs)
-
-    def autoexec_insert(self, table, keyvals, literals=None, optype="INSERT", **kwargs):
-        if literals is None:
-            literals = []
-        return self._db_exec.autoexec_insert(table, keyvals, literals=literals, optype=optype, **kwargs)
-
-    def autoexec_update(self, table, set_keyvals, **kwargs):
-        return self._db_exec.autoexec_update(table, set_keyvals, **kwargs)
 
     def __db_timestring_to_unix_timestamp(self, timestring):
         try:

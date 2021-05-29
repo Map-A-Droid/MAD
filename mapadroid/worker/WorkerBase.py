@@ -2,7 +2,7 @@ import asyncio
 import math
 import os
 import time
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from asyncio import Task
 from enum import Enum
 from typing import Dict, Optional, Any
@@ -44,7 +44,7 @@ class FortSearchResultTypes(Enum):
     FULL = 8
 
 
-class WorkerBase(AbstractWorker):
+class WorkerBase(AbstractWorker, ABC):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows,
