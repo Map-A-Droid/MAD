@@ -31,7 +31,7 @@ def get_distance_of_two_points_in_meters(start_lat, start_lon, dest_lat, dest_lo
     return distance * 1000
 
 
-def get_middle_of_coord_list(list_of_coords):
+def get_middle_of_coord_list(list_of_coords) -> Location:
     if len(list_of_coords) == 1:
         return list_of_coords[0]
 

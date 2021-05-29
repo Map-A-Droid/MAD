@@ -37,7 +37,6 @@ class SettingsRoutecalcEndpoint(AbstractRootEndpoint):
             pass
         else:
             routecalc: SettingsMonivlist = await SettingsRoutecalcHelper.get(self._session,
-                                                                             self._get_instance_id(),
                                                                              int(identifier))
             if not routecalc:
                 raise web.HTTPFound(url_for("settings_areas"))

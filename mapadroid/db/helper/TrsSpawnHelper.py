@@ -96,7 +96,7 @@ class TrsSpawnHelper:
 
     @staticmethod
     async def get_next_spawns(session: AsyncSession, geofence_helper: GeofenceHelper,
-                              additional_event: Optional[int]) -> List[Tuple[int, Location]]:
+                              additional_event: Optional[int] = None) -> List[Tuple[int, Location]]:
         """
         Used to be DbWrapper::retrieve_next_spawns
         Fetches the spawnpoints of which the calculated spawn time is upcoming within the next hour and converts it

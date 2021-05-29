@@ -35,20 +35,20 @@ class RouteManagerIV(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 60
 
-    def _get_coords_after_finish_route(self) -> bool:
+    async def _get_coords_after_finish_route(self) -> bool:
         return True
 
-    def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                          in_memory=False)
+    async def _recalc_route_workertype(self):
+        await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
+                                in_memory=False)
 
-    def _retrieve_latest_priority_queue(self):
+    async def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info
         async with self.db_wrapper as session:
             latest_priorities = await PokemonHelper.get_to_be_encountered(session,
                                                                           geofence_helper=self.geofence_helper,
-                                                                  min_time_left_seconds=self._settings.min_time_left_seconds,
-                                                                  eligible_mon_ids=self._mon_ids_iv)
+                                                                          min_time_left_seconds=self._settings.min_time_left_seconds,
+                                                                          eligible_mon_ids=self._mon_ids_iv)
         # extract the encounterIDs and set them in the routeManager...
         new_list = []
         for prio in latest_priorities:
@@ -74,7 +74,7 @@ class RouteManagerIV(RouteManagerBase):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    def _start_routemanager(self):
+    async def _start_routemanager(self):
         with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
@@ -89,3 +89,11 @@ class RouteManagerIV(RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
+
+    async def _change_init_mapping(self) -> None:
+        """
+        No init in IV mode anyway...
+        Returns:
+
+        """
+        pass

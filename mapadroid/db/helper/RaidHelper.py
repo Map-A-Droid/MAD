@@ -18,22 +18,23 @@ class RaidHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def get_next_hatches(session: AsyncSession, geofence_helper: GeofenceHelper = None) -> List[Tuple[float, Location]]:
+    async def get_next_hatches(session: AsyncSession,
+                               geofence_helper: GeofenceHelper = None) -> List[Tuple[int, Location]]:
         db_time_to_check = datetime.utcfromtimestamp(time.time())
-        stmt = select(Raid.start, Gym.latitude, Gym.longitude)\
-            .select_from(Raid).join(Gym, Gym.gym_id == Raid.gym_id)\
+        stmt = select(Raid.start, Gym.latitude, Gym.longitude) \
+            .select_from(Raid).join(Gym, Gym.gym_id == Raid.gym_id) \
             .where(and_(Raid.end > db_time_to_check, Raid.pokemon_id != None))
         result = await session.execute(stmt)
-        next_hatches: List[Tuple[float, Location]] = []
+        next_hatches: List[Tuple[int, Location]] = []
         for (start, latitude, longitude) in result.all():
             if latitude is None or longitude is None:
-                #logger.warning("lat or lng is none")
+                # logger.warning("lat or lng is none")
                 continue
             elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
-                #logger.debug3("Excluded hatch at {}, {} since the coordinate is not inside the given include fences",
+                # logger.debug3("Excluded hatch at {}, {} since the coordinate is not inside the given include fences",
                 #              latitude, longitude)
                 continue
-            next_hatches.append((start.timestamp(), Location(latitude, longitude)))
+            next_hatches.append((int(start.timestamp()), Location(latitude, longitude)))
 
-        #logger.debug4("Latest Q: {}", data)
+        # logger.debug4("Latest Q: {}", data)
         return next_hatches

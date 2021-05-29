@@ -16,6 +16,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
+from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import (LoggerEnums, get_logger,
@@ -44,7 +45,7 @@ class RoutePoolEntry:
     last_round_prio_event: bool = False
 
 
-class RouteManagerBase(object, ABC):
+class RouteManagerBase(ABC):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
                  max_radius: float,
                  max_coords_within_radius: int,
@@ -128,12 +129,12 @@ class RouteManagerBase(object, ABC):
 
     @classmethod
     async def create(cls, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
-                 max_radius: float,
-                 max_coords_within_radius: int,
-                 geofence_helper: GeofenceHelper,
-                 routecalc: SettingsRoutecalc,
-                 use_s2: bool = False, s2_level: int = 15,
-                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+                     max_radius: float,
+                     max_coords_within_radius: int,
+                     geofence_helper: GeofenceHelper,
+                     routecalc: SettingsRoutecalc,
+                     use_s2: bool = False, s2_level: int = 15,
+                     joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
         self = RouteManagerBase
         if mon_ids_iv is None:
             mon_ids_iv = []
@@ -273,40 +274,34 @@ class RouteManagerBase(object, ABC):
         self.add_coords_numpy(to_be_appended)
 
     # TODO: Really go async or just use threading in routemanagers and make all calls towards it async in executors?
-    async def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0,
-                            in_memory=False, calctype=None):
+    async def calculate_new_route(self, coords: List[Location], max_radius, max_coords_within_radius, delete_old_route,
+                                  num_procs=0,
+                                  in_memory=False, calctype=None):
         if calctype is None:
             calctype = self._calctype
-        if len(coords) > 0:
+        if coords:
             if self._overwrite_calculation:
                 calctype = 'route'
-            self.set_recalc_status(True)
-            if in_memory is False:
-                if delete_old_route:
-                    logger.debug("Deleting routefile...")
-                    self._routecalc.routefile = None
-                    # TODO: Ensure callstack does not have a session running already...
-                    await session.merge(self._routecalc)
-                    await session.commit()
-            # TODO: Move to util class running calculation in a thread/executor...
-            new_route = RoutecalcUtil.get_json_route(coords, max_radius, max_coords_within_radius, in_memory,
-                                            num_processes=num_procs,
-                                            algorithm=calctype, use_s2=self.useS2, s2_level=self.S2level,
-                                            route_name=self.name)
-            self.set_recalc_status(False)
 
+            async with self.db_wrapper as session:
+                new_route = await RoutecalcUtil.get_json_route(session, self._routecalc.routecalc_id, coords,
+                                                               max_radius, max_coords_within_radius, in_memory,
+                                                               num_processes=num_procs,
+                                                               algorithm=calctype, use_s2=self.useS2,
+                                                               s2_level=self.S2level,
+                                                               route_name=self.name, delete_old_route=delete_old_route)
             if self._overwrite_calculation:
                 self._overwrite_calculation = False
             return new_route
         return []
 
     async def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                            delete_old_route: bool = False):
+                                  delete_old_route: bool = False):
         if not self._routecalc.routefile:
             await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
-                              delete_old_route=delete_old_route,
-                              in_memory=True,
-                              calctype='quick')
+                                    delete_old_route=delete_old_route,
+                                    in_memory=True,
+                                    calctype='quick')
             # Route has not previously been calculated.  Recalculate a quick route then calculate the optimized route
             args = (self._max_radius, self._max_coords_within_radius)
             kwargs = {
@@ -317,12 +312,12 @@ class RouteManagerBase(object, ABC):
             await self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
 
     async def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                     delete_old_route: bool = False, in_memory: bool = False, calctype: str = None):
+                           delete_old_route: bool = False, in_memory: bool = False, calctype: str = None):
         current_coords = self._coords_unstructured
         new_route = await self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
-                                             delete_old_route, num_procs,
-                                             in_memory=in_memory,
-                                             calctype=calctype)
+                                                   delete_old_route, num_procs,
+                                                   in_memory=in_memory,
+                                                   calctype=calctype)
         with self._manager_mutex:
             self._route.clear()
             for coord in new_route:
@@ -331,22 +326,25 @@ class RouteManagerBase(object, ABC):
         return new_route
 
     async def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                           active: bool = False, calctype: str = 'route'):
+                                 active: bool = False, calctype: str = 'route'):
         self._clear_coords()
-        coords = self._get_coords_post_init()
+        coords = await self._get_coords_post_init()
         self.add_coords_list(coords)
         new_route = await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
-                                      in_memory=True,
-                                      calctype=calctype)
+                                            in_memory=True,
+                                            calctype=calctype)
         calc_coords = []
         for coord in new_route:
             calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
         async with self.db_wrapper as session:
+            await session.merge(self._routecalc)
+            await session.refresh(self._routecalc)
             self._routecalc.routefile = calc_coords
             self._routecalc.last_updated = datetime.utcnow()
             # TODO: First update the resource or simply set using helper which fetches the object first?
-            await session.merge(self._routecalc)
+            await session.add(self._routecalc)
             await session.commit()
+            await session.refresh(self._routecalc)
         with self._workers_registered_mutex:
             connected_worker_count = len(self._workers_registered)
             if connected_worker_count > 0:
@@ -403,8 +401,8 @@ class RouteManagerBase(object, ABC):
     def _get_round_finished_string(self):
         round_finish_time = datetime.now()
         round_completed_in = ("%d hours, %d minutes, %d seconds" % (self.dhms_from_seconds(self.date_diff_in_seconds(
-                                                                                           round_finish_time,
-                                                                                           self._round_started_time))))
+            round_finish_time,
+            self._round_started_time))))
         return round_completed_in
 
     def add_coord_to_be_removed(self, lat: float, lon: float):
@@ -414,7 +412,7 @@ class RouteManagerBase(object, ABC):
             self._coords_to_be_ignored.add(Location(lat, lon))
 
     @abstractmethod
-    def _retrieve_latest_priority_queue(self):
+    async def _retrieve_latest_priority_queue(self) -> List[Tuple[int, Location]]:
         """
         Method that's supposed to return a plain list containing (timestamp, Location) of the next events of interest
         :return:
@@ -438,7 +436,7 @@ class RouteManagerBase(object, ABC):
         pass
 
     @abstractmethod
-    def _get_coords_post_init(self):
+    async def _get_coords_post_init(self) -> List[Location]:
         """
         Return list of coords to be fetched and used for routecalc
         :return:
@@ -590,9 +588,9 @@ class RouteManagerBase(object, ABC):
 
             # determine whether we move to the next location or the prio queue top's item
             if self.delay_after_timestamp_prio is not None \
-               and ((not self._last_round_prio.get(origin, False) or self.starve_route) and
-                    self._prio_queue and len(self._prio_queue) > 0 and
-                    self._prio_queue[0][0] < time.time()):
+                    and ((not self._last_round_prio.get(origin, False) or self.starve_route) and
+                         self._prio_queue and len(self._prio_queue) > 0 and
+                         self._prio_queue[0][0] < time.time()):
                 next_prio = heapq.heappop(self._prio_queue)
                 next_timestamp = next_prio[0]
                 next_coord = next_prio[1]
@@ -662,11 +660,11 @@ class RouteManagerBase(object, ABC):
                     return None
                 self._start_calc = True
                 self._clear_coords()
-                coords = self._get_coords_post_init()
+                coords = await self._get_coords_post_init()
                 self.logger.debug("Setting {} coords to as new points ", len(coords))
                 self.add_coords_list(coords)
                 self.logger.debug("Route being calculated")
-                self._recalc_route_workertype()
+                await self._recalc_route_workertype()
                 self.init = False
                 await self._change_init_mapping()
                 self._start_calc = False

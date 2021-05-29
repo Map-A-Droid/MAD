@@ -8,13 +8,15 @@ from enum import Enum
 from typing import Dict, Optional, Any
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
+from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.ocr.screenPath import WordToScreenMatching
+from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (
@@ -91,14 +93,12 @@ class WorkerBase(AbstractWorker):
     async def get_devicesettings_value(self, key: MappingManagerDevicemappingKey, default_value: Optional[Any] = None):
         self.logger.debug("Fetching devicemappings")
         try:
-            devicemappings: Optional[dict] = await self._mapping_manager.get_devicemappings_of(self._origin)
+            value = await self._mapping_manager.get_devicesetting_value_of_device(key)
         except (EOFError, FileNotFoundError) as e:
             self.logger.warning("Failed fetching devicemappings with description: {}. Stopping worker", e)
             self._stop_worker_event.set()
             return None
-        if devicemappings is None:
-            return default_value
-        return devicemappings.get("settings", {}).get(key, default_value)
+        return value if value else default_value
 
     async def get_screenshot_path(self, fileaddon: bool = False) -> str:
         screenshot_ending: str = ".jpg"
@@ -220,8 +220,9 @@ class WorkerBase(AbstractWorker):
             # Reset last_location - no useless waiting delays (otherwise stop mode)
             self.last_location = Location(0.0, 0.0)
 
-        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_MODE, await self._mapping_manager.routemanager_get_mode(
-            self._routemanager_name))
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_MODE,
+                                            await self._mapping_manager.routemanager_get_mode(
+                                                self._routemanager_name))
         return loop.create_task(self._main_work_thread())
 
     async def stop_worker(self):
@@ -238,7 +239,9 @@ class WorkerBase(AbstractWorker):
         calc_type = await self._mapping_manager.routemanager_get_calc_type(self._routemanager_name)
 
         if start_position and (self._levelmode and calc_type == "routefree"):
-            startcoords = (await self.get_devicesettings_value(MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER)).replace(' ', '') \
+            startcoords = (
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER)).replace(' ',
+                                                                                                                   '') \
                 .replace('_', '').split(',')
 
             if not self._geofencehelper.is_coord_inside_include_geofence(Location(
@@ -393,7 +396,8 @@ class WorkerBase(AbstractWorker):
                 break
 
             try:
-                last_location: Location = await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION, Location(0, 0))
+                last_location: Location = await self.get_devicesettings_value(
+                    MappingManagerDevicemappingKey.LAST_LOCATION, Location(0, 0))
                 self.logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
                                    last_location.lat, last_location.lng,
                                    self.current_location.lat, self.current_location.lng)
@@ -408,7 +412,9 @@ class WorkerBase(AbstractWorker):
                 await self._update_position_file()
                 self._location_count += 1
                 self.logger.debug("Seting new 'scannedlocation' in Database")
-                await self.update_scanned_location(self.current_location.lat, self.current_location.lng, time_snapshot)
+                loop = asyncio.get_event_loop()
+                loop.create_task(
+                    self.update_scanned_location(self.current_location.lat, self.current_location.lng, time_snapshot))
 
                 # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
                 try:
@@ -429,13 +435,13 @@ class WorkerBase(AbstractWorker):
                 outfile.write(str(self.current_location.lat) +
                               ", " + str(self.current_location.lng))
 
-    async def update_scanned_location(self, latitude, longitude, timestamp):
+    async def update_scanned_location(self, latitude: float, longitude: float, utc_timestamp: float):
         try:
-            await self._db_wrapper._db_exec._db_accessor.run_in_session(self._db_wrapper.set_scanned_location,
-                                                                        lat=float(latitude), lng=float(longitude))
+            async with self._db_wrapper as session:
+                await ScannedLocationHelper.set_scanned_location(session, latitude, longitude, utc_timestamp)
+
         except Exception as e:
             self.logger.error("Failed updating scanned location: {}", e)
-            return
 
     async def check_walker(self):
         mode = self._walker['walkertype']
@@ -532,7 +538,8 @@ class WorkerBase(AbstractWorker):
     async def _check_for_mad_job(self):
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.JOB_ACTIVE, False):
             self.logger.info("Worker get a job - waiting")
-            while await self.get_devicesettings_value(MappingManagerDevicemappingKey.JOB_ACTIVE, False) and not self._stop_worker_event.is_set():
+            while await self.get_devicesettings_value(MappingManagerDevicemappingKey.JOB_ACTIVE,
+                                                      False) and not self._stop_worker_event.is_set():
                 await asyncio.sleep(10)
             self.logger.info("Worker processed the job and go on ")
 
@@ -551,7 +558,8 @@ class WorkerBase(AbstractWorker):
             await self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
             self.logger.info("Turning screen on")
             await self._communicator.turn_screen_on()
-            await asyncio.sleep(await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 2))
+            await asyncio.sleep(
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 2))
         # check if pogo is running and start it if necessary
         self.logger.info("turnScreenOnAndStartPogo: (Re-)Starting Pogo")
         await self._start_pogo()
@@ -685,7 +693,8 @@ class WorkerBase(AbstractWorker):
             await self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
             self.logger.info("Turning screen on")
             await self._communicator.turn_screen_on()
-            await asyncio.sleep(await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 7))
+            await asyncio.sleep(
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 7))
 
         cur_time = time.time()
         start_result = False
@@ -731,10 +740,11 @@ class WorkerBase(AbstractWorker):
         await asyncio.sleep(5)
         if mitm_mapper is not None:
             await mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 3, 0,
-                                               self._mapping_manager.routemanager_get_mode(
-                                                   self._routemanager_name),
-                                               99)
-        await self._db_wrapper.save_last_reboot(self._dev_id)
+                                                     self._mapping_manager.routemanager_get_mode(
+                                                         self._routemanager_name),
+                                                     99)
+        async with self._db_wrapper as session:
+            await TrsStatusHelper.save_last_reboot(session, self._db_wrapper.get_instance_id(), self._dev_id)
         self._reboot_count = 0
         self._restart_count = 0
         await self.stop_worker()
@@ -742,7 +752,8 @@ class WorkerBase(AbstractWorker):
 
     async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
         successful_stop = self._stop_pogo()
-        await self._db_wrapper.save_last_restart(self._dev_id)
+        async with self._db_wrapper as session:
+            await TrsStatusHelper.save_last_restart(session, self._db_wrapper.get_instance_id(), self._dev_id)
         self._restart_count = 0
         self.logger.debug("restartPogo: stop game resulted in {}", str(successful_stop))
         if successful_stop:
@@ -761,7 +772,9 @@ class WorkerBase(AbstractWorker):
 
     async def _get_trash_positions(self, full_screen=False):
         self.logger.debug2("_get_trash_positions: Get_trash_position.")
-        if not await self._take_screenshot(delay_before=await self.get_devicesettings_value("post_screenshot_delay", 1)):
+        if not await self._take_screenshot(
+                delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY,
+                                                                 1)):
             self.logger.debug("_get_trash_positions: Failed getting screenshot")
             return None
 
@@ -770,8 +783,9 @@ class WorkerBase(AbstractWorker):
             return None
 
         self.logger.debug2("_get_trash_positions: checking screen")
-        trashes = await self._pogoWindowManager.get_trash_click_positions(self._origin, await self.get_screenshot_path(),
-                                                                    full_screen=full_screen)
+        trashes = await self._pogoWindowManager.get_trash_click_positions(self._origin,
+                                                                          await self.get_screenshot_path(),
+                                                                          full_screen=full_screen)
 
         return trashes
 
@@ -786,7 +800,8 @@ class WorkerBase(AbstractWorker):
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_TYPE, "jpeg") == "png":
             screenshot_type = ScreenshotType.PNG
 
-        screenshot_quality: int = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_QUALITY, 80)
+        screenshot_quality: int = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_QUALITY,
+                                                                      80)
 
         take_screenshot = await self._communicator.get_screenshot(await self.get_screenshot_path(fileaddon=errorscreen),
                                                                   screenshot_quality, screenshot_type)
@@ -810,7 +825,9 @@ class WorkerBase(AbstractWorker):
         if not pogo_topmost:
             return False
 
-        if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1)):
+        if not await self._take_screenshot(
+                delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY,
+                                                                 1)):
             if again:
                 self.logger.warning("_check_pogo_main_screen: failed getting a screenshot again")
                 return False
@@ -831,26 +848,28 @@ class WorkerBase(AbstractWorker):
                 return False
 
             found = await self._pogoWindowManager.check_close_except_nearby_button(await self.get_screenshot_path(),
-                                                                             self._origin,
-                                                                             self._communicator,
-                                                                             close_raid=True)
+                                                                                   self._origin,
+                                                                                   self._communicator,
+                                                                                   close_raid=True)
             if found:
                 self.logger.debug("_check_pogo_main_screen: Found (X) button (except nearby)")
 
             if not found and await self._pogoWindowManager.look_for_button(self._origin, screenshot_path, 2.20, 3.01,
-                                                                     self._communicator):
+                                                                           self._communicator):
                 self.logger.debug("_check_pogo_main_screen: Found button (small)")
                 found = True
 
             if not found and await self._pogoWindowManager.look_for_button(self._origin, screenshot_path, 1.05, 2.20,
-                                                                     self._communicator):
+                                                                           self._communicator):
                 self.logger.debug("_check_pogo_main_screen: Found button (big)")
                 await asyncio.sleep(5)
                 found = True
 
             self.logger.debug("_check_pogo_main_screen: Previous checks found pop ups: {}", found)
 
-            await self._take_screenshot(delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1))
+            await self._take_screenshot(
+                delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY,
+                                                                 1))
 
             attempts += 1
         self.logger.debug("_check_pogo_main_screen: done")
@@ -861,7 +880,9 @@ class WorkerBase(AbstractWorker):
         pogo_topmost = await self._communicator.is_pogo_topmost()
         if not pogo_topmost:
             return False
-        if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1)):
+        if not await self._take_screenshot(
+                delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY,
+                                                                 1)):
             self.logger.debug("checkPogoButton: Failed getting screenshot")
             return False
         # TODO: os operation asyncio?
@@ -871,14 +892,16 @@ class WorkerBase(AbstractWorker):
 
         self.logger.debug("checkPogoButton: checking for buttons")
         # TODO: need to be non-blocking
-        found = await self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 2.20, 3.01,
-                                                        self._communicator)
+        found = await self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 2.20,
+                                                              3.01,
+                                                              self._communicator)
         if found:
             await asyncio.sleep(1)
             self.logger.debug("checkPogoButton: Found button (small)")
 
-        if not found and await self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 1.05, 2.20,
-                                                                 self._communicator):
+        if not found and await self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(),
+                                                                       1.05, 2.20,
+                                                                       self._communicator):
             self.logger.debug("checkPogoButton: Found button (big)")
             found = True
 
@@ -887,7 +910,8 @@ class WorkerBase(AbstractWorker):
 
     async def _wait_pogo_start_delay(self):
         delay_count: int = 0
-        pogo_start_delay: int = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_POGO_START_DELAY, 60)
+        pogo_start_delay: int = await self.get_devicesettings_value(
+            MappingManagerDevicemappingKey.POST_POGO_START_DELAY, 60)
         self.logger.info('Waiting for pogo start: {} seconds', pogo_start_delay)
 
         while delay_count <= pogo_start_delay:
@@ -904,7 +928,8 @@ class WorkerBase(AbstractWorker):
             return False
 
         if takescreen:
-            if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1)):
+            if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
+                    MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1)):
                 self.logger.debug("checkPogoClose: Could not get screenshot")
                 return False
 
@@ -915,8 +940,8 @@ class WorkerBase(AbstractWorker):
 
         self.logger.debug("checkPogoClose: checking for CloseX")
         found = await self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path(),
-                                                                         self._origin,
-                                                                         self._communicator)
+                                                                               self._origin,
+                                                                               self._communicator)
         if found:
             await asyncio.sleep(1)
             self.logger.debug("checkPogoClose: Found (X) button (except nearby)")

@@ -235,6 +235,36 @@ class MappingManager:
             # TODO: Maybe also set DB stuff? async with self.__db_wrapper as session:
             pass
 
+    async def get_devicesetting_value_of_device(self, device_name: str, key: MappingManagerDevicemappingKey):
+        devicemapping_entry: Optional[DeviceMappingsEntry] = self._devicemappings.get(device_name, None)
+        if not devicemapping_entry:
+            return
+        if key == MappingManagerDevicemappingKey.JOB_ACTIVE:
+            return devicemapping_entry.job_active
+        elif key == MappingManagerDevicemappingKey.WALKER_AREA_INDEX:
+            return devicemapping_entry.walker_area_index
+        elif key == MappingManagerDevicemappingKey.FINISHED:
+            return devicemapping_entry.finished
+        elif key == MappingManagerDevicemappingKey.LAST_LOCATION_TIME:
+            return devicemapping_entry.last_location_time
+        elif key == MappingManagerDevicemappingKey.LAST_CLEANUP_TIME:
+            return devicemapping_entry.last_cleanup_time
+        elif key == MappingManagerDevicemappingKey.LAST_LOCATION:
+            return devicemapping_entry.last_location
+        elif key == MappingManagerDevicemappingKey.ACCOUNT_INDEX:
+            return devicemapping_entry.account_index
+        elif key == MappingManagerDevicemappingKey.LAST_MODE:
+            return devicemapping_entry.last_known_mode
+        elif key == MappingManagerDevicemappingKey.LAST_ACTION_TIME:
+            return devicemapping_entry.last_action_time
+        elif key == MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED:
+            return devicemapping_entry.account_rotation_started
+        elif key == MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME:
+            return devicemapping_entry.last_questclear_time
+        else:
+            # TODO: Get all the DB values...
+            pass
+
     async def set_devicesetting_value_of(self, device_name: str, key: MappingManagerDevicemappingKey, value):
         if self._devicemappings.get(device_name, None) is not None:
             self.__devicesettings_setter_queue.put((device_name, key, value))
@@ -481,7 +511,7 @@ class MappingManager:
                 init_area: bool = area.init
             spawns_known: bool = area.coords_spawns_known if area.mode == "mon_mitm" else True
             routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper \
-                .get(session, self.__db_wrapper.get_instance_id(), area.routecalc)
+                .get(session, area.routecalc)
 
             calc_type: str = area.route_calc_algorithm if area.mode == "pokestop" else "route"
             including_stops: bool = area.including_stops if area.mode == "raids_mitm" else False

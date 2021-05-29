@@ -28,9 +28,8 @@ class SettingsRoutecalcHelper:
         await session.execute(stmt)
 
     @staticmethod
-    async def get(session: AsyncSession, instance_id: int, routecalc_id: int) -> Optional[SettingsRoutecalc]:
-        stmt = select(SettingsRoutecalc).where(and_(SettingsRoutecalc.instance_id == instance_id,
-                                                    SettingsRoutecalc.routecalc_id == routecalc_id))
+    async def get(session: AsyncSession, routecalc_id: int) -> Optional[SettingsRoutecalc]:
+        stmt = select(SettingsRoutecalc).where(SettingsRoutecalc.routecalc_id == routecalc_id)
         result = await session.execute(stmt)
         return result.scalars().first()
 

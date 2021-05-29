@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Dict, Optional, Tuple, Union
 
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
-from mapadroid.db.model import SettingsArea
+from mapadroid.db.model import SettingsArea, TrsStatus
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.mapping_manager import MappingManager
@@ -418,24 +418,27 @@ class MITMBase(WorkerBase):
         self.logger.debug('Init Mode: {}', routemanager_init)
         self.logger.debug('Last Date/Time of Data: {}', self._rec_data_time)
         self.logger.debug('===============================')
-        save_data = {
-            'device_id': self._dev_id,
-            'currentPos': 'POINT(%s,%s)' % (self.current_location.lat, self.current_location.lng),
-            'lastPos': 'POINT(%s,%s)' % (self.last_location.lat, self.last_location.lng),
-            'routePos': routemanager_status[0],
-            'routeMax': routemanager_status[1],
-            'area_id': self._area_id,
-            'rebootCounter': self._reboot_count,
-            'init': routemanager_init,
-            'rebootingOption': await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True),
-            'restartCounter': self._restart_count,
-            'currentSleepTime': self._current_sleep_time
-        }
-        if self._rec_data_time:
-            save_data['lastProtoDateTime'] = 'NOW()'
-            self._rec_data_time = None
-        # TODO: TrsStatusHelper.get() and then update accordingly...
-        self._db_wrapper.save_status(save_data) # TODO async
+        async with self._db_wrapper as session:
+            status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._dev_id)
+            if not status:
+                status = TrsStatus()
+                status.device_id = self._dev_id
+            # TODO: Check how to set the value...
+            status.currentPos = 'POINT(%s,%s)' % (self.current_location.lat, self.current_location.lng)
+            status.lastPos = 'POINT(%s,%s)' % (self.last_location.lat, self.last_location.lng)
+            status.routePos = routemanager_status[0]
+            status.routeMax = routemanager_status[1]
+            status.area_id = self._area_id
+            status.rebootCounter = self._reboot_count
+            status.init = routemanager_init
+            status.rebootingOption = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True)
+            status.restartCounter = self._restart_count
+            status.currentSleepTime = self._current_sleep_time
+
+            if self._rec_data_time:
+                status.lastProtoDateTime = datetime.utcnow()
+                self._rec_data_time = None
+            await session.add(status)
 
     async def _worker_specific_setup_stop(self):
         self.logger.info("Stopping pogodroid")

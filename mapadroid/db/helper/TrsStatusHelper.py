@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import insert
-from typing import Dict, Optional, List
+from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -59,7 +58,7 @@ class TrsStatusHelper:
         Returns:
 
         """
-        status: Optional[TrsStatus] = await TrsStatusHelper.get(device_id)
+        status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
         if not status:
             status.device_id = device_id
             status.instance_id = instance_id
@@ -69,7 +68,6 @@ class TrsStatusHelper:
         status.lastPogoReboot = datetime.utcnow()
         status.restartCounter = 0
         status.rebootCounter = 0
-
         session.add(status)
 
     @staticmethod
@@ -84,7 +82,7 @@ class TrsStatusHelper:
         Returns:
 
         """
-        status: Optional[TrsStatus] = await TrsStatusHelper.get(device_id)
+        status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
         if not status:
             status.device_id = device_id
             status.instance_id = instance_id
@@ -107,7 +105,7 @@ class TrsStatusHelper:
         Returns:
 
         """
-        status: Optional[TrsStatus] = await TrsStatusHelper.get(device_id)
+        status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
         if not status:
             status.device_id = device_id
             status.instance_id = instance_id

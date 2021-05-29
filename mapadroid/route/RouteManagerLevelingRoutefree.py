@@ -50,7 +50,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                         origin=origin,
                         location=current_worker_pos,
                         limit=30,
-                        ignore_spinned=self._settings.ignore_spinned_stops,
+                        ignore_spinned=self._settings.ignore_spinned_stops == 1,
                         max_distance=5)
                     if not unvisited_stops:
                         self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
@@ -65,7 +65,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
 
                     if unvisited_stops:
                         self.logger.info("Recalc a route")
-                        new_route = self._local_recalc_subroute(unvisited_stops)
+                        new_route = await self._local_recalc_subroute(unvisited_stops)
                         origin_local_list.clear()
                         for coord in new_route:
                             origin_local_list.append(Location(coord["lat"], coord["lng"]))

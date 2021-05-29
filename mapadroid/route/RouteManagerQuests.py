@@ -3,6 +3,7 @@ import time
 from typing import List, Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
@@ -44,8 +45,9 @@ class RouteManagerQuests(RouteManagerBase):
     def _retrieve_latest_priority_queue(self):
         return None
 
-    def _get_coords_post_init(self):
-        return self.db_wrapper.stops_from_db(self.geofence_helper)
+    async def _get_coords_post_init(self):
+        async with self.db_wrapper as session:
+            return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
 
     def _cluster_priority_queue_criteria(self):
         pass
@@ -53,17 +55,17 @@ class RouteManagerQuests(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 0
 
-    def _recalc_route_workertype(self):
+    async def _recalc_route_workertype(self):
         if self.init:
-            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
+            await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
                               in_memory=False)
         else:
-            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
+            await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
                               in_memory=True)
 
         self._init_route_queue()
 
-    def _get_coords_after_finish_route(self) -> bool:
+    async def _get_coords_after_finish_route(self) -> bool:
         with self._manager_mutex:
             if self._shutdown_route:
                 self.logger.info('Other worker shutdown - leaving it')

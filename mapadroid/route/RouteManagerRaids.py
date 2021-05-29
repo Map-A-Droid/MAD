@@ -1,9 +1,13 @@
 from typing import List, Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.GymHelper import GymHelper
+from mapadroid.db.helper.PokestopHelper import PokestopHelper
+from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.model import SettingsAreaRaidsMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -31,29 +35,30 @@ class RouteManagerRaids(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 300
 
-    def _get_coords_after_finish_route(self):
+    async def _get_coords_after_finish_route(self):
         self._init_route_queue()
         return True
 
-    def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
+    async def _recalc_route_workertype(self):
+        await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
                           in_memory=False)
         self._init_route_queue()
 
-    def _retrieve_latest_priority_queue(self):
+    async def _retrieve_latest_priority_queue(self):
         # TODO: pass timedelta for timeleft on raids that can be ignored.
         # e.g.: a raid only has 5mins to go, ignore those
-        return self.db_wrapper.get_next_raid_hatches(self.geofence_helper)
+        async with self.db_wrapper as session:
+            return await RaidHelper.get_next_hatches(session, self.geofence_helper)
 
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    def _get_coords_post_init(self):
-        # TODO: GymHelper.get_locations_in_fence
-        coords = self.db_wrapper.gyms_from_db(self.geofence_helper)
-        if self._settings.including_stops:
-            self.logger.info("Include stops in coords list too!")
-            coords.extend(self.db_wrapper.stops_from_db(self.geofence_helper))
+    async def _get_coords_post_init(self) -> List[Location]:
+        async with self.db_wrapper as session:
+            coords: List[Location] = await GymHelper.get_locations_in_fence(session, self.geofence_helper)
+            if self._settings.including_stops:
+                self.logger.info("Include stops in coords list too!")
+                coords.extend(await PokestopHelper.get_locations_in_fence(session, self.geofence_helper))
 
         return coords
 
@@ -61,14 +66,14 @@ class RouteManagerRaids(RouteManagerBase):
         return self._settings.priority_queue_clustering_timedelta \
             if self._settings.priority_queue_clustering_timedelta is not None else 600
 
-    def _start_routemanager(self):
+    async def _start_routemanager(self):
         with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
                 if self._mode != WorkerType.IDLE:
                     self._start_priority_queue()
-                    self._start_check_routepools()
+                    await self._start_check_routepools()
                     self._init_route_queue()
         return True
 
@@ -81,6 +86,8 @@ class RouteManagerRaids(RouteManagerBase):
         return True
 
     async def _change_init_mapping(self) -> None:
-        self._settings.init = False
-        # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
-        await session.merge(self._settings)
+        async with self.db_wrapper as session:
+            self._settings.init = False
+            # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
+            # TODO: Ensure that even works with SQLAlchemy's functionality in regards to objects and sessions etc...
+            await session.merge(self._settings)
