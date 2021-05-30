@@ -537,36 +537,38 @@ class MappingManager:
                                                                      "s2_cell_level", 30),
                                                                  mon_ids_iv=self.get_monlist(area_id)
                                                                  )
-            logger.info("Initializing area {}", area["name"])
+            logger.info("Initializing area {}", area.name)
             if area.mode not in ("iv_mitm", "idle") and calc_type != "routefree":
+                include_event_id = area.include_event_id if area.mode == "mon_mitm" else None
                 coords = await self.__fetch_coords(session, area.mode, geofence_helper,
                                                    coords_spawns_known=spawns_known,
                                                    init=init_area,
                                                    range_init=mode_mapping.get(area.mode, {}).get("range_init",
                                                                                                   630),
                                                    including_stops=including_stops,
-                                                   include_event_id=area.get("settings", {}).get("include_event_id",
-                                                                                                 None))
+                                                   include_event_id=include_event_id)
 
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area.mode]["range"]
                 max_count_in_radius = mode_mapping[area.mode]["max_count"]
-                if not area.get("init", False):
+                if not getattr(area, "init", False):
                     # TODO: proper usage in asnycio loop
                     proc = thread_pool.apply_async(route_manager.initial_calculation,
                                                    args=(max_radius, max_count_in_radius,
                                                          0, False))
                     areas_procs[area_id] = proc
                 else:
-                    logger.info("Init mode enabled. Going row-based for {}", area.get("name", "unknown"))
+                    logger.info("Init mode enabled. Going row-based for {}", area.name)
                     # we are in init, let's write the init route to file to make it visible in madmin
                     calc_coords = []
-                    if area["routecalc"] is not None:
+                    if getattr(area, "routecalc", None) is not None:
                         for loc in coords:
                             calc_coord = '%s,%s' % (str(loc.lat), str(loc.lng))
                             calc_coords.append(calc_coord)
-                        routecalc.routefile = calc_coords
+                        calc_coords = str(calc_coords).replace("\'", "\"")
+                        routecalc.routefile = str(calc_coords)
                         session.add(routecalc)
+                        await session.flush()
                     # gotta feed the route to routemanager... TODO: without recalc...
                     # TODO: proper usage in asnycio loop
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
@@ -739,7 +741,7 @@ class MappingManager:
         Updates the internal mappings and routemanagers
         :return:
         """
-        async with self.__db_wrapper as session:
+        async with self.__db_wrapper as session, session:
             if not full_lock:
                 self._monlists = await self.__get_latest_monlists(session)
                 areas_tmp = await self.__get_latest_areas(session)

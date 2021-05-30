@@ -92,8 +92,10 @@ class GeofenceHelper:
         # Read coordinates of excluded areas from file.
         if settings:
             first_line = True
-            for line in settings.fence_data:
-                line = line.strip()
+            # TODO: Handle the split and replace more nicely...
+            # TODO: Will require handling of "new" syntax... (str([]) of python)
+            for line in settings.fence_data.split("\","):
+                line = line.replace("\"", "").replace("]", "").strip()
                 if len(line) == 0:  # Empty line.
                     continue
                 elif line.startswith("["):  # Name line.

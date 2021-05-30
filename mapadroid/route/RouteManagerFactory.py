@@ -52,7 +52,7 @@ class RouteManagerFactory:
                                               )
         elif area.mode == WorkerType.STOPS.value:
             area: SettingsAreaPokestop = area
-            if area.level and area.calctype == 'routefree':
+            if area.level and area.route_calc_algorithm == 'routefree':
                 route_manager = RouteManagerLevelingRoutefree(db_wrapper=db_wrapper, area=area, coords=coords,
                                                               max_radius=max_radius,
                                                               max_coords_within_radius=max_coords_within_radius,

@@ -17,13 +17,13 @@ class RoutecalcUtil:
                              max_coords_within_radius,
                              in_memory, num_processes, algorithm, use_s2, s2_level, route_name,
                              delete_old_route: bool = False):
-        routecalc_entry: Optional[SettingsRoutecalc] = None
+        routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
         if not routecalc_entry:
             # TODO: Can this even be the case? Handle correctly
+            #  Missing instance_id...
             routecalc_entry = SettingsRoutecalc()
             routecalc_entry.routecalc_id = routecalc_id
         await session.merge(routecalc_entry)
-        await session.refresh(routecalc_entry)
 
         routecalc_entry.recalc_status = 1
         session.add(routecalc_entry)
@@ -32,7 +32,6 @@ class RoutecalcUtil:
         await session.refresh(routecalc_entry)
         # TODO: Ensure the object is still valid later on
         if not in_memory:
-            routecalc_entry: SettingsRoutecalc = await SettingsRoutecalcHelper.get(session, routecalc_id)
             if delete_old_route:
                 logger.debug("Deleting routefile...")
                 routecalc_entry.routefile = []
@@ -133,8 +132,9 @@ class RoutecalcUtil:
     def _read_saved_json_route(routecalc_entry: SettingsRoutecalc):
         result = []
         if routecalc_entry.routefile is not None:
-            for line in routecalc_entry.routefile:
-                if not line.strip():
+            for line in routecalc_entry.routefile.split("\","):
+                line = line.replace("\"", "").replace("]", "").replace("[", "").strip()
+                if not line:
                     continue
                 line_split = line.split(',')
                 result.append({'lat': float(line_split[0].strip()), 'lng': float(line_split[1].strip())})
