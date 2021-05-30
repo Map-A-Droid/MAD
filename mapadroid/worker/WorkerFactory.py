@@ -169,7 +169,7 @@ class WorkerFactory:
 
     def get_worker(self, origin: str, worker_type: WorkerType, communicator: AbstractCommunicator,
                    dev_id: int, last_known_state: dict, area_id: int,
-                   walker_settings: dict, walker_area_id: int) -> Optional[AbstractWorker]:
+                   walker_settings: SettingsWalkerarea, walker_area_id: int) -> Optional[AbstractWorker]:
         origin_logger = get_origin_logger(logger, origin=origin)
         if origin is None or worker_type is None or worker_type == WorkerType.UNDEFINED:
             return None

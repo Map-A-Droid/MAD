@@ -39,4 +39,4 @@ class ScannedLocationHelper:
         scanned_location.band5 = -1
         scanned_location.midpoint = -1
         scanned_location.width = 0
-        await session.add(scanned_location)
+        session.add(scanned_location)

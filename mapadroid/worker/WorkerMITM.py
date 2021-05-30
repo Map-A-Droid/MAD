@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, Optional, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.mapping_manager import MappingManager
@@ -22,7 +23,7 @@ logger = get_logger(LoggerEnums.worker)
 class WorkerMITM(MITMBase):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager, area_id: int, routemanager_id: int, mitm_mapper: MitmMapper,
-                 db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker: Dict, event):
+                 db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker: SettingsWalkerarea, event):
         MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_id=routemanager_id,

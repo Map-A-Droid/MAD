@@ -14,7 +14,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
-from mapadroid.db.model import SettingsAreaPokestop, Pokestop
+from mapadroid.db.model import SettingsAreaPokestop, Pokestop, SettingsWalkerarea
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -73,7 +73,7 @@ class WorkerQuests(MITMBase):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_id: int, db_wrapper: DbWrapper,
-                 pogo_window_manager: PogoWindows, walker,
+                 pogo_window_manager: PogoWindows, walker: SettingsWalkerarea,
                  mitm_mapper: MitmMapper, event):
         MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                           mapping_manager=mapping_manager, routemanager_id=routemanager_id,

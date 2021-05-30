@@ -4,6 +4,7 @@ import time
 from typing import Optional, Any
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
@@ -19,7 +20,8 @@ logger = get_logger(LoggerEnums.worker)
 
 
 class WorkerConfigmode(AbstractWorker):
-    def __init__(self, args, dev_id, origin, communicator: AbstractCommunicator, walker, mapping_manager,
+    def __init__(self, args, dev_id, origin, communicator: AbstractCommunicator, walker: SettingsWalkerarea,
+                 mapping_manager: MappingManager,
                  mitm_mapper: MitmMapper, db_wrapper: DbWrapper, area_id: int, routemanager_id: int, event):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._args = args
