@@ -522,7 +522,7 @@ class WebhookWorker:
     async def __build_ivmon_list(self):
         self.__IV_MON: List[int] = []
 
-        for routemanager_name in await self.__mapping_manager.get_all_routemanager_names():
+        for routemanager_name in await self.__mapping_manager.get_all_routemanager_ids():
             ids_iv_list: Optional[List[int]] = await self.__mapping_manager.routemanager_get_ids_iv(routemanager_name)
 
             if ids_iv_list is not None:
@@ -536,7 +536,7 @@ class WebhookWorker:
             pass
 
         tmp_excluded_areas = {}
-        for rm in await self.__mapping_manager.get_all_routemanager_names():
+        for rm in await self.__mapping_manager.get_all_routemanager_ids():
             name = await self.__mapping_manager.routemanager_get_name(rm)
             gfh = await self.__mapping_manager.routemanager_get_geofence_helper(rm)
             tmp_excluded_areas[name] = gfh

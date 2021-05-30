@@ -24,7 +24,7 @@ logger = get_logger(LoggerEnums.worker)
 class WalkerConfiguration(NamedTuple):
     walker_settings: SettingsWalkerarea
     walker_index: int
-    walker_area_id: int
+    area_id: int
     total_walkers_allowed_for_assigned_area: int
 
 
@@ -82,7 +82,7 @@ class WorkerFactory:
         while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
                 and client_mapping.walker_area_index < len(client_mapping.walker_areas):
             origin_logger.info('not using area {} - Walkervalue out of range',
-                               await self.__mapping_manager.routemanager_get_name(walker_settings.walkerarea_id))
+                               await self.__mapping_manager.routemanager_get_name(walker_settings.area_id))
             if client_mapping.walker_area_index >= len(client_mapping.walker_areas) - 1:
                 origin_logger.warning('Cannot find any active area defined for current time. Check Walker entries')
                 client_mapping.walker_area_index = 0
@@ -101,7 +101,7 @@ class WorkerFactory:
             await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.FINISHED, False)
             client_mapping.walker_area_index = 0
 
-        walker_configuration = WalkerConfiguration(walker_area_id=walker_settings.walkerarea_id, walker_index=client_mapping.walker_area_index,
+        walker_configuration = WalkerConfiguration(area_id=walker_settings.area_id, walker_index=client_mapping.walker_area_index,
                                                    walker_settings=walker_settings,
                                                    total_walkers_allowed_for_assigned_area=len(client_mapping.walker_areas))
         return walker_configuration
@@ -115,11 +115,11 @@ class WorkerFactory:
             # logging is done in __get_walker_settings...
             return None
 
-        if walker_configuration.walker_area_id not in await self.__mapping_manager.get_all_routemanager_names():
+        if walker_configuration.area_id not in await self.__mapping_manager.get_all_routemanager_ids():
             raise WrongAreaInWalker()
 
         origin_logger.info('using walker area {} [{}/{}]',
-                           await self.__mapping_manager.routemanager_get_name(walker_configuration.walker_area_id),
+                           await self.__mapping_manager.routemanager_get_name(walker_configuration.area_id),
                            walker_configuration.walker_index + 1,
                            walker_configuration.total_walkers_allowed_for_assigned_area)
         return walker_configuration
@@ -155,7 +155,7 @@ class WorkerFactory:
             .get_devicesettings_of(origin)
         dev_id: int = devicesettings[0].device_id
         walker_routemanager_mode: WorkerType = await self.__mapping_manager.routemanager_get_mode(
-            walker_configuration.walker_area_id
+            walker_configuration.area_id
         )
         if not dev_id or not walker_configuration.walker_settings or walker_routemanager_mode == WorkerType.UNDEFINED:
             origin_logger.error("Failed to instantiate worker due to invalid settings found")
@@ -165,7 +165,7 @@ class WorkerFactory:
         # TODO: last_known_state has never been used and got kinda deprecated due to devicesettings...
         return self.get_worker(origin, walker_routemanager_mode, communicator, dev_id, {},
                                walker_configuration.walker_settings.area_id,
-                               walker_configuration.walker_settings, walker_configuration.walker_area_id)
+                               walker_configuration.walker_settings, walker_configuration.area_id)
 
     def get_worker(self, origin: str, worker_type: WorkerType, communicator: AbstractCommunicator,
                    dev_id: int, last_known_state: dict, area_id: int,

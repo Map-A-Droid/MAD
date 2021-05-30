@@ -50,10 +50,9 @@ class WorkerMITM(MITMBase):
 
     async def _move_to_location(self):
         distance, routemanager_settings = await self._get_route_manager_settings_and_distance_to_current_location()
-
         if not await self._mapping_manager.routemanager_get_init(self._routemanager_id):
-            speed = routemanager_settings.get("speed", 0)
-            max_distance = routemanager_settings.get("max_distance", None)
+            speed = getattr(routemanager_settings, "speed", 0)
+            max_distance = getattr(routemanager_settings, "max_distance", None)
         else:
             speed = int(25)
             max_distance = int(200)

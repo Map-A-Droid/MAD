@@ -71,30 +71,32 @@ mode_mapping = {
 
 
 class DeviceMappingsEntry:
-    device_settings: SettingsDevice = None
-    ptc_logins: List[SettingsPogoauth] = []
-    pool_settings: SettingsDevicepool = None
-    walker_areas: List[SettingsWalkerarea] = []
-    # TODO: Ensure those values are being set properly from whereever...
-    last_location: Location = Location(0, 0)
-    last_known_mode: WorkerType = WorkerType.UNDEFINED
-    account_index: int = 0
-    account_rotation_started: bool = False
-    walker_area_index: int = -1
-    finished: bool = False
-    job_active: bool = False
-    last_location_time: Optional[int] = None
-    last_cleanup_time: Optional[int] = None
-    last_action_time: Optional[int] = None
-    last_questclear_time: Optional[int] = None
+    def __init__(self):
+        self.device_settings: SettingsDevice = None
+        self.ptc_logins: List[SettingsPogoauth] = []
+        self.pool_settings: SettingsDevicepool = None
+        self.walker_areas: List[SettingsWalkerarea] = []
+        # TODO: Ensure those values are being set properly from whereever...
+        self.last_location: Location = Location(0, 0)
+        self.last_known_mode: WorkerType = WorkerType.UNDEFINED
+        self.account_index: int = 0
+        self.account_rotation_started: bool = False
+        self.walker_area_index: int = -1
+        self.finished: bool = False
+        self.job_active: bool = False
+        self.last_location_time: Optional[int] = None
+        self.last_cleanup_time: Optional[int] = None
+        self.last_action_time: Optional[int] = None
+        self.last_questclear_time: Optional[int] = None
 
 
 class AreaEntry:
-    settings: SettingsArea = None
-    routecalc: SettingsRoutecalc = None
-    geofence_included: int = None
-    geofence_excluded: int = None
-    init: bool = False
+    def __init__(self):
+        self.settings: SettingsArea = None
+        self.routecalc: SettingsRoutecalc = None
+        self.geofence_included: int = None
+        self.geofence_excluded: int = None
+        self.init: bool = False
 
 
 class JoinQueue(object):
@@ -337,7 +339,7 @@ class MappingManager:
         except KeyError:
             return []
 
-    async def get_all_routemanager_names(self):
+    async def get_all_routemanager_ids(self):
         return self._routemanagers.keys()
 
     async def __fetch_routemanager(self, routemanager_id: int) -> Optional[RouteManagerBase]:
@@ -360,7 +362,7 @@ class MappingManager:
             await routemanager.join_threads()
 
     async def get_routemanager_id_where_device_is_registered(self, device_name: str) -> Optional[int]:
-        routemanagers = await self.get_all_routemanager_names()
+        routemanagers = await self.get_all_routemanager_ids()
         for routemanager in routemanagers:
             workers = await self.routemanager_get_registered_workers(routemanager)
             if device_name in workers:

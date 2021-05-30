@@ -119,7 +119,7 @@ class MADminMap:
     def get_route(self):
         routeexport = []
 
-        routemanager_names = self._mapping_manager.get_all_routemanager_names()
+        routemanager_names = self._mapping_manager.get_all_routemanager_ids()
 
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
@@ -140,7 +140,7 @@ class MADminMap:
     def get_prioroute(self):
         routeexport = []
 
-        routemanager_names = self._mapping_manager.get_all_routemanager_names()
+        routemanager_names = self._mapping_manager.get_all_routemanager_ids()
 
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
