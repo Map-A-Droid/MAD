@@ -86,7 +86,7 @@ class MADmin(object):
     @logger.catch()
     async def madmin_start(self):
         try:
-            async with self._db_wrapper as session:
+            async with self._db_wrapper as session, session:
                 duplicate_macs: Dict[str, List[SettingsDevice]] = await SettingsDeviceHelper.get_duplicate_mac_entries(
                     session)
                 if len(duplicate_macs) > 0:

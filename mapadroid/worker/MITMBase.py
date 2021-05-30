@@ -52,12 +52,12 @@ class LatestReceivedType(Enum):
 class MITMBase(WorkerBase, ABC):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
-                 area_id: int, routemanager_name: str, db_wrapper, mitm_mapper: MitmMapper,
+                 area_id: int, routemanager_id: int, db_wrapper, mitm_mapper: MitmMapper,
                  pogo_window_manager: PogoWindows,
                  walker: Dict = None, event=None):
         WorkerBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                             mapping_manager=mapping_manager, area_id=area_id,
-                            routemanager_name=routemanager_name,
+                            routemanager_id=routemanager_id,
                             db_wrapper=db_wrapper,
                             pogo_window_manager=pogo_window_manager, walker=walker, event=event)
         self._reboot_count = 0
@@ -72,13 +72,14 @@ class MITMBase(WorkerBase, ABC):
         self._dev_id = dev_id
 
     async def start_worker(self) -> Task:
-        async with self._db_wrapper as session:
-            await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
-                                                   self._dev_id, 0)
+        async with self._db_wrapper as session, session:
+            # TODO await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
+            #                                       self._dev_id, 0)
+            pass
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 2, 0,
-                                                 await self._mapping_manager.routemanager_get_mode(
-                                                     self._routemanager_name),
-                                                 99)
+                                                       await self._mapping_manager.routemanager_get_mode(
+                                                     self._routemanager_id),
+                                                       99)
         self._enhanced_mode = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST, False)
         return await super().start_worker()
 
@@ -125,8 +126,8 @@ class MITMBase(WorkerBase, ABC):
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         self.logger.info('Waiting for data after {}',
                          datetime.fromtimestamp(timestamp))
-        position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
-                                                                             self._origin)
+        position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_id,
+                                                                                   self._origin)
         type_of_data_returned = LatestReceivedType.UNDEFINED
         data = None
         latest = await self._mitm_mapper.request_latest(self._origin)
@@ -197,15 +198,15 @@ class MITMBase(WorkerBase, ABC):
         self.logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
                          proto_to_wait_for, type_of_data_returned)
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
-                                                 self._waittime_without_delays,
-                                                 position_type, 0,
-                                                 self._mapping_manager.routemanager_get_mode(
-                                                     self._routemanager_name),
-                                                 self._transporttype)
+                                                       self._waittime_without_delays,
+                                                       position_type, 0,
+                                                       self._mapping_manager.routemanager_get_mode(
+                                                     self._routemanager_id),
+                                                       self._transporttype)
         self._restart_count += 1
         restart_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.RESTART_THRESH, 5)
         reboot_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT_THRESH, 3)
-        if await self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
+        if await self._mapping_manager.routemanager_get_route_stats(self._routemanager_id,
                                                               self._origin) is not None:
             if self._init:
                 restart_thresh = restart_thresh * 2
@@ -230,22 +231,22 @@ class MITMBase(WorkerBase, ABC):
         self._rec_data_time = datetime.now()
         # TODO: Fire and forget async?
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1,
-                                                 self._waittime_without_delays,
-                                                 position_type, time.time(),
-                                                 await self._mapping_manager.routemanager_get_mode(
-                                                     self._routemanager_name), self._transporttype)
+                                                       self._waittime_without_delays,
+                                                       position_type, time.time(),
+                                                       await self._mapping_manager.routemanager_get_mode(
+                                                     self._routemanager_id), self._transporttype)
 
     async def raise_stop_worker_if_applicable(self):
         """
         Checks if the worker is supposed to be stopped or the routemanagers/mappings have changed
         Raises: InternalStopWorkerException
         """
-        if not await self._mapping_manager.routemanager_present(self._routemanager_name) \
+        if not await self._mapping_manager.routemanager_present(self._routemanager_id) \
                 or self._stop_worker_event.is_set():
             self.logger.error("killed while sleeping")
             raise InternalStopWorkerException
-        position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
-                                                                             self._origin)
+        position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_id,
+                                                                                   self._origin)
         if position_type is None:
             self.logger.info("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
@@ -259,7 +260,7 @@ class MITMBase(WorkerBase, ABC):
                                                                 float(latest_location.lng),
                                                                 float(self.current_location.lat),
                                                                 float(self.current_location.lng))
-        max_distance_of_mode = await self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
+        max_distance_of_mode = await self._mapping_manager.routemanager_get_max_radius(self._routemanager_id)
         max_distance_for_worker = self._applicationArgs.maximum_valid_distance
         if max_distance_for_worker > max_distance_of_mode > MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO:
             # some modes may be too strict (e.g. quests with 0.0001m calculations for routes)
@@ -348,10 +349,10 @@ class MITMBase(WorkerBase, ABC):
         return delay_used
 
     async def _get_route_manager_settings_and_distance_to_current_location(self) -> Tuple[float, SettingsArea]:
-        if not await self._mapping_manager.routemanager_present(self._routemanager_name) \
+        if not await self._mapping_manager.routemanager_present(self._routemanager_id) \
                 or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
-        routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+        routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_id)
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
                                                         float(
                                                             self.last_location.lng),
@@ -401,31 +402,31 @@ class MITMBase(WorkerBase, ABC):
         self.logger.debug('===============================')
         self.logger.debug('Worker Stats')
         self.logger.debug('Origin: {} [{}]', self._origin, self._dev_id)
-        self.logger.debug('Routemanager: {} [{}]', self._routemanager_name, self._area_id)
+        self.logger.debug('Routemanager: {} [{}]', self._routemanager_id, self._area_id)
         self.logger.debug('Restart Counter: {}', self._restart_count)
         self.logger.debug('Reboot Counter: {}', self._reboot_count)
         self.logger.debug('Reboot Option: {}', await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True))
         self.logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
         self.logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
-        routemanager_status = await self._mapping_manager.routemanager_get_route_stats(self._routemanager_name,
-                                                                                 self._origin)
+        routemanager_status = await self._mapping_manager.routemanager_get_route_stats(self._routemanager_id,
+                                                                                       self._origin)
         if routemanager_status is None:
             self.logger.warning("Routemanager of {} not available to update stats", self._origin)
             routemanager_status = [None, None]
         else:
             self.logger.debug('Route Pos: {} - Route Length: {}', routemanager_status[0], routemanager_status[1])
-        routemanager_init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_name)
+        routemanager_init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_id)
         self.logger.debug('Init Mode: {}', routemanager_init)
         self.logger.debug('Last Date/Time of Data: {}', self._rec_data_time)
         self.logger.debug('===============================')
-        async with self._db_wrapper as session:
+        async with self._db_wrapper as session, session:
             status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._dev_id)
             if not status:
                 status = TrsStatus()
                 status.device_id = self._dev_id
             # TODO: Check how to set the value...
-            status.currentPos = 'POINT(%s,%s)' % (self.current_location.lat, self.current_location.lng)
-            status.lastPos = 'POINT(%s,%s)' % (self.last_location.lat, self.last_location.lng)
+            # status.currentPos = 'POINT(%s,%s)' % (self.current_location.lat, self.current_location.lng)
+            # status.lastPos = 'POINT(%s,%s)' % (self.last_location.lat, self.last_location.lng)
             status.routePos = routemanager_status[0]
             status.routeMax = routemanager_status[1]
             status.area_id = self._area_id

@@ -284,7 +284,7 @@ class RouteManagerBase(ABC):
             if self._overwrite_calculation:
                 calctype = 'route'
 
-            async with self.db_wrapper as session:
+            async with self.db_wrapper as session, session:
                 async with session:
                     new_route = await RoutecalcUtil.get_json_route(session, self._routecalc.routecalc_id, coords,
                                                                    max_radius, max_coords_within_radius, in_memory,
@@ -338,7 +338,7 @@ class RouteManagerBase(ABC):
         calc_coords = []
         for coord in new_route:
             calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             await session.merge(self._routecalc)
             await session.refresh(self._routecalc)
             self._routecalc.routefile = calc_coords

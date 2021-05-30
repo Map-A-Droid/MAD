@@ -45,7 +45,7 @@ class PooledQueryExecutor:
             else:
                 self._redis_cache: NoopCache = NoopCache()
 
-    async def get_cache(self) -> Optional[Union[Redis, NoopCache]]:
+    async def get_cache(self) -> Union[Redis, NoopCache]:
         if self._redis_cache is None:
             await self.setup()
         return self._redis_cache

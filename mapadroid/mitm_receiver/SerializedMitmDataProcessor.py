@@ -35,7 +35,8 @@ class SerializedMitmDataProcessor:
                     break
                 # TODO: Tidy up... Do we even want to await the result? maybe just keep track of the amount of parallel tasks? The majority of waiting will be the DB...
                 try:
-                    await self.__db_submit._db_exec._db_accessor.run_in_session(self.process_data, received_timestamp=item[0], data=item[1], origin=item[2])
+                    async with self.__db_wrapper as session, session:
+                        await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
                 except Exception as e:
                     logger.info("Failed processing data... {}", e)
                     logger.exception(e)

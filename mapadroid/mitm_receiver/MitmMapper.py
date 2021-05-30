@@ -106,7 +106,7 @@ class MitmMapper(object):
         self.__playerstats_db_update_consumer.cancel()
 
     async def get_levelmode(self, origin):
-        device_routemananger = await self.__mapping_manager.get_routemanager_name_from_device(origin)
+        device_routemananger = await self.__mapping_manager.get_routemanager_id_where_device_is_registered(origin)
         if device_routemananger is None:
             return False
 

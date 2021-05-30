@@ -47,11 +47,11 @@ class FortSearchResultTypes(Enum):
 class WorkerBase(AbstractWorker, ABC):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
-                 area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows,
+                 area_id: int, routemanager_id: int, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows,
                  walker: Dict = None, event=None):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._mapping_manager: MappingManager = mapping_manager
-        self._routemanager_name: str = routemanager_name
+        self._routemanager_id: int = routemanager_id
         self._area_id = area_id
         self._dev_id: int = dev_id
         self._event = event
@@ -93,7 +93,7 @@ class WorkerBase(AbstractWorker, ABC):
     async def get_devicesettings_value(self, key: MappingManagerDevicemappingKey, default_value: Optional[Any] = None):
         self.logger.debug("Fetching devicemappings")
         try:
-            value = await self._mapping_manager.get_devicesetting_value_of_device(key)
+            value = await self._mapping_manager.get_devicesetting_value_of_device(self.origin, key)
         except (EOFError, FileNotFoundError) as e:
             self.logger.warning("Failed fetching devicemappings with description: {}. Stopping worker", e)
             self._stop_worker_event.set()
@@ -121,7 +121,7 @@ class WorkerBase(AbstractWorker, ABC):
         walkermax = self._walker.get('walkermax', False)
         if walkermax is False or (type(walkermax) is str and len(walkermax) == 0):
             return True
-        reg_workers = await self._mapping_manager.routemanager_get_registered_workers(self._routemanager_name)
+        reg_workers = await self._mapping_manager.routemanager_get_registered_workers(self._routemanager_id)
         if len(reg_workers) > int(walkermax):
             return False
         return True
@@ -202,12 +202,12 @@ class WorkerBase(AbstractWorker, ABC):
         loop = asyncio.get_event_loop()
 
         self._work_mutex: asyncio.Lock = asyncio.Lock()
-        self._init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_name)
+        self._init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_id)
         self._stop_worker_event: asyncio.Event = asyncio.Event()
-        self._mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._routemanager_name)
-        self._levelmode: bool = await self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        self._mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._routemanager_id)
+        self._levelmode: bool = await self._mapping_manager.routemanager_get_level(self._routemanager_id)
         self._geofencehelper: Optional[GeofenceHelper] = await self._mapping_manager.routemanager_get_geofence_helper(
-            self._routemanager_name)
+            self._routemanager_id)
         self.last_location: Optional[Location] = await self.get_devicesettings_value(
             MappingManagerDevicemappingKey.LAST_LOCATION, None)
         self._word_to_screen_matching = await WordToScreenMatching.create(self._communicator, self._pogoWindowManager,
@@ -222,7 +222,7 @@ class WorkerBase(AbstractWorker, ABC):
 
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_MODE,
                                             await self._mapping_manager.routemanager_get_mode(
-                                                self._routemanager_name))
+                                                self._routemanager_id))
         return loop.create_task(self._main_work_thread())
 
     async def stop_worker(self):
@@ -236,7 +236,7 @@ class WorkerBase(AbstractWorker, ABC):
         # current_thread().name = self._origin
 
         start_position = await self.get_devicesettings_value(MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER, None)
-        calc_type = await self._mapping_manager.routemanager_get_calc_type(self._routemanager_name)
+        calc_type = await self._mapping_manager.routemanager_get_calc_type(self._routemanager_id)
 
         if start_position and (self._levelmode and calc_type == "routefree"):
             startcoords = (
@@ -270,7 +270,7 @@ class WorkerBase(AbstractWorker, ABC):
             self.logger.info('Setting startcoords or walker lat {} / lng {}', startcoords[0], startcoords[1])
             await self._communicator.set_location(Location(startcoords[0], startcoords[1]), 0)
 
-            await self._mapping_manager.set_worker_startposition(routemanager_name=self._routemanager_name,
+            await self._mapping_manager.set_worker_startposition(routemanager_name=self._routemanager_id,
                                                                  worker_name=self._origin,
                                                                  lat=float(startcoords[0]),
                                                                  lon=float(startcoords[1]))
@@ -281,8 +281,8 @@ class WorkerBase(AbstractWorker, ABC):
                 await self._get_screen_size()
                 # register worker  in routemanager
                 self.logger.info("Try to register in Routemanager {}",
-                                 await self._mapping_manager.routemanager_get_name(self._routemanager_name))
-                await self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
+                                 await self._mapping_manager.routemanager_get_name(self._routemanager_id))
+                await self._mapping_manager.register_worker_to_routemanager(self._routemanager_id, self._origin)
             except WebsocketWorkerRemovedException:
                 self.logger.error("Timeout during init of worker")
                 # no cleanup required here? TODO: signal websocket server somehow
@@ -317,7 +317,7 @@ class WorkerBase(AbstractWorker, ABC):
         # set the event just to make sure - in case of exceptions for example
         self._stop_worker_event.set()
         try:
-            await self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._origin)
+            await self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_id, self._origin)
         except ConnectionResetError as e:
             self.logger.warning("Failed unregistering from routemanager, routemanager may have stopped running already."
                                 "Exception: {}", e)
@@ -340,7 +340,7 @@ class WorkerBase(AbstractWorker, ABC):
 
         if not await self.check_max_walkers_reached():
             self.logger.warning('Max. Walkers in Area {} - closing connections',
-                                self._mapping_manager.routemanager_get_name(self._routemanager_name))
+                                self._mapping_manager.routemanager_get_name(self._routemanager_id))
             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
             await self._internal_cleanup()
             return
@@ -437,7 +437,7 @@ class WorkerBase(AbstractWorker, ABC):
 
     async def update_scanned_location(self, latitude: float, longitude: float, utc_timestamp: float):
         try:
-            async with self._db_wrapper as session:
+            async with self._db_wrapper as session, session:
                 await ScannedLocationHelper.set_scanned_location(session, latitude, longitude, utc_timestamp)
 
         except Exception as e:
@@ -474,7 +474,7 @@ class WorkerBase(AbstractWorker, ABC):
             if len(rounds) == 0:
                 self.logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
-            processed_rounds = await self._mapping_manager.routemanager_get_rounds(self._routemanager_name,
+            processed_rounds = await self._mapping_manager.routemanager_get_rounds(self._routemanager_id,
                                                                                    self._origin)
             if int(processed_rounds) >= int(rounds):
                 return False
@@ -530,10 +530,10 @@ class WorkerBase(AbstractWorker, ABC):
 
         await self._check_for_mad_job()
 
-        self.current_location = await self._mapping_manager.routemanager_get_next_location(self._routemanager_name,
+        self.current_location = await self._mapping_manager.routemanager_get_next_location(self._routemanager_id,
                                                                                            self._origin)
         self._wait_again: int = 1
-        return await self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+        return await self._mapping_manager.routemanager_get_settings(self._routemanager_id)
 
     async def _check_for_mad_job(self):
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.JOB_ACTIVE, False):
@@ -741,9 +741,9 @@ class WorkerBase(AbstractWorker, ABC):
         if mitm_mapper is not None:
             await mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 3, 0,
                                                      self._mapping_manager.routemanager_get_mode(
-                                                         self._routemanager_name),
+                                                         self._routemanager_id),
                                                      99)
-        async with self._db_wrapper as session:
+        async with self._db_wrapper as session, session:
             await TrsStatusHelper.save_last_reboot(session, self._db_wrapper.get_instance_id(), self._dev_id)
         self._reboot_count = 0
         self._restart_count = 0
@@ -752,7 +752,7 @@ class WorkerBase(AbstractWorker, ABC):
 
     async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
         successful_stop = self._stop_pogo()
-        async with self._db_wrapper as session:
+        async with self._db_wrapper as session, session:
             await TrsStatusHelper.save_last_restart(session, self._db_wrapper.get_instance_id(), self._dev_id)
         self._restart_count = 0
         self.logger.debug("restartPogo: stop game resulted in {}", str(successful_stop))
@@ -763,7 +763,7 @@ class WorkerBase(AbstractWorker, ABC):
             if mitm_mapper is not None:
                 await mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 4, 0,
                                                          self._mapping_manager.routemanager_get_mode(
-                                                             self._routemanager_name),
+                                                             self._routemanager_id),
                                                          99)
             return await self._start_pogo()
         else:
@@ -915,7 +915,7 @@ class WorkerBase(AbstractWorker, ABC):
         self.logger.info('Waiting for pogo start: {} seconds', pogo_start_delay)
 
         while delay_count <= pogo_start_delay:
-            if not await self._mapping_manager.routemanager_present(self._routemanager_name) \
+            if not await self._mapping_manager.routemanager_present(self._routemanager_id) \
                     or self._stop_worker_event.is_set():
                 self.logger.error("Killed while waiting for pogo start")
                 raise InternalStopWorkerException

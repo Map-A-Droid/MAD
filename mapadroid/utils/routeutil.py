@@ -1,6 +1,7 @@
 import datetime
 import re
 
+from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
@@ -43,14 +44,12 @@ def check_time_period(period):
     return tm_from <= tm_now <= tm_til
 
 
-def pre_check_value(walker_settings, eventid):
-    walkertype = walker_settings['walkertype']
-    walkereventid = walker_settings.get('eventid', None)
-    if walkereventid is not None and walkereventid != eventid:
+def pre_check_value(walker_settings: SettingsWalkerarea, eventid):
+    if walker_settings.eventid is not None and walker_settings.eventid != eventid:
         logger.warning("Area is used for another event - leaving now")
         return False
-    if walkertype in ('timer', 'period', 'coords', 'idle'):
-        walkervalue = walker_settings['walkervalue']
+    if walker_settings.algo_type in ('timer', 'period', 'coords', 'idle'):
+        walkervalue = walker_settings.algo_value
         if len(walkervalue) == 0:
             return True
         return check_walker_value_type(walkervalue)

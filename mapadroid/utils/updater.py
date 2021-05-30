@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from multiprocessing import Event, Queue
 from queue import Empty
-from threading import RLock, Thread
+from threading import RLock
 from typing import Optional
 
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
@@ -48,6 +48,7 @@ class DeviceUpdater(object):
     def __init__(self, websocket, args, returning, db, storage_obj: AbstractAPKStorage):
         self._websocket = websocket
         self._update_queue = Queue()
+        # TODO: Replace appropriately
         self._update_mutex = RLock()
         self._db = db
         self._storage_obj = storage_obj
@@ -68,17 +69,8 @@ class DeviceUpdater(object):
                          'or disk health.')
             os.remove('update_log.json')
 
-        self.init_jobs()
-        self.kill_old_jobs()
-        self.load_automatic_jobs()
-
         self._stop_updater_threads: Event = Event()
         self.t_updater = []
-        for i in range(self._args.job_thread_count):
-            job_thread = Thread(name='apk_updater-{}'.format(str(i)), target=self.process_update_queue, args=(i,))
-            job_thread.daemon = True
-            self.t_updater.append(job_thread)
-            job_thread.start()
 
     def stop_updater(self):
         self._stop_updater_threads.set()
@@ -105,6 +97,12 @@ class DeviceUpdater(object):
                         self._commands[command] = peronal_cmd[command]
             except Exception as e:
                 logger.error('Cannot add job {} - Reason: {}', command_file, e)
+        self.kill_old_jobs()
+        await self.load_automatic_jobs()
+        loop = asyncio.get_event_loop()
+        for i in range(self._args.job_thread_count):
+            updater_task = loop.create_task(self.process_update_queue(i))
+            self.t_updater.append(updater_task)
 
     def return_commands(self):
         return self._commands
@@ -157,19 +155,19 @@ class DeviceUpdater(object):
                 self.write_status_log(str(job), delete=True)
 
     @logger.catch()
-    def process_update_queue(self, threadnumber):
+    async def process_update_queue(self, threadnumber):
         logger.info("Starting device job processor thread No {}", threadnumber)
-        time.sleep(10)
+        await asyncio.sleep(10)
         while not self._stop_updater_threads.is_set():
             try:
                 jobstatus = JobReturn.UNKNOWN
                 try:
                     item = self._update_queue.get_nowait()
                 except Empty:
-                    time.sleep(1)
+                    await asyncio.sleep(1)
                     continue
                 if item is None:
-                    time.sleep(1)
+                    await asyncio.sleep(1)
                     continue
 
                 if item not in self._log:
@@ -260,7 +258,7 @@ class DeviceUpdater(object):
                     continue
 
                 if processtime is not None and datetime.fromtimestamp(processtime) > datetime.now():
-                    time.sleep(1)
+                    await asyncio.sleep(1)
                     logger.debug('Job {} on device {} - File/Job: {} - queued of processtime in future (ID: {})',
                                  str(jobtype), str(origin), str(file_), str(job_id))
                     self.add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=counter,
@@ -294,14 +292,14 @@ class DeviceUpdater(object):
                             self.write_status_log(str(job_id), field='laststatus', value='not connected')
                             self._globaljoblog[globalid]['lastjobid'] = job_id
                             jobstatus = JobReturn.NOCONNECT
-                            time.sleep(5)
+                            await asyncio.sleep(5)
 
                         else:
                             # stop worker
                             self._websocket.set_job_activated(origin)
                             self.write_status_log(str(job_id), field='status', value='starting')
                             try:
-                                if self.start_job_type(item, jobtype, temp_comm):
+                                if await self.start_job_type(item, jobtype, temp_comm):
                                     logger.info('Job {} executed successfully - Device {} - File/Job {} (ID: {})',
                                                 jobtype, origin, file_, job_id)
                                     if self._log[str(job_id)]['status'] == 'not required':
@@ -345,14 +343,14 @@ class DeviceUpdater(object):
                         if redo and self._globaljoblog[globalid].get('redoonerror', False):
                             logger.info('Re-add this automatic job for {} (File/Job: {} - Type {})  (ID: {})',
                                         origin, file_, jobtype, job_id)
-                            self.restart_job(job_id=job_id)
+                            await self.restart_job(job_id=job_id)
                             self._globaljoblog[globalid]['lastjobid'] = job_id
                             self._globaljoblog[globalid]['laststatus'] = 'success'
 
                     elif jobstatus in SUCCESS_STATES and redo:
                         logger.info('Re-add this automatic job for {} (File/Job: {} - Type {})  (ID: {})', origin,
                                     file_, jobtype, job_id)
-                        self.restart_job(job_id=job_id)
+                        await self.restart_job(job_id=job_id)
 
                     elif jobstatus == JobReturn.NOCONNECT and self._args.job_restart_notconnect > 0:
                         logger.error("Job for {} (File/Job: {} - Type {}) failed 3 times in row - requeued it (ID: {})",
@@ -372,13 +370,13 @@ class DeviceUpdater(object):
                     self._current_job_id.remove(job_id)
                     self._current_job_device.remove(origin)
                     errorcount = 0
-                    time.sleep(10)
+                    await asyncio.sleep(10)
 
             except KeyboardInterrupt:
                 logger.info("process_update_queue-{} received keyboard interrupt, stopping", threadnumber)
                 break
 
-            time.sleep(2)
+            await asyncio.sleep(2)
         logger.info("Updater thread stopped")
 
     @logger.catch()
@@ -605,7 +603,7 @@ class DeviceUpdater(object):
         except Exception as e:
             logger.error('Cannot send discord webhook for origin {} - Job {} - Reason: {}', origin, file_, e)
 
-    def load_automatic_jobs(self):
+    async def load_automatic_jobs(self):
         self._globaljoblog = {}
         autocommandfile = os.path.join(self._args.file_path, 'autocommands.json')
         if os.path.exists(autocommandfile):
@@ -637,7 +635,7 @@ class DeviceUpdater(object):
 
                     self.preadd_job(origin, job, int(time.time()), str(JobType.CHAIN))
                     # get a unique id !
-                    time.sleep(1)
+                    await asyncio.sleep(1)
         else:
             logger.info('Did not find any automatic jobs')
 

@@ -175,79 +175,82 @@ class WebsocketServer(object):
                 return
             else:
                 self.__users_connecting.add(origin)
+        try:
+            continue_register = True
+            async with self.__current_users_mutex:
+                origin_logger.debug("Checking if an entry is already present")
+                entry = self.__current_users.get(origin, None)
+                device: Optional[SettingsDevice] = None
+                use_configmode = self.__enable_configmode
+                if not self.__enable_configmode:
+                    async with self.__db_wrapper as session, session:
+                        device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(),
+                                                                          origin)
+                    if not await self.__mapping_manager.is_device_active(device.device_id):
+                        origin_logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
+                        use_configmode = True
+                if entry is None or use_configmode:
+                    origin_logger.info("Need to start a new worker thread")
 
-        continue_register = True
-        async with self.__current_users_mutex:
-            origin_logger.debug("Checking if an entry is already present")
-            entry = self.__current_users.get(origin, None)
-            device: Optional[SettingsDevice] = None
-            use_configmode = self.__enable_configmode
-            if not self.__enable_configmode:
-                async with self.__db_wrapper as session:
-                    device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(),
-                                                                      origin)
-                if not await self.__mapping_manager.is_device_active(device.device_id):
-                    origin_logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
-                    use_configmode = True
-            if entry is None or use_configmode:
-                origin_logger.info("Need to start a new worker thread")
-
-                entry = WebsocketConnectedClientEntry(origin=origin,
-                                                      websocket_client_connection=websocket_client_connection,
-                                                      worker_instance=None,
-                                                      worker_task=None)
-                if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
-                    continue_register = False
-            else:
-                origin_logger.info("There is a worker thread entry present, handling accordingly")
-                if entry.websocket_client_connection.open:
-                    origin_logger.error("Old connection open while a new one is attempted to be established, "
-                                        "aborting handling of connection")
-                    continue_register = False
-
-                entry.websocket_client_connection = websocket_client_connection
-                # TODO: also change the worker's Communicator? idk yet
-                if not entry.worker_task.done() and not entry.worker_instance.is_stopping():
-                    origin_logger.info("Worker thread still alive, continue as usual")
-                    # TODO: does this need more handling? probably update communicator or whatever?
-                # TODO: This check will not work with asyncio anymore...
-                elif not entry.worker_task.done():
-                    origin_logger.info("Old task is not done but was supposed to stop?! Trying to start a new one")
-                    # TODO: entry.worker_task.cancel() or somehow call cleanup&cancel?
-                    #  entry.worker_task.cancel()
+                    entry = WebsocketConnectedClientEntry(origin=origin,
+                                                          websocket_client_connection=websocket_client_connection,
+                                                          worker_instance=None,
+                                                          worker_task=None)
                     if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
                         continue_register = False
                 else:
-                    origin_logger.info("Old thread is about to stop. Wait a little and reconnect")
-                    # random sleep to not have clients try again in sync
-                    continue_register = False
-            if continue_register:
-                self.__current_users[origin] = entry
+                    origin_logger.info("There is a worker thread entry present, handling accordingly")
+                    if entry.websocket_client_connection.open:
+                        origin_logger.error("Old connection open while a new one is attempted to be established, "
+                                            "aborting handling of connection")
+                        continue_register = False
 
-        if not continue_register:
-            await asyncio.sleep(rand.uniform(3, 15))
-            async with self.__users_connecting_mutex:
-                origin_logger.debug("Removing from users_connecting")
-                self.__users_connecting.remove(origin)
-            return
+                    entry.websocket_client_connection = websocket_client_connection
+                    # TODO: also change the worker's Communicator? idk yet
+                    if not entry.worker_task.done() and not entry.worker_instance.is_stopping():
+                        origin_logger.info("Worker thread still alive, continue as usual")
+                        # TODO: does this need more handling? probably update communicator or whatever?
+                    # TODO: This check will not work with asyncio anymore...
+                    elif not entry.worker_task.done():
+                        origin_logger.info("Old task is not done but was supposed to stop?! Trying to start a new one")
+                        # TODO: entry.worker_task.cancel() or somehow call cleanup&cancel?
+                        #  entry.worker_task.cancel()
+                        if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
+                            continue_register = False
+                    else:
+                        origin_logger.info("Old thread is about to stop. Wait a little and reconnect")
+                        # random sleep to not have clients try again in sync
+                        continue_register = False
+                if continue_register:
+                    self.__current_users[origin] = entry
 
-        try:
-            if entry.worker_task and not entry.worker_task.done():
-                # TODO..
-                pass
-            # TODO: we need to somehow check threads and synchronize connection status with worker status?
-            async with self.__users_connecting_mutex:
-                self.__users_connecting.remove(origin)
-            receiver_task = asyncio.ensure_future(
-                self.__client_message_receiver(origin, entry))
-            await receiver_task
-        except Exception as e:
-            origin_logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
-        # also check if thread is already running to not start it again. If it is not alive, we need to create it..
+            if not continue_register:
+                await asyncio.sleep(rand.uniform(3, 15))
+                async with self.__users_connecting_mutex:
+                    origin_logger.debug("Removing from users_connecting")
+                    self.__users_connecting.remove(origin)
+                return
+
+            try:
+                if entry.worker_task and not entry.worker_task.done():
+                    # TODO..
+                    pass
+                # TODO: we need to somehow check threads and synchronize connection status with worker status?
+                async with self.__users_connecting_mutex:
+                    self.__users_connecting.remove(origin)
+                receiver_task = asyncio.ensure_future(
+                    self.__client_message_receiver(origin, entry))
+                await receiver_task
+            except Exception as e:
+                origin_logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
+            # also check if thread is already running to not start it again. If it is not alive, we need to create it..
+            finally:
+                origin_logger.info("Awaiting unregister")
+                # TODO: cleanup thread is not really desired, I'd prefer to only restart a worker if the route changes :(
+                await self.__worker_shutdown_queue.put(entry.worker_task)
         finally:
-            origin_logger.info("Awaiting unregister")
-            # TODO: cleanup thread is not really desired, I'd prefer to only restart a worker if the route changes :(
-            await self.__worker_shutdown_queue.put(entry.worker_task)
+            async with self.__users_connecting_mutex:
+                self.__users_connecting.remove(origin)
         origin_logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 
     async def __add_worker_and_thread_to_entry(self, entry, origin, use_configmode: bool = None) -> bool:
@@ -284,7 +287,7 @@ class WebsocketServer(object):
                                   "'APPLY SETTINGS'")
             return origin, False
         elif origin not in (await self.__mapping_manager.get_all_devicemappings()).keys():
-            async with self.__db_wrapper as session:
+            async with self.__db_wrapper as session, session:
                 device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(), origin)
             if device:
                 origin_logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")

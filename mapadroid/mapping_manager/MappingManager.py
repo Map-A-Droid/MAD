@@ -136,7 +136,7 @@ class MappingManager:
 
         self._devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = None
         self._areas: Optional[Dict[int, AreaEntry]] = None
-        self._routemanagers: Optional[Dict[str, dict]] = None
+        self._routemanagers: Optional[Dict[int, RouteManagerBase]] = None
         self._auths: Optional[Dict[str, str]] = None
         self.__areamons: Optional[Dict[int, List[int]]] = {}
         self._monlists: Optional[Dict[int, List[int]]] = None
@@ -237,7 +237,7 @@ class MappingManager:
         elif key == MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME:
             devicemapping_entry.last_questclear_time = value
         else:
-            # TODO: Maybe also set DB stuff? async with self.__db_wrapper as session:
+            # TODO: Maybe also set DB stuff? async with self.__db_wrapper as session, session:
             pass
 
     async def get_devicesetting_value_of_device(self, device_name: str, key: MappingManagerDevicemappingKey):
@@ -266,13 +266,22 @@ class MappingManager:
             return devicemapping_entry.account_rotation_started
         elif key == MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME:
             return devicemapping_entry.last_questclear_time
+        # DB stuff
+        elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST:
+            return devicemapping_entry.pool_settings.enhanced_mode_quest if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.enhanced_mode_quest
+        elif key == MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET:
+            return devicemapping_entry.pool_settings.screenshot_y_offset if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.screenshot_y_offset
+        elif key == MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET:
+            return devicemapping_entry.pool_settings.screenshot_x_offset if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.screenshot_x_offset
+        elif key == MappingManagerDevicemappingKey.LOGINTYPE:
+            return devicemapping_entry.device_settings.logintype
         else:
             # TODO: Get all the DB values...
             pass
 
     async def set_devicesetting_value_of(self, device_name: str, key: MappingManagerDevicemappingKey, value):
         if self._devicemappings.get(device_name, None) is not None:
-            self.__devicesettings_setter_queue.put((device_name, key, value))
+            await self.__devicesettings_setter_queue.put((device_name, key, value))
 
     async def get_all_devicemappings(self) -> Optional[Dict[str, DeviceMappingsEntry]]:
         return self._devicemappings
@@ -289,29 +298,26 @@ class MappingManager:
     async def get_all_routemanager_names(self):
         return self._routemanagers.keys()
 
-    async def __fetch_routemanager(self, routemanager_name: str) -> Optional[RouteManagerBase]:
+    async def __fetch_routemanager(self, routemanager_id: int) -> Optional[RouteManagerBase]:
         async with self.__mappings_mutex:
-            routemanager_dict: dict = self._routemanagers.get(routemanager_name, None)
-            if routemanager_dict is not None:
-                return routemanager_dict.get("routemanager")
-            else:
-                return None
+            routemanager: RouteManagerBase = self._routemanagers.get(routemanager_id, None)
+            return routemanager
 
-    async def routemanager_present(self, routemanager_name: str) -> bool:
+    async def routemanager_present(self, routemanager_id: int) -> bool:
         async with self.__mappings_mutex:
-            return routemanager_name in self._routemanagers.keys()
+            return routemanager_id in self._routemanagers.keys()
 
-    async def routemanager_get_next_location(self, routemanager_name: str, origin: str) -> Optional[Location]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_next_location(self, routemanager_id: int, origin: str) -> Optional[Location]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_next_location(origin) if routemanager is not None else None
 
-    async def routemanager_join(self, routemanager_name: str):
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_join(self, routemanager_id: int):
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         if routemanager is not None:
             # TODO... asnycio
             await routemanager.join_threads()
 
-    async def get_routemanager_name_from_device(self, device_name: str) -> Optional[str]:
+    async def get_routemanager_id_where_device_is_registered(self, device_name: str) -> Optional[int]:
         routemanagers = await self.get_all_routemanager_names()
         for routemanager in routemanagers:
             workers = await self.routemanager_get_registered_workers(routemanager)
@@ -319,117 +325,115 @@ class MappingManager:
                 return routemanager
         return None
 
-    def device_set_disabled(self, device_name: str, routemanager: str = None) -> bool:
-        if routemanager is None:
-            routemanager = self.get_routemanager_name_from_device(device_name)
-            if routemanager is None:
-                logger.info('Device {} is not registered so it cannot be paused', device_name)
-                return False
-        if routemanager is None:
-            return False
-        return True
+    #def device_set_disabled(self, device_name: str) -> bool:
+    #    routemanager = self.get_routemanager_id_where_device_is_registered(device_name)
+    #    if routemanager is None:
+    #        logger.info('Device {} is not registered so it cannot be paused', device_name)
+    #        return False
 
-    async def register_worker_to_routemanager(self, routemanager_name: str, worker_name: str) -> bool:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+#        return True
+
+    async def register_worker_to_routemanager(self, routemanager_id: int, worker_name: str) -> bool:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.register_worker(worker_name) if routemanager is not None else False
 
-    async def unregister_worker_from_routemanager(self, routemanager_name: str, worker_name: str):
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def unregister_worker_from_routemanager(self, routemanager_id: int, worker_name: str):
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.unregister_worker(worker_name) if routemanager is not None else None
 
-    async def routemanager_add_coords_to_be_removed(self, routemanager_name: str, lat: float, lon: float):
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_add_coords_to_be_removed(self, routemanager_id: int, lat: float, lon: float):
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         if routemanager is not None:
             routemanager.add_coord_to_be_removed(lat, lon)
 
-    async def routemanager_get_route_stats(self, routemanager_name: str, origin: str) -> Optional[Tuple[int, int]]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_route_stats(self, routemanager_id: int, origin: str) -> Optional[Tuple[int, int]]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_route_status(origin) if routemanager is not None else None
 
-    async def routemanager_get_rounds(self, routemanager_name: str, worker_name: str) -> Optional[int]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_rounds(self, routemanager_id: int, worker_name: str) -> Optional[int]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_rounds(worker_name) if routemanager is not None else None
 
-    async def routemanager_redo_stop(self, routemanager_name: str, worker_name: str, lat: float,
+    async def routemanager_redo_stop(self, routemanager_id: int, worker_name: str, lat: float,
                                      lon: float) -> bool:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
 
-    async def routemanager_get_registered_workers(self, routemanager_name: str) -> Optional[Set[str]]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_registered_workers(self, routemanager_id: int) -> Optional[Set[str]]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_registered_workers() if routemanager is not None else None
 
-    async def routemanager_get_ids_iv(self, routemanager_name: str) -> Optional[List[int]]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_ids_iv(self, routemanager_id: int) -> Optional[List[int]]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_ids_iv() if routemanager is not None else None
 
-    async def routemanager_get_geofence_helper(self, routemanager_name: str) -> Optional[GeofenceHelper]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_geofence_helper(self, routemanager_id: int) -> Optional[GeofenceHelper]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_geofence_helper() if routemanager is not None else None
 
-    async def routemanager_get_init(self, routemanager_name: str) -> bool:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_init(self, routemanager_id: int) -> bool:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_init() if routemanager is not None else False
 
-    async def routemanager_get_level(self, routemanager_name: str) -> bool:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_level(self, routemanager_id: int) -> bool:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_level_mode() if routemanager is not None else None
 
-    async def routemanager_get_calc_type(self, routemanager_name: str) -> bool:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_calc_type(self, routemanager_id: int) -> bool:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_calc_type() if routemanager is not None else None
 
-    async def routemanager_get_mode(self, routemanager_name: str) -> WorkerType:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_mode(self, routemanager_id: int) -> WorkerType:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_mode() if routemanager is not None else WorkerType.UNDEFINED.value
 
-    async def routemanager_get_name(self, routemanager_name: str) -> Optional[str]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_name(self, routemanager_id: int) -> Optional[str]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.name if routemanager is not None else None
 
-    async def routemanager_get_encounter_ids_left(self, routemanager_name: str) -> Optional[List[int]]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_encounter_ids_left(self, routemanager_id: int) -> Optional[List[int]]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         if routemanager is not None and isinstance(routemanager, RouteManagerIV):
             return routemanager.get_encounter_ids_left()
         else:
             return None
 
-    async def routemanager_get_current_route(self, routemanager_name: str) -> Optional[Tuple[List[Location],
+    async def routemanager_get_current_route(self, routemanager_id: int) -> Optional[Tuple[List[Location],
                                                                                              Dict[
                                                                                                  str, List[Location]]]]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_current_route() if routemanager is not None else None
 
-    async def routemanager_get_current_prioroute(self, routemanager_name: str) -> Optional[List[Location]]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_current_prioroute(self, routemanager_id: int) -> Optional[List[Location]]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_current_prioroute() if routemanager is not None else None
 
-    async def routemanager_get_settings(self, routemanager_name: str) -> Optional[SettingsArea]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_settings(self, routemanager_id: int) -> Optional[SettingsArea]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_settings() if routemanager is not None else None
 
-    async def routemanager_set_worker_sleeping(self, routemanager_name: str, worker_name: str,
+    async def routemanager_set_worker_sleeping(self, routemanager_id: int, worker_name: str,
                                                sleep_duration: float):
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         routemanager.set_worker_sleeping(worker_name, sleep_duration)
 
-    async def set_worker_startposition(self, routemanager_name: str, worker_name: str,
+    async def set_worker_startposition(self, routemanager_id: int, worker_name: str,
                                        lat: float, lon: float):
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         routemanager.set_worker_startposition(worker_name, lat, lon)
 
-    async def routemanager_get_position_type(self, routemanager_name: str, worker_name: str) -> Optional[str]:
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_position_type(self, routemanager_id: int, worker_name: str) -> Optional[str]:
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
 
-    async def routemanager_get_max_radius(self, routemanager_name: str):
-        routemanager = await self.__fetch_routemanager(routemanager_name)
+    async def routemanager_get_max_radius(self, routemanager_id: int):
+        routemanager = await self.__fetch_routemanager(routemanager_id)
         return routemanager.get_max_radius() if routemanager is not None else None
 
-    async def routemanager_recalcualte(self, routemanager_name):
+    async def routemanager_recalcualte(self, routemanager_id: int):
         successful = False
         try:
-            routemanager = await self.__fetch_routemanager(routemanager_name)
+            routemanager = await self.__fetch_routemanager(routemanager_id)
             if not routemanager:
                 return False
             active = False
@@ -623,7 +627,7 @@ class MappingManager:
                     .get(walker.walker_id, [])
                 for walker_to_walkerareas in walkerarea_mappings_of_walker:
                     device_entry.walker_areas.append(all_walkerareas.get(walker_to_walkerareas.walkerarea_id))
-
+            devices[device.name] = device_entry
         return devices
 
     async def __fetch_coords(self, session: AsyncSession, mode: str, geofence_helper: GeofenceHelper,
@@ -781,7 +785,7 @@ class MappingManager:
             logger.info("Mappings have been updated")
 
     async def get_all_devicenames(self) -> List[str]:
-        async with self.__db_wrapper as session:
+        async with self.__db_wrapper as session, session:
             devices = []
             all_devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session,
                                                                                    self.__db_wrapper.get_instance_id())

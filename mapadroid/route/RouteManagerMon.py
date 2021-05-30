@@ -47,11 +47,11 @@ class RouteManagerMon(RouteManagerBase):
         self._init_route_queue()
 
     async def _retrieve_latest_priority_queue(self) -> List[Tuple[int, Location]]:
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             return await TrsSpawnHelper.get_next_spawns(session, self.geofence_helper, self.include_event_id)
 
     async def _get_coords_post_init(self):
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             if self.coords_spawns_known:
                 self.logger.info("Reading known Spawnpoints from DB")
                 coords = await TrsSpawnHelper.get_known_of_area(session, self.geofence_helper, self.include_event_id)
@@ -88,7 +88,7 @@ class RouteManagerMon(RouteManagerBase):
         return True
 
     async def _change_init_mapping(self) -> None:
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             self._settings.init = False
             # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
             # TODO: Ensure that even works with SQLAlchemy's functionality in regards to objects and sessions etc...

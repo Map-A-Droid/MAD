@@ -18,7 +18,7 @@ class Event:
 
     async def event_checker(self):
         while True:
-            async with self._db_wrapper as session:
+            async with self._db_wrapper as session, session:
                 active_event: Optional[TrsEvent] = await TrsEventHelper.get_current_event(session)
                 if active_event:
                     self._event_id = active_event.id

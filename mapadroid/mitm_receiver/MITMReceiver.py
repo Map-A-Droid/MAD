@@ -102,7 +102,7 @@ class EndpointAction(object):
                 self.response = Response("", status=403, headers={})
                 abort = True
             if 'mymac' in str(request.url):
-                async with self._db_wrapper as session:
+                async with self._db_wrapper as session, session:
                     device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session,
                                                                                                 self._db_wrapper.get_instance_id(),
                                                                                                 origin)
@@ -406,7 +406,7 @@ class MITMReceiver():
 
     async def origin_generator_endpoint(self, *args, **kwargs):
         # TODO: async
-        async with self._db_wrapper as session:
+        async with self._db_wrapper as session, session:
             return await origin_generator(session, self._db_wrapper.__instance_id, **kwargs)
 
     # ========================================
@@ -485,7 +485,7 @@ class MITMReceiver():
         except KeyError:
             level, msg = str(await request.data, 'utf-8').split(',', 1)
 
-        async with self._db_wrapper as session:
+        async with self._db_wrapper as session, session:
             autoconfig_log: AutoconfigLog = AutoconfigLog()
             autoconfig_log.session_id = session_id
             autoconfig_log.instance_id = self._db_wrapper.get_instance_id()
@@ -510,7 +510,7 @@ class MITMReceiver():
         origin = request.headers.get('Origin')
         if origin is None:
             return Response("", status=404)
-        async with self._db_wrapper as session:
+        async with self._db_wrapper as session, session:
             device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session,
                                                                                         self._db_wrapper.get_instance_id(),
                                                                                         origin)

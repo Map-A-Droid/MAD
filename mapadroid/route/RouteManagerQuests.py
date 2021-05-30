@@ -46,7 +46,7 @@ class RouteManagerQuests(RouteManagerBase):
         return None
 
     async def _get_coords_post_init(self):
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
 
     def _cluster_priority_queue_criteria(self):

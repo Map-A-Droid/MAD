@@ -44,7 +44,7 @@ class RouteManagerIV(RouteManagerBase):
 
     async def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             latest_priorities = await PokemonHelper.get_to_be_encountered(session,
                                                                           geofence_helper=self.geofence_helper,
                                                                           min_time_left_seconds=self._settings.min_time_left_seconds,

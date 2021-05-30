@@ -21,11 +21,11 @@ logger = get_logger(LoggerEnums.worker)
 
 class WorkerMITM(MITMBase):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
-                 mapping_manager: MappingManager, area_id: int, routemanager_name: str, mitm_mapper: MitmMapper,
+                 mapping_manager: MappingManager, area_id: int, routemanager_id: int, mitm_mapper: MitmMapper,
                  db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker: Dict, event):
         MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
-                          routemanager_name=routemanager_name,
+                          routemanager_id=routemanager_id,
                           db_wrapper=db_wrapper,
                           mitm_mapper=mitm_mapper, pogo_window_manager=pogo_window_manager, walker=walker, event=event)
 
@@ -51,7 +51,7 @@ class WorkerMITM(MITMBase):
     async def _move_to_location(self):
         distance, routemanager_settings = await self._get_route_manager_settings_and_distance_to_current_location()
 
-        if not await self._mapping_manager.routemanager_get_init(self._routemanager_name):
+        if not await self._mapping_manager.routemanager_get_init(self._routemanager_id):
             speed = routemanager_settings.get("speed", 0)
             max_distance = routemanager_settings.get("max_distance", None)
         else:
@@ -111,7 +111,7 @@ class WorkerMITM(MITMBase):
         injected_settings = {}
 
         # don't try catch here, the injection settings update is called in the main loop anyway...
-        routemanager_mode = await self._mapping_manager.routemanager_get_mode(self._routemanager_name)
+        routemanager_mode = await self._mapping_manager.routemanager_get_mode(self._routemanager_id)
 
         ids_iv = []
         if routemanager_mode is None:
@@ -120,19 +120,19 @@ class WorkerMITM(MITMBase):
             scanmode = "nothing"
         elif routemanager_mode == "mon_mitm":
             scanmode = "mons"
-            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_id)
             if routemanager_settings is not None:
                 # TODO: Moving to async
-                ids_iv = self._mapping_manager.get_monlist(self._routemanager_name)
+                ids_iv = self._mapping_manager.get_monlist(self._routemanager_id)
         elif routemanager_mode == "raids_mitm":
             scanmode = "raids"
-            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_id)
             if routemanager_settings is not None:
                 # TODO: Moving to async
-                ids_iv = self._mapping_manager.get_monlist(self._routemanager_name)
+                ids_iv = self._mapping_manager.get_monlist(self._routemanager_id)
         elif routemanager_mode == "iv_mitm":
             scanmode = "ivs"
-            ids_iv = await self._mapping_manager.routemanager_get_encounter_ids_left(self._routemanager_name)
+            ids_iv = await self._mapping_manager.routemanager_get_encounter_ids_left(self._routemanager_id)
         else:
             # TODO: should we throw an exception here?
             ids_iv = []
@@ -144,8 +144,9 @@ class WorkerMITM(MITMBase):
 
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv:
+            # TODO
             (self._latest_encounter_update, encounter_ids) = await self._db_wrapper.update_encounters_from_db(
-                await self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name),
+                await self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_id),
                 self._latest_encounter_update)
             if encounter_ids:
                 self.logger.debug("Found {} new encounter_ids", len(encounter_ids))
@@ -181,7 +182,7 @@ class WorkerMITM(MITMBase):
             return type_of_data_found, data_found
 
         # proto has previously been received, let's check the timestamp...
-        mode = await self._mapping_manager.routemanager_get_mode(self._routemanager_name)
+        mode = await self._mapping_manager.routemanager_get_mode(self._routemanager_id)
         timestamp_of_proto: float = latest_proto_entry.get("timestamp", None)
         self.logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
                           datetime.fromtimestamp(timestamp_of_proto), datetime.fromtimestamp(timestamp),

@@ -245,6 +245,7 @@ async def start():
     await ws_server.start_server()
 
     device_updater = DeviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
+    await device_updater.init_jobs()
     if not args.config_mode:
         if args.webhook:
             rarity = Rarity(args, db_wrapper)

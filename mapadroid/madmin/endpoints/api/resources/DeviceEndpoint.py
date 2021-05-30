@@ -40,8 +40,9 @@ class DeviceEndpoint(AbstractResourceEndpoint):
                 if call == 'device_state':
                     active = args.get('active', 1)
                     self._get_mapping_manager().set_device_state(int(identifier), active)
-                    self._get_mapping_manager().device_set_disabled(device.name)
-                    self._get_ws_server().force_disconnect(device.name)
+                    # TODO:..
+                    # self._get_mapping_manager().device_set_disabled(device.name)
+                    await self._get_ws_server().force_disconnect(device.name)
                     return self._json_response(status=200)
                 elif call == 'flush_level':
                     await TrsVisitedHelper.flush_all_of_origin(self._session, device.name)

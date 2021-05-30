@@ -47,14 +47,14 @@ class RouteManagerRaids(RouteManagerBase):
     async def _retrieve_latest_priority_queue(self):
         # TODO: pass timedelta for timeleft on raids that can be ignored.
         # e.g.: a raid only has 5mins to go, ignore those
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             return await RaidHelper.get_next_hatches(session, self.geofence_helper)
 
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
     async def _get_coords_post_init(self) -> List[Location]:
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             coords: List[Location] = await GymHelper.get_locations_in_fence(session, self.geofence_helper)
             if self._settings.including_stops:
                 self.logger.info("Include stops in coords list too!")
@@ -86,7 +86,7 @@ class RouteManagerRaids(RouteManagerBase):
         return True
 
     async def _change_init_mapping(self) -> None:
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             self._settings.init = False
             # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
             # TODO: Ensure that even works with SQLAlchemy's functionality in regards to objects and sessions etc...

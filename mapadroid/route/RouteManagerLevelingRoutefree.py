@@ -35,7 +35,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                 return False
 
             any_at_all = False
-            async with self.db_wrapper as session:
+            async with self.db_wrapper as session, session:
                 for origin in self._routepool:
                     origin_local_list = []
                     entry: RoutePoolEntry = self._routepool[origin]

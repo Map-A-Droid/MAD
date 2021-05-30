@@ -20,14 +20,14 @@ logger = get_logger(LoggerEnums.worker)
 
 class WorkerConfigmode(AbstractWorker):
     def __init__(self, args, dev_id, origin, communicator: AbstractCommunicator, walker, mapping_manager,
-                 mitm_mapper: MitmMapper, db_wrapper: DbWrapper, area_id: int, routemanager_name: str, event):
+                 mitm_mapper: MitmMapper, db_wrapper: DbWrapper, area_id: int, routemanager_id: int, event):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._args = args
         self._event = event
         self._stop_worker_event = asyncio.Event()
         self._dev_id = dev_id
         self._origin = origin
-        self._routemanager_name = routemanager_name
+        self._routemanager_id = routemanager_id
         self._area_id = area_id
         self._walker = walker
         self.workerstart = None
@@ -48,14 +48,14 @@ class WorkerConfigmode(AbstractWorker):
     async def start_worker(self):
         self.logger.warning("Worker started in configmode! This is special, configuration only mode - do not expect"
                             " scans or avatar moving. After you are done with initial configuration remove -cm flag")
-        await self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
+        await self._mapping_manager.register_worker_to_routemanager(self._routemanager_id, self._origin)
         self.logger.debug("Setting device to idle for routemanager")
         await self._db_wrapper.save_idle_status(self._dev_id, True)
         self.logger.debug("Device set to idle for routemanager")
         while not self._stop_worker_event.is_set() and await self.check_walker():
             await asyncio.sleep(10)
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-        await self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._origin)
+        await self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_id, self._origin)
         try:
             await self._communicator.cleanup()
         finally:

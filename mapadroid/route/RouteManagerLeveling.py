@@ -36,7 +36,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                 return False
 
             any_at_all = False
-            async with self.db_wrapper as session:
+            async with self.db_wrapper as session, session:
                 for origin in self._routepool:
                     origin_local_list = []
                     entry: RoutePoolEntry = self._routepool[origin]
@@ -88,7 +88,7 @@ class RouteManagerLeveling(RouteManagerQuests):
     async def generate_stop_list(self):
         # TODO: Why is there a sleep here?
         await asyncio.sleep(5)
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             stops_in_fence: List[Location] = await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
 
         self.logger.info('Detected stops without quests: {}', len(stops_in_fence))
@@ -113,7 +113,7 @@ class RouteManagerLeveling(RouteManagerQuests):
             self._restore_original_route()
 
             any_unvisited = False
-            async with self.db_wrapper as session:
+            async with self.db_wrapper as session, session:
                 for origin in self._routepool:
                     any_unvisited: bool = await PokestopHelper.any_stops_unvisited(session, self.geofence_helper,
                                                                                    origin)

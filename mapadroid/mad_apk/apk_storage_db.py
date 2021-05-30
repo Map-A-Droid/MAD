@@ -38,13 +38,13 @@ class APKStorageDatabase(AbstractAPKStorage):
             package (APKType): Package to lookup
             architecture (APKArch): Architecture of the package to lookup
         """
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             # TODO: Maybe move session further up the call stack for proper transactions?
             return await MadApkHelper.delete_file(session, package, architecture)
 
     async def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
         "Get the currently installed version of the package / architecture"
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             # TODO: Maybe move session further up the call stack for proper transactions?
             return await MadApkHelper.get_current_version(session, package, architecture)
 
@@ -58,7 +58,7 @@ class APKStorageDatabase(AbstractAPKStorage):
         Returns:
             None if no package is found.  MADPackages if the package lookup is successful
         """
-        async with self.db_wrapper as session:
+        async with self.db_wrapper as session, session:
             # TODO: Maybe move session further up the call stack for proper transactions?
             return await MadApkHelper.get_current_package_info(session, package)
 
