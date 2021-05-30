@@ -10,6 +10,7 @@ from typing import Dict, Optional, Any
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
+from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
@@ -48,7 +49,7 @@ class WorkerBase(AbstractWorker, ABC):
     def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_id: int, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows,
-                 walker: Dict = None, event=None):
+                 walker: SettingsWalkerarea = None, event=None):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._mapping_manager: MappingManager = mapping_manager
         self._routemanager_id: int = routemanager_id
@@ -59,7 +60,7 @@ class WorkerBase(AbstractWorker, ABC):
         self._applicationArgs = args
         self._last_known_state = last_known_state
         self._location_count = 0
-        self._walker: Dict = walker
+        self._walker: SettingsWalkerarea = walker
         self._lastScreenshotTaken = 0
         self._db_wrapper: DbWrapper = db_wrapper
         self._resocalc = Resocalculator
@@ -118,11 +119,10 @@ class WorkerBase(AbstractWorker, ABC):
             self._applicationArgs.temp_path, screenshot_filename)
 
     async def check_max_walkers_reached(self):
-        walkermax = self._walker.get('walkermax', False)
-        if walkermax is False or (type(walkermax) is str and len(walkermax) == 0):
+        if not self._walker :
             return True
         reg_workers = await self._mapping_manager.routemanager_get_registered_workers(self._routemanager_id)
-        if len(reg_workers) > int(walkermax):
+        if self._walker.max_walkers and len(reg_workers) > int(self._walker.max_walkers): # TODO: What if 0?
             return False
         return True
 
@@ -444,14 +444,14 @@ class WorkerBase(AbstractWorker, ABC):
             self.logger.error("Failed updating scanned location: {}", e)
 
     async def check_walker(self):
-        mode = self._walker['walkertype']
-        walkereventid = self._walker.get('eventid', None)
+        mode = self._walker.algo_type
+        walkereventid = self._walker.eventid
         if walkereventid is not None and walkereventid != self._event.get_current_event_id():
             self.logger.warning("Some other Event has started - leaving now")
             return False
         if mode == "countdown":
             self.logger.info("Checking walker mode 'countdown'")
-            countdown = self._walker['walkervalue']
+            countdown = self._walker.algo_value
             if not countdown:
                 self.logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
@@ -463,14 +463,14 @@ class WorkerBase(AbstractWorker, ABC):
             return True
         elif mode == "timer":
             self.logger.debug("Checking walker mode 'timer'")
-            exittime = self._walker['walkervalue']
+            exittime = self._walker.algo_value
             if not exittime or ':' not in exittime:
                 self.logger.error("No or wrong Value for Mode - check your settings! Killing worker")
                 return False
             return check_walker_value_type(exittime)
         elif mode == "round":
             self.logger.debug("Checking walker mode 'round'")
-            rounds = self._walker['walkervalue']
+            rounds = self._walker.algo_value
             if len(rounds) == 0:
                 self.logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
@@ -481,22 +481,22 @@ class WorkerBase(AbstractWorker, ABC):
             return True
         elif mode == "period":
             self.logger.debug("Checking walker mode 'period'")
-            period = self._walker['walkervalue']
+            period = self._walker.algo_value
             if len(period) == 0:
                 self.logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
             return check_walker_value_type(period)
         elif mode == "coords":
-            exittime = self._walker['walkervalue']
+            exittime = self._walker.algo_value
             if len(exittime) > 0:
                 return check_walker_value_type(exittime)
             return True
         elif mode == "idle":
             self.logger.debug("Checking walker mode 'idle'")
-            if len(self._walker['walkervalue']) == 0:
+            if len(self._walker.algo_value) == 0:
                 self.logger.error("Wrong Value for mode - check your settings! Killing worker")
                 return False
-            sleeptime = self._walker['walkervalue']
+            sleeptime = self._walker.algo_value
             self.logger.info('going to sleep')
             killpogo = False
             if check_walker_value_type(sleeptime):

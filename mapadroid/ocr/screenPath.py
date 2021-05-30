@@ -78,7 +78,8 @@ class WordToScreenMatching(object):
         else:
             temp_accounts = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, None)
             if not temp_accounts:
-                self._logger.warning('No GGL Accounts are set - using first @gmail.com Account')
+                # TODO: self._logger.warning('No GGL Accounts are set - using first @gmail.com Account')
+                return
             temp_accounts = temp_accounts.replace(' ', '').split('|')
 
             for account in temp_accounts:
