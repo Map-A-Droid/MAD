@@ -27,6 +27,6 @@ class SettingsDevicepoolHelper:
         stmt = select(SettingsDevicepool).where(SettingsDevicepool.instance_id == instance_id)
         result = await session.execute(stmt)
         mapped: Dict[int, SettingsDevicepool] = {}
-        for pool in result:
+        for pool in result.scalars():
             mapped[pool.pool_id] = pool
         return mapped

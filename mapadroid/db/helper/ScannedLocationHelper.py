@@ -30,7 +30,7 @@ class ScannedLocationHelper:
             scanned_location.cellid = cell_id
         scanned_location.latitude = lat
         scanned_location.longitude = lng
-        scanned_location.last_modified = datetime.utcfromtimestamp(timestamp)
+        scanned_location.last_modified = datetime.utcfromtimestamp(utc_timestamp)
         scanned_location.done = -1
         scanned_location.band1 = -1
         scanned_location.band2 = -1

@@ -47,7 +47,7 @@ class PokestopHelper:
                                           Pokestop.longitude <= max_lon))
         result = await session.execute(stmt)
         list_of_coords: List[Location] = []
-        for pokestop in result:
+        for pokestop in result.scalars():
             list_of_coords.append(Location(pokestop.latitude, pokestop.longitude))
         if geofence_helper:
             return geofence_helper.get_geofenced_coordinates(list_of_coords)
@@ -80,7 +80,7 @@ class PokestopHelper:
                         TrsVisited.origin == None))
         result = await session.execute(stmt)
         unvisited: List[Pokestop] = []
-        for pokestop in result:
+        for pokestop in result.scalars():
             if geofence_helper.is_coord_inside_include_geofence([pokestop.latitude, pokestop.longitude]):
                 unvisited.append(pokestop)
         return unvisited
@@ -98,7 +98,7 @@ class PokestopHelper:
     async def delete(session: AsyncSession, location: Location) -> None:
         pokestop: Optional[Pokestop] = await PokestopHelper.get_at_location(session, location)
         if pokestop:
-            session.delete(pokestop)
+            await session.delete(pokestop)
 
     @staticmethod
     async def get_nearby(session: AsyncSession, location: Location, max_distance: int = 0.5) -> Dict[str, Pokestop]:
@@ -121,7 +121,7 @@ class PokestopHelper:
                                         <= max_distance)
         result = await session.execute(stmt)
         stops: Dict[str, Pokestop] = {}
-        for pokestop in result:
+        for pokestop in result.scalars():
             stops[pokestop.pokestop_id] = pokestop
         return stops
 
@@ -170,7 +170,7 @@ class PokestopHelper:
             if limit > 0:
                 stmt = stmt.limit(limit)
             result = await session.execute(stmt)
-            for stop, _distance in result:
+            for stop, _distance in result.scalars():
                 if not geofence_helper.is_coord_inside_include_geofence([stop.latitude, stop.longitude]):
                     continue
                 stops_retrieved.append(stop)
@@ -234,7 +234,7 @@ class PokestopHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         stop_with_quest: Dict[int, Tuple[Pokestop, TrsQuest]] = {}
-        for (stop, quest) in result:
+        for (stop, quest) in result.scalars():
             stop_with_quest[stop.pokestop_id] = (stop, quest)
         return stop_with_quest
 
@@ -282,7 +282,7 @@ class PokestopHelper:
             .group_by(func.FROM_UNIXTIME(TrsQuest.quest_timestamp, '%y-%m-%d'))
         result = await session.execute(stmt)
         results: List[Tuple[str, int]] = []
-        for timestamp_as_str, count in result:
+        for timestamp_as_str, count in result.scalars():
             results.append((timestamp_as_str, count))
         return results
 
@@ -290,3 +290,4 @@ class PokestopHelper:
     async def submit_pokestop_visited(session: AsyncSession, location: Location) -> None:
         stmt = update(Pokestop).where(and_(Pokestop.latitude == location.lat,
                                            Pokestop.longitude == location.lng)).values(Pokestop.vi)
+        await session.execute(stmt)

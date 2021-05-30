@@ -290,7 +290,7 @@ class MappingManager:
         return self._routemanagers.keys()
 
     async def __fetch_routemanager(self, routemanager_name: str) -> Optional[RouteManagerBase]:
-        with self.__mappings_mutex:
+        async with self.__mappings_mutex:
             routemanager_dict: dict = self._routemanagers.get(routemanager_name, None)
             if routemanager_dict is not None:
                 return routemanager_dict.get("routemanager")
@@ -298,7 +298,7 @@ class MappingManager:
                 return None
 
     async def routemanager_present(self, routemanager_name: str) -> bool:
-        with self.__mappings_mutex:
+        async with self.__mappings_mutex:
             return routemanager_name in self._routemanagers.keys()
 
     async def routemanager_get_next_location(self, routemanager_name: str, origin: str) -> Optional[Location]:
@@ -760,7 +760,7 @@ class MappingManager:
                     devicemappings_tmp[dev].account_index = mapping.account_index
                     devicemappings_tmp[dev].account_rotation_started = mapping.account_rotation_started
                 logger.debug("Acquiring lock to update mappings")
-                with self.__mappings_mutex:
+                async with self.__mappings_mutex:
                     self._areas = areas_tmp
                     self._devicemappings = devicemappings_tmp
                     self._routemanagers = routemanagers_tmp
@@ -768,7 +768,7 @@ class MappingManager:
 
             else:
                 logger.debug("Acquiring lock to update mappings,full")
-                with self.__mappings_mutex:
+                async with self.__mappings_mutex:
                     self._monlists = await self.__get_latest_monlists(session)
                     self._areas = await self.__get_latest_areas(session)
                     self.__areamons = await self.__get_latest_areamons(self._areas)

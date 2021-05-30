@@ -67,6 +67,6 @@ class SettingsDeviceHelper:
     async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsDevice]:
         listed: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
         mapped: Dict[int, SettingsDevice] = {}
-        for device in listed:
+        for device in listed.scalars():
             mapped[device.device_id] = device
         return mapped

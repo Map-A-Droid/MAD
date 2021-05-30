@@ -1,13 +1,12 @@
 from enum import Enum
 from typing import Dict, List, Optional
 
-from sqlalchemy import and_, or_, update
+from sqlalchemy import and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.model import (SettingsDevice, SettingsPogoauth,
-                                SettingsRoutecalc)
+from mapadroid.db.model import (SettingsDevice, SettingsPogoauth)
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -62,9 +61,9 @@ class SettingsPogoauthHelper:
     @staticmethod
     async def get_of_autoconfig(session: AsyncSession, instance_id: int, device_id: int) -> List[SettingsPogoauth]:
         # LEFT JOIN...
-        stmt = select(SettingsPogoauth)\
-            .select_from(SettingsPogoauth)\
-            .join(SettingsDevice, SettingsDevice.device_id == SettingsPogoauth.device_id, isouter=True)\
+        stmt = select(SettingsPogoauth) \
+            .select_from(SettingsPogoauth) \
+            .join(SettingsDevice, SettingsDevice.device_id == SettingsPogoauth.device_id, isouter=True) \
             .where(and_(SettingsPogoauth.instance_id == instance_id,
                         or_(SettingsDevice.device_id == None,
                             SettingsDevice.device_id == device_id)))
@@ -114,7 +113,7 @@ class SettingsPogoauthHelper:
         except (ValueError, TypeError):
             identifier = None
         # Find all unassigned accounts
-        for pogoauth in result:
+        for pogoauth in result.scalars():
             if pogoauth.device_id is not None and identifier is not None and pogoauth.device_id != identifier:
                 continue
             accounts[pogoauth.account_id] = pogoauth

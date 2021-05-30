@@ -56,7 +56,7 @@ class MadApkHelper:
             .join(FilestoreMeta, MadApk.filestore_id == FilestoreMeta.filestore_id)\
             .where(MadApk.usage == package.value)
         result = await session.execute(stmt)
-        for row in result:
+        for row in result.scalars():
             arch = row['arch']
             row['arch_disp'] = APKArch(arch).name
             row['usage_disp'] = APKType(package).name

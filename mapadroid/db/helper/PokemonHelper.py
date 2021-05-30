@@ -43,7 +43,7 @@ class PokemonHelper:
                                           Pokemon.longitude <= max_lon))
         result = await session.execute(stmt)
         encounter_id_infos: Dict[int, int] = {}
-        for pokemon in result:
+        for pokemon in result.scalars():
             if not geofence_helper.is_coord_inside_include_geofence([pokemon.latitude, pokemon.longitude]):
                 continue
             latest = max(latest, pokemon.last_modified.timestamp())
@@ -87,7 +87,7 @@ class PokemonHelper:
         result = await session.execute(stmt)
 
         next_to_encounter = []
-        for pokemon in result:
+        for pokemon in result.scalars():
             if pokemon.pokemon_id not in eligible_mon_ids:
                 continue
             elif pokemon.latitude is None or pokemon.longitude is None:
@@ -160,7 +160,7 @@ class PokemonHelper:
         # SQLAlchemy does not handle group by very well it appears so we will do it in python...
         result = await session.execute(stmt)
         mapped: Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]] = {}
-        for (mon, stats) in result:
+        for (mon, stats) in result.scalars():
             if mon.encounter_id not in mapped:
                 mapped[mon.encounter_id] = (mon, [])
             mapped[mon.encounter_id][1].append(stats)
@@ -196,7 +196,7 @@ class PokemonHelper:
             .group_by(Pokemon.pokemon_id, Pokemon.form)
         result = await session.execute(stmt)
         results = []
-        for res in result:
+        for res in result.scalars():
             results.append(res)
         return results
 
@@ -231,7 +231,7 @@ class PokemonHelper:
             .order_by(timestamp)
         result = await session.execute(stmt)
         results = []
-        for res in result:
+        for res in result.scalars():
             results.append(res)
         return results
 
@@ -278,6 +278,6 @@ class PokemonHelper:
             .group_by(Pokemon.latitude, Pokemon.longitude)
         result = await session.execute(stmt)
         results: List[Tuple[int, Location]] = []
-        for count, lat, lng in result:
+        for count, lat, lng in result.scalars():
             results.append((count, Location(lat, lng)))
         return results

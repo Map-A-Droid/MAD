@@ -7,10 +7,11 @@ from aiofile import async_open
 async def open_json_file(jsonfile):
     try:
         async with async_open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json', encoding='utf8', mode="r") as f:
-            file_open = json.load(f)
+            derp = await f.read()
+            file_open = json.loads(derp)
     except (OSError, json.decoder.JSONDecodeError):
         async with async_open('locale/en/' + jsonfile + '.json', mode="r") as f:
-            file_open = json.load(f)
+            file_open = json.load(await f.read())
 
     return file_open
 

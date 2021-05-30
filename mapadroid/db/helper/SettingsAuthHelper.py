@@ -25,6 +25,6 @@ class SettingsAuthHelper:
     async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsAuth]:
         listed: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, instance_id)
         mapped: Dict[int, SettingsAuth] = {}
-        for device in listed:
+        for device in listed.scalars():
             mapped[device.device_id] = device
         return mapped

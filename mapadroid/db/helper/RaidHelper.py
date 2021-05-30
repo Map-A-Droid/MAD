@@ -26,7 +26,7 @@ class RaidHelper:
             .where(and_(Raid.end > db_time_to_check, Raid.pokemon_id != None))
         result = await session.execute(stmt)
         next_hatches: List[Tuple[int, Location]] = []
-        for (start, latitude, longitude) in result.all():
+        for (start, latitude, longitude) in result.scalars():
             if latitude is None or longitude is None:
                 # logger.warning("lat or lng is none")
                 continue

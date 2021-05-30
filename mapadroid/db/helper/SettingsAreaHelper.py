@@ -1,12 +1,10 @@
-from typing import Dict, List, Optional
+from typing import Optional
 
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import (SettingsArea, SettingsAreaIdle,
-                                SettingsAreaIvMitm, SettingsAreaMonMitm,
-                                SettingsAreaPokestop, SettingsAreaRaidsMitm)
+from mapadroid.db.model import SettingsArea
 
 
 class SettingsAreaHelper:

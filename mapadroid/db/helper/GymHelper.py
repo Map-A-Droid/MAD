@@ -27,7 +27,7 @@ class GymHelper:
         result = await session.execute(stmt)
 
         list_of_coords: List[Location] = []
-        for gym in result:
+        for gym in result.scalars():
             list_of_coords.append(Location(gym.latitude, gym.longitude))
         return geofence_helper.get_geofenced_coordinates(list_of_coords)
 
@@ -56,7 +56,7 @@ class GymHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         gyms: Dict[int, Tuple[Gym, GymDetail, Raid]] = {}
-        for (gym, gym_detail, raid) in result:
+        for (gym, gym_detail, raid) in result.scalars():
             gyms[gym.gym_id] = (gym, gym_detail, raid)
         return gyms
 
@@ -80,6 +80,6 @@ class GymHelper:
             .group_by(Gym.team_id)
         result = await session.execute(stmt)
         team_count: Dict[str, int] = {}
-        for team, count in result:
+        for team, count in result.scalars():
             team_count[team] = count
         return team_count

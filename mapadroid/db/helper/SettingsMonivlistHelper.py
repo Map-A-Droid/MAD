@@ -1,7 +1,7 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from sqlalchemy import and_, delete
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncResult
 from sqlalchemy.future import select
 
 from mapadroid.db.model import SettingsMonivlist, SettingsMonivlistToMon
@@ -20,9 +20,9 @@ class SettingsMonivlistHelper:
 
         """
         stmt = select(SettingsMonivlist).where(SettingsMonivlist.instance_id == instance_id)
-        result = await session.execute(stmt)
+        result: AsyncResult = await session.execute(stmt)
         mapped: Dict[int, List[int]] = {}
-        for mon_iv_list in result:
+        for mon_iv_list in result.scalars():
             mapped[mon_iv_list.monlist_id] = await SettingsMonivlistHelper.get_list(session, instance_id,
                                                                                     mon_iv_list.monlist_id)
         return mapped
@@ -48,7 +48,7 @@ class SettingsMonivlistHelper:
             .order_by(SettingsMonivlistToMon.mon_order)
         mon_ids = await session.execute(stmt)
         mon_ids_raw: List[int] = []
-        for mon_id_entry in mon_ids:
+        for mon_id_entry in mon_ids.scalars():
             mon_ids_raw.append(mon_id_entry.mon_id)
         return mon_ids_raw
 
@@ -64,7 +64,7 @@ class SettingsMonivlistHelper:
         stmt = select(SettingsMonivlist).where(SettingsMonivlist.instance_id == instance_id)
         result = await session.execute(stmt)
         mapped: Dict[int, SettingsMonivlist] = {}
-        for mon_iv_list in result:
+        for mon_iv_list in result.scalars():
             mapped[mon_iv_list.monlist_id] = mon_iv_list
         return mapped
 

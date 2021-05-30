@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import MadApkAutosearch
-from mapadroid.mad_apk import APKArch, APKType
+from mapadroid.mad_apk.apk_enums import APKType, APKArch
 
 
 class MadApkAutosearchHelper:

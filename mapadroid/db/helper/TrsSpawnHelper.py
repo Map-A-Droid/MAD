@@ -53,7 +53,7 @@ class TrsSpawnHelper:
         stmt = select(TrsSpawn).where(where_condition)
         result = await session.execute(stmt)
         list_of_spawns: List[TrsSpawn] = []
-        for spawnpoint in result:
+        for spawnpoint in result.scalars():
             if not geofence_helper.is_coord_inside_include_geofence([spawnpoint.latitude, spawnpoint.longitude]):
                 continue
             list_of_spawns.append(spawnpoint)
@@ -128,7 +128,7 @@ class TrsSpawnHelper:
         current_time = time.time()
         current_time_of_day = datetime.now().replace(microsecond=0)
         timedelta_to_be_added = timedelta(hours=1)
-        for spawn in result:
+        for spawn in result.scalars():
             if not geofence_helper.is_coord_inside_include_geofence([spawn.latitude, spawn.longitude]):
                 continue
             endminsec_split = spawn.calc_endminsec.split(":")
@@ -192,7 +192,8 @@ class TrsSpawnHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         spawns: Dict[int, Tuple[TrsSpawn, TrsEvent]] = {}
-        for (spawn, event) in result:
+        # TODO: Ensure .scalars() is correct here...
+        for (spawn, event) in result.scalars():
             spawns[spawn.spawnpoint] = (spawn, event)
 
         return spawns

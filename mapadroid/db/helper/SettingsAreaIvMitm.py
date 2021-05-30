@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,6 @@ class SettingsAreaIvMitmHelper:
         stmt = select(SettingsAreaIvMitm).where(SettingsAreaIvMitm.instance_id == instance_id)
         result = await session.execute(stmt)
         retval: Dict[int, SettingsAreaIvMitm] = {}
-        for area in result:
+        for area in result.scalars():
             retval[area.area_id] = area
         return retval

@@ -61,7 +61,7 @@ class TrsEventHelper:
         event: Optional[TrsEvent] = await TrsEventHelper.get(session, event_id)
         if not event:
             return False
-        session.delete(event)
+        await session.delete(event)
         # Now delete all spawns
         stmt = delete(TrsSpawn).where(TrsSpawn.eventid == event_id)
         await session.execute(stmt)

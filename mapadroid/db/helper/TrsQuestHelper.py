@@ -59,7 +59,7 @@ class TrsQuestHelper:
             .order_by(TrsQuest.quest_timestamp)
         result = await session.execute(stmt)
         results: List[Tuple[str, int]] = []
-        for timestamp, count in result:
+        for timestamp, count in result.scalars():
             results.append((timestamp, count))
         return result.scalars().all()
 
