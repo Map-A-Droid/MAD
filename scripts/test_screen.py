@@ -42,8 +42,8 @@ class testimage(object):
         if self._mode == "open_next_del_item":
             self._image_check = self.open_next_del_item(self._image)
 
-        if self._mode == "swipe_del_item":
-            self._image_check = self.swipe_del_item(self._image)
+        if self._mode == "get_click_item_minus":
+            self._image_check = self.get_click_item_minus(self._image)
 
         if self._mode == "confirm_delete_item":
             self._image_check = self.confirm_delete_item(self._image)
@@ -115,11 +115,10 @@ class testimage(object):
         y += self._resocalc.get_next_item_coord(self)
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
-    def swipe_del_item(self, image):
-        print('Swipe del item')
-        x1, x2, y = self._resocalc.get_swipe_item_amount(self)[0], self._resocalc.get_swipe_item_amount(self)[
-            1], self._resocalc.get_swipe_item_amount(self)[2]
-        return cv2.line(image, (int(x1), int(y)), (int(x2), int(y)), (255, 0, 0), 5)
+    def get_click_item_minus(self, image):
+        print('Click minus item')
+        x, y = self._resocalc.get_click_item_minus(self)
+        return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def confirm_delete_item(self, image):
         print('Check confirm delete item')

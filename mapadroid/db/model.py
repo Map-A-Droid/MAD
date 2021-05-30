@@ -703,7 +703,6 @@ class SettingsDevice(Base):
     post_pogo_start_delay = Column(Float)
     restart_pogo = Column(INTEGER(11))
     inventory_clear_rounds = Column(INTEGER(11))
-    inventory_clear_item_amount_tap_duration = Column(INTEGER(11))
     mitm_wait_timeout = Column(Float)
     vps_delay = Column(Float)
     reboot = Column(TINYINT(1))

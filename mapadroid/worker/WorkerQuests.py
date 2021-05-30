@@ -357,10 +357,7 @@ class WorkerQuests(MITMBase):
         text_x1, text_x2, _, _ = self._resocalc.get_delete_item_text(self)
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
-        click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)
-        click_duration = int(
-            await self.get_devicesettings_value(MappingManagerDevicemappingKey.INVENTORY_CLEAR_ITEM_AMOUNT_TAP_DURATION,
-                                                3)) * 1000
+        click_x, click_y = self._resocalc.get_click_item_minus(self)
         delrounds_remaining = int(
             await self.get_devicesettings_value(MappingManagerDevicemappingKey.INVENTORY_CLEAR_ROUNDS, 10))
         first_round = True
@@ -387,7 +384,7 @@ class WorkerQuests(MITMBase):
                                 raise InternalStopWorkerException
                     continue
                 self.logger.info('Found no item to delete. Scrolling down ({} times)', error_counter)
-                await self._communicator.touch_and_hold(int(200), int(600), int(200), int(100))
+                await self._communicator.click(click_x, click_y)
                 await asyncio.sleep(5)
 
             trashcancheck = await self._get_trash_positions()
