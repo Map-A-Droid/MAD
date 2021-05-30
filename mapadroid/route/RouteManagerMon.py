@@ -59,7 +59,7 @@ class RouteManagerMon(RouteManagerBase):
                 self.logger.info("Reading unknown Spawnpoints from DB")
                 coords = await TrsSpawnHelper.get_known_without_despawn_of_area(session, self.geofence_helper,
                                                                                 self.include_event_id)
-        self._start_priority_queue()
+        await self._start_priority_queue()
         return coords
 
     def _cluster_priority_queue_criteria(self):
@@ -71,7 +71,7 @@ class RouteManagerMon(RouteManagerBase):
                 self._is_started = True
                 self.logger.info("Starting routemanager {}", self.name)
                 if not self.init:
-                    self._start_priority_queue()
+                    await self._start_priority_queue()
                 await self._start_check_routepools()
                 self._init_route_queue()
         return True

@@ -79,7 +79,7 @@ class RouteManagerIV(RouteManagerBase):
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
-                self._start_priority_queue()
+                await self._start_priority_queue()
         return True
 
     def _quit_route(self):

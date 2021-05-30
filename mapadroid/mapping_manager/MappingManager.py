@@ -351,7 +351,7 @@ class MappingManager:
 
     async def routemanager_get_next_location(self, routemanager_id: int, origin: str) -> Optional[Location]:
         routemanager = await self.__fetch_routemanager(routemanager_id)
-        return routemanager.get_next_location(origin) if routemanager is not None else None
+        return await routemanager.get_next_location(origin) if routemanager is not None else None
 
     async def routemanager_join(self, routemanager_id: int):
         routemanager = await self.__fetch_routemanager(routemanager_id)

@@ -72,7 +72,7 @@ class RouteManagerRaids(RouteManagerBase):
                 self._is_started = True
                 self.logger.info("Starting routemanager")
                 if self._mode != WorkerType.IDLE:
-                    self._start_priority_queue()
+                    await self._start_priority_queue()
                     await self._start_check_routepools()
                     self._init_route_queue()
         return True

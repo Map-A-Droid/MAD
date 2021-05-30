@@ -240,7 +240,7 @@ class RouteManagerBase(ABC):
                 self.logger.info("Routemanager does not have any subscribing workers anymore, calling stop")
                 self.stop_routemanager()
 
-    def _start_priority_queue(self):
+    async def _start_priority_queue(self):
         if (self.delay_after_timestamp_prio is not None or self._mode == WorkerType.IV_MITM) \
                 and not self._mode == WorkerType.STOPS:
             if self._stop_update_thread.is_set():
@@ -250,10 +250,8 @@ class RouteManagerBase(ABC):
                 self.clustering_helper = ClusteringHelper(self._max_radius,
                                                           self._max_clustering,
                                                           self._cluster_priority_queue_criteria())
-            self._update_prio_queue_thread = Thread(name=self.name + "- prio_queue_update",
-                                                    target=self._update_priority_queue_loop)
-            self._update_prio_queue_thread.daemon = True
-            self._update_prio_queue_thread.start()
+            loop = asyncio.get_event_loop()
+            self._update_prio_queue_thread = loop.create_task(self._update_priority_queue_loop())
             self.logger.info("Started PrioQ")
 
     # list_coords is a numpy array of arrays!
@@ -355,17 +353,17 @@ class RouteManagerBase(ABC):
             else:
                 self.stop_routemanager()
 
-    def _update_priority_queue_loop(self):
+    async def _update_priority_queue_loop(self):
         if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:
             return
         while not self._stop_update_thread.is_set():
             # retrieve the latest hatches from DB
-            new_queue = self._retrieve_latest_priority_queue()
+            new_queue = await self._retrieve_latest_priority_queue()
             self._merge_priority_queue(new_queue)
             redocounter = 0
             while redocounter <= self._priority_queue_update_interval() and not self._stop_update_thread.is_set():
                 redocounter += 1
-                time.sleep(1)
+                await asyncio.sleep(1)
                 if self._stop_update_thread.is_set():
                     self.logger.info("Kill Prio Queue loop while sleeping")
                     break
@@ -578,7 +576,7 @@ class RouteManagerBase(ABC):
                 if self._mode == WorkerType.IV_MITM:
                     got_location = self._prio_queue is not None and len(self._prio_queue) > 0
                     if not got_location:
-                        time.sleep(1)
+                        await asyncio.sleep(1)
                 else:
                     # normal mode - should always have a route
                     got_location = True
