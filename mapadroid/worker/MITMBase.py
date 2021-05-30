@@ -439,7 +439,7 @@ class MITMBase(WorkerBase, ABC):
             if self._rec_data_time:
                 status.lastProtoDateTime = datetime.utcnow()
                 self._rec_data_time = None
-            await session.add(status)
+            session.add(status)
 
     async def _worker_specific_setup_stop(self):
         self.logger.info("Stopping pogodroid")

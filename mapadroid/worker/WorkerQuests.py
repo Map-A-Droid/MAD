@@ -187,7 +187,7 @@ class WorkerQuests(MITMBase):
         else:
             delay_used = distance / (area_settings.speed / 3.6)  # speed is in kmph , delay_used need mps
             self.logger.info("main: Walking {} m, this will take {} seconds", distance, delay_used)
-            cur_time = self._walk_to_location(area_settings.speed)
+            cur_time = await self._walk_to_location(area_settings.speed)
 
             delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)
         walk_distance_post_teleport = await self.get_devicesettings_value(

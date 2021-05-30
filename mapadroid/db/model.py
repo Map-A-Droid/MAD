@@ -1,5 +1,4 @@
 # coding: utf-8
-from geoalchemy2 import Geometry
 from sqlalchemy import (TIMESTAMP, Column, DateTime, Float, ForeignKey, Index,
                         String, Table, text)
 from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
@@ -7,6 +6,8 @@ from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
                                        VARCHAR)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+
+from mapadroid.db.GeometryColumnType import GeometryColumnType
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -443,8 +444,8 @@ t_v_trs_status = Table(
     Column('lastPogoReboot', BIGINT(17)),
     Column('currentPos', String(46)),
     Column('lastPos', String(46)),
-    Column('currentPos_raw', Geometry('POINT')),
-    Column('lastPos_raw', Geometry('POINT'))
+    Column('currentPos_raw', GeometryColumnType),
+    Column('lastPos_raw', GeometryColumnType)
 )
 
 
@@ -736,8 +737,8 @@ class TrsStatus(SettingsDevice):
 
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     device_id = Column(ForeignKey('settings_device.device_id', ondelete='CASCADE'), primary_key=True)
-    currentPos = Column(Geometry('POINT'))
-    lastPos = Column(Geometry('POINT'))
+    currentPos = Column(GeometryColumnType)
+    lastPos = Column(GeometryColumnType)
     routePos = Column(INTEGER(11))
     routeMax = Column(INTEGER(11))
     area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), index=True)

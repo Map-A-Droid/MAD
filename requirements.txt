@@ -23,7 +23,6 @@ greenlet
 Pillow~=8.1.0
 SQLAlchemy
 urllib3~=1.26.2
-GeoAlchemy2
 
 aiounittest~=1.4.0
 aiofile

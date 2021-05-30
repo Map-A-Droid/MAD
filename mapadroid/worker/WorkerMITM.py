@@ -83,7 +83,7 @@ class WorkerMITM(MITMBase):
                 await self._walk_after_teleport(walk_distance_post_teleport)
         else:
             self.logger.info("main: Walking...")
-            timestamp_to_use = self._walk_to_location(speed)
+            timestamp_to_use = await self._walk_to_location(speed)
 
             delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)
         self.logger.debug2("Sleeping for {}s", delay_used)
