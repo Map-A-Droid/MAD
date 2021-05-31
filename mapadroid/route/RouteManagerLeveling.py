@@ -1,8 +1,6 @@
 import asyncio
 from typing import List, Optional
 
-import numpy as np
-
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
@@ -29,7 +27,7 @@ class RouteManagerLeveling(RouteManagerQuests):
         self._stoplist: List[Location] = []
 
     async def _worker_changed_update_routepools(self):
-        with self._manager_mutex and self._workers_registered_mutex:
+        with self._manager_mutex:
             self.logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
             if len(self._workers_registered) == 0:
                 self.logger.info("No registered workers, aborting __worker_changed_update_routepools...")
@@ -76,13 +74,11 @@ class RouteManagerLeveling(RouteManagerQuests):
                 return any_at_all
 
     async def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]):
-        to_be_route = np.zeros(shape=(len(unvisited_stops), 2))
-        for i in range(len(unvisited_stops)):
-            to_be_route[i][0] = float(unvisited_stops[i].latitude)
-            to_be_route[i][1] = float(unvisited_stops[i].longitude)
-        new_route = await self.calculate_new_route(to_be_route, self._max_radius, self._max_coords_within_radius,
-                                                   False, 1,
-                                                   True)
+        coords: List[Location] = []
+        for stop in unvisited_stops:
+            coords.append(Location(stop.latitude, stop.longitude))
+        new_route = await self._calculate_new_route(coords, self._max_radius, self._max_coords_within_radius,
+                                                    False, 1, True)
         return new_route
 
     async def generate_stop_list(self):
@@ -138,13 +134,12 @@ class RouteManagerLeveling(RouteManagerQuests):
                 self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
-        with self._manager_mutex:
-            # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
-            # least one origin is connected to it.
-            return self._stoplist
+        # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
+        # least one origin is connected to it.
+        return self._stoplist
 
-    async def _start_routemanager(self):
-        with self._manager_mutex:
+    async def start_routemanager(self):
+        async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")

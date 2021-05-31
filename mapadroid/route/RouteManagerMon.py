@@ -65,8 +65,8 @@ class RouteManagerMon(RouteManagerBase):
     def _cluster_priority_queue_criteria(self):
         return self._settings.priority_queue_clustering_timedelta
 
-    async def _start_routemanager(self):
-        with self._manager_mutex:
+    async def start_routemanager(self):
+        async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager {}", self.name)

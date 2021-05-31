@@ -66,8 +66,8 @@ class RouteManagerRaids(RouteManagerBase):
         return self._settings.priority_queue_clustering_timedelta \
             if self._settings.priority_queue_clustering_timedelta is not None else 600
 
-    async def _start_routemanager(self):
-        with self._manager_mutex:
+    async def start_routemanager(self):
+        async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")

@@ -109,7 +109,7 @@ class DbPogoProtoSubmit:
                     mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
                 mon.last_modified = datetime.utcnow()
                 mon.disappear_time = despawn_time
-                session.add(mon)
+                await session.merge(mon)
 
                 cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                 if cache_time > 0:
@@ -207,7 +207,7 @@ class DbPogoProtoSubmit:
         mon.form = form
         mon.last_modified = datetime.utcnow()
         mon.disappear_time = despawn_time
-        session.add(mon)
+        await session.merge(mon)
 
         cache_time = int(despawn_time_unix - datetime.now().timestamp())
         if cache_time > 0:
@@ -324,7 +324,7 @@ class DbPogoProtoSubmit:
                 return True
 
             await cache.set(cache_key, 1, ex=900)
-            session.add(stop)
+            await session.merge(stop)
         return stop is not None
 
     async def quest(self, session: AsyncSession, origin: str, quest_proto: dict, mitm_mapper):
@@ -390,7 +390,7 @@ class DbPogoProtoSubmit:
         quest.quest_template = quest_template
 
         origin_logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
-        session.add(quest)
+        await session.merge(quest)
         return True
 
     async def gyms(self, session: AsyncSession, origin: str, map_proto: dict):
@@ -438,7 +438,7 @@ class DbPogoProtoSubmit:
                     gym_obj.last_scanned = datetime.utcnow()
                     gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
                     gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
-                    session.add(gym_obj)
+                    await session.merge(gym_obj)
 
                     gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gymid)
                     if not gym_detail:
@@ -447,7 +447,7 @@ class DbPogoProtoSubmit:
                         gym_detail.name = "unknown"
                     gym_detail.url = gym.get("image_url", "")
                     gym_detail.last_scanned = datetime.utcnow()
-                    session.add(gym_detail)
+                    await session.merge(gym_detail)
 
                     await cache.set(cache_key, 1, ex=900)
         return True
@@ -485,7 +485,7 @@ class DbPogoProtoSubmit:
             touched = True
             gym_detail.url = url
         if touched:
-            session.add(gym_detail)
+            await session.merge(gym_detail)
         return True
 
     async def raids(self, session: AsyncSession, origin: str, map_proto: dict, mitm_mapper):
@@ -565,7 +565,7 @@ class DbPogoProtoSubmit:
                     raid.gender = gender
                     raid.costume = costume
                     raid.evolution = evolution
-                    session.add(raid)
+                    await session.merge(raid)
 
                     await cache.set(cache_key, 1, ex=900)
         origin_logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
@@ -606,7 +606,7 @@ class DbPogoProtoSubmit:
                 s2cell.center_longitude = lng
             # TODO: cache?
             s2cell.updated = cell["current_timestamp"] / 1000
-            session.add(s2cell)
+            await session.merge(s2cell)
 
     async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache, stop_data) -> Optional[Pokestop]:
         if stop_data["type"] != 1:
@@ -684,7 +684,7 @@ class DbPogoProtoSubmit:
         pokestop.is_ar_scan_eligible = is_ar_scan_eligible
 
         await cache.set(cache_key, 1, ex=900)
-        session.add(pokestop)
+        await session.merge(pokestop)
 
     async def _extract_args_single_stop_details(self, session: AsyncSession, stop_data) -> Optional[Pokestop]:
         if stop_data.get("type", 999) != 1:
@@ -743,7 +743,7 @@ class DbPogoProtoSubmit:
                                                    weather.gameplay_weather)
         if await cache.exists(cache_key):
             return
-        session.add(weather)
+        await session.merge(weather)
         await cache.set(cache_key, 1, ex=900)
 
     async def _get_spawndef(self, session: AsyncSession, spawn_ids) -> Dict[int, TrsSpawn]:

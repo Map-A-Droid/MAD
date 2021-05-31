@@ -5,7 +5,7 @@ import time
 from abc import abstractmethod, ABC
 from asyncio import Task
 from enum import Enum
-from typing import Dict, Optional, Any
+from typing import Optional, Any
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper

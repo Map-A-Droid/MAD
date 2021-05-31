@@ -100,12 +100,12 @@ class RoutecalcUtil:
         return export_data
 
     @staticmethod
-    def get_less_coords(np_coords: List[Location], max_radius: int, max_coords_within_radius: int,
+    def get_less_coords(coords: List[Location], max_radius: int, max_coords_within_radius: int,
                         use_s2: bool = False, s2_level: int = 15):
         """
         Clusters the coords inserted according to the parameters provided
         Args:
-            np_coords:
+            coords:
             max_radius:
             max_coords_within_radius:
             use_s2:
@@ -115,7 +115,7 @@ class RoutecalcUtil:
 
         """
         coordinates: List[Tuple[int, Location]] = []
-        for coord in np_coords:
+        for coord in coords:
             coordinates.append(
                 (0, coord)
             )

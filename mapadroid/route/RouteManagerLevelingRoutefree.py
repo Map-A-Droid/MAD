@@ -28,7 +28,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         self.init = area.init
 
     async def _worker_changed_update_routepools(self):
-        with self._manager_mutex and self._workers_registered_mutex:
+        async with self._manager_mutex:
             self.logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
             if len(self._workers_registered) == 0:
                 self.logger.info("No registered workers, aborting __worker_changed_update_routepools...")
@@ -91,23 +91,21 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         self._init_route_queue()
 
     async def _get_coords_after_finish_route(self) -> bool:
-        with self._manager_mutex:
-            if self._shutdown_route:
-                self.logger.info('Other worker shutdown route - leaving it')
-                return False
+        if self._shutdown_route:
+            self.logger.info('Other worker shutdown route - leaving it')
+            return False
 
-            await self._worker_changed_update_routepools()
-            self._start_calc = False
-            return True
+        await self._worker_changed_update_routepools()
+        self._start_calc = False
+        return True
 
     def _check_unprocessed_stops(self):
-        with self._manager_mutex:
-            # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
-            # least one origin is connected to it.
-            return self._stoplist
+        # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
+        # least one origin is connected to it.
+        return self._stoplist
 
-    async def _start_routemanager(self):
-        with self._manager_mutex:
+    async def start_routemanager(self):
+        async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")

@@ -1,4 +1,3 @@
-import collections
 import time
 from typing import List, Optional
 
@@ -66,7 +65,7 @@ class RouteManagerQuests(RouteManagerBase):
         self._init_route_queue()
 
     async def _get_coords_after_finish_route(self) -> bool:
-        with self._manager_mutex:
+        async with self._manager_mutex:
             if self._shutdown_route:
                 self.logger.info('Other worker shutdown - leaving it')
                 return False
@@ -103,36 +102,35 @@ class RouteManagerQuests(RouteManagerBase):
             self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
-        with self._manager_mutex:
-            list_of_stops_to_return: List[Location] = []
+        list_of_stops_to_return: List[Location] = []
 
-            if len(self._stoplist) == 0:
-                return list_of_stops_to_return
-            else:
-                # we only want to add stops that we haven't spun yet
-                for stop in self._stoplist:
-                    if stop not in self._stops_not_processed and stop not in self._get_unprocessed_coords_from_worker():
-                        self._stops_not_processed[stop] = 1
-                    else:
-                        self._stops_not_processed[stop] += 1
-
-            for stop, error_count in self._stops_not_processed.items():
-                if stop not in self._stoplist:
-                    self.logger.info("Location {} is no longer in our stoplist and will be ignored", stop)
-                    self._coords_to_be_ignored.add(stop)
-                elif error_count < 4:
-                    self.logger.info("Found stop not processed yet: {}", stop)
-                    list_of_stops_to_return.append(stop)
-                else:
-                    self.logger.warning("Stop {} has not been processed thrice in a row, please check your DB", stop)
-                    self._coords_to_be_ignored.add(stop)
-
-            if len(list_of_stops_to_return) > 0:
-                self.logger.info("Found stops not yet processed, retrying those in the next round")
+        if len(self._stoplist) == 0:
             return list_of_stops_to_return
+        else:
+            # we only want to add stops that we haven't spun yet
+            for stop in self._stoplist:
+                if stop not in self._stops_not_processed and stop not in self._get_unprocessed_coords_from_worker():
+                    self._stops_not_processed[stop] = 1
+                else:
+                    self._stops_not_processed[stop] += 1
 
-    def _start_routemanager(self):
-        with self._manager_mutex:
+        for stop, error_count in self._stops_not_processed.items():
+            if stop not in self._stoplist:
+                self.logger.info("Location {} is no longer in our stoplist and will be ignored", stop)
+                self._coords_to_be_ignored.add(stop)
+            elif error_count < 4:
+                self.logger.info("Found stop not processed yet: {}", stop)
+                list_of_stops_to_return.append(stop)
+            else:
+                self.logger.warning("Stop {} has not been processed thrice in a row, please check your DB", stop)
+                self._coords_to_be_ignored.add(stop)
+
+        if len(list_of_stops_to_return) > 0:
+            self.logger.info("Found stops not yet processed, retrying those in the next round")
+        return list_of_stops_to_return
+
+    async def start_routemanager(self):
+        async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
@@ -146,7 +144,7 @@ class RouteManagerQuests(RouteManagerBase):
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None
                 self.starve_route = False
-                self._start_check_routepools()
+                await self._start_check_routepools()
 
                 if self.init:
                     self.logger.info('Starting init mode')
@@ -230,4 +228,5 @@ class RouteManagerQuests(RouteManagerBase):
     async def _change_init_mapping(self) -> None:
         self._settings.init = False
         # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
-        await session.merge(self._settings)
+        async with self.db_wrapper as session, session:
+            await session.merge(self._settings)

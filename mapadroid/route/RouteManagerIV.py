@@ -1,4 +1,3 @@
-import heapq
 from typing import List, Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
@@ -54,11 +53,9 @@ class RouteManagerIV(RouteManagerBase):
         for prio in latest_priorities:
             new_list.append(prio[2])
         self.encounter_ids_left = new_list
-
-        with self._manager_mutex:
-            heapq.heapify(latest_priorities)
-            self._prio_queue = latest_priorities
-        return None
+        # Clear old encounters in the list...
+        self._prio_queue.clear()
+        return latest_priorities
 
     def get_encounter_ids_left(self) -> List[int]:
         return self.encounter_ids_left
@@ -74,8 +71,8 @@ class RouteManagerIV(RouteManagerBase):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    async def _start_routemanager(self):
-        with self._manager_mutex:
+    async def start_routemanager(self):
+        async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
                 self.logger.info("Starting routemanager")
