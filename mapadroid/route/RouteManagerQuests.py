@@ -25,10 +25,10 @@ class RouteManagerQuests(RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv
                                   )
         self._settings: SettingsAreaPokestop = area
-        self._calctype = area.route_calc_algorithm
+        self._calctype: str = area.route_calc_algorithm
         self.starve_route = False
         self._stoplist: List[Location] = []
-        self.init = area.init
+        self.init: bool = True if area.init == 1 else False
         self._shutdown_route: bool = False
         self._routecopy: List[Location] = []
         self._tempinit: bool = False

@@ -25,7 +25,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                                       joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                       )
         self._level = True
-        self.init = area.init
+        self.init: bool = True if area.init == 1 else False
 
     async def _worker_changed_update_routepools(self):
         async with self._manager_mutex:

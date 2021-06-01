@@ -200,8 +200,8 @@ class MITMBase(WorkerBase, ABC):
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
                                                        self._waittime_without_delays,
                                                        position_type, 0,
-                                                       self._mapping_manager.routemanager_get_mode(
-                                                     self._routemanager_id),
+                                                       await self._mapping_manager.routemanager_get_mode(
+                                                           self._routemanager_id),
                                                        self._transporttype)
         self._restart_count += 1
         restart_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.RESTART_THRESH, 5)

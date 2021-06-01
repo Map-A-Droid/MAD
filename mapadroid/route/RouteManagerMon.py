@@ -25,14 +25,16 @@ class RouteManagerMon(RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv
                                   )
         self._settings: SettingsAreaMonMitm = area
-        self.coords_spawns_known = area.coords_spawns_known
-        self.include_event_id = area.include_event_id
-        self.init = area.init
-        self.remove_from_queue_backlog = area.remove_from_queue_backlog
-        self.delay_after_timestamp_prio = area.delay_after_prio_event
-        self.starve_route = area.starve_route
-        self._max_clustering = area.max_clustering
-        self.init_mode_rounds = area.init_mode_rounds
+        self.coords_spawns_known: bool = True if area.coords_spawns_known == 1 else False
+        self.include_event_id: Optional[int] = area.include_event_id
+        self.init: bool = True if area.init == 1 else False
+        self.remove_from_queue_backlog: Optional[int] = int(
+            area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
+        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
+        self.starve_route: bool = True if area.starve_route == 1 else False
+        if area.max_clustering:
+            self._max_clustering: int = area.max_clustering
+        self.init_mode_rounds: int = area.init_mode_rounds
 
     def _priority_queue_update_interval(self):
         return 600
@@ -43,7 +45,7 @@ class RouteManagerMon(RouteManagerBase):
 
     async def _recalc_route_workertype(self):
         await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                          in_memory=False)
+                                in_memory=False)
         self._init_route_queue()
 
     async def _retrieve_latest_priority_queue(self) -> List[Tuple[int, Location]]:

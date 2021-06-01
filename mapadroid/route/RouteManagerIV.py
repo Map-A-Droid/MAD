@@ -24,9 +24,9 @@ class RouteManagerIV(RouteManagerBase):
                                   )
         self._settings: SettingsAreaIvMitm = area
         self.encounter_ids_left: List[int] = []
-        self.starve_route = True
-        self.remove_from_queue_backlog = area.remove_from_queue_backlog
-        self.delay_after_timestamp_prio = area.delay_after_prio_event
+        self.starve_route: bool = True
+        self.remove_from_queue_backlog: int = area.remove_from_queue_backlog
+        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
         if self.delay_after_timestamp_prio is None or self.delay_after_timestamp_prio == 0:
             # just set a value to enable the queue
             self.delay_after_timestamp_prio = 5

@@ -523,7 +523,8 @@ class MappingManager:
         # TODO: use amount of CPUs, use process pool?
         thread_pool = ThreadPool(processes=4)
         routemanagers: Dict[int, RouteManagerBase] = {}
-        areas_procs = {}
+        areas_procs: Dict[int, Task] = {}
+        loop = asyncio.get_running_loop()
         for area_id, area in areas.items():
             if area.geofence_included is None:
                 raise RuntimeError("Cannot work without geofence_included")
@@ -601,12 +602,11 @@ class MappingManager:
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area.mode]["range"]
                 max_count_in_radius = mode_mapping[area.mode]["max_count"]
+                task: Optional[Task] = None
                 if not getattr(area, "init", False):
                     # TODO: proper usage in asnycio loop
-                    proc = thread_pool.apply_async(route_manager.initial_calculation,
-                                                   args=(max_radius, max_count_in_radius,
-                                                         0, False))
-                    areas_procs[area_id] = proc
+                    task = loop.create_task(route_manager.initial_calculation(max_radius, max_count_in_radius, 0,
+                                                                              False))
                 else:
                     logger.info("Init mode enabled. Going row-based for {}", area.name)
                     # we are in init, let's write the init route to file to make it visible in madmin
@@ -621,15 +621,14 @@ class MappingManager:
                         await session.flush()
                     # gotta feed the route to routemanager... TODO: without recalc...
                     # TODO: proper usage in asnycio loop
-                    proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
-                                                                                     0, False))
-                    areas_procs[area_id] = proc
+                    task = loop.create_task(route_manager.recalc_route(1, 99999999, 0, False))
+                areas_procs[area_id] = task
 
             routemanagers[area.area_id] = route_manager
         for area in areas_procs.keys():
             # TODO: Async executors...
-            to_be_checked = areas_procs[area]
-            await to_be_checked.get()
+            to_be_checked: Task = areas_procs[area]
+            await to_be_checked
 
         thread_pool.close()
         thread_pool.join()

@@ -4,10 +4,11 @@ from mapadroid.utils.collections import Relation
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_middle_of_coord_list)
 from mapadroid.utils.s2Helper import S2Helper
+from loguru import logger
 
 
 class ClusteringHelper:
-    def __init__(self, max_radius, max_count_per_circle, max_timedelta_seconds, use_s2: bool = False,
+    def __init__(self, max_radius, max_count_per_circle: int, max_timedelta_seconds, use_s2: bool = False,
                  s2_level: int = 30):
         self.max_radius = max_radius
         self.max_count_per_circle = max_count_per_circle
@@ -185,11 +186,14 @@ class ClusteringHelper:
 
         while len(relations) > 0:
             west_next = self._get_most_west_amongst_relations(relations)
-            middle_event, events_to_be_removed = self._get_circle(west_next, relations[west_next], relations,
-                                                                  self.max_radius)
-            final_set.append(middle_event)
-            relations = self._remove_coords_from_relations(
-                relations, events_to_be_removed)
+            try:
+                middle_event, events_to_be_removed = self._get_circle(west_next, relations[west_next], relations,
+                                                                      self.max_radius)
+                final_set.append(middle_event)
+                relations = self._remove_coords_from_relations(
+                    relations, events_to_be_removed)
+            except Exception as e:
+                logger.exception(e)
         return final_set
 
     def get_clustered(self, queue):

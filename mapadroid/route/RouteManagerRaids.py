@@ -26,11 +26,12 @@ class RouteManagerRaids(RouteManagerBase):
                                   joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
                                   )
         self._settings: SettingsAreaRaidsMitm = area
-        self.remove_from_queue_backlog = area.remove_from_queue_backlog
-        self.delay_after_timestamp_prio = area.delay_after_prio_event
-        self.starve_route = area.starve_route
-        self.init_mode_rounds = area.init_mode_rounds
-        self.init = area.init
+        self.remove_from_queue_backlog: Optional[int] = int(
+            area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
+        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
+        self.starve_route: bool = True if area.starve_route == 1 else False
+        self.init_mode_rounds: int = area.init_mode_rounds
+        self.init: bool = True if area.init == 1 else False
 
     def _priority_queue_update_interval(self):
         return 300

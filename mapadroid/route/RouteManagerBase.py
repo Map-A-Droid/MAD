@@ -119,7 +119,7 @@ class RouteManagerBase(ABC):
         self._max_clustering: int = self._max_coords_within_radius
         self.delay_after_timestamp_prio: int = 0
         self.starve_route: bool = False
-        self.remove_from_queue_backlog: int = 0
+        self.remove_from_queue_backlog: Optional[int] = 0
         self.init_mode_rounds: int = 1
         self._mon_ids_iv: List[int] = mon_ids_iv
         # initialize priority queue variables
@@ -353,7 +353,8 @@ class RouteManagerBase(ABC):
             new_queue = list(new_queue)
             self.logger.info("Got {} new events", len(new_queue))
             # TODO: verify if this procedure is good for other modes, too
-            if self._mode == "mon_mitm":
+            # TODO: Async Executor as clustering takes time..
+            if self._mode == WorkerType.MON_MITM:
                 new_queue = self._filter_priority_queue_internal(new_queue)
                 self.logger.debug2("Merging existing Q of {} events with {} clustered new events",
                                    len(self._prio_queue), len(new_queue))
