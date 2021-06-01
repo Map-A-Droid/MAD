@@ -2,7 +2,6 @@ import asyncio
 import copy
 from asyncio import Task, QueueEmpty
 from multiprocessing import Event
-from multiprocessing.pool import ThreadPool
 from threading import Thread
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -521,7 +520,6 @@ class MappingManager:
             return areas
         areas = await self.__db_wrapper.get_all_areas(session)
         # TODO: use amount of CPUs, use process pool?
-        thread_pool = ThreadPool(processes=4)
         routemanagers: Dict[int, RouteManagerBase] = {}
         areas_procs: Dict[int, Task] = {}
         loop = asyncio.get_running_loop()
@@ -630,8 +628,6 @@ class MappingManager:
             to_be_checked: Task = areas_procs[area]
             await to_be_checked
 
-        thread_pool.close()
-        thread_pool.join()
         return routemanagers
 
     async def __get_latest_devicemappings(self, session: AsyncSession) -> Dict[str, DeviceMappingsEntry]:
@@ -790,8 +786,8 @@ class MappingManager:
         Updates the internal mappings and routemanagers
         :return:
         """
-        async with self.__db_wrapper as session, session:
-            if not full_lock:
+        if not full_lock:
+            async with self.__db_wrapper as session, session:
                 self._monlists = await self.__get_latest_monlists(session)
                 areas_tmp = await self.__get_latest_areas(session)
                 self.__areamons = await self.__get_latest_areamons(areas_tmp)
@@ -799,35 +795,36 @@ class MappingManager:
                 routemanagers_tmp = await self.__get_latest_routemanagers(session)
                 auths_tmp = await self.__get_latest_auths(session)
 
-                for area_id, routemanager in self._routemanagers:
-                    logger.info("Stopping all routemanagers and join threads")
-                    routemanager.stop_routemanager(joinwithqueue=False)
-                    routemanager.join_threads()
+            for area_id, routemanager in self._routemanagers:
+                logger.info("Stopping all routemanagers and join threads")
+                routemanager.stop_routemanager(joinwithqueue=False)
+                routemanager.join_threads()
 
-                logger.info("Restoring old devicesettings")
-                for dev, mapping in self._devicemappings.items():
-                    devicemappings_tmp[dev].last_location = mapping.last_location
-                    devicemappings_tmp[dev].last_known_mode = mapping.last_known_mode
-                    devicemappings_tmp[dev].account_index = mapping.account_index
-                    devicemappings_tmp[dev].account_rotation_started = mapping.account_rotation_started
-                logger.debug("Acquiring lock to update mappings")
-                async with self.__mappings_mutex:
-                    self._areas = areas_tmp
-                    self._devicemappings = devicemappings_tmp
-                    self._routemanagers = routemanagers_tmp
-                    self._auths = auths_tmp
+            logger.info("Restoring old devicesettings")
+            for dev, mapping in self._devicemappings.items():
+                devicemappings_tmp[dev].last_location = mapping.last_location
+                devicemappings_tmp[dev].last_known_mode = mapping.last_known_mode
+                devicemappings_tmp[dev].account_index = mapping.account_index
+                devicemappings_tmp[dev].account_rotation_started = mapping.account_rotation_started
+            logger.debug("Acquiring lock to update mappings")
+            async with self.__mappings_mutex:
+                self._areas = areas_tmp
+                self._devicemappings = devicemappings_tmp
+                self._routemanagers = routemanagers_tmp
+                self._auths = auths_tmp
 
-            else:
-                logger.debug("Acquiring lock to update mappings,full")
-                async with self.__mappings_mutex:
-                    self._monlists = await self.__get_latest_monlists(session)
+        else:
+            logger.debug("Acquiring lock to update mappings,full")
+            async with self.__mappings_mutex:
+                async with self.__db_wrapper as session, session:
                     self._areas = await self.__get_latest_areas(session)
+                    self._monlists = await self.__get_latest_monlists(session)
                     self.__areamons = await self.__get_latest_areamons(self._areas)
                     self._routemanagers = await self.__get_latest_routemanagers(session)
                     self._devicemappings = await self.__get_latest_devicemappings(session)
                     self._auths = await self.__get_latest_auths(session)
 
-            logger.info("Mappings have been updated")
+        logger.info("Mappings have been updated")
 
     async def get_all_devicenames(self) -> List[str]:
         async with self.__db_wrapper as session, session:

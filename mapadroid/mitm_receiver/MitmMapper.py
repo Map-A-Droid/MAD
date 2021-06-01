@@ -1,7 +1,7 @@
 import asyncio
 import time
 from queue import Empty
-from typing import Dict, Optional, Tuple, Set
+from typing import Dict, Optional, Tuple, Set, List
 
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.model import SettingsDevice, SettingsDevicepool
@@ -115,16 +115,16 @@ class MitmMapper(object):
 
         return False
 
-    async def get_safe_items(self, origin) -> Set[int]:
+    async def get_safe_items(self, origin) -> List[int]:
         devicesettings: Optional[Tuple[SettingsDevice, SettingsDevicepool]] = await self.__mapping_manager.get_devicesettings_of(origin)
         values: str = ""
-        if not devicesettings:
-            values = "1301, 1401,1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
-        elif devicesettings[1] and devicesettings[1].enhanced_mode_quest_safe_items:
+        if devicesettings[1] and devicesettings[1].enhanced_mode_quest_safe_items:
             values = devicesettings[1].enhanced_mode_quest_safe_items
         else:
             values = devicesettings[0].enhanced_mode_quest_safe_items
-        return set(map(int, values.split(",")))
+        if not values:
+            values = "1301, 1401,1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
+        return list(map(int, values.split(",")))
 
     async def request_latest(self, origin, key=None):
         origin_logger = get_origin_logger(logger, origin=origin)

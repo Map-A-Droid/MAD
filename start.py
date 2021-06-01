@@ -184,10 +184,7 @@ async def start():
     db_wrapper, db_exec = DbFactory.get_wrapper(args)
     await db_exec.setup()
     await db_wrapper.setup()
-    try:
-        instance_id = db_wrapper.update_instance_id()
-    except Exception:
-        instance_id = None
+
     # TODO: MADPatcher(args, data_manager)
     #  data_manager.clear_on_boot()
     #  data_manager.fix_routecalc_on_boot()
@@ -244,24 +241,24 @@ async def start():
     # t_ws.start()
     await ws_server.start_server()
 
-    device_updater = DeviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
-    await device_updater.init_jobs()
-    if not args.config_mode:
-        if args.webhook:
-            rarity = Rarity(args, db_wrapper)
-            rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity, db_wrapper.webhook_reader)
-            # TODO: Start webhook_worker task
+    #device_updater = DeviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
+    #await device_updater.init_jobs()
+    #if not args.config_mode:
+    #    if args.webhook:
+    #        rarity = Rarity(args, db_wrapper)
+    #        rarity.start_dynamic_rarity()
+    #        webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity, db_wrapper.webhook_reader)
+    #        # TODO: Start webhook_worker task
             # t_whw = Thread(name="system",
-            #               target=webhook_worker.run_worker)
+   #         #               target=webhook_worker.run_worker)
             #t_whw.daemon = True
-            #t_whw.start()
-        if args.statistic:
-            logger.info("Starting statistics collector")
-            t_usage = Thread(name='system',
-                             target=get_system_infos, args=(db_wrapper,))
-            t_usage.daemon = True
-            t_usage.start()
+  #          #t_whw.start()
+  #      if args.statistic:
+  #          logger.info("Starting statistics collector")
+  #          t_usage = Thread(name='system',
+  #                           target=get_system_infos, args=(db_wrapper,))
+  #          t_usage.daemon = True
+  #          t_usage.start()
 
     # madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
 
@@ -280,7 +277,7 @@ async def start():
         # 'storage_elem': storage_elem,
         'webhook_worker': webhook_worker,
         'ws_server': ws_server,
-        'mitm_data_processor_manager': mitm_data_processor_manager
+    #    'mitm_data_processor_manager': mitm_data_processor_manager
     }
     # TODO: Restore functionality
     # mad_plugins = PluginCollection('plugins', plugin_parts)
@@ -349,10 +346,10 @@ async def start():
                 # mitm_receiver_process.()
                 # logger.debug("Trying to join MITMReceiver")
                 # mitm_receiver_process.join()
-                mitm_receiver_task.cancel()
+                #mitm_receiver_task.cancel()
                 logger.debug("MITMReceiver joined")
-            if mitm_data_processor_manager is not None:
-                await mitm_data_processor_manager.shutdown()
+           # if mitm_data_processor_manager is not None:
+         #       await mitm_data_processor_manager.shutdown()
             if device_updater is not None:
                 device_updater.stop_updater()
             if t_whw is not None:

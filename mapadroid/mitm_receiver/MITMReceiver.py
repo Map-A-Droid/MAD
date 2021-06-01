@@ -167,6 +167,7 @@ class EndpointAction(object):
                     self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
                 origin_logger.warning("Could not get JSON data from request: {}", e)
+                origin_logger.exception(e)
                 self.response = Response("", status=500, headers={})
         return self.response
 

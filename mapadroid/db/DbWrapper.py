@@ -49,7 +49,7 @@ class DbWrapper:
 
     async def setup(self) -> None:
         try:
-            async with self as session:
+            async with self as session, session:
                 await self.update_instance_id(session)
         except Exception:
             self.__instance_id = None
