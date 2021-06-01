@@ -19,7 +19,7 @@ class DbAccessor:
 
     async def __aenter__(self) -> AsyncSession:
         await self.__db_access_semaphore.acquire()
-        return AsyncSession(self.__db_engine, autoflush=False)
+        return AsyncSession(self.__db_engine, autoflush=True)
 
     async def __aexit__(self, type_, value, traceback):
         self.__db_access_semaphore.release()

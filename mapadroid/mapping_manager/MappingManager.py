@@ -320,6 +320,8 @@ class MappingManager:
             return devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.screendetection
         elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST_SAFE_ITEMS:
             return devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.enhanced_mode_quest_safe_items
+        elif key == MappingManagerDevicemappingKey.CLEAR_GAME_DATA:
+            return devicemapping_entry.device_settings.clear_game_data
         else:
             # TODO: Get all the DB values...
             pass

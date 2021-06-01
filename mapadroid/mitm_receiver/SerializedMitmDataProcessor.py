@@ -34,12 +34,14 @@ class SerializedMitmDataProcessor:
                     break
                 start_time = self.get_time_ms()
                 # TODO: Tidy up... Do we even want to await the result? maybe just keep track of the amount of parallel tasks? The majority of waiting will be the DB...
-                try:
-                    async with self.__db_wrapper as session, session:
-                        await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
-                except Exception as e:
-                    logger.info("Failed processing data... {}", e)
-                    logger.exception(e)
+                async with self.__db_wrapper as session, session:
+                    async with session.begin() as transaction:
+                        try:
+                            await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
+                        except Exception as e:
+                            logger.info("Failed processing data... {}", e)
+                            logger.exception(e)
+                            await transaction.rollback()
                 # await self.process_data(item[0], item[1], item[2])
                 self.__queue.task_done()
                 end_time = self.get_time_ms() - start_time
@@ -74,7 +76,6 @@ class SerializedMitmDataProcessor:
             # We can use the current session easily...
             if data_type == 106:
                 origin_logger.info("Processing GMO. Received at {}", processed_timestamp)
-
                 weather_time_start = self.get_time_ms()
                 await self.__db_submit.weather(session, origin, data["payload"], received_timestamp)
                 weather_time = self.get_time_ms() - weather_time_start
@@ -144,7 +145,6 @@ class SerializedMitmDataProcessor:
                 await self.__db_submit.gym(session, origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
                 origin_logger.debug("Done processing proto 156 in {}ms", end_time)
-        await session.commit()
 
     @staticmethod
     def get_time_ms():
