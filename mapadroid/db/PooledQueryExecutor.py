@@ -12,7 +12,7 @@ logger = get_logger(LoggerEnums.database)
 
 
 class PooledQueryExecutor:
-    def __init__(self, args, host, port, username, password, database, poolsize=1):
+    def __init__(self, args, host, port, username, password, database, poolsize=2):
         # TODO: Create redis cache elsewhere...
         self.args = args
         self.host = host

@@ -640,7 +640,12 @@ class DbPogoProtoSubmit:
                 s2cell.center_longitude = lng
             # TODO: cache?
             s2cell.updated = cell["current_timestamp"] / 1000
-            await session.merge(s2cell)
+            async with session.begin_nested() as nested_transaction:
+                try:
+                    await session.merge(s2cell)
+                except sqlalchemy.exc.IntegrityError as e:
+                    logger.warning("Failed committing cell for gym {} ({})", cell_id, str(e))
+                    await nested_transaction.rollback()
 
     async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache, stop_data) -> Optional[Pokestop]:
         if stop_data["type"] != 1:
@@ -832,3 +837,6 @@ class DbPogoProtoSubmit:
             minte_group[3] = 0
             minte_group[7] = 1
         return minte_group.uint
+
+    def get_time_ms(self):
+        return int(time.time() * 1000)
