@@ -28,11 +28,11 @@ class SerializedMitmDataProcessor:
         # TODO: use event to stop... Remove try/catch...
         while True:
             try:
-                start_time = self.get_time_ms()
                 item = await self.__queue.get()
                 if item is None:
                     logger.info("Received signal to stop MITM data processor")
                     break
+                start_time = self.get_time_ms()
                 # TODO: Tidy up... Do we even want to await the result? maybe just keep track of the amount of parallel tasks? The majority of waiting will be the DB...
                 try:
                     async with self.__db_wrapper as session, session:

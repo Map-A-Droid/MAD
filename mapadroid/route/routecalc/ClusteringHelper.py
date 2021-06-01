@@ -1,6 +1,9 @@
+from collections import Collection
+from typing import Tuple, List
+
 import s2sphere
 
-from mapadroid.utils.collections import Relation
+from mapadroid.utils.collections import Relation, Location
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_middle_of_coord_list)
 from mapadroid.utils.s2Helper import S2Helper
@@ -181,22 +184,22 @@ class ClusteringHelper:
                         relations[source_event].remove(relation)
         return relations
 
-    def _sum_up_relations(self, relations):
-        final_set = []
+    def _sum_up_relations(self, relations) -> Collection[Tuple[int, Location]]:
+        final_set: List[Tuple[int, Location]] = []
 
         while len(relations) > 0:
             west_next = self._get_most_west_amongst_relations(relations)
             try:
                 middle_event, events_to_be_removed = self._get_circle(west_next, relations[west_next], relations,
                                                                       self.max_radius)
-                final_set.append(middle_event)
+                final_set.append((middle_event[0], middle_event[1]))
                 relations = self._remove_coords_from_relations(
                     relations, events_to_be_removed)
             except Exception as e:
                 logger.exception(e)
         return final_set
 
-    def get_clustered(self, queue):
+    def get_clustered(self, queue) -> Collection[Tuple[int, Location]]:
         relations = self._get_relations_in_range_within_time(
             queue, max_radius=self.max_radius)
         summed_up = self._sum_up_relations(relations)

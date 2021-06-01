@@ -9,7 +9,7 @@ from datetime import datetime
 from enum import IntEnum
 from operator import itemgetter
 from threading import Thread
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Collection
 
 import numpy as np
 from dataclasses import dataclass
@@ -358,7 +358,7 @@ class RouteManagerBase(ABC):
                 new_queue = self._filter_priority_queue_internal(new_queue)
                 self.logger.debug2("Merging existing Q of {} events with {} clustered new events",
                                    len(self._prio_queue), len(new_queue))
-                merged = set(new_queue + self._prio_queue)
+                merged: Collection[Tuple[int, Location]] = set(new_queue + self._prio_queue)
                 merged = list(merged)
                 self.logger.info("Merging resulted in queue with {} entries", len(merged))
                 merged = self._filter_priority_queue_internal(merged, cluster=False)
@@ -467,7 +467,7 @@ class RouteManagerBase(ABC):
         :return:
         """
 
-    def _filter_priority_queue_internal(self, latest, cluster=True):
+    def _filter_priority_queue_internal(self, latest, cluster=True) -> Collection[Tuple[int, Location]]:
         """
         Filter through the internal priority queue and cluster events within the timedelta and distance returned by
         _cluster_priority_queue_criteria
