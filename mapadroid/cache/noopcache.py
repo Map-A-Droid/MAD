@@ -1,5 +1,8 @@
+from typing import Optional
+
+
 class NoopCache:
-    async def set(self, key, value, ex=None):
+    async def set(self, key, value, expire: Optional[int] = None):
         pass
 
     async def get(self, key):

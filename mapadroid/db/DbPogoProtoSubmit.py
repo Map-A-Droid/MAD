@@ -116,7 +116,7 @@ class DbPogoProtoSubmit:
 
                         cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                         if cache_time > 0:
-                            await cache.set(cache_key, 1, ex=cache_time)
+                            await cache.set(cache_key, 1, expire=cache_time)
                         await nested_transaction.commit()
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.warning("Failed committing mon {} ({})", encounter_id, str(e))
@@ -217,7 +217,7 @@ class DbPogoProtoSubmit:
 
         cache_time = int(despawn_time_unix - datetime.now().timestamp())
         if cache_time > 0:
-            await cache.set(cache_key, 1, ex=int(cache_time))
+            await cache.set(cache_key, 1, expire=int(cache_time))
         origin_logger.debug3("Done updating mon in DB")
 
         return True
@@ -331,7 +331,7 @@ class DbPogoProtoSubmit:
                 return True
             async with session.begin_nested() as nested_transaction:
                 try:
-                    await cache.set(cache_key, 1, ex=900)
+                    await cache.set(cache_key, 1, expire=900)
                     await session.merge(stop)
                     await nested_transaction.commit()
                 except sqlalchemy.exc.IntegrityError as e:
@@ -468,7 +468,7 @@ class DbPogoProtoSubmit:
                             gym_detail.last_scanned = datetime.utcnow()
                             await session.merge(gym_detail)
 
-                            await cache.set(cache_key, 1, ex=900)
+                            await cache.set(cache_key, 1, expire=900)
                             await nested_transaction.commit()
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.warning("Failed committing gym data of {} ({})", gymid, str(e))
@@ -597,7 +597,7 @@ class DbPogoProtoSubmit:
                             raid.evolution = evolution
                             await session.merge(raid)
 
-                            await cache.set(cache_key, 1, ex=900)
+                            await cache.set(cache_key, 1, expire=900)
                             await nested_transaction.commit()
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.warning("Failed committing raid for gym {} ({})", gymid, str(e))
@@ -623,12 +623,16 @@ class DbPogoProtoSubmit:
 
     async def cells(self, session: AsyncSession, origin: str, map_proto: dict):
         protocells = map_proto.get("cells", [])
+        cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
 
         for cell in protocells:
             cell_id = cell["id"]
 
             if cell_id < 0:
                 cell_id = cell_id + 2 ** 64
+            cache_key = "s2cell{}".format(cell_id)
+            if await cache.exists(cache_key):
+                continue
 
             lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
 
@@ -638,11 +642,13 @@ class DbPogoProtoSubmit:
                 s2cell.level = 15
                 s2cell.center_latitude = lat
                 s2cell.center_longitude = lng
-            # TODO: cache?
             s2cell.updated = cell["current_timestamp"] / 1000
             async with session.begin_nested() as nested_transaction:
                 try:
                     await session.merge(s2cell)
+                    # Only update s2cell's current_timestamp every 30s at most to avoid too many UPDATE operations
+                    # in dense areas being covered by a number of devices
+                    await cache.set(cache_key, 1, expire=30)
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed committing cell for gym {} ({})", cell_id, str(e))
                     await nested_transaction.rollback()
@@ -724,7 +730,7 @@ class DbPogoProtoSubmit:
                 pokestop.incident_grunt_type = incident_grunt_type
                 pokestop.is_ar_scan_eligible = is_ar_scan_eligible
 
-                await cache.set(cache_key, 1, ex=900)
+                await cache.set(cache_key, 1, expire=900)
                 await session.merge(pokestop)
                 await nested_transaction.commit()
             except sqlalchemy.exc.IntegrityError as e:
@@ -791,7 +797,7 @@ class DbPogoProtoSubmit:
         async with session.begin_nested() as nested_transaction:
             try:
                 await session.merge(weather)
-                await cache.set(cache_key, 1, ex=900)
+                await cache.set(cache_key, 1, expire=900)
                 await nested_transaction.commit()
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing weather of cell {} ({})", cell_id, str(e))
