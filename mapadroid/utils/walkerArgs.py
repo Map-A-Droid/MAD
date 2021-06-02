@@ -282,6 +282,8 @@ def parse_args():
                         help=('Redis host used by caching'))
     parser.add_argument('-cp', '--cache_port', default=6379,
                         help=('Redis port used by caching'))
+    parser.add_argument('-cpwd', '--cache_password', default=None,
+                        help=('Redis password'))
     parser.add_argument('-cdb', '--cache_database', default=0,
                         help=('Redis database. Use different numbers (0-15) if you are running multiple instances'))
 
