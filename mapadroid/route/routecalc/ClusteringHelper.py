@@ -184,7 +184,7 @@ class ClusteringHelper:
                         relations[source_event].remove(relation)
         return relations
 
-    def _sum_up_relations(self, relations) -> Collection[Tuple[int, Location]]:
+    def _sum_up_relations(self, relations) -> List[Tuple[int, Location]]:
         final_set: List[Tuple[int, Location]] = []
 
         while len(relations) > 0:
@@ -199,7 +199,7 @@ class ClusteringHelper:
                 logger.exception(e)
         return final_set
 
-    def get_clustered(self, queue) -> Collection[Tuple[int, Location]]:
+    def get_clustered(self, queue) -> List[Tuple[int, Location]]:
         relations = self._get_relations_in_range_within_time(
             queue, max_radius=self.max_radius)
         summed_up = self._sum_up_relations(relations)

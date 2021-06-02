@@ -1,3 +1,5 @@
+import asyncio
+import concurrent.futures
 import datetime
 from typing import List, Tuple, Optional
 
@@ -52,7 +54,11 @@ class RoutecalcUtil:
         less_coords = coords
         if len(coords) > 0 and max_radius and max_coords_within_radius:
             logger.info("Calculating route for {}", route_name)
-            new_coords = RoutecalcUtil.get_less_coords(coords, max_radius, max_coords_within_radius, use_s2, s2_level)
+            loop = asyncio.get_running_loop()
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                new_coords = await loop.run_in_executor(
+                    pool, RoutecalcUtil.get_less_coords, (coords, max_radius, max_coords_within_radius, use_s2,
+                                                          s2_level,))
             less_coords = np.zeros(shape=(len(new_coords), 2))
             for i in range(len(less_coords)):
                 less_coords[i][0] = new_coords[i][0]
@@ -71,7 +77,10 @@ class RoutecalcUtil:
             start = timer()
             from mapadroid.route.routecalc.calculate_route_all import \
                 route_calc_all
-            sol_best = route_calc_all(less_coords, route_name, num_processes, algorithm)
+            loop = asyncio.get_running_loop()
+            with concurrent.futures.ProcessPoolExecutor() as pool:
+                sol_best = await loop.run_in_executor(
+                    pool, route_calc_all, (less_coords, route_name, num_processes, algorithm,))
 
             end = timer()
 
