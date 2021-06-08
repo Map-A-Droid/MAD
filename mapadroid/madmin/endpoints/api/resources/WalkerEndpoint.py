@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Set
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
-from mapadroid.db.model import Base, SettingsWalker
+from mapadroid.db.model import Base, SettingsWalker, SettingsWalkerToWalkerarea
 from mapadroid.db.resource_definitions.Walker import Walker
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint
@@ -33,9 +33,10 @@ class WalkerEndpoint(AbstractResourceEndpoint):
         await SettingsWalkerToWalkerareaHelper.set(self._session, walker, value)
 
     async def _get_additional_keys(self, identifier: int) -> Dict:
-        additional_keys: Dict = {"setup": await SettingsWalkerToWalkerareaHelper.get(self._session,
-                                                                                     self._get_instance_id(),
-                                                                                     identifier)}
+        setup: Optional[List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper.get(self._session,
+                                                   self._get_instance_id(),
+                                                   identifier)
+        additional_keys: Dict = {"setup": setup}
         return additional_keys
 
     async def _handle_additional_keys(self, db_entry: Base, key: str, value):

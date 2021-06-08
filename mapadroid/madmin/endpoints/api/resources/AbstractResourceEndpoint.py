@@ -65,10 +65,20 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                 return self._json_response(self.request.method, status=404)
             else:
                 found_entries[identifier] = entry
-        for identifier in found_entries.keys():
-            found_entries[identifier] = self._translate_object_for_response(found_entries[identifier])
-            additional_keys: Dict = await self._get_additional_keys(identifier)
-            found_entries[identifier].update(additional_keys)
+        for identifier, value in found_entries.items():
+            if isinstance(value, list):
+                # hopefully a plain list...
+                found_entries[identifier] = value
+            else:
+                found_entries[identifier] = self._translate_object_for_response(value)
+                additional_keys: Dict = await self._get_additional_keys(identifier)
+                for key, key_value in additional_keys.items(): # TODO: Recursive...
+                    if isinstance(key_value, Base):
+                        additional_keys[key] = self._translate_object_for_response(key_value)
+                    elif isinstance(key_value, list) and all(isinstance(x, Base) for x in key_value):
+                        additional_keys[key] = [self._translate_object_for_response(x) for x in key_value]
+
+                found_entries[identifier].update(additional_keys)
         result["results"] = found_entries
         if self.request.query.get("hide_resource", "0") == "0":
             # Include the resource info as it's not to be hidden...

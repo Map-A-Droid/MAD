@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
@@ -30,4 +31,6 @@ class MADEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
         elif isinstance(obj, type):
             return str(obj)
+        elif isinstance(obj, datetime.datetime):
+            return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
