@@ -226,9 +226,6 @@ class WebsocketServer(object):
 
             if not continue_register:
                 await asyncio.sleep(rand.uniform(3, 15))
-                async with self.__users_connecting_mutex:
-                    origin_logger.debug("Removing from users_connecting")
-                    self.__users_connecting.remove(origin)
                 return
 
             try:
@@ -236,8 +233,6 @@ class WebsocketServer(object):
                     # TODO..
                     pass
                 # TODO: we need to somehow check threads and synchronize connection status with worker status?
-                async with self.__users_connecting_mutex:
-                    self.__users_connecting.remove(origin)
                 receiver_task = asyncio.ensure_future(
                     self.__client_message_receiver(origin, entry))
                 await receiver_task

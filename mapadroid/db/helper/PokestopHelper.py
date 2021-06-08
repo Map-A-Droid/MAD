@@ -227,7 +227,7 @@ class PokestopHelper:
                                          Pokestop.latitude <= old_ne_corner.lat,
                                          Pokestop.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(TrsQuest.last_scanned >= datetime.utcfromtimestamp(timestamp))
+            where_conditions.append(Pokestop.last_updated >= datetime.utcfromtimestamp(timestamp))
 
         if fence:
             where_conditions.append(func.ST_Contains(func.ST_GeomFromText(fence),

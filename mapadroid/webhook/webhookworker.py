@@ -1,12 +1,14 @@
 import asyncio
 import json
 import time
-from typing import List, Optional
+from asyncio import Task
+from typing import List, Optional, Dict, Tuple
 
 import requests
 
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import TrsQuest, Pokestop
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
@@ -22,12 +24,10 @@ class WebhookWorker:
     __IV_MON: List[int] = List[int]
     __excluded_areas = {}
 
-    def __init__(self, args, db_wrapper: DbWrapper, mapping_manager: MappingManager, rarity,
-                 db_webhook_reader: DbWebhookReader):
+    def __init__(self, args, db_wrapper: DbWrapper, mapping_manager: MappingManager, rarity):
         self.__worker_interval_sec = 10
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
-        self._db_reader = db_webhook_reader
         self.__rarity = rarity
         self.__last_check = int(time.time())
         self.__webhook_receivers = []
@@ -119,16 +119,14 @@ class WebhookWorker:
                 current_pl_num += 1
             current_wh_num += 1
 
-    def __prepare_quest_data(self, quest_data):
+    def __prepare_quest_data(self, quest_data: Dict[int, Tuple[Pokestop, TrsQuest]]):
         ret = []
-        for stopid in quest_data:
-            stop = quest_data[str(stopid)]
-
-            if self.__is_in_excluded_area([stop["latitude"], stop["longitude"]]):
+        for stop, quest in quest_data.values():
+            if self.__is_in_excluded_area([stop.latitude, stop.longitude]):
                 continue
 
             try:
-                quest = generate_quest(quest_data[str(stopid)])
+                quest = generate_quest(stop, quest)
                 quest_payload = self.__construct_quest_payload(quest)
 
                 entire_payload = {"type": "quest", "message": quest_payload}
@@ -558,58 +556,62 @@ class WebhookWorker:
 
         # the payload that is about to be sent
         full_payload = []
+        async with self.__db_wrapper as session, session:
+            # TODO: Single transaction...
+            try:
+                # raids
+                if 'raid' in self.__webhook_types:
+                    raids = self.__prepare_raid_data(
+                        await DbWebhookReader.get_raids_changed_since(session, self.__last_check)
+                    )
+                    full_payload += raids
 
-        # TODO: Single transaction...
-        try:
-            # raids
-            if 'raid' in self.__webhook_types:
-                raids = self.__prepare_raid_data(
-                    await self._db_reader.get_raids_changed_since(self.__last_check)
-                )
-                full_payload += raids
+                # quests
+                if 'quest' in self.__webhook_types:
+                    quest = self.__prepare_quest_data(
+                        await DbWebhookReader.get_quests_changed_since(session, self.__last_check)
+                    )
+                    full_payload += quest
 
-            # quests
-            if 'quest' in self.__webhook_types:
-                quest = self.__prepare_quest_data(
-                    await self._db_reader.get_quests_changed_since(self.__last_check)
-                )
-                full_payload += quest
+                # weather
+                if 'weather' in self.__webhook_types:
+                    weather = self.__prepare_weather_data(
+                        await DbWebhookReader.get_weather_changed_since(session, self.__last_check)
+                    )
+                    full_payload += weather
 
-            # weather
-            if 'weather' in self.__webhook_types:
-                weather = self.__prepare_weather_data(
-                    await self._db_reader.get_weather_changed_since(self.__last_check)
-                )
-                full_payload += weather
+                # gyms
+                if 'gym' in self.__webhook_types:
+                    gyms = self.__prepare_gyms_data(
+                        await DbWebhookReader.get_gyms_changed_since(session, self.__last_check)
+                    )
+                    full_payload += gyms
 
-            # gyms
-            if 'gym' in self.__webhook_types:
-                gyms = self.__prepare_gyms_data(
-                    await self._db_reader.get_gyms_changed_since(self.__last_check)
-                )
-                full_payload += gyms
+                # stops
+                if 'pokestop' in self.__webhook_types:
+                    pokestops = self.__prepare_stops_data(
+                        await DbWebhookReader.get_stops_changed_since(session, self.__last_check)
+                    )
+                    full_payload += pokestops
 
-            # stops
-            if 'pokestop' in self.__webhook_types:
-                pokestops = self.__prepare_stops_data(
-                    await self._db_reader.get_stops_changed_since(self.__last_check)
-                )
-                full_payload += pokestops
-
-            # mon
-            if 'pokemon' in self.__webhook_types:
-                mon = self.__prepare_mon_data(
-                    await self._db_reader.get_mon_changed_since(self.__last_check)
-                )
-                full_payload += mon
-        except Exception:
-            logger.exception("Error while creating webhook payload")
+                # mon
+                if 'pokemon' in self.__webhook_types:
+                    mon = self.__prepare_mon_data(
+                        await DbWebhookReader.get_mon_changed_since(session, self.__last_check)
+                    )
+                    full_payload += mon
+            except Exception:
+                logger.exception("Error while creating webhook payload")
 
         logger.debug("Done fetching data + building payload")
 
         return full_payload
 
-    async def run_worker(self):
+    async def start(self) -> Task:
+        loop = asyncio.get_running_loop()
+        return loop.create_task(self.__run_worker(), name="system")
+
+    async def __run_worker(self):
         logger.info("Starting webhook worker thread")
 
         self.__build_webhook_receivers()

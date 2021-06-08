@@ -51,7 +51,7 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    def get_weather_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_weather_changed_since(session: AsyncSession, utc_timestamp: int):
         logger.debug2("DbWebhookReader::get_weather_changed_since called")
         weather_changed: List[Weather] = await WeatherHelper.get_changed_since(session, utc_timestamp=utc_timestamp)
 
@@ -127,7 +127,7 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    def get_stops_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_stops_changed_since(session: AsyncSession, utc_timestamp: int):
         logger.debug2("DbWebhookReader::get_stops_changed_since called")
         stops_with_changes: List[Pokestop] = await PokestopHelper.get_changed_since_or_incident(session, utc_timestamp)
         ret = []
@@ -154,7 +154,7 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    def get_mon_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_mon_changed_since(session: AsyncSession, utc_timestamp: int):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
         mons_with_changes: List[Tuple[Pokemon, TrsSpawn]] = await PokemonHelper.get_changed_since(session,
                                                                                                   utc_timestamp)

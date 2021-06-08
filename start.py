@@ -244,12 +244,10 @@ async def start():
         if args.webhook:
             rarity = Rarity(args, db_wrapper)
             await rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity, db_wrapper.webhook_reader)
-            # TODO: Start webhook_worker task
-            # t_whw = Thread(name="system",
-   #         #               target=webhook_worker.run_worker)
-            #t_whw.daemon = True
-  #          #t_whw.start()
+            webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity)
+            webhook_task = await webhook_worker.start()
+            # TODO: Stop webhook_task properly
+            
   #      if args.statistic:
   #          logger.info("Starting statistics collector")
   #          t_usage = Thread(name='system',
