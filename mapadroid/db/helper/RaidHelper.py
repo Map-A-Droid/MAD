@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.db.model import Gym, Raid
+from mapadroid.db.model import Gym, Raid, GymDetail
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
 
@@ -38,3 +38,23 @@ class RaidHelper:
 
         # logger.debug4("Latest Q: {}", data)
         return next_hatches
+
+    @staticmethod
+    async def get_raids_changed_since(session: AsyncSession, utc_timestamp: int,
+                                      geofence_helper: GeofenceHelper = None) -> List[Tuple[Raid, GymDetail, Gym]]:
+        stmt = select(Raid, GymDetail, Gym) \
+            .select_from(Raid)\
+            .join(GymDetail, GymDetail.gym_id == Raid.gym_id)\
+            .join(Gym, Gym.gym_id == Raid.gym_id) \
+            .where(Raid.last_scanned > datetime.utcfromtimestamp(utc_timestamp))
+        result = await session.execute(stmt)
+        changed_data: List[Tuple[Raid, GymDetail, Gym]] = []
+        raw = result.all()
+        for (raid, gym_detail, gym) in raw:
+            if gym.latitude is None or gym.longitude is None:
+                continue
+            elif geofence_helper \
+                    and not geofence_helper.is_coord_inside_include_geofence([gym.latitude, gym.longitude]):
+                continue
+            changed_data.append((raid, gym_detail, gym))
+        return changed_data
