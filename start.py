@@ -192,9 +192,7 @@ async def start():
     await event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
     await asyncio.sleep(.1)
-    # MappingManagerManager.register('MappingManager', MappingManager)
-    # mapping_manager_manager = MappingManagerManager()
-    # mapping_manager_manager.start()
+    # TODO: Externalize MappingManager as a service
     mapping_manager: MappingManager = MappingManager(db_wrapper,
                                                      args,
                                                      configmode=args.config_mode)
@@ -205,7 +203,7 @@ async def start():
         logger.info('Running in route recalculation mode. MAD will exit once complete')
         recalc_in_progress = True
         while recalc_in_progress:
-            time.sleep(5)
+            await asyncio.sleep(5)
             sql = "SELECT COUNT(*) > 0 FROM `settings_routecalc` WHERE `recalc_status` = 1"
             # TODO recalc_in_progress = db_wrapper.autofetch_value(sql)
         logger.info("Done calculating routes!")
@@ -227,6 +225,7 @@ async def start():
                                          None,
                                          mitm_data_processor_manager.get_queue(),
                                          enable_configmode=args.config_mode)
+    # TODO: Cancel() task lateron
     mitm_receiver_task = await mitm_receiver.run_async()
     logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
     ws_server = WebsocketServer(args=args,
@@ -236,19 +235,17 @@ async def start():
                                 pogo_window_manager=pogo_win_manager,
                                 event=event,
                                 enable_configmode=args.config_mode)
-    # t_ws = Thread(name='system', target=ws_server.start_server)
-    # t_ws.daemon = False
-    # t_ws.start()
+    # TODO: module/service?
     await ws_server.start_server()
 
-    #device_updater = DeviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
-    #await device_updater.init_jobs()
-    #if not args.config_mode:
-    #    if args.webhook:
-    #        rarity = Rarity(args, db_wrapper)
-    #        rarity.start_dynamic_rarity()
-    #        webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity, db_wrapper.webhook_reader)
-    #        # TODO: Start webhook_worker task
+    device_updater = DeviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
+    await device_updater.init_jobs()
+    if not args.config_mode:
+        if args.webhook:
+            rarity = Rarity(args, db_wrapper)
+            await rarity.start_dynamic_rarity()
+            # webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity, db_wrapper.webhook_reader)
+            # TODO: Start webhook_worker task
             # t_whw = Thread(name="system",
    #         #               target=webhook_worker.run_worker)
             #t_whw.daemon = True

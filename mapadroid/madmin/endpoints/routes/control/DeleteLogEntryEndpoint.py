@@ -15,7 +15,7 @@ class DeleteLogEndpoint(AbstractControlEndpoint):
     async def get(self):
         job_id: Optional[str] = self.request.query.get('id')
 
-        if self._get_device_updater().delete_log_id(job_id):
+        if await self._get_device_updater().delete_log_id(job_id):
             await self._add_notice_message('Job deleted successfully')
         else:
             await self._add_notice_message('Job could not be deleted successfully')
