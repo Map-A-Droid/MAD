@@ -438,6 +438,7 @@ class WorkerBase(AbstractWorker, ABC):
     async def update_scanned_location(self, latitude: float, longitude: float, utc_timestamp: float):
         async with self._db_wrapper as session, session:
             await ScannedLocationHelper.set_scanned_location(session, latitude, longitude, utc_timestamp)
+            await session.commit()
 
     async def check_walker(self):
         mode = self._walker.algo_type

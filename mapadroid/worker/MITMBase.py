@@ -73,9 +73,9 @@ class MITMBase(WorkerBase, ABC):
 
     async def start_worker(self) -> Task:
         async with self._db_wrapper as session, session:
-            # TODO await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
-            #                                       self._dev_id, 0)
-            pass
+            await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
+                                                   self._dev_id, 0)
+            await session.commit()
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 2, 0,
                                                        await self._mapping_manager.routemanager_get_mode(
                                                      self._routemanager_id),
@@ -191,7 +191,10 @@ class MITMBase(WorkerBase, ABC):
         else:
             await self._handle_proto_timeout(position_type, proto_to_wait_for, type_of_data_returned)
 
-        await self.worker_stats()
+        loop = asyncio.get_running_loop()
+        loop.create_task(self.worker_stats())
+        # TODO: Rather freeze the state that is to be submitted and pass it to another task for performance reasons
+        # await self.worker_stats()
         return type_of_data_returned, data
 
     async def _handle_proto_timeout(self, position_type, proto_to_wait_for: ProtoIdentifier, type_of_data_returned):
@@ -424,7 +427,8 @@ class MITMBase(WorkerBase, ABC):
             if not status:
                 status = TrsStatus()
                 status.device_id = self._dev_id
-            # TODO: Check how to set the value...
+            status.currentPos = (self.current_location.lat, self.current_location.lng)
+            status.lastPos = (self.last_location.lat, self.last_location.lng)
             # status.currentPos = 'POINT(%s,%s)' % (self.current_location.lat, self.current_location.lng)
             # status.lastPos = 'POINT(%s,%s)' % (self.last_location.lat, self.last_location.lng)
             status.routePos = routemanager_status[0]
@@ -440,6 +444,7 @@ class MITMBase(WorkerBase, ABC):
                 status.lastProtoDateTime = datetime.utcnow()
                 self._rec_data_time = None
             session.add(status)
+            await session.commit()
 
     async def _worker_specific_setup_stop(self):
         self.logger.info("Stopping pogodroid")
