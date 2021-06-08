@@ -10,7 +10,7 @@ from typing import Callable, List
 from google.protobuf.message import DecodeError
 from gpapi.googleplay import GooglePlayAPI, LoginError
 
-from mapadroid.mad_apk import APKArch, DeviceCodename
+from mapadroid.mad_apk.apk_enums import APKArch, DeviceCodename
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.token_dispenser import TokenDispenser
 from mapadroid.utils.walkerArgs import parse_args

@@ -18,6 +18,7 @@ from mapadroid.db.DbFactory import DbFactory
 # from mapadroid.madmin.madmin import MADmin
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
+from mapadroid.madmin.madmin import MADmin
 from mapadroid.mitm_receiver.MitmDataProcessorManager import \
     MitmDataProcessorManager
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -255,7 +256,8 @@ async def start():
             logger.info("Starting statistics collector")
             t_usage = loop.create_task(get_system_infos(db_wrapper), name="system")
 
-    # madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
+    madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
+    await madmin.madmin_start()
 
     # starting plugin system
     plugin_parts = {

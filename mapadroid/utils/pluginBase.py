@@ -49,7 +49,7 @@ class PluginCollection(object):
         self.plugin_package = plugin_package
         self._mad = mad
         self._logger = mad['logger']
-        self._controller = Blueprint(str("MAD_Plugin_Controller"), __name__)
+        # self._controller = Blueprint(str("MAD_Plugin_Controller"), __name__)
 
         for route, view_func in self._routes:
             self._controller.route(route, methods=['GET', 'POST'])(view_func)

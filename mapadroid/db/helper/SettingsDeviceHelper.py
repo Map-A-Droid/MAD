@@ -29,14 +29,14 @@ class SettingsDeviceHelper:
         entries inserted IF there is more than one device for the given MAC...
         """
         # TODO: This won't work, we need to adjust it.. (group_by, see PokemonHelper::get_all_shiny
-        stmt = select("mac_address", SettingsDevice)\
+        stmt = select(SettingsDevice.mac_address, SettingsDevice)\
             .select_from(SettingsDevice)\
             .group_by(SettingsDevice.mac_address)\
             .having(and_(func.count("*") > 1,
                          SettingsDevice.mac_address != None))
         result = await session.execute(stmt)
         duplicates: Dict[str, List[SettingsDevice]] = {}
-        for mac_address, device in result:
+        for mac_address, device in result.all():
             logger.warning("Duplicate MAC `{}` detected on devices {}", mac_address, device.name)
             if mac_address not in duplicates:
                 duplicates[mac_address] = []

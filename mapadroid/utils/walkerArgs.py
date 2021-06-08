@@ -152,6 +152,8 @@ def parse_args():
                         help='MADmin listening interface (Default: 0.0.0.0)')
     parser.add_argument('-mmprt', '--madmin_port', default='5000',
                         help='MADmin web port (Default: 5000)')
+    parser.add_argument('-mus', '--madmin_unix_socket', required=False, default=None, type=str,
+                        help="Path to unix socket file to use if TCP is not to be used for MADmin...")
     parser.add_argument('-mmuser', '--madmin_user', default='',
                         help='Username for MADmin Frontend.')
     parser.add_argument('-mmpassword', '--madmin_password', default='',

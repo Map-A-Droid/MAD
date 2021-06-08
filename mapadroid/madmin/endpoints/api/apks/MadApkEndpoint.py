@@ -1,21 +1,24 @@
 import io
 from threading import Thread
 from typing import Optional
+from zipfile import LargeZipFile, BadZipFile
 
 from aiohttp import web
 from loguru import logger
 
 from mapadroid.db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
-from mapadroid.mad_apk import convert_to_backend, APKArch, APKType, MADapks, get_apk_status, \
-    PackageImporter, WizardError, BadZipFile, LargeZipFile, APKWizard
+from mapadroid.mad_apk.apk_enums import APKArch, APKType
+from mapadroid.mad_apk.custom_types import MADapks
+from mapadroid.mad_apk.utils import convert_to_backend, get_apk_status
+from mapadroid.mad_apk.wizard import APKWizard, WizardError, PackageImporter
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
 class MadApkEndpoint(AbstractRootEndpoint):
     # TODO: Require auth
     async def get(self):
-        apk_type_raw: str = self.request.match_info['apk_type']
-        apk_arch_raw: str = self.request.match_info['apk_arch']
+        apk_type_raw: str = self.request.match_info.get('apk_type')
+        apk_arch_raw: str = self.request.match_info.get('apk_arch')
         apk_type, apk_arch = convert_to_backend(apk_type_raw, apk_arch_raw)
 
         data = await get_apk_status(self._get_storage_obj())
@@ -28,8 +31,8 @@ class MadApkEndpoint(AbstractRootEndpoint):
                 return self._json_response(data=data[apk_type])
 
     async def post(self):
-        apk_type_raw: str = self.request.match_info['apk_type']
-        apk_arch_raw: str = self.request.match_info['apk_arch']
+        apk_type_raw: str = self.request.match_info.get('apk_type')
+        apk_arch_raw: str = self.request.match_info.get('apk_arch')
         apk_type, apk_arch = convert_to_backend(apk_type_raw, apk_arch_raw)
 
         is_upload: bool = False
@@ -114,8 +117,8 @@ class MadApkEndpoint(AbstractRootEndpoint):
             return web.Response(status=500)
 
     async def delete(self):
-        apk_type_raw: str = self.request.match_info['apk_type']
-        apk_arch_raw: str = self.request.match_info['apk_arch']
+        apk_type_raw: str = self.request.match_info.get('apk_type')
+        apk_arch_raw: str = self.request.match_info.get('apk_arch')
         apk_type, apk_arch = convert_to_backend(apk_type_raw, apk_arch_raw)
 
         if apk_type is None:

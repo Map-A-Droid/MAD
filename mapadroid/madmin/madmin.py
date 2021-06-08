@@ -2,112 +2,107 @@ import logging
 import os
 from typing import Dict, List
 
-from flask import Flask, render_template
-from werkzeug.middleware.proxy_fix import ProxyFix
+import aiohttp_jinja2
+import jinja2
+from aiohttp import web
+from aiohttp.web_runner import TCPSite, UnixSite
 
 import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
-from mapadroid.madmin.api import APIEntry
-from mapadroid.madmin.reverseproxy import ReverseProxied
-from mapadroid.madmin.routes.apks import APKManager
-from mapadroid.madmin.routes.autoconf import AutoConfigManager
-from mapadroid.madmin.routes.config import MADminConfig
-from mapadroid.madmin.routes.control import MADminControl
-from mapadroid.madmin.routes.event import MADminEvent
-from mapadroid.madmin.routes.map import MADminMap
-from mapadroid.madmin.routes.path import MADminPath
-from mapadroid.madmin.routes.statistics import MADminStatistics
+from mapadroid.madmin.endpoints.api.apks import register_api_api_endpoints
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 logger = get_logger(LoggerEnums.madmin)
-app = Flask(__name__,
-            static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
-            template_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates'))
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
-app.config['UPLOAD_FOLDER'] = 'temp'
-app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
-app.secret_key = "8bc96865945be733f3973ba21d3c5949"
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-log = logging.getLogger('werkzeug')
-handler = InterceptHandler(log_section=LoggerEnums.madmin)
-log.addHandler(handler)
-
-
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods',
-                         'GET,PUT,POST,DELETE,OPTIONS')
-    return response
-
-
-@app.errorhandler(500)
-def internal_error(self, exception):
-    logger.opt(exception=True).critical("An unhandled exception occurred!")
-    return render_template('500.html'), 500
 
 
 class MADmin(object):
     def __init__(self, args, db_wrapper: DbWrapper, ws_server: WebsocketServer, mapping_manager: MappingManager,
                  device_updater: DeviceUpdater, jobstatus, storage_obj):
-        app.add_template_global(name='app_config_mode', f=args.config_mode)
+        #app.add_template_global(name='app_config_mode', f=args.config_mode)
         # Determine if there are duplicate MACs
 
         self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
-        self._app = app
+        self._app = None
         self._mapping_manager: MappingManager = mapping_manager
         self._storage_obj = storage_obj
         self._device_updater: DeviceUpdater = device_updater
         self._ws_server: WebsocketServer = ws_server
         self._jobstatus = jobstatus
         self._plugin_hotlink: list = []
-        self.path = MADminPath(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
-                               self._plugin_hotlink)
-        self.map = MADminMap(self._db_wrapper, self._args, self._mapping_manager, self._app)
-        self.statistics = MADminStatistics(self._db_wrapper, self._args, app, self._mapping_manager)
-        self.control = MADminControl(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
-                                     self._app, self._device_updater)
-        self.APIEntry = APIEntry(logger, self._app, self._db_wrapper, self._mapping_manager, self._ws_server,
-                                 self._args.config_mode, self._storage_obj, self._args)
-        self.config = MADminConfig(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
-        self.apk_manager = APKManager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
-                                      self._storage_obj)
-        self.event = MADminEvent(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
-        self.autoconf = AutoConfigManager(self._app, self._db_wrapper, self._args, self._storage_obj)
 
     @logger.catch()
-    async def madmin_start(self):
+    async def madmin_start(self) -> web.AppRunner:
+        self._app = web.Application()
+
+        static_folder_path = os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static')
+        template_folder_path = os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates')
+        self._app.router.add_static("/static", static_folder_path, append_version=True)
+        self._app['static_root_url'] = '/static'
+        self._app['UPLOAD_FOLDER'] = 'temp'
+        self._app['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
+        self._app.secret_key = "8bc96865945be733f3973ba21d3c5949"
+        self._app['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+        self._app['db_wrapper'] = self._db_wrapper
+        self._app['mad_args'] = self._args
+        self._app['mapping_manager'] = self._mapping_manager
+        self._app['websocket_server'] = self._ws_server
+        self._app["plugin_hotlink"] = None # TODO
+        self._app["storage_obj"] = None # TODO
+        self._app['device_updater'] = self._device_updater
+        # TODO: Add routes...
+
+        jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader(template_folder_path))
+        register_api_api_endpoints(self._app)
+
         try:
             async with self._db_wrapper as session, session:
                 duplicate_macs: Dict[str, List[SettingsDevice]] = await SettingsDeviceHelper.get_duplicate_mac_entries(
                     session)
                 if len(duplicate_macs) > 0:
-                    app.add_template_global(name='app_dupe_macs_devs', f=duplicate_macs)
-                app.add_template_global(name='app_dupe_macs', f=bool(len(duplicate_macs) > 0))
-            # load routes
-            if self._args.madmin_base_path:
-                self._app.wsgi_app = ReverseProxied(self._app.wsgi_app, script_name=self._args.madmin_base_path)
-            # start modules
-            self.path.start_modul()
-            self.map.start_modul()
-            self.statistics.start_modul()
-            self.config.start_modul()
-            self.apk_manager.start_modul()
-            self.event.start_modul()
-            self.control.start_modul()
-            self.autoconf.start_modul()
-            self._app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)
-        except:  # noqa: E722 B001
+                    pass
+                # TODO
+                    # self._app.add_template_global(name='app_dupe_macs_devs', f=duplicate_macs)
+                # self._app.add_template_global(name='app_dupe_macs', f=bool(len(duplicate_macs) > 0))
+        except Exception as e:  # noqa: E722 B001
+            logger.exception(e)
             logger.opt(exception=True).critical('Unable to load MADmin component')
+        # self.path = MADminPath(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
+        #                        self._plugin_hotlink)
+        # self.map = MADminMap(self._db_wrapper, self._args, self._mapping_manager, self._app)
+        # self.statistics = MADminStatistics(self._db_wrapper, self._args, app, self._mapping_manager)
+        # self.control = MADminControl(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
+        #                              self._app, self._device_updater)
+        # self.APIEntry = APIEntry(logger, self._app, self._db_wrapper, self._mapping_manager, self._ws_server,
+        #                          self._args.config_mode, self._storage_obj, self._args)
+        # self.config = MADminConfig(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
+        # self.apk_manager = APKManager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
+        #                               self._storage_obj)
+        # self.event = MADminEvent(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
+        # self.autoconf = AutoConfigManager(self._app, self._db_wrapper, self._args, self._storage_obj)
+
+        # TODO: Logger for madmin
+        log = logging.getLogger('werkzeug')
+        handler = InterceptHandler(log_section=LoggerEnums.madmin)
+        log.addHandler(handler)
+
+        runner: web.AppRunner = web.AppRunner(self._app)
+        await runner.setup()
+        if self._args.madmin_unix_socket:
+            site: UnixSite = web.UnixSite(runner, self._args.madmin_unix_socket)
+            logger.info("Madmin starting at {}", self._args.madmin_unix_socket)
+        else:
+            site: TCPSite = web.TCPSite(runner, "127.0.0.1", 5000)
+            logger.info('Madmin starting at http://127.0.0.1:5000')
+        await site.start()
+        # TODO: Return runner and call     await runner.cleanup()
         logger.info('Finished madmin')
+        return runner
 
     def add_route(self, routes):
         for route, view_func in routes:

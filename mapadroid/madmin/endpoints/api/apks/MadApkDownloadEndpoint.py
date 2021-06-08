@@ -1,6 +1,6 @@
 from aiohttp import web
 
-from mapadroid.mad_apk import convert_to_backend, stream_package
+from mapadroid.mad_apk.utils import convert_to_backend, stream_package
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import Base
+from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin.api import apiException
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.mapping_manager.MappingManager import MappingManager
