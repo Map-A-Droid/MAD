@@ -586,7 +586,8 @@ class WorkerQuests(MITMBase):
             return type_received
         elif stop_type in (PositionStopType.STOP_CLOSED, PositionStopType.STOP_COOLDOWN,
                            PositionStopType.STOP_DISABLED):
-            self.logger.info("Stop at {}, {} is not spinnable at the moment ({})")
+            self.logger.info("Stop at {}, {} is not spinnable at the moment ({})", self.current_location.lat,
+                             self.current_location.lng, stop_type)
             return type_received
         elif stop_type == PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE:
             self.logger.info("Stop at {}, {} has been spun before and is to be ignored in the next round.")
