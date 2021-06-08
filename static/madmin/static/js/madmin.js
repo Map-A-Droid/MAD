@@ -1535,21 +1535,27 @@ new Vue({
                 var ivcolor = "red";
             }
 
-            // I have no idea how JS works and i'm sure the below block can be done better
-            if (mon["seen_type"] == "encounter") {
-                var seentype = "in an encounter"
-            } else if (mon["seen_type"] == "wild") {
-                var seentype = "in the wild"
-            } else if (mon["seen_type"] == "nearby_stop") {
-                var seentype = "at a Pokéstop"
-            } else if (mon["seen_type"] == "nearby_cell") {
-                var seentype = "in a L15 S2 cell"
-            } else if (mon["seen_type"] == "lure_wild") {
-                var seentype = "at a lure (no encounter)"
-            } else if (mon["seen_type"] == "lure_encounter") {
-                var seentype = "at a lure (with encounter)"
-            } else {
-                var seentype = "unknown"
+            switch (mon["seen_type"]) {
+                case "encounter":
+                    var seentype = "in an encounter"
+                    break;
+                case "wild":
+                    var seentype = "in the wild"
+                    break;
+                case "nearby_stop":
+                    var seentype = "at a Pokéstop"
+                    break;
+                case "nearby_cell":
+                    var seentype = "in a L15 S2 cell"
+                    break;
+                case "lure_wild":
+                    var seentype = "at a lure (no encounter)"
+                    break;
+                case "lure_enconter":
+                    var seentype = "at a lure (with encounter)"
+                    break;
+                default:
+                    var seentype = "unknown"
             }
 
             var ivtext = "";

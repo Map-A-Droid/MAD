@@ -38,7 +38,7 @@ class WorkerMITM(MITMBase):
         pass
 
     def _post_move_location_routine(self, timestamp):
-        # TODO: pass the appropiate proto number if IV?
+        # TODO: pass the appropriate proto number if IV?
         type_received, data = self._wait_for_data(timestamp)
         if type_received != LatestReceivedType.GMO:
             self.logger.warning("Worker failed to retrieve proper data at {}, {}. Worker will continue with "
