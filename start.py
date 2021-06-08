@@ -16,6 +16,7 @@ from mapadroid.db.DbFactory import DbFactory
 
 # TODO: Get MADmin running
 # from mapadroid.madmin.madmin import MADmin
+from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mitm_receiver.MitmDataProcessorManager import \
     MitmDataProcessorManager
@@ -91,7 +92,7 @@ def find_referring_graphs(obj):
                 yield parent
 
 
-def get_system_infos(db_wrapper):
+async def get_system_infos(db_wrapper):
     pid = os.getpid()
     py = psutil.Process(pid)
     gc.set_threshold(5, 1, 1)
@@ -124,8 +125,10 @@ def get_system_infos(db_wrapper):
             logger.debug("Garbage collector: collected %d objects." % collected)
         zero = datetime.datetime.utcnow()
         unixnow = calendar.timegm(zero.utctimetuple())
-        db_wrapper.insert_usage(args.status_name, cpu_usage, mem_usage, collected, unixnow)
-        time.sleep(args.statistic_interval)
+        async with db_wrapper as session, session:
+            await TrsUsageHelper.add(session, args.status_name, cpu_usage, mem_usage, collected, unixnow)
+            await session.commit()
+        await asyncio.sleep(args.statistic_interval)
 
 
 def create_folder(folder):
@@ -247,13 +250,10 @@ async def start():
             webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity)
             webhook_task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
-            
-  #      if args.statistic:
-  #          logger.info("Starting statistics collector")
-  #          t_usage = Thread(name='system',
-  #                           target=get_system_infos, args=(db_wrapper,))
-  #          t_usage.daemon = True
-  #          t_usage.start()
+
+        if args.statistic:
+            logger.info("Starting statistics collector")
+            t_usage = loop.create_task(get_system_infos(db_wrapper), name="system")
 
     # madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
 
