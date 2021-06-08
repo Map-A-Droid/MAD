@@ -7,7 +7,7 @@ from sqlalchemy import and_, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokemon, TrsStatsDetectMonRaw
+from mapadroid.db.model import Pokemon, TrsStatsDetectMonRaw, TrsSpawn
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -281,3 +281,11 @@ class PokemonHelper:
         for count, lat, lng in result.scalars():
             results.append((count, Location(lat, lng)))
         return results
+
+    @staticmethod
+    async def get_changed_since(session: AsyncSession, utc_timestamp: int) -> List[Tuple[Pokemon, TrsSpawn]]:
+        stmt = select(Pokemon, TrsSpawn) \
+            .join(TrsSpawn, TrsSpawn.spawnpoint == Pokemon.spawnpoint_id, isouter=False) \
+            .where(Pokemon.last_modified > datetime.datetime.utcfromtimestamp(utc_timestamp))
+        result = await session.execute(stmt)
+        return result.all()

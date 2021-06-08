@@ -83,3 +83,12 @@ class GymHelper:
         for team, count in result.scalars():
             team_count[team] = count
         return team_count
+
+    @staticmethod
+    async def get_changed_since(session: AsyncSession, utc_timestamp: int) -> List[Tuple[Gym, GymDetail]]:
+        stmt = select(Gym, GymDetail) \
+            .join(GymDetail, GymDetail.gym_id == Gym.gym_id, isouter=False)\
+            .where(Gym.last_modified >= datetime.utcfromtimestamp(utc_timestamp))
+        # TODO: Consider last_scanned above
+        result = await session.execute(stmt)
+        return result.all()

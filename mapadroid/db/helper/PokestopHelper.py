@@ -1,4 +1,5 @@
 from datetime import datetime
+from operator import or_
 from typing import Optional, List, Dict, Tuple
 
 from sqlalchemy import and_, update
@@ -291,3 +292,14 @@ class PokestopHelper:
         stmt = update(Pokestop).where(and_(Pokestop.latitude == location.lat,
                                            Pokestop.longitude == location.lng)).values(Pokestop.vi)
         await session.execute(stmt)
+
+    @staticmethod
+    async def get_changed_since_or_incident(session: AsyncSession, utc_timestamp: int) -> List[Pokestop]:
+        stmt = select(Pokestop)\
+            .where(and_(Pokestop.last_updated > datetime.utcfromtimestamp(utc_timestamp),
+                        or_(Pokestop.incident_start != None,
+                            Pokestop.lure_expiration > datetime.utcfromtimestamp(0))))
+        # TODO: Validate lure_expiration comparison works rather than DATEDIFF
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
