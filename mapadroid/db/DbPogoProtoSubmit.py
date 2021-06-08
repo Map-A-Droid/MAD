@@ -174,7 +174,7 @@ class DbPogoProtoSubmit:
                 disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
                 now = now.strftime("%Y-%m-%d %H:%M:%S")
 
-                if stopid == "" and cellid is not None:
+                if not stopid and cellid:
                     lat, lon, _ = S2Helper.get_position_from_cell(cellid)
                     stopid = None
                     db_cell = cellid
@@ -183,11 +183,11 @@ class DbPogoProtoSubmit:
                 else:
                     db_cell = None
                     seen_type = "nearby_stop"
-                    stop = self._db_exec.execute(stop_query, (stopid))
+                    stop = self._db_exec.execute(stop_query, stopid)
                     if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
-                        stop = self._db_exec.execute(gym_query, (stopid))
+                        stop = self._db_exec.execute(gym_query, stopid)
 
-                    if len(stop) > 0:
+                    if stop:
                         lat, lon = stop[0]
                     else:
                         lat, lon = (0, 0)

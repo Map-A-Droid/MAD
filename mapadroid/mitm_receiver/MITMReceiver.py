@@ -312,15 +312,10 @@ class MITMReceiver(Process):
         if unquest_stops is not None:
             unquest_stops = unquest_stops.get("values", [])
 
-        if self.__application_args.scan_lured_mons:
-            check_lured = True
-        else:
-            check_lured = False
-
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
                     "lvl_mode": level_mode, 'unquest_stops': unquest_stops,
-                    "check_lured": check_lured}
+                    "check_lured": self.__application_args.scan_lured_mons}
         return json.dumps(response)
 
     # TODO - Deprecate this function as it does not return useful addresses
