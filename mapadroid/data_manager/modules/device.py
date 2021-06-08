@@ -1,4 +1,5 @@
 import re
+import string
 from typing import List, Optional
 
 from mapadroid.data_manager.modules.pogoauth import PogoAuth
@@ -409,6 +410,10 @@ class Device(Resource):
             if invalid_ptc:
                 msg = 'Invalid PogoAuth specified [%s]' % ','.join([str(x) for x in invalid_ptc])
                 issues['invalid'].append(('ptc_login', msg))
+
+        if 'origin' in self and any(c in self['origin'] for c in string.whitespace):
+            issues['invalid'].append(('origin', 'Origin cannot have whitespaces, please use under_score'))
+
         if any(issues['invalid']):
             return issues
 
