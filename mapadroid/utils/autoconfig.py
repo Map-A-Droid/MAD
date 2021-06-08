@@ -108,7 +108,7 @@ class AutoConfigCreator:
     async def delete(self, session: AsyncSession):
         config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(session, self._instance_id, self.source)
         if config is not None:
-            session.delete(config)
+            await session.delete(config)
 
     async def generate_config(self, origin: str) -> BytesIO:
         origin_config = await self.get_config()

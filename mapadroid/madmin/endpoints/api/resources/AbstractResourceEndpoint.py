@@ -4,6 +4,7 @@ from typing import Dict, Optional, Set
 
 from aiohttp import web
 from sqlalchemy import Column
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from yarl import URL
 
 from mapadroid.db.model import Base
@@ -134,30 +135,43 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
     #  parse resource def for URIs and set the key to the according resource URI
     def _translate_object_for_response(self, obj: Base) -> Dict:
         translated: Dict = {}
-        for attr, value in vars(obj):
-            if isinstance(value, Column):
-                value: Column = value
-                if len(value.foreign_keys) > 0:
+        obj_vars = vars(obj)
+        type_of_obj = type(obj)
+        vars_of_type = vars(type_of_obj)
+        for attr, value in obj_vars.items():
+            attribute_type = vars_of_type.get(attr)
+            if attribute_type and isinstance(attribute_type, InstrumentedAttribute):
+                if len(attribute_type.foreign_keys) > 0:
                     # Foreign key field, we need to construct the matching API call...
                     # TODO: is ".path" correct?
-                    translated[attr] = self._api_uri_for_column(attr, value).path
+                    uri = self._api_uri_for_column(obj, attr, value)
+                    if not uri:
+                        translated[attr] = value
+                    else:
+                        translated[attr] = uri.path
                 else:
                     translated[attr] = value
         return translated
 
-    def _api_uri_for_column(self, key: str, col: Column) -> Optional[URL]:
-        resource_def: Dict = self._resource_info()
+    def _api_uri_for_column(self, obj: Base, key: str, col: Column) -> Optional[URL]:
+        resource_def: Dict = self._resource_info(obj)
         fields: Dict = resource_def.get("fields", {})
         settings_of_attr: Optional[Dict] = None
         if key in fields:
-            settings_of_attr: Optional[Dict] = fields.get("")
+            settings_of_attr: Optional[Dict] = fields.get(key)
         if not settings_of_attr:
             return None
+        settings_of_attr = settings_of_attr.get("settings", {})
         uri: Optional[bool] = settings_of_attr.get("uri")
         if not uri:
             return None
         else:
-            return self.request.app.router[settings_of_attr.get("uri_source")].url_for(identifier=col)
+            uri_source = settings_of_attr.get("uri_source")
+            router = self.request.app.router.get(uri_source)
+            if not router:
+                return None
+            # TODO: Ensure functionality with aiohttp...
+            return router.url_for(identifier=col)
 
     @abstractmethod
     def _attributes_to_ignore(self) -> Set[str]:
@@ -209,7 +223,7 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
         pass
 
     @abstractmethod
-    def _resource_info(self) -> Dict:
+    def _resource_info(self, obj: Optional[Base] = None) -> Dict:
         """
 
         Returns: The resource def of the data_manager like dictionary containing fields and settings with their types etc

@@ -5,7 +5,7 @@ from mapadroid.madmin.endpoints.api.apks.MadApkEndpoint import MadApkEndpoint
 from mapadroid.madmin.endpoints.api.apks.MadApkReloadEndpoint import MadApkReloadEndpoint
 
 
-def register_api_api_endpoints(app: web.Application):
+def register_api_apk_endpoints(app: web.Application):
     app.router.add_view('/api/mad_apk', MadApkEndpoint)
     app.router.add_view('/api/mad_apk/{apk_type}', MadApkEndpoint)
     app.router.add_view('/api/mad_apk/{apk_type}/{apk_arch}', MadApkEndpoint)

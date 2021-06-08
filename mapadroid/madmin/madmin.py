@@ -11,7 +11,9 @@ import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
-from mapadroid.madmin.endpoints.api.apks import register_api_api_endpoints
+from mapadroid.madmin.endpoints.api.apks import register_api_apk_endpoints
+from mapadroid.madmin.endpoints.api.autoconf import register_api_autoconf_endpoints
+from mapadroid.madmin.endpoints.api.resources import register_api_resources_endpoints
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.updater import DeviceUpdater
@@ -58,8 +60,9 @@ class MADmin(object):
         # TODO: Add routes...
 
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader(template_folder_path))
-        register_api_api_endpoints(self._app)
-
+        register_api_apk_endpoints(self._app)
+        register_api_autoconf_endpoints(self._app)
+        register_api_resources_endpoints(self._app)
         try:
             async with self._db_wrapper as session, session:
                 duplicate_macs: Dict[str, List[SettingsDevice]] = await SettingsDeviceHelper.get_duplicate_mac_entries(
@@ -72,19 +75,6 @@ class MADmin(object):
         except Exception as e:  # noqa: E722 B001
             logger.exception(e)
             logger.opt(exception=True).critical('Unable to load MADmin component')
-        # self.path = MADminPath(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
-        #                        self._plugin_hotlink)
-        # self.map = MADminMap(self._db_wrapper, self._args, self._mapping_manager, self._app)
-        # self.statistics = MADminStatistics(self._db_wrapper, self._args, app, self._mapping_manager)
-        # self.control = MADminControl(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
-        #                              self._app, self._device_updater)
-        # self.APIEntry = APIEntry(logger, self._app, self._db_wrapper, self._mapping_manager, self._ws_server,
-        #                          self._args.config_mode, self._storage_obj, self._args)
-        # self.config = MADminConfig(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
-        # self.apk_manager = APKManager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
-        #                               self._storage_obj)
-        # self.event = MADminEvent(self._db_wrapper, self._args, logger, self._app, self._mapping_manager)
-        # self.autoconf = AutoConfigManager(self._app, self._db_wrapper, self._args, self._storage_obj)
 
         # TODO: Logger for madmin
         log = logging.getLogger('werkzeug')

@@ -34,7 +34,7 @@ class AbstractRootEndpoint(web.View, ABC):
 
     async def _iter(self):
         db_wrapper: DbWrapper = self._get_db_wrapper()
-        async with db_wrapper as session:
+        async with db_wrapper as session, session:
             self._session = session
             with logger.contextualize(ip=self._get_request_address(), name="endpoint"):
                 response = await self.__generate_response(session)
@@ -51,6 +51,8 @@ class AbstractRootEndpoint(web.View, ABC):
                 logger.info("Done committing")
             # else:
             #    await session.rollback()
+        except web.HTTPFound as e:
+            raise e
         except Exception as e:
             logger.warning("Exception occurred in request!. Details: " + str(e))
             logger.exception("Issue with request to {}", self.request.url)

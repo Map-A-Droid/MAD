@@ -7,13 +7,14 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
-from mapadroid.utils.autoconfig import AutoConfIssueGenerator, origin_generator
+from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
+from mapadroid.utils.autoconfig import origin_generator
 
 
 class AutoconfStatusEndpoint(AbstractRootEndpoint):
     async def get(self) -> web.Response:
         # TODO: Ensure int
-        session_id: int = self.request.match_info['session_id']
+        session_id: int = self.request.match_info.get('session_id')
         entries: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
             .get_all_of_instance(self._session, self._get_instance_id(), session_id)
         if entries:
@@ -32,7 +33,8 @@ class AutoconfStatusEndpoint(AbstractRootEndpoint):
 
         if status == 1:
             is_hopper = False
-            ac_issues = AutoConfIssueGenerator(self._get_db_wrapper(), self._get_mad_args(), self._get_storage_obj())
+            ac_issues = AutoConfIssueGenerator()
+            await ac_issues.setup(self._session, self._get_instance_id(), self._get_mad_args(), self._get_storage_obj())
             if ac_issues.has_blockers():
                 return self._json_response(data=ac_issues.get_issues(), status=406, headers=ac_issues.get_headers())
             # Set the device id.  If it was not requested use the origin hopper to create one

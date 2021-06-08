@@ -30,15 +30,15 @@ class AreaEndpoint(AbstractResourceEndpoint):
     def _resource_info(self, db_entry: Optional[SettingsArea] = None) -> Dict:
         if not db_entry:
             return {}
-        elif db_entry.mode == WorkerType.IDLE:
+        elif db_entry.mode == WorkerType.IDLE.value:
             return AreaIdle.configuration
-        elif db_entry.mode == WorkerType.IV_MITM:
+        elif db_entry.mode == WorkerType.IV_MITM.value:
             return AreaIvMitm.configuration
-        elif db_entry.mode == WorkerType.MON_MITM:
+        elif db_entry.mode == WorkerType.MON_MITM.value:
             return AreaMonMitm.configuration
-        elif db_entry.mode == WorkerType.STOPS:
+        elif db_entry.mode == WorkerType.STOPS.value:
             return AreaPokestops.configuration
-        elif db_entry.mode == WorkerType.RAID_MITM:
+        elif db_entry.mode == WorkerType.RAID_MITM.value:
             return AreaRaidsMitm.configuration
         else:
             return {}
@@ -83,7 +83,7 @@ class AreaEndpoint(AbstractResourceEndpoint):
         routecalc: Optional[SettingsRoutecalc] = None
         if routecalc_id:
             routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper \
-                .get(self._session, self._get_instance_id(), routecalc_id)
+                .get(self._session, routecalc_id)
         if routecalc and routecalc.recalc_status == 0:
             # Start the recalculation.  This can take a little bit if the routemanager needs to be started
             status = self._get_mapping_manager().routemanager_recalcualte(area.area_id)
