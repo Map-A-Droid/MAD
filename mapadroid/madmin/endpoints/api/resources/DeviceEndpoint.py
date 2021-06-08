@@ -17,7 +17,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
     async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
         return await SettingsDeviceHelper.get_all_mapped(self._session, self._get_instance_id())
 
-    def _resource_info(self) -> Dict:
+    def _resource_info(self, obj: Optional[Base] = None) -> Dict:
         return Device.configuration
 
     # TODO: '%s/<string:identifier>' optionally at the end of the route

@@ -28,4 +28,6 @@ class MADEncoder(json.JSONEncoder):
             return obj.value
         elif isinstance(obj, MADapks):
             return json.JSONEncoder.default(self, obj)
+        elif isinstance(obj, type):
+            return str(obj)
         return json.JSONEncoder.default(self, obj)

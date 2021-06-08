@@ -14,11 +14,11 @@ class RoutecalcEndpoint(AbstractResourceEndpoint):
     async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
         return await SettingsRoutecalcHelper.get_all(self._session, self._get_instance_id())
 
-    def _resource_info(self) -> Dict:
+    def _resource_info(self, obj: Optional[Base] = None) -> Dict:
         return Routecalc.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
-        return await SettingsRoutecalcHelper.get(self._session, self._get_instance_id(), identifier)
+        return await SettingsRoutecalcHelper.get(self._session, identifier)
 
     async def _create_instance(self, identifier):
         routecalc: SettingsRoutecalc = SettingsRoutecalc()

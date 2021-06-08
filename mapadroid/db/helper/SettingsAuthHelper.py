@@ -17,14 +17,14 @@ class SettingsAuthHelper:
 
     @staticmethod
     async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsAuth]:
-            stmt = select(SettingsAuth).where(SettingsAuth.instance_id == instance_id)
-            result = await session.execute(stmt)
-            return result.scalars().all()
+        stmt = select(SettingsAuth).where(SettingsAuth.instance_id == instance_id)
+        result = await session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
     async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsAuth]:
         listed: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, instance_id)
         mapped: Dict[int, SettingsAuth] = {}
-        for device in listed.scalars():
-            mapped[device.device_id] = device
+        for auth in listed:
+            mapped[auth.auth_id] = auth
         return mapped

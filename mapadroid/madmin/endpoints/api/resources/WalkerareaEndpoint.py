@@ -15,7 +15,7 @@ class WalkerareaEndpoint(AbstractResourceEndpoint):
     async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
         return await SettingsWalkerareaHelper.get_all_mapped(self._session, self._get_instance_id())
 
-    def _resource_info(self) -> Dict:
+    def _resource_info(self, obj: Optional[Base] = None) -> Dict:
         return Walkerarea.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
