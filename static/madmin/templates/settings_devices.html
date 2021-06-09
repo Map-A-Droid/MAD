@@ -170,9 +170,9 @@ $(document).ready(function () {
           </td>
           <td class="align-middle d-none d-lg-table-cell">
             <p style="font-size: 65%; min-height: 50px; display: inline-box">
-            {% for key in vars(device)|sort %}
+            {% for key in device.__dict__|sort %}
             {% if key in ["post_walk_delay", "post_teleport_delay", "walk_after_teleport_distance", "mitm_wait_timeout", "restart_thresh"] %}
-            {{ key }}: {{ device.gettattr[key] }}<br>
+            {{ key }}: {{ device.__dict__[key] }}<br>
             {% endif %}
             {% endfor %}
             </p>
@@ -180,7 +180,7 @@ $(document).ready(function () {
           <td class="align-middle">
             <select class="form-control form-control-sm walker_sel_single" data-identifier="{{ dev_uri }}">
               {% for walker_uri, walker in walkers.items() %}
-               <option name="{{ url('api_walker') + '/'+ walker_uri|string }}" {{ 'selected=selected' if device.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
+               <option name="{{ url('api_walker') / walker_uri|string }}" {{ 'selected=selected' if device.walker_id == walker_uri else "" }}>{{ walker.name }}</option>
               {% endfor %}
             </select>
           </td>
@@ -206,10 +206,10 @@ $(document).ready(function () {
     <select class='bulk_update'>
       <option value="None">None</option>
       {% for walker_id, walker in walkers.items() %}
-       <option value="{{ url('api_walker') + '/'+ walker_id|string }}">Set walker to {{ walker.walkername }}</option>
+       <option value="{{ url('api_walker') / walker_id|string }}">Set walker to {{ walker.name }}</option>
       {% endfor %}
       {% for pool_id, pool in pools.items() %}
-       <option value="{{ url('api_devicepool') + '/'+ pool_id|string }}">Set devicepool to {{ pool.devicepool }}</option>
+       <option value="{{ url('api_devicepool') / pool_id|string }}">Set devicepool to {{ pool.name }}</option>
       {% endfor %}
       <option value='flush_level'>Clear levelup data</option>
     </select>
