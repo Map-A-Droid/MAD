@@ -11,7 +11,7 @@ from mapadroid.db.resource_definitions.Geofence import Geofence
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsGeofencesEndpoint(AbstractRootEndpoint):
+class SettingsGeofenceEndpoint(AbstractRootEndpoint):
     """
     "/settings/geofences"
     """

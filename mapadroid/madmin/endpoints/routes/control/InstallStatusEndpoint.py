@@ -17,6 +17,6 @@ class InstallStatusEndpoint(AbstractControlEndpoint):
     @aiohttp_jinja2.template('installation_status.html')
     async def get(self):
         withautojobs_raw: Optional[str] = self.request.query.get('withautojobs')
-        withautojobs: bool = True if withautojobs_raw == "True" else False
+        withautojobs: bool = True if withautojobs_raw.lower() == "true" else False
         return {"responsive": str(self._get_mad_args().madmin_noresponsive).lower(),
                 "title": "Installation Status", "withautojobs": withautojobs}

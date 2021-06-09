@@ -8,9 +8,9 @@ from mapadroid.db.model import TrsSpawn
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
 
 
-class DeleteSpawnsEndpoint(AbstractStatisticsRootEndpoint):
+class ConvertSpawnsEndpoint(AbstractStatisticsRootEndpoint):
     """
-    "/delete_spawns"
+    "/convert_spawns"
     """
 
     # TODO: Auth

@@ -11,9 +11,9 @@ from mapadroid.db.model import SettingsWalker, SettingsWalkerarea, SettingsArea
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsWalkerEndpoint(AbstractRootEndpoint):
+class SettingsWalkerAreaEndpoint(AbstractRootEndpoint):
     """
-    "/settings/walker"
+    "/settings/walker/areaeditor"
     """
 
     def __init__(self, request: Request):

@@ -5,6 +5,6 @@ from mapadroid.madmin.endpoints.routes.apk.ApkUpdateStatusEndpoint import ApkUpd
 
 
 def register_routes_apk_endpoints(app: web.Application):
-    app.router.add_view('/apk', ApkEndpoint)
+    app.router.add_view('/apk', ApkEndpoint, name='mad_apks')
 
-    app.router.add_view('/apk_update_status', ApkUpdateStatusEndpoint)
+    app.router.add_view('/apk_update_status', ApkUpdateStatusEndpoint, name='apk_update_status')

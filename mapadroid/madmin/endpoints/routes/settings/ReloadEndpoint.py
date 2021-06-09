@@ -5,7 +5,7 @@ from aiohttp_jinja2.helpers import url_for
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsEndpoint(AbstractRootEndpoint):
+class ReloadEndpoint(AbstractRootEndpoint):
     """
     "/reload"
     """

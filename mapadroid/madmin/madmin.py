@@ -14,9 +14,15 @@ from mapadroid.db.model import SettingsDevice
 from mapadroid.madmin.endpoints.api.apks import register_api_apk_endpoints
 from mapadroid.madmin.endpoints.api.autoconf import register_api_autoconf_endpoints
 from mapadroid.madmin.endpoints.api.resources import register_api_resources_endpoints
+from mapadroid.madmin.endpoints.routes import register_routes_root_endpoints
 from mapadroid.madmin.endpoints.routes.apk import register_routes_apk_endpoints
 from mapadroid.madmin.endpoints.routes.autoconfig import register_routes_autoconfig_endpoints
 from mapadroid.madmin.endpoints.routes.control import register_routes_control_endpoints
+from mapadroid.madmin.endpoints.routes.event import register_routes_event_endpoints
+from mapadroid.madmin.endpoints.routes.map import register_routes_map_endpoints
+from mapadroid.madmin.endpoints.routes.misc import register_routes_misc_endpoints
+from mapadroid.madmin.endpoints.routes.settings import register_routes_settings_endpoints
+from mapadroid.madmin.endpoints.routes.statistics import register_routes_statistics_endpoints
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.updater import DeviceUpdater
@@ -62,6 +68,7 @@ class MADmin(object):
         self._app['device_updater'] = self._device_updater
 
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader(template_folder_path))
+        register_routes_root_endpoints(self._app)
         register_api_apk_endpoints(self._app)
         register_api_autoconf_endpoints(self._app)
         register_api_resources_endpoints(self._app)
@@ -70,6 +77,11 @@ class MADmin(object):
         register_routes_apk_endpoints(self._app)
         register_routes_autoconfig_endpoints(self._app)
         register_routes_control_endpoints(self._app)
+        register_routes_settings_endpoints(self._app)
+        register_routes_misc_endpoints(self._app)
+        register_routes_map_endpoints(self._app)
+        register_routes_event_endpoints(self._app)
+        register_routes_statistics_endpoints(self._app)
         try:
             async with self._db_wrapper as session, session:
                 duplicate_macs: Dict[str, List[SettingsDevice]] = await SettingsDeviceHelper.get_duplicate_mac_entries(

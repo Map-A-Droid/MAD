@@ -3,7 +3,6 @@ from typing import Dict, Optional
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
@@ -41,20 +40,20 @@ class SettingsDevicesEndpoint(AbstractRootEndpoint):
             device: SettingsDevice = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),
                                                                     int(identifier))
             if not device:
-                raise web.HTTPFound(url_for("settings_devices"))
+                raise web.HTTPFound(self._url_for("settings_devices"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_device'),
-            'redirect': url_for('settings_devices'),
+            'base_uri': self._url_for('api_device'),
+            'redirect': self._url_for('settings_devices'),
             'subtab': 'device',
             'element': device,
             'section': device,
             'settings_vars': settings_vars,
             'method': 'POST' if not device else 'PATCH',
-            'uri': url_for('api_device') if not device else '%s/%s' % (url_for('api_device'), identifier),
+            'uri': self._url_for('api_device') if not device else '%s/%s' % (self._url_for('api_device'), identifier),
             # TODO: Above is pretty generic in theory...
             'ggl_accounts': await SettingsPogoauthHelper.get_avail_accounts(self._session, self._get_instance_id(),
                                                                             LoginType.GOOGLE),
@@ -70,8 +69,8 @@ class SettingsDevicesEndpoint(AbstractRootEndpoint):
     @aiohttp_jinja2.template('settings_devices.html')
     async def _render_overview(self):
         template_data: Dict = {
-            'base_uri': url_for('api_device'),
-            'redirect': url_for('settings_devices'),
+            'base_uri': self._url_for('api_device'),
+            'redirect': self._url_for('settings_devices'),
             'subtab': 'device',
             'section': await SettingsDeviceHelper.get_all_mapped(self._session, self._get_instance_id()),
             'walkers': await SettingsWalkerHelper.get_all_mapped(self._session, self._get_instance_id()),

@@ -147,3 +147,6 @@ class AbstractRootEndpoint(web.View, ABC):
             headers=headers,
             content_type=content_type,
         )
+
+    def _url_for(self, path_name: str):
+        return self.request.app.router[path_name].url_for()

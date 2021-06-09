@@ -7,7 +7,7 @@ from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
-class SettingsEndpoint(AbstractRootEndpoint):
+class RecalcStatusEndpoint(AbstractRootEndpoint):
     """
     "/recalc_status"
     """

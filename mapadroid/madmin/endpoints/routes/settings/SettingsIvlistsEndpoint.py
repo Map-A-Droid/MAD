@@ -13,7 +13,7 @@ from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.utils.language import i8ln, open_json_file
 
 
-class SettingsMonivlistsEndpoint(AbstractRootEndpoint):
+class SettingsIvlistsEndpoint(AbstractRootEndpoint):
     """
     "/settings/monivlists"
     """

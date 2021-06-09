@@ -15,4 +15,4 @@ class SettingsEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        raise web.HTTPFound(url_for('settings_devices'))
+        await self._redirect(self._url_for("settings_devices"))

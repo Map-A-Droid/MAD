@@ -3,7 +3,7 @@ import aiohttp_jinja2
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
 
 
-class StatisticsMonEndpoint(AbstractStatisticsRootEndpoint):
+class StatusEndpoint(AbstractStatisticsRootEndpoint):
     """
     "/status"
     """
