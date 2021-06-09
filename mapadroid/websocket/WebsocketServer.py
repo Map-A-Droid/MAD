@@ -362,11 +362,8 @@ class WebsocketServer(object):
                     origins_connected.append(origin)
             return origins_connected
 
-    def get_reg_origins(self) -> List[str]:
-        future = asyncio.run_coroutine_threadsafe(
-            self.get_connected_origins(),
-            self.__loop)
-        return future.result()
+    async def get_reg_origins(self) -> List[str]:
+        return await self.get_connected_origins()
 
     def get_origin_communicator(self, origin: str) -> Optional[AbstractCommunicator]:
         # TODO: this should probably lock?

@@ -7,7 +7,7 @@ from aiohttp_jinja2.helpers import url_for
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.model import SettingsAuth
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
-from mapadroid.utils.autoconfig import PDConfig
+from mapadroid.utils.PDConfig import PDConfig
 
 
 class AutoconfigPdEndpoint(AbstractRootEndpoint):

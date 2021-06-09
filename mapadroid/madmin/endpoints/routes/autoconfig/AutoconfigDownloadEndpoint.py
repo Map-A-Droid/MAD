@@ -7,7 +7,8 @@ from aiohttp.abc import Request
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.model import SettingsAuth
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
-from mapadroid.utils.autoconfig import PDConfig, AutoConfIssueGenerator
+from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
+from mapadroid.utils.PDConfig import PDConfig
 
 
 class AutoconfigDownloadEndpoint(AbstractRootEndpoint):
@@ -20,8 +21,9 @@ class AutoconfigDownloadEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        ac_issues = AutoConfIssueGenerator(self._session, self._get_instance_id(),
-                                           self._get_mad_args(), self._get_storage_obj())
+        ac_issues = AutoConfIssueGenerator()
+        await ac_issues.setup(self._session, self._get_instance_id(),
+                              self._get_mad_args(), self._get_storage_obj())
         if ac_issues.has_blockers():
             return self._json_response('Basic requirements not met', status=406, headers=ac_issues.get_headers())
         pd_conf = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())

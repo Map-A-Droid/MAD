@@ -6,7 +6,7 @@ from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 
 
-class DeleteLogEndpoint(AbstractControlEndpoint):
+class DeleteLogEntryEndpoint(AbstractControlEndpoint):
     """
     "/delete_log_entry"
     """

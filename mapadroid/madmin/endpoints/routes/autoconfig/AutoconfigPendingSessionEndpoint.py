@@ -10,7 +10,7 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
-from mapadroid.utils.autoconfig import AutoConfIssueGenerator
+from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
 class AutoconfigPendingSessionEndpoint(AbstractRootEndpoint):
@@ -30,8 +30,9 @@ class AutoconfigPendingSessionEndpoint(AbstractRootEndpoint):
             .get_all_of_instance(self._session, instance_id=self._get_instance_id(), session_id=session_id)
         if not sessions:
             raise web.HTTPFound(url_for('autoconfig_pending'))
-        ac_issues = AutoConfIssueGenerator(self._session, self._get_instance_id(), self._get_mad_args(),
-                                           self._get_storage_obj())
+        ac_issues = AutoConfIssueGenerator()
+        await ac_issues.setup(self._session, self._get_instance_id(),
+                              self._get_mad_args(), self._get_storage_obj())
         _, issues_critical = ac_issues.get_issues()
         if issues_critical:
             raise web.HTTPFound(url_for('autoconfig_pending'))

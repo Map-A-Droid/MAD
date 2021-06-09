@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional, Dict
 
 import aiohttp_jinja2
 
@@ -7,6 +7,7 @@ import mapadroid
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
+from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
 from mapadroid.utils.functions import generate_phones, image_resize
 
 
@@ -26,10 +27,10 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
 
         screens_phone = []
         if self._get_ws_server() is not None:
-            phones = self._get_ws_server().get_reg_origins()
+            phones = await self._get_ws_server().get_reg_origins()
         else:
             phones = []
-        devicemappings = await self._get_mapping_manager().get_all_devicemappings()
+        devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = await self._get_mapping_manager().get_all_devicemappings()
 
         # Sort devices by name.
         phones = sorted(phones)
@@ -38,10 +39,11 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
             ws_connected_phones.append(phonename)
             add_text = ""
             adb_option = False
-            adb = devicemappings.get(phonename, {}).get('adb', False)
+            device_entry: Optional[DeviceMappingsEntry] = devicemappings.get(phonename)
             # TODO: origin_logger = get_origin_logger(self._logger, origin=phonename)
             # TODO: Adb stuff needs to run async
-            if adb is not None and self._adb_connect.check_adb_status(adb) is not None:
+            if device_entry and device_entry.device_settings.adbname is not None \
+                    and self._adb_connect.check_adb_status(device_entry.device_settings.adbname) is not None:
                 # This append is odd
                 # ws_connected_phones.append(adb)
                 adb_option = True
@@ -50,11 +52,11 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
                 # ws_connected_phones.append(adb)
                 pass
 
-            filename = generate_device_screenshot_path(phonename, devicemappings, self._get_mad_args())
+            filename = generate_device_screenshot_path(phonename, device_entry, self._get_mad_args())
             try:
                 screenshot_ending: str = ".jpg"
                 # TODO: Async
-                image_resize(filename, os.path.join(
+                await image_resize(filename, os.path.join(
                     self._get_mad_args().temp_path, "madmin"), width=250)
                 screen = "screenshot/madmin/screenshot_" + str(phonename) + screenshot_ending
                 screens_phone.append(
@@ -73,23 +75,22 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
 
         for phonename in self._adb_connect.return_adb_devices():
             if phonename.serial not in ws_connected_phones:
-                devicemappings = await self._get_mapping_manager().get_all_devicemappings()
-                for pho in devicemappings:
-                    if phonename.serial == devicemappings[pho].get('adb', False):
+                for device_name, entry in devicemappings.items():
+                    if phonename.serial == entry.device_settings.adbname:
                         adb_option = True
                         add_text = '<b>ADB - no WS <i class="fa fa-exclamation-triangle"></i></b>'
-                        filename = generate_device_screenshot_path(pho, devicemappings, self._get_mad_args())
+                        filename = generate_device_screenshot_path(device_name, entry, self._get_mad_args())
                         if os.path.isfile(filename):
-                            image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path,
+                            await image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path,
                                                                 "madmin"),
                                          width=250)
                             screenshot_ending: str = ".jpg"
-                            screen = "screenshot/madmin/screenshot_" + str(pho) + screenshot_ending
-                            screens_phone.append(generate_phones(pho, add_text, adb_option, screen, filename,
+                            screen = "screenshot/madmin/screenshot_" + str(device_name) + screenshot_ending
+                            screens_phone.append(generate_phones(device_name, add_text, adb_option, screen, filename,
                                                                  self._datetimeformat, dummy=False))
                         else:
                             screen = "static/dummy.png"
-                            screens_phone.append(generate_phones(pho, add_text, adb_option, screen, filename,
+                            screens_phone.append(generate_phones(device_name, add_text, adb_option, screen, filename,
                                                                  self._datetimeformat, dummy=True))
         return {
             "editform": screens_phone,

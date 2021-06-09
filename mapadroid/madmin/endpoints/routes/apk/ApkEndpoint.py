@@ -1,7 +1,7 @@
 import aiohttp_jinja2
 from aiohttp.abc import Request
 
-from mapadroid.mad_apk import get_apk_status
+from mapadroid.mad_apk.utils import get_apk_status
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
 
