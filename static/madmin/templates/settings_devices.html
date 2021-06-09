@@ -155,24 +155,24 @@ $(document).ready(function () {
           <th style="width: 30%" class="align-middle"><input type="checkbox" id="selectAll"> Origin</th>
           <th style="width: 20%" class="align-middle d-none d-lg-table-cell">Settings</th>
           <th style="width: 30%" class="align-middle">Walker <i class="fas fa-info-circle" data-toggle="tooltip" title="Changing a walker for a device is saved automatically"></i></th>
-          <th style="width: 20%" class="text-right align-middle"><a href='{{ url('settings_devices', id='new') }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 20%" class="text-right align-middle"><a href='{{ url('settings_devices', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if device is none %}
         <div id='no-configured-elements' class="alert alert-info">No devices added yet</div>
       {% else %}
       <tbody>
-      {% for dev_uri, device in device.items() %}
+      {% for dev_uri, device in section.items() %}
         <tr>
           <td class="align-middle">
             <input type="checkbox" class="bulk_sel" data-identifier="{{ dev_uri }}">
-            <a href="{{ url('settings_devices', id=dev_uri) }}">{{ device.origin }}</a>
+            <a href="{{ url('settings_devices', query_={'id': dev_uri}) }}">{{ device.name }}</a>
           </td>
           <td class="align-middle d-none d-lg-table-cell">
             <p style="font-size: 65%; min-height: 50px; display: inline-box">
-            {% for key in device.settings|sort %}
+            {% for key in vars(device)|sort %}
             {% if key in ["post_walk_delay", "post_teleport_delay", "walk_after_teleport_distance", "mitm_wait_timeout", "restart_thresh"] %}
-            {{ key }}: {{ device.settings[key] }}<br>
+            {{ key }}: {{ device.gettattr[key] }}<br>
             {% endif %}
             {% endfor %}
             </p>
