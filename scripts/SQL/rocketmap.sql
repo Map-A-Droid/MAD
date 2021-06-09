@@ -271,7 +271,6 @@ CREATE TABLE `settings_area_mon_mitm` (
     `max_clustering` int(11) DEFAULT NULL,
     `include_event_id` int DEFAULT NULL,
     `encounter_all` tinyint(1) DEFAULT NULL,
-    `nearby_cell_mode` tinyint(1) DEFAULT NULL,
     PRIMARY KEY (`area_id`),
     KEY `fk_am_monid` (`monlist_id`),
     KEY `fk_area_mon_mitm_geofence` (`geofence_included`),

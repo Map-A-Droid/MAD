@@ -32,12 +32,6 @@ mode_mapping = {
         "range_init": 145,
         "max_count": 100000
     },
-    "nearby_cells": {
-        "s2_cell_level": 17,
-        "range": 200,
-        "range_init": 400,
-        "max_count": 100000
-    },
     "pokestops": {
         "s2_cell_level": 13,
         "range": 0.001,
@@ -396,23 +390,13 @@ class MappingManager:
                     self.get_monlist(area_id)
             route_resource = self.__data_manager.get_resource('routecalc', identifier=area["routecalc"])
 
-            # nearby mode for mon_mitm
-            nearby_cell_mode = area.get("settings", {}).get("nearby_cell_mode", False)
-            if area.get("init", False):
-                nearby_cell_mode = False
-            if nearby_cell_mode:
-                mode_mapping_key = "nearby_cells"
-            else:
-                mode_mapping_key = mode
-
-            range_ = mode_mapping.get(mode_mapping_key, {}).get("range", 0)
-            max_count = mode_mapping.get(mode_mapping_key, {}).get("max_count", 99999999)
-            s2_level = mode_mapping.get(mode_mapping_key, {}).get("s2_cell_level", 30)
-
             calc_type: str = area.get("route_calc_algorithm", "route")
             route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager,
                                                                  area_id, None,
-                                                                 range_, max_count, geofence_included,
+                                                                 mode_mapping.get(mode, {}).get("range", 0),
+                                                                 mode_mapping.get(mode, {}).get("max_count",
+                                                                                                99999999),
+                                                                 geofence_included,
                                                                  path_to_exclude_geofence=geofence_excluded,
                                                                  mode=mode,
                                                                  settings=area.get("settings", None),
@@ -424,7 +408,8 @@ class MappingManager:
                                                                  routefile=route_resource,
                                                                  calctype=calc_type,
                                                                  joinqueue=self.join_routes_queue,
-                                                                 s2_level=s2_level,
+                                                                 s2_level=mode_mapping.get(mode, {}).get(
+                                                                     "s2_cell_level", 30),
                                                                  include_event_id=area.get(
                                                                      "settings", {}).get("include_event_id", None)
                                                                  )
@@ -433,14 +418,13 @@ class MappingManager:
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", True),
                                              init=area.get("init", False),
-                                             range_init=mode_mapping.get(
-                                                 mode_mapping_key, {}).get("range_init", 630),
+                                             range_init=mode_mapping.get(mode, {}).get("range_init", 630),
                                              including_stops=area.get("including_stops", False),
                                              include_event_id=area.get("settings", {}).get("include_event_id", None))
 
                 route_manager.add_coords_list(coords)
-                max_radius = mode_mapping[mode_mapping_key]["range"]
-                max_count_in_radius = mode_mapping[mode_mapping_key]["max_count"]
+                max_radius = mode_mapping[mode]["range"]
+                max_count_in_radius = mode_mapping[mode]["max_count"]
                 if not area.get("init", False):
 
                     proc = thread_pool.apply_async(route_manager.initial_calculation,

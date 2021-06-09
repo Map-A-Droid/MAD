@@ -189,13 +189,13 @@ class AreaMonMITM(Area):
                     "expected": bool
                 }
             },
-            "nearby_cell_mode": {
+            "wait_for": {
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [False, True],
-                    "description": "If turned on, the area will cover Level 15 S2 cells instead of spawnpoints.",
-                    "expected": bool
+                    "values": ["Encounter", "Nearby/GMO", "Lure Encounter"],
+                    "description": "What kind of Pokémon to wait for. (Default: Encounter)",
+                    "expected": str
                 }
             }
         }
