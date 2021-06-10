@@ -56,7 +56,10 @@
 #only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
 #config_mode                  # Run in ConfigMode. Default: False
 #scan_nearby_mons             # Enable scanning of nearby mons - Please make sure you know how this works before turning it on!
-#scan_lured_mons               # Enable scanning of lured mons
+#disable_nearby_cell          # Disables nearby_cell scans if scan_nearby_mons is enabled
+#scan_lured_mons              # Enable scanning of lured mons
+#default_nearby_timeleft:     # The default despawn time left in minutes for Nearby Mons. Default: 15
+#default_unknown_timeleft:    # The default despawn time left in minutes for Mons at unknown Spawnpoints. Default: 3
 #status-name:                 # Setup name for this instance - if not set: PID of the process will be used
 #no_event_checker             # Disable event checker task
 

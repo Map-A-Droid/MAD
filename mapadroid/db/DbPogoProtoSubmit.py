@@ -79,7 +79,8 @@ class DbPogoProtoSubmit:
 
                 # get known spawn end time and feed into despawn time calculation
                 getdetspawntime = self._get_detected_endtime(str(spawnid))
-                despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp)
+                despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp,
+                                                          self._args.default_unknown_timeleft)
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
                 if getdetspawntime is None:
@@ -170,11 +171,11 @@ class DbPogoProtoSubmit:
                 gender = display["gender_value"]
 
                 now = datetime.utcfromtimestamp(time.time())
-                disappear_time = now + timedelta(minutes=15)  # TODO: Possible config option?
+                disappear_time = now + timedelta(minutes=self._args.default_nearby_timeleft)
                 disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
                 now = now.strftime("%Y-%m-%d %H:%M:%S")
 
-                if not stopid and cellid:
+                if (not stopid and cellid) and (not self._args.disable_nearby_cell):
                     lat, lon, _ = S2Helper.get_position_from_cell(cellid)
                     stopid = None
                     db_cell = cellid
@@ -257,7 +258,7 @@ class DbPogoProtoSubmit:
         spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
 
         getdetspawntime = self._get_detected_endtime(str(spawnid))
-        despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp)
+        despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp, self._args.default_unknown_timeleft)
         despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
         latitude = wild_pokemon.get("latitude")

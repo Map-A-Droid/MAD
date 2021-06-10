@@ -10,14 +10,14 @@ def calculate_mon_level(cp_multiplier):
     return round(pokemon_level) * 2 / 2
 
 
-def gen_despawn_timestamp(known_despawn, timestamp):
+def gen_despawn_timestamp(known_despawn, timestamp, default_time_left=3):
     if known_despawn is False:
         # just set despawn time to now + 3 minutes
         # after that round down to full minutes to fix
         # possible re-scan issue updating the seconds
         # causing the timestmap to change and thus causing
         # a resend via webhook. This kinde fixes that. Kinda.
-        return int(int(time.time() + 3 * 60) // 60 * 60)
+        return int(int(time.time() + default_time_left * 60) // 60 * 60)
 
     hrmi = known_despawn.split(":")
     known_despawn = datetime.now().replace(

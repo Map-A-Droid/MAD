@@ -40,7 +40,6 @@ class WebhookWorker:
         ]
 
         self.__build_webhook_receivers()
-        self.__build_ivmon_list(mapping_manager)
         self.__build_excluded_areas(mapping_manager)
 
         if self.__args.webhook_start_time != 0:
@@ -579,12 +578,15 @@ class WebhookWorker:
             url = webhook.strip()
 
             if url.startswith("["):
-                raw_sub_types, url = url.split("]")
+                end_pos = url.index("]")
+                raw_sub_types = url[1:end_pos]
+                url = url[end_pos+1:]
+
                 sub_types = raw_sub_types[1:].split(" ")
                 sub_types = [t.replace(" ", "") for t in sub_types]
 
                 if "pokemon" in sub_types:
-                    sub_types += "encounter"
+                    sub_types.append("encounter")
 
                 for vtype in self.__valid_types:
                     if vtype in sub_types:
@@ -600,16 +602,6 @@ class WebhookWorker:
                 "url": url.replace(" ", ""),
                 "types": sub_types
             })
-
-    def __build_ivmon_list(self, mapping_manager: MappingManager):
-        self.__IV_MON: List[int] = []
-
-        for routemanager_name in mapping_manager.get_all_routemanager_names():
-            ids_iv_list: Optional[List[int]] = mapping_manager.routemanager_get_ids_iv(routemanager_name)
-
-            if ids_iv_list is not None:
-                # TODO check if area/routemanager is actually active before adding the IDs
-                self.__IV_MON = self.__IV_MON + list(set(ids_iv_list) - set(self.__IV_MON))
 
     def __build_excluded_areas(self, mapping_manager: MappingManager):
         self.__excluded_areas: List[GeofenceHelper] = []
