@@ -185,7 +185,7 @@ $('dialog-confirm').dialog();
       event.preventDefault();
       var origin = $(this).attr("origin");
       var url = $(this).attr("href");
-      $('div#' + origin).block({ message: '<img src="{{ url_for("static", filename="loading.gif") }}" width="100px"><br><strong>Load...</strong>' });
+      $('div#' + origin).block({ message: '<img src="{{ static('loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
       $.ajax({
         type: "GET",
         url: url,
@@ -217,7 +217,7 @@ $('dialog-confirm').dialog();
                 icon: "ui-icon-power",
                 click: function() {
                      $(this).dialog("close");
-                  $('div#' + origin).block({ message: '<img src="{{ url_for("static", filename="loading.gif") }}" width="100px"><br><strong>Load...</strong>' });
+                  $('div#' + origin).block({ message: '<img src="{{ static("loading.gif") }}" width="100px"><br><strong>Load...</strong>' });
                      $.ajax({
                          type: "GET",
                          url: url,
@@ -235,7 +235,7 @@ $('dialog-confirm').dialog();
                 click: function() {
                     $(this).dialog("close");
                     url = url + "&restart=1"
-                    $('div#' + origin).block({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
+                    $('div#' + origin).block({ message: '<img src="{{ static('loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
                     $.ajax({
                         type: "GET",
                         url: url,
@@ -263,7 +263,7 @@ $('dialog-confirm').dialog();
        var origin = $(this).attr("origin");
        var adb = $(this).attr("adb");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
+       $('div#' + origin).block({ message: '<img src="{{ static('loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
        $.ajax({
        type: "GET",
        url: 'send_command?origin=' + origin + '&command=back&adb=' + adb,
@@ -280,7 +280,7 @@ $('dialog-confirm').dialog();
        var origin = $(this).attr("origin");
        var adb = $(this).attr("adb");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
+       $('div#' + origin).block({ message: '<img src="{{ static('loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
        $.ajax({
        type: "GET",
        url: 'send_command?origin=' + origin + '&command=home&adb=' + adb,
@@ -302,7 +302,7 @@ $('dialog-confirm').dialog();
            var origin = $(this).attr("origin");
            var adb = $(this).attr("adb");
            var url = $(this).attr("href");
-           $('div#' + origin).block({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
+           $('div#' + origin).block({ message: '<img src="{{ static('loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
            $.ajax({
                type: "GET",
                url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb + '&sleeptime=' + sleeptime,
@@ -322,7 +322,7 @@ $('dialog-confirm').dialog();
            var origin = $(this).attr("origin");
            var adb = $(this).attr("adb");
            var url = $(this).attr("href");
-           $('div#' + origin).block({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
+           $('div#' + origin).block({ message: '<img src="{{ static('loading.gif') }}" width="100px"><br><strong>Load...</strong>' });
            $.ajax({
                type: "GET",
                url: 'send_text?origin=' + origin + '&text=' + text + '&adb=' + adb,
@@ -372,7 +372,7 @@ $(".screenshot").mousedown(function(e){
     } else {
         var url = 'swipe_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey + '&adb=' + adb + '&clickxe=' + imagexe +'&clickye=' + imageye
     }
-    $('div#' + id).block({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px"><br><h2>Load...</h2>' });
+    $('div#' + id).block({ message: '<img src="{{ static('loading.gif') }}" width="100px"><br><h2>Load...</h2>' });
        $.ajax({
        type: "GET",
        url: url,

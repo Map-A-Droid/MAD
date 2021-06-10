@@ -6,7 +6,7 @@
 
 {% block scripts %}
 {{ super() }}
-<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
 <script>
 $.urlParam = function(name){
     var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -79,10 +79,10 @@ $(document).ready(function () {
         {% endfor %}
       </select>
       {% elif field.settings.type == 'lookup' %}
-      <select class="form-control" name="{{ key }}" setting='true' data-default="{{ url_for('api_monivlist') + '/'+ element.settings[key]|string if element.settings[key] else '' }}">
+      <select class="form-control" name="{{ key }}" setting='true' data-default="{{ url('api_monivlist') + '/'+ element.settings[key]|string if element.settings[key] else '' }}">
         <option value='' {{ 'selected="selected"' if uri == element.settings[key] }}>None</option>
         {% for uri, data in monlist.items() %}
-        <option value="{{ url_for('api_monivlist') + '/'+ uri|string  }}" {{ 'selected="selected"' if uri == element.settings[key] }}>{{ data.monlist|lower }}</option>
+        <option value="{{ url('api_monivlist') / uri|string  }}" {{ 'selected="selected"' if uri == element.settings[key] }}>{{ data.monlist|lower }}</option>
         {% endfor %}
       </select>
       {% else %}
@@ -99,7 +99,7 @@ $(document).ready(function () {
         <select class="form-control" name="mon_ids_iv" setting='true' data-default="{{ element.settings['mon_ids_iv'] }}">
           <option value='' {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>None</option>
           {% for uri, data in monlist.items() %}
-          <option value="{{ url_for('api_monivlist') + '/'+ uri|string  }}" {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>{{ data.monlist|lower }}</option>
+          <option value="{{ url('api_monivlist') / uri|string  }}" {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>{{ data.monlist|lower }}</option>
           {% endfor %}
         </select>
       </div>
@@ -118,12 +118,12 @@ $(document).ready(function () {
         {% endfor %}
       </select>
       {% elif field.settings.type == 'geofence' %}
-      <select class="form-control" name="{{ key }}" data-default="{{ url_for('api_geofence') + '/'+ element[key]|string if element[key] else 'None' }}">
+      <select class="form-control" name="{{ key }}" data-default="{{ url('api_geofence') / element[key]|string if element[key] else 'None' }}">
         {% if field.settings.require != True %}
         <option value='None' {{ 'selected="selected"' if uri == element.settings[key] }}>None</option>
         {% endif %}
         {% for uri, data in fences.items() %}
-        <option value="{{ url_for('api_geofence') + '/'+ uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
+        <option value="{{ url('api_geofence') / uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
         {% endfor %}
       </select>
       {% else %}

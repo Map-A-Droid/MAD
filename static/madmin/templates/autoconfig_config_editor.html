@@ -8,7 +8,7 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
 
-<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script type="text/javascript" src="{{ url('static', query_={'filename': 'js/madmin_settings.js'}) }}"></script>
 <script>
 $(document).ready(function () {
     $("#submit").click(function() {

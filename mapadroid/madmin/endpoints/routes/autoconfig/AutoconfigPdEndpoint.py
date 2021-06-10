@@ -23,7 +23,7 @@ class AutoconfigPdEndpoint(AbstractRootEndpoint):
     async def get(self):
         config = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())
         auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(self._session, self._get_instance_id())
-        uri = url_for('api_autoconf_pd')
+        uri = self._url_for('api_autoconf_pd')
         return {"subtab": "autoconf_pd",
                 "config_name": 'PogoDroid',
                 "config_element": config,

@@ -19,4 +19,4 @@ class DeleteLogEntryEndpoint(AbstractControlEndpoint):
             await self._add_notice_message('Job deleted successfully')
         else:
             await self._add_notice_message('Job could not be deleted successfully')
-        await self._redirect(str(url_for('install_status')))
+        await self._redirect(self._url_for('install_status'))

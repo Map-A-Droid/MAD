@@ -29,20 +29,20 @@ class AutoconfigPendingSessionEndpoint(AbstractRootEndpoint):
         sessions: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
             .get_all_of_instance(self._session, instance_id=self._get_instance_id(), session_id=session_id)
         if not sessions:
-            raise web.HTTPFound(url_for('autoconfig_pending'))
+            raise web.HTTPFound(self._url_for('autoconfig_pending'))
         ac_issues = AutoConfIssueGenerator()
         await ac_issues.setup(self._session, self._get_instance_id(),
                               self._get_mad_args(), self._get_storage_obj())
         _, issues_critical = ac_issues.get_issues()
         if issues_critical:
-            raise web.HTTPFound(url_for('autoconfig_pending'))
+            raise web.HTTPFound(self._url_for('autoconfig_pending'))
         registration_session: AutoconfigRegistration = sessions[0]
         pogoauths: List[SettingsPogoauth] = await SettingsPogoauthHelper.get_of_autoconfig(self._session,
                                                                                            self._get_instance_id(),
                                                                                            registration_session.device_id)
         devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(self._session, self._get_instance_id())
-        uri = "{}/{}".format(url_for('api_autoconf'), session_id)
-        redir_uri = url_for('autoconfig_pending')
+        uri = "{}/{}".format(self._url_for('api_autoconf'), session_id)
+        redir_uri = self._url_for('autoconfig_pending')
         return {"subtab": "autoconf_dev",
                 "element": registration_session,
                 "devices": devices,

@@ -37,19 +37,19 @@ class SettingsPoolEndpoint(AbstractRootEndpoint):
         else:
             device_pool: SettingsDevicepool = await SettingsDevicepoolHelper.get(self._session, int(identifier))
             if not device_pool:
-                raise web.HTTPFound(url_for("settings_pools"))
+                raise web.HTTPFound(self._url_for("settings_pools"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_devicepool'),
-            'redirect': url_for('settings_pools'),
+            'base_uri': self._url_for('api_devicepool'),
+            'redirect': self._url_for('settings_pools'),
             'subtab': 'devicepool',
             'element': device_pool,
             'settings_vars': settings_vars,
             'method': 'POST' if not device_pool else 'PATCH',
-            'uri': url_for('api_devicepool') if not device_pool else '%s/%s' % (url_for('api_devicepool'), identifier),
+            'uri': self._url_for('api_devicepool') if not device_pool else '%s/%s' % (self._url_for('api_devicepool'), identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data
@@ -57,8 +57,8 @@ class SettingsPoolEndpoint(AbstractRootEndpoint):
     @aiohttp_jinja2.template('settings_sharedsettings.html')
     async def _render_overview(self):
         template_data: Dict = {
-            'base_uri': url_for('api_devicepool'),
-            'redirect': url_for('settings_pools'),
+            'base_uri': self._url_for('api_devicepool'),
+            'redirect': self._url_for('settings_pools'),
             'subtab': 'devicepool',
             'section': await SettingsDevicepoolHelper.get_all_mapped(self._session, self._get_instance_id()),
         }

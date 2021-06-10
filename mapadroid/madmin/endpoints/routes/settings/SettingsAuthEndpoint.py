@@ -38,31 +38,31 @@ class SettingsAuthEndpoint(AbstractRootEndpoint):
         else:
             auth: SettingsAuth = await SettingsAuthHelper.get(self._session, self._get_instance_id(), int(identifier))
             if not auth:
-                raise web.HTTPFound(url_for("settings_auth"))
+                raise web.HTTPFound(self._url_for("settings_auth"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_auth'),
-            'redirect': url_for('settings_auth'),
+            'base_uri': self._url_for('api_auth'),
+            'redirect': self._url_for('settings_auth'),
             'subtab': 'auth',
             'element': auth,
             'section': auth,
             'settings_vars': settings_vars,
             'method': 'POST' if not auth else 'PATCH',
-            'uri': url_for('api_auth') if not auth else '%s/%s' % (url_for('api_auth'), identifier),
+            'uri': self._url_for('api_auth') if not auth else '%s/%s' % (self._url_for('api_auth'), identifier),
         }
         return template_data
 
     @aiohttp_jinja2.template('settings_auth.html')
     async def _render_overview(self):
         template_data: Dict = {
-            'base_uri': url_for('api_auth'),
+            'base_uri': self._url_for('api_auth'),
             'monlist': await SettingsMonivlistHelper.get_entries_mapped(self._session, self._get_instance_id()),
             'subtab': 'auth',
             'section': await SettingsAuthHelper.get_all_mapped(self._session, self._get_instance_id()),
-            'redirect': url_for('settings_auth'),
+            'redirect': self._url_for('settings_auth'),
         }
         return template_data
 

@@ -21,4 +21,4 @@ class DeleteEventEndpoint(AbstractControlEndpoint):
             await self._add_notice_message('Successfully deleted this event')
         else:
             await self._add_notice_message('Could not delete this event')
-        await self._redirect(str(url_for('events')), commit=True)
+        await self._redirect(self._url_for('events'), commit=True)

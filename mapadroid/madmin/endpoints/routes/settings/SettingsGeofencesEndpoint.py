@@ -38,20 +38,20 @@ class SettingsGeofenceEndpoint(AbstractRootEndpoint):
             geofence: SettingsGeofence = await SettingsGeofenceHelper.get(self._session, self._get_instance_id(),
                                                                           int(identifier))
             if not geofence:
-                raise web.HTTPFound(url_for("settings_geofence"))
+                raise web.HTTPFound(self._url_for("settings_geofence"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_geofence'),
-            'redirect': url_for('settings_geofence'),
+            'base_uri': self._url_for('api_geofence'),
+            'redirect': self._url_for('settings_geofence'),
             'subtab': 'geofence',
             'element': geofence,
             'section': geofence,
             'settings_vars': settings_vars,
             'method': 'POST' if not geofence else 'PATCH',
-            'uri': url_for('api_geofence') if not geofence else '%s/%s' % (url_for('api_geofence'), identifier),
+            'uri': self._url_for('api_geofence') if not geofence else '%s/%s' % (self._url_for('api_geofence'), identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data
@@ -59,8 +59,8 @@ class SettingsGeofenceEndpoint(AbstractRootEndpoint):
     @aiohttp_jinja2.template('settings_geofences.html')
     async def _render_overview(self):
         template_data: Dict = {
-            'base_uri': url_for('api_geofence'),
-            'redirect': url_for('settings_geofence'),
+            'base_uri': self._url_for('api_geofence'),
+            'redirect': self._url_for('settings_geofence'),
             'subtab': 'geofence',
             'section': await SettingsGeofenceHelper.get_all_mapped(self._session, self._get_instance_id()),
         }

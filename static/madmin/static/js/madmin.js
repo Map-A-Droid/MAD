@@ -1566,7 +1566,7 @@ new Vue({
                     <button type="button" class="btn btn-sm btn-outline-secondary map-popup-button-edit"><i class="fas fa-edit"></i> Edit</button>
                   </div>
                   <div class="map-popup-group-saving hidden">
-                    <img src="{{ url_for('static', filename='loading.gif') }}" style="height: 3em" /> Saving...
+                    <img src="/static/loading.gif'" style="height: 3em" /> Saving...
                   </div>
                   <div class="map-popup-group-save hidden">
                     <button type="button" class="btn btn-sm btn-outline-primary map-popup-button-save"><i class="fas fa-save"></i> Save</button>

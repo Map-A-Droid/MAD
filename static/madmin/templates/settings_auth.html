@@ -66,7 +66,7 @@ $(document).ready(function () {
       <thead>
         <tr>
           <th style="width: 80%" class="align-middle">Name <i class="fas fa-info-circle" data-toggle="tooltip" title="These usernames are being used to authenticate RGC and PogoDroid against MAD."></th>
-          <th style="width: 20%" class="text-right align-middle"><a href='{{ url_for('settings_auth', id='new') }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 20%" class="text-right align-middle"><a href='{{ url('settings_auth', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if auth is none %}
@@ -76,7 +76,7 @@ $(document).ready(function () {
         {% for auth_id, auth in auth.items() %}
         <tr>
           <td class="align-middle">
-            <a href="{{ url_for('settings_auth', id=auth_id) }}">{{ auth.username }}</a>
+            <a href="{{ url('settings_auth', query_={'id': auth_id}) }}">{{ auth.username }}</a>
           </td>
           <td class="text-right align-middle">
             <a href="{{ redirect }}?id={{ auth_id }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>

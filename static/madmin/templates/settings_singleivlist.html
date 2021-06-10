@@ -8,7 +8,7 @@
 {{ super() }}
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
 <script>
     $(document).ready(function () {
         $("#submit").click(function() {
@@ -45,7 +45,7 @@
         $(".result-hint").hide();
         if(val.length >= 3) {
             $.ajax({
-                url : "{{ url_for('monsearch') }}",
+                url : "{{ url('monsearch') }}",
                 data : jQuery.param({'search': val, 'monlist': '{{ uri }}'}),
                 type : 'GET',
                 contentType : 'application/json',

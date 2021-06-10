@@ -30,7 +30,7 @@ $(document).ready(function () {
           loadingBlockUI("Bulk Updating")
         var status = $(".bulk_update").val() == 'Accept';
         $.each($('.bulk_sel:checkbox:checked'), function() {
-          uri = '{{ url_for('api_autoconf') }}/' + $(this).data('identifier');
+          uri = '{{ url('api_autoconf') }}/' + $(this).data('identifier');
           bulk_status_update(uri, {'status':status});
         });
       }
@@ -41,7 +41,7 @@ $(document).ready(function () {
         if(confirm('Are you sure you want to delete this session?')) {
             loadingBlockUI("Updating registration")
             $.ajax({
-                url : '{{ url_for('api_autoconf') }}/'+ session_id,
+                url : '{{ url('api_autoconf') }}/'+ session_id,
                 type : 'DELETE',
                 success: function(data, status, xhr) {
                     if(xhr.status == 200) {
@@ -58,12 +58,12 @@ $(document).ready(function () {
     });
 
     $(".download_config").click(function() {
-        window.location.href = "{{ url_for('autoconfig_download_file') }}";
+        window.location.href = "{{ url('autoconfig_download_file') }}";
     });
 
     $(".sess_logs").click(function() {
         var session_id = $(this).data('identifier');
-        window.location.replace('{{ url_for('autoconfig_root') }}/logs/'+ session_id);
+        window.location.replace('{{ url('autoconfig_root') }}/logs/'+ session_id);
     });
 
     $(".reg_status").click(function() {
@@ -79,7 +79,7 @@ $(document).ready(function () {
         if(confirm('Are you sure you want to '+ msg +' this session?  '+ additional)) {
             loadingBlockUI("Updating registration")
             $.ajax({
-                url : '{{ url_for('api_autoconf') }}/'+ session_id,
+                url : '{{ url('api_autoconf') }}/'+ session_id,
                 contentType : 'application/json',
                 data: JSON.stringify({'status':accepted}),
                 type : 'POST',
@@ -156,14 +156,14 @@ $(document).ready(function () {
           <td><input type="checkbox" class="bulk_sel" data-identifier="{{ session_id }}"></td>
           <td class="align-middle">
             {% if not issues_critical %}
-              <a href="{{ url_for('autoconfig_pending_dev', session_id=session_id) }}">{{ session.ip }}</a>
+              <a href="{{ url('autoconfig_pending_dev', query_={'session_id':session_id}) }}">{{ session.ip }}</a>
             {% else %}
               {{ session.ip }}
             {% endif %}
           </td>
           <td class="align-middle">
           {% if session.device_id is not none %}
-            <a href="{{ url_for('settings_devices', id=session.device_id) }}">{{ session.origin }}</a>
+            <a href="{{ url('settings_devices', query_={'id': session.device_id}) }}">{{ session.origin }}</a>
           {% else %}
             {{ session.origin if session.origin is not none else '' }}
           {% endif %}

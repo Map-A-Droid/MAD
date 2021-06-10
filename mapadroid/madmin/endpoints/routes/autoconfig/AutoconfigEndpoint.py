@@ -11,4 +11,4 @@ class AutoconfigEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        raise web.HTTPFound(url_for('autoconfig_pending'))
+        raise web.HTTPFound(self._url_for('autoconfig_pending'))

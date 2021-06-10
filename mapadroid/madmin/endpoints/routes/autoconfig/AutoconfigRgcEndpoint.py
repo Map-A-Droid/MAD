@@ -23,7 +23,7 @@ class AutoconfigRgcEndpoint(AbstractRootEndpoint):
     async def get(self):
         config = RGCConfig(self._session, self._get_instance_id(), self._get_mad_args())
         auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(self._session, self._get_instance_id())
-        uri = url_for('api_autoconf_rgc')
+        uri = self._url_for('api_autoconf_rgc')
         return {"subtab": "autoconf_rgc",
                 "config_name": 'Remote GPS Controller',
                 "config_element": config,

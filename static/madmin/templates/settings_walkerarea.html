@@ -6,7 +6,7 @@
 
 {% block scripts %}
 {{ super() }}
-<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
 <script>
     function validate_walker() {
         var digitsOnlyNotEmptyPattern = "^[0-9]+$";
@@ -64,7 +64,7 @@
                   beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader('X-Append', true);
                   },
-                  url : '{{ url_for('api_walker')}}/{{ walkeruri }}',
+                  url : '{{ url('api_walker')}}/{{ walkeruri }}',
                   data : JSON.stringify(walkerarea_data),
                   type : 'PATCH',
                   contentType : 'application/json',
@@ -115,7 +115,7 @@
 {{ super() }}
 
 {% if areas.items()|length == 0 %}
-<div class="alert alert-warning">Couldn't find any area configurations. Please <a href="{{ url_for('settings_areas') }}">create</a> one first.</div>
+<div class="alert alert-warning">Couldn't find any area configurations. Please <a href="{{ url('settings_areas') }}">create</a> one first.</div>
 {% else %}
 {% if element %}
   <h1 class="display-5">Edit {{ walker.walkername }} ({{ areas[element.walkerarea].name }}) </h1>
@@ -127,9 +127,9 @@
     <div class="form-group">
       <label for='walkerarea'>Area</label><br>
       <small class="form-text text-muted">Select the Area</small>
-      <select class="form-control" name="walkerarea" required="" aria-invalid="false" data-default="{{ url_for('api_area') +'/'+ element.walkerarea|string if element.walkerarea else '' }}">
+      <select class="form-control" name="walkerarea" required="" aria-invalid="false" data-default="{{ url('api_area') / element.walkerarea|string if element.walkerarea else '' }}">
         {% for uri, area in areas.items() %}
-          <option value="{{ url_for('api_area') +'/'+ uri|string }}" {{'selected="selected"' if uri == element.walkerarea }}>{{ area.name }}</option>
+          <option value="{{ url('api_area') / uri|string }}" {{'selected="selected"' if uri == element.walkerarea }}>{{ area.name }}</option>
         {% endfor %}
       </select>
     </div>

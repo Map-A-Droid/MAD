@@ -23,4 +23,4 @@ class JobForWorkerEndpoint(AbstractControlEndpoint):
             # time.sleep(1)
 
         await self._add_notice_message('Job successfully queued')
-        await self._redirect(str(url_for('install_status')))
+        await self._redirect(self._url_for('install_status'))

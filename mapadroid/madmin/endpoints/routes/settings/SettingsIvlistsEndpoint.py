@@ -41,7 +41,7 @@ class SettingsIvlistsEndpoint(AbstractRootEndpoint):
                                                                                    self._get_instance_id(),
                                                                                    int(identifier))
             if not monivlist:
-                raise web.HTTPFound(url_for("settings_ivlists"))
+                raise web.HTTPFound(self._url_for("settings_ivlists"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
@@ -63,14 +63,14 @@ class SettingsIvlistsEndpoint(AbstractRootEndpoint):
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_monivlist'),
-            'redirect': url_for('settings_ivlists'),
+            'base_uri': self._url_for('api_monivlist'),
+            'redirect': self._url_for('settings_ivlists'),
             'subtab': 'monivlist',
             'element': monivlist,
             'section': monivlist,
             'settings_vars': settings_vars,
             'method': 'POST' if not monivlist else 'PATCH',
-            'uri': url_for('api_monivlist') if not monivlist else '%s/%s' % (url_for('api_monivlist'), identifier),
+            'uri': self._url_for('api_monivlist') if not monivlist else '%s/%s' % (self._url_for('api_monivlist'), identifier),
             # TODO: Above is pretty generic in theory...
             'current_mons_list': current_mons_list
         }
@@ -79,8 +79,8 @@ class SettingsIvlistsEndpoint(AbstractRootEndpoint):
     @aiohttp_jinja2.template('settings_ivlists.html')
     async def _render_overview(self):
         template_data: Dict = {
-            'base_uri': url_for('api_monivlist'),
-            'redirect': url_for('settings_ivlists'),
+            'base_uri': self._url_for('api_monivlist'),
+            'redirect': self._url_for('settings_ivlists'),
             'subtab': 'monivlist',
             'section': await SettingsMonivlistHelper.get_entries_mapped(self._session, self._get_instance_id()),
         }

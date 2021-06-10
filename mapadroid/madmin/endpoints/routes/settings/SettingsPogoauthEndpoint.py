@@ -40,7 +40,7 @@ class SettingsPogoauthEndpoint(AbstractRootEndpoint):
                                                                            self._get_instance_id(),
                                                                            int(identifier))
             if not pogoauth:
-                raise web.HTTPFound(url_for("settings_pogoauth"))
+                raise web.HTTPFound(self._url_for("settings_pogoauth"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
@@ -59,13 +59,13 @@ class SettingsPogoauthEndpoint(AbstractRootEndpoint):
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_pogoauth'),
-            'redirect': url_for('settings_pogoauth'),
+            'base_uri': self._url_for('api_pogoauth'),
+            'redirect': self._url_for('settings_pogoauth'),
             'subtab': 'pogoauth',
             'element': pogoauth,
             'settings_vars': settings_vars,
             'method': 'POST' if not pogoauth else 'PATCH',
-            'uri': url_for('api_pogoauth') if not pogoauth else '%s/%s' % (url_for('api_pogoauth'), identifier),
+            'uri': self._url_for('api_pogoauth') if not pogoauth else '%s/%s' % (self._url_for('api_pogoauth'), identifier),
             # TODO: Above is pretty generic in theory...
             'devices': devices,
             'devs_google': devs_google,
@@ -76,8 +76,8 @@ class SettingsPogoauthEndpoint(AbstractRootEndpoint):
     @aiohttp_jinja2.template('settings_pogoauth.html')
     async def _render_overview(self):
         template_data: Dict = {
-            'base_uri': url_for('api_pogoauth'),
-            'redirect': url_for('settings_pogoauth'),
+            'base_uri': self._url_for('api_pogoauth'),
+            'redirect': self._url_for('settings_pogoauth'),
             'subtab': 'pogoauth',
             'section': await SettingsPogoauthHelper.get_all_mapped(self._session, self._get_instance_id()),
         }

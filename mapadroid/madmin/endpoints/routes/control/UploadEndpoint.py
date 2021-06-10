@@ -27,13 +27,13 @@ class UploadEndpoint(AbstractControlEndpoint):
         # check if the post request has the file part
         if not file:
             await self._add_notice_message('No file part')
-            raise web.HTTPFound(url_for("upload"))
+            raise web.HTTPFound(self._url_for("upload"))
         elif not file.filename:
             await self._add_notice_message('No file selected for uploading')
-            raise web.HTTPFound(url_for("upload"))
+            raise web.HTTPFound(self._url_for("upload"))
         elif not allowed_file(file.filename):
             await self._add_notice_message('Allowed file type is apk only!')
-            raise web.HTTPFound(url_for("upload"))
+            raise web.HTTPFound(self._url_for("upload"))
         filename = secure_filename(file.filename)
         # You cannot rely on Content-Length if transfer is chunked.
         size = 0
@@ -47,4 +47,4 @@ class UploadEndpoint(AbstractControlEndpoint):
                 f.write(chunk)
 
         await self._add_notice_message('File uploaded successfully')
-        raise web.HTTPFound(url_for("uploaded_files"))
+        raise web.HTTPFound(self._url_for("uploaded_files"))

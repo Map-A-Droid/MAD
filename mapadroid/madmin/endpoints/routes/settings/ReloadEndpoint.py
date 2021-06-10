@@ -16,4 +16,4 @@ class ReloadEndpoint(AbstractRootEndpoint):
     # TODO: Auth
     async def get(self):
         await self._get_mapping_manager().update()
-        raise web.HTTPFound(url_for("settings_devices"))
+        raise web.HTTPFound(self._url_for("settings_devices"))

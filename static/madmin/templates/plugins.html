@@ -71,12 +71,12 @@
             <div class="plugin_author">{{item}}</div>
 
             {% for plugin in plugin_hotlinks[item] %}
-    <div class="plugin_header">{{plugin}} <a href="{{ url_for("MAD_Plugin_Controller.download_plugin") }}?plugin={{plugin}}" target_new><i class="fa fa-download" aria-hidden="true"></i></a>
+    <div class="plugin_header">{{plugin}} <a href="{{ url("MAD_Plugin_Controller.download_plugin") }}?plugin={{plugin}}" target_new><i class="fa fa-download" aria-hidden="true"></i></a>
                 <div class="plugin_authorurl">Version: {{plugin_hotlinks[item][plugin]['version']}}<br>
                     <a href="{{plugin_hotlinks[item][plugin]['authorurl']}}" target="_new">{{plugin_hotlinks[item][plugin]['authorurl']}}</a></div>
                 <div class="plugin_global_description">{{plugin_hotlinks[item][plugin]['description']}}</div>
                 {% for link in plugin_hotlinks[item][plugin]['links'] %}
-                    <div class="plugin_link"><a href="{{ url_for(link.linkurl) }}">{{link.linkname}}</a></div>
+                    <div class="plugin_link"><a href="{{ url(link.linkurl) }}">{{link.linkname}}</a></div>
                     <div class="plugin_description">-> {{link.description}}</div>
                 {% endfor %}
             {% endfor %}
@@ -88,7 +88,7 @@
 <hr>
 <p>
     <h3>Upload new plugin or updating existing one</h3>
-    <form method="post" action="{{ url_for("MAD_Plugin_Controller.upload_plugin") }}" enctype="multipart/form-data">
+    <form method="post" action="{{ url("MAD_Plugin_Controller.upload_plugin") }}" enctype="multipart/form-data">
   <dl>
     <p>
       <input type="file" name="file" autocomplete="off" required>

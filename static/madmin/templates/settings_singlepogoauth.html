@@ -6,7 +6,7 @@
 
 {% block scripts %}
 {{ super() }}
-<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
 <script>
 var devices_google = {{ devs_google|tojson }};
 var devices_ptc = {{ devs_ptc|tojson }};
@@ -41,7 +41,7 @@ $(document).ready(function () {
             let dev_id = device[0];
             let dev_name = device[1];
             let option = document.createElement("OPTION");
-            option.value = "{{ url_for('api_device') }}/"+ dev_id;
+            option.value = "{{ url('api_device') }}/"+ dev_id;
             option.text = dev_name;
             if(option.value == default_val) {
                 option.setAttribute('selected', 'selected');
@@ -80,7 +80,7 @@ $(document).ready(function () {
     </div>
     <div class="form-group">
       <label for="device_id">Assigned Device</label>
-      <select id="device_id" class="form-control" name="device_id" data-default="{{ url_for('api_device') + '/'+ element.device_id|string if element.device_id else 'None' }}">
+      <select id="device_id" class="form-control" name="device_id" data-default="{{ url('api_device') / element.device_id|string if element.device_id else 'None' }}">
       </select>
       <small class="form-text text-muted">Aligned Device</small>
     </div>

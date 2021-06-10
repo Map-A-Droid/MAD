@@ -26,4 +26,4 @@ class ConvertSpawnEndpoint(AbstractStatisticsRootEndpoint):
         query: Dict[str, str] = {"id": area_id,
                                  "eventid": event_id,
                                  "event": event}
-        await self._redirect(str(url_for('spawn_details', query_=query)), commit=True)
+        await self._redirect(self._url_for('spawn_details', query_=query), commit=True)

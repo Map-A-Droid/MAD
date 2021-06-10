@@ -26,7 +26,7 @@ class SettingsRoutecalcEndpoint(AbstractRootEndpoint):
         if identifier:
             return await self._render_single_element(identifier=identifier)
         else:
-            raise web.HTTPFound(url_for("settings_areas"))
+            raise web.HTTPFound(self._url_for("settings_areas"))
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singleroutecalc.html')
@@ -39,26 +39,26 @@ class SettingsRoutecalcEndpoint(AbstractRootEndpoint):
             routecalc: SettingsMonivlist = await SettingsRoutecalcHelper.get(self._session,
                                                                              int(identifier))
             if not routecalc:
-                raise web.HTTPFound(url_for("settings_areas"))
+                raise web.HTTPFound(self._url_for("settings_areas"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         area_id: str = self.request.query.get("area_id")
         if not area_id:
-            raise web.HTTPFound(url_for("settings_areas"))
+            raise web.HTTPFound(self._url_for("settings_areas"))
         area: Optional[SettingsArea] = await self._get_db_wrapper().get_area(self._session, int(area_id))
         if not area or getattr(area, "routecalc", None) != int(identifier):
-            raise web.HTTPFound(url_for("settings_areas"))
+            raise web.HTTPFound(self._url_for("settings_areas"))
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_routecalc'),
-            'redirect': url_for('settings_areas'),
+            'base_uri': self._url_for('api_routecalc'),
+            'redirect': self._url_for('settings_areas'),
             'subtab': 'routecalc',
             'element': routecalc,
             'settings_vars': settings_vars,
             'method': 'POST' if not routecalc else 'PATCH',
-            'uri': url_for('api_routecalc') if not routecalc else '%s/%s' % (url_for('api_routecalc'), identifier),
+            'uri': self._url_for('api_routecalc') if not routecalc else '%s/%s' % (self._url_for('api_routecalc'), identifier),
             # TODO: Above is pretty generic in theory...
             'area': area,
         }

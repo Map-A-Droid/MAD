@@ -22,4 +22,4 @@ class DeleteFileEndpoint(AbstractControlEndpoint):
         elif os.path.exists(os.path.join(self._get_mad_args().upload_path, filename)):
             os.remove(os.path.join(self._get_mad_args().upload_path, filename))
             await self._add_notice_message("File deleted successfully")
-        await self._redirect(str(url_for('uploaded_files')))
+        await self._redirect(self._url_for('uploaded_files'))

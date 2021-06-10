@@ -15,7 +15,7 @@
     });
 
     $(".reload_wiz").click(function() {
-        url = '{{ url_for('api_madapk') }}/reload';
+        url = '{{ url('api_madapk') }}/reload';
         $.ajax({
             url: url,
             type: 'GET',
@@ -35,7 +35,7 @@
     });
 
     $('#file-input').on('change', function () {
-        url = '{{ url_for('api_madapk') }}/'+ $("#apk_type").val() + '/'+ $("#apk_arch").val();
+        url = '{{ url('api_madapk') }}/'+ $("#apk_type").val() + '/'+ $("#apk_arch").val();
         var fd = new FormData();
         fd.append('file', $('#file-input')[0].files[0]);
         fd.append('filename', $('#file-input')[0].files[0].name);
@@ -69,7 +69,7 @@
             rpc_call = {
               'call': 'search'
             }
-            url = '{{ url_for('api_madapk') }}/'+ $(this).data('apk_type') + '/'+ $(this).data('apk_arch');
+            url = '{{ url('api_madapk') }}/'+ $(this).data('apk_type') + '/'+ $(this).data('apk_arch');
             $.ajax({
                 url : url,
                 contentType : 'application/json-rpc',
@@ -99,7 +99,7 @@
             }
             $.ajax({
                 contentType : 'application/json-rpc',
-                url : '{{ url_for('api_madapk') }}',
+                url : '{{ url('api_madapk') }}',
                 data: JSON.stringify(rpc_call),
                 type : 'POST',
                 success: function(data, status, xhr) {
@@ -123,9 +123,9 @@
             loadingBlockUI("Deleting an APK")
             var apk_type = $(this).data('apk_type');
             var apk_arch = $(this).data('apk_arch');
-            var url = '{{ url_for('api_madapk') }}/'+ apk_type +'/'+ apk_arch;
+            var url = '{{ url('api_madapk') }}/'+ apk_type +'/'+ apk_arch;
             $.ajax({
-                url : '{{ url_for('api_madapk') }}/'+ apk_type +'/'+ apk_arch,
+                url : '{{ url('api_madapk') }}/'+ apk_type +'/'+ apk_arch,
                 type : 'DELETE',
                 success: function(data, status, xhr) {
                     if(xhr.status == 202) {
@@ -145,7 +145,7 @@
 
   function check_apk_status() {
     $.ajax({
-        url : '{{ url_for('apk_update_status') }}',
+        url : '{{ url('apk_update_status') }}',
         type : 'GET',
         success: function(data, status, xhr) {
             if(xhr.status == 200) {
@@ -160,7 +160,7 @@
                   // Currently downloading
                   if(apk_status[composite_key].hasOwnProperty('download_status')) {
                     elem = $(document.createElement("img")).attr({
-                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'src': "{{ static('loading.gif') }}",
                       'class': 'apk_disp',
                       'data-apk_type': apk_type,
                       'data-apk_arch': apk_arch,
@@ -207,7 +207,7 @@
             rpc_call = {
               'call': 'import'
             }
-            url = '{{ url_for('api_madapk') }}/'+ $(this).data('apk_type') + '/'+ $(this).data('apk_arch');
+            url = '{{ url('api_madapk') }}/'+ $(this).data('apk_type') + '/'+ $(this).data('apk_arch');
             $.ajax({
                 url : url,
                 contentType : 'application/json-rpc',

@@ -16,4 +16,4 @@ class DeleteLogEndpoint(AbstractControlEndpoint):
         only_success: Optional[str] = self.request.query.get('only_success')
 
         await self._get_device_updater().delete_log(onlysuccess=only_success == "True")
-        await self._redirect(str(url_for('install_status')))
+        await self._redirect(self._url_for('install_status'))

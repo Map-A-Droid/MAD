@@ -18,7 +18,7 @@
     {% endif %}
   {% endwith %}
 </p>
-<form method="post" action="{{ url_for("upload") }}" enctype="multipart/form-data">
+<form method="post" action="{{ url("upload") }}" enctype="multipart/form-data">
   <dl>
     <p>
       <input type="file" name="file" autocomplete="off" required accept=".apk">

@@ -14,12 +14,12 @@ class GetPriorouteEndpoint(AbstractControlEndpoint):
     # TODO: Auth
     async def get(self):
         routeexport = []
-        routemanager_names: List[str] = await self._get_mapping_manager().get_all_routemanager_ids()
-        for routemanager_name in routemanager_names:
-            mode = self._get_mapping_manager().routemanager_get_mode(routemanager_name)
-            name = self._get_mapping_manager().routemanager_get_name(routemanager_name)
+        routemanager_ids: List[int] = await self._get_mapping_manager().get_all_routemanager_ids()
+        for routemanager_id in routemanager_ids:
+            mode = await self._get_mapping_manager().routemanager_get_mode(routemanager_id)
+            name = await self._get_mapping_manager().routemanager_get_name(routemanager_id)
             route: Optional[List[Location]] = await self._get_mapping_manager().routemanager_get_current_prioroute(
-                routemanager_name)
+                routemanager_id)
 
             if route is None:
                 continue

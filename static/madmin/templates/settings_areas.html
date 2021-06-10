@@ -52,7 +52,7 @@ $(document).ready(function () {
           'call': 'recalculate'
         }
         $.ajax({
-            url : '{{ url_for('api_area') }}/'+ $(this).data('area'),
+            url : '{{ url('api_area') }}/'+ $(this).data('area'),
             contentType : 'application/json-rpc',
             data: JSON.stringify(rpc_call),
             type : 'POST',
@@ -74,7 +74,7 @@ $(document).ready(function () {
 
   function check_recalc_status() {
     $.ajax({
-        url : '{{ url_for('recalc_status') }}',
+        url : '{{ url('recalc_status') }}',
         type : 'GET',
         success: function(data, status, xhr) {
             if(xhr.status == 200) {
@@ -88,7 +88,7 @@ $(document).ready(function () {
                 if(in_recalc.includes(area_id)) {
                   if(recalc_status == 0 || recalc_status == undefined) {
                     elem = $(document.createElement("img")).attr({
-                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'src': "{{ static('loading.gif') }}",
                       'class': 'recalc_disp',
                       'data-recalc': 1,
                       'width': '32px',
@@ -164,11 +164,11 @@ $(document).ready(function () {
                   <i class="fas fa-plus"></i>
                 </button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='idle') }}">Idle <span class="badge badge-secondary">idle</span></a>
-                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='iv_mitm') }}">Mon IV scanner <span class="badge badge-secondary">iv_mitm</span></a>
-                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='mon_mitm') }}">General mon scanner <span class="badge badge-secondary">mon_mitm</span></a>
-                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='pokestops') }}">Quest scanner <span class="badge badge-secondary">pokestops</span></a>
-                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='raids_mitm') }}">Raid scanner <span class="badge badge-secondary">raids_mitm</span></a>
+                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'idle'}) }}">Idle <span class="badge badge-secondary">idle</span></a>
+                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'iv_mitm'}) }}">Mon IV scanner <span class="badge badge-secondary">iv_mitm</span></a>
+                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'mon_mitm'}) }}">General mon scanner <span class="badge badge-secondary">mon_mitm</span></a>
+                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'pokestops'}) }}">Quest scanner <span class="badge badge-secondary">pokestops</span></a>
+                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'raids_mitm'}) }}">Raid scanner <span class="badge badge-secondary">raids_mitm</span></a>
                   <a class="dropdown-item" target="_blank" href="https://mad-docs.readthedocs.io/en/latest/faq/#what-s-the-difference-betwen-these-scanning-modes"><i class="fas fa-question-circle" aria-hidden="true"></i> How do modes work?</a>
                 </div>
             </div>
@@ -182,7 +182,7 @@ $(document).ready(function () {
         {% for area_id, area in area.items() %}
         <tr class="area_container" data-area='{{area_id}}'>
           <td class="align-middle">
-            <a href="{{ url_for('settings_areas', id=area_id, mode=area.area_type) }}">{{ area.name }}</a>
+            <a href="{{ url('settings_areas', query_={'id': area_id, 'mode': area.area_type}) }}">{{ area.name }}</a>
           </td>
           <td><small class="badge badge-secondary">{{ area.area_type }}</small></td>
           <td class="d-none d-lg-table-cell">
@@ -191,7 +191,7 @@ $(document).ready(function () {
             {% if area.settings[key] != "" %}
             {% if key == "mon_ids_iv" %}
               {% if area.settings[key] in monlist %}
-              {{ key }}: <a href="{{ url_for('settings_ivlists', id=area.settings[key]) }}">{{ monlist[area.settings[key]].monlist }}</a><br>
+              {{ key }}: <a href="{{ url('settings_ivlists', query_={'id': area.settings[key]}) }}">{{ monlist[area.settings[key]].monlist }}</a><br>
               {% else %}
               {{ key }}: <b><font color="red">ERROR IN IV LIST - CHECK IT</font></b>
               {% endif %}
@@ -203,7 +203,7 @@ $(document).ready(function () {
             </p>
           </td>
           <td class="text-right align-middle">
-            <a href="{{ url_for('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}"><button type="button" class="btn btn-success btn-sm edit" data-toggle="tooltip" title="Edit calculated route"><i class="fas fa-route"></i></button></a>
+            <a href="{{ url('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}"><button type="button" class="btn btn-success btn-sm edit" data-toggle="tooltip" title="Edit calculated route"><i class="fas fa-route"></i></button></a>
             {% if config_mode == False %}
               {% if area.area_type not in ['idle', 'iv_mitm'] %}
                 <div class='recalc_div' style='display:inline;' data-toggle="tooltip" title="Recalculate route"></div>

@@ -179,7 +179,7 @@
     var convert_div = $(this).find(".convert_div");
     convert_div.empty();
     elem = $(document.createElement("img")).attr({
-      'src': "{{ url_for('static', filename='loading.gif') }}",
+      'src': "{{ static('loading.gif') }}",
       'class': 'convert_disp fa',
       'width': '13px',
       'heigth': '13px'
@@ -227,7 +227,7 @@
     var delete_div = $(this).find(".delete_all_div");
     delete_div.empty();
     elem = $(document.createElement("img")).attr({
-      'src': "{{ url_for('static', filename='loading.gif') }}",
+      'src': "{{ static('loading.gif') }}",
       'class': 'convert_disp fa',
       'width': '13px',
       'heigth': '13px'
@@ -270,7 +270,7 @@
 
     delete_div.empty();
     elem = $(document.createElement("img")).attr({
-      'src': "{{ url_for('static', filename='loading.gif') }}",
+      'src': "{{ static('loading.gif') }}",
       'class': 'convert_disp fa',
       'width': '13px',
       'heigth': '13px'

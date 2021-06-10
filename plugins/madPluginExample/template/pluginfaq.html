@@ -63,7 +63,7 @@ This file is required to define plugin information. (The following content is re
     version = 1.0
 </code></pre><br><br>
 <h5>pluginname.py</h5>
-Use this <a href="{{url_for('.static', filename='madPluginExample.txt')}}" target="_new">file</a> as template for your plugins. You need to adjust the file with every new plugin:
+Use this <a href="{{static(filename='madPluginExample.txt')}}" target="_new">file</a> as template for your plugins. You need to adjust the file with every new plugin:
 <code>class <strong>MadPluginExample</strong>(mapadroid.utils.pluginBase.Plugin):</code>
 Define a unique classname for your plugin.<br><br>
 <pre><code>
@@ -172,7 +172,7 @@ This example store the raw stats in a own table.<br><br>
                     self._mad['logger'].info("Restarting cancelled job " + str(id))
                     self._mad['device_Updater'].restart_job(str(id))
             flash("Requeued " + str(len(ids)) + " canceled job(s)")
-            return redirect(url_for('plugins'), code=302)
+            return redirect(url('plugins'), code=302)
 
     def restartfailedjobs(self):<br>
             jobLog = self._mad['device_Updater'].get_log(withautojobs=False)
@@ -181,7 +181,7 @@ This example store the raw stats in a own table.<br><br>
                     self._mad['logger'].info("Restarting failed job " + str(id))
                     self._mad['device_Updater'].restart_job(str(id))
             flash("Requeued " + str(len(ids)) + " failed job(s)")
-            return redirect(url_for('plugins'), code=302)
+            return redirect(url('plugins'), code=302)
 
     def getting_job_ids(self, jobLog, status: str= None):
             ids: list = []
@@ -195,7 +195,7 @@ That´s a easy way to restart all failed or cancelled jobs - without clicking x 
 <h4>Accessing static file from template</h4>
 <strong>your template file</strong>
 <code>
-    {{url_for('.static', filename='filename')}}
+    {{static('filename')}}
 </code>
 That´s the easierst way to access static files from your template.
 <h3 id="sharing">Share plugin</h3>

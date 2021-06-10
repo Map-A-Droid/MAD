@@ -27,7 +27,7 @@ class AutoconfigLogsEndpoint(AbstractRootEndpoint):
             .get_all_of_instance(self._session, instance_id=self._get_instance_id(), session_id=session_id)
 
         if not sessions:
-            raise web.HTTPFound(url_for('autoconfig_pending'))
+            raise web.HTTPFound(self._url_for('autoconfig_pending'))
         return {"subtab": "autoconf_dev",
                 "responsive": str(self._get_mad_args().madmin_noresponsive).lower(),
                 "session_id": session_id

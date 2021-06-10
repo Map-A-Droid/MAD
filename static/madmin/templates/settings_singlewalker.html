@@ -12,7 +12,7 @@
     crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/additional-methods.min.js" integrity="sha256-Z3MmjesRY6rcd+sYj8tTwb/+EV/4msqGW7EZiQc3TK8="
     crossorigin="anonymous"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
 <script type="text/javascript">
     $(document).ready(function () {
         $("#submit").click(function() {
@@ -92,21 +92,21 @@
                         <th class="align-middle">Setting</th>
                         <th class="align-middle">Max devices</th>
                         <th class="align-middle">Event</th>
-                        <th>{% if uri != url_for('api_walker') %}<a href='{{ url_for('settings_walker_area', id=identifier) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
+                        <th>{% if uri != url('api_walker') %}<a href='{{ url('settings_walker_area', query_={'id': identifier}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
                     </tr>
                 </tbody>
                 <tbody class="row_position ui-sortable">
                     {% for walkerarea_uri in element.setup %}
                         {% set area = walkerarea[walkerarea_uri] %}
-                        <tr id='{{ url_for('api_walkerarea') }}/{{ walkerarea_uri }}'>
+                        <tr id='{{ url('api_walkerarea') }}/{{ walkerarea_uri }}'>
                             <td><i class="fa fa-fw fa-sort handle ui-sortable-handle"></i></td>
-                            <td class='walkerarea' data-save='{{ area.walkerarea }}' data-walkertext='{{ area.walkertext }}'><a href="{{ url_for('settings_areas', id=area['walkerarea'], mode=areas[area['walkerarea']].area_type) }}">{{ areas[area['walkerarea']].name }}</a><br>{{ area.walkertext }}</td>
+                            <td class='walkerarea' data-save='{{ area.walkerarea }}' data-walkertext='{{ area.walkertext }}'><a href="{{ url('settings_areas', query_={'id': area['walkerarea'], 'mode': areas[area['walkerarea']].area_type} ) }}">{{ areas[area['walkerarea']].name }}</a><br>{{ area.walkertext }}</td>
                             <td class='walkertype' data-save='{{ area.walkertype }}'>{{ area.walkertype }}</td>
                             <td class='walkervalue' data-save='{{ area.walkervalue }}'>{{ area.walkervalue }}</td>
                             <td class='walkermax' data-save='{{ area.walkermax }}'>{{ area.walkermax }}</td>
                             <td class='eventid' data-save='{{ area.eventid }}'>{{ area.eventid }}</td>
                             <td>
-                                <a href="{{ url_for('settings_walker_area', id=identifier, walkerarea=walkerarea_uri) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+                                <a href="{{ url('settings_walker_area',query_={'id': identifier, 'walkerarea': walkerarea_uri}) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
                                 <button type="button" class="btn btn-danger btn-sm delete" data-identifier="{{ loop.index }}"><i class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>

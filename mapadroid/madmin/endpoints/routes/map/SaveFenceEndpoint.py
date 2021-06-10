@@ -18,7 +18,7 @@ class SaveFenceEndpoint(AbstractRootEndpoint):
         coords: Optional[str] = self._request.query.get("coords")
 
         if not name and not coords:
-            await self._redirect(str(url_for("map")))
+            await self._redirect(self._url_for("map"))
 
         # Enforce 128 character limit
         if len(name) > 128:
@@ -36,4 +36,4 @@ class SaveFenceEndpoint(AbstractRootEndpoint):
         except Exception:
             # TODO - present the user with an issue.  probably fence-name already exists
             pass
-        await self._redirect(str(url_for("map")), commit=True)
+        await self._redirect(self._url_for("map"), commit=True)

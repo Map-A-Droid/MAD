@@ -26,7 +26,7 @@ class ConvertSpawnsEndpoint(AbstractStatisticsRootEndpoint):
         if await TrsEventHelper.is_event_active(self._session, event_id):
             if today_only:
                 await self._add_notice_message('Cannot convert spawnpoints during an event')
-                await self._redirect(str(url_for('statistics_spawns')))
+                await self._redirect(self._url_for('statistics_spawns'))
             return self._json_response({'status': 'event'})
         if area_id and event_id:
             spawns: List[TrsSpawn] = await self._get_spawnpoints_of_event(area_id, event_id, today_only=today_only,
@@ -35,5 +35,6 @@ class ConvertSpawnsEndpoint(AbstractStatisticsRootEndpoint):
             await TrsSpawnHelper.convert_spawnpoints(self._session, spawn_ids)
         if today_only:
             await self._add_notice_message('Successfully converted spawnpoints')
-            await self._redirect(str(url_for('statistics_spawns')))
+            await self._redirect(self._url_for('statistics_spawns'))
+            await self._redirect(self._url_for('statistics_spawns'))
         return self._json_response({'status': 'success'})

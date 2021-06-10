@@ -180,8 +180,8 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
             router = self.request.app.router.get(uri_source)
             if not router:
                 return None
-            # TODO: Ensure functionality with aiohttp...
-            return router.url_for(identifier=col)
+            return self._url_for(uri_source, identifier=col)
+            # return router.url_for(identifier=col)
 
     @abstractmethod
     def _attributes_to_ignore(self) -> Set[str]:

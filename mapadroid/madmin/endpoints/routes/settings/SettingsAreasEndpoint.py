@@ -60,16 +60,16 @@ class SettingsAreasEndpoint(AbstractRootEndpoint):
         else:
             area: SettingsArea = await self._get_db_wrapper().get_area(self._session, int(identifier))
             if not area:
-                raise web.HTTPFound(url_for("settings_areas"))
+                raise web.HTTPFound(self._url_for("settings_areas"))
             mode = WorkerType(area.mode)
 
         settings_vars: Optional[Dict] = self._get_settings_vars(mode)
         if not settings_vars:
             logger.warning("Unable to get resource definition for mode {}", mode)
-            raise web.HTTPFound(url_for("settings_areas"))
+            raise web.HTTPFound(self._url_for("settings_areas"))
 
         template_data: Dict = {
-            'base_uri': url_for('api_area'),
+            'base_uri': self._url_for('api_area'),
             'identifier': identifier,
             'monlist': await SettingsMonivlistHelper.get_entries_mapped(self._session, self._get_instance_id()),
             'fences': await SettingsGeofenceHelper.get_all_mapped(self._session, self._get_instance_id()),
@@ -79,8 +79,8 @@ class SettingsAreasEndpoint(AbstractRootEndpoint):
             'method': 'POST' if not area else 'PATCH',
             'subtab': 'area',
             'element': area,
-            'redirect': url_for('settings_areas'),
-            'uri': url_for('api_area') if not area else '%s/%s' % (url_for('api_area'), identifier),
+            'redirect': self._url_for('settings_areas'),
+            'uri': self._url_for('api_area') if not area else '%s/%s' % (self._url_for('api_area'), identifier),
             'section': area
         }
         return template_data
@@ -88,7 +88,7 @@ class SettingsAreasEndpoint(AbstractRootEndpoint):
     @aiohttp_jinja2.template('settings_areas.html')
     async def _render_area_overview(self):
         template_data: Dict = {
-            'base_uri': url_for('api_area'),
+            'base_uri': self._url_for('api_area'),
             'monlist': await SettingsMonivlistHelper.get_entries_mapped(self._session, self._get_instance_id()),
             # 'fences': await SettingsGeofenceHelper.get_all_mapped(self._session, self._get_instance_id()),
             'config_mode': self._get_mad_args().config_mode,

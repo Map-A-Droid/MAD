@@ -67,7 +67,7 @@ $(document).ready(function () {
         <tr>
           <th style="width: 40%" class="align-middle">Name</th>
           <th style="width: 40%" class="align-middle">Settings</th>
-          <th style="width: 20%" class= "text-right align-middle"><a href='{{ url_for('settings_walkers', id='new') }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 20%" class= "text-right align-middle"><a href='{{ url('settings_walkers', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if walker is none %}
@@ -82,7 +82,7 @@ $(document).ready(function () {
           <td>
             <p style="font-size: 65%; min-height: 40px; display: inline-box">
               Number of Areas: {{ walker.setup|length }}<br>
-            Areas: {% for walkerarea_uri in walker.setup %}{% if loop.index > 1 %}, {% endif %}<a href="{{ url_for('settings_areas', id=walkerarea[walkerarea_uri]['walkerarea'], mode=areas[walkerarea[walkerarea_uri]['walkerarea']].area_type) }}">{{ areas[walkerarea[walkerarea_uri]['walkerarea']].name }}</a>{% endfor %}
+            Areas: {% for walkerarea_uri in walker.setup %}{% if loop.index > 1 %}, {% endif %}<a href="{{ url('settings_areas', query_={'id': walkerarea[walkerarea_uri]['walkerarea'], 'mode': areas[walkerarea[walkerarea_uri]['walkerarea']].area_type}) }}">{{ areas[walkerarea[walkerarea_uri]['walkerarea']].name }}</a>{% endfor %}
             </p>
           </td>
           <td class="text-right align-middle">

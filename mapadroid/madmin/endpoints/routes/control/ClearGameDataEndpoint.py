@@ -33,4 +33,4 @@ class ClearGameDataEndpoint(AbstractControlEndpoint):
         else:
             temp_comm = self._get_ws_server().get_origin_communicator(origin)
             await temp_comm.reset_app_data("com.nianticlabs.pokemongo")
-        raise web.HTTPFound(url_for("get_phonescreens"))
+        raise web.HTTPFound(self._url_for("get_phonescreens"))

@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
 from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class MADEncoder(json.JSONEncoder):
@@ -36,4 +37,6 @@ class MADEncoder(json.JSONEncoder):
             return obj.isoformat()
         elif isinstance(obj, Decimal):
             return float(obj)
+        elif isinstance(obj, WorkerType):
+            return obj.value
         return json.JSONEncoder.default(self, obj)

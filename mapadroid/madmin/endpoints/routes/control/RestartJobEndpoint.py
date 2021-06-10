@@ -21,4 +21,4 @@ class RestartJobEndpoint(AbstractControlEndpoint):
 
         await self._get_device_updater().restart_job(int(job_id_raw))
         await self._add_notice_message('Job requeued')
-        await self._redirect(str(url_for('install_status')))
+        await self._redirect(self._url_for('install_status'))

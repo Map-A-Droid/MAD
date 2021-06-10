@@ -342,8 +342,8 @@ class MappingManager:
         except KeyError:
             return []
 
-    async def get_all_routemanager_ids(self):
-        return self._routemanagers.keys()
+    async def get_all_routemanager_ids(self) -> List[int]:
+        return list(self._routemanagers.keys())
 
     async def __fetch_routemanager(self, routemanager_id: int) -> Optional[RouteManagerBase]:
         async with self.__mappings_mutex:

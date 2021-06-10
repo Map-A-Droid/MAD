@@ -18,7 +18,8 @@ class GetMapMonsEndpoint(AbstractRootEndpoint):
     async def get(self):
         ne_lat, ne_lng, sw_lat, sw_lng, o_ne_lat, o_ne_lng, o_sw_lat, o_sw_lng = get_bound_params(self._request)
         timestamp: Optional[int] = self._request.query.get("timestamp")
-
+        if timestamp:
+            timestamp = int(timestamp)
         data: List[Pokemon] = \
             await PokemonHelper.get_mons_in_rectangle(self._session,
                                                       ne_corner=Location(ne_lat, ne_lng),

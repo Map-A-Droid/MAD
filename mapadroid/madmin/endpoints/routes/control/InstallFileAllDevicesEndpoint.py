@@ -19,7 +19,7 @@ class InstallFileAllDevicesEndpoint(AbstractControlEndpoint):
         job_type_raw: Optional[str] = self.request.query.get('type')
         if not jobname or not job_type_raw:
             await self._add_notice_message("No File or Type selected")
-            await self._redirect(str(url_for('install_status')))
+            await self._redirect(self._url_for('install_status'))
 
         devices = await self._get_mapping_manager().get_all_devicenames()
         for device in devices:
@@ -27,4 +27,4 @@ class InstallFileAllDevicesEndpoint(AbstractControlEndpoint):
             # await asyncio.sleep(1)
 
         await self._add_notice_message('Job successfully queued')
-        await self._redirect(str(url_for('install_status')))
+        await self._redirect(self._url_for('install_status'))

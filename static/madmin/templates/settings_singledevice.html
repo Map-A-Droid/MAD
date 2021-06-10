@@ -7,7 +7,7 @@
 
 {% block scripts %}
 {{ super() }}
-<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
 
@@ -42,7 +42,7 @@ $(document).ready(function () {
         });
     });
     $("#submit").click(function() {
-        // $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        // $.blockUI({ message: '<img src="{{ static('loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
         save_data = get_save_data();
         if(isEmptyObj(save_data) != false) {
             alert('No changes have been made');
@@ -84,7 +84,7 @@ $(document).ready(function () {
 function translate_ptc() {
     var ptc = [];
     $.each($(".ptc_login").val(), function () {
-        ptc.push("{{ url_for('api_pogoauth') }}/" + this);
+        ptc.push("{{ url('api_pogoauth') }}/" + this);
     });
     return ptc;
 }
@@ -100,7 +100,7 @@ function translate_ptc() {
 <h1 class="display-5">{{ element.origin }}</h1>
 
 {% if walkers.items()|length == 0 %}
-<div class="alert alert-warning">Couldn't find any walker configurations. Please <a href="{{ url_for('settings_walkers', id='new') }}">create</a> one first.</div>
+<div class="alert alert-warning">Couldn't find any walker configurations. Please <a href="{{ url('settings_walkers', query_={'id': 'new'}) }}">create</a> one first.</div>
 {% else %}
 <div class="row">
   <div class="col-sm">
@@ -130,20 +130,20 @@ function translate_ptc() {
   <div class="col-sm">
     <div class="form-group">
       <label for="walker">walker</label>
-      <select class="form-control" name="walker" data-default="{{ url_for('api_walker') + '/'+ element.walker|string if element.walker else '' }}">
+      <select class="form-control" name="walker" data-default="{{ url('api_walker') / element.walker|string if element.walker else '' }}">
         {% for walker_id, walker in walkers.items() %}
-         <option value="{{ url_for('api_walker') + '/'+ walker_id|string }}" {{ 'selected=selected' if element.walker == walker_id else "" }}>{{ walker.walkername }}</option>
+         <option value="{{ url('api_walker') / walker_id|string }}" {{ 'selected=selected' if element.walker == walker_id else "" }}>{{ walker.walkername }}</option>
         {% endfor %}
       </select>
       <small class="form-text text-muted">Walker for this device</small>
     </div>
     <div class="form-group">
       <label for="pool">pool</label>
-      <select class="form-control" name="pool" data-default="{{ url_for('api_devicepool') + '/'+ element.pool|string if element.pool else 'None' }}">
+      <select class="form-control" name="pool" data-default="{{ url('api_devicepool') / element.pool|string if element.pool else 'None' }}">
         <option value='None'>None</option>
         {% if pools is not none %}
         {% for poolid, pool in pools.items() %}
-         <option value="{{ url_for('api_devicepool') + '/'+ poolid|string }}" {{ 'selected=selected' if element.pool == poolid else "" }}>{{ pool.devicepool }}</option>
+         <option value="{{ url('api_devicepool') / poolid|string }}" {{ 'selected=selected' if element.pool == poolid else "" }}>{{ pool.devicepool }}</option>
         {% endfor %}
         {% endif %}
       </select>
@@ -156,10 +156,10 @@ function translate_ptc() {
     </div>
     <div class="form-group">
       <label for="ggl_login">Assigned Google address</label>
-      <select class="form-control" name="ggl_login" data-default="{{ url_for('api_pogoauth') + '/'+ element.ggl_login|string if element.ggl_login else 'None' }}">
+      <select class="form-control" name="ggl_login" data-default="{{ url('api_pogoauth') / element.ggl_login|string if element.ggl_login else 'None' }}">
         <option value='None'>None</option>
         {% for account_id, account in ggl_accounts.items() %}
-         <option value="{{ url_for('api_pogoauth') + '/'+ account_id|string }}" {{ 'selected=selected' if element.ggl_login == account_id else "" }}>{{ account.username }}</option>
+         <option value="{{ url('api_pogoauth') / account_id|string }}" {{ 'selected=selected' if element.ggl_login == account_id else "" }}>{{ account.username }}</option>
         {% endfor %}
       </select>
       <small class="form-text text-muted">Aligned email for auto-configuration</small>

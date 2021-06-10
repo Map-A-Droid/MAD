@@ -33,7 +33,7 @@ class SaveEventEndpoint(AbstractControlEndpoint):
         if event_name == "" or event_start_date == "" or event_start_time == "" or event_end_date == "" \
                 or event_end_time == "":
             await self._add_notice_message('Error while adding this event')
-            await self._redirect(str(url_for('events')))
+            await self._redirect(self._url_for('events'))
 
         # TODO: Ensure working conversion
         # TODO: Use self._datetimeformat ?
@@ -44,4 +44,4 @@ class SaveEventEndpoint(AbstractControlEndpoint):
                                   event_end=event_end,
                                   event_lure_duration=event_lure_duration, event_id=event_id)
         await self._add_notice_message('Successfully added this event')
-        await self._redirect(str(url_for('events')), commit=True)
+        await self._redirect(self._url_for('events'), commit=True)

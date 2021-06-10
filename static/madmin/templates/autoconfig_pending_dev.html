@@ -79,7 +79,7 @@ $(document).ready(function () {
         <option value='None'>None</option>
         {% if devices is not none %}
         {% for device_id, device in devices.items() %}
-         <option value="{{ url_for('api_device') + '/'+ device.identifier|string }}" {{ 'selected=selected' if element.device_id == device_id else "" }}>{{ device.origin }}</option>
+         <option value="{{ url('api_device') / device.identifier|string }}" {{ 'selected=selected' if element.device_id == device_id else "" }}>{{ device.origin }}</option>
         {% endfor %}
         {% endif %}
         </select>

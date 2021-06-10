@@ -28,7 +28,7 @@ class InstallFileEndpoint(AbstractControlEndpoint):
         devicemapping: Optional[DeviceMappingsEntry] = await self._get_mapping_manager().get_devicemappings_of(origin)
         if not devicemapping:
             await self._add_notice_message("Unknown device")
-            await self._redirect(str(url_for('uploaded_files')))
+            await self._redirect(self._url_for('uploaded_files'))
         if os.path.exists(os.path.join(self._get_mad_args().upload_path, jobname)):
             if useadb:
                 if self._adb_connect.push_file(devicemapping.device_settings.adbname, origin,
@@ -40,12 +40,12 @@ class InstallFileEndpoint(AbstractControlEndpoint):
                 else:
                     await self._add_notice_message('File could not be installed successfully :(')
             else:
-                self._get_device_updater().preadd_job(origin, jobname, int(time.time()), job_type)
+                await self._get_device_updater().preadd_job(origin, jobname, int(time.time()), job_type)
                 await self._add_notice_message('Job successfully queued --> See Job Status')
 
         elif int(job_type) != JobType.INSTALLATION.value:
-            self._get_device_updater().preadd_job(origin, jobname, int(time.time()), job_type)
+            await self._get_device_updater().preadd_job(origin, jobname, int(time.time()), job_type)
             await self._add_notice_message('Job successfully queued --> See Job Status')
-        await self._redirect(str(url_for('uploaded_files')))
+        await self._redirect(self._url_for('uploaded_files'))
 
         # return redirect(url_for('uploaded_files', origin=str(origin), adb=useadb), code=302)

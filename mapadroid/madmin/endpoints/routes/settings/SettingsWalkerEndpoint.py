@@ -38,19 +38,19 @@ class SettingsWalkerEndpoint(AbstractRootEndpoint):
             walker: SettingsWalker = await SettingsWalkerHelper.get(self._session, self._get_instance_id(),
                                                                     int(identifier))
             if not walker:
-                raise web.HTTPFound(url_for("settings_walkers"))
+                raise web.HTTPFound(self._url_for("settings_walkers"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_walker'),
-            'redirect': url_for('settings_walkers'),
+            'base_uri': self._url_for('api_walker'),
+            'redirect': self._url_for('settings_walkers'),
             'subtab': 'walker',
             'element': walker,
             'settings_vars': settings_vars,
             'method': 'POST' if not walker else 'PATCH',
-            'uri': url_for('api_walker') if not walker else '%s/%s' % (url_for('api_walker'), identifier),
+            'uri': self._url_for('api_walker') if not walker else '%s/%s' % (self._url_for('api_walker'), identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data
@@ -58,8 +58,8 @@ class SettingsWalkerEndpoint(AbstractRootEndpoint):
     @aiohttp_jinja2.template('settings_walkers.html')
     async def _render_overview(self):
         template_data: Dict = {
-            'base_uri': url_for('api_walker'),
-            'redirect': url_for('settings_walkers'),
+            'base_uri': self._url_for('api_walker'),
+            'redirect': self._url_for('settings_walkers'),
             'subtab': 'walker',
             'section': await SettingsWalkerHelper.get_all_mapped(self._session, self._get_instance_id()),
         }

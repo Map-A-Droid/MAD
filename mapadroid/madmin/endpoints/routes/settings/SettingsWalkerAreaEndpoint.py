@@ -25,7 +25,7 @@ class SettingsWalkerAreaEndpoint(AbstractRootEndpoint):
         if identifier:
             return await self._render_single_element(identifier=identifier)
         else:
-            raise web.HTTPFound(url_for("settings_walkers"))
+            raise web.HTTPFound(self._url_for("settings_walkers"))
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlewalker.html')
@@ -33,12 +33,12 @@ class SettingsWalkerAreaEndpoint(AbstractRootEndpoint):
         # Parse the mode to send the correct settings-resource definition accordingly
         walker: Optional[SettingsWalker] = None
         if not identifier:
-            raise web.HTTPFound(url_for("settings_walkers"))
+            raise web.HTTPFound(self._url_for("settings_walkers"))
         else:
             walker: Optional[SettingsWalker] = await SettingsWalkerHelper.get(self._session, self._get_instance_id(),
                                                                               int(identifier))
             if not walker:
-                raise web.HTTPFound(url_for("settings_walkers"))
+                raise web.HTTPFound(self._url_for("settings_walkers"))
 
         walkerarea_id: Optional[str] = self.request.query.get("walkerarea")
         # Only pull this if its set.  When creating a new walkerarea it will be empty
@@ -52,11 +52,11 @@ class SettingsWalkerAreaEndpoint(AbstractRootEndpoint):
 
         template_data: Dict = {
             'identifier': identifier,
-            'base_uri': url_for('api_walker'),
-            'redirect': url_for('settings_walkers'),
+            'base_uri': self._url_for('api_walker'),
+            'redirect': self._url_for('settings_walkers'),
             'subtab': 'walker',
             'element': walkerarea,
-            'uri': url_for('api_walker') if not walkerarea_id else '%s/%s' % (url_for('api_walker'), walkerarea_id),
+            'uri': self._url_for('api_walker') if not walkerarea_id else '%s/%s' % (self._url_for('api_walker'), walkerarea_id),
             # TODO: Above is pretty generic in theory...
             'walkertypes': walkertypes,
             'areas': areas,

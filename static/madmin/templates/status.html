@@ -35,7 +35,7 @@
             {
                 responsivePriority: 1, data: 'name', title: 'Origin',
                 "render": function (data, type, oData) {
-                    return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
+                    return "<a href='{{ url('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
                 }
             },
             {responsivePriority: 2, data: 'lastProtoDateTime', title: 'Last Update'},
@@ -44,7 +44,7 @@
                 responsivePriority: 3, data: 'rmname', title: 'Route',
                 "render": function (data, type, oData) {
                     if (oData.rmname != 'Idle') {
-                        return "<a href='{{ url_for('settings_areas') }}?id=" + oData.area_id + "&mode=" + oData.mode + "'>" + oData.rmname + "</a>";
+                        return "<a href='{{ url('settings_areas') }}?id=" + oData.area_id + "&mode=" + oData.mode + "'>" + oData.rmname + "</a>";
                     } else {
                         return 'Idle';
                     }
@@ -191,7 +191,7 @@
 
         delete_div.empty();
         elem = $(document.createElement("img")).attr({
-            'src': "{{ url_for('static', filename='loading.gif') }}",
+            'src': "{{ static('loading.gif') }}",
             'class': 'convert_disp fa',
             'width': '13px',
             'heigth': '13px'
@@ -231,7 +231,7 @@
 
         delete_div.empty();
         elem = $(document.createElement("img")).attr({
-            'src': "{{ url_for('static', filename='loading.gif') }}",
+            'src': "{{ static('loading.gif') }}",
             'class': 'convert_disp fa',
             'width': '13px',
             'heigth': '13px'

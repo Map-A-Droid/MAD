@@ -22,7 +22,7 @@ class RestartPhoneEndpoint(AbstractControlEndpoint):
         # origin_logger = get_origin_logger(self._logger, origin=origin)
         devicemapping: Optional[DeviceMappingsEntry] = await self._get_mapping_manager().get_devicemappings_of(origin)
         if not devicemapping:
-            raise web.HTTPFound(url_for("get_phonescreens"))
+            raise web.HTTPFound(self._url_for("get_phonescreens"))
 
         if devicemapping.device_settings.device_id:
             await TrsStatusHelper.save_last_reboot(self._session, self._get_instance_id(),
@@ -36,4 +36,4 @@ class RestartPhoneEndpoint(AbstractControlEndpoint):
             temp_comm = self._get_ws_server().get_origin_communicator(origin)
             await temp_comm.reboot()
         await self._get_ws_server().force_disconnect(origin)
-        raise web.HTTPFound(url_for("get_phonescreens"))
+        raise web.HTTPFound(self._url_for("get_phonescreens"))

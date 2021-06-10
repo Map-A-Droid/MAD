@@ -32,5 +32,5 @@ class DeleteSpawnsEndpoint(AbstractStatisticsRootEndpoint):
                 await self._delete(spawn)
         if older_than_x_days is not None:
             await self._add_notice_message('Successfully deleted outdated spawnpoints')
-            await self._redirect(str(url_for('statistics_spawns')), commit=True)
+            await self._redirect(self._url_for('statistics_spawns'), commit=True)
         return self._json_response({'status': 'success'})
