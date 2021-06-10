@@ -1,5 +1,6 @@
 import datetime
 import json
+from decimal import Decimal
 
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
 from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
@@ -33,4 +34,6 @@ class MADEncoder(json.JSONEncoder):
             return str(obj)
         elif isinstance(obj, datetime.datetime):
             return obj.isoformat()
+        elif isinstance(obj, Decimal):
+            return float(obj)
         return json.JSONEncoder.default(self, obj)

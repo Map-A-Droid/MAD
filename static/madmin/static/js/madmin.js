@@ -956,7 +956,7 @@ new Vue({
                     // store meta data
                     this.mons[id] = mon;
 
-                    const monId = mon["mon_id"];
+                    const monId = mon["pokemon_id"];
                     let icon;
                     if (leaflet_data.monicons[monId]) {
                         icon = leaflet_data.monicons[monId];
@@ -1486,7 +1486,7 @@ new Vue({
             mon = this.mons[marker.options.id];
 
             var form = mon["form"] == 0 ? "00" : mon["form"];
-            var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
+            var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(mon["pokemon_id"], 3, 0)}_${form}.png`;
 
             var iv = (mon["individual_attack"] + mon["individual_defense"] + mon["individual_stamina"]) * 100 / 45;
             var end = moment(mon["disappear_time"] * 1000);
@@ -1518,7 +1518,7 @@ new Vue({
 
             return `
         <div class="content">
-          <div class="name"><strong>${mon["name"]}</strong> #${mon["mon_id"]} ${mon["gender"] == 1 ? '<i class="fas fa-mars"></i>' : '<i class="fas fa-venus"></i>'}</div>
+          <div class="name"><strong>${mon["name"]}</strong> #${mon["pokemon_id"]} ${mon["gender"] === 1 ? '<i class="fas fa-mars"></i>' : '<i class="fas fa-venus"></i>'}</div>
           <div class="id"><i class="fa fa-fingerprint"></i> <span>${mon["encounter_id"]}</span></div>
           <div class="coords">
             <i class="fa fa-map-pin"></i>

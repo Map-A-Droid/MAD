@@ -30,7 +30,7 @@ class GetMapMonsEndpoint(AbstractRootEndpoint):
         mons_serialized: List[Dict] = []
         mon_name_cache: Dict[int, str] = {}
         for mon in data:
-            serialized_entry: Dict = vars(mon)
+            serialized_entry: Dict = {x: y for x, y in vars(mon).items() if not x.startswith("_")}
             serialized_entry["disappear_time"] = int(mon.disappear_time.replace(tzinfo=timezone.utc).timestamp())
             serialized_entry["last_modified"] = int(mon.last_modified.replace(tzinfo=timezone.utc).timestamp())
             try:
@@ -43,5 +43,6 @@ class GetMapMonsEndpoint(AbstractRootEndpoint):
                 serialized_entry["name"] = mon_name
             except Exception:
                 pass
+            mons_serialized.append(serialized_entry)
 
         return self._json_response(mons_serialized)

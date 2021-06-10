@@ -76,14 +76,38 @@ def nocache(view):
 
 
 def get_bound_params(request):
-    ne_lat = request.args.get('neLat')
-    ne_lon = request.args.get('neLon')
-    sw_lat = request.args.get('swLat')
-    sw_lon = request.args.get('swLon')
-    o_ne_lat = request.args.get('oNeLat', None)
-    o_ne_lon = request.args.get('oNeLon', None)
-    o_sw_lat = request.args.get('oSwLat', None)
-    o_sw_lon = request.args.get('oSwLon', None)
+    try:
+        ne_lat = float(request.query.get('neLat'))
+    except (ValueError, TypeError):
+        ne_lat = None
+    try:
+        ne_lon = float(request.query.get('neLon'))
+    except (ValueError, TypeError):
+        ne_lon = None
+    try:
+        sw_lat = float(request.query.get('swLat'))
+    except (ValueError, TypeError):
+        sw_lat = None
+    try:
+        sw_lon = float(request.query.get('swLon'))
+    except (ValueError, TypeError):
+        sw_lon = None
+    try:
+        o_ne_lat = float(request.query.get('oNeLat'))
+    except (ValueError, TypeError):
+        o_ne_lat = None
+    try:
+        o_ne_lon = float(request.query.get('oNeLon'))
+    except (ValueError, TypeError):
+        o_ne_lon = None
+    try:
+        o_sw_lat = float(request.query.get('oSwLat'))
+    except (ValueError, TypeError):
+        o_sw_lat = None
+    try:
+        o_sw_lon = float(request.query.get('oSwLon'))
+    except (ValueError, TypeError):
+        o_sw_lon = None
 
     # reset old bounds to None if they're equal
     # this will tell the query to only fetch new/updated elements

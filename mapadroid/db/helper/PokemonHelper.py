@@ -119,12 +119,14 @@ class PokemonHelper:
         stmt = select(Pokemon)
         where_conditions = []
         where_conditions.append(Pokemon.disappear_time > datetime.datetime.utcnow())
-        if ne_corner and sw_corner:
+        if (ne_corner and sw_corner
+                and ne_corner.lat and ne_corner.lng and sw_corner.lat and sw_corner.lng):
             where_conditions.append(and_(Pokemon.latitude >= sw_corner.lat,
                                          Pokemon.longitude >= sw_corner.lng,
                                          Pokemon.latitude <= ne_corner.lat,
                                          Pokemon.longitude <= ne_corner.lng))
-        if old_ne_corner and old_sw_corner:
+        if (old_ne_corner and old_sw_corner
+                and old_ne_corner.lat and old_ne_corner.lng and old_sw_corner.lat and old_sw_corner.lng):
             where_conditions.append(and_(Pokemon.latitude >= old_sw_corner.lat,
                                          Pokemon.longitude >= old_sw_corner.lng,
                                          Pokemon.latitude <= old_ne_corner.lat,

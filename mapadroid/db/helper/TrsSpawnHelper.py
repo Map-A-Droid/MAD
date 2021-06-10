@@ -163,12 +163,14 @@ class TrsSpawnHelper:
             .join(TrsEvent, TrsSpawn.eventid == TrsEvent.id, isouter=False)
         where_conditions = []
 
-        if ne_corner and sw_corner:
+        if (ne_corner and sw_corner
+                and ne_corner.lat and ne_corner.lng and sw_corner.lat and sw_corner.lng):
             where_conditions.append(and_(TrsSpawn.latitude >= sw_corner.lat,
                                          TrsSpawn.longitude >= sw_corner.lng,
                                          TrsSpawn.latitude <= ne_corner.lat,
                                          TrsSpawn.longitude <= ne_corner.lng))
-        if old_ne_corner and old_sw_corner:
+        if (old_ne_corner and old_sw_corner
+                and old_ne_corner.lat and old_ne_corner.lng and old_sw_corner.lat and old_sw_corner.lng):
             where_conditions.append(and_(TrsSpawn.latitude >= old_sw_corner.lat,
                                          TrsSpawn.longitude >= old_sw_corner.lng,
                                          TrsSpawn.latitude <= old_ne_corner.lat,
