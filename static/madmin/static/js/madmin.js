@@ -1535,6 +1535,29 @@ new Vue({
                 var ivcolor = "red";
             }
 
+            switch (mon["seen_type"]) {
+                case "encounter":
+                    var seentype = "in an encounter"
+                    break;
+                case "wild":
+                    var seentype = "in the wild"
+                    break;
+                case "nearby_stop":
+                    var seentype = "at a Pokéstop"
+                    break;
+                case "nearby_cell":
+                    var seentype = "in a L15 S2 cell"
+                    break;
+                case "lure_wild":
+                    var seentype = "at a lure (no encounter)"
+                    break;
+                case "lure_enconter":
+                    var seentype = "at a lure (with encounter)"
+                    break;
+                default:
+                    var seentype = "unknown"
+            }
+
             var ivtext = "";
             if (mon["cp"] > 0) {
                 ivtext = `
@@ -1558,6 +1581,7 @@ new Vue({
             <a onclick=copyClipboard("${mon["latitude"].toFixed(6)}|${mon["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
          </div>
           <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified'] * 1000).format("YYYY-MM-DD HH:mm:ss")}</div>
+          <div id="seentype"><i class="fa fa-eye"></i> Seen <strong>${seentype}</strong></div>
           <br>
           ${ivtext}
         <div class="end"><i class="fas fa-hourglass-end"></i> Despawn: <strong>${end.format("YYYY-MM-DD HH:mm:ss")} (${end.from(moment())})</strong></div>

@@ -269,7 +269,7 @@ class MITMReceiver(Process):
             origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
-        if proto_type not in (106, 102, 101, 104, 4, 156):
+        if proto_type not in (106, 102, 101, 104, 4, 156, 145):
             # trash protos - ignoring
             return
 
@@ -314,7 +314,8 @@ class MITMReceiver(Process):
 
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
-                    "lvl_mode": level_mode, 'unquest_stops': unquest_stops}
+                    "lvl_mode": level_mode, 'unquest_stops': unquest_stops,
+                    "check_lured": self.__application_args.scan_lured_mons}
         return json.dumps(response)
 
     # TODO - Deprecate this function as it does not return useful addresses

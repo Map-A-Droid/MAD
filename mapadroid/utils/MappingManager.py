@@ -39,7 +39,7 @@ mode_mapping = {
         "max_count": 100000
     },
     "iv_mitm": {
-        "range": 0,
+        "range": 67,
         "range_init": 0,
         "max_count": 999999
     }

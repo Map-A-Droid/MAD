@@ -9,6 +9,7 @@ class RouteManagerMon(RouteManagerBase):
                  path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=True, init=False,
                  name="unknown", settings=None, joinqueue=None, include_event_id=None):
+
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,

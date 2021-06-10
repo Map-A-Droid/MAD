@@ -188,6 +188,15 @@ class AreaMonMITM(Area):
                                    "Pokemon species to reach a near 100% IV-rate. This will slow down route progress!",
                     "expected": bool
                 }
+            },
+            "wait_for": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": ["Encounter", "Nearby/GMO", "Lure Encounter"],
+                    "description": "What kind of Pokémon to wait for. (Default: Encounter)",
+                    "expected": str
+                }
             }
         }
     }

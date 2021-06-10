@@ -1,4 +1,5 @@
 import json
+import random
 import re
 import time
 from datetime import datetime, timedelta, timezone
@@ -387,10 +388,10 @@ class DbWrapper:
         logger.debug3("Getting mons to be encountered")
         query = (
             "SELECT latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, "
-            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire "
+            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire, seen_type, cell_id "
             "FROM pokemon "
             "WHERE individual_attack IS NULL AND individual_defense IS NULL AND individual_stamina IS NULL "
-            "AND encounter_id != 0 "
+            "AND encounter_id != 0 AND seen_type != 'nearby_cell' "
             "and (disappear_time BETWEEN DATE_ADD(UTC_TIMESTAMP(), INTERVAL %s SECOND) "
             "and DATE_ADD(UTC_TIMESTAMP(), INTERVAL 60 MINUTE))"
             "ORDER BY expire ASC"
@@ -403,7 +404,7 @@ class DbWrapper:
         results = self.execute(query, sql_args, commit=False)
 
         next_to_encounter = []
-        for latitude, longitude, encounter_id, _spawnpoint_id, pokemon_id, _ in results:
+        for latitude, longitude, encounter_id, _spawnpoint_id, pokemon_id, _, seen_type, cellid in results:
             if pokemon_id not in eligible_mon_ids:
                 continue
             elif latitude is None or longitude is None:
@@ -415,15 +416,34 @@ class DbWrapper:
                               " fences", latitude, longitude)
                 continue
 
-            next_to_encounter.append((pokemon_id, Location(latitude, longitude), encounter_id))
+            next_to_encounter.append((pokemon_id, Location(latitude, longitude), encounter_id, seen_type, cellid))
 
         # now filter by the order of eligible_mon_ids
         to_be_encountered = []
         i = 0
         for mon_prio in eligible_mon_ids:
-            for mon in next_to_encounter:
-                if mon_prio == mon[0]:
-                    to_be_encountered.append((i, mon[1], mon[2]))
+            for mon_id, location, encounter_id, seen_type, cell_id in next_to_encounter:
+                if mon_prio == mon_id:
+                    if seen_type == "nearby_cell":
+                        cell_coords = S2Helper.coords_of_cell(cell_id)
+
+                        geohelper_data = {
+                            "fence_data": [
+                                str(lat) + "," + str(lon) for lat, lon in cell_coords
+                            ]
+                        }
+                        spawns = self.retrieve_next_spawns(
+                            GeofenceHelper(geohelper_data, None)
+                        )
+
+                        if len(spawns) == 0:
+                            to_be_encountered.append((i, location, encounter_id))
+                        else:
+                            for _, spawn_location in spawns:
+                                to_be_encountered.append((i, spawn_location, encounter_id))
+                                i += 1
+                    else:
+                        to_be_encountered.append((i, location, encounter_id))
             i += 1
         return to_be_encountered
 
@@ -604,7 +624,7 @@ class DbWrapper:
             "longitude, disappear_time, individual_attack, individual_defense, "
             "individual_stamina, move_1, move_2, cp, weight, "
             "height, gender, form, costume, weather_boosted_condition, "
-            "last_modified "
+            "last_modified, seen_type "
             "FROM pokemon "
             "WHERE disappear_time > '{}'"
         ).format(now)
@@ -636,7 +656,11 @@ class DbWrapper:
              disappear_time, individual_attack, individual_defense,
              individual_stamina, move_1, move_2, cp,
              weight, height, gender, form, costume,
-             weather_boosted_condition, last_modified) in res:
+             weather_boosted_condition, last_modified, seen_type) in res:
+
+            if seen_type is not None and "nearby" in seen_type:
+                latitude += random.uniform(-0.0003, 0.0003)
+                longitude += random.uniform(-0.0005, 0.0005)
             mons.append({
                 "encounter_id": encounter_id,
                 "spawnpoint_id": spawnpoint_id,
@@ -656,7 +680,8 @@ class DbWrapper:
                 "form": form,
                 "costume": costume,
                 "weather_boosted_condition": weather_boosted_condition,
-                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp())
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
+                "seen_type": seen_type
             })
 
         return mons
