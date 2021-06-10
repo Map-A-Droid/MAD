@@ -260,7 +260,7 @@ class PokestopHelper:
                                          Pokestop.latitude <= old_ne_corner.lat,
                                          Pokestop.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(TrsQuest.last_scanned >= datetime.utcfromtimestamp(timestamp))
+            where_conditions.append(Pokestop.last_updated >= datetime.utcfromtimestamp(timestamp))
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         return result.scalars().all()
