@@ -58,7 +58,7 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
                 # TODO: Async
                 await image_resize(filename, os.path.join(
                     self._get_mad_args().temp_path, "madmin"), width=250)
-                screen = "screenshot/madmin/screenshot_" + str(phonename) + screenshot_ending
+                screen = "screenshot/screenshot_" + str(phonename) + screenshot_ending + "?madmin=1"
                 screens_phone.append(
                     generate_phones(phonename, add_text, adb_option,
                                     screen, filename, self._datetimeformat, dummy=False)
@@ -85,7 +85,7 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
                                                                 "madmin"),
                                          width=250)
                             screenshot_ending: str = ".jpg"
-                            screen = "screenshot/madmin/screenshot_" + str(device_name) + screenshot_ending
+                            screen = "screenshot/screenshot_" + str(device_name) + screenshot_ending + "?madmin=1"
                             screens_phone.append(generate_phones(device_name, add_text, adb_option, screen, filename,
                                                                  self._datetimeformat, dummy=False))
                         else:

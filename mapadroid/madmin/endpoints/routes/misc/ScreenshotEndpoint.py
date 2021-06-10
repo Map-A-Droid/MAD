@@ -16,6 +16,9 @@ class ScreenshotEndpoint(AbstractRootEndpoint):
     async def get(self):
         # TODO: Validate screenshot, otherwise we might be sending whatever....
         file_name = self.request.match_info['path']
+        madmin_thumbnail = self.request.query.get("madmin")
+        if madmin_thumbnail:
+            file_name = "madmin/" + file_name
         headers = {
             "Content-disposition": "attachment; filename={file_name}".format(file_name=file_name)
         }
@@ -28,8 +31,8 @@ class ScreenshotEndpoint(AbstractRootEndpoint):
                 status=404
             )
         else:
-            return web.Response(
-                body=self.file_sender(file_path=file_path),
+            return web.FileResponse(
+                path=file_path,
                 headers=headers
             )
 

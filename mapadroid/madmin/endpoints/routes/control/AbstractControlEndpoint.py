@@ -9,6 +9,7 @@ import mapadroid
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType
@@ -46,11 +47,12 @@ class AbstractControlEndpoint(AbstractRootEndpoint, ABC):
             creation_date(filename)).strftime(self._datetimeformat)
 
     async def _generate_screenshot(self, mapping_entry: DeviceMappingsEntry):
-        screenshot_type: ScreenshotType = ScreenshotType.JPEG
-        if mapping_entry.device_settings.screenshot_type == "png":
-            screenshot_type = ScreenshotType.PNG
-
-        screenshot_quality: int = mapping_entry.device_settings.screenshot_quality
+        screenshot_type: ScreenshotType = await self._get_mapping_manager()\
+            .get_devicesetting_value_of_device(mapping_entry.device_settings.name,
+                                               MappingManagerDevicemappingKey.SCREENSHOT_TYPE)
+        screenshot_quality: int = await self._get_mapping_manager()\
+            .get_devicesetting_value_of_device(mapping_entry.device_settings.name,
+                                               MappingManagerDevicemappingKey.SCREENSHOT_QUALITY)
         temp_comm = self._get_ws_server().get_origin_communicator(mapping_entry.device_settings.name)
         filename = generate_device_screenshot_path(mapping_entry.device_settings.name, mapping_entry,
                                                    self._get_mad_args())

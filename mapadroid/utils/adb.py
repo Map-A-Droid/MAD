@@ -64,6 +64,8 @@ class ADBConnect(object):
 
     def make_screenshot(self, adb, origin, extenstion):
         origin_logger = get_origin_logger(logger, origin=origin)
+        if not adb:
+            return False
         try:
             device = self._client.device(adb)
             if device is not None:

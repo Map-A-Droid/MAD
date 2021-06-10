@@ -192,7 +192,7 @@ $('dialog-confirm').dialog();
         success: function(data){
             $('#date' + origin + ' span.date').attr('data-original-title', data).tooltip('hide');
             $('#date' + origin + ' span.date').text(moment(data).fromNow());
-            $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+            $('img#' + origin).attr('src', 'screenshot/screenshot_' + origin + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
             $('div#' + origin).unblock();
         }
      });
@@ -223,7 +223,7 @@ $('dialog-confirm').dialog();
                          url: url,
                          success: function(data){
                              $('#date' + origin).text(data);
-                             $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                             $('img#' + origin).attr('src', 'screenshot/screenshot_' + origin + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
                              $('div#' + origin).unblock();
                          }
                      });
@@ -241,7 +241,7 @@ $('dialog-confirm').dialog();
                         url: url,
                         success: function(data){
                             $('#date' + origin).text(data);
-                            $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                            $('img#' + origin).attr('src', 'screenshot/screenshot_' + origin + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
                             $('div#' + origin).unblock();
                         }
                     });
@@ -269,7 +269,7 @@ $('dialog-confirm').dialog();
        url: 'send_command?origin=' + origin + '&command=back&adb=' + adb,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('img#' + origin).attr('src', 'screenshot/screenshot_' + origin + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -286,7 +286,7 @@ $('dialog-confirm').dialog();
        url: 'send_command?origin=' + origin + '&command=home&adb=' + adb,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('img#' + origin).attr('src', 'screenshot/screenshot_' + origin + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -298,7 +298,7 @@ $('dialog-confirm').dialog();
 
        if (coords != null) {
            var sleeptime = prompt("Additional sleeptime after geofix (in seconds)?", "0");
-           if (sleeptime == null || sleeptime == "") { sleeptime = 0 }
+           if (sleeptime == null || sleeptime === "") { sleeptime = 0 }
            var origin = $(this).attr("origin");
            var adb = $(this).attr("adb");
            var url = $(this).attr("href");
@@ -308,7 +308,7 @@ $('dialog-confirm').dialog();
                url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb + '&sleeptime=' + sleeptime,
                success: function(data){
                    $('#date' + origin).text(data);
-                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                   $('img#' + origin).attr('src', 'screenshot/screenshot_' + origin + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
                    $('div#' + origin).unblock();
                }
            });
@@ -328,7 +328,7 @@ $('dialog-confirm').dialog();
                url: 'send_text?origin=' + origin + '&text=' + text + '&adb=' + adb,
                success: function(data){
                    $('#date' + origin).text(data);
-                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                   $('img#' + origin).attr('src', 'screenshot/screenshot_' + origin + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
                    $('div#' + origin).unblock();
                }
            });
@@ -378,7 +378,7 @@ $(".screenshot").mousedown(function(e){
        url: url,
        success: function(data){
            $('#date' + id).text(data);
-           $('img#' + id).attr('src', 'screenshot/madmin/screenshot_' + id + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('img#' + id).attr('src', 'screenshot/screenshot_' + id + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + id).unblock();
        }
     });

@@ -37,6 +37,7 @@ from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import ScreenshotType
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -271,55 +272,59 @@ class MappingManager:
             return devicemapping_entry.last_questclear_time
         # DB stuff
         elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST:
-            return devicemapping_entry.pool_settings.enhanced_mode_quest if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.enhanced_mode_quest
+            return devicemapping_entry.pool_settings.enhanced_mode_quest if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.enhanced_mode_quest else devicemapping_entry.device_settings.enhanced_mode_quest
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET:
-            return devicemapping_entry.pool_settings.screenshot_y_offset if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.screenshot_y_offset
+            return devicemapping_entry.pool_settings.screenshot_y_offset if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_y_offset else devicemapping_entry.device_settings.screenshot_y_offset
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET:
-            return devicemapping_entry.pool_settings.screenshot_x_offset if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.screenshot_x_offset
+            return devicemapping_entry.pool_settings.screenshot_x_offset if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_x_offset else devicemapping_entry.device_settings.screenshot_x_offset
         elif key == MappingManagerDevicemappingKey.LOGINTYPE:
             return devicemapping_entry.device_settings.logintype
         elif key == MappingManagerDevicemappingKey.GGL_LOGIN_MAIL:
             return devicemapping_entry.device_settings.ggl_login_mail
         elif key == MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER:
-            return devicemapping_entry.pool_settings.startcoords_of_walker if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.startcoords_of_walker
+            return devicemapping_entry.pool_settings.startcoords_of_walker if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.startcoords_of_walker else devicemapping_entry.device_settings.startcoords_of_walker
         elif key == MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY:
-            return devicemapping_entry.pool_settings.post_turn_screen_on_delay if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.post_turn_screen_on_delay
+            return devicemapping_entry.pool_settings.post_turn_screen_on_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.post_turn_screen_on_delay else devicemapping_entry.device_settings.post_turn_screen_on_delay
         elif key == MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY:
-            return devicemapping_entry.pool_settings.post_screenshot_delay if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.post_screenshot_delay
+            return devicemapping_entry.pool_settings.post_screenshot_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.post_screenshot_delay else devicemapping_entry.device_settings.post_screenshot_delay
         elif key == MappingManagerDevicemappingKey.POST_WALK_DELAY:
-            return devicemapping_entry.pool_settings.post_walk_delay if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.post_walk_delay
+            return devicemapping_entry.pool_settings.post_walk_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.post_walk_delay else devicemapping_entry.device_settings.post_walk_delay
         elif key == MappingManagerDevicemappingKey.POST_TELEPORT_DELAY:
-            return devicemapping_entry.pool_settings.post_teleport_delay if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.post_teleport_delay
+            return devicemapping_entry.pool_settings.post_teleport_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.post_teleport_delay else devicemapping_entry.device_settings.post_teleport_delay
         elif key == MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE:
-            return devicemapping_entry.pool_settings.walk_after_teleport_distance if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.walk_after_teleport_distance
+            return devicemapping_entry.pool_settings.walk_after_teleport_distance if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.walk_after_teleport_distance else devicemapping_entry.device_settings.walk_after_teleport_distance
         elif key == MappingManagerDevicemappingKey.COOLDOWN_SLEEP:
-            return devicemapping_entry.pool_settings.cool_down_sleep if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.cool_down_sleep
+            return devicemapping_entry.pool_settings.cool_down_sleep if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.cool_down_sleep else devicemapping_entry.device_settings.cool_down_sleep
         elif key == MappingManagerDevicemappingKey.POST_POGO_START_DELAY:
-            return devicemapping_entry.pool_settings.post_pogo_start_delay if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.post_pogo_start_delay
+            return devicemapping_entry.pool_settings.post_pogo_start_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.post_pogo_start_delay else devicemapping_entry.device_settings.post_pogo_start_delay
         elif key == MappingManagerDevicemappingKey.RESTART_POGO:
-            return devicemapping_entry.pool_settings.restart_pogo if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.restart_pogo
+            return devicemapping_entry.pool_settings.restart_pogo if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.restart_pogo else devicemapping_entry.device_settings.restart_pogo
         elif key == MappingManagerDevicemappingKey.INVENTORY_CLEAR_ROUNDS:
-            return devicemapping_entry.pool_settings.inventory_clear_rounds if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.inventory_clear_rounds
+            return devicemapping_entry.pool_settings.inventory_clear_rounds if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.inventory_clear_rounds else devicemapping_entry.device_settings.inventory_clear_rounds
         elif key == MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT:
-            return devicemapping_entry.pool_settings.mitm_wait_timeout if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.mitm_wait_timeout
+            return devicemapping_entry.pool_settings.mitm_wait_timeout if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.mitm_wait_timeout else devicemapping_entry.device_settings.mitm_wait_timeout
         elif key == MappingManagerDevicemappingKey.VPS_DELAY:
-            return devicemapping_entry.pool_settings.vps_delay if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.vps_delay
+            return devicemapping_entry.pool_settings.vps_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.vps_delay else devicemapping_entry.device_settings.vps_delay
         elif key == MappingManagerDevicemappingKey.REBOOT:
-            return devicemapping_entry.pool_settings.reboot if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.reboot
+            return devicemapping_entry.pool_settings.reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot else devicemapping_entry.device_settings.reboot
         elif key == MappingManagerDevicemappingKey.REBOOT_THRESH:
-            return devicemapping_entry.pool_settings.reboot_thresh if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.reboot_thresh
+            return devicemapping_entry.pool_settings.reboot_thresh if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot_thresh else devicemapping_entry.device_settings.reboot_thresh
         elif key == MappingManagerDevicemappingKey.RESTART_THRESH:
-            return devicemapping_entry.pool_settings.restart_thresh if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.restart_thresh
+            return devicemapping_entry.pool_settings.restart_thresh if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.restart_thresh else devicemapping_entry.device_settings.restart_thresh
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_TYPE:
-            return devicemapping_entry.pool_settings.screenshot_type if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.screenshot_type
+            try:
+                return ScreenshotType(devicemapping_entry.pool_settings.screenshot_type if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_type else devicemapping_entry.device_settings.screenshot_type)
+            except ValueError:
+                return ScreenshotType.JPEG
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_QUALITY:
-            return devicemapping_entry.pool_settings.screenshot_quality if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.screenshot_quality
+            quality: Optional[int] = devicemapping_entry.pool_settings.screenshot_quality if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_quality else devicemapping_entry.device_settings.screenshot_quality
+            return quality if quality else 80
         elif key == MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT:
-            return devicemapping_entry.pool_settings.injection_thresh_reboot if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.injection_thresh_reboot
+            return devicemapping_entry.pool_settings.injection_thresh_reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.injection_thresh_reboot else devicemapping_entry.device_settings.injection_thresh_reboot
         elif key == MappingManagerDevicemappingKey.SCREENDETECTION:
-            return devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.screendetection
+            return devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
         elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST_SAFE_ITEMS:
-            return devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items if devicemapping_entry.pool_settings else devicemapping_entry.device_settings.enhanced_mode_quest_safe_items
+            return devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items else devicemapping_entry.device_settings.enhanced_mode_quest_safe_items
         elif key == MappingManagerDevicemappingKey.CLEAR_GAME_DATA:
             return devicemapping_entry.device_settings.clear_game_data
         else:

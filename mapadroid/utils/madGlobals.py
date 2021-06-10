@@ -28,5 +28,5 @@ class InternalStopWorkerException(Exception):
 
 
 class ScreenshotType(Enum):
-    JPEG = 0,
+    JPEG = 0
     PNG = 1
