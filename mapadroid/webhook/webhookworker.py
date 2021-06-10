@@ -1,6 +1,6 @@
 import json
 import time
-from typing import List, Optional
+from typing import List
 
 import requests
 
@@ -580,7 +580,7 @@ class WebhookWorker:
             if url.startswith("["):
                 end_pos = url.index("]")
                 raw_sub_types = url[1:end_pos]
-                url = url[end_pos+1:]
+                url = url[end_pos + 1:]
 
                 sub_types = raw_sub_types[1:].split(" ")
                 sub_types = [t.replace(" ", "") for t in sub_types]
