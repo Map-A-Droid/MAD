@@ -33,7 +33,7 @@ async def get_mon_name(mon_id: int):
     str_id = str(mon_id)
     if str_id in mons_file:
         if os.environ['LANGUAGE'] != "en":
-            return i8ln(mons_file[str_id]["name"])
+            return await i8ln(mons_file[str_id]["name"])
         else:
             return mons_file[str_id]["name"]
     else:

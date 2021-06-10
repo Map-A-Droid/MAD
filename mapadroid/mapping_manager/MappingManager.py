@@ -157,7 +157,7 @@ class MappingManager:
 
         loop = asyncio.get_event_loop()
         # TODO: Restore...
-        # self.__devicesettings_setter_consumer_task = loop.create_task(self.__devicesettings_setter_consumer())
+        self.__devicesettings_setter_consumer_task = loop.create_task(self.__devicesettings_setter_consumer())
 
         await self.update(full_lock=True)
 

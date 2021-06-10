@@ -11,13 +11,13 @@ lang = gettext.translation('quest', localedir='locale', fallback=True)
 lang.install()
 
 
-def generate_quest(stop: Pokestop, quest: TrsQuest):
+async def generate_quest(stop: Pokestop, quest: TrsQuest):
     gettext.find('quest', 'locales', all=True)
     lang = gettext.translation('quest', localedir='locale', fallback=True)
     lang.install()
 
     quest_reward_type = questreward(quest.quest_reward_type)
-    quest_type = questtype(quest.quest_type)
+    quest_type = await questtype(quest.quest_type)
     if '{0}' in quest_type:
         quest_type = quest_type.replace('{0}', str(quest.quest_target))
 
@@ -32,14 +32,14 @@ def generate_quest(stop: Pokestop, quest: TrsQuest):
 
     if quest_reward_type == _('Item'):
         item_amount = quest.quest_item_amount
-        item_type = rewarditem(quest.quest_item_id)
+        item_type = await rewarditem(quest.quest_item_id)
         item_id = quest.quest_item_id
     elif quest_reward_type == _('Stardust'):
         item_amount = quest.quest_stardust
         item_type = _('Stardust')
     elif quest_reward_type == _('Pokemon'):
         item_type = 'Pokemon'
-        pokemon_name = i8ln(pokemonname(str(quest.quest_pokemon_id)))
+        pokemon_name = await i8ln(await pokemonname(str(quest.quest_pokemon_id)))
         pokemon_id = quest.quest_pokemon_id
         pokemon_form = quest.quest_pokemon_form_id
         pokemon_costume = quest.quest_pokemon_costume_id
@@ -48,14 +48,14 @@ def generate_quest(stop: Pokestop, quest: TrsQuest):
     elif quest_reward_type == _('Energy'):
         item_type = _('Mega Energy')
         if quest.quest_pokemon_id and quest.quest_pokemon_id > 0:
-            pokemon_name = i8ln(pokemonname(str(quest.quest_pokemon_id)))
+            pokemon_name = await i8ln(await pokemonname(str(quest.quest_pokemon_id)))
             pokemon_id = quest.quest_pokemon_id
         else:
             pokemon_name = ''
         item_amount = quest.quest_item_amount
 
     if not quest.quest_task:
-        quest_task = questtask(
+        quest_task = await questtask(
             quest.quest_type, quest.quest_condition, quest.quest_target, quest.quest_template)
     else:
         quest_task = quest.quest_task
@@ -78,12 +78,12 @@ def generate_quest(stop: Pokestop, quest: TrsQuest):
         'quest_type': quest_type,
         'quest_type_raw': quest.quest_type,
         'quest_reward_type': quest_reward_type,
-        'quest_reward_type_raw': quest['quest_reward_type'],
+        'quest_reward_type_raw': quest.quest_reward_type,
         'quest_task': quest_task,
-        'quest_target': quest['quest_target'],
-        'quest_condition': quest['quest_condition'],
-        'quest_template': quest['quest_template'],
-        'is_ar_scan_eligible': quest['is_ar_scan_eligible'],
+        'quest_target': quest.quest_target,
+        'quest_condition': quest.quest_condition,
+        'quest_template': quest.quest_template,
+        'is_ar_scan_eligible': stop.is_ar_scan_eligible,
 
     })
     return quest_raw
@@ -99,38 +99,38 @@ def questreward(quest_reward_type):
     return type.get(quest_reward_type, "nothing")
 
 
-def questtype(quest_type):
-    file = open_json_file('types')
+async def questtype(quest_type):
+    file = await open_json_file('types')
     if str(quest_type) in file:
         return file[str(quest_type)]['text']
 
     return "Unknown quest type placeholder: {0}"
 
 
-def rewarditem(itemid):
-    file = open_json_file('items')
+async def rewarditem(itemid):
+    file = await open_json_file('items')
     if str(itemid) in file:
         return (file[str(itemid)]['name'])
     return "Item " + str(itemid)
 
 
-def pokemonname(id):
-    file = open_json_file('pokemon')
+async def pokemonname(id):
+    file = await open_json_file('pokemon')
     return file[str(int(id))]["name"]
 
 
-def questtask(typeid, condition, target, quest_template):
+async def questtask(typeid, condition, target, quest_template):
     gettext.find('quest', 'locales', all=True)
     lang = gettext.translation('quest', localedir='locale', fallback=True)
     lang.install()
 
-    pokemonTypes = open_json_file('pokemonTypes')
-    items = open_json_file('items')
+    pokemonTypes = await open_json_file('pokemonTypes')
+    items = await open_json_file('items')
     throwTypes = {"10": _("Nice"), "11": _("Great"),
                   "12": _("Excellent"), "13": _("Curveball")}
     arr = {}
     arr['0'] = target
-    text = questtype(typeid)
+    text = await questtype(typeid)
     # TODO use the dict instead of regex parsing in all logic
     condition_dict = {}
     if condition is not None and condition != '':
@@ -167,11 +167,11 @@ def questtask(typeid, condition, target, quest_template):
             last = len(pt)
             cur = 1
             if last == 1:
-                arr['poke'] = i8ln(pokemonname(pt[0]))
+                arr['poke'] = await i8ln(await pokemonname(pt[0]))
             else:
                 for ty in pt:
                     arr['poke'] += (_('or ') if last == cur else '') + \
-                                   i8ln(pokemonname(ty)) + ('' if last == cur else ', ')
+                                   await i8ln(await pokemonname(ty)) + ('' if last == cur else ', ')
                     cur += 1
             text = _('Catch {0} {poke}')
     elif typeid == 5:
@@ -255,10 +255,10 @@ def questtask(typeid, condition, target, quest_template):
                     last = len(pt)
                     cur = 1
                     if last == 1:
-                        arr['poke'] = i8ln(pokemonname(pt[0]))
+                        arr['poke'] = await i8ln(await pokemonname(pt[0]))
                     else:
                         for ty in pt:
-                            arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + (
+                            arr['poke'] += (_('or ') if last == cur else '') + await i8ln(await pokemonname(ty)) + (
                                 '' if last == cur else ', ')
                             cur += 1
                     text = _('{mega}Evolve {0} {poke}')
@@ -331,10 +331,10 @@ def questtask(typeid, condition, target, quest_template):
                 last = len(pt)
                 cur = 1
                 if last == 1:
-                    arr['poke'] = i8ln(pokemonname(pt[0]))
+                    arr['poke'] = await i8ln(await pokemonname(pt[0]))
                 else:
                     for ty in pt:
-                        arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + (
+                        arr['poke'] += (_('or ') if last == cur else '') + await i8ln(await pokemonname(ty)) + (
                             '' if last == cur else ', ')
                         cur += 1
                 text = _("Take {0} snapshots of {poke}")

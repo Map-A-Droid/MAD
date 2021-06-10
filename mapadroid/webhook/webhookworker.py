@@ -119,14 +119,14 @@ class WebhookWorker:
                 current_pl_num += 1
             current_wh_num += 1
 
-    def __prepare_quest_data(self, quest_data: Dict[int, Tuple[Pokestop, TrsQuest]]):
+    async def __prepare_quest_data(self, quest_data: Dict[int, Tuple[Pokestop, TrsQuest]]):
         ret = []
         for stop, quest in quest_data.values():
             if self.__is_in_excluded_area([stop.latitude, stop.longitude]):
                 continue
 
             try:
-                quest = generate_quest(stop, quest)
+                quest = await generate_quest(stop, quest)
                 quest_payload = self.__construct_quest_payload(quest)
 
                 entire_payload = {"type": "quest", "message": quest_payload}
@@ -568,7 +568,7 @@ class WebhookWorker:
 
                 # quests
                 if 'quest' in self.__webhook_types:
-                    quest = self.__prepare_quest_data(
+                    quest = await self.__prepare_quest_data(
                         await DbWebhookReader.get_quests_changed_since(session, self.__last_check)
                     )
                     full_payload += quest

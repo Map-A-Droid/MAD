@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from operator import or_
 from typing import Optional, List, Dict, Tuple
 
@@ -214,7 +214,8 @@ class PokestopHelper:
             .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=False)
         where_conditions = []
         # TODO: Verify this works for all timezones...
-        where_conditions.append(TrsQuest.quest_timestamp > datetime.today().timestamp())
+        today_midnight = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+        where_conditions.append(TrsQuest.quest_timestamp > today_midnight.timestamp())
 
         if (ne_corner and sw_corner
                 and ne_corner.lat and ne_corner.lng and sw_corner.lat and sw_corner.lng):
@@ -229,7 +230,7 @@ class PokestopHelper:
                                          Pokestop.latitude <= old_ne_corner.lat,
                                          Pokestop.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(Pokestop.last_updated >= datetime.utcfromtimestamp(timestamp))
+            where_conditions.append(Pokestop.last_updated >= datetime.fromtimestamp(timestamp))
 
         if fence:
             where_conditions.append(func.ST_Contains(func.ST_GeomFromText(fence),
@@ -237,7 +238,7 @@ class PokestopHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         stop_with_quest: Dict[int, Tuple[Pokestop, TrsQuest]] = {}
-        for (stop, quest) in result.scalars():
+        for (stop, quest) in result.all():
             stop_with_quest[stop.pokestop_id] = (stop, quest)
         return stop_with_quest
 

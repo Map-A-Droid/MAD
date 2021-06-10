@@ -17,7 +17,8 @@ class GetGymcoordsEndpoint(AbstractRootEndpoint):
     async def get(self):
         ne_lat, ne_lng, sw_lat, sw_lng, o_ne_lat, o_ne_lng, o_sw_lat, o_sw_lng = get_bound_params(self._request)
         timestamp: Optional[int] = self._request.query.get("timestamp")
-
+        if timestamp:
+            timestamp = int(timestamp)
         coords: List[Dict] = []
         data: Dict[int, Tuple[Gym, GymDetail, Raid]] = \
             await GymHelper.get_gyms_in_rectangle(self._session,
@@ -30,7 +31,7 @@ class GetGymcoordsEndpoint(AbstractRootEndpoint):
         for gym_id, (gym, gym_detail, raid) in data.items():
             raid_data = None
             # TODO: Validate time of spawn/end/start
-            if raid and raid.end.replace(tzinfo=timezone.utc) > datetime.utcnow():
+            if raid and raid.end > datetime.utcnow():
                 raid_data = {
                     "spawn": int(raid.spawn.replace(tzinfo=timezone.utc).timestamp()),
                     "start": int(raid.start.replace(tzinfo=timezone.utc).timestamp()),
@@ -49,8 +50,8 @@ class GetGymcoordsEndpoint(AbstractRootEndpoint):
                 "lat": gym.latitude,
                 "lon": gym.longitude,
                 "team_id": gym.team_id,
-                "last_updated": gym.last_modified.strftime(self._datetimeformat),
-                "last_scanned": gym.last_scanned.strftime(self._datetimeformat),
+                "last_updated": gym.last_modified.replace(tzinfo=timezone.utc).timestamp(),
+                "last_scanned": gym.last_scanned.replace(tzinfo=timezone.utc).timestamp(),
                 "raid": raid_data
             })
 

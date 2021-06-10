@@ -58,7 +58,7 @@ class GymHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         gyms: Dict[int, Tuple[Gym, GymDetail, Raid]] = {}
-        for (gym, gym_detail, raid) in result.scalars():
+        for (gym, gym_detail, raid) in result.all():
             gyms[gym.gym_id] = (gym, gym_detail, raid)
         return gyms
 

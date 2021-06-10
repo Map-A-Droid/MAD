@@ -25,7 +25,8 @@ class GetQuestsEndpoint(AbstractRootEndpoint):
             fence = None
         ne_lat, ne_lng, sw_lat, sw_lng, o_ne_lat, o_ne_lng, o_sw_lat, o_sw_lng = get_bound_params(self._request)
         timestamp: Optional[int] = self._request.query.get("timestamp")
-
+        if timestamp:
+            timestamp = int(timestamp)
         data: Dict[int, Tuple[Pokestop, TrsQuest]] = \
             await PokestopHelper.get_with_quests(self._session,
                                                  ne_corner=Location(ne_lat, ne_lng),
@@ -54,6 +55,6 @@ class GetQuestsEndpoint(AbstractRootEndpoint):
         #     })
 
         for stop_id, (stop, quest) in data.items():
-            quests.append(generate_quest(stop, quest))
+            quests.append(await generate_quest(stop, quest))
 
         return self._json_response(quests)

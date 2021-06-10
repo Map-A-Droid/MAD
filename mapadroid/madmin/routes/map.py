@@ -273,7 +273,7 @@ class MADminMap:
 
         for stopid in data:
             quest = data[str(stopid)]
-            coords.append(generate_quest(quest))
+            coords.append(await generate_quest(quest))
 
         return jsonify(coords)
 
