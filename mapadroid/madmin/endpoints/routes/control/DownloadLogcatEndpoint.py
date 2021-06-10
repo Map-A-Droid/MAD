@@ -21,10 +21,10 @@ class DownloadLogcatEndpoint(AbstractControlEndpoint):
 
         filename = generate_device_logcat_zip_path(origin, self._get_mad_args())
         # origin_logger.info("Logcat being stored at {}", filename)
-        if self._fetch_logcat_websocket(origin, filename):
+        if await self._fetch_logcat_websocket(origin, filename):
             attachment_filename = "logcat_{}.zip".format(origin)
             return web.FileResponse(generate_path(filename),
-                                    headers={'Content-Disposition': f"Attachment; filename='{attachment_filename}"})
+                                    headers={'Content-Disposition': f"Attachment; filename={attachment_filename}"})
         else:
             # origin_logger.error("Failed fetching logcat")
             # TODO: Return proper error :P
