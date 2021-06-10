@@ -595,8 +595,9 @@ class WebhookWorker:
                     if vmtype in sub_types:
                         self.__pokemon_types.add(vmtype)
             else:
-                for vtype in self.__valid_types + self.__valid_mon_types:
-                    self.__webhook_types.add(vtype)
+                self.__webhook_types = set(self.__valid_types)
+                self.__pokemon_types = set(self.__valid_mon_types)
+                sub_types = self.__valid_mon_types + self.__valid_types
 
             self.__webhook_receivers.append({
                 "url": url.replace(" ", ""),
