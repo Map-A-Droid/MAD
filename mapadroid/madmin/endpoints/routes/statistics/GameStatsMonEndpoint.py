@@ -48,7 +48,7 @@ class GameStatsMonEndpoint(AbstractStatisticsRootEndpoint):
         if best_mon_spawns:
             for mon in best_mon_spawns:
                 mon_img = self._generate_mon_icon_url(mon.pokemon_id, mon.form, mon.costume)
-                mon_name = get_mon_name(mon.pokemon_id)
+                mon_name = await get_mon_name(mon.pokemon_id)
                 lvl = calculate_mon_level(mon.cp_multiplier)
 
                 good_spawns.append({'id': mon.pokemon_id, 'iv': round(calculate_iv(mon.individual_attack,

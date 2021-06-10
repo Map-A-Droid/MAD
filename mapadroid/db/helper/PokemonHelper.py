@@ -233,7 +233,7 @@ class PokemonHelper:
             .order_by(timestamp)
         result = await session.execute(stmt)
         results = []
-        for res in result.scalars():
+        for res in result.all():
             results.append(res)
         return results
 
@@ -280,7 +280,7 @@ class PokemonHelper:
             .group_by(Pokemon.latitude, Pokemon.longitude)
         result = await session.execute(stmt)
         results: List[Tuple[int, Location]] = []
-        for count, lat, lng in result.scalars():
+        for count, lat, lng in result.all():
             results.append((count, Location(lat, lng)))
         return results
 
