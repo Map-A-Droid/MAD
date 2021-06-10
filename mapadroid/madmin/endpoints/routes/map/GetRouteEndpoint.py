@@ -16,7 +16,7 @@ class GetRouteEndpoint(AbstractControlEndpoint):
         for routemanager_name in routemanager_names:
             mode = self._get_mapping_manager().routemanager_get_mode(routemanager_name)
             name = self._get_mapping_manager().routemanager_get_name(routemanager_name)
-            (route, workers) = self._get_mapping_manager().routemanager_get_current_route(routemanager_name)
+            (route, workers) = await self._get_mapping_manager().routemanager_get_current_route(routemanager_name)
 
             if route is None:
                 continue
