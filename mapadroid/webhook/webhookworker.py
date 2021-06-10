@@ -582,7 +582,7 @@ class WebhookWorker:
                 raw_sub_types = url[1:end_pos]
                 url = url[end_pos + 1:]
 
-                sub_types = raw_sub_types[1:].split(" ")
+                sub_types = raw_sub_types.split(" ")
                 sub_types = [t.replace(" ", "") for t in sub_types]
 
                 if "pokemon" in sub_types:
