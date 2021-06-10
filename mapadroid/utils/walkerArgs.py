@@ -111,8 +111,14 @@ def parse_args():
                         help='Run in ConfigMode')
     parser.add_argument('-nm', '--scan_nearby_mons', action='store_true', default=False,
                         help='Enable scanning of nearby mons')
+    parser.add_argument('-dnc', '--disable_nearby_cell', action='store_true', default=False,
+                        help='Disables nearby_cell scans if scan_nearby_mons is enabled')
     parser.add_argument('-lm', '--scan_lured_mons', action='store_true', default=False,
                         help='Enable scanning of lured mons')
+    parser.add_argument('-dnt', '--default_nearby_timeleft', type=int, default=15,
+                        help='The default despawn time left in minutes for Nearby Mons. Default: 15')
+    parser.add_argument('-dut', '--default_unknown_timeleft', type=int, default=3,
+                        help='The default despawn time left in minutes for Mons at unknown Spawnpoints. Default: 3')
     parser.add_argument("-sn", "--status-name", default="mad",
                         help=("Enable status page database update using"
                               " STATUS_NAME as main worker name."))
