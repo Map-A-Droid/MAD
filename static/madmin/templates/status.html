@@ -26,7 +26,7 @@
                 console.log(xhr);
                 console.log(error);
                 console.log(code);
-                if (errorCount == 5) {
+                if (errorCount === 5) {
                     alert("Could not get updates from MAD five times in a row. More logs in browser developer console. Is MAD running?");
                 }
             }
@@ -43,7 +43,7 @@
             {
                 responsivePriority: 3, data: 'rmname', title: 'Route',
                 "render": function (data, type, oData) {
-                    if (oData.rmname != 'Idle') {
+                    if (oData.rmname !== 'Idle') {
                         return "<a href='{{ url('settings_areas') }}?id=" + oData.area_id + "&mode=" + oData.mode + "'>" + oData.rmname + "</a>";
                     } else {
                         return 'Idle';

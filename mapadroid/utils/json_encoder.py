@@ -1,10 +1,10 @@
-import datetime
 import json
+from datetime import timezone, datetime
 from decimal import Decimal
+from enum import Enum
 
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
 from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
-from mapadroid.worker.WorkerType import WorkerType
 
 
 class MADEncoder(json.JSONEncoder):
@@ -33,10 +33,10 @@ class MADEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
         elif isinstance(obj, type):
             return str(obj)
-        elif isinstance(obj, datetime.datetime):
-            return obj.isoformat()
+        elif isinstance(obj, datetime):
+            return obj.replace(tzinfo=timezone.utc).timestamp()
         elif isinstance(obj, Decimal):
             return float(obj)
-        elif isinstance(obj, WorkerType):
+        elif isinstance(obj, Enum):
             return obj.value
         return json.JSONEncoder.default(self, obj)

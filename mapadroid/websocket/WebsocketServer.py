@@ -207,11 +207,11 @@ class WebsocketServer(object):
 
                     entry.websocket_client_connection = websocket_client_connection
                     # TODO: also change the worker's Communicator? idk yet
-                    if not entry.worker_task.done() and not entry.worker_instance.is_stopping():
+                    if entry.worker_task and not entry.worker_task.done() and not entry.worker_instance.is_stopping():
                         origin_logger.info("Worker thread still alive, continue as usual")
                         # TODO: does this need more handling? probably update communicator or whatever?
                     # TODO: This check will not work with asyncio anymore...
-                    elif not entry.worker_task.done():
+                    elif entry.worker_task and not entry.worker_task.done():
                         origin_logger.info("Old task is not done but was supposed to stop?! Trying to start a new one")
                         # TODO: entry.worker_task.cancel() or somehow call cleanup&cancel?
                         #  entry.worker_task.cancel()
