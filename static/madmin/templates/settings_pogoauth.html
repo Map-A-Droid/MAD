@@ -75,7 +75,7 @@ $(document).ready(function () {
         <div id='no-configured-elements' class="alert alert-info">No PoGo logins added yet</div>
       {% else %}
       <tbody>
-        {% for auth_id, auth in pogoauth.items() %}
+        {% for auth_id, auth in section.items() %}
         <tr>
           <td class="align-middle">
             {{ auth.login_type }}
@@ -84,8 +84,8 @@ $(document).ready(function () {
             <a href="{{ url('settings_pogoauth', query_={'id': auth_id}) }}">{{ auth.username }}</a>
           </td>
           <td>
-            {% if auth.device_id is not none %}
-             <a href="{{ url('settings_devices', query_={'id': devices[auth.device_id].identifier}) }}">{{ devices[auth.device_id].origin }}</a>
+            {% if auth.device_id %}
+             <a href="{{ url('settings_devices', query_={'id': auth.account_id }) }}">{{ devices[auth.device_id].name }}</a>
             {% endif %}
           <td class="text-right align-middle">
             <a href="{{ redirect }}?id={{ auth_id }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>

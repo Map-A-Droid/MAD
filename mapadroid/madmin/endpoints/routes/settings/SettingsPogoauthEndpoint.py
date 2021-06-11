@@ -7,7 +7,7 @@ from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
-from mapadroid.db.model import SettingsMonivlist, SettingsDevice
+from mapadroid.db.model import SettingsMonivlist, SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
@@ -75,11 +75,14 @@ class SettingsPogoauthEndpoint(AbstractRootEndpoint):
 
     @aiohttp_jinja2.template('settings_pogoauth.html')
     async def _render_overview(self):
+        devices: Dict[int, SettingsDevice] = await SettingsDeviceHelper.get_all_mapped(self._session, self._get_instance_id())
+        pogoauth: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_all_mapped(self._session, self._get_instance_id())
         template_data: Dict = {
             'base_uri': self._url_for('api_pogoauth'),
             'redirect': self._url_for('settings_pogoauth'),
             'subtab': 'pogoauth',
-            'section': await SettingsPogoauthHelper.get_all_mapped(self._session, self._get_instance_id()),
+            'devices': devices,
+            'section': pogoauth,
         }
         return template_data
 

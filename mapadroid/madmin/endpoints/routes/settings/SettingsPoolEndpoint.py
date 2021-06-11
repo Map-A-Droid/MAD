@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -6,7 +6,8 @@ from aiohttp.abc import Request
 from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
-from mapadroid.db.model import SettingsDevicepool
+from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
+from mapadroid.db.model import SettingsDevicepool, SettingsWalkerarea
 from mapadroid.db.resource_definitions.Devicepool import Devicepool
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 

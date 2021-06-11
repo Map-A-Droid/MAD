@@ -22,28 +22,28 @@ class SettingsAuthEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_element(identifier=identifier)
+        self.identifier: Optional[str] = self.request.query.get("id")
+        if self.identifier:
+            return await self._render_single_element()
         else:
             return await self._render_overview()
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singleauth.html')
-    async def _render_single_element(self, identifier: str):
+    async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         auth: Optional[SettingsAuth] = None
-        if identifier == "new":
+        if self.identifier == "new":
             pass
         else:
-            auth: SettingsAuth = await SettingsAuthHelper.get(self._session, self._get_instance_id(), int(identifier))
+            auth: SettingsAuth = await SettingsAuthHelper.get(self._session, self._get_instance_id(), int(self.identifier))
             if not auth:
                 raise web.HTTPFound(self._url_for("settings_auth"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
-            'identifier': identifier,
+            'identifier': self.identifier,
             'base_uri': self._url_for('api_auth'),
             'redirect': self._url_for('settings_auth'),
             'subtab': 'auth',
@@ -51,7 +51,7 @@ class SettingsAuthEndpoint(AbstractRootEndpoint):
             'section': auth,
             'settings_vars': settings_vars,
             'method': 'POST' if not auth else 'PATCH',
-            'uri': self._url_for('api_auth') if not auth else '%s/%s' % (self._url_for('api_auth'), identifier),
+            'uri': self._url_for('api_auth') if not auth else '%s/%s' % (self._url_for('api_auth'), self.identifier),
         }
         return template_data
 

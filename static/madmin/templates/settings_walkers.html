@@ -74,20 +74,27 @@ $(document).ready(function () {
         <div id='no-configured-elements' class="alert alert-info">No walker configuration added yet</div>
       {% else %}
       <tbody>
-        {% for walker_uri, walker in walker.items() %}
+        {% for walker_id, walker in section.items() %}
         <tr>
           <td class="align-middle">
-            <a href="{{ redirect }}?id={{ walker_uri }}">{{ walker.walkername }}</a>
+            <a href="{{ redirect }}?id={{ walker_id }}">{{ walker.name }}</a>
           </td>
           <td>
             <p style="font-size: 65%; min-height: 40px; display: inline-box">
-              Number of Areas: {{ walker.setup|length }}<br>
-            Areas: {% for walkerarea_uri in walker.setup %}{% if loop.index > 1 %}, {% endif %}<a href="{{ url('settings_areas', query_={'id': walkerarea[walkerarea_uri]['walkerarea'], 'mode': areas[walkerarea[walkerarea_uri]['walkerarea']].area_type}) }}">{{ areas[walkerarea[walkerarea_uri]['walkerarea']].name }}</a>{% endfor %}
+              Number of Areas: {{ walker_to_walkerares[walker_id]|length }}<br>
+            Areas: {% for walkerarea in walker_to_walkerares[walker_id] %}
+                {% if loop.index > 1 %}
+                    ,
+                {% endif %}
+                <a href="{{ url('settings_areas', query_={'id': walkerarea.area_id, 'mode': areas[walkerarea.area_id].mode}) }}">
+                    {{ areas[walkerarea.area_id].name }}
+                </a>
+            {% endfor %}
             </p>
           </td>
           <td class="text-right align-middle">
-              <a href="{{ redirect }}?id={{ walker_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
-            <button data-identifier='{{ walker_uri }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+              <a href="{{ redirect }}?id={{ walker_id }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+            <button data-identifier='{{ walker_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
           </td>
         </tr>
         {% endfor %}

@@ -23,23 +23,23 @@ class SettingsIvlistsEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_element(identifier=identifier)
+        self.identifier: Optional[str] = self.request.query.get("id")
+        if self.identifier:
+            return await self._render_single_element()
         else:
             return await self._render_overview()
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singleivlist.html')
-    async def _render_single_element(self, identifier: str):
+    async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         monivlist: Optional[SettingsMonivlist] = None
-        if identifier == "new":
+        if self.identifier == "new":
             pass
         else:
             monivlist: SettingsMonivlist = await SettingsMonivlistHelper.get_entry(self._session,
                                                                                    self._get_instance_id(),
-                                                                                   int(identifier))
+                                                                                   int(self.identifier))
             if not monivlist:
                 raise web.HTTPFound(self._url_for("settings_ivlists"))
 
@@ -48,7 +48,7 @@ class SettingsIvlistsEndpoint(AbstractRootEndpoint):
         try:
             current_mons: Optional[List[int]] = await SettingsMonivlistHelper.get_list(self._session,
                                                                                        self._get_instance_id(),
-                                                                                       int(identifier))
+                                                                                       int(self.identifier))
         except Exception:
             current_mons = []
         all_pokemon = await self.get_pokemon()
@@ -62,7 +62,7 @@ class SettingsIvlistsEndpoint(AbstractRootEndpoint):
             current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
 
         template_data: Dict = {
-            'identifier': identifier,
+            'identifier': self.identifier,
             'base_uri': self._url_for('api_monivlist'),
             'redirect': self._url_for('settings_ivlists'),
             'subtab': 'monivlist',
@@ -70,7 +70,7 @@ class SettingsIvlistsEndpoint(AbstractRootEndpoint):
             'section': monivlist,
             'settings_vars': settings_vars,
             'method': 'POST' if not monivlist else 'PATCH',
-            'uri': self._url_for('api_monivlist') if not monivlist else '%s/%s' % (self._url_for('api_monivlist'), identifier),
+            'uri': self._url_for('api_monivlist') if not monivlist else '%s/%s' % (self._url_for('api_monivlist'), self.identifier),
             # TODO: Above is pretty generic in theory...
             'current_mons_list': current_mons_list
         }

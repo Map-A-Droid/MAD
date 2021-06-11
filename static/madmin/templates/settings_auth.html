@@ -73,7 +73,7 @@ $(document).ready(function () {
         <div id='no-configured-elements' class="alert alert-info">No auth users added yet</div>
       {% else %}
       <tbody>
-        {% for auth_id, auth in auth.items() %}
+        {% for auth_id, auth in section.items() %}
         <tr>
           <td class="align-middle">
             <a href="{{ url('settings_auth', query_={'id': auth_id}) }}">{{ auth.username }}</a>

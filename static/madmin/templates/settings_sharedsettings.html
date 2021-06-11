@@ -74,16 +74,16 @@ $(document).ready(function () {
           <div id='no-configured-elements' class="alert alert-info">No shared device settings added yet</div>
         {% else %}
         <tbody>
-        {% for pool_id, devicepool in devicepool.items() %}
+        {% for pool_id, devicepool in section.items() %}
         <tr>
           <td class="align-middle">
-            <a href="{{ url('settings_pools', query_={'id': pool_id}) }}">{{ devicepool.devicepool }}</a>
+            <a href="{{ url('settings_pools', query_={'id': pool_id}) }}">{{ devicepool.name }}</a>
           </td>
           <td>
             <p style="font-size: 65%; min-height: 40px; display: inline-box">
-            {% for key in devicepool.settings|sort %}
-            {%if devicepool.settings[key] != "" %}
-            {{ key }}: {{ devicepool.settings[key] }}<br>
+            {% for key, val in devicepool.__dict__.items()|sort %}
+            {% if not key.startswith("_") and val and key not in ["name", "instance_id", "pool_id"] %}
+            {{ key }}: {{ val }}<br>
             {% endif %}
             {% endfor %}
             </p>

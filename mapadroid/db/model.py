@@ -676,6 +676,9 @@ class SettingsMonivlist(Base):
 
     instance = relationship('MadminInstance')
 
+    def __str__(self):
+        return self.name
+
 
 class SettingsWalker(Base):
     __tablename__ = 'settings_walker'
@@ -686,6 +689,9 @@ class SettingsWalker(Base):
     name = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
 
     instance = relationship('MadminInstance')
+
+    def __str__(self):
+        return self.name
 
 
 class SettingsDevice(Base):

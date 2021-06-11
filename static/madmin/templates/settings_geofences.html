@@ -74,7 +74,7 @@ $(document).ready(function () {
         <div id='no-configured-elements' class="alert alert-info">No geofences yet</div>
       {% else %}
       <tbody>
-        {% for fence_id, fence in geofence.items() %}
+        {% for fence_id, fence in section.items() %}
         <tr>
           <td class="align-middle">
             <a href="{{ url('settings_geofence', query_={'id': fence_id}) }}">{{ fence.name }}</a>

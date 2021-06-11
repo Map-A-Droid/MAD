@@ -3,7 +3,6 @@ from typing import Dict, Optional
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
@@ -21,29 +20,29 @@ class SettingsGeofenceEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_element(identifier=identifier)
+        self.identifier: Optional[str] = self.request.query.get("id")
+        if self.identifier:
+            return await self._render_single_element()
         else:
             return await self._render_overview()
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlegeofence.html')
-    async def _render_single_element(self, identifier: str):
+    async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         geofence: Optional[SettingsGeofence] = None
-        if identifier == "new":
+        if self.identifier == "new":
             pass
         else:
             geofence: SettingsGeofence = await SettingsGeofenceHelper.get(self._session, self._get_instance_id(),
-                                                                          int(identifier))
+                                                                          int(self.identifier))
             if not geofence:
                 raise web.HTTPFound(self._url_for("settings_geofence"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
-            'identifier': identifier,
+            'identifier': self.identifier,
             'base_uri': self._url_for('api_geofence'),
             'redirect': self._url_for('settings_geofence'),
             'subtab': 'geofence',
@@ -51,7 +50,7 @@ class SettingsGeofenceEndpoint(AbstractRootEndpoint):
             'section': geofence,
             'settings_vars': settings_vars,
             'method': 'POST' if not geofence else 'PATCH',
-            'uri': self._url_for('api_geofence') if not geofence else '%s/%s' % (self._url_for('api_geofence'), identifier),
+            'uri': self._url_for('api_geofence') if not geofence else '%s/%s' % (self._url_for('api_geofence'), self.identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data
