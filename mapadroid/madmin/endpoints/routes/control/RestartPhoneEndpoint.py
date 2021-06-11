@@ -18,7 +18,7 @@ class RestartPhoneEndpoint(AbstractControlEndpoint):
     async def get(self):
         origin: Optional[str] = self.request.query.get("origin")
         useadb_raw: Optional[str] = self.request.query.get("adb")
-        useadb: bool = True if useadb_raw is not None else False
+        useadb: bool = True if useadb_raw else False
         # origin_logger = get_origin_logger(self._logger, origin=origin)
         devicemapping: Optional[DeviceMappingsEntry] = await self._get_mapping_manager().get_devicemappings_of(origin)
         if not devicemapping:

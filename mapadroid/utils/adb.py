@@ -50,7 +50,9 @@ class ADBConnect(object):
         return []
 
     async def send_shell_command(self, adb, origin, command):
-        # TODO: Async exec
+        if not adb:
+            return False
+        # TODO: Async adb commands...
         origin_logger = get_origin_logger(logger, origin=origin)
         try:
             device = self._client.device(adb)
@@ -82,6 +84,8 @@ class ADBConnect(object):
         return False
 
     def make_screenclick(self, adb, origin, position_x, position_y):
+        if not adb:
+            return False
         origin_logger = get_origin_logger(logger, origin=origin)
         try:
             device = self._client.device(adb)
@@ -95,6 +99,8 @@ class ADBConnect(object):
         return False
 
     def make_screenswipe(self, adb, origin, position_x, position_y, swipe_x, swipe_y):
+        if not adb:
+            return False
         origin_logger = get_origin_logger(logger, origin=origin)
         try:
             device = self._client.device(adb)
@@ -109,6 +115,8 @@ class ADBConnect(object):
         return False
 
     def push_file(self, adb, origin, filename):
+        if not adb:
+            return False
         origin_logger = get_origin_logger(logger, origin=origin)
         try:
             device = self._client.device(adb)

@@ -31,12 +31,12 @@ class QuitPogoEndpoint(AbstractControlEndpoint):
             await TrsStatusHelper.save_last_restart(self._session, self._get_instance_id(),
                                                     devicemapping.device_settings.device_id)
         # origin_logger.info('MADmin: Restart Pogo')
-        if useadb and self._adb_connect.send_shell_command(devicemapping.device_settings.adbname,
+        if useadb and await self._adb_connect.send_shell_command(devicemapping.device_settings.adbname,
                                                            origin, "am force-stop com.nianticlabs.pokemongo"):
             # origin_logger.info('MADmin: ADB shell force-stop game command successfully')
             if restart:
                 await asyncio.sleep(1)
-                started = self._adb_connect.send_shell_command(devicemapping.device_settings.adbname,
+                started = await self._adb_connect.send_shell_command(devicemapping.device_settings.adbname,
                                                                origin, "am start com.nianticlabs.pokemongo")
                 if started:
                     # origin_logger.info('MADmin: ADB shell start game command successfully')
