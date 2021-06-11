@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper

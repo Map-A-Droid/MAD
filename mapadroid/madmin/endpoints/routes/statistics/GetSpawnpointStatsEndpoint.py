@@ -13,7 +13,7 @@ class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        geofence_type: Optional[str] = self._request.query.get("type")
+        geofence_type: Optional[str] = self._request.query.get("type", "mon_mitm")
         if geofence_type not in ['idle', 'iv_mitm', 'mon_mitm', 'pokestops', 'raids_mitm']:
             stats = {'spawnpoints': []}
             return self._json_response(stats)
@@ -51,7 +51,7 @@ class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
 
                 spawns_and_events: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
                     .download_spawns(self._session, fence=fence)
-                for spawn_id, spawn, event in spawns_and_events.items():
+                for spawn_id, (spawn, event) in spawns_and_events.items():
                     if event.event_name not in known:
                         known[event.event_name] = []
                     if event.event_name not in unknown:

@@ -3,6 +3,7 @@ from datetime import timezone, datetime
 from decimal import Decimal
 from enum import Enum
 
+from mapadroid.db.model import Base
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
 from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
 
@@ -39,4 +40,7 @@ class MADEncoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, Enum):
             return obj.value
+        elif isinstance(obj, Base):
+            # Dumb serialization of a model class to json... excluding private/protected attributes
+            return {var: val for var, val in vars(obj).items() if not var.startswith("_")}
         return json.JSONEncoder.default(self, obj)
