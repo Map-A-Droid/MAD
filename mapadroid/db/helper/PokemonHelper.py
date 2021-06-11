@@ -162,7 +162,7 @@ class PokemonHelper:
         # SQLAlchemy does not handle group by very well it appears so we will do it in python...
         result = await session.execute(stmt)
         mapped: Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]] = {}
-        for (mon, stats) in result.scalars():
+        for (mon, stats) in result.all():
             if mon.encounter_id not in mapped:
                 mapped[mon.encounter_id] = (mon, [])
             mapped[mon.encounter_id][1].append(stats)
@@ -198,7 +198,7 @@ class PokemonHelper:
             .group_by(Pokemon.pokemon_id, Pokemon.form)
         result = await session.execute(stmt)
         results = []
-        for res in result.scalars():
+        for res in result.all():
             results.append(res)
         return results
 

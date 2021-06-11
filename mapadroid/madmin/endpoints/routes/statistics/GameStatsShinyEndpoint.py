@@ -30,7 +30,7 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
         data: Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]] = await PokemonHelper \
             .get_all_shiny(self._session, timestamp_from, timestamp_to)
         found_shiny_mon_id = []
-        shiny_count = {}
+        shiny_count: Dict[int, Dict] = {}
         mon_names = {}
         tmp_perhour_v2 = {}
 
@@ -41,7 +41,7 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
         shiny_stats_v2 = []
         for encounter_id, (mon, stats) in data.items():
             mon_img = self._generate_mon_icon_url(mon.pokemon_id, mon.form)
-            mon_name = get_mon_name(mon.pokemon_id)
+            mon_name = await get_mon_name(mon.pokemon_id)
             mon_names[mon.pokemon_id] = mon_name
             found_shiny_mon_id.append(
                 mon.pokemon_id)  # append everything now, we will set() it later to remove duplicates
@@ -73,14 +73,14 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
         global_shiny_stats: List[Tuple[int, int, int, int, int]] = await PokemonHelper \
             .get_count_iv_scanned_of_mon_ids(self._session, set(found_shiny_mon_id),
                                              timestamp_from, timestamp_to)
-        for dat in global_shiny_stats:
-            if dat[1] in shiny_count and dat[2] in shiny_count[dat[1]]:
-                odds = round(dat[0] / shiny_count[dat[1]][dat[2]], 0)
-                mon_img = self._generate_mon_icon_url(dat[1], dat[2])
-                global_shiny_stats_v2.append({'name': mon_names[dat[1]], 'count': dat[0], 'img': mon_img,
-                                              'shiny': shiny_count[dat[1]][dat[2]], 'odds': odds,
-                                              'mon_id': dat[1], 'form': dat[2], 'gender': dat[3],
-                                              'costume': dat[4]})
+        for count, mon_id, form, gender, costume in global_shiny_stats:
+            if mon_id in shiny_count and form in shiny_count[mon_id]:
+                odds = round(count / shiny_count[mon_id][form], 0)
+                mon_img = self._generate_mon_icon_url(mon_id, form)
+                global_shiny_stats_v2.append({'name': mon_names[mon_id], 'count': count, 'img': mon_img,
+                                              'shiny': shiny_count[mon_id][form], 'odds': odds,
+                                              'mon_id': mon_id, 'form': form, 'gender': gender,
+                                              'costume': costume})
 
         shiny_stats_perworker_v2 = []
         for worker in tmp_perworker_v2:

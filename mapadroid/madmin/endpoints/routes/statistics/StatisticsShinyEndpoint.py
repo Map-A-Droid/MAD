@@ -9,7 +9,7 @@ class StatisticsShinyEndpoint(AbstractRootEndpoint):
     """
 
     # TODO: Auth
-    @aiohttp_jinja2.template('statistics/statistics_shiny.html')
+    @aiohttp_jinja2.template('statistics/shiny_statistics.html')
     async def get(self):
         return {
             "title": "MAD Shiny Statistics",
