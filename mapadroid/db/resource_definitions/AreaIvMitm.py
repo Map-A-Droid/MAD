@@ -99,7 +99,7 @@ class AreaIvMitm:
             },
             "mon_ids_iv": {
                 "settings": {
-                    "type": "lookup",
+                    "type": "hidden",
                     "display": {
                         "name": "monlist",
                         "section": "monivlist"

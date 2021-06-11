@@ -1,140 +1,121 @@
 {% extends "settings.html" %}
 
 {% block header %}
-{{ super() }}
+    {{ super() }}
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
-<script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
-<script>
-$.urlParam = function(name){
-    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-    return results[1] || 0;
-}
-$(document).ready(function () {
-    $("#submit").click(function() {
-        loadingBlockUI('Saving a {{ subtab }}' );
-        save_data = get_save_data();
-        if(isEmptyObj(save_data) != false) {
-            alert('No changes have been made');
-            window.location.replace('{{ redirect }}');
-        } else {
-          $.ajax({
-              beforeSend: function(xhr) {
-                  xhr.setRequestHeader('X-Mode', $.urlParam('mode'));
-              },
-              url : "{{ uri }}",
-              data : JSON.stringify(save_data),
-              type : '{{ method }}',
-              contentType : 'application/json',
-              success: function(data, status, xhr) {
-                if(xhr.status < 400)
-                  window.location.replace('{{ redirect }}');
-              },
-              error: function(data, status, xhr) {
-                  $("label[for]").removeClass('btn-danger');
-                  if(data['responseJSON'] != undefined) {
-                      $.each(data['responseJSON']['missing'], function() {
-                          var elem = $("label[for="+ this +"]");
-                          elem[0].innerHTML = elem.attr('for') +' - Required Field';
-                          elem.addClass('btn-danger');
-                      });
-                      $.each(data['responseJSON']['invalid'], function() {
-                          var field = this[0];
-                          var expected = this[1];
-                          var elem = $("label[for="+ field +"]");
-                          elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
-                          elem.addClass('btn-danger');
-                      });
-                      $.unblockUI();
-                      alert('One or more fields failed validation');
-                  } else {
-                      $.unblockUI();
-                      alert('Unable to save the {{ subtab }}.  An unknown error occurred');
-                  }
-              }
-          });
+    {{ super() }}
+    <script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
+    <script>
+        $.urlParam = function (name) {
+            var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+            return results[1] || 0;
         }
-    });
-});
-</script>
+        $(document).ready(function () {
+            $("#submit").click(function () {
+                loadingBlockUI('Saving a {{ subtab }}');
+                save_data = get_save_data();
+                if (isEmptyObj(save_data) != false) {
+                    alert('No changes have been made');
+                    window.location.replace('{{ redirect }}');
+                } else {
+                    $.ajax({
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader('X-Mode', $.urlParam('mode'));
+                        },
+                        url: "{{ uri }}",
+                        data: JSON.stringify(save_data),
+                        type: '{{ method }}',
+                        contentType: 'application/json',
+                        success: function (data, status, xhr) {
+                            if (xhr.status < 400)
+                                window.location.replace('{{ redirect }}');
+                        },
+                        error: function (data, status, xhr) {
+                            $("label[for]").removeClass('btn-danger');
+                            if (data['responseJSON'] != undefined) {
+                                $.each(data['responseJSON']['missing'], function () {
+                                    var elem = $("label[for=" + this + "]");
+                                    elem[0].innerHTML = elem.attr('for') + ' - Required Field';
+                                    elem.addClass('btn-danger');
+                                });
+                                $.each(data['responseJSON']['invalid'], function () {
+                                    var field = this[0];
+                                    var expected = this[1];
+                                    var elem = $("label[for=" + field + "]");
+                                    elem[0].innerHTML = elem.attr('for') + ' - Expected ' + expected;
+                                    elem.addClass('btn-danger');
+                                });
+                                $.unblockUI();
+                                alert('One or more fields failed validation');
+                            } else {
+                                $.unblockUI();
+                                alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
-{{ super() }}
+    {{ super() }}
 
-<h1 class="display-5">{{ element.name }} <small class="badge badge-secondary" style="font-weight: normal; font-size: 45%">{{ element.mode }}</small></h1>
+    <h1 class="display-5">{{ element.name }} <small class="badge badge-secondary"
+                                                    style="font-weight: normal; font-size: 45%">{{ element.mode }}</small>
+    </h1>
 
-<div class="row">
-  {% if settings_vars.settings is defined %}
-  <div class="col-sm">
-    {% for key, field in settings_vars.settings|dictsort %}
-    <div class="form-group">
-      <label for="{{ key }}">{{ key }}</label>
-      {% if field.settings.type == "option" %}
-      <select class="form-control" name="{{ key }}" setting='true' data-default="{{ element.settings[key] }}">
-        {% for option in field.settings["values"] %}
-        <option value="{{ option }}" {% if key in element.settings %}{{ 'selected="selected"' if option|tojson == element.settings[key]|tojson }}{% endif %} >{{ option|lower }}</option>
-        {% endfor %}
-      </select>
-      {% elif field.settings.type == 'lookup' %}
-      <select class="form-control" name="{{ key }}" setting='true' data-default="{{ url('api_monivlist') + '/'+ element.settings[key]|string if element.settings[key] else '' }}">
-        <option value='' {{ 'selected="selected"' if uri == element.settings[key] }}>None</option>
-        {% for uri, data in monlist.items() %}
-        <option value="{{ url('api_monivlist') / uri|string  }}" {{ 'selected="selected"' if uri == element.settings[key] }}>{{ data.monlist|lower }}</option>
-        {% endfor %}
-      </select>
-      {% else %}
-      <input type="{{ field.settings.type }}" name="{{ key }}" setting='true' class="form-control" id="{{ key }}" value="{% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}" data-default="{{ element.settings[key] }}">
-      {% endif %}
-      <small class="form-text text-muted">{{ field.settings.description }}</small>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-    <div class="col-sm">
-      <div class="form-group">
-        <label for="mon_ids_iv">mon_ids_iv</label>
-        <select class="form-control" name="mon_ids_iv" setting='true' data-default="{{ element.monlist_id }}">
-          <option value='' {{ 'selected="selected"' if uri == element.monlist_id }}>None</option>
-          {% for uri, data in monlist.items() %}
-          <option value="{{ url('api_monivlist') / uri|string  }}" {{ 'selected="selected"' if uri == element.monlist_id }}>{{ data.monlist|lower }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-  {% endif %}
-  {% if settings_vars.fields is defined %}
-  <div class="col-sm">
-    {% for key, field in settings_vars.fields|dictsort %}
-    {% if field.settings.type != 'hidden' %}
-    <div class="form-group">
-      <label for="{{ key }}">{{ key }}</label>
-      {% if field.settings.type == "option" %}
-      <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
-        {% for option in field.settings["values"] %}
-        <option value="{{ option }}" {% if key in element.__dict__ %}{{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
-        {% endfor %}
-      </select>
-      {% elif field.settings.type == 'geofence' %}
-      <select class="form-control" name="{{ key }}" data-default="{{ url('api_geofence') / element[key]|string if element[key] else 'None' }}">
-        {% if field.settings.require != True %}
-        <option value='None' {{ 'selected="selected"' if uri == element.__dict__[key] }}>None</option>
+    <div class="row">
+        <div class="col-sm">
+            <div class="form-group">
+                <label for="mon_ids_iv">mon_ids_iv</label>
+                <select class="form-control" name="mon_ids_iv" setting='true'
+                        data-default="{{ element.monlist_id }}">
+                    <option value='' {{ 'selected="selected"' if uri == element.monlist_id }}>None</option>
+                    {% for monlist_id, monlist in monlist.items() %}
+                        <option value="{{ url('api_monivlist') / monlist_id|string }}" {{ 'selected="selected"' if monlist_id == element.monlist_id }}>{{ monlist.name|lower }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        {% if settings_vars.fields is defined %}
+            <div class="col-sm">
+                {% for key, field in settings_vars.fields|dictsort %}
+                    {% if field.settings.type != 'hidden' %}
+                        <div class="form-group">
+                            <label for="{{ key }}">{{ key }}</label>
+                            {% if field.settings.type == "option" %}
+                                <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
+                                    {% for option in field.settings["values"] %}
+                                        <option value="{{ option }}"{% if key in element.__dict__ %}
+                                            {{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% elif field.settings.type == 'geofence' %}
+                                <select class="form-control" name="{{ key }}"
+                                        data-default="{{ url('api_geofence') / element[key]|string if element[key] else 'None' }}">
+                                    {% if field.settings.require != True %}
+                                        <option value='None' {{ 'selected="selected"' if uri == element.__dict__[key] }}>
+                                            None
+                                        </option>
+                                    {% endif %}
+                                    {% for uri, data in fences.items() %}
+                                        <option value="{{ url('api_geofence') / uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <input type="{{ field.type }}" name="{{ key }}" data-default="{{ element[key] }}"
+                                       class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
+                            {% endif %}
+                            <small class="form-text text-muted">{{ field.settings.description }}</small>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
         {% endif %}
-        {% for uri, data in fences.items() %}
-        <option value="{{ url('api_geofence') / uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
-        {% endfor %}
-      </select>
-      {% else %}
-      <input type="{{ field.type }}" name="{{ key }}" data-default="{{ element[key] }}" class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
-      {% endif %}
-      <small class="form-text text-muted">{{ field.settings.description }}</small>
+        <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
     </div>
-    {% endif %}
-    {% endfor %}
-  </div>
-  {% endif %}
-  <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
-</div>
 {% endblock %}
