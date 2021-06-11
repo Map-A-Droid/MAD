@@ -32,7 +32,9 @@ class PokestopHelper:
     @staticmethod
     async def get_locations_in_fence(session: AsyncSession, geofence_helper: Optional[GeofenceHelper] = None,
                                      fence=None) -> List[Location]:
-        min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
+        min_lat, min_lon, max_lat, max_lon = -90, -180, 90, 180
+        if geofence_helper:
+            min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
         if fence is not None:
             # TODO: probably gotta fix ST_Contains, ST_GeomFromText and Point...
             stmt = select(Pokestop).where(and_(Pokestop.latitude >= min_lat,
@@ -287,7 +289,7 @@ class PokestopHelper:
             .group_by(func.FROM_UNIXTIME(TrsQuest.quest_timestamp, '%y-%m-%d'))
         result = await session.execute(stmt)
         results: List[Tuple[str, int]] = []
-        for timestamp_as_str, count in result.scalars():
+        for timestamp_as_str, count in result.all():
             results.append((timestamp_as_str, count))
         return results
 

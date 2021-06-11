@@ -8,6 +8,7 @@ from mapadroid.madmin.endpoints.routes.statistics.DeleteStatusEntryEndpoint impo
 from mapadroid.madmin.endpoints.routes.statistics.DeleteUnfencedSpawnsEndpoint import DeleteUnfencedSpawnsEndpoint
 from mapadroid.madmin.endpoints.routes.statistics.GameStatsMonEndpoint import GameStatsMonEndpoint
 from mapadroid.madmin.endpoints.routes.statistics.GameStatsShinyEndpoint import GameStatsShinyEndpoint
+from mapadroid.madmin.endpoints.routes.statistics.GetGameStatsEndpoint import GetGameStatsEndpoint
 from mapadroid.madmin.endpoints.routes.statistics.GetNonivEncountersCountEndpoint import GetNonivEncountersCountEndpoint
 from mapadroid.madmin.endpoints.routes.statistics.GetSpawnDetailsEndpoint import GetSpawnDetailsEndpoint
 from mapadroid.madmin.endpoints.routes.statistics.GetSpawnpointStatsEndpoint import GetSpawnpointStatsEndpoint
@@ -35,7 +36,7 @@ def register_routes_statistics_endpoints(app: web.Application):
     app.router.add_view('/statistics_mon', StatisticsMonEndpoint, name='statistics_mon')
     app.router.add_view('/statistics_shiny', StatisticsShinyEndpoint, name='statistics_shiny')
     app.router.add_view('/get_game_stats_shiny', GameStatsShinyEndpoint, name='game_stats_shiny_v2')
-    # TODO: app.router.add_view('/get_game_stats', EventsEndpoint, name='game_stats')
+    app.router.add_view('/get_game_stats', GetGameStatsEndpoint, name='game_stats')
     app.router.add_view('/get_game_stats_mon', GameStatsMonEndpoint, name='game_stats_mon')
     app.router.add_view('/statistics_detection_worker_data', StatisticsDetectionWorkerDataEndpoint,
                         name='statistics_detection_worker_data')

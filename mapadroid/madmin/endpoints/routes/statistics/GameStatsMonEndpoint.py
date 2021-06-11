@@ -15,9 +15,7 @@ class GameStatsMonEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        minutes_spawn: Optional[int] = self._request.query.get("minutes_spawn")
-        if minutes_spawn:
-            minutes_spawn = 10
+        minutes_spawn: Optional[int] = int(self._request.query.get("minutes_spawn", "10"))
 
         # Spawn
         iv = []

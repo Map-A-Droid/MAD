@@ -124,7 +124,7 @@ class AbstractRootEndpoint(web.View, ABC):
         except Exception as err:
             raise apiException.FormattingError(err)
 
-    def _get_instance_id(self):
+    def _get_instance_id(self) -> int:
         db_wrapper: DbWrapper = self._get_db_wrapper()
         return db_wrapper.get_instance_id()
 

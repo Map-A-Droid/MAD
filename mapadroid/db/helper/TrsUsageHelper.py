@@ -39,13 +39,13 @@ class TrsUsageHelper:
 
     @staticmethod
     async def get_usages(session: AsyncSession, last_n_minutes: Optional[int] = 120,
-                         instance_id: Optional[str] = None) -> List[TrsUsage]:
+                         instance_name: Optional[str] = None) -> List[TrsUsage]:
         """
         Instead of DbStatsReader::get_usage_count
         Args:
             session:
             last_n_minutes:
-            instance_id:
+            instance_name:
 
         Returns: Simply return all usage entries for the constraints given (if any) sorted by their time of creation
 
@@ -55,8 +55,8 @@ class TrsUsageHelper:
         if last_n_minutes:
             time_to_check_after = datetime.utcnow() - timedelta(minutes=last_n_minutes)
             where_conditions.append(TrsUsage.timestamp > time_to_check_after.timestamp())
-        if instance_id:
-            where_conditions.append(TrsUsage.instance == instance_id)
+        if instance_name:
+            where_conditions.append(TrsUsage.instance == instance_name)
         stmt = stmt.where(and_(*where_conditions))\
             .order_by(TrsUsage.timestamp)
         result = await session.execute(stmt)

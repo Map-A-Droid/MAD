@@ -30,3 +30,11 @@ class InternalStopWorkerException(Exception):
 class ScreenshotType(Enum):
     JPEG = 0
     PNG = 1
+
+
+class TeamColours(Enum):
+    YELLOW = "Yellow"
+    BLUE = "Blue"
+    RED = "Red"
+    WHITE = "White"
+

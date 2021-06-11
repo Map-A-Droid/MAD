@@ -276,15 +276,7 @@
 {% block content %}
 <h2>Quest processing</h2>
 
-<p>
-	{% with messages = get_flashed_messages() %}
-	  {% if messages %}
-		{% for message in messages %}
-		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-		{% endfor %}
-	  {% endif %}
-	{% endwith %}
-</p>
+
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
 <br>
 <h2>Today Quest Statistics</h2>

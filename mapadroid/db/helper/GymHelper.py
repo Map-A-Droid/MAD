@@ -8,6 +8,7 @@ from sqlalchemy.future import select
 from mapadroid.db.model import Gym, GymDetail, Raid
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.madGlobals import TeamColours
 
 
 class GymHelper:
@@ -73,16 +74,16 @@ class GymHelper:
 
         """
         stmt = select(
-                case((Gym.team_id == 0, "WHITE"),
-                     (Gym.team_id == 1, "Blue"),
-                     (Gym.team_id == 2, "Red"),
-                     else_="Yellow"),
+                case((Gym.team_id == 0, TeamColours.WHITE.value),
+                     (Gym.team_id == 1, TeamColours.BLUE.value),
+                     (Gym.team_id == 2, TeamColours.RED.value),
+                     else_=TeamColours.YELLOW.value),
                 func.count(Gym.team_id))\
             .select_from(Gym)\
             .group_by(Gym.team_id)
         result = await session.execute(stmt)
         team_count: Dict[str, int] = {}
-        for team, count in result.scalars():
+        for team, count in result.all():
             team_count[team] = count
         return team_count
 
