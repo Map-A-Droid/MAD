@@ -169,7 +169,9 @@
             "dataType": "json",
             success: function (result) {
                 console.log(result);
-                unfiltered_points = result.data.map(function (p) { return {"count": p[0], "lat": p[1], "lon": p[2]}; })
+                unfiltered_points = result.data.map(function (p) {
+                    return {"count": p[0], "lat": p[1][0], "lon": p[1][1]};
+                })
                 setupSlider();
             }
         });
@@ -179,7 +181,7 @@
         $.fn.UseTooltip = function () {
             $(this).bind("plothover", function (event, pos, item) {
                 if (item) {
-                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                    if ((previousLabel !== item.series.label) || (previousPoint !== item.dataIndex)) {
                         previousPoint = item.dataIndex;
                         previousLabel = item.series.label;
                         $("#tooltip").remove();
@@ -202,7 +204,7 @@
         $.fn.UseTooltipFull = function () {
             $(this).bind("plothover", function (event, pos, item) {
                 if (item) {
-                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                    if ((previousLabel !== item.series.label) || (previousPoint !== item.dataIndex)) {
                         previousPoint = item.dataIndex;
                         previousLabel = item.series.label;
                         $("#tooltip").remove();
@@ -244,11 +246,9 @@
             hour_till + ' ' + ampm;
             sec = sec + ' ' + ampm;
             {% endif %}
-
-            if (mode == 'hour') {
-                var time = hour + ' - ' + hour_till
-            } else {
-                var time = hour + ':' + min + ':' + sec
+            var time = hour + ':' + min + ':' + sec
+            if (mode === 'hour') {
+                time = hour + ' - ' + hour_till
             }
             return time;
         }
