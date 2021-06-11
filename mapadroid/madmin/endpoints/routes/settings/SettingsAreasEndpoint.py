@@ -42,23 +42,23 @@ class SettingsAreasEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_area(identifier=identifier)
+        self._identifier: Optional[str] = self.request.query.get("id")
+        if self._identifier:
+            return await self._render_single_area()
         else:
             return await self._render_area_overview()
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlearea.html')
-    async def _render_single_area(self, identifier: str):
+    async def _render_single_area(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         mode: WorkerType = WorkerType.MON_MITM
         area: Optional[SettingsArea] = None
-        if identifier == "new":
+        if self._identifier == "new":
             mode_raw: Optional[str] = self.request.query.get("mode")
             mode = WorkerType(mode_raw)
         else:
-            area: SettingsArea = await self._get_db_wrapper().get_area(self._session, int(identifier))
+            area: SettingsArea = await self._get_db_wrapper().get_area(self._session, int(self._identifier))
             if not area:
                 raise web.HTTPFound(self._url_for("settings_areas"))
             mode = WorkerType(area.mode)
@@ -70,7 +70,7 @@ class SettingsAreasEndpoint(AbstractRootEndpoint):
 
         template_data: Dict = {
             'base_uri': self._url_for('api_area'),
-            'identifier': identifier,
+            'identifier': self._identifier,
             'monlist': await SettingsMonivlistHelper.get_entries_mapped(self._session, self._get_instance_id()),
             'fences': await SettingsGeofenceHelper.get_all_mapped(self._session, self._get_instance_id()),
             'config_mode': self._get_mad_args().config_mode,
@@ -80,7 +80,7 @@ class SettingsAreasEndpoint(AbstractRootEndpoint):
             'subtab': 'area',
             'element': area,
             'redirect': self._url_for('settings_areas'),
-            'uri': self._url_for('api_area') if not area else '%s/%s' % (self._url_for('api_area'), identifier),
+            'uri': self._url_for('api_area') if not area else '%s/%s' % (self._url_for('api_area'), self._identifier),
             'section': area
         }
         return template_data

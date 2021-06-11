@@ -229,6 +229,9 @@ class SettingsGeofence(Base):
     fence_type = Column(ENUM('polygon', 'geojson'), nullable=False, server_default=text("'polygon'"))
     fence_data = Column(LONGTEXT, nullable=False)
 
+    def __str__(self):
+        return self.name
+
 
 class SettingsRoutecalc(Base):
     __tablename__ = 'settings_routecalc'

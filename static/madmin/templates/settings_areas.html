@@ -179,10 +179,10 @@ $(document).ready(function () {
         <div id='no-configured-elements' class="alert alert-info">No walker configuration added yet</div>
       {% else %}
       <tbody>
-        {% for area_id, area in area.items() %}
+        {% for area_id, area in section.items() %}
         <tr class="area_container" data-area='{{area_id}}'>
           <td class="align-middle">
-            <a href="{{ url('settings_areas', query_={'id': area_id, 'mode': area.area_type}) }}">{{ area.name }}</a>
+            <a href="{{ url('settings_areas', query_={'id': area_id, 'mode': area.mode}) }}">{{ area.name }}</a>
           </td>
           <td><small class="badge badge-secondary">{{ area.area_type }}</small></td>
           <td class="d-none d-lg-table-cell">

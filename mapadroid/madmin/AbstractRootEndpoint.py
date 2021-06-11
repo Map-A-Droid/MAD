@@ -31,6 +31,7 @@ class AbstractRootEndpoint(web.View, ABC):
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
+        self._identifier = None
 
     async def _iter(self):
         db_wrapper: DbWrapper = self._get_db_wrapper()

@@ -96,10 +96,10 @@ $(document).ready(function () {
     <div class="col-sm">
       <div class="form-group">
         <label for="mon_ids_iv">mon_ids_iv</label>
-        <select class="form-control" name="mon_ids_iv" setting='true' data-default="{{ element.settings['mon_ids_iv'] }}">
-          <option value='' {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>None</option>
+        <select class="form-control" name="mon_ids_iv" setting='true' data-default="{{ element.monlist_id }}">
+          <option value='' {{ 'selected="selected"' if uri == element.monlist_id }}>None</option>
           {% for uri, data in monlist.items() %}
-          <option value="{{ url('api_monivlist') / uri|string  }}" {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>{{ data.monlist|lower }}</option>
+          <option value="{{ url('api_monivlist') / uri|string  }}" {{ 'selected="selected"' if uri == element.monlist_id }}>{{ data.monlist|lower }}</option>
           {% endfor %}
         </select>
       </div>
@@ -114,13 +114,13 @@ $(document).ready(function () {
       {% if field.settings.type == "option" %}
       <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
         {% for option in field.settings["values"] %}
-        <option value="{{ option }}" {% if key in element %}{{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
+        <option value="{{ option }}" {% if key in element.__dict__ %}{{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
         {% endfor %}
       </select>
       {% elif field.settings.type == 'geofence' %}
       <select class="form-control" name="{{ key }}" data-default="{{ url('api_geofence') / element[key]|string if element[key] else 'None' }}">
         {% if field.settings.require != True %}
-        <option value='None' {{ 'selected="selected"' if uri == element.settings[key] }}>None</option>
+        <option value='None' {{ 'selected="selected"' if uri == element.__dict__[key] }}>None</option>
         {% endif %}
         {% for uri, data in fences.items() %}
         <option value="{{ url('api_geofence') / uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
