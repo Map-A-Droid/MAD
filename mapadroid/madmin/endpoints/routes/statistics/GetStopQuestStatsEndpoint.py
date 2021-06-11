@@ -37,6 +37,7 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
                 processed_fences.append(include_fence_name)
                 fence = await generate_coords_from_geofence(self._get_mapping_manager(), self._session,
                                                             self._get_instance_id(), include_fence_name)
+                # TODO: Just get tuples with Optional[TrsQuest]?
                 stops_in_fence: List[Location] = await PokestopHelper.get_locations_in_fence(self._session,
                                                                                              fence=fence)
                 quests_in_fence: Dict[int, Tuple[Pokestop, TrsQuest]] = await PokestopHelper \
@@ -67,8 +68,8 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
         # Stop
         stop = []
         data: List[Tuple[str, int]] = await PokestopHelper.get_stop_quest(self._session)
-        for dat in data:
-            stop.append({'label': dat[0], 'data': dat[1]})
+        for label, timestamp in data:
+            stop.append({'label': label, 'data': timestamp})
 
         stats = {'stop_quest_stats': stats_process, 'quest': quest, 'stop': stop}
         return self._json_response(stats)

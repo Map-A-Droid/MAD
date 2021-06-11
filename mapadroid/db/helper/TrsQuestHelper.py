@@ -58,9 +58,9 @@ class TrsQuestHelper:
                              func.hour(func.FROM_UNIXTIME(TrsQuest.quest_timestamp)))\
             .order_by(TrsQuest.quest_timestamp)
         result = await session.execute(stmt)
-        results: List[Tuple[str, int]] = []
+        results: List[Tuple[int, int]] = []
         for timestamp, count in result.all():
             results.append((timestamp, count))
-        return result.scalars().all()
+        return results
 
 

@@ -94,7 +94,7 @@ class GeofenceHelper:
             first_line = True
             # TODO: Handle the split and replace more nicely...
             # TODO: Will require handling of "new" syntax... (str([]) of python)
-            for line in settings.fence_data.split("\","):
+            for line in settings.fence_data.replace("[", "", 1).split("\","):
                 line = line.replace("\"", "").replace("]", "").strip()
                 if len(line) == 0:  # Empty line.
                     continue

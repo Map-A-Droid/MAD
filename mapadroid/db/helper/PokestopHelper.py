@@ -213,7 +213,7 @@ class PokestopHelper:
 
         """
         stmt = select(Pokestop, TrsQuest)\
-            .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=False)
+            .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)
         where_conditions = []
         # TODO: Verify this works for all timezones...
         today_midnight = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
