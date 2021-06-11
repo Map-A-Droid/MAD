@@ -35,13 +35,13 @@ class PokestopHelper:
         min_lat, min_lon, max_lat, max_lon = -90, -180, 90, 180
         if geofence_helper:
             min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
-        if fence is not None:
-            # TODO: probably gotta fix ST_Contains, ST_GeomFromText and Point...
+        if fence:
+            polygon = "POLYGON(({}))".format(fence)
             stmt = select(Pokestop).where(and_(Pokestop.latitude >= min_lat,
                                                Pokestop.longitude >= min_lon,
                                                Pokestop.latitude <= max_lat,
                                                Pokestop.longitude <= max_lon,
-                                               func.ST_Contains(func.ST_GeomFromText(str(fence)),
+                                               func.ST_Contains(func.ST_GeomFromText(polygon),
                                                                 func.POINT(Pokestop.latitude, Pokestop.longitude))))
         else:
             stmt = select(Pokestop).where(and_(Pokestop.latitude >= min_lat,
@@ -235,7 +235,8 @@ class PokestopHelper:
             where_conditions.append(Pokestop.last_updated >= datetime.fromtimestamp(timestamp))
 
         if fence:
-            where_conditions.append(func.ST_Contains(func.ST_GeomFromText(fence),
+            polygon = "POLYGON(({}))".format(fence)
+            where_conditions.append(func.ST_Contains(func.ST_GeomFromText(polygon),
                                                      func.POINT(Pokestop.latitude, Pokestop.longitude)))
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)

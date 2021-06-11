@@ -110,7 +110,7 @@ class GeofenceHelper:
                 else:  # Coordinate line.
                     if first_line:
                         fencename = "unnamed"
-                        if fence_fallback is not None:
+                        if fence_fallback:
                             fencename = fence_fallback
                         # Geofence file with no name
                         geofences.append({

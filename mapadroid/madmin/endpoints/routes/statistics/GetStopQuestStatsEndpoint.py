@@ -17,26 +17,26 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
     async def get(self):
         stats_process = []
         processed_fences = []
-        possible_fences = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id(),
+        possible_fences: Dict[int, Dict] = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id(),
                                               fence_type="pokestops")
         wanted_fences = []
         if self._get_mad_args().quest_stats_fences != "":
             wanted_fences = [item.lower().replace(" ", "") for item in
                              self._get_mad_args().quest_stats_fences.split(",")]
-        for possible_fence in possible_fences:
+        for area_id, fence_data in possible_fences.items():
             subfenceindex: int = 0
 
-            for subfence in possible_fences[possible_fence]['include']:
-                if subfence in processed_fences:
+            for include_fence_name, list_of_coords in fence_data["include"].items():
+                if include_fence_name in processed_fences:
                     continue
 
                 if len(wanted_fences) > 0:
-                    if str(subfence).lower() not in wanted_fences:
+                    if str(include_fence_name).lower() not in wanted_fences:
                         continue
 
-                processed_fences.append(subfence)
+                processed_fences.append(include_fence_name)
                 fence = await generate_coords_from_geofence(self._get_mapping_manager(), self._session,
-                                                            self._get_instance_id(), subfence)
+                                                            self._get_instance_id(), include_fence_name)
                 stops_in_fence: List[Location] = await PokestopHelper.get_locations_in_fence(self._session,
                                                                                              fence=fence)
                 quests_in_fence: Dict[int, Tuple[Pokestop, TrsQuest]] = await PokestopHelper \
@@ -48,7 +48,7 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
                 if int(stops) > 0:
                     processed: int = int(int(quests) * 100 / int(stops))
                 info = {
-                    "fence": str(subfence),
+                    "fence": str(include_fence_name),
                     'stops': int(stops),
                     'quests': int(quests),
                     'processed': str(int(processed)) + " %"

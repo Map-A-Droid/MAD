@@ -179,7 +179,8 @@ class TrsSpawnHelper:
             where_conditions.append(TrsSpawn.last_scanned >= datetime.utcfromtimestamp(timestamp))
 
         if fence:
-            where_conditions.append(func.ST_Contains(func.ST_GeomFromText(fence),
+            polygon = "POLYGON(({}))".format(fence)
+            where_conditions.append(func.ST_Contains(func.ST_GeomFromText(polygon),
                                                      func.POINT(TrsSpawn.latitude, TrsSpawn.longitude)))
         if event_id:
             where_conditions.append(TrsSpawn.eventid == event_id)
