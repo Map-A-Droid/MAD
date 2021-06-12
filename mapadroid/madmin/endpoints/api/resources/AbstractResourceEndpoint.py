@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
 
 from aiohttp import web
 from sqlalchemy import Column
 from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.orm.properties import ColumnProperty
 from yarl import URL
 
 from mapadroid.db.model import Base
@@ -43,7 +44,8 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
         db_entry: Optional[Base] = await self._fetch_from_db(identifier)
         if not db_entry:
             return self._json_response(self.request.method, status=404)
-        self._delete(db_entry)
+        await self._delete_connected(db_entry)
+        await self._delete(db_entry)
         headers = {
             'X-Status': 'Successfully deleted the object'
         }
@@ -111,12 +113,39 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                                            status=405)
             type_of_obj = type(db_entry)
             vars_of_type = vars(type_of_obj)
+
+            missing: List[str] = []
+            # first validate if any fields are missing...
+            for variable, type_info in vars_of_type.items():
+                # TODO: Also do not continue if FK?
+                if variable in self._attributes_to_ignore():
+                    continue
+                type_of_var = vars_of_type.get(variable)
+                if (isinstance(type_of_var, InstrumentedAttribute) and type_of_var.is_attribute
+                        and isinstance(type_of_var.prop, ColumnProperty)
+                        and not type_of_var.nullable
+                        and type_of_var.comparator.autoincrement is not True):
+                    # variable is needed (PK or not nullable)
+                    to_be_set = api_request_data.get(variable)
+                    if to_be_set is None:
+                        missing.append(variable)
+            if missing:
+                self._commit_trigger = False
+                return self._json_response({"missing": missing},
+                                           status=405)
+
             for key, value in api_request_data.items():
                 if key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
                     continue
                 elif vars_of_type.get(key) and not isinstance(vars_of_type.get(key), InstrumentedAttribute):
                     # We only allow modifying columns ;) This will also raise if the attribute does not exist
                     continue
+                # validate whether a field is required...
+                elif ((vars_of_type.get(key).primary_key or not vars_of_type.get(key).nullable)
+                        and getattr(db_entry, key, None) is None and value is None):
+                    self._commit_trigger = False
+                    return self._json_response({"missing": [key]},
+                                               status=405)
                 else:
                     await self._handle_additional_keys(db_entry, key, value)
                 # TODO: Support "legacy" translations of fields? e.g. origin -> name
@@ -132,11 +161,12 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
             await self._session.commit()
         except Exception as err:
             self._commit_trigger = False
+            await self._session.rollback()
             logger.exception(err)
             return self._json_response(str(err), status=400)
 
         headers = {
-            'Location': identifier,
+            'Location': str(identifier),
             'X-Uri': str(self.request.url),
             'X-Status': 'Successfully created the object'
         }
@@ -193,7 +223,7 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
             router = self.request.app.router.get(uri_source)
             if not router:
                 return None
-            return self._url_for(uri_source, identifier=col)
+            return self._url_for(uri_source, dynamic_path={"identifier": col})
             # return router.url_for(identifier=col)
 
     @abstractmethod
@@ -278,4 +308,8 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
         Returns:
 
         """
+        pass
+
+    @abstractmethod
+    async def _delete_connected(self, db_entry):
         pass

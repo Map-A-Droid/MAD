@@ -50,8 +50,8 @@ class AbstractRootEndpoint(web.View, ABC):
                 logger.debug("Awaiting commit")
                 await session.commit()
                 logger.info("Done committing")
-            # else:
-            #    await session.rollback()
+            else:
+                await session.rollback()
         except web.HTTPFound as e:
             raise e
         except Exception as e:
@@ -71,14 +71,14 @@ class AbstractRootEndpoint(web.View, ABC):
         self._session.add(instance)
         # await self._session.flush(instance)
 
-    def _delete(self, instance: Base):
+    async def _delete(self, instance: Base):
         """
         Deletes the instance from the DB
         :param instance:
         :return:
         """
         self._commit_trigger = True
-        self._session.delete(instance)
+        await self._session.delete(instance)
 
     def _get_request_address(self) -> str:
         if "CF-Connecting-IP" in self.request.headers:

@@ -100,7 +100,7 @@
                                             </option>
                                         {% endif %}
                                         {% for uri, data in fences.items() %}
-                                            <option value="{{ url('api_geofence') / uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
+                                            <option value="{{ uri }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
                                         {% endfor %}
                                     </select>
                                 {% else %}

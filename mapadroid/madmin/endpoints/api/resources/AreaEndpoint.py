@@ -1,6 +1,8 @@
 from typing import Dict, Optional, Set
 
+import sqlalchemy
 from aiohttp import web
+from loguru import logger
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.model import Base, SettingsArea, SettingsRoutecalc
@@ -15,6 +17,12 @@ from mapadroid.worker.WorkerType import WorkerType
 
 
 class AreaEndpoint(AbstractResourceEndpoint):
+    async def _delete_connected(self, db_entry: SettingsArea):
+        # Delete routecalc entry for a clean DB...
+        if hasattr(db_entry, "routecalc"):
+            routecalc = await SettingsRoutecalcHelper.get(self._session, db_entry.routecalc)
+            await self._delete(routecalc)
+
     async def _create_instance(self, identifier) -> Base:
         api_request_data = await self.request.json()
         mode: WorkerType = WorkerType(api_request_data.get("mode", None))
@@ -22,6 +30,21 @@ class AreaEndpoint(AbstractResourceEndpoint):
         area.mode = mode.value
         area.instance_id = self._get_instance_id()
         area.area_id = identifier
+        if hasattr(area, "routecalc"):
+            # We also need to create a SettingsRoutecalc instance/entry for consistency...
+            async with self._session.begin_nested() as nested_transaction:
+                try:
+                    routecalc = SettingsRoutecalc()
+                    routecalc.instance_id = self._get_instance_id()
+                    self._session.add(routecalc)
+                    await self._session.flush([routecalc])
+                    setattr(area, "routecalc", routecalc.routecalc_id)
+                    await nested_transaction.commit()
+                except sqlalchemy.exc.IntegrityError as e:
+                    logger.warning("Failed creating area")
+                    await nested_transaction.rollback()
+                    raise e
+
         return area
 
     async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
@@ -44,7 +67,7 @@ class AreaEndpoint(AbstractResourceEndpoint):
             return {}
 
     def _attributes_to_ignore(self) -> Set[str]:
-        return {"area_id", "mode", "guid"}
+        return {"area_id", "mode", "guid", "routecalc", "instance_id"}
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
         return await self._get_db_wrapper().get_area(self._session, identifier)

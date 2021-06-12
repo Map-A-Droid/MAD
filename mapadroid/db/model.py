@@ -505,7 +505,7 @@ class FilestoreChunk(Base):
 class SettingsArea(Base):
     __tablename__ = 'settings_area'
 
-    area_id = Column(INTEGER(10), primary_key=True)
+    area_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
@@ -517,7 +517,7 @@ class SettingsArea(Base):
 class SettingsAreaIdle(SettingsArea):
     __tablename__ = 'settings_area_idle'
 
-    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True)
+    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True, autoincrement=True)
     geofence_included = Column(ForeignKey('settings_geofence.geofence_id'), nullable=False, index=True)
     routecalc = Column(ForeignKey('settings_routecalc.routecalc_id'), nullable=False, index=True)
 
@@ -528,7 +528,7 @@ class SettingsAreaIdle(SettingsArea):
 class SettingsAreaIvMitm(SettingsArea):
     __tablename__ = 'settings_area_iv_mitm'
 
-    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True)
+    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True, autoincrement=True)
     geofence_included = Column(ForeignKey('settings_geofence.geofence_id'), nullable=False, index=True)
     geofence_excluded = Column(String(256, 'utf8mb4_unicode_ci'))
     routecalc = Column(ForeignKey('settings_routecalc.routecalc_id'), nullable=False, index=True)
@@ -551,7 +551,7 @@ class SettingsAreaIvMitm(SettingsArea):
 class SettingsAreaMonMitm(SettingsArea):
     __tablename__ = 'settings_area_mon_mitm'
 
-    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True)
+    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True, autoincrement=True)
     init = Column(TINYINT(1), nullable=False)
     geofence_included = Column(ForeignKey('settings_geofence.geofence_id'), nullable=False, index=True)
     geofence_excluded = Column(String(256, 'utf8mb4_unicode_ci'))
@@ -579,7 +579,7 @@ class SettingsAreaMonMitm(SettingsArea):
 class SettingsAreaPokestop(SettingsArea):
     __tablename__ = 'settings_area_pokestops'
 
-    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True)
+    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True, autoincrement=True)
     geofence_included = Column(ForeignKey('settings_geofence.geofence_id'), nullable=False, index=True)
     geofence_excluded = Column(String(256, 'utf8mb4_unicode_ci'))
     routecalc = Column(ForeignKey('settings_routecalc.routecalc_id'), nullable=False, index=True)
@@ -598,7 +598,7 @@ class SettingsAreaPokestop(SettingsArea):
 class SettingsAreaRaidsMitm(SettingsArea):
     __tablename__ = 'settings_area_raids_mitm'
 
-    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True)
+    area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True, autoincrement=True)
     init = Column(TINYINT(1), nullable=False)
     geofence_included = Column(ForeignKey('settings_geofence.geofence_id'), nullable=False, index=True)
     geofence_excluded = Column(String(256, 'utf8mb4_unicode_ci'))
@@ -623,7 +623,7 @@ class SettingsAreaRaidsMitm(SettingsArea):
 class SettingsAuth(Base):
     __tablename__ = 'settings_auth'
 
-    auth_id = Column(INTEGER(10), primary_key=True)
+    auth_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     username = Column(String(32, 'utf8mb4_unicode_ci'), nullable=False)
@@ -635,7 +635,7 @@ class SettingsAuth(Base):
 class SettingsDevicepool(Base):
     __tablename__ = 'settings_devicepool'
 
-    pool_id = Column(INTEGER(10), primary_key=True)
+    pool_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
@@ -669,7 +669,7 @@ class SettingsDevicepool(Base):
 class SettingsMonivlist(Base):
     __tablename__ = 'settings_monivlist'
 
-    monlist_id = Column(INTEGER(10), primary_key=True)
+    monlist_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
@@ -683,7 +683,7 @@ class SettingsMonivlist(Base):
 class SettingsWalker(Base):
     __tablename__ = 'settings_walker'
 
-    walker_id = Column(INTEGER(10), primary_key=True)
+    walker_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
@@ -697,7 +697,7 @@ class SettingsWalker(Base):
 class SettingsDevice(Base):
     __tablename__ = 'settings_device'
 
-    device_id = Column(INTEGER(10), primary_key=True)
+    device_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
@@ -780,7 +780,7 @@ class SettingsMonivlistToMon(Base):
 class SettingsWalkerarea(Base):
     __tablename__ = 'settings_walkerarea'
 
-    walkerarea_id = Column(INTEGER(10), primary_key=True)
+    walkerarea_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'))
@@ -814,7 +814,7 @@ class SettingsPogoauth(Base):
     )
 
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
-    account_id = Column(INTEGER(10), primary_key=True)
+    account_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
     device_id = Column(ForeignKey('settings_device.device_id', ondelete='CASCADE'), index=True)
     login_type = Column(ENUM('google', 'ptc'), nullable=False)
     username = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
