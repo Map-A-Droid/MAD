@@ -2,6 +2,7 @@ import asyncio
 import calendar
 import datetime
 import gc
+import logging
 import os
 import sys
 import time
@@ -25,7 +26,7 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.event import Event
-from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
+from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging, InterceptHandler
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.mapping_manager.MappingManager import MappingManager
 # from mapadroid.utils.pluginBase import PluginCollection
@@ -166,6 +167,22 @@ async def start():
     t_ws: Thread = None  # Thread - WebSocket Server
     webhook_worker: Optional[WebhookWorker] = None
     ws_server: WebsocketServer = None
+
+    logging.getLogger('asyncio').setLevel(logging.INFO)
+    logging.getLogger('asyncio').addHandler(InterceptHandler(log_section=LoggerEnums.asyncio))
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+    logging.getLogger('sqlalchemy.engine').addHandler(InterceptHandler(log_section=LoggerEnums.database))
+    logging.getLogger('aiohttp.access').setLevel(logging.INFO)
+    logging.getLogger('aiohttp.access').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+    logging.getLogger('aiohttp.client').setLevel(logging.INFO)
+    logging.getLogger('aiohttp.client').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+    logging.getLogger('aiohttp.internal').setLevel(logging.INFO)
+    logging.getLogger('aiohttp.internal').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+    logging.getLogger('aiohttp.server').setLevel(logging.INFO)
+    logging.getLogger('aiohttp.server').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+    logging.getLogger('aiohttp.web').setLevel(logging.INFO)
+    logging.getLogger('aiohttp.web').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+
     if args.config_mode:
         logger.info('Starting MAD in config mode')
     else:

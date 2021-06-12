@@ -108,32 +108,42 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
             elif not db_entry:
                 return self._json_response("DB entry with ID {} could not be created.".format(str(identifier)),
                                            status=405)
-            for key, value in api_request_data:
-                if key in self._attributes_to_ignore() or key.startswith("_"):
+            type_of_obj = type(db_entry)
+            vars_of_type = vars(type_of_obj)
+            for key, value in api_request_data.items():
+                if key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
                     continue
-                elif isinstance(getattr(db_entry, key), Column):
+                elif vars_of_type.get(key) and not isinstance(vars_of_type.get(key), InstrumentedAttribute):
                     # We only allow modifying columns ;) This will also raise if the attribute does not exist
                     continue
                 else:
                     await self._handle_additional_keys(db_entry, key, value)
                 # TODO: Support "legacy" translations of fields? e.g. origin -> name
+                if isinstance(value, str) and value.lower() in ["none", "undefined"]:
+                    value = None
+                elif isinstance(value, bool) or isinstance(value, str) and value.lower() in ["true", "false"]:
+                    if isinstance(value, str):
+                        value = 1 if value.lower() == "true" else 0
+                    else:
+                        value = 1 if value else 0
                 setattr(db_entry, key, value)
-            self._save(db_entry)
+            await self._session.merge(db_entry)
+            await self._session.commit()
         except ValueError as err:
             return self._json_response(str(err.args[0]), status=400)
 
         headers = {
             'Location': identifier,
-            'X-Uri': self.request.url,
+            'X-Uri': str(self.request.url),
             'X-Status': 'Successfully created the object'
         }
 
         if methodology in (DataHandlingMethodology.CREATE, DataHandlingMethodology.REPLACE):
             headers["X-Status"] = 'Successfully created the object'
-            return self._json_response(None, status=201, headers=headers)
+            return self._json_response({}, status=201, headers=headers)
         else:
             headers["X-Status"] = 'Successfully updated the object'
-            return self._json_response(None, status=204, headers=headers)
+            return self._json_response({}, status=204, headers=headers)
 
     # TODO: lateron: Derive resource_def from model class.
     #  Column nullable=False => required=True
