@@ -10,6 +10,7 @@ class Patch(PatchBase):
     )
 
     def _execute(self):
+        self._logger.warning("This migration may take a while if you don't trim your pokemon table.")
         alter_pokemon = (
             "ALTER TABLE `pokemon` "
             "ADD COLUMN `fort_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL, "
