@@ -23,11 +23,8 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
     # TODO: ResourceEndpoint class that loads the identifier accordingly before patch/post etc are called (populate_mode)
 
     async def post(self) -> web.Response:
-        identifier = self.request.match_info.get('identifier', None)
-        if not identifier:
-            return self._json_response(self.request.method, status=404)
         api_request_data = await self.request.json()
-        return await self._update_or_create_object(identifier, api_request_data,
+        return await self._update_or_create_object(None, api_request_data,
                                                    methodology=DataHandlingMethodology.CREATE)
 
     async def patch(self) -> web.Response:
@@ -94,12 +91,15 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
         return await self._update_or_create_object(identifier, api_request_data,
                                                    methodology=DataHandlingMethodology.REPLACE)
 
-    async def _update_or_create_object(self, identifier: int, api_request_data: Dict,
+    async def _update_or_create_object(self, identifier: Optional[int], api_request_data: Dict,
                                        methodology: DataHandlingMethodology) -> web.Response:
         try:
             # TODO: REPLACE needs to REPLACE the entire obj -> Delete and then create it from scratch...
             #  aka: ensure creating a new instance works
-            db_entry: Optional[Base] = await self._fetch_from_db(identifier)
+            if identifier:
+                db_entry: Optional[Base] = await self._fetch_from_db(identifier)
+            else:
+                db_entry: Optional[Base] = None
             if not db_entry and methodology in (DataHandlingMethodology.CREATE, DataHandlingMethodology.REPLACE):
                 # Try to create an area if possible...
                 db_entry = await self._create_instance(identifier)
@@ -129,10 +129,11 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                         value = 1 if value else 0
                 setattr(db_entry, key, value)
             self._save(db_entry)
-            # await self._session.merge(db_entry)
+            await self._session.commit()
         except Exception as err:
+            self._commit_trigger = False
             logger.exception(err)
-            return self._json_response(str(err.args[0]), status=400)
+            return self._json_response(str(err), status=400)
 
         headers = {
             'Location': identifier,
@@ -223,7 +224,7 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
         """
 
         Args:
-            identifier:
+            identifier: may be optional in case of autoincrement. However, replace requires it
 
         Returns: Instantiates the type of resource that the endpoint is supposed to handle as such that it fills the
         bare minimum of data (instance_id and identifier...)

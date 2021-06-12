@@ -23,29 +23,29 @@ class SettingsDevicesEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_element(identifier=identifier)
+        self.identifier: Optional[str] = self.request.query.get("id")
+        if self.identifier:
+            return await self._render_single_element()
         else:
             return await self._render_overview()
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singledevice.html')
-    async def _render_single_element(self, identifier: str):
+    async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         device: Optional[SettingsDevice] = None
-        if identifier == "new":
+        if self.identifier == "new":
             pass
         else:
             device: SettingsDevice = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),
-                                                                    int(identifier))
+                                                                    int(self.identifier))
             if not device:
                 raise web.HTTPFound(self._url_for("settings_devices"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
-            'identifier': identifier,
+            'identifier': self.identifier,
             'base_uri': self._url_for('api_device'),
             'redirect': self._url_for('settings_devices'),
             'subtab': 'device',
@@ -53,7 +53,7 @@ class SettingsDevicesEndpoint(AbstractRootEndpoint):
             'section': device,
             'settings_vars': settings_vars,
             'method': 'POST' if not device else 'PATCH',
-            'uri': self._url_for('api_device') if not device else '%s/%s' % (self._url_for('api_device'), identifier),
+            'uri': self._url_for('api_device') if not device else '%s/%s' % (self._url_for('api_device'), self.identifier),
             # TODO: Above is pretty generic in theory...
             'ggl_accounts': await SettingsPogoauthHelper.get_avail_accounts(self._session, self._get_instance_id(),
                                                                             LoginType.GOOGLE),

@@ -16,6 +16,7 @@
             $("#submit").click(function () {
                 loadingBlockUI('Saving a {{ subtab }}');
                 save_data = get_save_data();
+                save_data["mode"] = $.urlParam('mode');
                 if (isEmptyObj(save_data) != false) {
                     alert('No changes have been made');
                     window.location.replace('{{ redirect }}');
@@ -67,51 +68,52 @@
     <h1 class="display-5">{{ element.name }} <small class="badge badge-secondary"
                                                     style="font-weight: normal; font-size: 45%">{{ element.mode }}</small>
     </h1>
-
-    <div class="row">
-        {% if settings_vars.fields is defined %}
-            <div class="col-sm">
-                {% for key, field in settings_vars.fields|dictsort %}
-                    {% if field.settings.type != 'hidden' %}
-                        <div class="form-group">
-                            <label for="{{ key }}">{{ key }}</label>
-                            {% if field.settings.type == "option" %}
-                                <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
-                                    {% for option in field.settings["values"] %}
-                                        <option value="{{ option }}"{% if key in element.__dict__ %}
-                                            {{ 'selected="selected"' if option|tojson == element[key]|tojson or option is boolean and (1 if option else 0) == element[key] }}{% endif %}>{{ option|lower }}</option>
-                                    {% endfor %}
-                                </select>
-                            {% elif field.settings.type == 'mon_ids_iv' %}
-                                <select class="form-control" name="monlist_id"
-                                        data-default="{{ element.monlist_id }}">
-                                    <option value='' {{ 'selected="selected"' if uri == element.monlist_id }}>None</option>
-                                    {% for monlist_id, monlist in monlist.items() %}
-                                        <option value="{{ monlist_id }}" {{ 'selected="selected"' if monlist_id == element.monlist_id }}>{{ monlist.name|lower }}</option>
-                                    {% endfor %}
-                                </select>
-                            {% elif field.settings.type == 'geofence' %}
-                                <select class="form-control" name="{{ key }}"
-                                        data-default="{{ url('api_geofence') / element[key]|string if element[key] else 'None' }}">
-                                    {% if field.settings.require != True %}
-                                        <option value='None' {{ 'selected="selected"' if uri == element.__dict__[key] }}>
-                                            None
-                                        </option>
-                                    {% endif %}
-                                    {% for uri, data in fences.items() %}
-                                        <option value="{{ url('api_geofence') / uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
-                                    {% endfor %}
-                                </select>
-                            {% else %}
-                                <input type="{{ field.type }}" name="{{ key }}" data-default="{{ element[key] }}"
-                                       class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
-                            {% endif %}
-                            <small class="form-text text-muted">{{ field.settings.description }}</small>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        {% endif %}
-        <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
-    </div>
+    <form>
+        <div class="row">
+            {% if settings_vars.fields is defined %}
+                <div class="col-sm">
+                    {% for key, field in settings_vars.fields|dictsort %}
+                        {% if field.settings.type != 'hidden' %}
+                            <div class="form-group">
+                                <label for="{{ key }}">{{ key }}</label>
+                                {% if field.settings.type == "option" %}
+                                    <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
+                                        {% for option in field.settings["values"] %}
+                                            <option value="{{ option }}"{% if key in element.__dict__ %}
+                                                {{ 'selected="selected"' if option|tojson == element[key]|tojson or option is boolean and (1 if option else 0) == element[key] }}{% endif %}>{{ option|lower }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% elif field.settings.type == 'mon_ids_iv' %}
+                                    <select class="form-control" name="monlist_id"
+                                            data-default="{{ element.monlist_id }}">
+                                        <option value='' {{ 'selected="selected"' if uri == element.monlist_id }}>None</option>
+                                        {% for monlist_id, monlist in monlist.items() %}
+                                            <option value="{{ monlist_id }}" {{ 'selected="selected"' if monlist_id == element.monlist_id }}>{{ monlist.name|lower }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% elif field.settings.type == 'geofence' %}
+                                    <select class="form-control" name="{{ key }}"
+                                            data-default="{{ url('api_geofence') / element[key]|string if element[key] else 'None' }}">
+                                        {% if field.settings.require != True %}
+                                            <option value='None' {{ 'selected="selected"' if uri == element[key] }}>
+                                                None
+                                            </option>
+                                        {% endif %}
+                                        {% for uri, data in fences.items() %}
+                                            <option value="{{ url('api_geofence') / uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    <input type="{{ field.type }}" name="{{ key }}" data-default="{{ element[key] }}" {{ 'required=true' if field.settings.require }}
+                                           class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
+                                {% endif %}
+                                <small class="form-text text-muted">{{ field.settings.description }}</small>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+        </div>
+    </form>
 {% endblock %}

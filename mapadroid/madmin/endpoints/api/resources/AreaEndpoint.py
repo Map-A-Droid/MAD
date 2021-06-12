@@ -54,10 +54,10 @@ class AreaEndpoint(AbstractResourceEndpoint):
 
     async def post(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
-        if not identifier:
-            return self._json_response(self.request.method, status=405)
         api_request_data = await self.request.json()
         if self.request.content_type == 'application/json-rpc':
+            if not identifier:
+                return self._json_response(self.request.method, status=405)
             try:
                 call = api_request_data['call']
                 # args = api_request_data.get('args', {})

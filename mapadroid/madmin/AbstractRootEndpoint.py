@@ -149,5 +149,9 @@ class AbstractRootEndpoint(web.View, ABC):
             content_type=content_type,
         )
 
-    def _url_for(self, path_name: str, **kwargs):
-        return self.request.app.router[path_name].url_for(**kwargs)
+    def _url_for(self, path_name: str, query: Optional[Dict] = None, dynamic_path: Optional[Dict] = None):
+        if dynamic_path is None:
+            dynamic_path = {}
+        if query is None:
+            query = {}
+        return self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
