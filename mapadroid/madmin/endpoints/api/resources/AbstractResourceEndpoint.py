@@ -9,6 +9,7 @@ from yarl import URL
 
 from mapadroid.db.model import Base
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from loguru import logger
 
 
 class DataHandlingMethodology(Enum):
@@ -127,9 +128,10 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                     else:
                         value = 1 if value else 0
                 setattr(db_entry, key, value)
-            await self._session.merge(db_entry)
-            await self._session.commit()
-        except ValueError as err:
+            self._save(db_entry)
+            # await self._session.merge(db_entry)
+        except Exception as err:
+            logger.exception(err)
             return self._json_response(str(err.args[0]), status=400)
 
         headers = {

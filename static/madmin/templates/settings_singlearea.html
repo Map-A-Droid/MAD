@@ -69,18 +69,6 @@
     </h1>
 
     <div class="row">
-        <div class="col-sm">
-            <div class="form-group">
-                <label for="mon_ids_iv">mon_ids_iv</label>
-                <select class="form-control" name="mon_ids_iv" setting='true'
-                        data-default="{{ element.monlist_id }}">
-                    <option value='' {{ 'selected="selected"' if uri == element.monlist_id }}>None</option>
-                    {% for monlist_id, monlist in monlist.items() %}
-                        <option value="{{ url('api_monivlist') / monlist_id|string }}" {{ 'selected="selected"' if monlist_id == element.monlist_id }}>{{ monlist.name|lower }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
         {% if settings_vars.fields is defined %}
             <div class="col-sm">
                 {% for key, field in settings_vars.fields|dictsort %}
@@ -91,7 +79,15 @@
                                 <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
                                     {% for option in field.settings["values"] %}
                                         <option value="{{ option }}"{% if key in element.__dict__ %}
-                                            {{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
+                                            {{ 'selected="selected"' if option|tojson == element[key]|tojson or option is boolean and (1 if option else 0) == element[key] }}{% endif %}>{{ option|lower }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% elif field.settings.type == 'mon_ids_iv' %}
+                                <select class="form-control" name="monlist_id"
+                                        data-default="{{ element.monlist_id }}">
+                                    <option value='' {{ 'selected="selected"' if uri == element.monlist_id }}>None</option>
+                                    {% for monlist_id, monlist in monlist.items() %}
+                                        <option value="{{ monlist_id }}" {{ 'selected="selected"' if monlist_id == element.monlist_id }}>{{ monlist.name|lower }}</option>
                                     {% endfor %}
                                 </select>
                             {% elif field.settings.type == 'geofence' %}
