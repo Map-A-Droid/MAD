@@ -1,222 +1,253 @@
 {% extends "settings.html" %}
 
 {% block header %}
-{{ super() }}
+    {{ super() }}
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
-<script>
-$(document).ready(function () {
-    $(".delete").click(function() {
-        if(confirm('Are you sure you want to delete this resource?')) {
-            var elem =  $(this);
-            loadingBlockUI('Deleting a  {{ subtab }}' )
+    {{ super() }}
+    <script>
+        $(document).ready(function () {
+            $(".delete").click(function () {
+                if (confirm('Are you sure you want to delete this resource?')) {
+                    var elem = $(this);
+                    loadingBlockUI('Deleting a  {{ subtab }}')
+                    $.ajax({
+                        url: '{{ base_uri }}/' + $(this).data('identifier'),
+                        type: 'DELETE',
+                        success: function (data, status, xhr) {
+                            if (xhr.status == 202) {
+                                elem.parent().parent().remove();
+                                toggleConfiguredElement();
+                            }
+                            $.unblockUI();
+                        },
+                        error: function (data, status, xhr) {
+                            if (data.status == 412) {
+                                var dependencies = data.responseJSON;
+                                var msg = 'The following entities have a dependency on this element:';
+                                $.each(dependencies, function () {
+                                    msg += "\n" + this['name'] + " (" + this['uri'] + ")";
+                                });
+                                alert(msg);
+                            } else {
+                                alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+                            }
+                            $.unblockUI();
+                        }
+                    });
+                }
+            });
+            // Toggle on boot
+            toggleConfiguredElement();
+            check_recalc_status();
+            setInterval(check_recalc_status, 5000);
+        });
+
+        function recalculate_route() {
+            if (confirm('Are you sure you want to recalculate this route?')) {
+                var elem = $(this);
+                loadingBlockUI("Recalculating routefile")
+                rpc_call = {
+                    'call': 'recalculate'
+                }
+                $.ajax({
+                    url: '{{ url('api_area') }}/' + $(this).data('area'),
+                    contentType: 'application/json-rpc',
+                    data: JSON.stringify(rpc_call),
+                    type: 'POST',
+                    success: function (data, status, xhr) {
+                        if (xhr.status == 204) {
+                            alert('Recalculation successfully started');
+                        }
+                        $.unblockUI();
+                        check_recalc_status();
+                    },
+                    error: function (data, status, xhr) {
+                        alert('Unable to recalculate the area.  Please look at server logs');
+                        $.unblockUI();
+                        check_recalc_status();
+                    }
+                });
+            }
+        }
+
+        function check_recalc_status() {
             $.ajax({
-                url : '{{ base_uri }}/'+ $(this).data('identifier'),
-                type : 'DELETE',
-                success: function(data, status, xhr) {
-                    if(xhr.status == 202) {
-                        elem.parent().parent().remove();
-                        toggleConfiguredElement();
-                    }
-                    $.unblockUI();
-                },
-                error: function(data, status, xhr) {
-                    if(data.status == 412) {
-                        var dependencies = data.responseJSON;
-                        var msg = 'The following entities have a dependency on this element:';
-                        $.each(dependencies, function() {
-                            msg += "\n"+ this['name'] +" ("+ this['uri'] +")";
+                url: '{{ url('recalc_status') }}',
+                type: 'GET',
+                success: function (data, status, xhr) {
+                    if (xhr.status == 200) {
+                        var in_recalc = xhr.responseJSON;
+                        $.each($(".area_container"), function () {
+                            var area_id = $(this).data('area');
+                            var recalc_div = $(this).find(".recalc_div");
+                            var recalc_elem = $(this).find(".recalc_disp");
+                            var recalc_status = $(recalc_elem).data('recalc');
+                            var elem;
+                            if (in_recalc.includes(area_id)) {
+                                if (recalc_status == 0 || recalc_status == undefined) {
+                                    elem = $(document.createElement("img")).attr({
+                                        'src': "{{ static('loading.gif') }}",
+                                        'class': 'recalc_disp',
+                                        'data-recalc': 1,
+                                        'width': '32px',
+                                        'heigth': '30px'
+                                    });
+                                }
+                            } else {
+                                if (recalc_status == '1' || recalc_status == undefined) {
+                                    var fa_img = $(document.createElement("i")).attr({
+                                        'class': "fa fa-sync"
+                                    });
+                                    elem = $(document.createElement("button")).attr({
+                                        'class': 'recalc_disp btn btn-info btn-sm',
+                                        'data-area': area_id,
+                                        'data-recalc': 0,
+                                    }).bind('click', recalculate_route).append(fa_img);
+                                }
+                            }
+                            if (elem) {
+                                recalc_div.empty().append(elem);
+                            }
                         });
-                        alert(msg);
-                    } else {
-                        alert('Unable to save the {{ subtab }}.  An unknown error occurred');
                     }
-                    $.unblockUI();
+                },
+                error: function (data, status, xhr) {
+                    alert('Unable to get recalc status.  Can you reach the server?');
                 }
             });
         }
-    });
-    // Toggle on boot
-    toggleConfiguredElement();
-    check_recalc_status();
-    setInterval(check_recalc_status, 5000);
-  });
 
-  function recalculate_route() {
-    if(confirm('Are you sure you want to recalculate this route?')) {
-        var elem = $(this);
-        loadingBlockUI("Recalculating routefile")
-        rpc_call = {
-          'call': 'recalculate'
-        }
-        $.ajax({
-            url : '{{ url('api_area') }}/'+ $(this).data('area'),
-            contentType : 'application/json-rpc',
-            data: JSON.stringify(rpc_call),
-            type : 'POST',
-            success: function(data, status, xhr) {
-                if(xhr.status == 204) {
-                  alert('Recalculation successfully started');
-                }
-                $.unblockUI();
-                check_recalc_status();
-            },
-            error: function(data, status, xhr) {
-                alert('Unable to recalculate the area.  Please look at server logs');
-                $.unblockUI();
-                check_recalc_status();
+        function toggleConfiguredElement() {
+            if ($(".delete").length == 0) {
+                $('#no-configured-elements').show();
+            } else {
+                $('#no-configured-elements').hide();
             }
-        });
-    }
-  }
-
-  function check_recalc_status() {
-    $.ajax({
-        url : '{{ url('recalc_status') }}',
-        type : 'GET',
-        success: function(data, status, xhr) {
-            if(xhr.status == 200) {
-              var in_recalc = xhr.responseJSON;
-              $.each($(".area_container"), function () {
-                var area_id = $(this).data('area');
-                var recalc_div = $(this).find(".recalc_div");
-                var recalc_elem = $(this).find(".recalc_disp");
-                var recalc_status = $(recalc_elem).data('recalc');
-                var elem;
-                if(in_recalc.includes(area_id)) {
-                  if(recalc_status == 0 || recalc_status == undefined) {
-                    elem = $(document.createElement("img")).attr({
-                      'src': "{{ static('loading.gif') }}",
-                      'class': 'recalc_disp',
-                      'data-recalc': 1,
-                      'width': '32px',
-                      'heigth': '30px'
-                    });
-                  }
-                } else {
-                  if(recalc_status == '1' || recalc_status == undefined) {
-                    var fa_img = $(document.createElement("i")).attr({
-                      'class': "fa fa-sync"
-                    });
-                    elem = $(document.createElement("button")).attr({
-                      'class': 'recalc_disp btn btn-info btn-sm',
-                      'data-area': area_id,
-                      'data-recalc': 0,
-                    }).bind('click', recalculate_route).append(fa_img);
-                  }
-                }
-                if(elem) {
-                  recalc_div.empty().append(elem);
-                }
-              });
-            }
-        },
-        error: function(data, status, xhr) {
-            alert('Unable to get recalc status.  Can you reach the server?');
         }
-    });
-  }
-
-  function toggleConfiguredElement() {
-    if($(".delete").length == 0) {
-        $('#no-configured-elements').show();
-    } else {
-        $('#no-configured-elements').hide();
-    }
-  }
-</script>
+    </script>
 {% endblock %}
 
 {% block content %}
-{{ super() }}
+    {{ super() }}
 
-<div class="row">
-  <div class="col">
-    <div class="alert alert-primary">
-      Areas define zones where scanning should happen. Areas can be assigned to Walkers and Walkers must be assigned to Devices. Every area requires a file containing one or more geofences. MAD will build a route based on these areas and the elements within them.</p>
+    <div class="row">
+        <div class="col">
+            <div class="alert alert-primary">
+                Areas define zones where scanning should happen. Areas can be assigned to Walkers and Walkers must be
+                assigned to Devices. Every area requires a file containing one or more geofences. MAD will build a route
+                based on these areas and the elements within them.</p>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-{% if ortools_info %}
-<div class="row">
-  <div class="col">
-    <div class="alert alert-info">
-      <i class="fas fa-info-circle"></i> To speed up and improve route calculation you can use <code>ortools</code>. Check out the <a href="https://mad-docs.readthedocs.io/en/latest/server-setup/#mad" target="_blank" rel="noopener">MAD wiki</a> for installation instructions. If you see this message, your server is eligible to install it.
-    </div>
-  </div>
-</div>
-{% endif %}
-
-<div class="row mt-3">
-  <div class="col">
-    <table class="table table-striped table-hover table-sm">
-      <thead >
-        <tr>
-          <th style="width: 40%" class="align-middle">Name</th>
-          <th style="width: 10%" class="align-middle">Mode</th>
-          <th style="width: 30%" class="align-middle d-none d-lg-table-cell">Settings</th>
-          <th style="width: 20%" class="text-right align-middle">
-            <div class="dropdown">
-                <button class="btn btn-success btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="fas fa-plus"></i>
-                </button>
-                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'idle'}) }}">Idle <span class="badge badge-secondary">idle</span></a>
-                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'iv_mitm'}) }}">Mon IV scanner <span class="badge badge-secondary">iv_mitm</span></a>
-                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'mon_mitm'}) }}">General mon scanner <span class="badge badge-secondary">mon_mitm</span></a>
-                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'pokestops'}) }}">Quest scanner <span class="badge badge-secondary">pokestops</span></a>
-                  <a class="dropdown-item" href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'raids_mitm'}) }}">Raid scanner <span class="badge badge-secondary">raids_mitm</span></a>
-                  <a class="dropdown-item" target="_blank" href="https://mad-docs.readthedocs.io/en/latest/faq/#what-s-the-difference-betwen-these-scanning-modes"><i class="fas fa-question-circle" aria-hidden="true"></i> How do modes work?</a>
+    {% if ortools_info %}
+        <div class="row">
+            <div class="col">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> To speed up and improve route calculation you can use <code>ortools</code>.
+                    Check out the <a href="https://mad-docs.readthedocs.io/en/latest/server-setup/#mad" target="_blank"
+                                     rel="noopener">MAD wiki</a> for installation instructions. If you see this message,
+                    your server is eligible to install it.
                 </div>
             </div>
-          </th>
-        </tr>
-      </thead>
-      {% if area is none %}
-        <div id='no-configured-elements' class="alert alert-info">No walker configuration added yet</div>
-      {% else %}
-      <tbody>
-        {% for area_id, area in section.items() %}
-        <tr class="area_container" data-area='{{area_id}}'>
-          <td class="align-middle">
-            <a href="{{ url('settings_areas', query_={'id': area_id, 'mode': area.mode}) }}">{{ area.name }}</a>
-          </td>
-          <td><small class="badge badge-secondary">{{ area.area_type }}</small></td>
-          <td class="d-none d-lg-table-cell">
-            <p style="font-size: 65%; min-height: 40px; display: inline-box">
-            {% for key in area.settings|sort %}
-            {% if area.settings[key] != "" %}
-            {% if key == "mon_ids_iv" %}
-              {% if area.settings[key] in monlist %}
-              {{ key }}: <a href="{{ url('settings_ivlists', query_={'id': area.settings[key]}) }}">{{ monlist[area.settings[key]].monlist }}</a><br>
-              {% else %}
-              {{ key }}: <b><font color="red">ERROR IN IV LIST - CHECK IT</font></b>
-              {% endif %}
-            {% else %}
-            {{ key }}: {{ area.settings[key] }}<br>
-            {% endif %}
-            {% endif %}
-            {% endfor %}
-            </p>
-          </td>
-          <td class="text-right align-middle">
-            <a href="{{ url('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}"><button type="button" class="btn btn-success btn-sm edit" data-toggle="tooltip" title="Edit calculated route"><i class="fas fa-route"></i></button></a>
-            {% if config_mode == False %}
-              {% if area.area_type not in ['idle', 'iv_mitm'] %}
-                <div class='recalc_div' style='display:inline;' data-toggle="tooltip" title="Recalculate route"></div>
-              {% endif %}
-            {% endif %}
-            <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.area_type }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}" data-toggle="tooltip" title="Edit area"><i class="far fa-edit"></i></button></a>
-            <button data-identifier='{{ area_id }}' type="button" class="delete btn btn-danger btn-sm" data-toggle="tooltip" title="Delete area"><i class="fas fa-trash-alt"></i>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-      {% endif %}
-    </table>
-  </div>
-</div>
+        </div>
+    {% endif %}
+
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-striped table-hover table-sm">
+                <thead>
+                <tr>
+                    <th style="width: 40%" class="align-middle">Name</th>
+                    <th style="width: 10%" class="align-middle">Mode</th>
+                    <th style="width: 30%" class="align-middle d-none d-lg-table-cell">Settings</th>
+                    <th style="width: 20%" class="text-right align-middle">
+                        <div class="dropdown">
+                            <button class="btn btn-success btn-sm dropdown-toggle" type="button" id="dropdownMenuButton"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item"
+                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'idle'}) }}">Idle <span
+                                        class="badge badge-secondary">idle</span></a>
+                                <a class="dropdown-item"
+                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'iv_mitm'}) }}">Mon IV
+                                    scanner <span class="badge badge-secondary">iv_mitm</span></a>
+                                <a class="dropdown-item"
+                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'mon_mitm'}) }}">General
+                                    mon scanner <span class="badge badge-secondary">mon_mitm</span></a>
+                                <a class="dropdown-item"
+                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'pokestops'}) }}">Quest
+                                    scanner <span class="badge badge-secondary">pokestops</span></a>
+                                <a class="dropdown-item"
+                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'raids_mitm'}) }}">Raid
+                                    scanner <span class="badge badge-secondary">raids_mitm</span></a>
+                                <a class="dropdown-item" target="_blank"
+                                   href="https://mad-docs.readthedocs.io/en/latest/faq/#what-s-the-difference-betwen-these-scanning-modes"><i
+                                        class="fas fa-question-circle" aria-hidden="true"></i> How do modes work?</a>
+                            </div>
+                        </div>
+                    </th>
+                </tr>
+                </thead>
+                {% if area is none %}
+                    <div id='no-configured-elements' class="alert alert-info">No walker configuration added yet</div>
+                {% else %}
+                    <tbody>
+                    {% for area_id, area in section.items() %}
+                        <tr class="area_container" data-area='{{ area_id }}'>
+                            <td class="align-middle">
+                                <a href="{{ url('settings_areas', query_={'id': area_id, 'mode': area.mode}) }}">{{ area.name }}</a>
+                            </td>
+                            <td><small class="badge badge-secondary">{{ area.mode }}</small></td>
+                            <td class="d-none d-lg-table-cell">
+                                <p style="font-size: 65%; min-height: 40px; display: inline-box">
+                                    {% for key, value in area.__dict__.items()|sort %}
+                                        {% if not key.startswith("_") and value %}
+                                            {% if key == "mon_ids_iv" %}
+                                                {% if area.key in monlist %}
+                                                    {{ key }}:
+                                                    <a href="{{ url('settings_ivlists', query_={'id': area.key}) }}">{{ monlist[area.key].monlist }}</a>
+                                                    <br>
+                                                {% else %}
+                                                    {{ key }}:
+                                                    <b><font color="red">ERROR IN IV LIST - CHECK IT</font></b>
+                                                {% endif %}
+                                            {% else %}
+                                                {{ key }}: {{ value }}<br>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </td>
+                            <td class="text-right align-middle">
+                                <a href="{{ url('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}">
+                                    <button type="button" class="btn btn-success btn-sm edit" data-toggle="tooltip"
+                                            title="Edit calculated route"><i class="fas fa-route"></i></button>
+                                </a>
+                                {% if config_mode == False %}
+                                    {% if area.area_type not in ['idle', 'iv_mitm'] %}
+                                        <div class='recalc_div' style='display:inline;' data-toggle="tooltip"
+                                             title="Recalculate route"></div>
+                                    {% endif %}
+                                {% endif %}
+                                <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.mode }}">
+                                    <button type="button" class="btn btn-success btn-sm edit"
+                                            data-identifier="{{ loop.index }}" data-toggle="tooltip" title="Edit area">
+                                        <i class="far fa-edit"></i></button>
+                                </a>
+                                <button data-identifier='{{ area_id }}' type="button"
+                                        class="delete btn btn-danger btn-sm" data-toggle="tooltip" title="Delete area">
+                                    <i class="fas fa-trash-alt"></i>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                {% endif %}
+            </table>
+        </div>
+    </div>
 {% endblock %}
