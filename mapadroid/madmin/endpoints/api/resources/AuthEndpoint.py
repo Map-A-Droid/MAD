@@ -8,8 +8,11 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 
 class AuthEndpoint(AbstractResourceEndpoint):
+    async def _delete_connected(self, db_entry):
+        pass
+
     def _attributes_to_ignore(self) -> Set[str]:
-        return {"auth_id", "guid"}
+        return {"auth_id", "guid", "instance_id"}
 
     async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
         return await SettingsAuthHelper.get_all_mapped(self._session, self._get_instance_id())

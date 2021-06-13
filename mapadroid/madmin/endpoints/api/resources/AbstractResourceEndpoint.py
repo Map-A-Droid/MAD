@@ -127,7 +127,7 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                         and type_of_var.comparator.autoincrement is not True):
                     # variable is needed (PK or not nullable)
                     to_be_set = api_request_data.get(variable)
-                    if to_be_set is None:
+                    if to_be_set is None and getattr(db_entry, variable, None) is None:
                         missing.append(variable)
             if missing:
                 self._commit_trigger = False
