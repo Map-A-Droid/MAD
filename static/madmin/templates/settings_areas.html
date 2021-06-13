@@ -206,11 +206,11 @@
                             <td class="d-none d-lg-table-cell">
                                 <p style="font-size: 65%; min-height: 40px; display: inline-box">
                                     {% for key, value in area.__dict__.items()|sort %}
-                                        {% if not key.startswith("_") and value %}
-                                            {% if key == "mon_ids_iv" %}
-                                                {% if area.key in monlist %}
+                                        {% if not key.startswith("_") and key not in ["area_id", "instance_id", "name"] and value %}
+                                            {% if key == "monlist_id" %}
+                                                {% if area.monlist_id in monlist %}
                                                     {{ key }}:
-                                                    <a href="{{ url('settings_ivlists', query_={'id': area.key}) }}">{{ monlist[area.key].monlist }}</a>
+                                                    <a href="{{ url('settings_ivlists', query_={'id': area.monlist_id}) }}">{{ monlist[area.monlist_id].name }}</a>
                                                     <br>
                                                 {% else %}
                                                     {{ key }}:
