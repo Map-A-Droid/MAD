@@ -24,6 +24,7 @@ from mapadroid.madmin.endpoints.routes.misc import register_routes_misc_endpoint
 from mapadroid.madmin.endpoints.routes.settings import register_routes_settings_endpoints
 from mapadroid.madmin.endpoints.routes.statistics import register_routes_statistics_endpoints
 from mapadroid.mapping_manager import MappingManager
+from mapadroid.utils.JinjaFilters import base64Filter, mad_json_filter
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
@@ -68,6 +69,8 @@ class MADmin(object):
         self._app['device_updater'] = self._device_updater
 
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader(template_folder_path))
+        jinja2_env.filters["base64"] = base64Filter
+        jinja2_env.filters["madJson"] = mad_json_filter
         register_routes_root_endpoints(self._app)
         register_api_apk_endpoints(self._app)
         register_api_autoconf_endpoints(self._app)
