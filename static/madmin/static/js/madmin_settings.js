@@ -170,22 +170,15 @@ function get_save_data() {
             value = obj.val();
           }
         }
-        if (value != null && value.length == 0)
+        if (value != null && value.length === 0)
             value = null;
-        if ((default_val == 'None' || default_val.length == 0) && value == null) {
+        if ((default_val === 'None' || default_val.length === 0) && value == null) {
             return;
         }
-        if (value == obj.data('default')) {
+        if (value === obj.data('default')) {
             return;
         }
-        if (obj.attr('setting') == 'true') {
-            if (!save_data.hasOwnProperty('settings')) {
-                save_data['settings'] = {};
-            }
-            save_data['settings'][name] = value;
-        } else {
-            save_data[name] = value;
-        }
+        save_data[name] = value;
     });
     return save_data;
 }

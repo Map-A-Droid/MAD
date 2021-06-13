@@ -93,7 +93,7 @@
                                     </select>
                                 {% elif field.settings.type == 'geofence' %}
                                     <select class="form-control" name="{{ key }}"
-                                            data-default="{{ url('api_geofence') / element[key]|string if element[key] else 'None' }}">
+                                            data-default="{{ element[key]|string if element[key] else 'None' }}">
                                         {% if field.settings.require != True %}
                                             <option value='None' {{ 'selected="selected"' if uri == element[key] }}>
                                                 None

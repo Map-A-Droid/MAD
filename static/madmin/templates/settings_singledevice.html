@@ -85,7 +85,7 @@
         function translate_ptc() {
             var ptc = [];
             $.each($(".ptc_login").val(), function () {
-                ptc.push("{{ url('api_pogoauth') }}/" + this);
+                ptc.push(this);
             });
             return ptc;
         }
@@ -110,74 +110,66 @@
         <div class="row">
             <div class="col-sm">
                 <div class="form-group">
-                    <label for="origin">origin</label>
-                    <input type="input" class="form-control" id="origin" name="origin" value="{{ element.origin }}"
-                           data-default="{{ element.origin }}">
+                    <label for="name">origin</label>
+                    <input type="input" class="form-control" id="name" name="name" value="{{ element.name }}"
+                           data-default="{{ element.name }}">
                     <small class="form-text text-muted">origin is the unique name of your device</small>
                 </div>
                 {% for key, field in settings_vars.fields|dictsort %}
-                    <div class="form-group">
-                        <label for="{{ key }}">{{ key }}</label>
-                        {% if field.settings.type == "option" %}
-                            <select class="form-control {{ key }}" name="{{ key }}" setting='true'
-                                    data-default="{{ element[key] }}">
-                                {% for option in field.settings["values"] %}
-                                    <option value="{{ option }}"{% if key in element.__dict__ %}
-                                        {{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
-                                {% endfor %}
-                            </select>
-                        {% elif field.settings.type == "select" %}
-                            <select class="form-control {{ key }}" data-default="
-                                    {% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}"
-                                    name="{{ key }}" setting='true' multiple="multiple"></select>
-                        {% else %}
-                            <input type="{{ field.settings.type }}" name="{{ key }}" setting='true' class="form-control"
-                                   id="{{ key }}" value="
-                                    {% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}"
-                                   data-default="{{ element[key] }}">
-                        {% endif %}
-                        <small class="form-text text-muted">{{ field.settings.description }}</small>
-                    </div>
+                    {% if key not in ["origin", "pool", "walker", "mac_address", "ggl_login", "ptc_login", "interface_type"] %}
+                        <div class="form-group">
+                            <label for="{{ key }}">{{ key }}</label>
+                            {% if field.settings.type == "option" %}
+                                <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
+                                        {% for option in field.settings["values"] %}
+                                            <option value="{{ option }}"{% if key in element.__dict__ %}
+                                                {{ 'selected="selected"' if option|tojson == element[key]|tojson or option is boolean and (1 if option else 0) == element[key] }}{% endif %}>{{ option|lower }}</option>
+                                        {% endfor %}
+                                    </select>
+                            {% elif field.settings.type == "select" %}
+                                <select class="form-control {{ key }}" data-default="
+                                        {% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}"
+                                        name="{{ key }}" setting='true' multiple="multiple"></select>
+                            {% else %}
+                                    <input type="{{ field.type }}" name="{{ key }}" data-default="{{ element[key] }}" {{ 'required=true' if field.settings.require }}
+                                           class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
+                            {% endif %}
+                            <small class="form-text text-muted">{{ field.settings.description }}</small>
+                        </div>
+                    {% endif %}
                 {% endfor %}
             </div>
             <div class="col-sm">
                 <div class="form-group">
-                    <label for="walker">walker</label>
-                    <select class="form-control" name="walker"
-                            data-default="{{ url('api_walker') / element.walker|string if element.walker else '' }}">
+                    <label for="walker_id">walker</label>
+                    <select class="form-control" name="walker_id"
+                            data-default="{{ element.walker_id }}">
                         {% for walker_id, walker in walkers.items() %}
-                            <option value="{{ url('api_walker') / walker_id|string }}" {{ 'selected=selected' if element.walker == walker_id else "" }}>{{ walker.walkername }}</option>
+                            <option value="{{ walker_id }}" {{ 'selected="selected"' if element.walker_id == walker_id else "" }}>{{ walker.name }}</option>
                         {% endfor %}
                     </select>
                     <small class="form-text text-muted">Walker for this device</small>
                 </div>
                 <div class="form-group">
-                    <label for="pool">pool</label>
-                    <select class="form-control" name="pool"
-                            data-default="{{ url('api_devicepool') / element.pool|string if element.pool else 'None' }}">
+                    <label for="pool_id">pool</label>
+                    <select class="form-control" name="pool_id"
+                            data-default="{{ element.pool if element.pool else 'None' }}">
                         <option value='None'>None</option>
                         {% if pools is not none %}
-                            {% for poolid, pool in pools.items() %}
-                                <option value="{{ url('api_devicepool') / poolid|string }}" {{ 'selected=selected' if element.pool == poolid else "" }}>{{ pool.devicepool }}</option>
+                            {% for pool_id, pool in pools.items() %}
+                                <option value="{{ pool_id }}" {{ 'selected="selected"' if element.pool_id == pool_id else "" }}>{{ pool.name }}</option>
                             {% endfor %}
                         {% endif %}
                     </select>
                     <small class="form-text text-muted">Configuration pool used by this device</small>
                 </div>
                 <div class="form-group">
-                    <label for="adbname">adbname</label>
-                    <input type="input" class="form-control" id="adbname" name="adbname"
-                           value="{{ element.adbname if element.adbname else '' }}"
-                           data-default="{{ element.adbname }}">
-                    <small class="form-text text-muted">ADB device name</small>
-                </div>
-                <div class="form-group">
-                    <label for="ggl_login">Assigned Google address</label>
-                    <select class="form-control" name="ggl_login"
-                            data-default="{{ url('api_pogoauth') / element.ggl_login|string if element.ggl_login else 'None' }}">
+                    <label for="ggl_login_mail">Assigned Google address</label>
+                    <select class="form-control" name="ggl_login_mail"
+                            data-default="{{ element.ggl_login_mail if element.ggl_login_mail else 'None' }}">
                         <option value='None'>None</option>
                         {% for account_id, account in ggl_accounts.items() %}
-                            <option value="{{ url('api_pogoauth') / account_id|string }}" {{ 'selected=selected' if element.ggl_login == account_id else "" }}>{{ account.username }}</option>
+                            <option value="{{ account.username }}" {{ 'selected="selected"' if element.ggl_login_mail == account.username else "" }}>{{ account.username }}</option>
                         {% endfor %}
                     </select>
                     <small class="form-text text-muted">Aligned email for auto-configuration</small>
@@ -185,7 +177,7 @@
                 <div class="form-group">
                     <label for="ptc_login">Assigned PTC Account(s)</label>
                     <select class="form-control ptc_login" name="ptc_login"
-                            data-default="{{ element.ptc_login|string }}" data-callback='translate_ptc'
+                            data-default="[{% for assigned_ptc in ptc_assigned %}{{ assigned_ptc.account_id }}, {% endfor %}]" data-callback='translate_ptc'
                             multiple="multiple"></select>
                     <small class="form-text text-muted">Aligned PTC accounts to be used on the device</small>
                 </div>

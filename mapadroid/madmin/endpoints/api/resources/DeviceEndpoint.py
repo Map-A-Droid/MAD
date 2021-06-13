@@ -1,16 +1,39 @@
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
 
 from aiohttp import web
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
-from mapadroid.db.model import Base, SettingsDevice
+from mapadroid.db.model import Base, SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Device import Device
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
     AbstractResourceEndpoint)
 
 
 class DeviceEndpoint(AbstractResourceEndpoint):
+    async def _delete_connected(self, db_entry):
+        pass
+
+    async def _handle_additional_keys(self, db_entry: SettingsDevice, key: str, value):
+        # ptc_login is an array of IDs that are to be used. We need to set the IDs accordingly
+        if key == "ptc_login":
+            pogoauth_ids_to_use: Set[int] = set([int(x) for x in value])
+            assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
+                .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
+            all_pogoauth_mapped: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper \
+                .get_all_mapped(self._session, self._get_instance_id())
+
+            # First remove any that are not in the set to use
+            for assigned in assigned_to_device:
+                if assigned.account_id not in pogoauth_ids_to_use:
+                    assigned.device_id = None
+            # Now check if any of those to be used are really available and assign them..
+            for auth_id_to_use in pogoauth_ids_to_use:
+                pogoauth_to_use: Optional[SettingsPogoauth] = all_pogoauth_mapped.get(auth_id_to_use, None)
+                if pogoauth_to_use:
+                    pogoauth_to_use.device_id = db_entry.device_id
+
     def _attributes_to_ignore(self) -> Set[str]:
         return {"device_id", "guid"}
 
@@ -25,11 +48,11 @@ class DeviceEndpoint(AbstractResourceEndpoint):
 
     async def post(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
-        if not identifier:
-            return self._json_response(self.request.method, status=405)
         api_request_data = await self.request.json()
         # TODO: if not identifier
         if self.request.content_type == 'application/json-rpc':
+            if not identifier:
+                return self._json_response(self.request.method, status=405)
             device: Optional[SettingsDevice] = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),
                                                                               identifier)
             try:

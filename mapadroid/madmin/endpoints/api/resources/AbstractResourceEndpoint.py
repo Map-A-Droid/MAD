@@ -136,9 +136,11 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
 
             for key, value in api_request_data.items():
                 if key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
+                    await self._handle_additional_keys(db_entry, key, value)
                     continue
                 elif vars_of_type.get(key) and not isinstance(vars_of_type.get(key), InstrumentedAttribute):
                     # We only allow modifying columns ;) This will also raise if the attribute does not exist
+                    await self._handle_additional_keys(db_entry, key, value)
                     continue
                 # validate whether a field is required...
                 elif ((vars_of_type.get(key).primary_key or not vars_of_type.get(key).nullable)
@@ -146,8 +148,6 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                     self._commit_trigger = False
                     return self._json_response({"missing": [key]},
                                                status=405)
-                else:
-                    await self._handle_additional_keys(db_entry, key, value)
                 # TODO: Support "legacy" translations of fields? e.g. origin -> name
                 if isinstance(value, str) and value.lower() in ["none", "undefined"]:
                     value = None

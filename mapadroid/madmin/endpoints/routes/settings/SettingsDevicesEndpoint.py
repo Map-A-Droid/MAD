@@ -36,13 +36,20 @@ class SettingsDevicesEndpoint(AbstractRootEndpoint):
         device: Optional[SettingsDevice] = None
         if self.identifier == "new":
             pass
+            ptc_accounts_assigned = []
         else:
             device: SettingsDevice = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),
                                                                     int(self.identifier))
             if not device:
                 raise web.HTTPFound(self._url_for("settings_devices"))
+            ptc_accounts_assigned = await SettingsPogoauthHelper \
+                .get_assigned_to_device(self._session, self._get_instance_id(), device.device_id)
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
+        ptc_accounts_assigned_or_not_assigned = await SettingsPogoauthHelper.get_avail_accounts(
+            self._session, self._get_instance_id(), LoginType.PTC)
+        for assigned in ptc_accounts_assigned:
+            ptc_accounts_assigned_or_not_assigned[assigned.account_id] = assigned
 
         template_data: Dict = {
             'identifier': self.identifier,
@@ -57,8 +64,8 @@ class SettingsDevicesEndpoint(AbstractRootEndpoint):
             # TODO: Above is pretty generic in theory...
             'ggl_accounts': await SettingsPogoauthHelper.get_avail_accounts(self._session, self._get_instance_id(),
                                                                             LoginType.GOOGLE),
-            'ptc_accounts': await SettingsPogoauthHelper.get_avail_accounts(self._session, self._get_instance_id(),
-                                                                            LoginType.PTC),
+            'ptc_accounts': ptc_accounts_assigned_or_not_assigned,
+            'ptc_assigned': ptc_accounts_assigned,
             'requires_auth': not self._get_mad_args().autoconfig_no_auth,
             'responsive': str(self._get_mad_args().madmin_noresponsive).lower(),
             'walkers': await SettingsWalkerHelper.get_all_mapped(self._session, self._get_instance_id()),
