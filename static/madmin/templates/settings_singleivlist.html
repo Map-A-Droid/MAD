@@ -14,7 +14,7 @@
         $("#submit").click(function() {
             loadingBlockUI('Saving {{ subtab }}');
             save_data = get_save_data();
-            if(isEmptyObj(save_data) != false) {
+            if(isEmptyObj(save_data) !== false) {
                 alert('No changes have been made');
                 window.location.replace('{{ redirect }}');
             } else {
@@ -128,12 +128,12 @@
 
 {% block content %}
 {{ super() }}
-<h1 class="display-5">{{ element.monlist }}</h1>
+<h1 class="display-5">{{ element.name }}</h1>
 <div class="row">
     <div class="col-sm">
         <div class="form-group">
-          <label for="monlist">monlist</label>
-          <input type="input" class="form-control" id="monlist" name="monlist" value="{{ element.monlist }}" data-default="{{ element.monlist }}">
+          <label for="name">monlist</label>
+          <input type="input" class="form-control" id="name" name="name" value="{{ element.name }}" data-default="{{ element.name }}">
           <small class="form-text text-muted">Name of the mon list</small>
         </div>
         <div class="form-gropup" id="add-pokemon">

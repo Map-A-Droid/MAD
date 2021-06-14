@@ -69,10 +69,14 @@ class SettingsMonivlistHelper:
         return mapped
 
     @staticmethod
-    async def set_mon_ids(session: AsyncSession, monlist_id: int, ids: List[int]) -> None:
+    async def delete_mapped_ids(session: AsyncSession, monlist_id: int) -> None:
         del_stmt = delete(SettingsMonivlistToMon) \
             .where(SettingsMonivlistToMon.monlist_id == monlist_id)
         await session.execute(del_stmt)
+
+    @staticmethod
+    async def set_mon_ids(session: AsyncSession, monlist_id: int, ids: List[int]) -> None:
+        await SettingsMonivlistHelper.delete_mapped_ids(session, monlist_id)
         for ind, mon_id in enumerate(ids):
             entry = SettingsMonivlistToMon()
             entry.monlist_id = monlist_id

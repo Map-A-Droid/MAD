@@ -18,7 +18,7 @@ class MonIvListEndpoint(AbstractResourceEndpoint):
         return MonIvList.configuration
 
     async def _fetch_from_db(self, identifier, **kwargs) -> Optional[Base]:
-        return await SettingsMonivlistHelper.get_list(self._session, self._get_instance_id(), identifier)
+        return await SettingsMonivlistHelper.get_entry(self._session, self._get_instance_id(), identifier)
 
     async def _create_instance(self, identifier):
         mon_iv_list = SettingsMonivlist()
@@ -40,3 +40,9 @@ class MonIvListEndpoint(AbstractResourceEndpoint):
         if key == "mon_ids_iv":
             # Handle the list of IDs as those are stored in another table...
             await self._set_mon_ids_iv(db_entry, value)
+            return True
+        return False
+
+    async def _delete_connected(self, db_entry: SettingsMonivlist):
+        await SettingsMonivlistHelper.delete_mapped_ids(self._session, db_entry.monlist_id)
+

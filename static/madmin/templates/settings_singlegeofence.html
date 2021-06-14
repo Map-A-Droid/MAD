@@ -48,10 +48,10 @@ function get_geofence_definition() {
       <small class="form-text text-muted">Fence Type</small>
     </div>
     <div class="form-group">
-      <label for="fence_data">fence_data</label>
+      <label for="fence_data_raw">fence_data</label>
     {% set last_bracket_removed = "".join(element.fence_data.rsplit(']', 1)) %}
         {% set fence_data_to_display = last_bracket_removed.replace("[", "", 1).split("\",") %}
-      <textarea data-callback='get_geofence_definition' rows=20 class="form-control" id="fence_data" name="fence_data" value="{{ element.fence_data }}" data-default="{{ element.fence_data }}">{% for line in fence_data_to_display %}{% set line = line.replace("\"", "").strip() %}{% if line == fence_data_to_display[-1] %}{{ line.replace("]", "").strip() }}{% else %}{{ line.strip() + "\n" }}{% endif %}{% endfor %}</textarea>
+      <textarea data-callback='get_geofence_definition' rows=20 class="form-control" id="fence_data_raw" name="fence_data_raw" value="{{ element.fence_data }}" data-default="{{ element.fence_data }}">{% for line in fence_data_to_display %}{% set line = line.replace("\"", "").strip() %}{% if line == fence_data_to_display[-1] %}{{ line.replace("]", "").strip() }}{% else %}{{ line.strip() + "\n" }}{% endif %}{% endfor %}</textarea>
       <small class="form-text text-muted">Fence Information</small>
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>

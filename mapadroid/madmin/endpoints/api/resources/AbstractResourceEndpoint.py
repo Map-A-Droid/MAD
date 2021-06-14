@@ -135,9 +135,7 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                                            status=405)
 
             for key, value in api_request_data.items():
-                if await self._handle_additional_keys(db_entry, key, value):
-                    continue
-                elif key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
+                if key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
                     continue
                 elif vars_of_type.get(key) and not isinstance(vars_of_type.get(key), InstrumentedAttribute):
                     # We only allow modifying columns ;)
@@ -157,6 +155,11 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                     else:
                         value = 1 if value else 0
                 setattr(db_entry, key, value)
+            self._session.add(db_entry)
+            await self._session.commit()
+            await self._session.refresh(db_entry)
+            for key, value in api_request_data.items():
+                await self._handle_additional_keys(db_entry, key, value)
             self._save(db_entry)
             await self._session.commit()
         except Exception as err:
