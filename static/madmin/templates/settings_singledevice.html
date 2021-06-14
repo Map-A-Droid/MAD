@@ -116,7 +116,7 @@
                     <small class="form-text text-muted">origin is the unique name of your device</small>
                 </div>
                 {% for key, field in settings_vars.fields|dictsort %}
-                    {% if key not in ["origin", "pool", "walker", "mac_address", "ggl_login", "ptc_login", "interface_type"] %}
+                    {% if key not in ["origin", "pool", "walker", "mac_address", "ggl_login", "ptc_login", "interface_type", "ggl_login_mail"] %}
                         <div class="form-group">
                             <label for="{{ key }}">{{ key }}</label>
                             {% if field.settings.type == "option" %}
@@ -177,7 +177,7 @@
                 <div class="form-group">
                     <label for="ptc_login">Assigned PTC Account(s)</label>
                     <select class="form-control ptc_login" name="ptc_login"
-                            data-default="[{% for assigned_ptc in ptc_assigned %}{{ assigned_ptc.account_id }}, {% endfor %}]" data-callback='translate_ptc'
+                            data-default="[{% for assigned_ptc in ptc_assigned %}{{ assigned_ptc.account_id }}{% if ptc_assigned[-1] != assigned_ptc %},{% endif %}{% endfor %}]" data-callback='translate_ptc'
                             multiple="multiple"></select>
                     <small class="form-text text-muted">Aligned PTC accounts to be used on the device</small>
                 </div>

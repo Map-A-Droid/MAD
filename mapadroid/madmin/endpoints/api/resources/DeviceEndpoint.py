@@ -13,7 +13,10 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
 
 class DeviceEndpoint(AbstractResourceEndpoint):
     async def _delete_connected(self, db_entry):
-        pass
+        assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
+            .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
+        for assigned in assigned_to_device:
+            assigned.device_id = None
 
     async def _handle_additional_keys(self, db_entry: SettingsDevice, key: str, value):
         # ptc_login is an array of IDs that are to be used. We need to set the IDs accordingly
