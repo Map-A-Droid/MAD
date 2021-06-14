@@ -135,12 +135,12 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
                                            status=405)
 
             for key, value in api_request_data.items():
-                if key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
-                    await self._handle_additional_keys(db_entry, key, value)
+                if await self._handle_additional_keys(db_entry, key, value):
+                    continue
+                elif key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
                     continue
                 elif vars_of_type.get(key) and not isinstance(vars_of_type.get(key), InstrumentedAttribute):
-                    # We only allow modifying columns ;) This will also raise if the attribute does not exist
-                    await self._handle_additional_keys(db_entry, key, value)
+                    # We only allow modifying columns ;)
                     continue
                 # validate whether a field is required...
                 elif ((vars_of_type.get(key).primary_key or not vars_of_type.get(key).nullable)
@@ -296,7 +296,7 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
         """
         return {}
 
-    async def _handle_additional_keys(self, db_entry: Base, key: str, value):
+    async def _handle_additional_keys(self, db_entry: Base, key: str, value) -> bool:
         """
         Allows the update/setter to handle additional keys such as mon IV lists that
         are stored in another table
@@ -305,10 +305,10 @@ class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
             key:
             value:
 
-        Returns:
+        Returns: True if key was handled, False otherwise
 
         """
-        pass
+        return True
 
     @abstractmethod
     async def _delete_connected(self, db_entry):

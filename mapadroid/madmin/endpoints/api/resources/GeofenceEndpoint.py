@@ -8,6 +8,16 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 
 class GeofenceEndpoint(AbstractResourceEndpoint):
+    async def _delete_connected(self, db_entry):
+        pass
+
+    async def _handle_additional_keys(self, db_entry: SettingsGeofence, key: str, value) -> bool:
+        if key == "fence_data":
+            to_be_written = str(value).replace("\'", "\"")
+            db_entry.fence_data = to_be_written
+            return True
+        return False
+
     def _attributes_to_ignore(self) -> Set[str]:
         return {"geofence_id", "guid"}
 
