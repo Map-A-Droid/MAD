@@ -9,6 +9,9 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 
 class WalkerareaEndpoint(AbstractResourceEndpoint):
+    async def _delete_connected(self, db_entry):
+        pass
+
     def _attributes_to_ignore(self) -> Set[str]:
         return {"walkerarea_id", "guid"}
 

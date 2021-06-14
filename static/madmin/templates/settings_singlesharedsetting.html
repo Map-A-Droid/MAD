@@ -49,26 +49,29 @@ $(document).ready(function () {
 <div class="row">
   <div class="col-sm-8">
     <div class="form-group">
-      <label for="devicepool">devicepool</label>
-      <input type="input" class="form-control" id="devicepool" name="devicepool" value="{{ element.devicepool }}" data-default="{{ element.devicepool }}">
+      <label for="name">devicepool</label>
+      <input type="input" class="form-control" id="name" name="name" value="{{ element.name }}" data-default="{{ element.name }}">
       <small class="form-text text-muted">devicepool</small>
     </div>
-    {% for key, field in settings_vars.settings|dictsort %}
-    <div class="form-group">
-      <label for="{{ key }}">{{ key }}</label>
-      {% if field.settings.type == "option" %}
-      <select class="form-control" name="{{ key }}" setting='true' data-default="{{ element.settings[key] }}">
-        {% for option in field.settings["values"] %}
-        <option value="{{ option }}" {% if key in element.settings %}{{ 'selected="selected"' if option|tojson == element.settings[key]|tojson }}{% endif %}>{{ option|lower }}</option>
-        {% endfor %}
-      </select>
-      {% elif field.settings.type == "select" %}
-      <select class="form-control {{ key }}" data-default="{% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}" name="{{ key }}" setting='true' multiple="multiple"></select>
-      {% else %}
-      <input type="{{ field.settings.type }}" name="{{ key }}" setting='true' class="form-control" id="{{ key }}" value="{% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}" data-default="{{ element.settings[key] }}">
-      {% endif %}
-      <small class="form-text text-muted">{{ field.settings.description }}</small>
-    </div>
+    {% for key, field in settings_vars.fields|dictsort %}
+        {% if key not in ["devicepool"] %}
+            <div class="form-group">
+              <label for="{{ key }}">{{ key }}</label>
+              {% if field.settings.type == "option" %}
+                <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
+                    {% for option in field.settings["values"] %}
+                        <option value="{{ option }}"{% if key in element.__dict__ %}
+                            {{ 'selected="selected"' if option|tojson == element[key]|tojson or option is boolean and (1 if option else 0) == element[key] }}{% endif %}>{{ option|lower }}</option>
+                    {% endfor %}
+                </select>
+              {% elif field.settings.type == "select" %}
+              <select class="form-control {{ key }}" data-default="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}" name="{{ key }}" setting='true' multiple="multiple"></select>
+              {% else %}
+              <input type="{{ field.settings.type }}" name="{{ key }}" setting='true' class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}" data-default="{{ element[key] }}">
+              {% endif %}
+              <small class="form-text text-muted">{{ field.settings.description }}</small>
+            </div>
+        {% endif %}
     {% endfor %}
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
   </div>

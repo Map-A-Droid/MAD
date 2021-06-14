@@ -22,35 +22,35 @@ class SettingsPoolEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_element(identifier=identifier)
+        self.identifier: Optional[str] = self.request.query.get("id")
+        if self.identifier:
+            return await self._render_single_element()
         else:
             return await self._render_overview()
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlesharedsetting.html')
-    async def _render_single_element(self, identifier: str):
+    async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         device_pool: Optional[SettingsDevicepool] = None
-        if identifier == "new":
+        if self.identifier == "new":
             pass
         else:
-            device_pool: SettingsDevicepool = await SettingsDevicepoolHelper.get(self._session, int(identifier))
+            device_pool: SettingsDevicepool = await SettingsDevicepoolHelper.get(self._session, int(self.identifier))
             if not device_pool:
                 raise web.HTTPFound(self._url_for("settings_pools"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
-            'identifier': identifier,
+            'identifier': self.identifier,
             'base_uri': self._url_for('api_devicepool'),
             'redirect': self._url_for('settings_pools'),
             'subtab': 'devicepool',
             'element': device_pool,
             'settings_vars': settings_vars,
             'method': 'POST' if not device_pool else 'PATCH',
-            'uri': self._url_for('api_devicepool') if not device_pool else '%s/%s' % (self._url_for('api_devicepool'), identifier),
+            'uri': self._url_for('api_devicepool') if not device_pool else '%s/%s' % (self._url_for('api_devicepool'), self.identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data
