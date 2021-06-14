@@ -78,8 +78,8 @@
 <div class="row">
     <div class="col-sm">
         <div class="form-group">
-            <label for="walkername">walkername</label>
-            <input type="input" class="form-control" id="walkername" name="walkername" value="{{ element.walkername }}" data-default="{{ element.walkername }}">
+            <label for="name">walkername</label>
+            <input type="input" class="form-control" id="name" name="name" value="{{ element.name }}" data-default="{{ element.name }}">
             <small class="form-text text-muted">Name for the walker</small>
         </div>
         <div class="form-group">
@@ -96,17 +96,16 @@
                     </tr>
                 </tbody>
                 <tbody class="row_position ui-sortable">
-                    {% for walkerarea_uri in element.setup %}
-                        {% set area = walkerarea[walkerarea_uri] %}
-                        <tr id='{{ url('api_walkerarea') }}/{{ walkerarea_uri }}'>
+                    {% for walkerarea in walkerareas %}
+                        <tr id='{{ url('api_walkerarea') }}/{{ walkerarea.walkerarea_id }}'>
                             <td><i class="fa fa-fw fa-sort handle ui-sortable-handle"></i></td>
-                            <td class='walkerarea' data-save='{{ area.walkerarea }}' data-walkertext='{{ area.walkertext }}'><a href="{{ url('settings_areas', query_={'id': area['walkerarea'], 'mode': areas[area['walkerarea']].area_type} ) }}">{{ areas[area['walkerarea']].name }}</a><br>{{ area.walkertext }}</td>
-                            <td class='walkertype' data-save='{{ area.walkertype }}'>{{ area.walkertype }}</td>
-                            <td class='walkervalue' data-save='{{ area.walkervalue }}'>{{ area.walkervalue }}</td>
-                            <td class='walkermax' data-save='{{ area.walkermax }}'>{{ area.walkermax }}</td>
-                            <td class='eventid' data-save='{{ area.eventid }}'>{{ area.eventid }}</td>
+                            <td class='name' data-save='{{ walkerarea.name }}' data-walkertext='{{ walkerarea.name }}'><a href="{{ url('settings_areas', query_={'id': walkerarea.area_id, 'mode': areas[walkerarea.area_id].mode} ) }}">{{ areas[walkerarea.area_id].name }}</a><br>{{ walkerarea.name }}</td>
+                            <td class='algo_type' data-save='{{ walkerarea.algo_type }}'>{{ walkerarea.algo_type }}</td>
+                            <td class='algo_value' data-save='{{ walkerarea.algo_value }}'>{{ walkerarea.algo_value }}</td>
+                            <td class='max_walkers' data-save='{{ walkerarea.max_walkers }}'>{{ walkerarea.max_walkers }}</td>
+                            <td class='eventid' data-save='{{ walkerarea.eventid }}'>{{ walkerarea.eventid }}</td>
                             <td>
-                                <a href="{{ url('settings_walker_area',query_={'id': identifier, 'walkerarea': walkerarea_uri}) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+                                <a href="{{ url('settings_walker_area',query_={'id': element.walker_id, 'walkerarea': walkerarea.walkerarea_id}) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
                                 <button type="button" class="btn btn-danger btn-sm delete" data-identifier="{{ loop.index }}"><i class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>

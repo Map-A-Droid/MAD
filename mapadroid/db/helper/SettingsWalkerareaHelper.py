@@ -60,3 +60,17 @@ class SettingsWalkerareaHelper:
                                                      SettingsWalkerarea.walkerarea_id == walkerarea_id))
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def get_mapped_to_walker(session: AsyncSession, instance_id: int,
+                                   walker_id: int) -> Optional[List[SettingsWalkerarea]]:
+        all_walkerareas_mapped: Optional[List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper\
+            .get(session, instance_id, walker_id)
+        if not all_walkerareas_mapped:
+            return None
+        walkerareas: List[SettingsWalkerarea] = []
+        all_walkerareas_mapped.sort(key=lambda x: x.area_order)
+        for walkerarea_mapping in all_walkerareas_mapped:
+            walkerareas.append(await SettingsWalkerareaHelper.get(session, instance_id,
+                                                                  walkerarea_mapping.walkerarea_id))
+        return walkerareas
