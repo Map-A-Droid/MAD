@@ -21,8 +21,8 @@
             coords: ['^(|'+hourPattern+'|'+rangeHoursPattern+')$', "Please set correct time."],
             idle: ['^('+hourPattern+'|'+rangeHoursPattern+')$', "Please set correct time."],
         };
-        var type = $("select[name='walkertype']").val();
-        var value = $("input[name=walkervalue]").val();
+        var type = $("select[name='algo_type']").val();
+        var value = $("input[name=algo_value]").val();
         if (!(type in rules)) {
             console.log("No rule implemented for " + type + " please fix :)");
             return true;
@@ -34,18 +34,18 @@
             validateWalkervalueMsg = rules[type][1];
             $("#walkervalue-error").remove()
             elem = '<em id="walkervalue-error" class="error help-block">'+ validateWalkervalueMsg +'</em>';
-            $("input[name=walkervalue]").parent().append(elem);
+            $("input[name=algo_value]").parent().append(elem);
             return false;
         }
     }
   $(document).ready(function () {
     $("#submit").click(function() {
-        if(validate_walker() == false) {
+        if(validate_walker() === false) {
             return;
         }
         loadingBlockUI('Saving {{ subtab }}');
         save_data = get_save_data();
-        if(isEmptyObj(save_data) != false) {
+        if(isEmptyObj(save_data) !== false) {
             alert('No changes have been made');
             window.location.replace('{{ redirect }}?id={{ walkeruri }}');
         } else {
@@ -59,12 +59,12 @@
               walkerarea_data = {
                 'setup': [walkerarea_uri]
               }
-              if('{{ 'PATCH' if element else 'POST' }}' == 'POST') {
+              if('{{ 'PATCH' if element else 'POST' }}' === 'POST') {
                 $.ajax({
                   beforeSend: function(xhr, settings) {
                     xhr.setRequestHeader('X-Append', true);
                   },
-                  url : '{{ url('api_walker')}}/{{ walkeruri }}',
+                  url : '{{ url('api_walkerarea')}}/{{ walkeruri }}',
                   data : JSON.stringify(walkerarea_data),
                   type : 'PATCH',
                   contentType : 'application/json',
@@ -84,7 +84,7 @@
             },
             error: function(data, status, xhr) {
                 $("label[for]").removeClass('btn-danger');
-                if(data['responseJSON'] != undefined) {
+                if(data['responseJSON'] !== undefined) {
                     $.each(data['responseJSON']['missing'], function() {
                         var elem = $("label[for="+ this +"]");
                         elem[0].innerHTML = elem.attr('for') +' - Required Field';
@@ -118,7 +118,7 @@
 <div class="alert alert-warning">Couldn't find any area configurations. Please <a href="{{ url('settings_areas') }}">create</a> one first.</div>
 {% else %}
 {% if element %}
-  <h1 class="display-5">Edit {{ walker.walkername }} ({{ areas[element.walkerarea].name }}) </h1>
+  <h1 class="display-5">Edit {{ walker.name }} ({{ areas[element.area_id].name }}) </h1>
 {% else %}
   <h1 class="display-5">New WalkerArea for {{ walker.walkername }} </h1>
 {% endif %}
@@ -128,13 +128,13 @@
       <label for='walkerarea'>Area</label><br>
       <small class="form-text text-muted">Select the Area</small>
       <select class="form-control" name="walkerarea" required="" aria-invalid="false" data-default="{{ url('api_area') / element.walkerarea|string if element.walkerarea else '' }}">
-        {% for uri, area in areas.items() %}
-          <option value="{{ url('api_area') / uri|string }}" {{'selected="selected"' if uri == element.walkerarea }}>{{ area.name }}</option>
+        {% for area_id, area in areas.items() %}
+          <option value="{{ url('api_area') / area_id|string }}" {{'selected="selected"' if area_id == element.area_id }}>{{ area.name }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="form-group">
-      <label for='walkertype'>Walkermode</label><br>
+      <label for='algo_type'>Walkermode</label><br>
       <small class="form-text text-muted">Choose the way to end the route:<br>
         <b>countdown</b>: Kill worker after X seconds<br>
         <b>timer</b>: Kill worker after X:XX o´clock (Format: 24h f.e. 21:30 -&gt; 9:30 pm)<br>
@@ -146,26 +146,26 @@
         - Kill worker after X:XX o´clock (Format: 24h)<br>
         - Kill worker if outside of a period (Format: 24h f.e. 7:00-21:00)<br>
       </small>
-      <select class="form-control" name="walkertype" required="" data-default="{{ element.walkertype }}">
+      <select class="form-control" name="algo_type" required="" data-default="{{ element.algo_type }}">
         {% for walkertype in walkertypes %}
-        <option value="{{ walkertype }}" {{'selected="selected"' if walkertype == element.walkertype }}>{{ walkertype }}</option>
+        <option value="{{ walkertype }}" {{'selected="selected"' if walkertype == element.algo_type }}>{{ walkertype }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="form-group">
-      <label for='walkervalue'>Value for Walkermode</label><br>
+      <label for='algo_value'>Value for Walkermode</label><br>
       <small class="form-text text-muted"></small>
-      <input type="text" class="form-control" name="walkervalue" value="{{ element.walkervalue }}" data-default="{{ element.walkervalue }}">
+      <input type="text" class="form-control" name="algo_value" value="{{ element.algo_value if element.algo_value else "" }}" data-default="{{ element.algo_value if element.algo_value else "" }}">
     </div>
     <div class="form-group">
-      <label for='walkermax'>Max. Walker in Area</label><br>
+      <label for='max_walkers'>Max. Walker in Area</label><br>
       <small class="form-text text-muted">Empty = infinitely</small>
-      <input type="text" class="form-control" name="walkermax" value="{{ element.walkermax }}" data-default="{{ element.walkermax }}">
+      <input type="text" class="form-control" name="max_walkers" value="{{ element.max_walkers if element.max_walkers else "" }}" data-default="{{ element.max_walkers if element.max_walkers else "" }}">
     </div>
     <div class="form-group">
-      <label for='walkertext'>Description</label><br>
+      <label for='name'>Description</label><br>
       <small class="form-text text-muted"></small>
-      <input type="text" class= "form-control" name="walkertext" value="{{ element.walkertext }}" data-default="{{ element.walkertext }}">
+      <input type="text" class= "form-control" name="name" value="{{ element.name }}" data-default="{{ element.name }}">
     </div>
     <div class="form-group">
       <label for='eventid'>Event ID</label><br>

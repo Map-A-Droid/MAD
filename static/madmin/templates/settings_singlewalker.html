@@ -102,7 +102,7 @@
                             <td class='name' data-save='{{ walkerarea.name }}' data-walkertext='{{ walkerarea.name }}'><a href="{{ url('settings_areas', query_={'id': walkerarea.area_id, 'mode': areas[walkerarea.area_id].mode} ) }}">{{ areas[walkerarea.area_id].name }}</a><br>{{ walkerarea.name }}</td>
                             <td class='algo_type' data-save='{{ walkerarea.algo_type }}'>{{ walkerarea.algo_type }}</td>
                             <td class='algo_value' data-save='{{ walkerarea.algo_value }}'>{{ walkerarea.algo_value }}</td>
-                            <td class='max_walkers' data-save='{{ walkerarea.max_walkers }}'>{{ walkerarea.max_walkers }}</td>
+                            <td class='max_walkers' data-save='{{ walkerarea.max_walkers }}'>{{ walkerarea.max_walkers if walkerarea.max_walkers else "-" }}</td>
                             <td class='eventid' data-save='{{ walkerarea.eventid }}'>{{ walkerarea.eventid }}</td>
                             <td>
                                 <a href="{{ url('settings_walker_area',query_={'id': element.walker_id, 'walkerarea': walkerarea.walkerarea_id}) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>

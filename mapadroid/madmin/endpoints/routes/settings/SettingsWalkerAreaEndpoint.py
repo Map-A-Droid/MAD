@@ -21,22 +21,22 @@ class SettingsWalkerAreaEndpoint(AbstractRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_element(identifier=identifier)
+        self.identifier: Optional[str] = self.request.query.get("id")
+        if self.identifier:
+            return await self._render_single_element()
         else:
             raise web.HTTPFound(self._url_for("settings_walkers"))
 
     # TODO: Verify working
-    @aiohttp_jinja2.template('settings_singlewalker.html')
-    async def _render_single_element(self, identifier: str):
+    @aiohttp_jinja2.template('settings_walkerarea.html')
+    async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         walker: Optional[SettingsWalker] = None
-        if not identifier:
+        if not self.identifier:
             raise web.HTTPFound(self._url_for("settings_walkers"))
         else:
             walker: Optional[SettingsWalker] = await SettingsWalkerHelper.get(self._session, self._get_instance_id(),
-                                                                              int(identifier))
+                                                                              int(self.identifier))
             if not walker:
                 raise web.HTTPFound(self._url_for("settings_walkers"))
 
@@ -51,15 +51,16 @@ class SettingsWalkerAreaEndpoint(AbstractRootEndpoint):
         walkertypes = ['coords', 'countdown', 'idle', 'period', 'round', 'timer']
 
         template_data: Dict = {
-            'identifier': identifier,
-            'base_uri': self._url_for('api_walker'),
+            'identifier': self.identifier,
+            'base_uri': self._url_for('api_walkerarea'),
             'redirect': self._url_for('settings_walkers'),
             'subtab': 'walker',
             'element': walkerarea,
-            'uri': self._url_for('api_walker') if not walkerarea_id else '%s/%s' % (self._url_for('api_walker'), walkerarea_id),
+            'uri': self._url_for('api_walkerarea') if not walkerarea_id else '%s/%s' % (self._url_for('api_walkerarea'), walkerarea_id),
             # TODO: Above is pretty generic in theory...
             'walkertypes': walkertypes,
             'areas': areas,
             'walker': walker,
+            'walkeruri': self.identifier,
         }
         return template_data
