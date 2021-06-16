@@ -1,8 +1,8 @@
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class RootEndpoint(AbstractRootEndpoint):
+class RootEndpoint(AbstractMadminRootEndpoint):
     """
     "/"
     """

@@ -2,10 +2,10 @@ import aiohttp_jinja2
 from aiohttp.abc import Request
 
 from mapadroid.mad_apk.utils import get_apk_status
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class ApkEndpoint(AbstractRootEndpoint):
+class ApkEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 

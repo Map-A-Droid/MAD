@@ -7,11 +7,11 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import TrsEvent, TrsSpawn
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_geofences, generate_coords_from_geofence
 
 
-class AbstractStatisticsRootEndpoint(AbstractRootEndpoint, ABC):
+class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
     """
     Used for statistics-related endpoints
     """

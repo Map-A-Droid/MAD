@@ -2,10 +2,10 @@ from typing import Optional
 
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class PickWorkerEndpoint(AbstractRootEndpoint):
+class PickWorkerEndpoint(AbstractMadminRootEndpoint):
     """
     "/pick_worker"
     """

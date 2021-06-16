@@ -8,10 +8,10 @@ from aiohttp_jinja2.helpers import url_for
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
 from mapadroid.db.model import SettingsWalker, SettingsWalkerarea, SettingsArea
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SettingsWalkerAreaEndpoint(AbstractRootEndpoint):
+class SettingsWalkerAreaEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/walker/areaeditor"
     """

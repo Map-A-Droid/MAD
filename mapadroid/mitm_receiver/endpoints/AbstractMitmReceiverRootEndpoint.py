@@ -20,7 +20,7 @@ from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 
-class AbstractRootEndpoint(web.View, ABC):
+class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     # TODO: Add security etc in here (abstract) to enforce security true/false
     # If we really need more methods, we can just define them abstract...
     def __init__(self, request: Request):

@@ -14,11 +14,11 @@ from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
 from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
 from mapadroid.db.resource_definitions.AreaRaidsMitm import AreaRaidsMitm
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.worker.WorkerType import WorkerType
 
 
-class SettingsAreasEndpoint(AbstractRootEndpoint):
+class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/areas"
     """

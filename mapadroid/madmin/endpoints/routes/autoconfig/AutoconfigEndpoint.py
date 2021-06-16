@@ -2,10 +2,10 @@ from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp_jinja2.helpers import url_for
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class AutoconfigEndpoint(AbstractRootEndpoint):
+class AutoconfigEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 

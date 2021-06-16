@@ -9,7 +9,7 @@ from sqlalchemy.orm.properties import ColumnProperty
 from yarl import URL
 
 from mapadroid.db.model import Base
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from loguru import logger
 
 
@@ -19,7 +19,7 @@ class DataHandlingMethodology(Enum):
     UPDATE = "patch"
 
 
-class AbstractResourceEndpoint(AbstractRootEndpoint, ABC):
+class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
     # TODO: '%s/<string:identifier>' optionally at the end of the route
     # TODO: ResourceEndpoint class that loads the identifier accordingly before patch/post etc are called (populate_mode)
 

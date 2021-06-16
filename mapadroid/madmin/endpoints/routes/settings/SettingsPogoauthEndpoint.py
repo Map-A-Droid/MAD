@@ -9,10 +9,10 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import SettingsMonivlist, SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SettingsPogoauthEndpoint(AbstractRootEndpoint):
+class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/pogoauth"
     """

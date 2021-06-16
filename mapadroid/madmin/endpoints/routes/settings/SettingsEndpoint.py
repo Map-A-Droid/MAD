@@ -2,10 +2,10 @@ from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp_jinja2.helpers import url_for
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SettingsEndpoint(AbstractRootEndpoint):
+class SettingsEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings"
     """

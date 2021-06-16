@@ -3,11 +3,11 @@ import os
 from aiofile import async_open
 from aiohttp import streamer, web
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.utils.functions import generate_path
 
 
-class ScreenshotEndpoint(AbstractRootEndpoint):
+class ScreenshotEndpoint(AbstractMadminRootEndpoint):
     """
     "/screenshot/{path}"
     """

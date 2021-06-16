@@ -11,10 +11,10 @@ from mapadroid.mad_apk.apk_enums import APKArch, APKType
 from mapadroid.mad_apk.custom_types import MADapks
 from mapadroid.mad_apk.utils import convert_to_backend, get_apk_status
 from mapadroid.mad_apk.wizard import APKWizard, WizardError, PackageImporter
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class MadApkEndpoint(AbstractRootEndpoint):
+class MadApkEndpoint(AbstractMadminRootEndpoint):
     # TODO: Require auth
     async def get(self):
         apk_type_raw: str = self.request.match_info.get('apk_type')

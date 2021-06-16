@@ -7,10 +7,10 @@ from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import AutoconfigRegistration
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class AutoconfigLogsEndpoint(AbstractRootEndpoint):
+class AutoconfigLogsEndpoint(AbstractMadminRootEndpoint):
     """
     "/autoconfig/logs/<int:session_id>"
     """

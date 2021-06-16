@@ -9,11 +9,11 @@ from aiohttp_jinja2.helpers import url_for
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import SettingsMonivlist
 from mapadroid.db.resource_definitions.MonIvList import MonIvList
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.utils.language import i8ln, open_json_file
 
 
-class SettingsIvlistsEndpoint(AbstractRootEndpoint):
+class SettingsIvlistsEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/monivlists"
     """

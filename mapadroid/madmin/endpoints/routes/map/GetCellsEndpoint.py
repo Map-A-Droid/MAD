@@ -2,13 +2,13 @@ from typing import List, Optional
 
 from mapadroid.db.helper.TrsS2CellHelper import TrsS2CellHelper
 from mapadroid.db.model import TrsS2Cell
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
 from mapadroid.utils.s2Helper import S2Helper
 
 
-class GetCellsEndpoint(AbstractRootEndpoint):
+class GetCellsEndpoint(AbstractMadminRootEndpoint):
     """
     "/get_cells"
     """

@@ -9,10 +9,10 @@ from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import SettingsAuth
 from mapadroid.db.resource_definitions.Auth import Auth
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SettingsAuthEndpoint(AbstractRootEndpoint):
+class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/auth"
     """

@@ -3,13 +3,13 @@ from typing import Optional, Dict, List
 
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import Pokemon
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_name
 
 
-class GetMapMonsEndpoint(AbstractRootEndpoint):
+class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
     """
     "/get_map_mons"
     """

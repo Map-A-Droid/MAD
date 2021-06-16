@@ -2,12 +2,12 @@ from typing import List, Optional, Dict, Tuple
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import TrsSpawn, TrsEvent
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
 
 
-class GetSpawnsEndpoint(AbstractRootEndpoint):
+class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
     """
     "/get_spawns"
     """

@@ -1,10 +1,10 @@
 from aiohttp import web
 
 from mapadroid.mad_apk.utils import convert_to_backend, stream_package
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class MadApkDownloadEndpoint(AbstractRootEndpoint):
+class MadApkDownloadEndpoint(AbstractMadminRootEndpoint):
     # TODO: Require auth
     async def get(self):
         response = web.StreamResponse()

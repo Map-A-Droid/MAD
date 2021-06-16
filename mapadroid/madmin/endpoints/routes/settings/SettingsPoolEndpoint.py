@@ -9,10 +9,10 @@ from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelpe
 from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
 from mapadroid.db.model import SettingsDevicepool, SettingsWalkerarea
 from mapadroid.db.resource_definitions.Devicepool import Devicepool
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SettingsPoolEndpoint(AbstractRootEndpoint):
+class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/shared"
     """

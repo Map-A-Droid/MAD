@@ -1,11 +1,11 @@
 from aiohttp import web
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.utils.RGCConfig import RGCConfig
 from mapadroid.utils.autoconfig import AutoConfIssue
 
 
-class AutoconfRgcEndpoint(AbstractRootEndpoint):
+class AutoconfRgcEndpoint(AbstractMadminRootEndpoint):
     async def post(self) -> web.Response:
         return await self.__save_config()
 

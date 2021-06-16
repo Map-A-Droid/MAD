@@ -1,9 +1,9 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class StatisticsStopQuestEndpoint(AbstractRootEndpoint):
+class StatisticsStopQuestEndpoint(AbstractMadminRootEndpoint):
     """
     "/statistics_stop_quest"
     """

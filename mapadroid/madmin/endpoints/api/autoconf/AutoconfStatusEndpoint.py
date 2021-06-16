@@ -6,12 +6,12 @@ from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrat
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 from mapadroid.utils.autoconfig import origin_generator
 
 
-class AutoconfStatusEndpoint(AbstractRootEndpoint):
+class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
     async def get(self) -> web.Response:
         # TODO: Ensure int
         session_id: int = self.request.match_info.get('session_id')

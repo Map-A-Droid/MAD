@@ -2,13 +2,13 @@ from typing import Optional, Dict, Tuple
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import Pokestop, TrsQuest
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_bound_params, generate_coords_from_geofence
 from mapadroid.utils.collections import Location
 from mapadroid.utils.questGen import generate_quest
 
 
-class GetQuestsEndpoint(AbstractRootEndpoint):
+class GetQuestsEndpoint(AbstractMadminRootEndpoint):
     """
     "/get_quests"
     """

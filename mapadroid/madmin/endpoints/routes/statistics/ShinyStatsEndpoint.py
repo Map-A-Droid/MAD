@@ -1,9 +1,9 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class ShinyStatsEndpoint(AbstractRootEndpoint):
+class ShinyStatsEndpoint(AbstractMadminRootEndpoint):
     """
     "/shiny_stats"
     """

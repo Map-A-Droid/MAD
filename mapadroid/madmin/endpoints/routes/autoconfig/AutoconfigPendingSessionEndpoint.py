@@ -9,11 +9,11 @@ from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrat
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
-class AutoconfigPendingSessionEndpoint(AbstractRootEndpoint):
+class AutoconfigPendingSessionEndpoint(AbstractMadminRootEndpoint):
     """
     "/autoconfig/pending/<int:session_id>"
     """

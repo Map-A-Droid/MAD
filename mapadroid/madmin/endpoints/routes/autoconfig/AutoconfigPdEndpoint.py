@@ -6,11 +6,11 @@ from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.model import SettingsAuth
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.utils.PDConfig import PDConfig
 
 
-class AutoconfigPdEndpoint(AbstractRootEndpoint):
+class AutoconfigPdEndpoint(AbstractMadminRootEndpoint):
     """
     "/autoconfig/pd"
     """

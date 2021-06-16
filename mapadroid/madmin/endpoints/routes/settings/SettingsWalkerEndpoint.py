@@ -8,10 +8,10 @@ from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
 from mapadroid.db.model import SettingsWalker, SettingsWalkerarea, SettingsArea
 from mapadroid.db.resource_definitions.Walker import Walker
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SettingsWalkerEndpoint(AbstractRootEndpoint):
+class SettingsWalkerEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/walker"
     """

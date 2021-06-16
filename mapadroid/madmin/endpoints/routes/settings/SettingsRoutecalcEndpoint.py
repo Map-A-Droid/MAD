@@ -8,10 +8,10 @@ from aiohttp_jinja2.helpers import url_for
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
 from mapadroid.db.model import SettingsMonivlist, SettingsArea, SettingsRoutecalc
 from mapadroid.db.resource_definitions.Routecalc import Routecalc
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SettingsRoutecalcEndpoint(AbstractRootEndpoint):
+class SettingsRoutecalcEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/routecalc"
     """

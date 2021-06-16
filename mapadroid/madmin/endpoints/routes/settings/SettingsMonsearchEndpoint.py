@@ -4,11 +4,11 @@ from typing import Optional
 
 from aiohttp.abc import Request
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.utils.language import open_json_file, i8ln
 
 
-class SettingsMonsearchEndpoint(AbstractRootEndpoint):
+class SettingsMonsearchEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/monsearch"
     """

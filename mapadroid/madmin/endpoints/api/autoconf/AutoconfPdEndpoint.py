@@ -1,11 +1,11 @@
 from aiohttp import web
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.utils.PDConfig import PDConfig
 from mapadroid.utils.autoconfig import AutoConfIssue
 
 
-class AutoconfPdEndpoint(AbstractRootEndpoint):
+class AutoconfPdEndpoint(AbstractMadminRootEndpoint):
     async def post(self) -> web.Response:
         return await self.__save_config()
 

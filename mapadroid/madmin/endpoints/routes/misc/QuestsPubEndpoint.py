@@ -2,11 +2,11 @@ from typing import Optional
 
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_quest_areas
 
 
-class QuestsPubEndpoint(AbstractRootEndpoint):
+class QuestsPubEndpoint(AbstractMadminRootEndpoint):
     """
     "/quests_pub"
     """

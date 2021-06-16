@@ -4,10 +4,10 @@ from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SaveFenceEndpoint(AbstractRootEndpoint):
+class SaveFenceEndpoint(AbstractMadminRootEndpoint):
     """
     "/savefence"
     """

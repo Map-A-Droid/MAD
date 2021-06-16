@@ -8,10 +8,10 @@ from mapadroid.mad_apk.apk_enums import APKType, APKArch
 from mapadroid.mad_apk.custom_types import MADapks
 from mapadroid.mad_apk.utils import get_apk_status, lookup_arch_enum, is_newer_version, lookup_apk_enum
 
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class ApkUpdateStatusEndpoint(AbstractRootEndpoint):
+class ApkUpdateStatusEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 

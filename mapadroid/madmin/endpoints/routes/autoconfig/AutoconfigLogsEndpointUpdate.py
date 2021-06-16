@@ -6,10 +6,10 @@ from aiohttp.abc import Request
 from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogHelper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import AutoconfigRegistration
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class AutoconfigLogsEndpointUpdate(AbstractRootEndpoint):
+class AutoconfigLogsEndpointUpdate(AbstractMadminRootEndpoint):
     """
     "/autoconfig/logs/<int:session_id>/update"
     TODO: Move to /api/?

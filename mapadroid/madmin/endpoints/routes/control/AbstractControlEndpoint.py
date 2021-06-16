@@ -6,7 +6,7 @@ from typing import Optional
 from aiohttp.abc import Request
 
 import mapadroid
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
@@ -15,7 +15,7 @@ from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType
 
 
-class AbstractControlEndpoint(AbstractRootEndpoint, ABC):
+class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
     """
     Used for control-related endpoints e.g. screenshot handling of devicecontrol
     """

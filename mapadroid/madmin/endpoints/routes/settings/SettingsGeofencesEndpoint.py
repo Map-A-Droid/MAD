@@ -7,10 +7,10 @@ from aiohttp.abc import Request
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
 from mapadroid.db.resource_definitions.Geofence import Geofence
-from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 
-class SettingsGeofenceEndpoint(AbstractRootEndpoint):
+class SettingsGeofenceEndpoint(AbstractMadminRootEndpoint):
     """
     "/settings/geofences"
     """
