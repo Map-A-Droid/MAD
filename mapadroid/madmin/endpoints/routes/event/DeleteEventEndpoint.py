@@ -14,8 +14,7 @@ class DeleteEventEndpoint(AbstractControlEndpoint):
 
     # TODO: Auth
     # TODO: rather use "delete"?
-    async def post(self):
-        # TODO: Verify str or int?
+    async def get(self):
         event_id: Optional[str] = self._request.query.get("id")
         if event_id and await TrsEventHelper.delete_including_spawns(self._session, int(event_id)):
             await self._add_notice_message('Successfully deleted this event')
