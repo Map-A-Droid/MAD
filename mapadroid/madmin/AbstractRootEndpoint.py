@@ -91,8 +91,9 @@ class AbstractRootEndpoint(web.View, ABC):
 
     async def _add_notice_message(self, message: str) -> None:
         # TODO: Handle accordingly
-        session = await get_session(self.request)
-        session["notice"] = message
+        # session = await get_session(self.request)
+        # session["notice"] = message
+        pass
 
     async def _redirect(self, redirect_to: StrOrURL, commit: bool = False):
         if commit:

@@ -9,15 +9,6 @@
 {% block content %}
 <h2>Select an apk file for upload</h2>
 <p>Uploaded APKs you'd like to install on your devices. Each APK becomes an installation job.</p>
-<p>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    {% for message in messages %}
-      <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-    {% endfor %}
-    {% endif %}
-  {% endwith %}
-</p>
 <form method="post" action="{{ url("upload") }}" enctype="multipart/form-data">
   <dl>
     <p>

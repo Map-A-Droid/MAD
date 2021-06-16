@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
-from aiohttp_jinja2.helpers import url_for
+from aiohttp.web_request import FileField
+from multidict._multidict import MultiDictProxy
 
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
@@ -17,15 +18,16 @@ class SaveEventEndpoint(AbstractControlEndpoint):
     # TODO: get or post?
     async def post(self):
         # TODO: Verify str or int?
-        event_id: Optional[str] = self._request.query.get("id")
-        event_name: Optional[str] = self._request.query.get("event_name")
+        form_data: MultiDictProxy[Union[str, bytes, FileField]] = await self.request.post()
+        event_id: Optional[str] = form_data.get("id")
+        event_name: Optional[str] = form_data.get("event_name")
         # TODO: Verify str
-        event_start_date: Optional[str] = self._request.query.get("event_start_date")
-        event_start_time: Optional[str] = self._request.query.get("event_start_time")
-        event_end_date: Optional[str] = self._request.query.get("event_end_date")
-        event_end_time: Optional[str] = self._request.query.get("event_end_time")
+        event_start_date: Optional[str] = form_data.get("event_start_date")
+        event_start_time: Optional[str] = form_data.get("event_start_time")
+        event_end_date: Optional[str] = form_data.get("event_end_date")
+        event_end_time: Optional[str] = form_data.get("event_end_time")
         # TODO: Verify int
-        event_lure_duration: Optional[int] = self._request.query.get("event_lure_duration")
+        event_lure_duration: Optional[int] = form_data.get("event_lure_duration")
 
         # default lure duration = 30 (min)
         if event_lure_duration == "":
@@ -38,7 +40,7 @@ class SaveEventEndpoint(AbstractControlEndpoint):
         # TODO: Ensure working conversion
         # TODO: Use self._datetimeformat ?
         event_start = datetime.strptime(event_start_date + " " + event_start_time, '%Y-%m-%d %H:%M')
-        event_end = datetime.strptime(event_end_date + " " + event_end_date, '%Y-%m-%d %H:%M')
+        event_end = datetime.strptime(event_end_date + " " + event_end_time, '%Y-%m-%d %H:%M')
 
         await TrsEventHelper.save(self._session, event_name, event_start=event_start,
                                   event_end=event_end,

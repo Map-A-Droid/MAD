@@ -144,15 +144,6 @@
 
 {% block content %}
 <h2>Job status</h2>
-<p>
-	{% with messages = get_flashed_messages() %}
-	  {% if messages %}
-		{% for message in messages %}
-		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-		{% endfor %}
-	  {% endif %}
-	{% endwith %}
-</p>
 <table id="show-data" class="table" style="width:100%;"></table>
 {% if not withautojobs %}
 <i class='fa fa-trash'></i> <a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a><br>
