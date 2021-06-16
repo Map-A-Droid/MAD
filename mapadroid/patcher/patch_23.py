@@ -13,7 +13,7 @@ class Patch(PatchBase):
             field_defs[field_name] = field
         sql = "SELECT %s FROM `trs_status`" % (','.join(field_defs.keys()),)
         try:
-            existing_data = self._db.autofetch_all(sql, raise_exec=True)
+            existing_data = self._db.autofetch_all(sql, raise_exc=True)
         except Exception:
             pass
         if not existing_data:
@@ -60,7 +60,7 @@ class Patch(PatchBase):
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """
         try:
-            self._db.execute(new_table, commit=True, raise_exec=True)
+            self._db.execute(new_table, commit=True, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
@@ -133,7 +133,7 @@ class Patch(PatchBase):
                 LEFT JOIN `settings_area` sa ON sa.`area_id` = trs.`area_id`
             """
         try:
-            self._db.execute(sql, commit=True, raise_exec=True)
+            self._db.execute(sql, commit=True, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
