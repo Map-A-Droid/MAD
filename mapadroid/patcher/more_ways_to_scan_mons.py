@@ -25,7 +25,7 @@ class Patch(PatchBase):
                 self._db.execute(alter_pokemon, commit=True, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
-            self._logger.warning("Migration failed if your error is Temporary file write failure it means you run out of disk space.")
+            self._logger.warning("If your error is 'Temporary file write failure' it means you run out of hard disk space.")
             self._logger.warning("Delete/truncate old entries from pokemon table or re-created table by hand.")
             self.issues = True
 
