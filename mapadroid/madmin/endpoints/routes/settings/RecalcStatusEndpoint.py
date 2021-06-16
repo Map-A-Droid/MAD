@@ -24,6 +24,6 @@ class RecalcStatusEndpoint(AbstractRootEndpoint):
         for area_id, area in areas.items():
             # TODO: Fetch recalcs...
             routecalc_id: Optional[int] = getattr(area, "routecalc", None)
-            if routecalc_id and routecalc_id in routecalcs:
+            if routecalc_id and routecalc_id in routecalcs and routecalcs[routecalc_id].recalc_status == 1:
                 recalc.append(area_id)
         return self._json_response(recalc)
