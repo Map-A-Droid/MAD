@@ -97,7 +97,7 @@
                 </tbody>
                 <tbody class="row_position ui-sortable">
                     {% for walkerarea in walkerareas %}
-                        <tr id='{{ url('api_walkerarea') }}/{{ walkerarea.walkerarea_id }}'>
+                        <tr id='{{ walkerarea.walkerarea_id }}'>
                             <td><i class="fa fa-fw fa-sort handle ui-sortable-handle"></i></td>
                             <td class='name' data-save='{{ walkerarea.name }}' data-walkertext='{{ walkerarea.name }}'><a href="{{ url('settings_areas', query_={'id': walkerarea.area_id, 'mode': areas[walkerarea.area_id].mode} ) }}">{{ areas[walkerarea.area_id].name }}</a><br>{{ walkerarea.name }}</td>
                             <td class='algo_type' data-save='{{ walkerarea.algo_type }}'>{{ walkerarea.algo_type }}</td>

@@ -42,7 +42,9 @@ class WalkerEndpoint(AbstractResourceEndpoint):
         additional_keys: Dict = {"setup": setup}
         return additional_keys
 
-    async def _handle_additional_keys(self, db_entry: Base, key: str, value):
+    async def _handle_additional_keys(self, db_entry: Base, key: str, value) -> bool:
         if key == "setup":
             # Handle the list of IDs as those are stored in another table...
             await self._set_walkerareas(db_entry, value)
+            return True
+        return False
