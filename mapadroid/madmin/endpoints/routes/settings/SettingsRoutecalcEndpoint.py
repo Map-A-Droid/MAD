@@ -6,7 +6,7 @@ from aiohttp.abc import Request
 from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
-from mapadroid.db.model import SettingsMonivlist, SettingsArea
+from mapadroid.db.model import SettingsMonivlist, SettingsArea, SettingsRoutecalc
 from mapadroid.db.resource_definitions.Routecalc import Routecalc
 from mapadroid.madmin.AbstractRootEndpoint import AbstractRootEndpoint
 
@@ -22,22 +22,22 @@ class SettingsRoutecalcEndpoint(AbstractRootEndpoint):
     # TODO: Auth
     @aiohttp_jinja2.template('settings_singleroutecalc.html')
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_element(identifier=identifier)
+        self.identifier: Optional[str] = self.request.query.get("id")
+        if self.identifier:
+            return await self._render_single_element()
         else:
             raise web.HTTPFound(self._url_for("settings_areas"))
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singleroutecalc.html')
-    async def _render_single_element(self, identifier: str):
+    async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
-        routecalc: Optional[SettingsMonivlist] = None
-        if identifier == "new":
+        routecalc: Optional[SettingsRoutecalc] = None
+        if self.identifier == "new":
             pass
         else:
-            routecalc: SettingsMonivlist = await SettingsRoutecalcHelper.get(self._session,
-                                                                             int(identifier))
+            routecalc: SettingsRoutecalc = await SettingsRoutecalcHelper.get(self._session,
+                                                                             int(self.identifier))
             if not routecalc:
                 raise web.HTTPFound(self._url_for("settings_areas"))
 
@@ -47,18 +47,18 @@ class SettingsRoutecalcEndpoint(AbstractRootEndpoint):
         if not area_id:
             raise web.HTTPFound(self._url_for("settings_areas"))
         area: Optional[SettingsArea] = await self._get_db_wrapper().get_area(self._session, int(area_id))
-        if not area or getattr(area, "routecalc", None) != int(identifier):
+        if not area or self.identifier != "new" and getattr(area, "routecalc", None) != int(self.identifier):
             raise web.HTTPFound(self._url_for("settings_areas"))
 
         template_data: Dict = {
-            'identifier': identifier,
+            'identifier': self.identifier,
             'base_uri': self._url_for('api_routecalc'),
             'redirect': self._url_for('settings_areas'),
             'subtab': 'routecalc',
             'element': routecalc,
             'settings_vars': settings_vars,
             'method': 'POST' if not routecalc else 'PATCH',
-            'uri': self._url_for('api_routecalc') if not routecalc else '%s/%s' % (self._url_for('api_routecalc'), identifier),
+            'uri': self._url_for('api_routecalc') if not routecalc else '%s/%s' % (self._url_for('api_routecalc'), self.identifier),
             # TODO: Above is pretty generic in theory...
             'area': area,
         }

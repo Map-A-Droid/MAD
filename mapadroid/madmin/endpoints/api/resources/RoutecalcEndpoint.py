@@ -11,6 +11,13 @@ class RoutecalcEndpoint(AbstractResourceEndpoint):
     async def _delete_connected(self, db_entry):
         pass
 
+    async def _handle_additional_keys(self, db_entry: SettingsRoutecalc, key: str, value) -> bool:
+        if key == "routefile_raw":
+            to_be_written = str(value).replace("\'", "\"")
+            db_entry.routefile = to_be_written
+            return True
+        return False
+
     def _attributes_to_ignore(self) -> Set[str]:
         return {"routecalc_id", "guid"}
 

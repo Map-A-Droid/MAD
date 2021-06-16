@@ -23,7 +23,7 @@ $(document).ready(function () {
 
 function get_routefile_definition() {
   var routefile = [];
-  $.each($("#routefile").val().trim().split("\n"), function() {
+  $.each($("#routefile_raw").val().trim().split("\n"), function() {
       if(this.length > 0) {
         routefile.push(this);
       }
@@ -37,12 +37,14 @@ function get_routefile_definition() {
 {% block content %}
 {{ super() }}
 
-<h1 class="display-5">Routecalc for {{ areaname }}</h1>
+<h1 class="display-5">Routecalc for {{ area.name }}</h1>
 <div class="row">
   <div class="col-sm">
     <div class="form-group">
-      <label for="routefile">routefile</label>
-      <textarea data-callback='get_routefile_definition' rows=20 class="form-control" id="routefile" name="routefile" value="{{ element.routefile }}" data-default="{{ element.routefile }}">{{ element.routefile|join('\n') }}</textarea>
+      <label for="routefile_raw">routefile</label>
+        {% set last_bracket_removed = "".join(element.routefile.rsplit(']', 1)) %}
+        {% set locations_to_display = last_bracket_removed.replace("[", "", 1).split("\",") %}
+      <textarea data-callback='get_routefile_definition' rows=20 class="form-control" id="routefile_raw" name="routefile_raw" value="{{ element.routefile }}" data-default="{{ element.routefile }}">{% for line in locations_to_display %}{% set line = line.replace("\"", "").strip() %}{% if line == locations_to_display[-1] %}{{ line.replace("]", "").strip() }}{% else %}{{ line.strip() + "\n" }}{% endif %}{% endfor %}</textarea>
       <small class="form-text text-muted">Route stops</small>
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
