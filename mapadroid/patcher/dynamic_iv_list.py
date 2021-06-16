@@ -18,7 +18,7 @@ class Patch(PatchBase):
                     AFTER `monlist_id`;
                 """.format(table)
                 try:
-                    self._db.execute(alter, commit=True, raise_exec=True)
+                    self._db.execute(alter, commit=True, raise_exc=True)
                 except Exception as e:
                     self._logger.exception("Unexpected error: {}", e)
                     self.issues = True

@@ -12,7 +12,7 @@ class Patch(PatchBase):
         """
         try:
             if not self._schema_updater.check_column_exists("pokestop", "is_ar_scan_eligible"):
-                self._db.execute(alter_pokestop, commit=True, raise_exec=True)
+                self._db.execute(alter_pokestop, commit=True, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
@@ -23,7 +23,7 @@ class Patch(PatchBase):
         """
         try:
             if not self._schema_updater.check_column_exists("gym", "is_ar_scan_eligible"):
-                self._db.execute(alter_gym, commit=True, raise_exec=True)
+                self._db.execute(alter_gym, commit=True, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True

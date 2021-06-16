@@ -10,6 +10,7 @@ class Patch(PatchBase):
     )
 
     def _execute(self):
+        self._logger.warning("This migration may take a while if you don't trim your pokemon table often.")
         alter_pokemon = (
             "ALTER TABLE `pokemon` "
             "ADD COLUMN `fort_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL, "
@@ -21,9 +22,11 @@ class Patch(PatchBase):
             if not self._schema_updater.check_column_exists("pokemon", "fort_id")\
                     or not self._schema_updater.check_column_exists("pokemon", "cell_id")\
                     or not self._schema_updater.check_column_exists("pokemon", "seen_type"):
-                self._db.execute(alter_pokemon, commit=True, raise_exec=True)
+                self._db.execute(alter_pokemon, commit=True, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
+            self._logger.warning("If your error is 'Temporary file write failure' it means you run out of disk space.")
+            self._logger.warning("Delete/truncate old entries from pokemon table or re-created table by hand.")
             self.issues = True
 
         remove_encounter_id = """
@@ -32,7 +35,7 @@ class Patch(PatchBase):
         """
         try:
             if self._schema_updater.check_column_exists("pokestop", "encounter_id"):
-                self._db.execute(remove_encounter_id, commit=True, raise_exec=True)
+                self._db.execute(remove_encounter_id, commit=True, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
