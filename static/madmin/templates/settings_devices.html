@@ -75,13 +75,13 @@ $(document).ready(function () {
                 url : '{{ base_uri }}/'+ $(this).data('identifier'),
                 type : 'DELETE',
                 success: function(data, status, xhr) {
-                    if(xhr.status == 202) {
+                    if(xhr.status === 202) {
                         elem.parent().parent().remove();
                         toggleConfiguredElement();
                     }
                 },
                 error: function(data, status, xhr) {
-                    if(data.status == 412) {
+                    if(data.status === 412) {
                         var dependencies = data.responseJSON;
                         var msg = 'The following entities have a dependency on this element:';
                         $.each(dependencies, function() {

@@ -45,6 +45,7 @@
         }
         loadingBlockUI('Saving {{ subtab }}');
         save_data = get_save_data();
+        save_data["walker_id"] = {{ walkeruri }}
         if(isEmptyObj(save_data) !== false) {
             alert('No changes have been made');
             window.location.replace('{{ redirect }}?id={{ walkeruri }}');
@@ -55,32 +56,7 @@
             type : '{{ 'PATCH' if element else 'POST' }}',
             contentType : 'application/json',
             success: function(data, status, xhr) {
-              walkerarea_uri = xhr.getResponseHeader('X-Uri');
-              walkerarea_data = {
-                'setup': [walkerarea_uri]
-              }
-              if('{{ 'PATCH' if element else 'POST' }}' === 'POST') {
-                $.ajax({
-                  beforeSend: function(xhr, settings) {
-                    xhr.setRequestHeader('X-Append', true);
-                  },
-                  url : '{{ url('api_walkerarea')}}/{{ walkeruri }}',
-                  data : JSON.stringify(walkerarea_data),
-                  type : 'PATCH',
-                  contentType : 'application/json',
-                  success: function(data, status, xhr) {
-                    $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
-                  },
-                  error: function(data, status, xhr) {
-                    console.log(data);
-                    console.log(status);
-                    console.log(xhr);
-                    alert('Something bad happened.  Check console for output');
-                  }
-                });
-              } else {
-                $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
-              }
+              $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
             },
             error: function(data, status, xhr) {
                 $("label[for]").removeClass('btn-danger');
@@ -120,16 +96,16 @@
 {% if element %}
   <h1 class="display-5">Edit {{ walker.name }} ({{ areas[element.area_id].name }}) </h1>
 {% else %}
-  <h1 class="display-5">New WalkerArea for {{ walker.walkername }} </h1>
+  <h1 class="display-5">New WalkerArea for {{ walker.name }} </h1>
 {% endif %}
 <div class="row">
   <div class="col-sm-8">
     <div class="form-group">
-      <label for='walkerarea'>Area</label><br>
+      <label for='area_id'>Area</label><br>
       <small class="form-text text-muted">Select the Area</small>
-      <select class="form-control" name="walkerarea" required="" aria-invalid="false" data-default="{{ url('api_area') / element.walkerarea|string if element.walkerarea else '' }}">
+      <select class="form-control" name="area_id" required="" aria-invalid="false" data-default="{{ element.walkerarea|string if element.walkerarea else '' }}">
         {% for area_id, area in areas.items() %}
-          <option value="{{ url('api_area') / area_id|string }}" {{'selected="selected"' if area_id == element.area_id }}>{{ area.name }}</option>
+          <option value="{{ area_id }}" {{'selected="selected"' if area_id == element.area_id }}>{{ area.name }}</option>
         {% endfor %}
       </select>
     </div>
