@@ -20,7 +20,7 @@
                 {
                     "targets": [5],
                     "render": function (data, type, row) {
-                       if(row.locked == "0") {
+                       if(row["event_name"] !== "DEFAULT") {
                             var link = "<button type='button' class='delete btn btn-info btn-sm'><a href='edit_event?id=" + row.id +
                                 "' title='Edit Event'><i class='fas fa-edit'></i></a></button> <button type='button' class='delete btn btn-danger btn-sm'><a href='del_event?id=" +
                                 row.id +

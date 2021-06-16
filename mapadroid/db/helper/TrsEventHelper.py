@@ -77,7 +77,8 @@ class TrsEventHelper:
         event.event_start = event_start
         event.event_end = event_end
         event.event_lure_duration = event_lure_duration
-        session.add(event)
+        await session.merge(event)
+        await session.flush([event])
 
     @staticmethod
     async def is_event_active(session: AsyncSession, event_id: int) -> bool:

@@ -38,6 +38,7 @@ class TrsStatusHelper:
     async def reset_status(session: AsyncSession, instance_id: int, device_id: int) -> None:
         status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
         if not status:
+            status = TrsStatus()
             status.device_id = device_id
             status.instance_id = instance_id
         status.globalrebootcount = 0
@@ -60,6 +61,7 @@ class TrsStatusHelper:
         """
         status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
         if not status:
+            status = TrsStatus()
             status.device_id = device_id
             status.instance_id = instance_id
             status.globalrebootcount = 0
@@ -84,6 +86,7 @@ class TrsStatusHelper:
         """
         status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
         if not status:
+            status = TrsStatus()
             status.device_id = device_id
             status.instance_id = instance_id
             status.globalrestartcount = 0
@@ -107,6 +110,7 @@ class TrsStatusHelper:
         """
         status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
         if not status:
+            status = TrsStatus()
             status.device_id = device_id
             status.instance_id = instance_id
         status.idle = idle_state
