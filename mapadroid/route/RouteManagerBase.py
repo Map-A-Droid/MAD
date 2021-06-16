@@ -150,7 +150,7 @@ class RouteManagerBase(ABC):
     async def _start_check_routepools(self):
         # TODO: Transform to asyncio
         loop = asyncio.get_running_loop()
-        self._check_routepools_thread = loop.create_task(self._check_routepools())
+        self._check_routepools_thread: Task = loop.create_task(self._check_routepools())
 
     async def join_threads(self):
         self.logger.info("Shutdown Route Threads")
@@ -163,7 +163,7 @@ class RouteManagerBase(ABC):
         self.logger.debug("Shutdown Prio Queue Thread - done...")
         if self._check_routepools_thread is not None:
             while self._check_routepools_thread.isAlive():
-                time.sleep(1)
+                await asyncio.sleep(1)
                 self.logger.debug("Shutdown Routepool Thread - waiting...")
                 self._check_routepools_thread.join(5)
 
@@ -172,11 +172,11 @@ class RouteManagerBase(ABC):
         self._stop_update_thread.clear()
         self.logger.info("Shutdown Route Threads completed")
 
-    def stop_routemanager(self, joinwithqueue=True):
+    async def stop_routemanager(self, joinwithqueue=True):
         # call routetype stoppper
         if self._joinqueue is not None and joinwithqueue:
             self.logger.info("Adding route to queue")
-            self._joinqueue.set_queue(self.name)
+            await self._joinqueue.set_queue(self.name)
 
         self._quit_route()
         self._stop_update_thread.set()
@@ -204,7 +204,7 @@ class RouteManagerBase(ABC):
             self._workers_registered.add(worker_name)
             return True
 
-    def unregister_worker(self, worker_name):
+    async def unregister_worker(self, worker_name):
         route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         if worker_name in self._workers_registered:
             route_logger.info("unregistering from routemanager")
@@ -221,7 +221,7 @@ class RouteManagerBase(ABC):
              #   del self._routepool[worker_name]
         if len(self._workers_registered) == 0 and self._is_started:
             self.logger.info("Routemanager does not have any subscribing workers anymore, calling stop", self.name)
-            self.stop_routemanager()
+            await self.stop_routemanager()
 
     async def _start_priority_queue(self):
         if (self.delay_after_timestamp_prio is not None or self._mode == WorkerType.IV_MITM) \
@@ -320,19 +320,17 @@ class RouteManagerBase(ABC):
             calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
         async with self.db_wrapper as session, session:
             await session.merge(self._routecalc)
-            await session.refresh(self._routecalc)
-            self._routecalc.routefile = calc_coords
+            self._routecalc.routefile = str(calc_coords).replace("\'", "\"")
             self._routecalc.last_updated = datetime.utcnow()
             # TODO: First update the resource or simply set using helper which fetches the object first?
-            await session.add(self._routecalc)
+            await session.flush([self._routecalc])
             await session.commit()
-            await session.refresh(self._routecalc)
         connected_worker_count = len(self._workers_registered)
         if connected_worker_count > 0:
             for worker in self._workers_registered.copy():
-                self.unregister_worker(worker)
+                await self.unregister_worker(worker)
         else:
-            self.stop_routemanager()
+            await self.stop_routemanager()
 
     async def _update_priority_queue_loop(self):
         if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:
@@ -768,7 +766,7 @@ class RouteManagerBase(ABC):
                 if time.time() - entry.last_access > timeout + entry.worker_sleeping:
                     self.logger.warning("Worker {} has not accessed a location in {} seconds, removing from "
                                         "routemanager", origin, timeout)
-                    self.unregister_worker(origin)
+                    await self.unregister_worker(origin)
             await asyncio.sleep(60)
 
     def set_worker_sleeping(self, origin: str, sleep_duration: float) -> None:

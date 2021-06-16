@@ -109,7 +109,7 @@ class AreaEndpoint(AbstractResourceEndpoint):
                 .get(self._session, routecalc_id)
         if routecalc and routecalc.recalc_status == 0:
             # Start the recalculation.  This can take a little bit if the routemanager needs to be started
-            status = self._get_mapping_manager().routemanager_recalcualte(area.area_id)
+            status = await self._get_mapping_manager().routemanager_recalcualte(area.area_id)
             if status:
                 return self._json_response(status=204)
             else:

@@ -124,10 +124,10 @@ class JoinQueue(object):
 
             if routejoin is not None:
                 logger.info("Try to join routethreads for route {}", routejoin)
-                self._mapping_mananger.routemanager_join(routejoin)
+                await self._mapping_mananger.routemanager_join(routejoin)
 
-    def set_queue(self, item):
-        self._joinqueue.put(item)
+    async def set_queue(self, item):
+        await self._joinqueue.put(item)
 
 
 class MappingManager:
@@ -155,6 +155,7 @@ class MappingManager:
     async def setup(self):
         self.__devicesettings_setter_queue: asyncio.Queue = asyncio.Queue()
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
+        await self.join_routes_queue.start()
 
         loop = asyncio.get_event_loop()
         # TODO: Restore...
@@ -391,7 +392,7 @@ class MappingManager:
 
     async def unregister_worker_from_routemanager(self, routemanager_id: int, worker_name: str):
         routemanager = await self.__fetch_routemanager(routemanager_id)
-        return routemanager.unregister_worker(worker_name) if routemanager is not None else None
+        return await routemanager.unregister_worker(worker_name) if routemanager is not None else None
 
     async def routemanager_add_coords_to_be_removed(self, routemanager_id: int, lat: float, lon: float):
         routemanager = await self.__fetch_routemanager(routemanager_id)
@@ -501,11 +502,8 @@ class MappingManager:
                 'num_procs': 0,
                 'active': active
             }
-            recalc_thread = Thread(name=routemanager.name,
-                                   target=routemanager.recalc_route_adhoc,
-                                   args=args,
-                                   kwargs=kwargs)
-            recalc_thread.start()
+            loop = asyncio.get_running_loop()
+            loop.create_task(coro=routemanager.recalc_route_adhoc(*args, **kwargs), name=routemanager.name)
         except Exception:
             logger.opt(exception=True).error('Unable to start recalculation')
         return successful
