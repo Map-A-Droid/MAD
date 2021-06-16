@@ -254,7 +254,7 @@ new Vue({
     watch: {
         "layers.stat.gyms": function (newVal, oldVal) {
             if (newVal && !init) {
-                this.map_fetch_gyms(this.buildUrlFilter(true));
+                this.map_fetch_gyms(this.buildUrlFilter(true, true));
             }
 
             this.changeStaticLayer("gyms", oldVal, newVal, layerOrders.gyms.bringTo);
@@ -262,35 +262,35 @@ new Vue({
         },
         "layers.stat.workers": function (newVal, oldVal) {
             if (newVal && !init) {
-                this.map_fetch_workers(this.buildUrlFilter(true));
+                this.map_fetch_workers(this.buildUrlFilter(true, true));
             }
 
             this.changeStaticLayer("workers", oldVal, newVal, layerOrders.workers.bringTo);
         },
         "layers.stat.quests": function (newVal, oldVal) {
             if (newVal && !init) {
-                this.map_fetch_quests(this.buildUrlFilter(true));
+                this.map_fetch_quests(this.buildUrlFilter(true, true));
             }
 
             this.changeStaticLayer("quests", oldVal, newVal, layerOrders.quests.bringTo);
         },
         "layers.stat.stops": function (newVal, oldVal) {
             if (newVal && !init) {
-                this.map_fetch_stops(this.buildUrlFilter(true));
+                this.map_fetch_stops(this.buildUrlFilter(true, true));
             }
 
             this.changeStaticLayer("stops", oldVal, newVal, layerOrders.stops.bringTo);
         },
         "layers.stat.mons": function (newVal, oldVal) {
             if (newVal && !init) {
-                this.map_fetch_mons(this.buildUrlFilter(true));
+                this.map_fetch_mons(this.buildUrlFilter(true, true));
             }
 
             this.changeStaticLayer("mons", oldVal, newVal, layerOrders.mons.bringTo);
         },
         "layers.stat.cellupdates": function (newVal, oldVal) {
             if (newVal && !init) {
-                this.map_fetch_cells(this.buildUrlFilter(true));
+                this.map_fetch_cells(this.buildUrlFilter(true, true));
             }
 
             this.changeStaticLayer("cellupdates", oldVal, newVal, layerOrders.cells.bringTo);
@@ -375,8 +375,8 @@ new Vue({
         this.initMap();
     },
     methods: {
-        map_fetch_everything() {
-            const urlFilter = this.buildUrlFilter();
+        map_fetch_everything(force_update_all = false) {
+            const urlFilter = this.buildUrlFilter(false, force_update_all);
 
             this.map_fetch_workers();
             this.map_fetch_gyms(urlFilter);
@@ -1777,7 +1777,7 @@ new Vue({
             }
 
             fetchTimeout = setTimeout(function () {
-                $this.map_fetch_everything();
+                $this.map_fetch_everything(true);
             }, 500);
         },
         l_event_zoomed() {
@@ -1877,14 +1877,14 @@ new Vue({
             layer.openPopup();
             $(".name input", popupContent).focus();
         },
-        buildUrlFilter(force = false) {
+        buildUrlFilter(force_area = false, force_time = false) {
             var oSwLat = this.getStoredSetting("oSwLat", null);
             var oSwLon = this.getStoredSetting("oSwLon", null);
             var oNeLat = this.getStoredSetting("oNeLat", null);
             var oNeLon = this.getStoredSetting("oNeLon", null);
 
             var old = {};
-            if (oSwLat && oSwLon && oNeLat && oNeLon && !force) {
+            if (oSwLat && oSwLon && oNeLat && oNeLon && !force_area) {
                 old = {
                     "oSwLat": oSwLat,
                     "oSwLon": oSwLon,
@@ -1894,7 +1894,7 @@ new Vue({
             }
 
             var timestamp = this.getStoredSetting("fetchTimestamp", null);
-            if (timestamp && !force) {
+            if (timestamp && !force_time) {
                 old["timestamp"] = timestamp;
             }
 
