@@ -65,6 +65,7 @@ def generate_quest(quest):
     elif quest_reward_type == _("Candy"):
         # TODO maybe we should be doing deep parsing against the reward array
         item_amount = quest['quest_item_amount']
+        item_type = quest_reward_type
         pokemon_id = quest['quest_pokemon_id']
         pokemon_name = pokemon_name = i8ln(pokemonname(str(pokemon_id)))
 
