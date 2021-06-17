@@ -1,4 +1,5 @@
 import time
+from sqlalchemy import and_, case, desc, func
 from typing import List, Optional, Tuple
 
 from sqlalchemy import desc
@@ -8,7 +9,7 @@ from sqlalchemy.future import select
 from mapadroid.db.model import AutoconfigLog
 
 
-class AutoconfigLogHelper:
+class AutoconfigLogsHelper:
     @staticmethod
     async def get_all_of_instance(session: AsyncSession, instance_id: int,
                                   session_id: Optional[int] = None) -> List[AutoconfigLog]:
@@ -21,7 +22,7 @@ class AutoconfigLogHelper:
 
     @staticmethod
     async def get_transformed(session: AsyncSession, instance_id: int,
-                                  session_id: Optional[int] = None) -> List[Tuple[int, int, str]]:
+                              session_id: Optional[int] = None) -> List[Tuple[int, int, str]]:
         """
 
         Args:
@@ -39,3 +40,11 @@ class AutoconfigLogHelper:
             timestamp: int = int(time.mktime(log.log_time.timetuple()))
             transformed_list.append((timestamp, log.level, log.msg))
         return transformed_list
+
+    @staticmethod
+    async def get_max_level_of_session(session: AsyncSession, instance_id: int,
+                                       session_id: int) -> Optional[int]:
+        stmt = select(func.MAX(AutoconfigLog.level)).where(and_(AutoconfigLog.instance_id == instance_id,
+                                                AutoconfigLog.session_id == session_id))
+        result = await session.execute(stmt)
+        return result.scalars().first()

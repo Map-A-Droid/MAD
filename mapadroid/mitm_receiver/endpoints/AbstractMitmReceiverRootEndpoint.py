@@ -1,19 +1,25 @@
 import json
+import socket
 from abc import ABC
-from typing import Any, Optional, List, Dict
+from functools import wraps
+from typing import Any, Optional, List, Dict, Union, Tuple
 
 from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders, StrOrURL
-from aiohttp_session import get_session
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.model import Base
+from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
+from mapadroid.mad_apk.apk_enums import APKArch, APKType, APKPackage
+from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin.api import apiException
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.updater import DeviceUpdater
@@ -34,6 +40,8 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         self._identifier = None
 
     async def _iter(self):
+        await self._check_mitm_device_auth()
+
         db_wrapper: DbWrapper = self._get_db_wrapper()
         async with db_wrapper as session, session:
             self._session = session
@@ -82,12 +90,23 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
     def _get_request_address(self) -> str:
         if "CF-Connecting-IP" in self.request.headers:
-            address = self.request.headers["CF-Connecting-IP"]
+            addresses = self.request.headers["CF-Connecting-IP"].split(",")
         elif "X-Forwarded-For" in self.request.headers:
-            address = self.request.headers["X-Forwarded-For"]
+            addresses = self.request.headers["X-Forwarded-For"].split(",")
+        elif "HTTP_X_REAL_IP" in self.request.headers:
+            addresses = self.request.headers["HTTP_X_REAL_IP"].split(",")
+        elif "HTTP_X_FORWARDED_FOR" in self.request.headers:
+            addresses = self.request.headers["HTTP_X_FORWARDED_FOR"].split(",")[0].split(',')
         else:
-            address = self.request.remote
-        return address
+            addresses = [self.request.remote]
+        for ip in addresses:
+            try:
+                socket.inet_aton(ip)
+                return ip
+            except socket.error:
+                pass
+        # No IPv4 address found.  Return the first value
+        return addresses[0]
 
     async def _add_notice_message(self, message: str) -> None:
         # TODO: Handle accordingly
@@ -117,8 +136,14 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     def _get_ws_server(self) -> WebsocketServer:
         return self.request.app['websocket_server']
 
+    def _get_mitm_mapper(self) -> MitmMapper:
+        return self.request.app['mitm_mapper']
+
     def _get_plugin_hotlinks(self) -> List[Dict]:
         return self.request.app["plugin_hotlink"]
+
+    def _get_mitmreceiver_startup_time(self) -> int:
+        return self.request.app["mitmreceiver_startup_time"]
 
     def _convert_to_json_string(self, content) -> str:
         try:
@@ -156,3 +181,98 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         if query is None:
             query = {}
         return self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
+
+    def _parse_frontend(self) -> Union[Tuple[APKType, APKArch], web.Response]:
+        """ Converts front-end input into backend enums
+        Returns (tuple):
+            Returns a tuple of (APKType, APKArch) enums or a flask.Response stating what is invalid
+        """
+        apk_type_o = self.request.query.get('apk_type')
+        apk_arch_o = self.request.query.get('apk_arch')
+        package, architecture = convert_to_backend(apk_type_o, apk_arch_o)
+        if apk_type_o is not None and package is None:
+            resp_msg = 'Invalid Type.  Valid types are {}'.format([e.name for e in APKPackage])
+            return web.Response(status=404, body=resp_msg)
+        if architecture is None and apk_arch_o is not None:
+            resp_msg = 'Invalid Architecture.  Valid types are {}'.format([e.name for e in APKArch])
+            return web.Response(status=404, body=resp_msg)
+        return package, architecture
+
+    async def autoconfig_log(self, **kwargs) -> None:
+        session_id: Optional[int] = kwargs.get('session_id', None)
+        try:
+            level = kwargs['level']
+            msg = kwargs['msg']
+        except KeyError:
+            level, msg = str(await self.request.read(), 'utf-8').split(',', 1)
+
+        autoconfig_log: AutoconfigLog = AutoconfigLog()
+        autoconfig_log.session_id = session_id
+        autoconfig_log.instance_id = self._get_instance_id()
+        autoconfig_log.msg = msg
+        try:
+            autoconfig_log.level = int(level)
+        except TypeError:
+            autoconfig_log.level = 0
+            logger.warning('Unable to parse level for autoconfig log')
+        self._save(autoconfig_log)
+        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+            .get_by_session_id(self._session, self._get_instance_id(), session_id)
+        if int(level) == 4 and autoconf is not None and autoconf.status == 1:
+            autoconf.status = 3
+            self._save(autoconf)
+        # TODO Commit?
+
+    async def autoconfig_status(self) -> web.Response:
+        body = await self.request.json()
+        session_id: Optional[int] = body.get('session_id', None)
+        update_data = {
+            'ip': self._get_request_address()
+        }
+        where = {
+            'session_id': session_id,
+            'instance_id': self._get_instance_id()
+        }
+        await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
+        return web.Response(text="", status=200)
+
+    async def _add_to_queue(self, data):
+        if self._data_queue:
+            await self._data_queue.put(data)
+
+    def _check_mitm_status_auth(self):
+        """
+        Checks for /status/ authorization. Raises web.HTTPUnauthorized if access is denied
+        Returns:
+
+        """
+        auth = self.request.headers.get('Authorization')
+        if self._get_mad_args().mitm_status_password != "" and \
+                (not auth or auth != self._get_mad_args().mitm_status_password):
+            raise web.HTTPUnauthorized
+
+    def _check_mitm_device_auth(self):
+        """
+        Checks whether the credentials passed are valid compared to those last read by MappingManager
+        Returns:
+
+        """
+        auth = self._request.headers.get('Authorization')
+        if not check_auth(logger, auth, self._get_mad_args(), await self._get_mapping_manager().get_auths()):
+            logger.warning("Unauthorized attempt to POST from {}", self._get_request_address())
+            raise web.HTTPUnauthorized
+
+    def _check_origin_header(self):
+        """
+        Checks whether an origin-header was passed and whether the given origin is allowed to access this instance
+        Returns:
+
+        """
+        origin = self._request.headers.get('Origin')
+        if origin is None:
+            logger.warning("Missing Origin header in request")
+            raise web.HTTPUnauthorized
+        elif (await self._get_mapping_manager().get_all_devicemappings()).keys() is not None and \
+                origin not in (await self._get_mapping_manager().get_all_devicemappings()).keys():
+            logger.warning("MITMReceiver request without Origin or disallowed Origin")
+            raise web.HTTPUnauthorized
