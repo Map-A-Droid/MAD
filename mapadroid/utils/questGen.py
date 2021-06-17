@@ -17,6 +17,7 @@ pokemen_file = open_json_file('pokemon')
 
 quest_rewards = {
     2: _("Item"),
+    4: _("Candy"),
     3: _("Stardust"),
     7: _("Pokemon"),
     12: _("Energy")
@@ -61,6 +62,11 @@ def generate_quest(quest):
         else:
             pokemon_name = ''
         item_amount = quest['quest_item_amount']
+    elif quest_reward_type == _("Candy"):
+        # TODO maybe we should be doing deep parsing against the reward array
+        item_amount = quest['quest_item_amount']
+        pokemon_id = quest['quest_pokemon_id']
+        pokemon_name = pokemon_name = i8ln(pokemonname(str(pokemon_id)))
 
     if not quest['task']:
         quest_task = questtask(

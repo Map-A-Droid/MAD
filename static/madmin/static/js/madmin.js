@@ -1312,6 +1312,10 @@ new Vue({
                     var image = `${iconBasePath}/rewards/reward_stardust.png`;
                     var rewardtext = `${quest_item_amount} ${quest_item_type}`;
                     break;
+                case 4:
+                    var image = `${iconBasePath}/rewards/reward_candy.png`;
+                    var rewardtext = `${quest_item_amount} ${quest_pokemon_name} Candy`;
+                    break;
                 case 7:
                     var costume = '';
                     var asset_bundle = quest_pokemon_asset_bundle_id || '00';
