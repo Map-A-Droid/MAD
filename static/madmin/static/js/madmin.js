@@ -1272,6 +1272,11 @@ new Vue({
                     var size = [30, 30]
                     var anchor = [30, 30]
                     break;
+                case 4:
+                    var image = `${iconBasePath}/rewards/reward_candy.png`;
+                    var size = [30, 30]
+                    var anchor = [30, 30]
+                    break;
                 case 7:
                     var costume = '';
                     var asset_bundle = quest_pokemon_asset_bundle_id || '00';
