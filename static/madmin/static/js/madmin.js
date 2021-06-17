@@ -1273,7 +1273,7 @@ new Vue({
                     var anchor = [30, 30]
                     break;
                 case 4:
-                    var image = `${iconBasePath}/rewards/reward_candy.png`;
+                    var image = `/static/quest/reward_candy.png`;
                     var size = [30, 30]
                     var anchor = [30, 30]
                     break;
@@ -1318,7 +1318,7 @@ new Vue({
                     var rewardtext = `${quest_item_amount} ${quest_item_type}`;
                     break;
                 case 4:
-                    var image = `${iconBasePath}/rewards/reward_candy.png`;
+                    var image = `/static/quest/reward_candy.png`;
                     var rewardtext = `${quest_item_amount} ${quest_pokemon_name} Candy`;
                     break;
                 case 7:
