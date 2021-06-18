@@ -99,6 +99,9 @@ function build_reward_text(quest_reward_type, quest_item_amount, monname, quest_
         case 3:
             var rewardtext = quest_item_name + '<br>Amount: ' + quest_item_amount;
             break;
+        case 4:
+            var rewardtext = monname + " " + quest_item_name + '<br>Amount: ' + quest_item_amount;
+            break;
         case 7:
             var rewardtext = monname;
             break;
@@ -116,6 +119,9 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, q
             break;
         case 3:
             var image = '<img class="mr-3" src="static/quest/reward_stardust.png" width="50">';
+            break;
+        case 4:
+            var image = '<img class="mr-3" src="static/quest/reward_candy.png" width="50">';
             break;
         case 7:
             var costume = ''
