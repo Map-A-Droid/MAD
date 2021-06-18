@@ -42,6 +42,14 @@ class AutoconfigRegistrationHelper:
         await session.execute(stmt)
 
     @staticmethod
+    async def update_ip(session: AsyncSession, instance_id: int, session_id: int, request_ip: str) -> None:
+        stmt = update(AutoconfigRegistration)\
+            .where(and_(AutoconfigRegistration.instance_id == instance_id,
+                        AutoconfigRegistration.session_id == session_id))\
+            .values(ip=request_ip)
+        await session.execute(stmt)
+
+    @staticmethod
     async def get_pending(session: AsyncSession, instance_id: int) \
             -> List[Tuple[AutoconfigRegistration, SettingsDevice]]:
         """

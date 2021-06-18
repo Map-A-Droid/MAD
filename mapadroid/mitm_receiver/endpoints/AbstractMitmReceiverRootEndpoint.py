@@ -229,7 +229,8 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
             'session_id': session_id,
             'instance_id': self._get_instance_id()
         }
-        await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
+        await AutoconfigRegistrationHelper.update_ip(self._session, self._get_instance_id(), session_id,
+                                                     self._get_request_address())
         return web.Response(text="", status=200)
 
     async def _add_to_queue(self, data):
