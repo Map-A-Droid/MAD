@@ -4,13 +4,12 @@ import time
 from asyncio import Task
 from typing import List, Optional, Dict, Tuple
 
-import requests
-
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import TrsQuest, Pokestop
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
+from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import terminate_mad
@@ -89,14 +88,11 @@ class WebhookWorker:
                 logger.debug4("Payload: {}", json.dumps(payload_chunk))
 
                 try:
-                    # TODO: Asyncio POST needed...
-                    response = requests.post(
-                        webhook.get('url'),
-                        data=json.dumps(payload_chunk),
-                        headers={"Content-Type": "application/json"},
-                        timeout=5,
-                    )
-
+                    response: RestApiResult = await RestHelper.send_post(webhook.get('url'),
+                                                                         data=payload_chunk,
+                                                                         headers={"Content-Type": "application/json"},
+                                                                         params=None,
+                                                                         timeout=5)
                     if response.status_code != 200:
                         logger.warning("Got status code other than 200 OK from webhook destination: {}",
                                        response.status_code)
@@ -348,8 +344,8 @@ class WebhookWorker:
                 continue
 
             if not self.__args.pokemon_webhook_nonivs \
-               and mon["pokemon_id"] in self.__IV_MON \
-               and (mon["individual_attack"] is None):
+                    and mon["pokemon_id"] in self.__IV_MON \
+                    and (mon["individual_attack"] is None):
                 # skipping this mon since IV has not been scanned yet
                 continue
 
@@ -412,7 +408,7 @@ class WebhookWorker:
                 mon_payload["ultra_catch"] = mon["ultra_catch"]
 
             if mon["weather_boosted_condition"] is not None \
-               and mon["weather_boosted_condition"] > 0:
+                    and mon["weather_boosted_condition"] > 0:
                 if self.__args.quest_webhook_flavor == "default":
                     mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
                 if self.__args.quest_webhook_flavor == "poracle":
