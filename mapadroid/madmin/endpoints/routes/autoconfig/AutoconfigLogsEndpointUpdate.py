@@ -3,7 +3,7 @@ from typing import List, Tuple
 from aiohttp import web
 from aiohttp.abc import Request
 
-from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogHelper
+from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogsHelper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import AutoconfigRegistration
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
@@ -26,7 +26,7 @@ class AutoconfigLogsEndpointUpdate(AbstractMadminRootEndpoint):
             .get_all_of_instance(self._session, instance_id=self._get_instance_id(), session_id=session_id)
         if not sessions:
             raise web.HTTPFound("")
-        logs: List[Tuple[int, int, str]] = await AutoconfigLogHelper.get_transformed(self._session,
+        logs: List[Tuple[int, int, str]] = await AutoconfigLogsHelper.get_transformed(self._session,
                                                                                      self._get_instance_id())
 
         return self._json_response(logs)

@@ -14,8 +14,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
     async def _iter(self):
         # TODO: VisitorPattern for extra auth checks...
-        await self._check_origin_header()
-        return await super()._iter()
+        with logger.contextualize(ip=self._get_request_address(), name="endpoint"):
+            await self._check_origin_header()
+            return await super()._iter()
 
     # TODO: Auth
     async def post(self):

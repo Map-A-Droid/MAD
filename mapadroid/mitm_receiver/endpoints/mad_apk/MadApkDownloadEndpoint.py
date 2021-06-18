@@ -1,9 +1,7 @@
-import json
-from typing import Dict
-from aiofile import async_open
-
-from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 from aiohttp import web
+
+from mapadroid.mad_apk.utils import stream_package
+from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 
 
 class MadApkDownloadEndpoint(AbstractMitmReceiverRootEndpoint):
@@ -18,6 +16,12 @@ class MadApkDownloadEndpoint(AbstractMitmReceiverRootEndpoint):
         if type(parsed) == web.Response:
             return parsed
         apk_type, apk_arch = parsed
-        return parsed
-        # TODO: Restore functionality
-        # return stream_package(self._db_wrapper, self.__storage_obj, apk_type, apk_arch)
+        response = web.StreamResponse()
+
+        data_generator, mimetype, filename = stream_package(self._session, self._get_storage_obj(), apk_type, apk_arch)
+        response.content_type = mimetype
+        response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+        await response.prepare(self.request)
+        async for data in data_generator:
+            await response.write(data)
+        return response

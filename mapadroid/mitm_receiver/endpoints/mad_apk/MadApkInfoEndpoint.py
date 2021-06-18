@@ -1,10 +1,8 @@
-import json
-from typing import Dict
-from aiofile import async_open
-
-
-from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 from aiohttp import web
+
+from mapadroid.mad_apk.apk_enums import APKType
+from mapadroid.mad_apk.utils import lookup_package_info, supported_pogo_version
+from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 
 
 class MadApkInfoEndpoint(AbstractMitmReceiverRootEndpoint):
@@ -19,12 +17,12 @@ class MadApkInfoEndpoint(AbstractMitmReceiverRootEndpoint):
         if type(parsed) == web.Response:
             return parsed
         apk_type, apk_arch = parsed
-        # TODO: Restore functionality
-        return parsed
-        # (msg, status_code) = await lookup_package_info(self.__storage_obj, apk_type, apk_arch)
-        # if msg:
-        #     if apk_type == APKType.pogo and not supported_pogo_version(apk_arch, msg.version):
-        #         return Response(status=406, response='Supported version not installed')
-        #     return Response(status=status_code, response=msg.version)
-        # else:
-        #     return Response("", status=status_code)
+
+        (msg, status_code) = await lookup_package_info(self._get_storage_obj(), apk_type, apk_arch)
+        if msg:
+            if apk_type == APKType.pogo and not supported_pogo_version(apk_arch, msg.version):
+                return web.Response(status=406, text='Supported version not installed')
+            else:
+                return web.Response(status=status_code, text=msg.version)
+        else:
+            return web.Response(text="", status=status_code)

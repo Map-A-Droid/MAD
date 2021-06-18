@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 from functools import wraps
 from typing import Optional, Tuple, Dict, Any
+
+from aiohttp import web
+from loguru import logger
 
 from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogsHelper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from aiohttp import web
-from loguru import logger
-
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 from mapadroid.utils.PDConfig import PDConfig
 from mapadroid.utils.RGCConfig import RGCConfig
@@ -39,9 +41,8 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
     """
 
     async def preprocess(self) -> Tuple[Dict, str]:
-        body = await self.request.json()
-        operation: Optional[str] = body.get('operation', None)
-        session_id: Optional[int] = body.get('session_id', None)
+        operation: Optional[str] = self.request.match_info.get('operation')
+        session_id: Optional[int] = self.request.match_info.get('session_id')
         if operation is None:
             raise web.HTTPNotFound
         log_data = {

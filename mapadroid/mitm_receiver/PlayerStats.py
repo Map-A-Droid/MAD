@@ -5,7 +5,6 @@ import os
 import time
 from math import floor
 from pathlib import Path
-from aiofile import async_open
 
 from mapadroid.mitm_receiver import MitmMapper
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger

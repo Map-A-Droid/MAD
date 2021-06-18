@@ -77,6 +77,8 @@ def parse_args():
                         help='Ignore MITM data having a timestamp pre MAD\'s startup time')
     parser.add_argument('-mspass', '--mitm_status_password', default='',
                         help='Header Authorization password for MITM /status/ page')
+    parser.add_argument('-mitmus', '--mitm_unix_socket', required=False, default=None, type=str,
+                        help="Path to unix socket file to use if TCP is not to be used for MITMReceiver...")
 
     # Walk Settings
     parser.add_argument('--enable_worker_specific_extra_start_stop_handling', default=False,

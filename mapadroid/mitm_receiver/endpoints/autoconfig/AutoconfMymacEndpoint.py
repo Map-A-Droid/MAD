@@ -1,10 +1,11 @@
 from typing import Optional, Dict, Tuple
 
+from aiohttp import web
+
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice, AutoconfigRegistration
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
-from aiohttp import web
 
 
 class AutoconfMymacEndpoint(AbstractMitmReceiverRootEndpoint):

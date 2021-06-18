@@ -1,7 +1,8 @@
 import json
 from typing import Dict
-from aiofile import async_open
 
+from aiofile import async_open
+from loguru import logger
 
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 
@@ -13,8 +14,9 @@ class GetAddressesEndpoint(AbstractMitmReceiverRootEndpoint):
 
     async def _iter(self):
         # TODO: VisitorPattern for extra auth checks...
-        await self._check_origin_header()
-        return await super()._iter()
+        with logger.contextualize(ip=self._get_request_address(), name="endpoint"):
+            await self._check_origin_header()
+            return await super()._iter()
 
     # TODO: Auth
     async def get(self):

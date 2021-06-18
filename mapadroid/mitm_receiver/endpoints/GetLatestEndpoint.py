@@ -1,7 +1,9 @@
+from loguru import logger
+
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 
 
-class GetLatestMitmEndpoint(AbstractMitmReceiverRootEndpoint):
+class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
     """
     "/get_latest_mitm"
     """
@@ -10,8 +12,9 @@ class GetLatestMitmEndpoint(AbstractMitmReceiverRootEndpoint):
 
     async def _iter(self):
         # TODO: VisitorPattern for extra auth checks...
-        await self._check_origin_header()
-        return await super()._iter()
+        with logger.contextualize(ip=self._get_request_address(), name="endpoint"):
+            await self._check_origin_header()
+            return await super()._iter()
 
     async def get(self):
         origin = self.request.headers.get("Origin")

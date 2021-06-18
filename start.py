@@ -241,13 +241,12 @@ async def start():
     mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper)
     await mitm_data_processor_manager.launch_processors()
 
-    mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                         mitm_mapper, args, mapping_manager, db_wrapper,
-                                         None,
-                                         mitm_data_processor_manager.get_queue(),
-                                         enable_configmode=args.config_mode)
+    mitm_receiver = MITMReceiver(mitm_mapper, args, mapping_manager, db_wrapper,
+                                 None,
+                                 mitm_data_processor_manager.get_queue(),
+                                 enable_configmode=args.config_mode)
     # TODO: Cancel() task lateron
-    mitm_receiver_task = await mitm_receiver.run_async()
+    mitm_receiver_task = await mitm_receiver.start()
     logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
     ws_server = WebsocketServer(args=args,
                                 mitm_mapper=mitm_mapper,
@@ -355,7 +354,7 @@ async def start():
             # TODO: check against args or init variables to None...
             if mitm_receiver_process is not None:
                 logger.info("Trying to stop receiver")
-                mitm_receiver_process.shutdown()
+                await mitm_receiver_process.shutdown()
                 # logger.debug("MITM child threads successfully shutdown. Terminating parent thread")
                 # mitm_receiver_process.()
                 # logger.debug("Trying to join MITMReceiver")

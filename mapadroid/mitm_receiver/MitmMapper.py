@@ -1,14 +1,14 @@
 import asyncio
 import time
 from queue import Empty
-from typing import Dict, Optional, Tuple, Set, List
+from typing import Dict, Optional, Tuple, List
 
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.model import SettingsDevice, SettingsDevicepool
+from mapadroid.mapping_manager.MappingManager import MappingManager, DeviceMappingsEntry
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
-from mapadroid.mapping_manager.MappingManager import MappingManager, DeviceMappingsEntry
 
 logger = get_logger(LoggerEnums.mitm)
 

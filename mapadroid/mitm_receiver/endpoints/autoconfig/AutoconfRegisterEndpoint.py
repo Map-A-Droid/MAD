@@ -1,5 +1,6 @@
-from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 from aiohttp import web
+
+from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 
 
 class AutoconfRegisterEndpoint(AbstractMitmReceiverRootEndpoint):
@@ -14,11 +15,6 @@ class AutoconfRegisterEndpoint(AbstractMitmReceiverRootEndpoint):
         #  TODO - auto-accept list
         if False:
             status = 1
-        register_data = {
-            'status': status,
-            'ip': get_actual_ip(request),
-            'instance_id': self._get_instance_id()
-        }
         autoconfig_registration: AutoconfigRegistration = AutoconfigRegistration()
         autoconfig_registration.status = status
         autoconfig_registration.ip = self._get_request_address()

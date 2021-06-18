@@ -1,8 +1,6 @@
 import asyncio
 import time
-from asyncio import Task
 from datetime import datetime
-from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

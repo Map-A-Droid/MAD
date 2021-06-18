@@ -1,8 +1,8 @@
+import asyncio
 import json
 import socket
 from abc import ABC
-from functools import wraps
-from typing import Any, Optional, List, Dict, Union, Tuple
+from typing import Any, Optional, Dict, Union, Tuple
 
 from aiohttp import web
 from aiohttp.abc import Request
@@ -18,12 +18,11 @@ from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mad_apk.apk_enums import APKArch, APKType, APKPackage
 from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin.api import apiException
+from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.json_encoder import MADEncoder
-from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.updater import DeviceUpdater
-from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 
 class AbstractMitmReceiverRootEndpoint(web.View, ABC):
@@ -40,14 +39,14 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         self._identifier = None
 
     async def _iter(self):
-        await self._check_mitm_device_auth()
+        with logger.contextualize(ip=self._get_request_address(), name="endpoint"):
+            await self._check_mitm_device_auth()
 
-        db_wrapper: DbWrapper = self._get_db_wrapper()
-        async with db_wrapper as session, session:
-            self._session = session
-            with logger.contextualize(ip=self._get_request_address(), name="endpoint"):
+            db_wrapper: DbWrapper = self._get_db_wrapper()
+            async with db_wrapper as session, session:
+                self._session = session
                 response = await self.__generate_response(session)
-            return response
+                return response
 
     async def __generate_response(self, session: AsyncSession):
         try:
@@ -124,26 +123,23 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     def _get_db_wrapper(self) -> DbWrapper:
         return self.request.app['db_wrapper']
 
-    def _get_storage_obj(self) -> AbstractAPKStorage:
-        return self.request.app['storage_obj']
-
     def _get_mad_args(self):
         return self.request.app['mad_args']
 
     def _get_mapping_manager(self) -> MappingManager:
         return self.request.app['mapping_manager']
 
-    def _get_ws_server(self) -> WebsocketServer:
-        return self.request.app['websocket_server']
-
     def _get_mitm_mapper(self) -> MitmMapper:
         return self.request.app['mitm_mapper']
 
-    def _get_plugin_hotlinks(self) -> List[Dict]:
-        return self.request.app["plugin_hotlink"]
-
     def _get_mitmreceiver_startup_time(self) -> int:
         return self.request.app["mitmreceiver_startup_time"]
+
+    def _get_data_queue(self) -> asyncio.Queue:
+        return self.request.app["data_queue"]
+
+    def _get_storage_obj(self) -> AbstractAPKStorage:
+        return self.request.app['storage_obj']
 
     def _convert_to_json_string(self, content) -> str:
         try:
@@ -187,8 +183,8 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         Returns (tuple):
             Returns a tuple of (APKType, APKArch) enums or a flask.Response stating what is invalid
         """
-        apk_type_o = self.request.query.get('apk_type')
-        apk_arch_o = self.request.query.get('apk_arch')
+        apk_type_o = self.request.match_info.get('apk_type')
+        apk_arch_o = self.request.match_info.get('apk_arch')
         package, architecture = convert_to_backend(apk_type_o, apk_arch_o)
         if apk_type_o is not None and package is None:
             resp_msg = 'Invalid Type.  Valid types are {}'.format([e.name for e in APKPackage])
@@ -216,7 +212,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
             autoconfig_log.level = 0
             logger.warning('Unable to parse level for autoconfig log')
         self._save(autoconfig_log)
-        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
             .get_by_session_id(self._session, self._get_instance_id(), session_id)
         if int(level) == 4 and autoconf is not None and autoconf.status == 1:
             autoconf.status = 3
@@ -237,8 +233,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         return web.Response(text="", status=200)
 
     async def _add_to_queue(self, data):
-        if self._data_queue:
-            await self._data_queue.put(data)
+        await self._get_data_queue().put(data)
 
     def _check_mitm_status_auth(self):
         """
@@ -251,18 +246,18 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
                 (not auth or auth != self._get_mad_args().mitm_status_password):
             raise web.HTTPUnauthorized
 
-    def _check_mitm_device_auth(self):
+    async def _check_mitm_device_auth(self):
         """
         Checks whether the credentials passed are valid compared to those last read by MappingManager
         Returns:
 
         """
         auth = self._request.headers.get('Authorization')
-        if not check_auth(logger, auth, self._get_mad_args(), await self._get_mapping_manager().get_auths()):
+        if not check_auth(logger, auth, self._get_mad_args(), await (self._get_mapping_manager().get_auths())):
             logger.warning("Unauthorized attempt to POST from {}", self._get_request_address())
             raise web.HTTPUnauthorized
 
-    def _check_origin_header(self):
+    async def _check_origin_header(self):
         """
         Checks whether an origin-header was passed and whether the given origin is allowed to access this instance
         Returns:
