@@ -63,7 +63,7 @@ class AutoconfigRegistrationHelper:
             .join(SettingsDevice, SettingsDevice.device_id == AutoconfigRegistration.device_id)\
             .where(AutoconfigRegistration.instance_id == instance_id)
         result = await session.execute(stmt)
-        return result.scalars().all()
+        return result.all()
 
     @staticmethod
     async def delete(session: AsyncSession, instance_id: int, session_id: int) -> None:

@@ -2,7 +2,6 @@ import json
 from typing import Dict
 from aiofile import async_open
 
-from mapadroid.mitm_receiver.endpoints.AbstractDeviceAuthEndpoint import AbstractDeviceAuthEndpoint
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 from aiohttp import web
 

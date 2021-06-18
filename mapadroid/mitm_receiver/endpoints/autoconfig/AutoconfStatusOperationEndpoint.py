@@ -3,7 +3,9 @@ from typing import Optional, Tuple, Dict, Any
 
 from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogsHelper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
-from mapadroid.db.model import AutoconfigRegistration
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
+from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
 from aiohttp import web
 from loguru import logger
 
@@ -85,32 +87,27 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
         session_id: Optional[int] = body.get('session_id', None)
         operation: Optional[str] = body.get('operation', None)
         try:
-            sql = "SELECT sd.`name`\n" \
-                  "FROM `settings_device` sd\n" \
-                  "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = sd.`device_id`\n" \
-                  "WHERE ar.`session_id` = %s AND ar.`instance_id` = %s"
-            origin = await self._db_wrapper.autofetch_value_async(sql, (session_id, self._get_instance_id()))
+            device_settings: Optional[SettingsDevice] = await SettingsDeviceHelper\
+                .get_device_settings_with_autoconfig_registration_pending(self._session, self._get_instance_id(),
+                                                                          session_id)
             if operation in ['pd', 'rgc']:
                 if operation == 'pd':
                     config = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())
                 else:
                     config = RGCConfig(self._session, self._get_instance_id(), self._get_mad_args())
                 # TODO: Fix return type of generate_config/stream it properly
-                return web.FileResponse(await config.generate_config(origin),
+                return web.FileResponse(await config.generate_config(device_settings.name),
                                         headers={'Content-Disposition': f"Attachment; filename=conf.xml"})
             elif operation in ['google']:
-                sql = "SELECT ag.`username`, ag.`password`\n" \
-                      "FROM `settings_pogoauth` ag\n" \
-                      "INNER JOIN `autoconfig_registration` ar ON ar.`device_id` = ag.`device_id`\n" \
-                      "WHERE ar.`session_id` = %s and ag.`instance_id` = %s and ag.`login_type` = %s"
-                login = await self._db_wrapper.autofetch_row_async(sql, (
-                    session_id, self._db_wrapper.__instance_id, 'google'))
+                login: Optional[SettingsPogoauth] = await SettingsPogoauthHelper\
+                    .get_google_credentials_of_autoconfig_registered_device(self._session, self._get_instance_id(),
+                                                                            session_id)
                 if login:
-                    return web.Response(status=200, text='\n'.join([login['username'], login['password']]))
+                    return web.Response(status=200, text='\n'.join([login.username, login.password]))
                 else:
                     raise web.HTTPNotFound
             elif operation == 'origin':
-                return web.Response(status=200, text=origin)
+                return web.Response(status=200, text=device_settings.name)
         except Exception:
             logger.opt(exception=True).critical('Unable to process autoconfig')
             raise web.HTTPNotAcceptable
@@ -120,25 +117,16 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
         body = await self.request.json()
         session_id: Optional[int] = body.get('session_id', None)
         try:
-            info = {
-                'session_id': session_id,
-                'instance_id': self._get_instance_id()
-            }
-
             max_msg_level: Optional[int] = await AutoconfigLogsHelper\
                 .get_max_level_of_session(self._session, self._get_instance_id(), session_id)
             if max_msg_level and max_msg_level == 4:
                 logger.warning('Unable to clear session due to a failure.  Manual deletion required')
-                update_data = {
-                    'status': 4
-                }
-                where = {
-                    'session_id': session_id,
-                    'instance_id': self._get_instance_id()
-                }
-                await self._db_wrapper.autoexec_update('autoconfig_registration', update_data, where_keyvals=where)
+                await AutoconfigRegistrationHelper.update_status(self._session, self._get_instance_id(), session_id,
+                                                                 status=4)
+                await self._session.commit()
                 raise web.HTTPBadRequest
-            await self._db_wrapper.autoexec_delete('autoconfig_registration', info)
+            await AutoconfigRegistrationHelper.delete(self._session, self._get_instance_id(), session_id)
+            self._commit_trigger = True
             return web.Response(status=200, text="")
         except Exception:
             logger.opt(exception=True).error('Unable to delete session')

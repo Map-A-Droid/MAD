@@ -1,4 +1,3 @@
-from mapadroid.mitm_receiver.endpoints.AbstractDeviceAuthEndpoint import AbstractDeviceAuthEndpoint
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 from aiohttp import web
 

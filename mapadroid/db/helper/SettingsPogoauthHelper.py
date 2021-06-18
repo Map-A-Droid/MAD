@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.model import (SettingsDevice, SettingsPogoauth)
+from mapadroid.db.model import (SettingsDevice, SettingsPogoauth, AutoconfigRegistration)
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -118,3 +118,16 @@ class SettingsPogoauthHelper:
                 continue
             accounts[pogoauth.account_id] = pogoauth
         return accounts
+
+    @staticmethod
+    async def get_google_credentials_of_autoconfig_registered_device(session: AsyncSession,
+                                                                     instance_id: int,
+                                                                     session_id: int) -> Optional[SettingsPogoauth]:
+        stmt = select(SettingsPogoauth) \
+            .select_from(SettingsPogoauth) \
+            .join(AutoconfigRegistration, AutoconfigRegistration.device_id == SettingsPogoauth.device_id) \
+            .where(and_(SettingsPogoauth.instance_id == instance_id,
+                        AutoconfigRegistration.session_id == session_id,
+                        SettingsPogoauth.login_type == LoginType.GOOGLE.value))
+        result = await session.execute(stmt)
+        return result.scalars().first()

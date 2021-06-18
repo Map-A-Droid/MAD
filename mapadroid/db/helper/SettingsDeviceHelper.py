@@ -4,7 +4,7 @@ from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import SettingsDevice
+from mapadroid.db.model import SettingsDevice, AutoconfigRegistration
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -70,3 +70,14 @@ class SettingsDeviceHelper:
         for device in listed:
             mapped[device.device_id] = device
         return mapped
+
+    @staticmethod
+    async def get_device_settings_with_autoconfig_registration_pending(session: AsyncSession, instance_id: int,
+                                                                       session_id: int) -> Optional[SettingsDevice]:
+        stmt = select(SettingsDevice)\
+            .select_from(SettingsDevice)\
+            .join(AutoconfigRegistration, AutoconfigRegistration.device_id == SettingsDevice.device_id)\
+            .where(and_(AutoconfigRegistration.instance_id == instance_id,
+                        AutoconfigRegistration.session_id == session_id))
+        result = await session.execute(stmt)
+        return result.scalars().first()
