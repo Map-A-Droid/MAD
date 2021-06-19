@@ -1,10 +1,14 @@
 import datetime
+import json
 import os
 import time
-
+from cachetools.func import ttl_cache
 from PIL import Image
+from aiofile import async_open
 
 import mapadroid
+from mapadroid.utils.RestHelper import RestHelper, RestApiResult
+from mapadroid.utils.global_variables import VERSIONCODES_URL
 
 with open(os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates/phone.tpl'), 'r') as file:
     phone_template = file.read().replace('\n', '')
@@ -56,3 +60,18 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
                       .replace('<<creationdate>>', creationdate)
                       .replace('<<time>>', str(int(time.time())))
     )
+
+
+@ttl_cache
+async def get_version_codes(force_gh=False):
+    if not force_gh:
+        try:
+            async with async_open('configs/version_codes.json', "r") as fh:
+                return json.load(await fh.read())
+        except (IOError, json.decoder.JSONDecodeError):
+            pass
+    result: RestApiResult = await RestHelper.send_get(VERSIONCODES_URL)
+    if result.status_code == 200:
+        return result.result_body
+    else:
+        return {}

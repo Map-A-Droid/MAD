@@ -16,8 +16,8 @@ class RestApiResult:
 
 class RestHelper:
     @staticmethod
-    async def send_get(url: str, headers: Optional[LooseHeaders],
-                       params: Optional[Mapping[str, str]],
+    async def send_get(url: str, headers: Optional[LooseHeaders] = {},
+                       params: Optional[Mapping[str, str]] = None,
                        timeout: int = 10) -> RestApiResult:
         result: RestApiResult = RestApiResult()
         timeout = aiohttp.ClientTimeout(total=timeout)
