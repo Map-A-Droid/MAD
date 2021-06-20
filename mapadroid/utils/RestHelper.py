@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Optional, Mapping, Dict
+from typing import Optional, Mapping, Dict, Union
 
 import aiohttp
 from aiohttp import ClientConnectionError, ClientError
@@ -11,14 +11,17 @@ from loguru import logger
 class RestApiResult:
     def __init__(self):
         self.status_code: int = 0
-        self.result_body: Optional[Dict] = None
+        self.result_body: Optional[Union[Dict, bytes]] = None
 
 
 class RestHelper:
     @staticmethod
-    async def send_get(url: str, headers: Optional[LooseHeaders] = {},
+    async def send_get(url: str, headers=None,
                        params: Optional[Mapping[str, str]] = None,
-                       timeout: int = 10) -> RestApiResult:
+                       timeout: int = 10,
+                       get_raw_body: Optional[bool] = False) -> RestApiResult:
+        if headers is None:
+            headers = {}
         result: RestApiResult = RestApiResult()
         timeout = aiohttp.ClientTimeout(total=timeout)
         try:
@@ -26,7 +29,10 @@ class RestHelper:
                 async with session.get(url, headers=headers, params=params) as resp:
                     result.status_code = resp.status
                     try:
-                        result.result_body = json.loads(await resp.text())
+                        if get_raw_body:
+                            result.result_body = await resp.read()
+                        else:
+                            result.result_body = await resp.json()
                         logger.success("Successfully got data from our request to {}: {}", url, result)
                     except Exception as e:
                         logger.warning("Failed converting response of request to '{}' with raw result '{}' to json: {}",
