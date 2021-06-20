@@ -141,7 +141,6 @@ CREATE TABLE `pokestop` (
     `incident_expiration` datetime DEFAULT NULL,
     `incident_grunt_type` smallint(1) DEFAULT NULL,
     `is_ar_scan_eligible` tinyint(1) NOT NULL DEFAULT '0',
-    `encounter_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     PRIMARY KEY (`pokestop_id`),
     KEY `pokestop_last_modified` (`last_modified`),
     KEY `pokestop_lure_expiration` (`lure_expiration`),
