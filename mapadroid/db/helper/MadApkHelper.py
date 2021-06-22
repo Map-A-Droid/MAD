@@ -82,3 +82,18 @@ class MadApkHelper:
             return False
         del_stmt = delete(FilestoreMeta).where(FilestoreMeta.filestore_id == apk.filestore_id)
         await session.execute(del_stmt)
+
+    @staticmethod
+    async def insert_or_update(session: AsyncSession, filestore_id: int,
+                               usage: APKType, arch: APKArch, version: str) -> None:
+        async with session.begin_nested() as nested_transaction:
+            mad_apk: MadApk = MadApk()
+            mad_apk.filestore_id = filestore_id
+            await session.merge(mad_apk)
+            mad_apk.usage = usage.value
+            mad_apk.arch = arch.value
+            mad_apk.version = version
+            await session.flush([mad_apk])
+            await nested_transaction.commit()
+
+

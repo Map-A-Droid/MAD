@@ -4,12 +4,10 @@ import re
 from copy import copy
 from functools import wraps
 from io import BytesIO
-from threading import RLock
-from typing import Any, ClassVar, NamedTuple, Optional
+from typing import Any, ClassVar, Optional
 
 from aiofile import async_open
-from flask import Response
-
+from asyncio_rlock import RLock
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -22,33 +20,35 @@ logger = get_logger(LoggerEnums.storage)
 
 
 def ensure_exists(func) -> Any:
+    """
+    Throws FileNotFoundError if not present...
+    Args:
+        func:
+
+    Returns:
+
+    """
     @wraps(func)
-    def decorated(self, *args, **kwargs):
-        try:
-            self.validate_file(args[0], args[1])
-            return func(self, *args, **kwargs)
-        except FileNotFoundError:
-            msg = 'Attempted to access a non-existent file for {} [{}]'.format(args[0].name, args[1].name)
-            return Response(status=404, response=json.dumps(msg))
+    async def decorated(self, *args, **kwargs):
+        await self.validate_file(args[0], args[1])
+        return func(self, *args, **kwargs)
     return decorated
 
 
 def ensure_config_file(func) -> Any:
     @wraps(func)
-    def decorated(self, *args, **kwargs):
+    async def decorated(self, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
         except FileNotFoundError:
             logger.info('Configuration file not found.  Recreating')
-            with self.file_lock:
-                self.create_structure()
-                self.create_config()
+            async with self._lock:
+                self.__create_structure()
+                self.__create_config()
             return func(self, *args, **kwargs)
         except json.decoder.JSONDecodeError:
             logger.warning('Corrupted MAD APK json file.  Recreating')
-            with self.file_lock:
-                self.create_structure()
-                self.create_config(delete_config=True)
+            self.reload()
             return func(self, *args, **kwargs)
     return decorated
 
@@ -58,33 +58,33 @@ class APKStorageFilesystem(AbstractAPKStorage):
         storage mediums
 
     Args:
-        application_args (NamedTuple): Arguments used at startup
+        application_args: Arguments used at startup
 
     Attributes:
         apks (MADapks): All APKs known to the storage system
         config_apk_dir (str): Root storage directory for packages
         config_filepath (str): Path to the configuration file
-        file_lock (RLock): RLock to allow updates to be thread-safe
     """
+    # TODO: Somehow get async locking running?...
     config_apks: ClassVar[str] = 'mad_apk'
     apks: MADapks
     config_apk_dir: str
     config_filepath: str
-    file_lock: RLock
 
-    def __init__(self, application_args: NamedTuple):
+    def __init__(self, application_args):
         logger.debug('Initializing FileSystem storage')
-        self.file_lock: RLock = RLock()
         self.config_apk_dir: str = application_args.temp_path + '/' + APKStorageFilesystem.config_apks
         self.config_filepath: str = '{}/config.json'.format(self.config_apk_dir)
         self.apks = MADapks()
-        with self.file_lock:
-            self.create_structure()
-            self.create_config(delete_config=True)
+        self._lock = None
+
+    async def setup(self):
+        self._lock: RLock = RLock()
+        async with self._lock:
+            await self.reload()
 
     @ensure_config_file
-    def create_config(self, delete_config: bool = False) -> None:
-        # TODO:.. async
+    async def __create_config(self, delete_config: bool = False) -> None:
         """ Creates and saves the configuration
 
         Examines the contents from self.config_apk_dir and builds out the configuration based off each available file.
@@ -92,7 +92,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         Args:
             delete_config (bool): If the current configuration file should be removed and re-created
         """
-        with self.file_lock:
+        async with self._lock:
             if delete_config:
                 try:
                     os.unlink(self.config_filepath)
@@ -126,14 +126,14 @@ class APKStorageFilesystem(AbstractAPKStorage):
                         self.apks[apk_family][arch] = MADPackage(apk_family, arch, **package)
                     except ValueError:
                         continue
-                self.save_configuration()
+                await self.save_configuration()
             else:
                 updated: bool = False
                 with open(self.config_filepath, 'rb') as fh:
                     conf = json.load(fh)
                     for apk_family, apks in conf.items():
                         for arch, apk_info in apks.items():
-                            if not os.path.isfile(self.get_package_path(apk_info['filename'])):
+                            if not os.path.isfile(self.__get_package_path(apk_info['filename'])):
                                 logger.info('APK {} no longer exists.  Removing the file', apk_info.filename)
                                 updated = True
                             else:
@@ -141,12 +141,11 @@ class APKStorageFilesystem(AbstractAPKStorage):
                                     self.apks[apk_family] = MADPackages()
                                 self.apks[apk_family][arch]: MADPackage(apk_family, arch, **apk_info)
                 if updated:
-                    self.save_configuration()
+                    await self.save_configuration()
 
-    def create_structure(self) -> None:
+    async def __create_structure(self) -> None:
         "Creates the filestructure required for saving packages and configuration"
-        # todo async...
-        with self.file_lock:
+        async with self._lock:
             if not os.path.isdir(self.config_apk_dir):
                 logger.debug('Creating APK directory')
                 os.mkdir(self.config_apk_dir)
@@ -161,12 +160,12 @@ class APKStorageFilesystem(AbstractAPKStorage):
             architecture (APKArch): Architecture of the package to lookup
         """
         apk_info: MADPackage = self.apks[package][architecture]
-        os.unlink(self.get_package_path(apk_info.filename))
+        os.unlink(self.__get_package_path(apk_info.filename))
         del self.apks[package][architecture]
         await self.save_configuration()
         return True
 
-    def get_package_path(self, filename: str):
+    def __get_package_path(self, filename: str):
         "Generate the packpage path based off the filename"
         return'{}/{}'.format(self.config_apk_dir, filename)
 
@@ -190,47 +189,47 @@ class APKStorageFilesystem(AbstractAPKStorage):
             None if no package is found.  MADPackages if the package lookup is successful
         """
         # TODO: Async handling
-        data = None
-        with self.file_lock:
+        async with self._lock:
             try:
                 data = copy(self.apks[package])
                 for arch, _apk_info in data.items():
-                    self.validate_file(package, arch)
+                    await self.validate_file(package, arch)
             except KeyError:
                 logger.debug('Package has not been downloaded')
-        try:
-            if self.apks[package]:
-                return self.apks[package]
-            else:
+            try:
+                if self.apks[package]:
+                    return self.apks[package]
+                else:
+                    return None
+            except KeyError:
+                logger.debug('Package has not been downloaded')
                 return None
-        except KeyError:
-            logger.debug('Package has not been downloaded')
-            return None
 
     def get_storage_type(self) -> str:
         return 'fs'
 
     async def reload(self) -> None:
-        # TODO: Async...
-        with self.file_lock:
-            self.create_structure()
-            self.create_config(delete_config=True)
+        async with self._lock:
+            await self.__create_structure()
+            await self.__create_config(delete_config=True)
 
     async def save_configuration(self) -> None:
-        "Save the current configuration to the filesystem with human-readable indentation"
-        with self.file_lock:
+        """Save the current configuration to the filesystem with human-readable indentation"""
+        async with self._lock:
             async with async_open(self.config_filepath, 'w+') as fh:
                 # TODO: pass async read data to dump
-                json.dump(self.apks, fh, indent=2, cls=MADEncoder)
+                json_encoded: str = json.dumps(self.apks, indent=2, cls= MADEncoder)
+                await fh.write(json_encoded)
+                # json.dump(self.apks, fh, indent=2, cls=MADEncoder)
 
     @ensure_config_file
     async def shutdown(self) -> None:
-        "Save the configuration prior to shutdown"
+        """Save the configuration prior to shutdown"""
         await self.save_configuration()
 
     @ensure_config_file
     async def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
-                  retry: bool = False) -> bool:
+                        retry: bool = False) -> bool:
         """ Save the package to the filesystem.  Remove the old version if it existed
 
         Args:
@@ -246,42 +245,42 @@ class APKStorageFilesystem(AbstractAPKStorage):
         """
         try:
             filename = generate_filename(package, architecture, version, mimetype)
-            with self.file_lock:
+            async with self._lock:
                 try:
-                    self.delete_file(package, architecture)
+                    await self.delete_file(package, architecture)
                     logger.debug2('Successfully removed the previous version')
                 except (FileNotFoundError, KeyError):
                     pass
                 try:
-                    self.delete_file(package, architecture)
+                    await self.delete_file(package, architecture)
                 except (TypeError, KeyError):
                     pass
                 try:
-                    with open(self.get_package_path(filename), 'wb+') as fh:
-                        fh.write(data.getbuffer())
+                    async with async_open(self.__get_package_path(filename), 'wb+') as fh:
+                        await fh.write(data.getbuffer())
                 except FileNotFoundError:
                     if retry:
-                        self.create_structure()
-                        return self.save_file(package, architecture, version, mimetype, data)
+                        await self.__create_structure()
+                        return await self.save_file(package, architecture, version, mimetype, data)
                 else:
                     info = {
                         'version': version,
                         'file_id': None,
                         'filename': filename,
                         'mimetype': mimetype,
-                        'size': os.stat(self.get_package_path(filename)).st_size,
+                        'size': os.stat(self.__get_package_path(filename)).st_size,
                     }
                     if package not in self.apks:
                         self.apks[package] = MADPackages()
                     self.apks[package][architecture] = MADPackage(package, architecture, **info)
-                    self.save_configuration()
+                    await self.save_configuration()
                     logger.info('Successfully saved {} to the disk', filename)
                     return True
         except Exception:  # noqa: E722
             logger.opt(exception=True).critical('Unable to upload APK')
         return False
 
-    def validate_file(self, package: APKType, architecture: APKArch) -> bool:
+    async def validate_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Validate that the file exists on the filesystem.  Remove from the config if it does not exist
 
         Args:
@@ -293,12 +292,11 @@ class APKStorageFilesystem(AbstractAPKStorage):
         """
         try:
             apk_info: MADPackage = self.apks[package][architecture]
-            package_path = self.get_package_path(apk_info.filename)
+            package_path = self.__get_package_path(apk_info.filename)
             if not os.path.isfile(package_path):
                 del self.apks[package][architecture]
-                self.save_configuration()
+                await self.save_configuration()
                 raise FileNotFoundError(package_path)
             return True
         except KeyError:
             raise FileNotFoundError
-        return False

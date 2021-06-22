@@ -44,7 +44,7 @@ class AbstractAPKStorage(ABC):
 
     @abstractmethod
     async def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
-                  retry: bool = False) -> bool:
+                        retry: bool = False) -> bool:
         """ Save the package to the storage interface.  Remove the old version if it existed
 
         Args:
@@ -62,5 +62,5 @@ class AbstractAPKStorage(ABC):
 
     @abstractmethod
     async def shutdown(self) -> None:
-        "Perform any required steps to safely shutdown the interface"
+        """Perform any required steps to safely shutdown the interface"""
         pass

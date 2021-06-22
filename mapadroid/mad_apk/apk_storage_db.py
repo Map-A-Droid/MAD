@@ -1,5 +1,4 @@
 from io import BytesIO
-from threading import RLock
 from typing import Optional
 
 from mapadroid.utils import global_variables
@@ -10,7 +9,10 @@ from .apk_enums import APKArch, APKType
 from .custom_types import MADPackages
 from .utils import generate_filename
 from ..db.DbWrapper import DbWrapper
+from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
+from ..db.helper.FilestoreMetaHelper import FilestoreMetaHelper
 from ..db.helper.MadApkHelper import MadApkHelper
+from ..db.model import FilestoreMeta
 
 logger = get_logger(LoggerEnums.storage)
 
@@ -20,15 +22,13 @@ class APKStorageDatabase(AbstractAPKStorage):
         storage mediums
 
     Args:
-        dbc: Database wrapper
+        db_wrapper: Database wrapper
 
     Attributes:
-        dbc: Database wrapper
-        file_lock (RLock): RLock to allow updates to be thread-safe
+        db_wrapper: Database wrapper
     """
     def __init__(self, db_wrapper: DbWrapper):
         logger.debug('Initializing Database storage')
-        self.file_lock: RLock = RLock()
         self.db_wrapper = db_wrapper
 
     async def delete_file(self, package: APKType, architecture: APKArch) -> bool:
@@ -84,38 +84,28 @@ class APKStorageDatabase(AbstractAPKStorage):
             Save was successful
         """
         # TODO: Async DB accesses...
-        try:
-            await self.delete_file(package, architecture)
-            file_length: int = data.getbuffer().nbytes
-            filename: str = generate_filename(package, architecture, version, mimetype)
-            insert_data = {
-                'filename': filename,
-                'size': file_length,
-                'mimetype': mimetype,
-            }
-            new_id: int = self.dbc.autoexec_insert('filestore_meta', insert_data)
-            insert_data = {
-                'filestore_id': new_id,
-                'usage': package.value,
-                'arch': architecture.value,
-                'version': version,
-            }
-            self.dbc.autoexec_insert('mad_apks', insert_data, optype='ON DUPLICATE')
-            logger.info('Starting upload of APK')
-            chunk_size = global_variables.CHUNK_MAX_SIZE
-            for chunked_data in [data.getbuffer()[i * chunk_size:(i + 1) * chunk_size] for i in
-                                 range((len(data.getbuffer()) + chunk_size - 1) // chunk_size)]:
-                insert_data = {
-                    'filestore_id': new_id,
-                    'size': len(chunked_data),
-                    'data': chunked_data.tobytes()
-                }
-                self.dbc.autoexec_insert('filestore_chunks', insert_data)
-            logger.info('Finished upload of APK')
-            return True
-        except:  # noqa: E722 B001
-            logger.opt(exception=True).critical('Unable to upload APK')
-        return False
+        async with self.db_wrapper as session, session:
+            try:
+                await self.delete_file(package, architecture)
+                file_length: int = data.getbuffer().nbytes
+                filename: str = generate_filename(package, architecture, version, mimetype)
+
+                filestore_meta: FilestoreMeta = await FilestoreMetaHelper.insert(session, filename,
+                                                                                 file_length, mimetype)
+                new_id: int = filestore_meta.filestore_id
+
+                await MadApkHelper.insert_or_update(session, new_id, package, architecture, version)
+                logger.info('Starting upload of APK')
+                chunk_size = global_variables.CHUNK_MAX_SIZE
+                for chunked_data in [data.getbuffer()[i * chunk_size:(i + 1) * chunk_size] for i in
+                                     range((len(data.getbuffer()) + chunk_size - 1) // chunk_size)]:
+                    await FilestoreChunkHelper.insert(session, new_id, len(chunked_data), chunked_data.tobytes())
+                logger.info('Finished upload of APK')
+                await session.commit()
+                return True
+            except:  # noqa: E722 B001
+                logger.opt(exception=True).critical('Unable to upload APK')
+            return False
 
     async def shutdown(self) -> None:
         pass

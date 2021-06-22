@@ -27,3 +27,11 @@ class FilestoreChunkHelper:
         ## TODO: Async iteratble possible?
         #async for data_chunk in result:
         #    yield data_chunk
+
+    @staticmethod
+    async def insert(session: AsyncSession, filestore_id: int, size: int, data: bytes) -> None:
+        chunk: FilestoreChunk = FilestoreChunk()
+        chunk.filestore_id = filestore_id
+        chunk.size = size
+        chunk.data = data
+        session.add(chunk)

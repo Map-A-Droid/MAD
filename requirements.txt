@@ -33,3 +33,4 @@ aiomysql
 yarl~=1.6.3
 apkmirror-search
 cachetools
+asyncio-rlock
