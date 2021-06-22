@@ -1,9 +1,7 @@
-import functools
 import json
 import os
 import re
 from copy import copy
-from functools import wraps
 from io import BytesIO
 from typing import Any, ClassVar, Optional
 
@@ -41,13 +39,11 @@ def ensure_config_file(func) -> Any:
             return await func(self, *args, **kwargs)
         except FileNotFoundError:
             logger.info('Configuration file not found.  Recreating')
-            async with self._lock:
-                self.__create_structure()
-                self.__create_config()
+            await self.reload()
             return await func(self, *args, **kwargs)
         except json.decoder.JSONDecodeError:
             logger.warning('Corrupted MAD APK json file.  Recreating')
-            self.reload()
+            await self.reload()
             return await func(self, *args, **kwargs)
     return wrapped
 
@@ -143,7 +139,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
                     await self.save_configuration()
 
     async def __create_structure(self) -> None:
-        "Creates the filestructure required for saving packages and configuration"
+        """Creates the filestructure required for saving packages and configuration"""
         async with self._lock:
             if not os.path.isdir(self.config_apk_dir):
                 logger.debug('Creating APK directory')
@@ -171,7 +167,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
     @ensure_config_file
     @ensure_exists
     async def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
-        "Get the currently installed version of the package / architecture"
+        """Get the currently installed version of the package / architecture"""
         apk_info: MADPackage = self.apks[package][architecture]
         version = apk_info.version
         return version
@@ -193,7 +189,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
                 data = copy(self.apks[package])
                 for arch, _apk_info in data.items():
                     await self.validate_file(package, arch)
-            except KeyError:
+            except (KeyError, FileNotFoundError):
                 logger.debug('Package has not been downloaded')
             try:
                 if self.apks[package]:
@@ -252,11 +248,11 @@ class APKStorageFilesystem(AbstractAPKStorage):
                     pass
                 try:
                     await self.delete_file(package, architecture)
-                except (TypeError, KeyError):
+                except (TypeError, KeyError, FileNotFoundError):
                     pass
                 try:
                     async with async_open(self.get_package_path(filename), 'wb+') as fh:
-                        await fh.write(data.getbuffer())
+                        await fh.write(data.getvalue())
                 except FileNotFoundError:
                     if retry:
                         await self.__create_structure()

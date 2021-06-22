@@ -25,11 +25,12 @@ class MadApkAutosearchHelper:
 
     @staticmethod
     async def insert_or_update(session: AsyncSession, package: APKType, architecture: APKArch, data: Dict) -> None:
-        autosearch_entry: MadApkAutosearch = MadApkAutosearch()
-        autosearch_entry.arch = architecture.value
-        autosearch_entry.usage = package.value
-        await session.merge(autosearch_entry)
-        # TODO: Ensure values are fetches...
+        autosearch_entry: Optional[MadApkAutosearch] = await MadApkAutosearchHelper.get(session, package, architecture)
+        if not autosearch_entry:
+            autosearch_entry: MadApkAutosearch = MadApkAutosearch()
+            autosearch_entry.arch = architecture.value
+            autosearch_entry.usage = package.value
+        # TODO: Ensure values are fetched...
         autosearch_entry.last_checked = datetime.utcnow()
         for key, value in data.items():
             setattr(autosearch_entry, key, value)
@@ -41,4 +42,4 @@ class MadApkAutosearchHelper:
         stmt = select(MadApkAutosearch).where(and_(MadApkAutosearch.usage == package.value,
                                                    MadApkAutosearch.arch == architecture.value))
         res = await session.execute(stmt)
-        return res.scalar().first()
+        return res.scalars().first()

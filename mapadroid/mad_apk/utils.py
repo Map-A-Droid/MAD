@@ -5,7 +5,6 @@ from distutils.version import LooseVersion
 from typing import Tuple, Union, Optional, List, AsyncGenerator
 
 import apkutils
-import requests
 from aiofile import async_open
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +17,7 @@ from .apk_enums import APKArch, APKPackage, APKType
 from .custom_types import MADapks, MADPackage, MADPackages
 from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
 from ..db.helper.MadApkHelper import MadApkHelper
+from ..utils.RestHelper import RestHelper, RestApiResult
 
 logger = get_logger(LoggerEnums.package_mgr)
 
@@ -121,19 +121,19 @@ async def get_apk_status(storage_obj: AbstractAPKStorage) -> MADapks:
         if package == APKType.pogo:
             for arch in [APKArch.armeabi_v7a, APKArch.arm64_v8a]:
                 try:
-                    (package_info, status_code) = await lookup_package_info(storage_obj, package, arch)
+                    package_info: Optional[Union[MADPackage, MADPackages]] = await lookup_package_info(storage_obj, package, arch)
                 except ValueError:
-                    package_info = None
+                    package_info: Optional[Union[MADPackage, MADPackages]] = None
                 if package_info is None:
-                    package_info = MADPackage(package, arch)
+                    package_info: Optional[Union[MADPackage, MADPackages]] = MADPackage(package, arch)
                 data[package][arch] = package_info
         if package in [APKType.pd, APKType.rgc]:
             try:
-                (package_info, status_code) = await lookup_package_info(storage_obj, package, APKArch.noarch)
+                package_info: Optional[Union[MADPackage, MADPackages]] = await lookup_package_info(storage_obj, package, APKArch.noarch)
             except ValueError:
-                package_info = None
+                package_info: Optional[Union[MADPackage, MADPackages]] = None
             if package_info is None:
-                package_info = MADPackage(package, APKArch.noarch)
+                package_info: Optional[Union[MADPackage, MADPackages]] = MADPackage(package, APKArch.noarch)
             data[package][APKArch.noarch] = package_info
     return data
 
@@ -260,7 +260,7 @@ async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
     else:
         try:
             fileinfo = package_info[architecture]
-            if package == APKType.pogo and not supported_pogo_version(architecture, fileinfo.version):
+            if package == APKType.pogo and not await supported_pogo_version(architecture, fileinfo.version):
                 raise ValueError("Version is not supported anymore.")
             return fileinfo
         except KeyError:
@@ -292,10 +292,11 @@ async def stream_package(session: AsyncSession, storage_obj,
     return gen_func, mimetype, filename
 
 
-def supported_pogo_version(architecture: APKArch, version: str) -> bool:
+async def supported_pogo_version(architecture: APKArch, version: str, version_code: Optional[int] = None) -> bool:
     """ Determine if the com.nianticlabs.pokemongo package is supported by MAD
 
     Args:
+        version_code:
         architecture (APKArch): Architecture of the package to lookup
         version (str): Version of the pogo package
     """
@@ -305,16 +306,23 @@ def supported_pogo_version(architecture: APKArch, version: str) -> bool:
     else:
         bits = '64'
     composite_key = '%s_%s' % (version, bits,)
-    try:
-        with open('configs/version_codes.json') as fh:
-            json.load(fh)[composite_key]
-            return True
-    except KeyError:
-        try:
-            requests.get(VERSIONCODES_URL).json()[composite_key]
-            return True
-        except KeyError:
-            pass
+    async with async_open('configs/version_codes.json', "r") as fh:
+        raw = await fh.read()
+        content = json.loads(raw)
+        version_code_supported = content.get(composite_key, None)
+        if version_code:
+            valid = version_code_supported == version_code
+        else:
+            valid = version_code_supported is not None
+
+    if not valid:
+        result: RestApiResult = await RestHelper.send_get(VERSIONCODES_URL)
+        if result.result_body and result.status_code == 200:
+            version_code_supported = result.result_body.get(composite_key)
+            if version_code:
+                valid = version_code_supported == version_code
+            else:
+                valid = version_code_supported is not None
     if not valid:
         logger.info('Current version of PoGo [{}] is not supported', composite_key)
     return valid

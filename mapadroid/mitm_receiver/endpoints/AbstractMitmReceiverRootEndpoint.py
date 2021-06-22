@@ -17,7 +17,7 @@ from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mad_apk.apk_enums import APKArch, APKType, APKPackage
 from mapadroid.mad_apk.utils import convert_to_backend
-from mapadroid.madmin.api import apiException
+from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils.authHelper import check_auth

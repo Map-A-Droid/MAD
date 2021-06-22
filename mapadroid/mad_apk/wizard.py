@@ -1,15 +1,17 @@
+import asyncio
 import io
 import zipfile
-from threading import Thread
 from typing import Dict, NoReturn, Optional, Tuple
+
+import aiohttp
 from apksearch import package_search_async
 from apksearch.entities import PackageBase, PackageVariant
 import apkutils
-import cachetools as cachetools
-import requests
+from aiocache import cached
+from apksearch.search import HEADERS
 import urllib3
 from apkutils.apkfile import BadZipFile, LargeZipFile
-
+from aiohttp import ClientConnectionError, ClientError
 from mapadroid.utils import global_variables
 from mapadroid.utils.gplay_connector import GPlayConnector
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -61,15 +63,6 @@ class APKWizard(object):
     def __init__(self, db_wrapper: DbWrapper, storage: AbstractAPKStorage):
         self.storage: AbstractAPKStorage = storage
         self._db_wrapper: DbWrapper = db_wrapper
-
-    async def apk_all_actions(self) -> None:
-        "Search and download all required packages"
-        await self.apk_all_download()
-
-    async def apk_all_download(self) -> None:
-        "Download all packages in a non-blocking fashion"
-        # TODO... async
-        Thread(target=self.apk_nonblocking_download).start()
 
     async def apk_all_search(self) -> None:
         "Search for updates for any required package"
@@ -134,7 +127,10 @@ class APKWizard(object):
         if latest_pogo_info[0] is None:
             logger.warning('Unable to find latest data for PoGo. Try again later')
             return None
-        current_version = self.storage.get_current_version(APKType.pogo, architecture)
+        try:
+            current_version = await self.storage.get_current_version(APKType.pogo, architecture)
+        except FileNotFoundError:
+            current_version = None
         if current_version and current_version == latest_pogo_info[0]:
             logger.info("Latest version of PoGO is already installed")
             return None
@@ -145,12 +141,22 @@ class APKWizard(object):
         async with self._db_wrapper as session, session:
             await MadApkAutosearchHelper.insert_or_update(session, APKType.pogo, architecture, update_data)
             await session.commit()
-        response = await RestHelper.send_get(latest_pogo_info[1].download_url, get_raw_body=True)
-        if response is None:
+        data: bytearray = bytearray()
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=2400)) as session:
+            async with session.get(latest_pogo_info[1].download_url, headers=HEADERS, allow_redirects=True) as resp:
+                while True:
+                    chunk = await resp.content.read(4096)
+                    if not chunk:
+                        break
+                    data += bytearray(chunk)
+        if not data:
             logger.warning("Unable to successfully download PoGo")
         try:
-            PackageImporter(APKType.pogo, architecture, self.storage, io.BytesIO(response.result_body),
-                            'application/vnd.android.package-archive', version=latest_pogo_info[0])
+            package_importer: PackageImporter = PackageImporter(APKType.pogo, architecture, self.storage,
+                                                                io.BytesIO(data),
+                                                                'application/vnd.android.package-archive',
+                                                                version=latest_pogo_info[0])
+            await package_importer.import_configured()
         except Exception as err:
             logger.warning("Unable to import the APK. {}", err)
         finally:
@@ -179,7 +185,10 @@ class APKWizard(object):
             architecture (APKArch): Architecture of the package to download
         """
         latest_data: Optional[MadApkAutosearch] = await self.get_latest(package, architecture)
-        current_version = await self.storage.get_current_version(package, architecture)
+        try:
+            current_version = await self.storage.get_current_version(package, architecture)
+        except FileNotFoundError:
+            current_version = None
         if type(current_version) is not str:
             current_version = None
         if not latest_data or latest_data.url is None:
@@ -193,10 +202,6 @@ class APKWizard(object):
             update_data = {
                 'download_status': 1
             }
-            where = {
-                'usage': package.value,
-                'arch': architecture.value
-            }
             async with self._db_wrapper as session, session:
                 await MadApkAutosearchHelper.insert_or_update(session, package, architecture, update_data)
                 await session.commit()
@@ -204,18 +209,21 @@ class APKWizard(object):
                 retries: int = 0
                 successful: bool = False
                 while retries < MAX_RETRIES and not successful:
-                    response = requests.get(latest_data['url'], verify=False, headers=APK_HEADERS)
-                    downloaded_file = io.BytesIO(response.content)
-                    if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
-                        PackageImporter(package, architecture, self.storage, downloaded_file,
-                                        'application/vnd.android.package-archive')
-                        successful = True
-                    else:
+                    response = await RestHelper.send_get(latest_data.url, headers=APK_HEADERS, get_raw_body=True)
+                    if response.status_code == 200:
+                        downloaded_file = io.BytesIO(response.result_body)
+                        if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
+                            package_importer: PackageImporter = PackageImporter(package, architecture, self.storage,
+                                                                                downloaded_file,
+                                            'application/vnd.android.package-archive')
+                            successful = await package_importer.import_configured()
+                    if not successful:
                         logger.info("Issue downloading apk")
                         retries += 1
                         if retries < MAX_RETRIES:
                             logger.warning('Unable to successfully download the APK')
-            except Exception:  # noqa: E722
+            except Exception as e:  # noqa: E722
+                logger.exception(e)
                 logger.warning('Unable to download the file @ {}', latest_data['url'])
             finally:
                 update_data['download_status'] = 0
@@ -241,7 +249,10 @@ class APKWizard(object):
             url (str): URL to perform the HEAD against
         """
         update_available = False
-        (packages, status) = lookup_package_info(self.storage, package)
+        try:
+            (packages, status) = await lookup_package_info(self.storage, package)
+        except ValueError:
+            packages = None
         curr_info = packages[architecture] if packages else None
         if curr_info:
             installed_size = curr_info.size
@@ -249,8 +260,18 @@ class APKWizard(object):
         else:
             installed_size = None
             curr_info_logstring = ''
-        head = requests.head(url, verify=False, headers=APK_HEADERS, allow_redirects=True)
-        mirror_size = str(int(head.headers['Content-Length']))
+        timeout = aiohttp.ClientTimeout(total=10)
+        mirror_size = "-1"
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.head(url, headers=APK_HEADERS, allow_redirects=True) as resp:
+                    mirror_size = str(int(resp.headers.get('Content-Length')))
+
+        except (ClientConnectionError, asyncio.exceptions.TimeoutError) as e:
+            logger.warning("Connecting to {} failed: {}", url, str(e))
+        except (ClientError, ValueError) as e:
+            logger.warning("Request to {} failed: {}", url, e)
+
         if not curr_info or (installed_size and installed_size != mirror_size):
             logger.info('Newer version found on the mirror of size {}{}', mirror_size, curr_info_logstring)
             update_available = True
@@ -276,10 +297,13 @@ class APKWizard(object):
         """
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
         available_versions = await get_available_versions()
-        latest_supported = APKWizard.get_latest_supported(architecture, available_versions)
-        current_version_str = await self.storage.get_current_version(APKType.pogo, architecture)
+        latest_supported = await APKWizard.get_latest_supported(architecture, available_versions)
+        try:
+            current_version_str = await self.storage.get_current_version(APKType.pogo, architecture)
+        except FileNotFoundError:
+            current_version_str = None
         if current_version_str:
-            current_version_code = self.lookup_version_code(current_version_str, architecture)
+            current_version_code = await self.lookup_version_code(current_version_str, architecture)
             if current_version_code is None:
                 current_version_code = 0
             latest_vc = latest_supported[1].version_code
@@ -320,7 +344,7 @@ class APKWizard(object):
             return await MadApkAutosearchHelper.get(session, package, architecture)
 
     @staticmethod
-    def get_latest_supported(architecture: APKArch,
+    async def get_latest_supported(architecture: APKArch,
                              available_versions: Dict[str, PackageBase]
                              ) -> Tuple[str, PackageVariant]:
         latest_supported: Dict[APKArch, Tuple[Optional[str], Optional[PackageVariant]]] = {
@@ -334,15 +358,14 @@ class APKWizard(object):
                     for variant in variants:
                         if variant.apk_type != "APK":
                             continue
-                        ver = str(variant.version_code)
-                        if not supported_pogo_version(architecture, ver):
-                            logger.debug("Version {} [{}] is not supported", ver, named_arch)
+                        if not await supported_pogo_version(architecture, version, variant.version_code):
+                            logger.debug("Version {} [{}] is not supported", version, named_arch)
                             continue
-                        logger.debug("Version {} [{}] is supported", ver, named_arch)
+                        logger.debug("Version {} [{}] is supported", version, named_arch)
                         if latest_supported[named_arch][1] is None:
-                            latest_supported[named_arch] = (ver, variant)
+                            latest_supported[named_arch] = (version, variant)
                         elif variant.version_code > latest_supported[named_arch][1].version_code:
-                            latest_supported[named_arch] = (ver, variant)
+                            latest_supported[named_arch] = (version, variant)
         return latest_supported[architecture]
 
     def parse_version_codes(self, supported_codes: Dict[APKArch, Dict[str, int]]):
@@ -401,28 +424,39 @@ class PackageImporter(object):
         self.package_name: Optional[str] = None
         self.package_arch: Optional[APKArch] = None
         self._data: io.BytesIO = downloaded_file
-        if mimetype == 'application/vnd.android.package-archive':
-            self.package_version, self.package_name = get_apk_info(downloaded_file)
+        self._storage_obj = storage_obj
+        self._mimetype = mimetype
+        self._version = version
+        self._package = package
+        self._arch = architecture
+
+    async def import_configured(self) -> bool:
+        if self._mimetype == 'application/vnd.android.package-archive':
+            self.package_version, self.package_name = get_apk_info(self._data)
         else:
             self.normalize_package()
-            mimetype = 'application/zip'
+            self._mimetype = 'application/zip'
         if self.package_version:
-            if not version:
-                version = self.package_version
+            if not self._version:
+                self._version = self.package_version
             try:
                 pkg = APKPackage(self.package_name)
             except ValueError:
                 raise InvalidFile('Unknown package %s' % self.package_name)
-            if pkg.name != package.name:
-                raise WizardError('Attempted to upload %s as %s' % (pkg.name, package.name))
-            if self.package_arch and self.package_arch != architecture and architecture != APKArch.noarch:
+            if pkg.name != self._package.name:
+                raise WizardError('Attempted to upload %s as %s' % (pkg.name, self._package.name))
+            if self.package_arch and self.package_arch != self._arch and self._arch != APKArch.noarch:
                 msg = 'Attempted to upload {} as an invalid architecture.  Expected {} but received {}'
-                raise WizardError(msg.format(pkg.name, architecture.name, self.package_arch.name))
-            storage_obj.save_file(package, architecture, version, mimetype, self._data, True)
+                raise WizardError(msg.format(pkg.name, self._arch.name, self.package_arch.name))
+            await self._storage_obj.save_file(self._package, self._arch, self._version, self._mimetype,
+                                              self._data, True)
             log_msg = 'New APK uploaded for {} [{}]'
-            logger.info(log_msg, package.name, version)
+            logger.info(log_msg, self._package.name, self._version)
+            return True
         else:
             logger.warning('Unable to determine apk information')
+            return False
+
 
     def normalize_package(self) -> NoReturn:
         """ Normalize the package
@@ -466,7 +500,7 @@ class PackageImporter(object):
         self._data = pruned_zip
 
 
-@cachetools.func.ttl_cache(maxsize=1, ttl=10 * 60)
+@cached(ttl=10 * 60)
 async def get_available_versions() -> Dict[str, PackageBase]:
     """Query apkmirror for the available packages"""
     logger.info("Querying APKMirror for the latest releases")

@@ -1,3 +1,4 @@
+import asyncio
 import io
 from threading import Thread
 from typing import Optional
@@ -19,7 +20,12 @@ class MadApkEndpoint(AbstractMadminRootEndpoint):
     async def get(self):
         apk_type_raw: str = self.request.match_info.get('apk_type')
         apk_arch_raw: str = self.request.match_info.get('apk_arch')
-        apk_type, apk_arch = convert_to_backend(apk_type_raw, apk_arch_raw)
+        apk_type = None
+        apk_arch = APKArch.noarch
+        if apk_type_raw == "reload":
+            await self._get_storage_obj().reload()
+        else:
+            apk_type, apk_arch = convert_to_backend(apk_type_raw, apk_arch_raw)
 
         data = await get_apk_status(self._get_storage_obj())
         if apk_type is None and apk_arch is APKArch.noarch:
@@ -65,17 +71,20 @@ class MadApkEndpoint(AbstractMadminRootEndpoint):
             call = json_data['call']
             wizard = APKWizard(self._get_db_wrapper(), self._get_storage_obj())
             if call == 'import':
-                # TODO: Add task and just run it without a thread
-                thread_args = (apk_type, apk_arch)
-                upload_thread = Thread(name='PackageWizard', target=wizard.apk_download, args=thread_args)
-                upload_thread.start()
+                loop = asyncio.get_running_loop()
+                loop.create_task(wizard.apk_download(apk_type, apk_arch))
                 return web.Response(status=204)
             elif call == 'search':
-                await wizard.apk_search(apk_type, apk_arch)
+                try:
+                    await wizard.apk_search(apk_type, apk_arch)
+                except ValueError as e:
+                    logger.exception(e)
+                    raise web.HTTPNotFound
                 return web.Response(status=204)
             elif call == 'search_download':
                 try:
-                    await wizard.apk_all_actions()
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(wizard.apk_nonblocking_download())
                     return web.Response(status=204)
                 except TypeError:
                     return web.Response(status=404)
@@ -103,7 +112,9 @@ class MadApkEndpoint(AbstractMadminRootEndpoint):
         else:
             return web.Response(text="Unsupported extension", status=406)
         try:
-            PackageImporter(apk_type, apk_arch, self._get_storage_obj(), apk, mimetype)
+            package_importer: PackageImporter = PackageImporter(apk_type, apk_arch, self._get_storage_obj(),
+                                                                apk, mimetype)
+            await package_importer.import_configured()
             if self.request.content_type == 'multipart/form-data':
                 raise web.HTTPCreated()
             return web.Response(status=201)
