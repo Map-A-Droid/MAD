@@ -2,9 +2,9 @@ import datetime
 import json
 import os
 import time
-from cachetools.func import ttl_cache
 from PIL import Image
 from aiofile import async_open
+from aiocache import cached
 
 import mapadroid
 from mapadroid.utils.RestHelper import RestHelper, RestApiResult
@@ -62,7 +62,7 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
     )
 
 
-@ttl_cache
+@cached(ttl=10 * 60)
 async def get_version_codes(force_gh=False):
     if not force_gh:
         try:

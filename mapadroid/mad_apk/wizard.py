@@ -1,7 +1,8 @@
 import asyncio
 import io
 import zipfile
-from typing import Dict, NoReturn, Optional, Tuple
+from asyncio import Task
+from typing import Dict, NoReturn, Optional, Tuple, List
 
 import aiohttp
 from apksearch import package_search_async
@@ -78,26 +79,31 @@ class APKWizard(object):
             package (APKType): Package to download
             architecture (APKArch): Architecture of the package to download
         """
-        if package == APKType.pogo:
+        if package == APKType.pogo and await self.find_latest_pogo(architecture):
             await self.download_pogo(architecture)
-        elif package == APKType.rgc:
+        elif package == APKType.rgc and await self.find_latest_rgc(architecture):
             await self.download_rgc(architecture)
-        elif package == APKType.pd:
+        elif package == APKType.pd and await self.find_latest_pd(architecture):
             await self.download_pd(architecture)
 
     async def apk_nonblocking_download(self) -> None:
-        "Download all packages"
+        """Download all packages"""
+        download_tasks: List[Task] = []
+        loop = asyncio.get_running_loop()
         for arch in APKArch:
             if arch == APKArch.noarch:
                 continue
             try:
-                await self.download_pogo(arch)
+                if await self.find_latest_pogo(arch):
+                    download_tasks.append(loop.create_task(self.download_pogo(arch)))
             except InvalidDownload:
                 pass
         if await self.find_latest_rgc(APKArch.noarch):
-            await self.download_rgc(APKArch.noarch)
+            download_tasks.append(loop.create_task(self.download_rgc(APKArch.noarch)))
         if await self.find_latest_pd(APKArch.noarch):
-            await self.download_pd(APKArch.noarch)
+            download_tasks.append(loop.create_task(self.download_pd(APKArch.noarch)))
+        for download_task in download_tasks:
+            await download_task
 
     async def apk_search(self, package: APKType, architecture: APKArch) -> None:
         """ Search for a specific package
@@ -209,7 +215,8 @@ class APKWizard(object):
                 retries: int = 0
                 successful: bool = False
                 while retries < MAX_RETRIES and not successful:
-                    response = await RestHelper.send_get(latest_data.url, headers=APK_HEADERS, get_raw_body=True)
+                    response = await RestHelper.send_get(latest_data.url, headers=APK_HEADERS, get_raw_body=True,
+                                                         timeout=360)
                     if response.status_code == 200:
                         downloaded_file = io.BytesIO(response.result_body)
                         if downloaded_file and downloaded_file.getbuffer().nbytes > 0:

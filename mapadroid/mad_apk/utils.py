@@ -3,6 +3,7 @@ import json
 import zipfile
 from distutils.version import LooseVersion
 from typing import Tuple, Union, Optional, List, AsyncGenerator
+from aiocache import cached
 
 import apkutils
 from aiofile import async_open
@@ -316,7 +317,7 @@ async def supported_pogo_version(architecture: APKArch, version: str, version_co
             valid = version_code_supported is not None
 
     if not valid:
-        result: RestApiResult = await RestHelper.send_get(VERSIONCODES_URL)
+        result: RestApiResult = await get_latest_version_codes_from_github()
         if result.result_body and result.status_code == 200:
             version_code_supported = result.result_body.get(composite_key)
             if version_code:
@@ -326,3 +327,9 @@ async def supported_pogo_version(architecture: APKArch, version: str, version_co
     if not valid:
         logger.info('Current version of PoGo [{}] is not supported', composite_key)
     return valid
+
+
+@cached(ttl=5 * 60)
+async def get_latest_version_codes_from_github() -> RestApiResult:
+    result: RestApiResult = await RestHelper.send_get(VERSIONCODES_URL)
+    return result
