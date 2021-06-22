@@ -65,7 +65,7 @@ class MADmin(object):
         self._app['mapping_manager'] = self._mapping_manager
         self._app['websocket_server'] = self._ws_server
         self._app["plugin_hotlink"] = None # TODO
-        self._app["storage_obj"] = None # TODO
+        self._app["storage_obj"] = self._storage_obj
         self._app['device_updater'] = self._device_updater
 
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader(template_folder_path))

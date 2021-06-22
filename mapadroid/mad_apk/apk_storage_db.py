@@ -31,6 +31,9 @@ class APKStorageDatabase(AbstractAPKStorage):
         logger.debug('Initializing Database storage')
         self.db_wrapper = db_wrapper
 
+    async def setup(self):
+        pass
+
     async def delete_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Remove the package and update the configuration
 

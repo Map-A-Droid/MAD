@@ -14,7 +14,7 @@ class MadApkAutosearchHelper:
     async def get_all(session: AsyncSession) -> List[MadApkAutosearch]:
         stmt = select(MadApkAutosearch)
         res = await session.execute(stmt)
-        return res.scalar().all()
+        return res.scalars().all()
 
     @staticmethod
     async def delete(session: AsyncSession, package: APKType, architecture: Optional[APKArch] = None) -> None:

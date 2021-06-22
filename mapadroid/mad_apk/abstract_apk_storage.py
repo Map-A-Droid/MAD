@@ -8,6 +8,15 @@ from .custom_types import MADPackages
 
 class AbstractAPKStorage(ABC):
     @abstractmethod
+    async def setup(self):
+        """
+        Called to setup instances with initial values...
+        Returns:
+
+        """
+        pass
+
+    @abstractmethod
     async def delete_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Remove the package and update the configuration
 

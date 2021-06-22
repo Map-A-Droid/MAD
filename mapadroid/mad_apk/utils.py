@@ -120,12 +120,18 @@ async def get_apk_status(storage_obj: AbstractAPKStorage) -> MADapks:
         data[package] = MADPackages()
         if package == APKType.pogo:
             for arch in [APKArch.armeabi_v7a, APKArch.arm64_v8a]:
-                (package_info, status_code) = await lookup_package_info(storage_obj, package, arch)
+                try:
+                    (package_info, status_code) = await lookup_package_info(storage_obj, package, arch)
+                except ValueError:
+                    package_info = None
                 if package_info is None:
                     package_info = MADPackage(package, arch)
                 data[package][arch] = package_info
         if package in [APKType.pd, APKType.rgc]:
-            (package_info, status_code) = await lookup_package_info(storage_obj, package, APKArch.noarch)
+            try:
+                (package_info, status_code) = await lookup_package_info(storage_obj, package, APKArch.noarch)
+            except ValueError:
+                package_info = None
             if package_info is None:
                 package_info = MADPackage(package, APKArch.noarch)
             data[package][APKArch.noarch] = package_info

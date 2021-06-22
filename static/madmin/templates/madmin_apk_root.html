@@ -244,15 +244,6 @@
         </div>
     </div>
 </div>
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
 <div style="clear: both;"></div>
 <div class="row">
     <div class="col">

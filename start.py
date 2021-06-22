@@ -18,6 +18,7 @@ from mapadroid.db.DbFactory import DbFactory
 # TODO: Get MADmin running
 # from mapadroid.madmin.madmin import MADmin
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
+from mapadroid.mad_apk import get_storage_obj
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin.madmin import MADmin
 from mapadroid.mitm_receiver.MitmDataProcessorManager import \
@@ -230,7 +231,7 @@ async def start():
         logger.info("Done calculating routes!")
         # TODO: shutdown managers properly...
         sys.exit(0)
-    # (storage_manager, storage_elem) = get_storage_obj(args, db_wrapper)
+    storage_elem = await get_storage_obj(args, db_wrapper)
     if not args.config_mode:
         pogo_win_manager = PogoWindows(args.temp_path, args.ocr_thread_count)
         mitm_mapper = MitmMapper(args, mapping_manager, db_wrapper.stats_submit)
@@ -242,7 +243,7 @@ async def start():
     await mitm_data_processor_manager.launch_processors()
 
     mitm_receiver = MITMReceiver(mitm_mapper, args, mapping_manager, db_wrapper,
-                                 None,
+                                 storage_elem,
                                  mitm_data_processor_manager.get_queue(),
                                  enable_configmode=args.config_mode)
     # TODO: Cancel() task lateron

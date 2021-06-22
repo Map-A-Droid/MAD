@@ -1,3 +1,4 @@
+import functools
 import json
 import os
 import re
@@ -28,29 +29,27 @@ def ensure_exists(func) -> Any:
     Returns:
 
     """
-    @wraps(func)
     async def decorated(self, *args, **kwargs):
         await self.validate_file(args[0], args[1])
-        return func(self, *args, **kwargs)
+        return await func(self, *args, **kwargs)
     return decorated
 
 
 def ensure_config_file(func) -> Any:
-    @wraps(func)
-    async def decorated(self, *args, **kwargs):
+    async def wrapped(self, *args, **kwargs):
         try:
-            return func(self, *args, **kwargs)
+            return await func(self, *args, **kwargs)
         except FileNotFoundError:
             logger.info('Configuration file not found.  Recreating')
             async with self._lock:
                 self.__create_structure()
                 self.__create_config()
-            return func(self, *args, **kwargs)
+            return await func(self, *args, **kwargs)
         except json.decoder.JSONDecodeError:
             logger.warning('Corrupted MAD APK json file.  Recreating')
             self.reload()
-            return func(self, *args, **kwargs)
-    return decorated
+            return await func(self, *args, **kwargs)
+    return wrapped
 
 
 class APKStorageFilesystem(AbstractAPKStorage):
@@ -133,7 +132,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
                     conf = json.load(fh)
                     for apk_family, apks in conf.items():
                         for arch, apk_info in apks.items():
-                            if not os.path.isfile(self.__get_package_path(apk_info['filename'])):
+                            if not os.path.isfile(self.get_package_path(apk_info['filename'])):
                                 logger.info('APK {} no longer exists.  Removing the file', apk_info.filename)
                                 updated = True
                             else:
@@ -160,12 +159,12 @@ class APKStorageFilesystem(AbstractAPKStorage):
             architecture (APKArch): Architecture of the package to lookup
         """
         apk_info: MADPackage = self.apks[package][architecture]
-        os.unlink(self.__get_package_path(apk_info.filename))
+        os.unlink(self.get_package_path(apk_info.filename))
         del self.apks[package][architecture]
         await self.save_configuration()
         return True
 
-    def __get_package_path(self, filename: str):
+    def get_package_path(self, filename: str):
         "Generate the packpage path based off the filename"
         return'{}/{}'.format(self.config_apk_dir, filename)
 
@@ -256,7 +255,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
                 except (TypeError, KeyError):
                     pass
                 try:
-                    async with async_open(self.__get_package_path(filename), 'wb+') as fh:
+                    async with async_open(self.get_package_path(filename), 'wb+') as fh:
                         await fh.write(data.getbuffer())
                 except FileNotFoundError:
                     if retry:
@@ -268,7 +267,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
                         'file_id': None,
                         'filename': filename,
                         'mimetype': mimetype,
-                        'size': os.stat(self.__get_package_path(filename)).st_size,
+                        'size': os.stat(self.get_package_path(filename)).st_size,
                     }
                     if package not in self.apks:
                         self.apks[package] = MADPackages()
@@ -292,7 +291,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         """
         try:
             apk_info: MADPackage = self.apks[package][architecture]
-            package_path = self.__get_package_path(apk_info.filename)
+            package_path = self.get_package_path(apk_info.filename)
             if not os.path.isfile(package_path):
                 del self.apks[package][architecture]
                 await self.save_configuration()
