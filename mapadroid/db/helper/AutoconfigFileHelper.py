@@ -23,5 +23,5 @@ class AutoconfigFileHelper:
             config = AutoconfigFile()
             config.instance_id = instance_id
             config.name = name
-        config.data = data
+        config.data = data.encode("utf-8")
         session.add(config)

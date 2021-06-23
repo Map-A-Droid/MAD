@@ -14,6 +14,7 @@ class AutoconfRgcEndpoint(AbstractMadminRootEndpoint):
 
     async def delete(self) -> web.Response:
         await RGCConfig(self._session, self._get_instance_id(), self._get_mad_args()).delete(self._session)
+        self._commit_trigger = True
         return self._json_response()
 
     async def get(self) -> web.Response:
@@ -22,8 +23,10 @@ class AutoconfRgcEndpoint(AbstractMadminRootEndpoint):
 
     async def __save_config(self) -> web.Response:
         conf = RGCConfig(self._session, self._get_instance_id(), self._get_mad_args())
+        await conf.load_config()
         try:
             await conf.save_config(await self.request.json())
+            self._commit_trigger = True
         except AutoConfIssue as err:
             return self._json_response(data=err.issues, status=400)
-        return self._json_response()
+        return web.Response(status=200)

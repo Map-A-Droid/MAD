@@ -55,7 +55,7 @@ class AbstractMadminRootEndpoint(web.View, ABC):
             raise e
         except Exception as e:
             logger.warning("Exception occurred in request!. Details: " + str(e))
-            logger.exception("Issue with request to {}", self.request.url)
+            logger.exception(e)
             await session.rollback()
             # TODO: Get previous URL...
             raise web.HTTPFound("/")
