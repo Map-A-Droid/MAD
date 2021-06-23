@@ -19,6 +19,6 @@ class RestartJobEndpoint(AbstractControlEndpoint):
         if not job_id_raw:
             await self._add_notice_message('ID not specified - restart failed')
 
-        await self._get_device_updater().restart_job(int(job_id_raw))
+        await self._get_device_updater().restart_job(job_id_raw)
         await self._add_notice_message('Job requeued')
         await self._redirect(self._url_for('install_status'))

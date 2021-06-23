@@ -55,7 +55,7 @@ class DeviceUpdater(object):
         self._current_job_id = []
         self._current_job_device = []
         self._returning = returning
-        self.storage_obj: AbstractAPKStorage = storage_obj
+        self._storage_obj: AbstractAPKStorage = storage_obj
         # TODO: move to async init with await IO...
         try:
             if os.path.exists('update_log.json'):
@@ -105,16 +105,16 @@ class DeviceUpdater(object):
         return self._commands
 
     @logger.catch()
-    async def restart_job(self, job_id: int):
+    async def restart_job(self, job_id: str):
         # TODO: Async exec
-        if (job_id) in self._log:
+        if job_id in self._log:
             origin = self._log[job_id]['origin']
             file_ = self._log[job_id]['file']
             jobtype = self._log[job_id]['jobtype']
             globalid = self._log[job_id]['globalid']
             redo = self._log[job_id].get('redo', False)
             waittime = self._log[job_id].get('waittime', 0)
-            jobname = self._log[job_id].get('redo', None)
+            jobname = self._log[job_id].get('jobname', None)
 
             if globalid not in self._globaljoblog:
                 self._globaljoblog[globalid] = {}
@@ -392,16 +392,16 @@ class DeviceUpdater(object):
 
             for subjob in self._commands[job]:
                 logger.debug2(subjob)
-                await self.__add_job(globalid, origin, subjob['SYNTAX'], job_id=int(time.time()),
+                await self.__add_job(globalid, origin, subjob['SYNTAX'], job_id=str(time.time()),
                                job_type=subjob['TYPE'], waittime=subjob.get('WAITTIME', 0),
                                redo=self._globaljoblog[globalid].get('redo', False),
                                fieldname=subjob.get('FIELDNAME', 'unknown'), jobname=job)
                 await asyncio.sleep(1)
         else:
-            await self.__add_job(globalid, origin, job, job_id=int(job_id), job_type=job_type)
+            await self.__add_job(globalid, origin, job, job_id=str(job_id), job_type=job_type)
 
     @logger.catch()
-    async def __add_job(self, globalid, origin, job, job_id: int, job_type, counter=0, status='pending', waittime=0,
+    async def __add_job(self, globalid, origin, job, job_id: str, job_type, counter=0, status='pending', waittime=0,
                         processtime=None, redo=False, fieldname=None, jobname=None):
         if str(job_id) not in self._log:
             log_entry = ({
