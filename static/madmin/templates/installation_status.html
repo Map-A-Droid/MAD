@@ -33,10 +33,10 @@
 
                             return row.jobname +"<br><b>RETURNING:</b>" + returning;
 
+                        } else if (row.file.length === 0) {
+                            return row.jobname;
                         } else {
-
                             return row.file;
-
                         }
 
                     }

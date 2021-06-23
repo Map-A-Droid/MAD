@@ -19,4 +19,6 @@ class InstallStatusEndpoint(AbstractControlEndpoint):
         withautojobs_raw: Optional[str] = self.request.query.get('withautojobs')
         withautojobs: bool = True if withautojobs_raw and withautojobs_raw.lower() == "true" else False
         return {"responsive": str(self._get_mad_args().madmin_noresponsive).lower(),
-                "title": "Installation Status", "withautojobs": withautojobs}
+                "title": "Installation Status",
+                "withautojobs": withautojobs
+                }
