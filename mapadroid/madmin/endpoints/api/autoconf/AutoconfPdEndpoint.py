@@ -18,8 +18,9 @@ class AutoconfPdEndpoint(AbstractMadminRootEndpoint):
         return self._json_response()
 
     async def get(self) -> web.Response:
-        data = PDConfig(self._session, self._get_instance_id(), self._get_mad_args()).contents
-        return self._json_response(data=data)
+        config = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())
+        await config.load_config()
+        return self._json_response(data=config.contents)
 
     async def __save_config(self) -> web.Response:
         conf = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())

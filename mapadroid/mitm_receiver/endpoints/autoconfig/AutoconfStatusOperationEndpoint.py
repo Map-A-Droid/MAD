@@ -96,6 +96,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
                     config = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())
                 else:
                     config = RGCConfig(self._session, self._get_instance_id(), self._get_mad_args())
+                await config.load_config()
                 # TODO: Fix return type of generate_config/stream it properly
                 return web.FileResponse(await config.generate_config(device_settings.name),
                                         headers={'Content-Disposition': f"Attachment; filename=conf.xml"})

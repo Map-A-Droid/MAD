@@ -38,9 +38,14 @@ class AutoConfIssueGenerator(object):
         auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, instance_id)
         if len(auths) == 0:
             self.warnings.append(AutoConfIssues.auth_not_configured)
-        if not PDConfig(session, instance_id, args).configured:
+
+        pd_config = PDConfig(session, instance_id, args)
+        await pd_config.load_config()
+        if not pd_config.configured:
             self.critical.append(AutoConfIssues.pd_not_configured)
-        if not RGCConfig(session, instance_id, args).configured:
+        rgc_config = RGCConfig(session, instance_id, args)
+        await rgc_config.load_config()
+        if not rgc_config.configured:
             self.critical.append(AutoConfIssues.rgc_not_configured)
         missing_packages = []
         for _, apkpackages in (await get_apk_status(storage_obj)).items():
