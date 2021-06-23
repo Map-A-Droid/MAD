@@ -370,7 +370,7 @@ class WebsocketServer(object):
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
         return (entry.worker_instance.communicator
                 if entry is not None and entry.worker_instance is not None
-                else False)
+                else None)
 
     def set_geofix_sleeptime_worker(self, origin: str, sleeptime: int) -> bool:
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
@@ -378,11 +378,11 @@ class WebsocketServer(object):
                 if entry is not None and entry.worker_instance is not None
                 else False)
 
-    def set_job_activated(self, origin) -> None:
-        self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE, True)
+    async def set_job_activated(self, origin) -> None:
+        await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE, True)
 
-    def set_job_deactivated(self, origin) -> None:
-        self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE, False)
+    async def set_job_deactivated(self, origin) -> None:
+        await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE, False)
 
     async def __close_and_signal_stop(self, origin: str) -> None:
         origin_logger = get_origin_logger(logger, origin=origin)

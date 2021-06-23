@@ -21,7 +21,7 @@
                     "targets": [1],
                     "render": function (data, type, row) {
 
-                        if(row.jobtype == 'jobType.PASSTHROUGH') {
+                        if(row.jobtype === 'jobType.PASSTHROUGH') {
 
                             if(typeof row.returning === "undefined" ) {
                                 var returning = "<p id='info'>-</p>";

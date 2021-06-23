@@ -86,15 +86,6 @@
 
 {% block content %}
 <h2>Select Worker</h2>
-<p>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    {% for message in messages %}
-      <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-    {% endfor %}
-    {% endif %}
-  {% endwith %}
-</p>
 <form name="workerselect" id="workerselect" action="job_for_worker">
   <input type="hidden" name="jobname" value="{{jobname}}">
   <input type="hidden" name="type" value="{{type}}">

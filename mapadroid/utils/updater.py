@@ -48,7 +48,6 @@ class DeviceUpdater(object):
         # TODO: Replace appropriately
         self._update_mutex = asyncio.Lock()
         self._db = db
-        self._storage_obj = storage_obj
         self._log = {}
         self._args = args
         self._commands: dict = {}
@@ -294,7 +293,7 @@ class DeviceUpdater(object):
 
                         else:
                             # stop worker
-                            self._websocket.set_job_activated(origin)
+                            await self._websocket.set_job_activated(origin)
                             await self.__write_status_log(str(job_id), field='status', value='starting')
                             try:
                                 if await self.start_job_type(item, jobtype, temp_comm):
@@ -319,7 +318,7 @@ class DeviceUpdater(object):
                                     jobstatus = JobReturn.FAILURE
 
                                 # start worker
-                                self._websocket.set_job_deactivated(origin)
+                                await self._websocket.set_job_deactivated(origin)
 
                             except Exception:
                                 logger.error('Job {} could not be executed successfully (fatal error) - Device {} - '
@@ -527,22 +526,22 @@ class DeviceUpdater(object):
                     for chunk in await file_generator(self._db, self._storage_obj, package, architecture):
                         apk_file += chunk
                     if mad_apk.mimetype == 'application/zip':
-                        returning = ws_conn.install_bundle(300, data=apk_file)
+                        returning = await ws_conn.install_bundle(300, data=apk_file)
                     else:
-                        returning = ws_conn.install_apk(300, data=apk_file)
+                        returning = await ws_conn.install_apk(300, data=apk_file)
                     return returning if not 'RemoteGpsController'.lower() in str(
                         self._log[str(item)]['file']).lower() else True
             elif jobtype == JobType.REBOOT:
-                return ws_conn.reboot()
+                return await ws_conn.reboot()
             elif jobtype == JobType.RESTART:
-                return ws_conn.restart_app("com.nianticlabs.pokemongo")
+                return await ws_conn.restart_app("com.nianticlabs.pokemongo")
             elif jobtype == JobType.STOP:
-                return ws_conn.stop_app("com.nianticlabs.pokemongo")
+                return await ws_conn.stop_app("com.nianticlabs.pokemongo")
             elif jobtype == JobType.START:
-                return ws_conn.start_app("com.nianticlabs.pokemongo")
+                return await ws_conn.start_app("com.nianticlabs.pokemongo")
             elif jobtype == JobType.PASSTHROUGH:
                 command = self._log[str(item)]['file']
-                returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
+                returning = await ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
                 await self.__write_status_log(str(item), field='returning', value=returning)
                 self.set_returning(origin=self._log[str(item)]['origin'],
                                    fieldname=self._log[str(item)].get('fieldname'),
