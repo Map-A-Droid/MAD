@@ -33,7 +33,7 @@ class AutoConfIssueGenerator(object):
                                                                                                None)
         if len(pogoauth_entries) == 0 and not args.autoconfig_no_auth:
             self.warnings.append(AutoConfIssues.no_ggl_login)
-        if not validate_hopper_ready(session, instance_id):
+        if not await validate_hopper_ready(session, instance_id):
             self.critical.append(AutoConfIssues.origin_hopper_not_ready)
         auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(session, instance_id)
         if len(auths) == 0:

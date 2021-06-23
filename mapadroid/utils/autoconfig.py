@@ -102,8 +102,6 @@ class AutoConfigCreator:
         self.configured: bool = False
         self._session: AsyncSession = session
         self._instance_id: int = instance_id
-        # TODO: Load config -> factory method to be awaited for...
-        self.load_config()
 
     async def delete(self, session: AsyncSession):
         config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(session, self._instance_id, self.source)
@@ -151,7 +149,7 @@ class AutoConfigCreator:
             tmp_config['auth_password'] = ""
         return tmp_config
 
-    async def load_config(self) -> NoReturn:
+    async def load_config(self) -> None:
         try:
             config: Optional[AutoconfigFile] = await AutoconfigFileHelper.get(self._session, self._instance_id,
                                                                               self.source)

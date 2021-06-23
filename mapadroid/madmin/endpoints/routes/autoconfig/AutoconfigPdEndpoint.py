@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import aiohttp_jinja2
 from aiohttp.abc import Request
@@ -22,7 +22,8 @@ class AutoconfigPdEndpoint(AbstractMadminRootEndpoint):
     @aiohttp_jinja2.template('autoconfig_config_editor.html')
     async def get(self):
         config = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())
-        auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(self._session, self._get_instance_id())
+        await config.load_config()
+        auths: Dict[int, SettingsAuth] = await SettingsAuthHelper.get_all_mapped(self._session, self._get_instance_id())
         uri = self._url_for('api_autoconf_pd')
         return {"subtab": "autoconf_pd",
                 "config_name": 'PogoDroid',

@@ -8,7 +8,7 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
 
-<script type="text/javascript" src="{{ url('static', query_={'filename': 'js/madmin_settings.js'}) }}"></script>
+<script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
 <script>
 $(document).ready(function () {
     $("#submit").click(function() {
@@ -58,7 +58,7 @@ $(document).ready(function () {
               <option value=''>None</option>
             {% endif %}
             {% for auth_id, auth in auths.items() %}
-            <option value="{{ auth_id }}" {{ 'selected="selected"' if auth_id|tojson == config_element.contents[key]|tojson }} >{{ auth.username }}</option>
+            <option value="{{ auth_id }}" {{ 'selected="selected"' if config_element.contents[key] and auth_id == config_element.contents[key] }} >{{ auth.username }}</option>
             {% endfor %}
           </select>
           {% else %}
