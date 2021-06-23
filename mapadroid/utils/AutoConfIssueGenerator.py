@@ -10,7 +10,7 @@ from mapadroid.mad_apk.utils import get_apk_status
 from mapadroid.utils.PDConfig import PDConfig
 from mapadroid.utils.RGCConfig import RGCConfig
 from mapadroid.utils.autoconfig import validate_hopper_ready
-from aiohttp_jinja2.helpers import url_for
+from aiohttp.abc import Request
 
 
 class AutoConfIssues(IntEnum):
@@ -57,35 +57,34 @@ class AutoConfIssueGenerator(object):
         }
         return headers
 
-    def get_issues(self) -> Tuple[List[str], List[str]]:
+    def get_issues(self, request: Request) -> Tuple[List[str], List[str]]:
         issues_warning = []
         issues_critical = []
         # Warning messages
         if AutoConfIssues.no_ggl_login in self.warnings:
-            # TODO: url_for does not work here...
-            link = url_for('settings_pogoauth')
+            link = request.app.router['settings_pogoauth'].url_for()
             anchor = f"<a class=\"alert-link\" href=\"{link}\">PogoAuth</a>"
             issues_warning.append("No available Google logins for auto creation of devices. Configure through "
                                   f"{anchor}")
         if AutoConfIssues.auth_not_configured in self.warnings:
-            link = url_for('settings_auth')
+            link = request.app.router['settings_auth'].url_for()
             anchor = f"<a class=\"alert-link\" href=\"{link}\">Auth</a>"
             issues_warning.append(f"No auth configured which is a potential security risk. Configure through {anchor}")
         # Critical messages
         if AutoConfIssues.origin_hopper_not_ready in self.critical:
-            link = url_for('settings_walkers')
+            link = request.app.router['settings_walkers'].url_for()
             anchor = f"<a class=\"alert-link\" href=\"{link}\">Walker</a>"
             issues_critical.append(f"No walkers configured. Configure through {anchor}")
         if AutoConfIssues.pd_not_configured in self.critical:
-            link = url_for('autoconf_pd')
+            link = request.app.router['autoconf_pd'].url_for()
             anchor = f"<a class=\"alert-link\" href=\"{link}\">PogoDroid Configuration</a>"
             issues_critical.append(f"PogoDroid is not configured. Configure through {anchor}")
         if AutoConfIssues.rgc_not_configured in self.critical:
-            link = url_for('autoconf_rgc')
+            link = request.app.router['autoconf_rgc'].url_for()
             anchor = f"<a class=\"alert-link\" href=\"{link}\">RemoteGPSController Configuration</a>"
             issues_critical.append(f"RGC is not configured. Configure through {anchor}")
         if AutoConfIssues.package_missing in self.critical:
-            link = url_for('mad_apks')
+            link = request.app.router['mad_apks'].url_for()
             anchor = f"<a class=\"alert-link\" href=\"{link}\">MADmin Packages</a>"
             issues_critical.append(f"Missing one or more required packages. Configure through {anchor}")
         return issues_warning, issues_critical

@@ -255,7 +255,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         """
         auth = self._request.headers.get('Authorization')
         if not check_auth(logger, auth, self._get_mad_args(), await (self._get_mapping_manager().get_auths())):
-            logger.warning("Unauthorized attempt to POST from {}", self._get_request_address())
+            logger.warning("Unauthorized attempt to connect from {}", self._get_request_address())
             raise web.HTTPUnauthorized
 
     async def _check_origin_header(self):

@@ -33,7 +33,7 @@ class AutoconfigPendingSessionEndpoint(AbstractMadminRootEndpoint):
         ac_issues = AutoConfIssueGenerator()
         await ac_issues.setup(self._session, self._get_instance_id(),
                               self._get_mad_args(), self._get_storage_obj())
-        _, issues_critical = ac_issues.get_issues()
+        _, issues_critical = ac_issues.get_issues(self.request)
         if issues_critical:
             raise web.HTTPFound(self._url_for('autoconfig_pending'))
         registration_session: AutoconfigRegistration = sessions[0]

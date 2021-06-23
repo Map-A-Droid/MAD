@@ -146,7 +146,7 @@ $(document).ready(function () {
           <th style="width: 30%" class="text-right align-middle">Status</th>
         </tr>
       </thead>
-      {% if pending is none or len(pending) == 0 %}
+      {% if not pending %}
         <div id='no-configured-elements' class="alert alert-info">No pending devices</div>
       {% else %}
       <tbody>

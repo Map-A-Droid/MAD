@@ -19,7 +19,7 @@ class AutoconfigPendingEndpoint(AbstractMadminRootEndpoint):
         ac_issues = AutoConfIssueGenerator()
         await ac_issues.setup(self._session, self._get_instance_id(),
                               self._get_mad_args(), self._get_storage_obj())
-        issues_warning, issues_critical = ac_issues.get_issues()
+        issues_warning, issues_critical = ac_issues.get_issues(self.request)
         pending_entries: List[Tuple[AutoconfigRegistration, SettingsDevice]] = \
             await AutoconfigRegistrationHelper.get_pending(self._session, self._get_instance_id())
 

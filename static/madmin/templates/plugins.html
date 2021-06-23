@@ -57,15 +57,6 @@
 {% block content %}
 <h2>Select Plugin</h2>
 <p>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-          <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-</p>
-<p>
      {% for item in plugin_hotlinks %}
         <div class="plugin_group">
             <div class="plugin_author">{{item}}</div>

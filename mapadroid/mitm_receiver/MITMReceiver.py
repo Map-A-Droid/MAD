@@ -49,7 +49,7 @@ class MITMReceiver:
         self._app["mitm_mapper"] = self.__mitm_mapper
         self._app["mitmreceiver_startup_time"] = self.__mitmreceiver_startup_time
         self._app["data_queue"] = self._data_queue
-        self._app["storage_obj"] = None  # TODO
+        self._app["storage_obj"] = self._storage_obj  # TODO
 
         register_autoconfig_endpoints(self._app)
         register_mitm_receiver_root_endpoints(self._app)
@@ -61,8 +61,8 @@ class MITMReceiver:
             site: UnixSite = web.UnixSite(runner, self.__application_args.mitm_unix_socket)
             logger.info("MITMReceiver starting at {}", self.__application_args.mitm_unix_socket)
         else:
-            site: TCPSite = web.TCPSite(runner, "127.0.0.1", self.__application_args.mitmreceiver_port)
-            logger.info('MITMReceiver starting at http://127.0.0.1:' + str(self.__application_args.mitmreceiver_port))
+            site: TCPSite = web.TCPSite(runner, "0.0.0.0", self.__application_args.mitmreceiver_port)
+            logger.info('MITMReceiver starting at http://0.0.0.0:' + str(self.__application_args.mitmreceiver_port))
         await site.start()
         # TODO: Return runner and call     await runner.cleanup()
         logger.info('Finished madmin')
