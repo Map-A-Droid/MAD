@@ -257,7 +257,7 @@ class APKWizard(object):
         """
         update_available = False
         try:
-            (packages, status) = await lookup_package_info(self.storage, package)
+            packages = await lookup_package_info(self.storage, package)
         except ValueError:
             packages = None
         curr_info = packages[architecture] if packages else None
@@ -268,11 +268,11 @@ class APKWizard(object):
             installed_size = None
             curr_info_logstring = ''
         timeout = aiohttp.ClientTimeout(total=10)
-        mirror_size = "-1"
+        mirror_size = -1
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.head(url, headers=APK_HEADERS, allow_redirects=True) as resp:
-                    mirror_size = str(int(resp.headers.get('Content-Length')))
+                    mirror_size = int(resp.headers.get('Content-Length'))
 
         except (ClientConnectionError, asyncio.exceptions.TimeoutError) as e:
             logger.warning("Connecting to {} failed: {}", url, str(e))
@@ -284,7 +284,7 @@ class APKWizard(object):
             update_available = True
         else:
             logger.info('No newer version found (installed version {} of size {})', curr_info.version, curr_info.size)
-        await self.set_last_searched(package, architecture, version=mirror_size, url=url)
+        await self.set_last_searched(package, architecture, version=str(mirror_size), url=url)
         return update_available
 
     async def find_latest_pd(self, architecture: APKArch) -> Optional[bool]:
