@@ -26,11 +26,10 @@ from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
+from mapadroid.utils.logging import get_origin_logger
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
-
-logger = get_logger(LoggerEnums.database)
+from loguru import logger
 
 
 class DbPogoProtoSubmit:
@@ -77,47 +76,47 @@ class DbPogoProtoSubmit:
 
                 # get known spawn end time and feed into despawn time calculation
                 #getdetspawntime = self._get_detected_endtime(str(spawnid))
+                spawnpoint: Optional[TrsSpawn] = await TrsSpawnHelper.get(session, spawnid)
+                despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp)
+                despawn_time = datetime.utcfromtimestamp(despawn_time_unix)
+
+                if spawnpoint is None:
+                    origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", mon_id, lat, lon,
+                                         despawn_time.strftime("%Y-%m-%d %H:%M:%S"), spawnid)
+                else:
+                    origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
+                                         despawn_time.strftime("%Y-%m-%d %H:%M:%S"), spawnid)
+
+                cache_key = "mon{}".format(encounter_id)
+                if await cache.exists(cache_key):
+                    continue
                 async with session.begin_nested() as nested_transaction:
-                    try:
-                        spawnpoint: Optional[TrsSpawn] = await TrsSpawnHelper.get(session, spawnid)
-                        despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp)
-                        despawn_time = datetime.utcfromtimestamp(despawn_time_unix)
-
-                        if spawnpoint is None:
-                            origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", mon_id, lat, lon,
-                                                 despawn_time.strftime("%Y-%m-%d %H:%M:%S"), spawnid)
-                        else:
-                            origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
-                                                 despawn_time.strftime("%Y-%m-%d %H:%M:%S"), spawnid)
-
-                        cache_key = "mon{}".format(encounter_id)
-                        if await cache.exists(cache_key):
-                            continue
-                        mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
-                        if not mon:
-                            mon: Pokemon = Pokemon()
-                            mon.encounter_id = encounter_id
-                            mon.spawnpoint_id = spawnid
-                            mon.pokemon_id = mon_id
-                            mon.latitude = lat
-                            mon.longitude = lon
-                            mon.disappear_time = despawn_time
-                            mon.individual_attack = mon.individual_defense = mon.individual_stamina = None
-                            mon.move_1 = mon.move_2 = mon.cp = mon.cp_multiplier = mon.weight = mon.height = None
-                            mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
-                            mon.catch_prob_1 = mon.catch_prob_2 = mon.catch_prob_3 = None
-                            mon.rating_attack = mon.rating_defense = None
-                            mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
-                            mon.costume = wild_mon["pokemon_data"]["display"]["costume_value"]
-                            mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
-                        mon.last_modified = datetime.utcnow()
+                    mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
+                    if not mon:
+                        mon: Pokemon = Pokemon()
+                        mon.encounter_id = encounter_id
+                        mon.spawnpoint_id = spawnid
+                        mon.pokemon_id = mon_id
+                        mon.latitude = lat
+                        mon.longitude = lon
                         mon.disappear_time = despawn_time
-                        await session.merge(mon)
+                        mon.individual_attack = mon.individual_defense = mon.individual_stamina = None
+                        mon.move_1 = mon.move_2 = mon.cp = mon.cp_multiplier = mon.weight = mon.height = None
+                        mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
+                        mon.catch_prob_1 = mon.catch_prob_2 = mon.catch_prob_3 = None
+                        mon.rating_attack = mon.rating_defense = None
+                        mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
+                        mon.costume = wild_mon["pokemon_data"]["display"]["costume_value"]
+                        mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
+                    mon.last_modified = datetime.utcnow()
+                    mon.disappear_time = despawn_time
+                    await session.merge(mon)
 
+                    try:
+                        await nested_transaction.commit()
                         cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                         if cache_time > 0:
                             await cache.set(cache_key, 1, expire=cache_time)
-                        await nested_transaction.commit()
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.warning("Failed committing mon {} ({})", encounter_id, str(e))
                         await nested_transaction.rollback()
@@ -331,9 +330,9 @@ class DbPogoProtoSubmit:
                 return True
             async with session.begin_nested() as nested_transaction:
                 try:
-                    await cache.set(cache_key, 1, expire=900)
                     await session.merge(stop)
                     await nested_transaction.commit()
+                    await cache.set(cache_key, 1, expire=900)
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed committing stop details of {} ({})", stop.pokestop_id, str(e))
                     await nested_transaction.rollback()
@@ -439,35 +438,35 @@ class DbPogoProtoSubmit:
                     cache_key = "gym{}{}".format(gymid, last_modified_ts)
                     if await cache.exists(cache_key):
                         continue
+
+                    gym_obj: Optional[Gym] = await GymHelper.get(session, gymid)
+                    if not gym_obj:
+                        gym_obj: Gym = Gym()
+                        gym_obj.gym_id = gymid
+                    gym_obj.team_id = team_id
+                    gym_obj.guard_pokemon_id = guard_pokemon_id
+                    gym_obj.slots_available = slots_available
+                    gym_obj.enabled = 1 # TODO: read in proto?
+                    gym_obj.latitude = latitude
+                    gym_obj.longitude = longitude
+                    gym_obj.total_cp = 0 # TODO: Read from proto..
+                    gym_obj.is_in_battle = 0
+                    gym_obj.last_modified = last_modified
+                    gym_obj.last_scanned = datetime.utcnow()
+                    gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
+                    gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
+                    await session.merge(gym_obj)
+
+                    gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gymid)
+                    if not gym_detail:
+                        gym_detail: GymDetail = GymDetail()
+                        gym_detail.gym_id = gymid
+                        gym_detail.name = "unknown"
+                    gym_detail.url = gym.get("image_url", "")
+                    gym_detail.last_scanned = datetime.utcnow()
+                    await session.merge(gym_detail)
                     async with session.begin_nested() as nested_transaction:
                         try:
-                            gym_obj: Optional[Gym] = await GymHelper.get(session, gymid)
-                            if not gym_obj:
-                                gym_obj: Gym = Gym()
-                                gym_obj.gym_id = gymid
-                            gym_obj.team_id = team_id
-                            gym_obj.guard_pokemon_id = guard_pokemon_id
-                            gym_obj.slots_available = slots_available
-                            gym_obj.enabled = 1 # TODO: read in proto?
-                            gym_obj.latitude = latitude
-                            gym_obj.longitude = longitude
-                            gym_obj.total_cp = 0 # TODO: Read from proto..
-                            gym_obj.is_in_battle = 0
-                            gym_obj.last_modified = last_modified
-                            gym_obj.last_scanned = datetime.utcnow()
-                            gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
-                            gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
-                            await session.merge(gym_obj)
-
-                            gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gymid)
-                            if not gym_detail:
-                                gym_detail: GymDetail = GymDetail()
-                                gym_detail.gym_id = gymid
-                                gym_detail.name = "unknown"
-                            gym_detail.url = gym.get("image_url", "")
-                            gym_detail.last_scanned = datetime.utcnow()
-                            await session.merge(gym_detail)
-
                             await cache.set(cache_key, 1, expire=900)
                             await nested_transaction.commit()
                         except sqlalchemy.exc.IntegrityError as e:
@@ -575,30 +574,31 @@ class DbPogoProtoSubmit:
                     cache_key = "raid{}{}{}".format(gymid, pokemon_id, raid_end_sec)
                     if await cache.exists(cache_key):
                         continue
+
+                    raid: Optional[Raid] = await RaidHelper.get(session, gymid)
+                    if not raid:
+                        raid: Raid = Raid()
+                        raid.gym_id = gymid
+                    raid.level = level
+                    raid.spawn = raidspawn_date
+                    raid.start = raidstart_date
+                    raid.end = raidend_date
+                    raid.pokemon_id = pokemon_id
+                    raid.cp = cp
+                    raid.move_1 = move_1
+                    raid.move_2 = move_2
+                    raid.last_scanned = datetime.utcnow()
+                    raid.form = form
+                    raid.is_exclusive = is_exclusive
+                    raid.gender = gender
+                    raid.costume = costume
+                    raid.evolution = evolution
                     async with session.begin_nested() as nested_transaction:
                         try:
-                            raid: Optional[Raid] = await RaidHelper.get(session, gymid)
-                            if not raid:
-                                raid: Raid = Raid()
-                                raid.gym_id = gymid
-                            raid.level = level
-                            raid.spawn = raidspawn_date
-                            raid.start = raidstart_date
-                            raid.end = raidend_date
-                            raid.pokemon_id = pokemon_id
-                            raid.cp = cp
-                            raid.move_1 = move_1
-                            raid.move_2 = move_2
-                            raid.last_scanned = datetime.utcnow()
-                            raid.form = form
-                            raid.is_exclusive = is_exclusive
-                            raid.gender = gender
-                            raid.costume = costume
-                            raid.evolution = evolution
                             await session.merge(raid)
 
-                            await cache.set(cache_key, 1, expire=900)
                             await nested_transaction.commit()
+                            await cache.set(cache_key, 1, expire=900)
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.warning("Failed committing raid for gym {} ({})", gymid, str(e))
                             await nested_transaction.rollback()
@@ -712,27 +712,27 @@ class DbPogoProtoSubmit:
                 incident_expiration = datetime.utcfromtimestamp(expiration_ms / 1000).strftime(
                     "%Y-%m-%d %H:%M:%S")
         stop_id = stop_data["id"]
+
+        pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_id)
+        if not pokestop:
+            pokestop: Pokestop = Pokestop()
+            pokestop.pokestop_id = stop_id
+        pokestop.enabled = 1 # TODO: Shouldn't this be in the proto?
+        pokestop.latitude = stop_data["latitude"]
+        pokestop.longitude = stop_data["longitude"]
+        pokestop.last_modified = last_modified
+        pokestop.lure_expiration = lure
+        pokestop.last_updated = now
+        pokestop.active_fort_modifier = active_fort_modifier
+        pokestop.incident_start = incident_start
+        pokestop.incident_expiration = incident_expiration
+        pokestop.incident_grunt_type = incident_grunt_type
+        pokestop.is_ar_scan_eligible = is_ar_scan_eligible
         async with session.begin_nested() as nested_transaction:
             try:
-                pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_id)
-                if not pokestop:
-                    pokestop: Pokestop = Pokestop()
-                    pokestop.pokestop_id = stop_id
-                pokestop.enabled = 1 # TODO: Shouldn't this be in the proto?
-                pokestop.latitude = stop_data["latitude"]
-                pokestop.longitude = stop_data["longitude"]
-                pokestop.last_modified = last_modified
-                pokestop.lure_expiration = lure
-                pokestop.last_updated = now
-                pokestop.active_fort_modifier = active_fort_modifier
-                pokestop.incident_start = incident_start
-                pokestop.incident_expiration = incident_expiration
-                pokestop.incident_grunt_type = incident_grunt_type
-                pokestop.is_ar_scan_eligible = is_ar_scan_eligible
-
-                await cache.set(cache_key, 1, expire=900)
                 await session.merge(pokestop)
                 await nested_transaction.commit()
+                await cache.set(cache_key, 1, expire=900)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing stop {} ({})", stop_id, str(e))
                 await nested_transaction.rollback()
