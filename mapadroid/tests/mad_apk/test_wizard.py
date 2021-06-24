@@ -5,7 +5,6 @@ from mapadroid.mad_apk import APKArch, APKType, APKWizard, WizardError
 from mapadroid.mad_apk.wizard import InvalidDownload
 from mapadroid.tests.mad_apk.base_storage import StorageBase, upload_package
 from mapadroid.tests.test_utils import GetStorage, get_connection_api
-from mapadroid.utils.gplay_connector import GPlayConnector
 
 TEST_GPLAY_RESPONSE = io.BytesIO(b"Dummy File")
 

@@ -14,7 +14,6 @@ import urllib3
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from aiohttp import ClientConnectionError, ClientError
 from mapadroid.utils import global_variables
-from mapadroid.utils.gplay_connector import GPlayConnector
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.functions import get_version_codes
 
@@ -58,7 +57,6 @@ class APKWizard(object):
         _db_wrapper: Database wrapper
         storage: Abstract storage element for interacting with storage medium
     """
-    gpconn: GPlayConnector
     storage: AbstractAPKStorage
 
     def __init__(self, db_wrapper: DbWrapper, storage: AbstractAPKStorage):

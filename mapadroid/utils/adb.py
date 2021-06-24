@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import time
@@ -83,7 +84,7 @@ class ADBConnect(object):
             origin_logger.exception('MADmin: Exception occurred while making screenshot: {}.', e)
         return False
 
-    def make_screenclick(self, adb, origin, position_x, position_y):
+    async def make_screenclick(self, adb, origin, position_x, position_y):
         if not adb:
             return False
         origin_logger = get_origin_logger(logger, origin=origin)
@@ -92,13 +93,13 @@ class ADBConnect(object):
             if device is not None:
                 device.shell("input tap " + str(position_x) + " " + str(position_y))
                 origin_logger.info('MADMin ADB Click x:{} y:{}', position_x, position_y)
-                time.sleep(1)
+                await asyncio.sleep(1)
                 return True
         except Exception as e:
             origin_logger.exception('MADmin: Exception occurred while making screenclick: {}.', e)
         return False
 
-    def make_screenswipe(self, adb, origin, position_x, position_y, swipe_x, swipe_y):
+    async def make_screenswipe(self, adb, origin, position_x, position_y, swipe_x, swipe_y):
         if not adb:
             return False
         origin_logger = get_origin_logger(logger, origin=origin)
@@ -108,13 +109,13 @@ class ADBConnect(object):
                 device.shell("input swipe " + str(position_x) + " " +
                              str(position_y) + " " + str(swipe_x) + " " + str(swipe_y) + " 100")
                 origin_logger.info('MADMin ADB Swipe x:{} y:{} xe:{} ye:{}', position_x, position_y, swipe_x, swipe_y)
-                time.sleep(1)
+                await asyncio.sleep(1)
                 return True
         except Exception as e:
             origin_logger.exception('MADmin: Exception occurred while making screenswipe: {}.', e)
         return False
 
-    def push_file(self, adb, origin, filename):
+    async def push_file(self, adb, origin, filename):
         if not adb:
             return False
         origin_logger = get_origin_logger(logger, origin=origin)
@@ -123,7 +124,7 @@ class ADBConnect(object):
             if device is not None:
                 device.shell("adb push  " + str(filename) + " /sdcard/Download")
                 origin_logger.info('MADMin ADB Push File {}', filename)
-                time.sleep(1)
+                await asyncio.sleep(1)
                 return True
         except Exception as e:
             origin_logger.exception('MADmin: Exception occurred while pushing file: {}.', e)
