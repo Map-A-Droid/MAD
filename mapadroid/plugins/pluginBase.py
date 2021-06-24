@@ -35,7 +35,7 @@ class Plugin(ABC):
         self.pluginname = self._versionconfig.get("plugin", "pluginname", fallback="https://www.maddev.eu")
 
         # Modify the template and static loader of jinja2 to also consider the directories of the plugin
-        env = aiohttp_jinja2.get_env(self._mad_parts["madmin"]._app)
+        env = aiohttp_jinja2.get_env(self._mad_parts["madmin"].get_app())
         paths = copy(env.loader.searchpath)
         paths.append(self.templatepath)
         env.loader = jinja2.FileSystemLoader(paths)

@@ -116,6 +116,9 @@ class MADmin(object):
         register_routes_event_endpoints(self._app)
         register_routes_statistics_endpoints(self._app)
 
+    def get_app(self) -> web.Application:
+        return self._app
+
     def register_plugin(self, base_uri_appendix: str, app: web.Application):
         self._app.add_subapp("/" + base_uri_appendix + "/", app)
         self._app[base_uri_appendix] = app
