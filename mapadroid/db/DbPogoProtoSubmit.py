@@ -199,7 +199,6 @@ class DbPogoProtoSubmit:
 
                 """
                 if self._args.nearby_spawn_matching:
-                    #possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
                     query_spawns = (
                         "SELECT last_non_scanned, "
                         "spawndef, calc_endminsec, latitude, longitude, spawnpoint "
