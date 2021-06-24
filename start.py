@@ -277,7 +277,7 @@ async def start():
     plugin_parts = {
         'args': args,
         'db_wrapper': db_wrapper,
-        'device_Updater': device_updater,
+        'device_updater': device_updater,
         'event': event,
         'jobstatus': jobstatus,
         'logger': get_logger(LoggerEnums.plugin),
@@ -290,17 +290,14 @@ async def start():
         'ws_server': ws_server,
         'mitm_data_processor_manager': mitm_data_processor_manager
     }
-    # TODO: Restore functionality
+
     mad_plugins = PluginCollection('plugins', plugin_parts)
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added
-    await madmin.madmin_start()
 
-    # if not args.disable_madmin or args.config_mode:
-    #     logger.info("Starting Madmin on port {}", str(args.madmin_port))
-     #   t_madmin = Thread(name="madmin", target=madmin.madmin_start)
-     #   t_madmin.daemon = True
-     #   t_madmin.start()
+    if not args.disable_madmin or args.config_mode:
+        logger.info("Starting Madmin on port {}", str(args.madmin_port))
+        madmin_app_runner = await madmin.madmin_start()
 
     logger.info("MAD is now running.....")
     exit_code = 0
