@@ -1,3 +1,4 @@
+import asyncio
 import time
 from typing import List, Optional
 
@@ -33,8 +34,8 @@ class RouteManagerQuests(RouteManagerBase):
         self._routecopy: List[Location] = []
         self._tempinit: bool = False
 
-    def generate_stop_list(self):
-        time.sleep(5)
+    async def generate_stop_list(self):
+        await asyncio.sleep(5)
         stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
 
         self.logger.info('Detected stops without quests: {}', len(stops))
@@ -74,7 +75,7 @@ class RouteManagerQuests(RouteManagerBase):
                 self.logger.info("Another process already calculate the new route")
                 return True
             self._start_calc = True
-            self.generate_stop_list()
+            await self.generate_stop_list()
             if len(self._stoplist) == 0:
                 self.logger.info("Dont getting new stops - leaving now.")
                 self._shutdown_route = True
@@ -139,7 +140,7 @@ class RouteManagerQuests(RouteManagerBase):
                     self.logger.info('Other worker shutdown - leaving it')
                     return False
 
-                self.generate_stop_list()
+                await self.generate_stop_list()
                 stops = self._stoplist
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None
