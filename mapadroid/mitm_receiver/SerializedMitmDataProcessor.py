@@ -7,9 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
-
-logger = get_logger(LoggerEnums.mitm)
+from mapadroid.utils.logging import get_origin_logger
+from loguru import logger
 
 
 class SerializedMitmDataProcessor:
@@ -26,29 +25,30 @@ class SerializedMitmDataProcessor:
     async def run(self):
         logger.info("Starting serialized MITM data processor")
         # TODO: use event to stop... Remove try/catch...
-        while True:
-            try:
-                item = await self.__queue.get()
-                if item is None:
-                    logger.info("Received signal to stop MITM data processor")
+        with logger.contextualize(name=self.__name):
+            while True:
+                try:
+                    item = await self.__queue.get()
+                    if item is None:
+                        logger.info("Received signal to stop MITM data processor")
+                        break
+                    start_time = self.get_time_ms()
+                    async with self.__db_wrapper as session, session:
+                        async with session.begin() as transaction:
+                            try:
+                                await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
+                                await session.commit()
+                            except Exception as e:
+                                logger.info("Failed processing data... {}", e)
+                                logger.exception(e)
+                                await transaction.rollback()
+                    # await self.process_data(item[0], item[1], item[2])
+                    self.__queue.task_done()
+                    end_time = self.get_time_ms() - start_time
+                    logger.debug("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
+                except KeyboardInterrupt:
+                    logger.info("Received keyboard interrupt, stopping MITM data processor")
                     break
-                start_time = self.get_time_ms()
-                # TODO: Tidy up... Do we even want to await the result? maybe just keep track of the amount of parallel tasks? The majority of waiting will be the DB...
-                async with self.__db_wrapper as session, session:
-                    async with session.begin() as transaction:
-                        try:
-                            await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
-                        except Exception as e:
-                            logger.info("Failed processing data... {}", e)
-                            logger.exception(e)
-                            await transaction.rollback()
-                # await self.process_data(item[0], item[1], item[2])
-                self.__queue.task_done()
-                end_time = self.get_time_ms() - start_time
-                logger.debug("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
-            except KeyboardInterrupt:
-                logger.info("Received keyboard interrupt, stopping MITM data processor")
-                break
 
     #@logger.catch
     async def process_data(self, session: AsyncSession, received_timestamp, data, origin):

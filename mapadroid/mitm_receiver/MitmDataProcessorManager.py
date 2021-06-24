@@ -57,7 +57,7 @@ class MitmDataProcessorManager():
                 self._args,
                 self._mitm_mapper,
                 self._db_wrapper,
-                name="SerialiedMitmDataProcessor-%s" % str(i))
+                name="DataProc-%s" % str(i))
             # TODO: Own thread/loop?
             self._worker_threads.append(loop.create_task(data_processor.run()))
 
