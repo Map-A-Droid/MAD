@@ -5,7 +5,6 @@ import gc
 import logging
 import os
 import sys
-import time
 from multiprocessing import Process
 from threading import Thread, active_count
 from typing import Optional
@@ -15,8 +14,6 @@ import psutil
 
 from mapadroid.db.DbFactory import DbFactory
 
-# TODO: Get MADmin running
-# from mapadroid.madmin.madmin import MADmin
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
 from mapadroid.mad_apk import get_storage_obj
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
@@ -31,6 +28,7 @@ from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging, Inter
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.mapping_manager.MappingManager import MappingManager
 # from mapadroid.utils.pluginBase import PluginCollection
+from mapadroid.plugins.pluginBase import PluginCollection
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.utils.walkerArgs import parse_args
@@ -274,7 +272,6 @@ async def start():
             t_usage = loop.create_task(get_system_infos(db_wrapper), name="system")
 
     madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
-    await madmin.madmin_start()
 
     # starting plugin system
     plugin_parts = {
@@ -284,18 +281,20 @@ async def start():
         'event': event,
         'jobstatus': jobstatus,
         'logger': get_logger(LoggerEnums.plugin),
-        # 'madmin': madmin,
+        'madmin': madmin,
         'mapping_manager': mapping_manager,
         'mitm_mapper': mitm_mapper,
         'mitm_receiver_process': mitm_receiver_process,
-        # 'storage_elem': storage_elem,
+        'storage_elem': storage_elem,
         'webhook_worker': webhook_worker,
         'ws_server': ws_server,
-    #    'mitm_data_processor_manager': mitm_data_processor_manager
+        'mitm_data_processor_manager': mitm_data_processor_manager
     }
     # TODO: Restore functionality
-    # mad_plugins = PluginCollection('plugins', plugin_parts)
+    mad_plugins = PluginCollection('plugins', plugin_parts)
     # mad_plugins.apply_all_plugins_on_value()
+    # MADmin needs to be started after sub-applications (plugins) have been added
+    await madmin.madmin_start()
 
     # if not args.disable_madmin or args.config_mode:
     #     logger.info("Starting Madmin on port {}", str(args.madmin_port))

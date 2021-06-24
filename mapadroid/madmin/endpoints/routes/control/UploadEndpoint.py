@@ -2,7 +2,7 @@ import os
 
 import aiohttp_jinja2
 from aiohttp import MultipartReader, web
-from aiohttp_jinja2.helpers import url_for
+from aiofile import async_open
 from werkzeug.utils import secure_filename
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
@@ -37,14 +37,13 @@ class UploadEndpoint(AbstractControlEndpoint):
         filename = secure_filename(file.filename)
         # You cannot rely on Content-Length if transfer is chunked.
         size = 0
-        with open(os.path.join(self._get_mad_args().upload_path, filename), 'wb') as f:
+        async with async_open(os.path.join(self._get_mad_args().upload_path, filename), 'wb') as f:
             while True:
                 chunk = await file.read_chunk()  # 8192 bytes by default.
                 if not chunk:
                     break
                 size += len(chunk)
-                # TODO: Async exec?
-                f.write(chunk)
+                await f.write(chunk)
 
         await self._add_notice_message('File uploaded successfully')
         raise web.HTTPFound(self._url_for("uploaded_files"))

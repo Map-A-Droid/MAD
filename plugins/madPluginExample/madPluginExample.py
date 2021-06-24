@@ -1,10 +1,10 @@
 import os
 
-import mapadroid.utils.pluginBase
+import mapadroid.plugins.pluginBase
 from mapadroid.madmin.functions import auth_required
 
 
-class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
+class MadPluginExample(mapadroid.plugins.pluginBase.Plugin):
     """This plugin is just the identity function: it returns the argument
     """
     def __init__(self, mad):

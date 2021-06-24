@@ -155,3 +155,4 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         if query is None:
             query = {}
         return self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
+
