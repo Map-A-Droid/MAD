@@ -54,7 +54,7 @@ class Plugin(ABC):
         plugin_subapp['websocket_server'] = self._mad_parts["ws_server"]
         plugin_subapp["plugin_hotlink"] = self._mad_parts['madmin'].get_plugin_hotlink()
         plugin_subapp["storage_obj"] = self._mad_parts["storage_elem"]
-        plugin_subapp['device_updater'] = self._mad_parts["device_Updater"]
+        plugin_subapp['device_updater'] = self._mad_parts["device_updater"]
         return plugin_subapp
 
     def register_app(self):
@@ -107,7 +107,7 @@ class PluginCollection(object):
         self._plugins_subapp['websocket_server'] = self._mad_parts["ws_server"]
         self._plugins_subapp["plugin_hotlink"] = self._mad_parts['madmin'].get_plugin_hotlink()
         self._plugins_subapp["storage_obj"] = self._mad_parts["storage_elem"]
-        self._plugins_subapp['device_updater'] = self._mad_parts["device_Updater"]
+        self._plugins_subapp['device_updater'] = self._mad_parts["device_updater"]
         register_plugin_endpoints(self._plugins_subapp)
 
         self.__load_plugins()

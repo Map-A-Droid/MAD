@@ -35,7 +35,6 @@ logger = get_logger(LoggerEnums.madmin)
 class MADmin(object):
     def __init__(self, args, db_wrapper: DbWrapper, ws_server: WebsocketServer, mapping_manager: MappingManager,
                  device_updater: DeviceUpdater, jobstatus, storage_obj):
-        #app.add_template_global(name='app_config_mode', f=args.config_mode)
         # Determine if there are duplicate MACs
 
         self._db_wrapper: DbWrapper = db_wrapper
@@ -63,11 +62,6 @@ class MADmin(object):
         except Exception as e:  # noqa: E722 B001
             logger.exception(e)
             logger.opt(exception=True).critical('Unable to load MADmin component')
-
-        # TODO: Logger for madmin
-        log = logging.getLogger('werkzeug')
-        handler = InterceptHandler(log_section=LoggerEnums.madmin)
-        log.addHandler(handler)
 
         runner: web.AppRunner = web.AppRunner(self._app)
         await runner.setup()

@@ -2,10 +2,9 @@ import sys
 from typing import Optional, Tuple
 
 from mapadroid.db.model import SettingsGeofence
-from mapadroid.utils.logging import LoggerEnums, get_logger
 
-logger = get_logger(LoggerEnums.system)
 
+from loguru import logger
 # Most of the code is from RocketMap
 # https://github.com/RocketMap/RocketMap
 # Trying to import matplotlib, which is not compatible with all hardware.

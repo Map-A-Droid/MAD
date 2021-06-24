@@ -166,20 +166,20 @@ This example store the raw stats in a own table.<br><br>
     ### Add at end of file:
 
     def restartcanceledjobs(self):
-            jobLog = self._mad['device_Updater'].get_log(withautojobs=False)
+            jobLog = self._mad['device_updater'].get_log(withautojobs=False)
             ids = (self.getting_job_ids(jobLog, status='cancelled'))
             for id in ids:<br>
                     self._mad['logger'].info("Restarting cancelled job " + str(id))
-                    self._mad['device_Updater'].restart_job(str(id))
+                    self._mad['device_updater'].restart_job(str(id))
             flash("Requeued " + str(len(ids)) + " canceled job(s)")
             return redirect(url('plugins'), code=302)
 
     def restartfailedjobs(self):<br>
-            jobLog = self._mad['device_Updater'].get_log(withautojobs=False)
+            jobLog = self._mad['device_updater'].get_log(withautojobs=False)
             ids = (self.getting_job_ids(jobLog, status='failed'))
             for id in ids:<br>
                     self._mad['logger'].info("Restarting failed job " + str(id))
-                    self._mad['device_Updater'].restart_job(str(id))
+                    self._mad['device_updater'].restart_job(str(id))
             flash("Requeued " + str(len(ids)) + " failed job(s)")
             return redirect(url('plugins'), code=302)
 
