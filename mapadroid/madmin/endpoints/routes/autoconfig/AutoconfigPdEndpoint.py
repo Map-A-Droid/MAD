@@ -1,8 +1,7 @@
-from typing import List, Dict
+from typing import Dict
 
 import aiohttp_jinja2
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.model import SettingsAuth

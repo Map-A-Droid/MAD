@@ -292,7 +292,7 @@ async def start():
     }
     # TODO: Restore functionality
     mad_plugins = PluginCollection('plugins', plugin_parts)
-    # mad_plugins.apply_all_plugins_on_value()
+    await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added
     await madmin.madmin_start()
 
