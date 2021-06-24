@@ -595,6 +595,7 @@ class RouteManagerBase(ABC):
                 routepool_entry.last_position_type = PositionType.PRIO
                 route_logger.debug2("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
                                   next_coord.lng, next_readable_time)
+                self.__set_routepool_entry_location(origin, next_coord)
                 return next_coord
             except IndexError:
                 # Get next coord "normally"
@@ -685,6 +686,7 @@ class RouteManagerBase(ABC):
             next_coord = routepool_entry.queue.popleft()
             route_logger.info("Moving on with location {}, {} [{} coords left (Workerpool)]", next_coord.lat,
                               next_coord.lng, len(routepool_entry.queue) + 1)
+        self.__set_routepool_entry_location(origin, next_coord)
         return next_coord
 
     def _check_coord_and_remove_from_route_if_applicable(self, next_coord, origin) -> bool:
