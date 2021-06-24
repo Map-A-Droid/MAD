@@ -18,7 +18,7 @@ class Plugin(ABC):
     """
 
     def __init__(self, subapp_to_register_to: web.Application, mad_parts: Dict):
-        self._subapp: web.Application = subapp_to_register_to
+        self._subapp_to_register_to: web.Application = subapp_to_register_to
         self._mad_parts: Dict = mad_parts
         self._pluginconfig = configparser.ConfigParser()
         self._versionconfig = configparser.ConfigParser()
@@ -34,12 +34,32 @@ class Plugin(ABC):
         self.version = self._versionconfig.get("plugin", "version", fallback="unknown")
         self.pluginname = self._versionconfig.get("plugin", "pluginname", fallback="https://www.maddev.eu")
 
+        # Per plugin a subapp is registered in order to be able to handle static files accordingly
+        self._plugin_subapp: web.Application = self.__create_subapp()
         # Modify the template and static loader of jinja2 to also consider the directories of the plugin
         env = aiohttp_jinja2.get_env(self._mad_parts["madmin"].get_app())
         paths = copy(env.loader.searchpath)
         paths.append(self.templatepath)
         env.loader = jinja2.FileSystemLoader(paths)
-        self._subapp.router.add_static("/static", self.staticpath, append_version=True)
+        self._plugin_subapp['static_root_url'] = '/static'
+        self._plugin_subapp.router.add_static("/static", self.staticpath, append_version=True)
+
+    def __create_subapp(self) -> web.Application:
+        plugin_subapp = web.Application()
+        plugin_subapp["plugin_package"] = self._pluginconfig
+        plugin_subapp["plugins"] = self._subapp_to_register_to["plugin_package"]
+        plugin_subapp['db_wrapper'] = self._mad_parts["db_wrapper"]
+        plugin_subapp['mad_args'] = self._mad_parts["args"]
+        plugin_subapp['mapping_manager'] = self._mad_parts["mapping_manager"]
+        plugin_subapp['websocket_server'] = self._mad_parts["ws_server"]
+        plugin_subapp["plugin_hotlink"] = self._mad_parts['madmin'].get_plugin_hotlink()
+        plugin_subapp["storage_obj"] = self._mad_parts["storage_elem"]
+        plugin_subapp['device_updater'] = self._mad_parts["device_Updater"]
+        return plugin_subapp
+
+    def register_app(self):
+        self._subapp_to_register_to.add_subapp("/" + self.pluginname + "/", self._plugin_subapp)
+        self._subapp_to_register_to[self.pluginname] = self._plugin_subapp
 
     async def run(self):
         if not self._pluginconfig.getboolean("plugin", "active", fallback=False):
@@ -78,17 +98,17 @@ class PluginCollection(object):
         self.plugin_package = plugin_package
         self._mad_parts = mad_parts
         self._logger = self._mad_parts['logger']
-        self._plugin_subapp = web.Application()
-        self._plugin_subapp["plugin_package"] = plugin_package
-        self._plugin_subapp["plugins"] = self.plugins
-        self._plugin_subapp['db_wrapper'] = self._mad_parts["db_wrapper"]
-        self._plugin_subapp['mad_args'] = self._mad_parts["args"]
-        self._plugin_subapp['mapping_manager'] = self._mad_parts["mapping_manager"]
-        self._plugin_subapp['websocket_server'] = self._mad_parts["ws_server"]
-        self._plugin_subapp["plugin_hotlink"] = self._mad_parts['madmin'].get_plugin_hotlink()
-        self._plugin_subapp["storage_obj"] = self._mad_parts["storage_elem"]
-        self._plugin_subapp['device_updater'] = self._mad_parts["device_Updater"]
-        register_plugin_endpoints(self._plugin_subapp)
+        self._plugins_subapp = web.Application()
+        self._plugins_subapp["plugin_package"] = plugin_package
+        self._plugins_subapp["plugins"] = self.plugins
+        self._plugins_subapp['db_wrapper'] = self._mad_parts["db_wrapper"]
+        self._plugins_subapp['mad_args'] = self._mad_parts["args"]
+        self._plugins_subapp['mapping_manager'] = self._mad_parts["mapping_manager"]
+        self._plugins_subapp['websocket_server'] = self._mad_parts["ws_server"]
+        self._plugins_subapp["plugin_hotlink"] = self._mad_parts['madmin'].get_plugin_hotlink()
+        self._plugins_subapp["storage_obj"] = self._mad_parts["storage_elem"]
+        self._plugins_subapp['device_updater'] = self._mad_parts["device_Updater"]
+        register_plugin_endpoints(self._plugins_subapp)
 
         self.__load_plugins()
 
@@ -97,7 +117,9 @@ class PluginCollection(object):
         self.__register_to_madmin()
 
     def __register_to_madmin(self):
-        self._mad_parts['madmin'].register_plugin("custom_plugins", self._plugin_subapp)
+        for plugin in self.plugins:
+            plugin["plugin"].register_app()
+        self._mad_parts['madmin'].register_plugin("custom_plugins", self._plugins_subapp)
 
     def __load_plugins(self):
         """Reset the list of all plugins and initiate the walk over the main
@@ -132,7 +154,7 @@ class PluginCollection(object):
                         # Only add classes that are a sub class of Plugin, but NOT Plugin itself
                         if issubclass(plugin, Plugin) & (plugin is not Plugin):
                             self._logger.info(f'Found plugin class: {plugin.__name__}')
-                            self.plugins.append({"plugin": plugin(self._plugin_subapp, self._mad_parts),
+                            self.plugins.append({"plugin": plugin(self._plugins_subapp, self._mad_parts),
                                                  "path": [package for package in imported_package.__path__][0]})
 
             # Now that we have looked at all the modules in the current package, start looking

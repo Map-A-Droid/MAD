@@ -26,7 +26,12 @@ def subapp_url(context,
     query_: Optional[Dict[str, str]] = None,
     **parts: Union[str, int]
 ) -> URL:
-    app = context["app"][subapp_name]
+
+    # allows chaining of subapps...
+    subapps = subapp_name.split("/")
+    app = context["app"]
+    for subapp in subapps:
+        app = app[subapp]
 
     parts_clean: Dict[str, str] = {}
     for key in parts:
@@ -49,3 +54,31 @@ def subapp_url(context,
     if query_:
         url = url.with_query(query_)
     return url
+
+
+@jinja2.contextfunction
+def subapp_static(context, subapp_name: str, static_file_path: str) -> str:
+    """Filter for generating urls for static files.
+
+    NOTE: you'll need
+    to set app['static_root_url'] to be used as the root for the urls returned.
+
+    Usage: {{ static('styles.css') }} might become
+    "/static/styles.css" or "http://mycdn.example.com/styles.css"
+    """
+    # allows chaining of subapps...
+    subapps = subapp_name.split("/")
+    app = context["app"]
+    for subapp in subapps:
+        app = app[subapp]
+
+    try:
+        static_url = app["static_root_url"]
+    except KeyError:
+        raise RuntimeError(
+            "app does not define a static root url "
+            "'static_root_url', you need to set the url root "
+            "with app['static_root_url'] = '<static root>'."
+        ) from None
+    path = "{}/{}".format(static_url.lstrip("/").rstrip("/"), static_file_path.lstrip("/"))
+    return path

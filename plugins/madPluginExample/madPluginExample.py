@@ -22,7 +22,7 @@ class MadPluginExample(mapadroid.plugins.pluginBase.Plugin):
         ]
 
         if self._pluginconfig.getboolean("plugin", "active", fallback=False):
-            register_custom_plugin_endpoints(self._subapp)
+            register_custom_plugin_endpoints(self._plugin_subapp)
 
             for name, link, description in self._hotlink:
                 self._mad_parts['madmin'].add_plugin_hotlink(name, link.replace("/", ""),

@@ -67,7 +67,7 @@
                     <a href="{{plugin_hotlinks[item][plugin]['authorurl']}}" target="_new">{{plugin_hotlinks[item][plugin]['authorurl']}}</a></div>
                 <div class="plugin_global_description">{{plugin_hotlinks[item][plugin]['description']}}</div>
                 {% for link in plugin_hotlinks[item][plugin]['links'] %}
-                    <div class="plugin_link"><a href="{{ subapp_url("custom_plugins", link.linkurl) }}">{{link.linkname}}</a></div>
+                    <div class="plugin_link"><a href="{{ subapp_url("custom_plugins/" + plugin, link.linkurl) }}">{{link.linkname}}</a></div>
                     <div class="plugin_description">-> {{link.description}}</div>
                 {% endfor %}
             {% endfor %}
