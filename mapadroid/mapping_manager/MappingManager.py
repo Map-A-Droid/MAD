@@ -503,7 +503,7 @@ class MappingManager:
                 'active': active
             }
             loop = asyncio.get_running_loop()
-            loop.create_task(coro=routemanager.recalc_route_adhoc(*args, **kwargs), name=routemanager.name)
+            loop.create_task(coro=routemanager.recalc_route_adhoc(*args, **kwargs))
         except Exception:
             logger.opt(exception=True).error('Unable to start recalculation')
         return successful

@@ -605,7 +605,7 @@ class WebhookWorker:
 
     async def start(self) -> Task:
         loop = asyncio.get_running_loop()
-        return loop.create_task(self.__run_worker(), name="system")
+        return loop.create_task(self.__run_worker())
 
     async def __run_worker(self):
         logger.info("Starting webhook worker thread")
