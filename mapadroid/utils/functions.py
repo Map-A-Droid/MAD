@@ -1,3 +1,5 @@
+import asyncio
+import concurrent
 import datetime
 import json
 import os
@@ -25,6 +27,14 @@ def generate_path(path):
 
 async def image_resize(image, savepath, width=None, height=None):
     # TODO: Async exec
+    loop = asyncio.get_running_loop()
+    with concurrent.futures.ProcessPoolExecutor() as pool:
+        result = await loop.run_in_executor(
+            pool, _process_image_resize, (image, savepath, width,))
+        print('custom process pool', result)
+
+
+def _process_image_resize(image, savepath, width):
     basewidth = width
     filename = os.path.basename(image)
     with Image.open(image) as img:
@@ -33,8 +43,6 @@ async def image_resize(image, savepath, width=None, height=None):
         img = img.resize((basewidth, hsize), Image.ANTIALIAS)
         pre, _ = os.path.splitext(filename)
         img.save(os.path.join(savepath, str(pre) + '.jpg'))
-
-    return True
 
 
 def pngtojpg(image):
