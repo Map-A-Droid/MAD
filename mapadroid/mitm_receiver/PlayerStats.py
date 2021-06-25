@@ -41,7 +41,7 @@ class PlayerStats(object):
     def get_poke_stop_visits(self) -> int:
         return self._poke_stop_visits
 
-    def gen_player_stats(self, data: dict) -> None:
+    async def gen_player_stats(self, data: dict) -> None:
         if 'inventory_delta' not in data:
             self._logger.debug2('gen_player_stats cannot generate new stats')
             return
@@ -66,7 +66,7 @@ class PlayerStats(object):
                               'w') as outfile:
                         await outfile.write(json.dumps(data, indent=4, sort_keys=True))
 
-    def open_player_stats(self):
+    async def open_player_stats(self):
         statsfile = Path(os.path.join(
             self.__application_args.file_path, str(self._id) + '.stats'))
         try:

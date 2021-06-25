@@ -115,7 +115,7 @@ class SerializedMitmDataProcessor:
                 origin_logger.debug("Done processing proto 104 in {}ms", end_time)
             elif data_type == 4:
                 origin_logger.debug("Processing proto 4 (GET_HOLO_INVENTORY)")
-                self.__mitm_mapper.generate_player_stats(origin, data["payload"])
+                await self.__mitm_mapper.generate_player_stats(origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
                 origin_logger.debug("Done processing proto 4 in {}ms", end_time)
             elif data_type == 156:

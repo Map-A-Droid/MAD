@@ -42,12 +42,12 @@ class MitmMapper(object):
         if self.__mapping_manager is not None:
             devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = await self.__mapping_manager.get_all_devicemappings()
             for origin in devicemappings.keys():
-                self.__add_new_device(origin)
+                await self.__add_new_device(origin)
 
-    def __add_new_device(self, origin: str) -> None:
+    async def __add_new_device(self, origin: str) -> None:
         self.__mapping[origin] = {}
         self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
-        self.__playerstats[origin].open_player_stats()
+        await self.__playerstats[origin].open_player_stats()
 
     async def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
         if self.__application_args.game_stats:
@@ -157,10 +157,10 @@ class MitmMapper(object):
         origin_logger.debug2("Trying to acquire lock and update proto {}", key)
         async with self.__mapping_mutex:
             loop = asyncio.get_event_loop()
-            devicemappings = loop.create_task(self.__mapping_manager.get_all_devicemappings())
-            if origin not in self.__mapping.keys() and origin in devicemappings.result().keys():
+            devicemappings = await self.__mapping_manager.get_all_devicemappings()
+            if origin not in self.__mapping.keys() and origin in devicemappings.keys():
                 origin_logger.info("New device detected.  Setting up the device configuration")
-                self.__add_new_device(origin)
+                await self.__add_new_device(origin)
             if origin in self.__mapping.keys():
                 origin_logger.debug2("Updating timestamp at {} with method {} to {}", location, key,
                                      timestamp_received_raw)
@@ -234,9 +234,9 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).stats_collect_quest(stop_id)
 
-    def generate_player_stats(self, origin: str, inventory_proto: dict):
+    async def generate_player_stats(self, origin: str, inventory_proto: dict):
         if self.__playerstats.get(origin, None) is not None:
-            self.__playerstats.get(origin).gen_player_stats(inventory_proto)
+            await self.__playerstats.get(origin).gen_player_stats(inventory_proto)
 
     def submit_gmo_for_location(self, origin, payload):
         origin_logger = get_origin_logger(logger, origin=origin)
