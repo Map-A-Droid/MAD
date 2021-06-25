@@ -119,7 +119,7 @@ class WorkerBase(AbstractWorker, ABC):
             self._applicationArgs.temp_path, screenshot_filename)
 
     async def check_max_walkers_reached(self):
-        if not self._walker :
+        if not self._walker:
             return True
         reg_workers = await self._mapping_manager.routemanager_get_registered_workers(self._routemanager_id)
         if self._walker.max_walkers and len(reg_workers) > int(self._walker.max_walkers): # TODO: What if 0?
@@ -274,6 +274,7 @@ class WorkerBase(AbstractWorker, ABC):
                                                                  worker_name=self._origin,
                                                                  lat=float(startcoords[0]),
                                                                  lon=float(startcoords[1]))
+        self.logger.info("Worker starting actual work")
 
         async with self._work_mutex:
             try:

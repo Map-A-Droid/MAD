@@ -69,8 +69,9 @@ class MADmin(object):
             site: UnixSite = web.UnixSite(runner, self._args.madmin_unix_socket)
             logger.info("Madmin starting at {}", self._args.madmin_unix_socket)
         else:
-            site: TCPSite = web.TCPSite(runner, "127.0.0.1", 5000)
-            logger.info('Madmin starting at http://127.0.0.1:5000')
+
+            site: TCPSite = web.TCPSite(runner, self._args.madmin_ip, self._args.madmin_port)
+            logger.info('Madmin starting at http://{}:{}', self._args.madmin_ip, self._args.madmin_port)
         await site.start()
         # TODO: Return runner and call     await runner.cleanup()
         logger.info('Finished madmin')
