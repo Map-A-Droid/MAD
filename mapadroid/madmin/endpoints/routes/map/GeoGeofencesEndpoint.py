@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
@@ -18,7 +18,10 @@ class GetGeofencesEndpoint(AbstractControlEndpoint):
                                                                                              self._get_instance_id())
         export = []
         for geofence_id, geofence in geofences.items():
-            geofence_helper = GeofenceHelper(geofence, None, geofence.name)
+            geofence_helper: Optional[GeofenceHelper] = self._get_geofence_helper(geofence_id)
+            if not geofence_helper:
+                geofence_helper = GeofenceHelper(geofence, None, geofence.name)
+                self._add_geofence_helper(geofence_id, geofence_helper)
             if len(geofence_helper.geofenced_areas) == 1:
                 geofenced_area = geofence_helper.geofenced_areas[0]
                 if "polygon" in geofenced_area:
@@ -29,3 +32,4 @@ class GetGeofencesEndpoint(AbstractControlEndpoint):
                     })
 
         return self._json_response(export)
+

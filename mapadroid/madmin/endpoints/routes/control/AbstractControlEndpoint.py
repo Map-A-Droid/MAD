@@ -1,11 +1,12 @@
 import datetime
 import os
 from abc import ABC
-from typing import Optional
+from typing import Optional, Dict
 
 from aiohttp.abc import Request
 
 import mapadroid
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
@@ -57,7 +58,16 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         filename = generate_device_screenshot_path(mapping_entry.device_settings.name, mapping_entry,
                                                    self._get_mad_args())
         await temp_comm.get_screenshot(filename, screenshot_quality, screenshot_type)
-
-        # TODO: Async
         await image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path, "madmin"),
                            width=250)
+
+    def _add_geofence_helper(self, geofence_id, geofence_helper):
+        geofence_helpers: Optional[Dict[int, GeofenceHelper]] = self.request.get("geofence_helpers", None)
+        if not geofence_helpers:
+            self.request["geofence_helpers"] = {}
+        if geofence_id not in self.request["geofence_helpers"]:
+            self.request["geofence_helpers"][geofence_id] = geofence_helper
+
+    def _get_geofence_helper(self, geofence_id) -> Optional[GeofenceHelper]:
+        geofence_helpers: Optional[Dict[int, GeofenceHelper]] = self.request.get("geofence_helpers", {})
+        return geofence_helpers.get(geofence_id, None)

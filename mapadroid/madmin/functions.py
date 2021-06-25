@@ -150,9 +150,9 @@ async def get_geofences(mapping_manager: MappingManager, session: AsyncSession, 
                                                                                              area_entry.geofence_excluded)
         if fence_type is not None and area_entry.settings.mode != fence_type:
             continue
-        # TODO: json.loads?
-        # area_geofences = GeofenceHelper(geofence_included.fence_data, geofence_excluded.fence_data, area['name'])
-        area_geofences = GeofenceHelper(geofence_included, geofence_excluded, area_entry.settings.name)
+
+        # area_geofences = GeofenceHelper(geofence_included, geofence_excluded, area_entry.settings.name)
+        area_geofences = await mapping_manager.routemanager_get_geofence_helper(area_id)
         include = {}
         exclude = {}
         for fences in area_geofences.geofenced_areas:
