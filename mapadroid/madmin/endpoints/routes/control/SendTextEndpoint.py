@@ -29,7 +29,7 @@ class SendTextEndpoint(AbstractControlEndpoint):
         if len(text) == 0:
             return 'Empty text'
         # origin_logger.info('MADmin: Send text')
-        if useadb == 'True' and self._adb_connect.send_shell_command(devicemapping.device_settings.adbname,
+        if useadb == 'True' and await self._adb_connect.send_shell_command(devicemapping.device_settings.adbname,
                                                                      origin, 'input text "' + text + '"'):
             # origin_logger.info('MADmin: Send text successfully')
             pass

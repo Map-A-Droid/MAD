@@ -1,12 +1,14 @@
+import asyncio
 import datetime
 import os
 from abc import ABC
-from typing import Optional, Dict
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional
 
 from aiohttp.abc import Request
+from PIL import Image
 
 import mapadroid
-from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
@@ -14,6 +16,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType
+from loguru import logger
 
 
 class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
@@ -43,7 +46,7 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
             pass
         else:
             await self._generate_screenshot(devicemapping)
-
+        logger.info("Done taking screenshot")
         return datetime.datetime.fromtimestamp(
             creation_date(filename)).strftime(self._datetimeformat)
 
@@ -60,3 +63,15 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         await temp_comm.get_screenshot(filename, screenshot_quality, screenshot_type)
         await image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path, "madmin"),
                            width=250)
+
+    def _process_read_screenshot_size(self, filename):
+        with Image.open(filename) as screenshot:
+            width, height = screenshot.size
+        return height, width
+
+    async def _read_screenshot_size(self, filename):
+        loop = asyncio.get_running_loop()
+        with ThreadPoolExecutor() as pool:
+            height, width = await loop.run_in_executor(
+                pool, self._process_read_screenshot_size, filename)
+        return height, width

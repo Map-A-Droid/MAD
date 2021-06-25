@@ -32,9 +32,7 @@ class SwipeScreenshotEndpoint(AbstractControlEndpoint):
             return web.Response(text="Failed clearing game data.")
 
         filename = generate_device_screenshot_path(origin, devicemapping, self._get_mad_args())
-        # TODO: Async exec
-        with Image.open(filename) as screenshot:
-            width, height = screenshot.size
+        height, width = await self._read_screenshot_size(filename)
 
         real_click_x = int(width / float(click_x))
         real_click_y = int(height / float(click_y))

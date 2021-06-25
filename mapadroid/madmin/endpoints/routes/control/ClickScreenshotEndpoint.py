@@ -1,7 +1,7 @@
 import asyncio
+import concurrent
 from typing import Optional
 
-from PIL import Image
 from aiohttp import web
 from loguru import logger
 
@@ -29,9 +29,8 @@ class ClickScreenshotEndpoint(AbstractControlEndpoint):
             logger.warning("Device {} not found.", origin)
             return web.Response(text="Failed clearing game data.")
         filename = generate_device_screenshot_path(origin, devicemapping, self._get_mad_args())
-        # TODO: Async exec
-        with Image.open(filename) as screenshot:
-            width, height = screenshot.size
+
+        height, width = await self._read_screenshot_size(filename)
 
         real_click_x = int(width / float(click_x))
         real_click_y = int(height / float(click_y))
@@ -48,3 +47,4 @@ class ClickScreenshotEndpoint(AbstractControlEndpoint):
         await asyncio.sleep(2)
         creationdate = await self._take_screenshot()
         return web.Response(text=creationdate)
+
