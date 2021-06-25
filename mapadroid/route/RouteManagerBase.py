@@ -204,21 +204,16 @@ class RouteManagerBase(ABC):
             self._workers_registered.add(worker_name)
             return True
 
-    async def unregister_worker(self, worker_name):
+    async def unregister_worker(self, worker_name, remove_routepool_entry: bool = False):
         route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         if worker_name in self._workers_registered:
             route_logger.info("unregistering from routemanager")
             self._workers_registered.remove(worker_name)
-            # TODO: Ensure the routepool should really be cleared here. What if there is only a brief disconnect?
-            #if worker_name in self._routepool:
-            #    self.logger.info("Deleting old routepool of {}", worker_name)
-            #    del self._routepool[worker_name]
         else:
-            # TODO: handle differently?
             route_logger.info("failed unregistering from routemanager since subscription was previously lifted")
-            # if worker_name in self._routepool:
-             #   self.logger.info("Deleting old routepool of {}", worker_name)
-             #   del self._routepool[worker_name]
+        if remove_routepool_entry and worker_name in self._routepool:
+            self.logger.info("Deleting old routepool of {}", worker_name)
+            del self._routepool[worker_name]
         if len(self._workers_registered) == 0 and self._is_started:
             self.logger.info("Routemanager does not have any subscribing workers anymore, calling stop", self.name)
             await self.stop_routemanager()
@@ -328,7 +323,7 @@ class RouteManagerBase(ABC):
         connected_worker_count = len(self._workers_registered)
         if connected_worker_count > 0:
             for worker in self._workers_registered.copy():
-                await self.unregister_worker(worker)
+                await self.unregister_worker(worker, True)
         else:
             await self.stop_routemanager()
 
@@ -768,7 +763,7 @@ class RouteManagerBase(ABC):
                 if time.time() - entry.last_access > timeout + entry.worker_sleeping:
                     self.logger.warning("Worker {} has not accessed a location in {} seconds, removing from "
                                         "routemanager", origin, timeout)
-                    await self.unregister_worker(origin)
+                    await self.unregister_worker(origin, True)
             await asyncio.sleep(60)
 
     def set_worker_sleeping(self, origin: str, sleep_duration: float) -> None:
