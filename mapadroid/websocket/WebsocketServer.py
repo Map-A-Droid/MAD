@@ -1,8 +1,6 @@
 import asyncio
 import logging
-import queue
 import random as rand
-from asyncio import Task
 from threading import current_thread
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -61,8 +59,6 @@ class WebsocketServer(object):
         self.__loop: Optional[asyncio.AbstractEventLoop] = None
         self.__loop_tid: int = -1
         self.__server_task = None
-        self.__worker_shutdown_queue: asyncio.Queue[Task] = asyncio.Queue()
-        self.__internal_worker_join_task: Optional[Task] = None
 
     async def __setup_first_loop(self):
         logger.debug("Device mappings: {}", await self.__mapping_manager.get_all_devicemappings())
@@ -74,8 +70,6 @@ class WebsocketServer(object):
         logger.info("Starting websocket-server...")
 
         self.__loop = asyncio.get_event_loop()
-        self.__internal_worker_join_task: Task = self.__loop.create_task(self.__internal_worker_join())
-
         await self.__setup_first_loop()
         # the type-check here is sorta wrong, not entirely sure why
         # noinspection PyTypeChecker
@@ -103,43 +97,7 @@ class WebsocketServer(object):
             await asyncio.sleep(1)
 
         await self.__close_all_connections_and_signal_stop()
-        logger.info("Waiting for join-queue to be emptied and threads to be joined")
-        # if not self.__internal_worker_join_task.done():
-        # join the join thread, gotta love the irony
-        # TODO: this is async..
-        # await self.__internal_worker_join_task.join()
-        #    self.__internal_worker_join_task.result()
-        # TODO: this could block forever, should we just place a timeout and have daemon = True handle it all anyway?
-        await self.__worker_shutdown_queue.join()
-        # await self.__loop.stop)
-
         logger.info("Stopped websocket server")
-
-    # TODO:.. is this really needed at all?
-    async def __internal_worker_join(self):
-        while not self.__stop_server.is_set() \
-                or (self.__stop_server.is_set() and not self.__worker_shutdown_queue.empty()):
-            try:
-                next_item: Optional[Task] = self.__worker_shutdown_queue.get_nowait()
-            except queue.Empty:
-                await asyncio.sleep(1)
-                continue
-            if next_item is not None:
-                logger.info("Trying to join worker thread")
-                try:
-                    await asyncio.wait_for(next_item, timeout=30)
-                except asyncio.TimeoutError:
-                    next_item.cancel()
-                except RuntimeError as e:
-                    logger.warning("Caught runtime error trying to join thread, the thread likely did not start at all."
-                                   " Exact message: {}", e)
-                # if next_item.is_alive():
-                #    logger.debug("Error while joining worker thread - requeue it")
-                #    self.__worker_shutdown_queue.put(next_item)
-                # else:
-                #    logger.debug("Done with worker thread, moving on")
-            self.__worker_shutdown_queue.task_done()
-        logger.info("Worker join-thread done")
 
     @logger.catch()
     async def __connection_handler(self, websocket_client_connection: websockets.WebSocketClientProtocol,
@@ -241,8 +199,7 @@ class WebsocketServer(object):
             # also check if thread is already running to not start it again. If it is not alive, we need to create it..
             finally:
                 origin_logger.info("Awaiting unregister")
-                # TODO: cleanup thread is not really desired, I'd prefer to only restart a worker if the route changes :(
-                await self.__worker_shutdown_queue.put(entry.worker_task)
+                del self.__current_users[origin]
         finally:
             async with self.__users_connecting_mutex:
                 self.__users_connecting.remove(origin)
