@@ -44,7 +44,7 @@ def _process_image_resize(image, savepath, width):
 
 async def pngtojpg(image):
     loop = asyncio.get_running_loop()
-    with concurrent.futures.ProcessPoolExecutor() as pool:
+    with concurrent.futures.ThreadPoolExecutor() as pool:
         await loop.run_in_executor(
             pool, process_png_to_jpg, image)
 
