@@ -17,7 +17,6 @@ class MitmMapper(object):
     def __init__(self, args, mapping_manager: MappingManager, db_stats_submit: DbStatsSubmit):
         self.__mapping = {}
         self.__playerstats: Dict[str, PlayerStats] = {}
-        self.__mapping_mutex = asyncio.Lock()
         self.__mapping_manager: MappingManager = mapping_manager
         self.__injected = {}
         self.__last_cellsid = {}
@@ -127,25 +126,19 @@ class MitmMapper(object):
         return list(map(int, values.split(",")))
 
     async def request_latest(self, origin, key=None):
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug2("Request latest called")
-        async with self.__mapping_mutex:
-            result = None
-            retrieved = self.__mapping.get(origin, None)
-            if retrieved is not None:
-                # copy in case references are overwritten... who knows
-                # TODO: double check what python does in the background
-                retrieved = retrieved.copy()
-            if key is None:
-                result = retrieved
-            elif retrieved is not None:
-                result = retrieved.get(key, None)
-        origin_logger.debug2("Request latest done")
+        logger.debug2("Request latest called")
+        result = None
+        retrieved = self.__mapping.get(origin, None)
+        if key is None:
+            result = retrieved
+        elif retrieved is not None:
+            result = retrieved.get(key, None)
+        logger.debug2("Request latest done")
         return result
 
     # origin, method, data, timestamp
     async def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = None,
-                      timestamp_received_receiver: float = None, location: Location = None):
+                            timestamp_received_receiver: float = None, location: Location = None):
         origin_logger = get_origin_logger(logger, origin=origin)
         if timestamp_received_raw is None:
             timestamp_received_raw = time.time()
@@ -154,30 +147,23 @@ class MitmMapper(object):
             timestamp_received_receiver = time.time()
 
         updated = False
-        origin_logger.debug2("Trying to acquire lock and update proto {}", key)
-        async with self.__mapping_mutex:
-            loop = asyncio.get_event_loop()
-            devicemappings = await self.__mapping_manager.get_all_devicemappings()
-            if origin not in self.__mapping.keys() and origin in devicemappings.keys():
-                origin_logger.info("New device detected.  Setting up the device configuration")
-                await self.__add_new_device(origin)
-            if origin in self.__mapping.keys():
-                origin_logger.debug2("Updating timestamp at {} with method {} to {}", location, key,
-                                     timestamp_received_raw)
-                if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
-                    del self.__mapping[origin][key]
-                self.__mapping[origin][key] = {}
-                if location is not None:
-                    self.__mapping[origin]["location"] = location
-                if timestamp_received_raw is not None:
-                    self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
-                    self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
-                if timestamp_received_receiver is not None:
-                    self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
-                self.__mapping[origin][key]["values"] = values_dict
-                updated = True
-            else:
-                origin_logger.warning("Not updating timestamp since origin is unknown")
+        if origin in self.__mapping:
+            origin_logger.debug2("Updating timestamp at {} with method {} to {}", location, key,
+                                 timestamp_received_raw)
+            if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
+                del self.__mapping[origin][key]
+            self.__mapping[origin][key] = {}
+            if location is not None:
+                self.__mapping[origin]["location"] = location
+            if timestamp_received_raw is not None:
+                self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
+                self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
+            if timestamp_received_receiver is not None:
+                self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
+            self.__mapping[origin][key]["values"] = values_dict
+            updated = True
+        else:
+            origin_logger.warning("Not updating timestamp since origin is unknown")
         origin_logger.debug2("Done updating proto {}", key)
         return updated
 
