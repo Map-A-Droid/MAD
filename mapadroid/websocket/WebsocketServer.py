@@ -193,6 +193,9 @@ class WebsocketServer(object):
                     # TODO..
                     pass
                 # TODO: we need to somehow check threads and synchronize connection status with worker status?
+                async with self.__users_connecting_mutex:
+                    if origin in self.__users_connecting:
+                        self.__users_connecting.remove(origin)
                 await self.__client_message_receiver(origin, entry)
             except Exception as e:
                 origin_logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
@@ -202,7 +205,8 @@ class WebsocketServer(object):
                 del self.__current_users[origin]
         finally:
             async with self.__users_connecting_mutex:
-                self.__users_connecting.remove(origin)
+                if origin in self.__users_connecting:
+                    self.__users_connecting.remove(origin)
         origin_logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 
     async def __add_worker_and_thread_to_entry(self, entry, origin, use_configmode: bool = None) -> bool:
