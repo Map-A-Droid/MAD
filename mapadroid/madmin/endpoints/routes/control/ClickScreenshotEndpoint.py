@@ -36,7 +36,7 @@ class ClickScreenshotEndpoint(AbstractControlEndpoint):
         real_click_x = int(width / float(click_x))
         real_click_y = int(height / float(click_y))
 
-        if useadb and self._adb_connect.make_screenclick(devicemapping.device_settings.adbname, origin,
+        if useadb and await self._adb_connect.make_screenclick(devicemapping.device_settings.adbname, origin,
                                                          real_click_x, real_click_y):
             # TODO: origin_logger.info('MADmin: ADB screenclick successfully')
             pass
