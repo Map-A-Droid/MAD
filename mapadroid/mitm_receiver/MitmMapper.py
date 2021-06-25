@@ -25,7 +25,6 @@ class MitmMapper(object):
         self._db_stats_submit: DbStatsSubmit = db_stats_submit
         self.__playerstats_db_update_stop: asyncio.Event = asyncio.Event()
         self.__playerstats_db_update_queue: asyncio.Queue = asyncio.Queue()
-        self.__playerstats_db_update_mutex: asyncio.Lock = asyncio.Lock()
         pstat_args = {
             'name': 'system',
             'target': self.__internal_playerstats_db_update_consumer
@@ -50,8 +49,7 @@ class MitmMapper(object):
 
     async def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
         if self.__application_args.game_stats:
-            async with self.__playerstats_db_update_mutex:
-                await self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
+            await self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
 
     async def __internal_playerstats_db_update_consumer(self):
         try:
@@ -60,8 +58,7 @@ class MitmMapper(object):
                     logger.info("Playerstats are disabled")
                     break
                 try:
-                    async with self.__playerstats_db_update_mutex:
-                        next_item = self.__playerstats_db_update_queue.get_nowait()
+                    next_item = self.__playerstats_db_update_queue.get_nowait()
                 except Empty:
                     await asyncio.sleep(0.5)
                     continue

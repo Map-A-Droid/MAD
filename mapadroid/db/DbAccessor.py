@@ -6,8 +6,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     create_async_engine)
 
-from mapadroid.db.model import Base
-
 
 class DbAccessor:
     def __init__(self, connection_data: str, pool_size: int = 10):
