@@ -969,9 +969,9 @@ class RouteManagerBase(ABC):
             if less_coords:
                 new_subroute_length = 0
 
-            self.logger.debug("Current routepool: {}", self._routepool)
-            self.logger.debug("Done updating subroutes")
-            return True
+        self.logger.debug("Current routepool: {}", self._routepool)
+        self.logger.debug("Done updating subroutes")
+        return True
             # TODO: A worker has been removed or added, we need to update the individual workerpools/queues
             #
             # First: Split the original route by the remaining workers => we have a list of new subroutes of
