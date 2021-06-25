@@ -1,6 +1,7 @@
 import asyncio
 import glob
 import json
+import math
 import os
 import re
 import time
@@ -392,7 +393,7 @@ class DeviceUpdater(object):
 
             for subjob in self._commands[job]:
                 logger.debug2(subjob)
-                await self.__add_job(globalid, origin, subjob['SYNTAX'], job_id=str(time.time()),
+                await self.__add_job(globalid, origin, subjob['SYNTAX'], job_id=str(int(time.time())),
                                job_type=subjob['TYPE'], waittime=subjob.get('WAITTIME', 0),
                                redo=self._globaljoblog[globalid].get('redo', False),
                                fieldname=subjob.get('FIELDNAME', 'unknown'), jobname=job)
