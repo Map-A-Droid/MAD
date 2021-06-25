@@ -20,8 +20,8 @@ async def i8ln(word):
     # TODO: Async...
     lang_file = 'locale/' + os.environ['LANGUAGE'] + '/mad.json'
     if os.path.isfile(lang_file):
-        with open(lang_file, encoding='utf8') as f:
-            language_file = json.load(f)
+        async with async_open(lang_file, "r", encoding='utf8') as f:
+            language_file = json.loads(await f.read())
         if word in language_file:
             return language_file[word]
 

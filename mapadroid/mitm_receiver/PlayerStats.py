@@ -5,7 +5,7 @@ import os
 import time
 from math import floor
 from pathlib import Path
-
+from aiofile import async_open
 from mapadroid.mitm_receiver import MitmMapper
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 
@@ -62,16 +62,16 @@ class PlayerStats(object):
                         'pokemons_encountered': str(player_stats['pokemons_encountered']),
                         'poke_stop_visits': str(player_stats['poke_stop_visits'])
                     })
-                    with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'),
+                    async with async_open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'),
                               'w') as outfile:
-                        outfile.write(json.dumps(data, indent=4, sort_keys=True))
+                        await outfile.write(json.dumps(data, indent=4, sort_keys=True))
 
     def open_player_stats(self):
         statsfile = Path(os.path.join(
             self.__application_args.file_path, str(self._id) + '.stats'))
         try:
-            with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'), "r") as f:
-                data = json.loads(f.read())
+            async with async_open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'), "r") as f:
+                data = json.loads(await f.read())
                 self.set_level(int(data[self._id][0]['level']))
                 self.set_poke_stop_visits(int(data[self._id][0]['poke_stop_visits']))
         except IOError:

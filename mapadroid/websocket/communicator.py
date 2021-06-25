@@ -55,14 +55,14 @@ class Communicator(AbstractCommunicator):
 
     async def install_apk(self, timeout: float, filepath: str = None, data=None) -> bool:
         if not data:
-            with open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
-                data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
+            async with async_open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
+                data = await file.read()  # if you only wanted to read 512 bytes, do .read(512)
         return await self.__run_and_ok_bytes(message=data, timeout=timeout, byte_command=1)
 
     async def install_bundle(self, timeout: float, filepath: str = None, data=None) -> bool:
         if not data:
-            with open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
-                data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
+            async with async_open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
+                data = await file.read()  # if you only wanted to read 512 bytes, do .read(512)
         return await self.__run_and_ok_bytes(message=data, timeout=timeout, byte_command=2)
 
     async def start_app(self, package_name: str) -> bool:
@@ -224,7 +224,7 @@ class Communicator(AbstractCommunicator):
         else:
             self.logger.debug("Storing logcat...")
 
-            with open(path, "wb") as fh:
-                fh.write(encoded)
+            async with async_open(path, "wb") as fh:
+                await fh.write(encoded)
             self.logger.debug("Done storing logcat, returning")
             return True

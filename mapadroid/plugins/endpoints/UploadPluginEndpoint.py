@@ -60,7 +60,7 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
         logger.info("Try to install/update plugin: " + str(base))
 
         try:
-            async with open(mpl_file) as plugin_file:
+            async with async_open(mpl_file, "r") as plugin_file:
                 data = json.loads(await plugin_file.read())
         except (TypeError, ValueError):
             logger.error("Old or wrong plugin format - abort")
@@ -72,7 +72,7 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
         plugin_meta_name = data['plugin_name']
         plugin_version = data['plugin_version']
 
-        async with open(plugin_tmp_zip, "wb") as tmp_plugin:
+        async with async_open(plugin_tmp_zip, "wb") as tmp_plugin:
             await tmp_plugin.write(bytearray(plugin_content))
 
         extractpath = os.path.join(self._get_plugin_package(), plugin_meta_name)
@@ -100,7 +100,7 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
             if not os.path.isfile(
                     os.path.join(extractpath, "plugin.ini.example")):
                 logger.debug("Creating basic plugin.ini.example")
-                async with open(os.path.join(extractpath, "plugin.ini.example"), 'w') as pluginini:
+                async with async_open(os.path.join(extractpath, "plugin.ini.example"), 'w') as pluginini:
                     await pluginini.write('[plugin]\n')
                     await pluginini.write('active = false\n')
         except:  # noqa: E722 B001
