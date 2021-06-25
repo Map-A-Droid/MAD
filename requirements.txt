@@ -34,3 +34,5 @@ yarl~=1.6.3
 apkmirror-search
 aiocache
 asyncio-rlock
+
+werkzeug
