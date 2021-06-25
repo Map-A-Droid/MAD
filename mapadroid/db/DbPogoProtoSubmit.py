@@ -767,35 +767,38 @@ class DbPogoProtoSubmit:
             return
         else:
             gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
-        weather: Optional[Weather] = await WeatherHelper.get(session, cell_id)
-        if not weather:
-            weather: Weather = Weather()
-            weather.s2_cell_id = cell_id
-            weather.latitude = real_lat
-            weather.longitude = real_lng
-        weather.cloud_level = display_weather_data.get("cloud_level", 0)
-        weather.rain_level = display_weather_data.get("rain_level", 0)
-        weather.wind_level = display_weather_data.get("wind_level", 0)
-        weather.snow_level = display_weather_data.get("snow_level", 0)
-        weather.fog_level = display_weather_data.get("fog_level", 0)
-        weather.wind_direction = display_weather_data.get("wind_direction", 0)
-        weather.gameplay_weather = gameplay_weather
-        # TODO: Properly extract severity and warn..
-        weather.warn_weather = 0
-        weather.severity = 0
-        weather.world_time = time_of_day
-        weather.last_updated = datetime.utcnow()
-
-        if not weather:
-            return
-        cache_key = "weather{}{}{}{}{}{}{}".format(weather.s2_cell_id, weather.rain_level, weather.wind_level,
-                                                   weather.snow_level,
-                                                   weather.fog_level, weather.wind_direction,
-                                                   weather.gameplay_weather)
+        cache_key = "weather{}{}{}{}{}{}{}".format(cell_id, display_weather_data.get("rain_level", 0),
+                                                   display_weather_data.get("wind_level", 0),
+                                                   display_weather_data.get("snow_level", 0),
+                                                   display_weather_data.get("fog_level", 0),
+                                                   display_weather_data.get("wind_direction", 0),
+                                                   gameplay_weather)
         if await cache.exists(cache_key):
             return
         async with session.begin_nested() as nested_transaction:
             try:
+                weather: Optional[Weather] = await WeatherHelper.get(session, cell_id)
+                if not weather:
+                    weather: Weather = Weather()
+                    weather.s2_cell_id = cell_id
+                    weather.latitude = real_lat
+                    weather.longitude = real_lng
+                weather.cloud_level = display_weather_data.get("cloud_level", 0)
+                weather.rain_level = display_weather_data.get("rain_level", 0)
+                weather.wind_level = display_weather_data.get("wind_level", 0)
+                weather.snow_level = display_weather_data.get("snow_level", 0)
+                weather.fog_level = display_weather_data.get("fog_level", 0)
+                weather.wind_direction = display_weather_data.get("wind_direction", 0)
+                weather.gameplay_weather = gameplay_weather
+                # TODO: Properly extract severity and warn..
+                weather.warn_weather = 0
+                weather.severity = 0
+                weather.world_time = time_of_day
+                weather.last_updated = datetime.utcnow()
+
+                if not weather:
+                    return
+
                 await session.merge(weather)
                 await cache.set(cache_key, 1, expire=900)
                 await nested_transaction.commit()
