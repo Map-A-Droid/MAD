@@ -26,7 +26,7 @@ class PogoWindows:
             os.makedirs(temp_dir_path)
             logger.info('PogoWindows: Temp directory created')
         self.temp_dir_path = temp_dir_path
-        self.__process_executor_pool: concurrent.futures.ProcessPoolExecutor = concurrent.futures.ProcessPoolExecutor(thread_count)
+        self.__process_executor_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(thread_count)
         # TODO: SHutdown pool...
 
     async def __read_circle_count(self, filename, identifier, ratio, communicator, xcord=False, crop=False,

@@ -26,7 +26,7 @@ def generate_path(path):
 
 async def image_resize(image, savepath, width=None, height=None):
     loop = asyncio.get_running_loop()
-    with concurrent.futures.ProcessPoolExecutor() as pool:
+    with concurrent.futures.ThreadPoolExecutor() as pool:
         await loop.run_in_executor(
             pool, _process_image_resize, image, savepath, width)
 
