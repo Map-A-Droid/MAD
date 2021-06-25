@@ -51,15 +51,19 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
             creation_date(filename)).strftime(self._datetimeformat)
 
     async def _generate_screenshot(self, mapping_entry: DeviceMappingsEntry):
+        temp_comm = self._get_ws_server().get_origin_communicator(mapping_entry.device_settings.name)
+        if not temp_comm:
+            logger.warning("Unable to fetch screenshot of a device that is not connected")
+            return
         screenshot_type: ScreenshotType = await self._get_mapping_manager()\
             .get_devicesetting_value_of_device(mapping_entry.device_settings.name,
                                                MappingManagerDevicemappingKey.SCREENSHOT_TYPE)
         screenshot_quality: int = await self._get_mapping_manager()\
             .get_devicesetting_value_of_device(mapping_entry.device_settings.name,
                                                MappingManagerDevicemappingKey.SCREENSHOT_QUALITY)
-        temp_comm = self._get_ws_server().get_origin_communicator(mapping_entry.device_settings.name)
         filename = generate_device_screenshot_path(mapping_entry.device_settings.name, mapping_entry,
                                                    self._get_mad_args())
+
         await temp_comm.get_screenshot(filename, screenshot_quality, screenshot_type)
         await image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path, "madmin"),
                            width=250)
