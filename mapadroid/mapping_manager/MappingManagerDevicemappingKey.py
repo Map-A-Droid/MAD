@@ -43,3 +43,4 @@ class MappingManagerDevicemappingKey(IntEnum):
     GGL_LOGIN_MAIL = 38
     LAST_QUESTCLEAR_TIME = 39
     ENHANCED_MODE_QUEST_SAFE_ITEMS = 40
+    PTC_LOGIN = 41

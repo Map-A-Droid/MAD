@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
+from mapadroid.db.model import SettingsPogoauth
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
@@ -67,22 +68,24 @@ class WordToScreenMatching(object):
             await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google')]
         self._logger.info("Set logintype: {}", self._logintype)
         if self._logintype == LoginType.ptc:
-            temp_accounts = await self.get_device_value('ptc_login', [])
+            temp_accounts: List[SettingsPogoauth] = await self.get_devicesettings_value(
+                MappingManagerDevicemappingKey.PTC_LOGIN, [])
             if not temp_accounts:
-                self._logger.warning('No PTC Accounts are set - hope we are login and never logout!')
+                self._logger.warning('No PTC Accounts are set - hope we are logged in and never logout!')
                 self._accountcount = 0
                 return
-            for username, password in temp_accounts:
-                self._PTC_accounts.append(Login_PTC(username, password))
+            for auth in temp_accounts:
+                self._PTC_accounts.append(Login_PTC(auth.username, auth.password))
             self._accountcount = len(self._PTC_accounts)
         else:
-            temp_accounts = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, None)
-            if not temp_accounts:
+            google_login_mail: Optional[str] = await self.get_devicesettings_value(
+                MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, None)
+            if not google_login_mail:
                 # TODO: self._logger.warning('No GGL Accounts are set - using first @gmail.com Account')
                 return
-            temp_accounts = temp_accounts.replace(' ', '').split('|')
+            google_accounts = google_login_mail.replace(' ', '').split('|')
 
-            for account in temp_accounts:
+            for account in google_accounts:
                 self._GGL_accounts.append(Login_GGL(account))
             self._accountcount = len(self._GGL_accounts)
 
@@ -568,17 +571,6 @@ class WordToScreenMatching(object):
             return default_value
         else:
             return value
-
-    async def get_device_value(self, key: str, default_value: object = None) -> Optional[List]:
-        self._logger.debug2("Fetching devicemappings")
-        try:
-            devicemappings: Optional[dict] = await self._mapping_manager.get_devicemappings_of(self.origin)
-        except (EOFError, FileNotFoundError) as e:
-            self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
-            return None
-        if devicemappings is None:
-            return default_value
-        return devicemappings.get(key, default_value)
 
     def censor_account(self, emailaddress, is_ptc=False):
         # PTC account

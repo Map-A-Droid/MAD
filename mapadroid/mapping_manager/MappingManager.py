@@ -328,6 +328,9 @@ class MappingManager:
             return devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items else devicemapping_entry.device_settings.enhanced_mode_quest_safe_items
         elif key == MappingManagerDevicemappingKey.CLEAR_GAME_DATA:
             return devicemapping_entry.device_settings.clear_game_data
+        # Extra keys to e.g. retrieve PTC accounts
+        elif key == MappingManagerDevicemappingKey.PTC_LOGIN:
+            return devicemapping_entry.ptc_logins
         else:
             # TODO: Get all the DB values...
             pass
