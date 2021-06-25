@@ -65,8 +65,10 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
                                                    self._get_mad_args())
 
         await temp_comm.get_screenshot(filename, screenshot_quality, screenshot_type)
+        logger.info("Done grabbing screenshot, resizing")
         await image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path, "madmin"),
                            width=250)
+        logger.info("Done resizing screenshot")
 
     def _process_read_screenshot_size(self, filename):
         with Image.open(filename) as screenshot:

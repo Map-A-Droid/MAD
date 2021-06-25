@@ -16,7 +16,6 @@ with open(os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates/phone.tpl'),
     phone_template = file.read().replace('\n', '')
 
 
-# TODO: Async
 def creation_date(path_to_file):
     return os.path.getmtime(path_to_file)
 
@@ -26,7 +25,6 @@ def generate_path(path):
 
 
 async def image_resize(image, savepath, width=None, height=None):
-    # TODO: Async exec
     loop = asyncio.get_running_loop()
     with concurrent.futures.ProcessPoolExecutor() as pool:
         await loop.run_in_executor(

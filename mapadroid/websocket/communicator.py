@@ -121,7 +121,6 @@ class Communicator(AbstractCommunicator):
     async def uiautomator(self) -> Optional[MessageTyping]:
         return await self.__run_get_gesponse("more uiautomator")
 
-    # TODO: Writing may require asyncio...
     async def get_screenshot(self, path: str, quality: int = 70,
                        screenshot_type: ScreenshotType = ScreenshotType.JPEG) -> bool:
         if quality < 10 or quality > 100:
@@ -146,7 +145,6 @@ class Communicator(AbstractCommunicator):
             return False
         else:
             self.logger.debug("Storing screenshot...")
-            # TODO: Async write...
             async with async_open(path, "wb") as fh:
                 await fh.write(encoded)
             self.logger.debug2("Done storing, returning")
