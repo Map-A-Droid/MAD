@@ -1,3 +1,5 @@
+import asyncio
+import math
 import time
 from typing import List, Optional, Union
 
@@ -24,8 +26,9 @@ class JobForWorkerEndpoint(AbstractControlEndpoint):
             await self._redirect(self._url_for('install_status'))
 
         for device in devices:
-            await self._get_device_updater().preadd_job(device, jobname, int(time.time()), job_type)
-            # time.sleep(1)
+            job_id: int = int(math.ceil(time.time()))
+            await self._get_device_updater().preadd_job(device, jobname, job_id, job_type)
+            await asyncio.sleep(1)
 
         await self._add_notice_message('Job successfully queued')
         await self._redirect(self._url_for('install_status'))

@@ -1,3 +1,5 @@
+import asyncio
+import math
 import time
 from typing import Optional
 
@@ -23,8 +25,9 @@ class InstallFileAllDevicesEndpoint(AbstractControlEndpoint):
 
         devices = await self._get_mapping_manager().get_all_devicenames()
         for device in devices:
-            await self._get_device_updater().preadd_job(device, jobname, int(time.time()), job_type_raw)
-            # await asyncio.sleep(1)
+            job_id: int = int(math.ceil(time.time()))
+            await self._get_device_updater().preadd_job(device, jobname, job_id, job_type_raw)
+            await asyncio.sleep(1)
 
         await self._add_notice_message('Job successfully queued')
         await self._redirect(self._url_for('install_status'))
