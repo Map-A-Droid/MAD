@@ -467,9 +467,9 @@ class DeviceUpdater(object):
             if jobtype == JobType.INSTALLATION:
                 file_ = self._log[str(item)]['file']
                 if str(file_).lower().endswith(".apk"):
-                    returning = ws_conn.install_apk(300, filepath=os.path.join(self._args.upload_path, file_))
+                    returning = await ws_conn.install_apk(300, filepath=os.path.join(self._args.upload_path, file_))
                 elif str(file_).lower().endswith(".zip"):
-                    returning = ws_conn.install_bundle(600, filepath=os.path.join(self._args.upload_path, file_))
+                    returning = await ws_conn.install_bundle(600, filepath=os.path.join(self._args.upload_path, file_))
                 else:
                     # unknown filetype
                     returning = False
@@ -478,8 +478,8 @@ class DeviceUpdater(object):
                 package_ver: str = None
                 package_raw = self._log[str(item)]['file']
                 version_job = "dumpsys package %s | grep versionName" % (package_raw,)
-                architecture_job = ws_conn.passthrough('getprop ro.product.cpu.abi')
-                package_ver_job = ws_conn.passthrough(version_job)
+                architecture_job = await ws_conn.passthrough('getprop ro.product.cpu.abi')
+                package_ver_job = await ws_conn.passthrough(version_job)
                 try:
                     architecture_raw = re.search(r'\[(\S+)\]', architecture_job).group(1)
                 except AttributeError:
