@@ -269,7 +269,7 @@ async def start():
 
         if args.statistic:
             logger.info("Starting statistics collector")
-            t_usage = loop.create_task(get_system_infos(db_wrapper), name="system")
+            t_usage = loop.create_task(get_system_infos(db_wrapper))
 
     madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
 
