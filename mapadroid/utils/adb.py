@@ -1,9 +1,8 @@
 import asyncio
 import os
 import sys
-import time
 
-from mapadroid.utils.functions import pngtojpg
+from mapadroid.utils.functions import process_png_to_jpg
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 
 logger = get_logger(LoggerEnums.utils)
@@ -78,7 +77,7 @@ class ADBConnect(object):
                 with open(os.path.join(self._args.temp_path, 'screenshot_%s.png' % str(origin)), "wb") as fp:
                     fp.write(result)
                 if extenstion == "jpg":
-                    pngtojpg(os.path.join(self._args.temp_path, 'screenshot_%s.png' % str(origin)))
+                    process_png_to_jpg(os.path.join(self._args.temp_path, 'screenshot_%s.png' % str(origin)))
                 return True
         except Exception as e:
             origin_logger.exception('MADmin: Exception occurred while making screenshot: {}.', e)

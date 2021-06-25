@@ -29,9 +29,8 @@ async def image_resize(image, savepath, width=None, height=None):
     # TODO: Async exec
     loop = asyncio.get_running_loop()
     with concurrent.futures.ProcessPoolExecutor() as pool:
-        result = await loop.run_in_executor(
-            pool, _process_image_resize, (image, savepath, width,))
-        print('custom process pool', result)
+        await loop.run_in_executor(
+            pool, _process_image_resize, image, savepath, width)
 
 
 def _process_image_resize(image, savepath, width):
@@ -45,12 +44,18 @@ def _process_image_resize(image, savepath, width):
         img.save(os.path.join(savepath, str(pre) + '.jpg'))
 
 
-def pngtojpg(image):
+async def pngtojpg(image):
+    loop = asyncio.get_running_loop()
+    with concurrent.futures.ProcessPoolExecutor() as pool:
+        await loop.run_in_executor(
+            pool, process_png_to_jpg, image)
+
+
+def process_png_to_jpg(image):
     pre, _ = os.path.splitext(image)
     with Image.open(image) as im:
         rgb_im = im.convert('RGB')
         rgb_im.save(pre + '.jpg')
-    return True
 
 
 def generate_phones(phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=False):
