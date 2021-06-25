@@ -7,7 +7,7 @@ from asyncio import Task
 from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional, Tuple, Union
-
+from loguru import logger
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsArea, TrsStatus
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -16,7 +16,6 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_lat_lng_offsets_by_distance)
-from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
@@ -35,7 +34,6 @@ MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO = 5
 # That buffer can be subtracted in case a walk was longer than that buffer.
 SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER = 10
 
-logger = get_logger(LoggerEnums.worker)
 Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
@@ -98,19 +96,19 @@ class MITMBase(WorkerBase, ABC):
                                                        float(
                                                            self.current_location.lat) + lat_offset,
                                                        float(self.current_location.lng) + lng_offset)
-        self.logger.info("Walking roughly: {:.2f}m", to_walk)
+        logger.info("Walking roughly: {:.2f}m", to_walk)
         await asyncio.sleep(0.3)
         await self._communicator.walk_from_to(self.current_location,
                                         Location(self.current_location.lat + lat_offset,
                                                  self.current_location.lng + lng_offset),
                                         WALK_AFTER_TELEPORT_SPEED)
-        self.logger.debug("Walking back")
+        logger.debug("Walking back")
         await asyncio.sleep(0.3)
         await self._communicator.walk_from_to(Location(self.current_location.lat + lat_offset,
                                                  self.current_location.lng + lng_offset),
                                         self.current_location,
                                         WALK_AFTER_TELEPORT_SPEED)
-        self.logger.debug("Done walking")
+        logger.debug("Done walking")
         return to_walk
 
     async def _wait_for_data(self, timestamp: float = None,
@@ -124,7 +122,7 @@ class MITMBase(WorkerBase, ABC):
             timeout = await self.get_devicesettings_value(MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT, FALLBACK_MITM_WAIT_TIMEOUT)
 
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
-        self.logger.info('Waiting for data after {}',
+        logger.info('Waiting for data after {}',
                          datetime.fromtimestamp(timestamp))
         position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_id,
                                                                                    self._origin)
@@ -135,14 +133,14 @@ class MITMBase(WorkerBase, ABC):
         # Any data after timestamp + timeout should be valid!
         last_time_received = TIMESTAMP_NEVER
         if latest is None:
-            self.logger.debug("Nothing received from worker since MAD started")
+            logger.debug("Nothing received from worker since MAD started")
         else:
             latest_proto_entry = latest.get(proto_to_wait_for.value, None)
             if not latest_proto_entry:
-                self.logger.debug("No data linked to the requested proto since MAD started.")
+                logger.debug("No data linked to the requested proto since MAD started.")
             else:
                 last_time_received = latest_proto_entry.get("timestamp", TIMESTAMP_NEVER)
-        self.logger.debug("Waiting for data ({}) after {} with timeout of {}s. "
+        logger.debug("Waiting for data ({}) after {} with timeout of {}s. "
                           "Last received timestamp of that type was: {}",
                           proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout,
                           datetime.fromtimestamp(timestamp) if last_time_received != TIMESTAMP_NEVER else "never")
@@ -152,12 +150,12 @@ class MITMBase(WorkerBase, ABC):
             latest = await self._mitm_mapper.request_latest(self._origin)
 
             if latest is None:
-                self.logger.info("Nothing received from worker since MAD started")
+                logger.info("Nothing received from worker since MAD started")
                 await asyncio.sleep(WAIT_FOR_DATA_NEXT_ROUND_SLEEP)
                 continue
             latest_proto_entry = latest.get(proto_to_wait_for.value, None)
             if not latest_proto_entry:
-                self.logger.info("No data linked to the requested proto since MAD started.")
+                logger.info("No data linked to the requested proto since MAD started.")
                 await asyncio.sleep(WAIT_FOR_DATA_NEXT_ROUND_SLEEP)
                 continue
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
@@ -168,7 +166,7 @@ class MITMBase(WorkerBase, ABC):
                     or not (latest_location.lat != 0.0 and latest_location.lng != 0.0 and
                             -90.0 <= latest_location.lat <= 90.0 and
                             -180.0 <= latest_location.lng <= 180.0)):
-                self.logger.debug("Data may be valid but does not contain a proper location yet: {}",
+                logger.debug("Data may be valid but does not contain a proper location yet: {}",
                                   str(latest_location))
                 check_data = False
             elif proto_to_wait_for == ProtoIdentifier.GMO:
@@ -198,7 +196,7 @@ class MITMBase(WorkerBase, ABC):
         return type_of_data_returned, data
 
     async def _handle_proto_timeout(self, position_type, proto_to_wait_for: ProtoIdentifier, type_of_data_returned):
-        self.logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
+        logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
                          proto_to_wait_for, type_of_data_returned)
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
                                                        self._waittime_without_delays,
@@ -218,17 +216,17 @@ class MITMBase(WorkerBase, ABC):
             self._reboot_count += 1
             if self._reboot_count > reboot_thresh \
                     and self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
-                self.logger.warning("Too many timeouts - Rebooting device")
+                logger.warning("Too many timeouts - Rebooting device")
                 await self._reboot(mitm_mapper=self._mitm_mapper)
                 raise InternalStopWorkerException
 
             # self._mitm_mapper.
             self._restart_count = 0
-            self.logger.warning("Too many timeouts - Restarting game")
+            logger.warning("Too many timeouts - Restarting game")
             await self._restart_pogo(True, self._mitm_mapper)
 
     async def _reset_restart_count_and_collect_stats(self, position_type):
-        self.logger.success('Received data')
+        logger.success('Received data')
         self._reboot_count = 0
         self._restart_count = 0
         self._rec_data_time = datetime.now()
@@ -246,16 +244,16 @@ class MITMBase(WorkerBase, ABC):
         """
         if not await self._mapping_manager.routemanager_present(self._routemanager_id) \
                 or self._stop_worker_event.is_set():
-            self.logger.error("killed while sleeping")
+            logger.error("killed while sleeping")
             raise InternalStopWorkerException
         position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_id,
                                                                                    self._origin)
         if position_type is None:
-            self.logger.info("Mappings/Routemanagers have changed, stopping worker to be created again")
+            logger.info("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
 
     async def _is_location_within_allowed_range(self, latest_location):
-        self.logger.debug2("Checking (data) location reported by {} at {} against real data location {}",
+        logger.debug2("Checking (data) location reported by {} at {} against real data location {}",
                            self._origin,
                            self.current_location,
                            latest_location)
@@ -269,9 +267,9 @@ class MITMBase(WorkerBase, ABC):
             # some modes may be too strict (e.g. quests with 0.0001m calculations for routes)
             # yet, the route may "require" a stricter ruling than max valid distance
             max_distance_for_worker = max_distance_of_mode
-        self.logger.debug2("Distance of worker {} to (data) location: {}", self._origin, distance_to_data)
+        logger.debug2("Distance of worker {} to (data) location: {}", self._origin, distance_to_data)
         if distance_to_data > max_distance_for_worker:
-            self.logger.debug("Location too far from worker position, max distance allowed: {}m",
+            logger.debug("Location too far from worker position, max distance allowed: {}m",
                               max_distance_for_worker)
         return distance_to_data <= max_distance_for_worker
 
@@ -295,14 +293,14 @@ class MITMBase(WorkerBase, ABC):
         while not await self._mitm_mapper.get_injection_status(self._origin):
             await self._check_for_mad_job()
             if reboot and self._not_injected_count >= injection_thresh_reboot:
-                self.logger.warning("Not injected in time - reboot")
+                logger.warning("Not injected in time - reboot")
                 await self._reboot(self._mitm_mapper)
                 return False
-            self.logger.info("Didn't receive any data yet. (Retry count: {}/{})", self._not_injected_count,
+            logger.info("Didn't receive any data yet. (Retry count: {}/{})", self._not_injected_count,
                              injection_thresh_reboot)
             if (self._not_injected_count != 0 and self._not_injected_count % window_check_frequency == 0) \
                     and not self._stop_worker_event.is_set():
-                self.logger.info("Retry check_windows while waiting for injection at count {}",
+                logger.info("Retry check_windows while waiting for injection at count {}",
                                  self._not_injected_count)
                 await self._ensure_pogo_topmost()
             self._not_injected_count += 1
@@ -310,7 +308,7 @@ class MITMBase(WorkerBase, ABC):
             while wait_time < 20:
                 wait_time += 1
                 if self._stop_worker_event.is_set():
-                    self.logger.error("Killed while waiting for injection")
+                    logger.error("Killed while waiting for injection")
                     return False
                 await asyncio.sleep(1)
         return True
@@ -362,66 +360,66 @@ class MITMBase(WorkerBase, ABC):
                                                         float(
                                                             self.current_location.lat),
                                                         float(self.current_location.lng))
-        self.logger.debug('Moving {} meters to the next position', round(distance, 2))
+        logger.debug('Moving {} meters to the next position', round(distance, 2))
         return distance, routemanager_settings
 
     async def _clear_quests(self, delayadd, openmenu=True):
-        self.logger.debug('{_clear_quests} called')
+        logger.debug('{_clear_quests} called')
         if openmenu:
             x, y = self._resocalc.get_coords_quest_menu(self)
             await self._communicator.click(int(x), int(y))
-            self.logger.debug("_clear_quests Open menu: {}, {}", int(x), int(y))
+            logger.debug("_clear_quests Open menu: {}, {}", int(x), int(y))
             await asyncio.sleep(6 + int(delayadd))
 
         x, y = self._resocalc.get_close_main_button_coords(self)
         await self._communicator.click(int(x), int(y))
         await asyncio.sleep(1.5)
-        self.logger.debug('{_clear_quests} finished')
+        logger.debug('{_clear_quests} finished')
 
     async def _click_pokestop_at_current_location(self, delayadd):
-        self.logger.debug('{_open_gym} called')
+        logger.debug('{_open_gym} called')
         await asyncio.sleep(.5)
         x, y = self._resocalc.get_gym_click_coords(self)
         await self._communicator.click(int(x), int(y))
         await asyncio.sleep(.5 + int(delayadd))
-        self.logger.debug('{_open_gym} finished')
+        logger.debug('{_open_gym} finished')
 
     async def _close_gym(self, delayadd):
-        self.logger.debug('{_close_gym} called')
+        logger.debug('{_close_gym} called')
         x, y = self._resocalc.get_close_main_button_coords(self)
         await self._communicator.click(int(x), int(y))
         await asyncio.sleep(1 + int(delayadd))
-        self.logger.debug('{_close_gym} called')
+        logger.debug('{_close_gym} called')
 
     async def _turn_map(self, delayadd):
-        self.logger.debug('{_turn_map} called')
-        self.logger.info('Turning map')
+        logger.debug('{_turn_map} called')
+        logger.info('Turning map')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)
         await self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         await asyncio.sleep(int(delayadd))
-        self.logger.debug('{_turn_map} called')
+        logger.debug('{_turn_map} called')
 
     async def worker_stats(self):
-        self.logger.debug('===============================')
-        self.logger.debug('Worker Stats')
-        self.logger.debug('Origin: {} [{}]', self._origin, self._dev_id)
-        self.logger.debug('Routemanager: {} [{}]', self._routemanager_id, self._area_id)
-        self.logger.debug('Restart Counter: {}', self._restart_count)
-        self.logger.debug('Reboot Counter: {}', self._reboot_count)
-        self.logger.debug('Reboot Option: {}', await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True))
-        self.logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
-        self.logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
+        logger.debug('===============================')
+        logger.debug('Worker Stats')
+        logger.debug('Origin: {} [{}]', self._origin, self._dev_id)
+        logger.debug('Routemanager: {} [{}]', self._routemanager_id, self._area_id)
+        logger.debug('Restart Counter: {}', self._restart_count)
+        logger.debug('Reboot Counter: {}', self._reboot_count)
+        logger.debug('Reboot Option: {}', await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True))
+        logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
+        logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
         routemanager_status = await self._mapping_manager.routemanager_get_route_stats(self._routemanager_id,
                                                                                        self._origin)
         if routemanager_status is None:
-            self.logger.warning("Routemanager of {} not available to update stats", self._origin)
+            logger.warning("Routemanager of {} not available to update stats", self._origin)
             routemanager_status = [None, None]
         else:
-            self.logger.debug('Route Pos: {} - Route Length: {}', routemanager_status[0], routemanager_status[1])
+            logger.debug('Route Pos: {} - Route Length: {}', routemanager_status[0], routemanager_status[1])
         routemanager_init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_id)
-        self.logger.debug('Init Mode: {}', routemanager_init)
-        self.logger.debug('Last Date/Time of Data: {}', self._rec_data_time)
-        self.logger.debug('===============================')
+        logger.debug('Init Mode: {}', routemanager_init)
+        logger.debug('Last Date/Time of Data: {}', self._rec_data_time)
+        logger.debug('===============================')
         async with self._db_wrapper as session, session:
             status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._dev_id)
             if not status:
@@ -447,11 +445,11 @@ class MITMBase(WorkerBase, ABC):
             await session.commit()
 
     async def _worker_specific_setup_stop(self):
-        self.logger.info("Stopping pogodroid")
+        logger.info("Stopping pogodroid")
         return await self._communicator.stop_app("com.mad.pogodroid")
 
     async def _worker_specific_setup_start(self):
-        self.logger.info("Starting pogodroid")
+        logger.info("Starting pogodroid")
         start_result = await self._communicator.start_app("com.mad.pogodroid")
         await asyncio.sleep(5)
         # won't work if PogoDroid is repackaged!

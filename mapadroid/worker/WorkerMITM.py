@@ -11,13 +11,11 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import LatestReceivedType, MITMBase
-
-logger = get_logger(LoggerEnums.worker)
+from loguru import logger
 
 
 class WorkerMITM(MITMBase):
@@ -36,7 +34,7 @@ class WorkerMITM(MITMBase):
         await super().start_worker()
 
     async def _health_check(self):
-        self.logger.debug4("_health_check: called")
+        logger.debug4("_health_check: called")
 
     async def _cleanup(self):
         # no additional cleanup in MITM yet
@@ -46,7 +44,7 @@ class WorkerMITM(MITMBase):
         # TODO: pass the appropiate proto number if IV?
         type_received, data = await self._wait_for_data(timestamp)
         if type_received != LatestReceivedType.GMO:
-            self.logger.warning("Worker failed to retrieve proper data at {}, {}. Worker will continue with "
+            logger.warning("Worker failed to retrieve proper data at {}, {}. Worker will continue with "
                                 "the next location", self.current_location.lat, self.current_location.lng)
 
     async def _move_to_location(self):
@@ -61,7 +59,7 @@ class WorkerMITM(MITMBase):
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance) or
                 (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
-            self.logger.debug("main: Teleporting...")
+            logger.debug("main: Teleporting...")
             self._transporttype = 0
             await self._communicator.set_location(
                 Location(self.current_location.lat, self.current_location.lng), 0)
@@ -77,16 +75,16 @@ class WorkerMITM(MITMBase):
                     delay_used = 10
                 elif distance > 2500:
                     delay_used = 8
-                self.logger.debug("Need more sleep after Teleport: {} seconds!", delay_used)
+                logger.debug("Need more sleep after Teleport: {} seconds!", delay_used)
             walk_distance_post_teleport = await self.get_devicesettings_value(MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE, 0)
             if 0 < walk_distance_post_teleport < distance:
                 await self._walk_after_teleport(walk_distance_post_teleport)
         else:
-            self.logger.info("main: Walking...")
+            logger.info("main: Walking...")
             timestamp_to_use = await self._walk_to_location(speed)
 
             delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)
-        self.logger.debug2("Sleeping for {}s", delay_used)
+        logger.debug2("Sleeping for {}s", delay_used)
         await asyncio.sleep(float(delay_used))
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION, self.current_location)
         self.last_location = self.current_location
@@ -97,7 +95,7 @@ class WorkerMITM(MITMBase):
         await self.__update_injection_settings()
 
     async def _pre_work_loop(self):
-        self.logger.info("MITM worker starting")
+        logger.info("MITM worker starting")
         if not await self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 
@@ -149,7 +147,7 @@ class WorkerMITM(MITMBase):
                 await self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_id),
                 self._latest_encounter_update)
             if encounter_ids:
-                self.logger.debug("Found {} new encounter_ids", len(encounter_ids))
+                logger.debug("Found {} new encounter_ids", len(encounter_ids))
             self._encounter_ids = {**encounter_ids, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.
@@ -163,7 +161,7 @@ class WorkerMITM(MITMBase):
             for key in remove:
                 del self._encounter_ids[key]
 
-            self.logger.debug("Encounter list len: {}", len(self._encounter_ids))
+            logger.debug("Encounter list len: {}", len(self._encounter_ids))
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.
@@ -178,17 +176,17 @@ class WorkerMITM(MITMBase):
         data_found: Optional[object] = None
         latest_proto_entry = latest_data.get(proto_to_wait_for.value, None)
         if not latest_proto_entry:
-            self.logger.debug("No data linked to the requested proto since MAD started.")
+            logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found
 
         # proto has previously been received, let's check the timestamp...
         mode = await self._mapping_manager.routemanager_get_mode(self._routemanager_id)
         timestamp_of_proto: float = latest_proto_entry.get("timestamp", None)
-        self.logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
+        logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
                           datetime.fromtimestamp(timestamp_of_proto), datetime.fromtimestamp(timestamp),
                           proto_to_wait_for)
         if timestamp_of_proto < timestamp:
-            self.logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
+            logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
                               timestamp_of_proto, timestamp)
             # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
             # TODO: latter indicates too high speeds for example
@@ -203,6 +201,6 @@ class WorkerMITM(MITMBase):
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GMO
         else:
-            self.logger.debug("{} not in GMO", key_to_check)
+            logger.debug("{} not in GMO", key_to_check)
 
         return type_of_data_found, data_found
