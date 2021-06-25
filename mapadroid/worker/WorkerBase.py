@@ -6,6 +6,7 @@ from abc import abstractmethod, ABC
 from asyncio import Task
 from enum import Enum
 from typing import Optional, Any
+from aiofile import async_open
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
@@ -410,7 +411,6 @@ class WorkerBase(AbstractWorker, ABC):
                 break
 
             if process_location:
-                await self._update_position_file()
                 self._location_count += 1
                 self.logger.debug("Seting new 'scannedlocation' in Database")
                 loop = asyncio.get_event_loop()
@@ -427,14 +427,6 @@ class WorkerBase(AbstractWorker, ABC):
                 self.logger.info("Worker finished iteration, continuing work")
 
         await self._internal_cleanup()
-
-    async def _update_position_file(self):
-        self.logger.debug2("Updating .position file")
-        if self.current_location is not None:
-            with open(os.path.join(self._applicationArgs.file_path, self._origin + '.position'),
-                      'w') as outfile:
-                outfile.write(str(self.current_location.lat) +
-                              ", " + str(self.current_location.lng))
 
     async def update_scanned_location(self, latitude: float, longitude: float, utc_timestamp: float):
         async with self._db_wrapper as session, session:
