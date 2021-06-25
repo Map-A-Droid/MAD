@@ -13,6 +13,7 @@ class DbAccessor:
     def __init__(self, connection_data: str, pool_size: int = 10):
         self.__db_engine: Optional[AsyncEngine] = None
         self.__connection_data: str = connection_data
+        logger.info("Starting with pool size {}", pool_size)
         self.__pool_size: int = pool_size
         self.__setup_lock = None
         self.__db_access_semaphore: Optional[asyncio.Semaphore] = None
@@ -44,21 +45,6 @@ class DbAccessor:
 
     def get_engine(self) -> AsyncEngine:
         return self.__db_engine
-
-    async def run_in_session(self, coroutine, **kw):
-        if not self.__db_access_semaphore:
-            await self.setup()
-        async with self.__db_access_semaphore:
-            async with AsyncSession(self.__db_engine, autocommit=False, autoflush=True) as session:
-                return await coroutine(session, **kw)
-
-    async def immediate_save(self, instance: Base):
-        if not self.__db_access_semaphore:
-            await self.setup()
-        async with self.__db_access_semaphore:
-            async with AsyncSession(self.__db_engine, autocommit=False, autoflush=True) as session:
-                session.add(instance)
-                await session.commit()
 
     async def execute(self, sql, args=(), commit=False, **kwargs):
         if not self.__db_access_semaphore:
@@ -111,4 +97,3 @@ class DbAccessor:
     def __convert_to_dict(self, descr, rows):
         desc = [n for n in descr]
         return [dict(zip(desc, row)) for row in rows]
-    # TODO: check if _await_ and _aexit may be viable for use..

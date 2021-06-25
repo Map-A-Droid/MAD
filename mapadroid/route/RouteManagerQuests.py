@@ -36,8 +36,9 @@ class RouteManagerQuests(RouteManagerBase):
 
     async def generate_stop_list(self):
         await asyncio.sleep(5)
-        stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
-
+        # stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
+        # TODO
+        stops = []
         self.logger.info('Detected stops without quests: {}', len(stops))
         self.logger.debug('Detected stops without quests: {}', stops)
         self._stoplist: List[Location] = stops
