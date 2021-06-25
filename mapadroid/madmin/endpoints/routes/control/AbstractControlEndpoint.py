@@ -60,14 +60,3 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         await temp_comm.get_screenshot(filename, screenshot_quality, screenshot_type)
         await image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path, "madmin"),
                            width=250)
-
-    def _add_geofence_helper(self, geofence_id, geofence_helper):
-        geofence_helpers: Optional[Dict[int, GeofenceHelper]] = self.request.get("geofence_helpers", None)
-        if not geofence_helpers:
-            self.request["geofence_helpers"] = {}
-        if geofence_id not in self.request["geofence_helpers"]:
-            self.request["geofence_helpers"][geofence_id] = geofence_helper
-
-    def _get_geofence_helper(self, geofence_id) -> Optional[GeofenceHelper]:
-        geofence_helpers: Optional[Dict[int, GeofenceHelper]] = self.request.get("geofence_helpers", {})
-        return geofence_helpers.get(geofence_id, None)

@@ -138,6 +138,7 @@ class MappingManager:
         self.__configmode: bool = configmode
 
         self._devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = None
+        self._geofence_helpers: Optional[Dict[int, GeofenceHelper]] = None
         self._areas: Optional[Dict[int, AreaEntry]] = None
         self._routemanagers: Optional[Dict[int, RouteManagerBase]] = None
         self._auths: Optional[Dict[str, str]] = None
@@ -511,6 +512,18 @@ class MappingManager:
             logger.opt(exception=True).error('Unable to start recalculation')
         return successful
 
+    async def __get_latest_geofence_helpers(self, session: AsyncSession) -> Dict[int, GeofenceHelper]:
+        geofences: Dict[int, SettingsGeofence] = await SettingsGeofenceHelper.get_all_mapped(session,
+                                                                                             self.__db_wrapper.get_instance_id())
+        geofence_helpers: Dict[int, GeofenceHelper] = {}
+        for geofence_id, geofence in geofences.items():
+            geofence_helper = GeofenceHelper(geofence, None, geofence.name)
+            geofence_helpers[geofence_id] = geofence_helper
+        return geofence_helpers
+
+    async def get_geofence_helper(self, geofence_id: int):
+        pass
+
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
         for pool_setting in poolsettings:
@@ -801,6 +814,7 @@ class MappingManager:
                 self.__areamons = await self.__get_latest_areamons(areas_tmp)
                 devicemappings_tmp: Dict[str, DeviceMappingsEntry] = await self.__get_latest_devicemappings(session)
                 routemanagers_tmp = await self.__get_latest_routemanagers(session)
+                geofence_helpers_tmp = await self.__get_latest_geofence_helpers(session)
                 auths_tmp = await self.__get_latest_auths(session)
 
             for area_id, routemanager in self._routemanagers:
@@ -820,6 +834,7 @@ class MappingManager:
                 self._devicemappings = devicemappings_tmp
                 self._routemanagers = routemanagers_tmp
                 self._auths = auths_tmp
+                self._geofence_helpers = geofence_helpers_tmp
 
         else:
             logger.debug("Acquiring lock to update mappings,full")
@@ -831,6 +846,7 @@ class MappingManager:
                     self._routemanagers = await self.__get_latest_routemanagers(session)
                     self._devicemappings = await self.__get_latest_devicemappings(session)
                     self._auths = await self.__get_latest_auths(session)
+                    self._geofence_helpers = await self.__get_latest_geofence_helpers(session)
 
         logger.info("Mappings have been updated")
 
@@ -845,3 +861,4 @@ class MappingManager:
 
     def get_jobstatus(self) -> Dict:
         return self.__jobstatus
+
