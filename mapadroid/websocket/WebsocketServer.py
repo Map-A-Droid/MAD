@@ -209,18 +209,20 @@ class WebsocketServer(object):
                     # TODO: also change the worker's Communicator? idk yet
                     if entry.worker_task and not entry.worker_task.done() and not entry.worker_instance.is_stopping():
                         origin_logger.info("Worker thread still alive, continue as usual")
+                        continue_register = False
                         # TODO: does this need more handling? probably update communicator or whatever?
                     # TODO: This check will not work with asyncio anymore...
                     elif entry.worker_task and not entry.worker_task.done():
                         origin_logger.info("Old task is not done but was supposed to stop?! Trying to start a new one")
                         # TODO: entry.worker_task.cancel() or somehow call cleanup&cancel?
                         #  entry.worker_task.cancel()
-                        if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
+                        entry.worker_task.cancel()
+                        if not await self.__add_worker_and_thread_to_entry(entry, origin,
+                                                                           use_configmode=use_configmode):
                             continue_register = False
                     else:
-                        origin_logger.info("Old thread is about to stop. Wait a little and reconnect")
-                        # random sleep to not have clients try again in sync
-                        continue_register = False
+                        origin_logger.info("Old worker task is done, continuing creating a new one given the "
+                                           "new connection")
                 if continue_register:
                     self.__current_users[origin] = entry
 
@@ -233,9 +235,7 @@ class WebsocketServer(object):
                     # TODO..
                     pass
                 # TODO: we need to somehow check threads and synchronize connection status with worker status?
-                receiver_task = asyncio.ensure_future(
-                    self.__client_message_receiver(origin, entry))
-                await receiver_task
+                await self.__client_message_receiver(origin, entry)
             except Exception as e:
                 origin_logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
             # also check if thread is already running to not start it again. If it is not alive, we need to create it..
