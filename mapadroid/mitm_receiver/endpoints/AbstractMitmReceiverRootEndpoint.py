@@ -50,13 +50,13 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
     async def __generate_response(self, session: AsyncSession):
         try:
-            logger.debug("Waiting for response to {}", self.request.url)
+            # logger.debug("Waiting for response to {}", self.request.url)
             response = await super()._iter()
-            logger.success("Got response to {}", self.request.url)
+            # logger.success("Got response to {}", self.request.url)
             if self._commit_trigger:
-                logger.debug("Awaiting commit")
+                # logger.debug("Awaiting commit")
                 await session.commit()
-                logger.info("Done committing")
+                # logger.info("Done committing")
             else:
                 await session.rollback()
         except web.HTTPFound as e:

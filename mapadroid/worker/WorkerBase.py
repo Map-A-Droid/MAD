@@ -739,7 +739,7 @@ class WorkerBase(AbstractWorker, ABC):
         return start_result
 
     async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
-        successful_stop = self._stop_pogo()
+        successful_stop = await self._stop_pogo()
         async with self._db_wrapper as session, session:
             await TrsStatusHelper.save_last_restart(session, self._db_wrapper.get_instance_id(), self._dev_id)
         self._restart_count = 0
