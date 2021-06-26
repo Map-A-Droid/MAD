@@ -210,6 +210,6 @@ class WorkerFactory:
                                   mitm_mapper=self.__mitm_mapper,
                                   db_wrapper=self.__db_wrapper,
                                   area_id=0,
-                                  routemanager_name=None,
+                                  routemanager_id=None,
                                   event=self.__event)
         return worker

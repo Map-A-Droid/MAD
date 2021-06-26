@@ -268,7 +268,7 @@ class WorkerBase(AbstractWorker, ABC):
             logger.info('Setting startcoords or walker lat {} / lng {}', startcoords[0], startcoords[1])
             await self._communicator.set_location(Location(startcoords[0], startcoords[1]), 0)
             logger.info("Updating startposition")
-            await self._mapping_manager.set_worker_startposition(routemanager_name=self._routemanager_id,
+            await self._mapping_manager.set_worker_startposition(routemanager_id=self._routemanager_id,
                                                                  worker_name=self._origin,
                                                                  lat=float(startcoords[0]),
                                                                  lon=float(startcoords[1]))
@@ -333,7 +333,8 @@ class WorkerBase(AbstractWorker, ABC):
             try:
                 await self._internal_pre_work()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                    WebsocketWorkerConnectionClosedException):
+                    WebsocketWorkerConnectionClosedException) as e:
+                logger.exception(e)
                 logger.error("Failed initializing worker, connection terminated exceptionally")
                 await self._internal_cleanup()
                 return
