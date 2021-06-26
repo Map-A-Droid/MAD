@@ -356,13 +356,11 @@ class MappingManager:
         return list(self._routemanagers.keys())
 
     async def __fetch_routemanager(self, routemanager_id: int) -> Optional[RouteManagerBase]:
-        async with self.__mappings_mutex:
-            routemanager: RouteManagerBase = self._routemanagers.get(routemanager_id, None)
-            return routemanager
+        routemanager: RouteManagerBase = self._routemanagers.get(routemanager_id, None)
+        return routemanager
 
     async def routemanager_present(self, routemanager_id: int) -> bool:
-        async with self.__mappings_mutex:
-            return routemanager_id in self._routemanagers.keys()
+        return routemanager_id in self._routemanagers.keys()
 
     async def routemanager_get_next_location(self, routemanager_id: int, origin: str) -> Optional[Location]:
         routemanager = await self.__fetch_routemanager(routemanager_id)
