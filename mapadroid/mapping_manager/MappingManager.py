@@ -474,7 +474,9 @@ class MappingManager:
 
     async def set_worker_startposition(self, routemanager_id: int, worker_name: str,
                                        lat: float, lon: float):
+        logger.debug("Fetching routemanager")
         routemanager = self.__fetch_routemanager(routemanager_id)
+        logger.info("Setting routemanager's startposition")
         routemanager.set_worker_startposition(worker_name, lat, lon)
 
     async def routemanager_get_position_type(self, routemanager_id: int, worker_name: str) -> Optional[str]:
