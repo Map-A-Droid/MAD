@@ -334,7 +334,6 @@ class WorkerBase(AbstractWorker, ABC):
                 await self._internal_pre_work()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                     WebsocketWorkerConnectionClosedException) as e:
-                logger.exception(e)
                 logger.error("Failed initializing worker, connection terminated exceptionally")
                 await self._internal_cleanup()
                 return
