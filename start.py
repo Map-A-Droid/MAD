@@ -167,7 +167,7 @@ async def start():
     webhook_worker: Optional[WebhookWorker] = None
     ws_server: WebsocketServer = None
 
-    logging.getLogger('asyncio').setLevel(logging.INFO)
+    logging.getLogger('asyncio').setLevel(logging.DEBUG)
     logging.getLogger('asyncio').addHandler(InterceptHandler(log_section=LoggerEnums.asyncio))
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
     logging.getLogger('sqlalchemy.engine').addHandler(InterceptHandler(log_section=LoggerEnums.database))
@@ -397,7 +397,8 @@ if __name__ == "__main__":
 
     loop_being_run = loop
     try:
-        loop.run_until_complete(start())
+        # loop.run_until_complete(start())
+        asyncio.run(start(), debug=True)
     except (KeyboardInterrupt, Exception) as e:
         #shutdown(loop_being_run)
         logger.info(f"Shutting down. {e}")

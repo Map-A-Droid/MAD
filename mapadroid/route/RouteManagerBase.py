@@ -299,28 +299,29 @@ class RouteManagerBase(ABC):
 
     async def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                                  active: bool = False, calctype: str = 'route'):
-        self._clear_coords()
-        coords = await self._get_coords_post_init()
-        self.add_coords_list(coords)
-        new_route = await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
-                                            in_memory=True,
-                                            calctype=calctype)
-        calc_coords = []
-        for coord in new_route:
-            calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
-        async with self.db_wrapper as session, session:
-            await session.merge(self._routecalc)
-            self._routecalc.routefile = str(calc_coords).replace("\'", "\"")
-            self._routecalc.last_updated = datetime.utcnow()
-            # TODO: First update the resource or simply set using helper which fetches the object first?
-            await session.flush([self._routecalc])
-            await session.commit()
-        connected_worker_count = len(self._workers_registered)
-        if connected_worker_count > 0:
-            for worker in self._workers_registered.copy():
-                await self.unregister_worker(worker, True)
-        else:
-            await self.stop_routemanager()
+        async with self._manager_mutex:
+            self._clear_coords()
+            coords = await self._get_coords_post_init()
+            self.add_coords_list(coords)
+            new_route = await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
+                                                in_memory=True,
+                                                calctype=calctype)
+            calc_coords = []
+            for coord in new_route:
+                calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
+            async with self.db_wrapper as session, session:
+                await session.merge(self._routecalc)
+                self._routecalc.routefile = str(calc_coords).replace("\'", "\"")
+                self._routecalc.last_updated = datetime.utcnow()
+                # TODO: First update the resource or simply set using helper which fetches the object first?
+                await session.flush([self._routecalc])
+                await session.commit()
+            connected_worker_count = len(self._workers_registered)
+            if connected_worker_count > 0:
+                for worker in self._workers_registered.copy():
+                    await self.unregister_worker(worker, True)
+            else:
+                await self.stop_routemanager()
 
     async def _update_priority_queue_loop(self):
         if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:

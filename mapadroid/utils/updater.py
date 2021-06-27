@@ -1,13 +1,15 @@
 import asyncio
 import glob
 import json
+from asyncio import Task
+
 import math
 import os
 import re
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mad_apk.apk_enums import APKPackage, APKType, APKArch
@@ -68,12 +70,12 @@ class DeviceUpdater(object):
             os.remove('update_log.json')
 
         self._stop_updater_threads: asyncio.Event = asyncio.Event()
-        self.t_updater = []
+        self.t_updater: List[Task] = []
 
     def stop_updater(self):
         self._stop_updater_threads.set()
         for thread in self.t_updater:
-            thread.join()
+            thread.cancel()
 
     async def init_jobs(self):
         # TODO: Async exec
@@ -99,7 +101,7 @@ class DeviceUpdater(object):
         await self.load_automatic_jobs()
         loop = asyncio.get_event_loop()
         for i in range(self._args.job_thread_count):
-            updater_task = loop.create_task(self.process_update_queue(i))
+            updater_task: Task = loop.create_task(self.process_update_queue(i))
             self.t_updater.append(updater_task)
 
     def return_commands(self):

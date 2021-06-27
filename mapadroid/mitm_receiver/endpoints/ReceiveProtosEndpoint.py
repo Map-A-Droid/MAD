@@ -1,5 +1,6 @@
 import time
 
+from aiohttp import web
 from loguru import logger
 
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
@@ -37,6 +38,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             await self.__handle_proto_data_dict(origin, data)
 
         await self._get_mitm_mapper().set_injection_status(origin)
+        return web.Response(status=200)
 
     async def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
         origin_logger = get_origin_logger(logger, origin=origin)

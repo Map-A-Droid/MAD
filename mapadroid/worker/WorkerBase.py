@@ -570,7 +570,7 @@ class WorkerBase(AbstractWorker, ABC):
                 logger.info("Found {} multiple times in a row ({})", screen_type, self._same_screen_count)
                 if self._same_screen_count > 3:
                     logger.warning("Screen is frozen!")
-                    if self._same_screen_count > 4 or not self._restart_pogo():
+                    if self._same_screen_count > 4 or not await self._restart_pogo():
                         logger.warning("Restarting PoGo failed - reboot device")
                         await self._reboot()
                     break
