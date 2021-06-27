@@ -221,7 +221,7 @@ class DbPogoProtoSubmit:
                     break
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.debug("Failed committing mon IV {} ({})", encounter_id, str(e))
-                    await session.expire(mon)
+                    session.expire(mon)
                     await nested_transaction.rollback()
                     await asyncio.sleep(2)
             attempts += 1
