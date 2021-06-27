@@ -99,8 +99,7 @@ class DbPogoProtoSubmit:
                         mon.spawnpoint_id = spawnid
                         mon.latitude = lat
                         mon.longitude = lon
-                    else:
-                        await session.merge(mon)
+
                     mon.pokemon_id = mon_id
                     mon.disappear_time = despawn_time
                     mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
@@ -192,8 +191,6 @@ class DbPogoProtoSubmit:
                         mon.spawnpoint_id = spawnid
                         mon.latitude = latitude
                         mon.longitude = longitude
-                    else:
-                        await session.refresh(mon)
                     mon.pokemon_id = mon_id
                     mon.disappear_time = despawn_time
                     mon.individual_attack = pokemon_data.get("individual_attack")
