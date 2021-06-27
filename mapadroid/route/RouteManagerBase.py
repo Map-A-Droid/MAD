@@ -542,12 +542,12 @@ class RouteManagerBase(ABC):
 
         # check priority queue for items of priority that are past our time...
         # if that is not the case, simply increase the index in route and return the location on route
-        logger.info("Trying to fetch a location from routepool")
+        logger.debug("Trying to fetch a location from routepool")
         # determine whether we move to the next location or the prio queue top's item
         # TODO: Better use a strategy pattern or observer for extendability?
         if self.delay_after_timestamp_prio and (not routepool_entry.last_position_type == PositionType.PRIO
                                                 or self.starve_route):
-            logger.info("Checking for prioQ entries")
+            logger.debug2("Checking for prioQ entries")
             # Check the PrioQ
             try:
                 next_timestamp, next_coord = None, None
@@ -560,9 +560,9 @@ class RouteManagerBase(ABC):
                             # No item available yet, sleep
                             await asyncio.sleep(1)
                 else:
-                    logger.info("Popping prioQ: {}", self._prio_queue)
+                    logger.debug2("Popping prioQ")
                     val = heapq.heappop(self._prio_queue)
-                    logger.info("Got location of prioQ: {}", val)
+                    logger.debug2("Got location of prioQ: {}", val)
 
                     next_timestamp, next_coord = val
                 next_readable_time = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
