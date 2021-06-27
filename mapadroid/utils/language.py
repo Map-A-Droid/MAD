@@ -1,9 +1,12 @@
 import json
 import os
+from typing import Dict
 
 from aiofile import async_open
+from aiocache import cached
 
 
+@cached(ttl=30 * 60)
 async def open_json_file(jsonfile):
     try:
         async with async_open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json', encoding='utf8', mode="r") as f:
@@ -17,15 +20,18 @@ async def open_json_file(jsonfile):
 
 
 async def i8ln(word):
-    # TODO: Async...
+    translations = await _get_translations()
+    return translations.get(word, word)
+
+
+@cached(ttl=30 * 60)
+async def _get_translations() -> Dict:
     lang_file = 'locale/' + os.environ['LANGUAGE'] + '/mad.json'
+    translations: Dict = {}
     if os.path.isfile(lang_file):
         async with async_open(lang_file, "r", encoding='utf8') as f:
-            language_file = json.loads(await f.read())
-        if word in language_file:
-            return language_file[word]
-
-    return word
+            translations = json.loads(await f.read())
+    return translations
 
 
 async def get_mon_name(mon_id: int):
