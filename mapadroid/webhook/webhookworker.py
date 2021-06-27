@@ -11,6 +11,7 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
+from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.questGen import generate_quest
@@ -85,7 +86,7 @@ class WebhookWorker:
             current_pl_num = 1
             for payload_chunk in payload_list:
                 logger.debug4("Python data for payload: {}", payload_chunk)
-                logger.debug4("Payload: {}", json.dumps(payload_chunk))
+                logger.debug4("Payload: {}", json.dumps(payload_chunk, cls=MADEncoder))
 
                 try:
                     response: RestApiResult = await RestHelper.send_post(webhook.get('url'),

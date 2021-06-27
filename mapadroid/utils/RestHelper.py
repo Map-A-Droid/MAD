@@ -7,6 +7,8 @@ from aiohttp import ClientConnectionError, ClientError
 from aiohttp.typedefs import LooseHeaders
 from loguru import logger
 
+from mapadroid.utils.json_encoder import MADEncoder
+
 
 class RestApiResult:
     def __init__(self):
@@ -50,7 +52,8 @@ class RestHelper:
         result: RestApiResult = RestApiResult()
         timeout = aiohttp.ClientTimeout(total=timeout)
         try:
-            async with aiohttp.ClientSession(timeout=timeout) as session:
+            mad_json_dumps = lambda data_to_dump: json.dumps(data_to_dump, cls=MADEncoder)
+            async with aiohttp.ClientSession(timeout=timeout, json_serialize=mad_json_dumps) as session:
                 async with session.post(url, json=data, headers=headers, params=params, allow_redirects=True) as resp:
                     result.status_code = resp.status
                     try:
