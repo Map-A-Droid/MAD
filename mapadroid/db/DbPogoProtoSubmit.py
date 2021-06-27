@@ -218,14 +218,15 @@ class DbPogoProtoSubmit:
                     cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                     if cache_time > 0:
                         await cache.set(cache_key, 1, expire=cache_time)
+                    origin_logger.success("Done updating mon IV in DB")
                     break
                 except sqlalchemy.exc.IntegrityError as e:
-                    logger.warning("Failed committing mon IV {} ({})", encounter_id, str(e))
+                    logger.debug("Failed committing mon IV {} ({})", encounter_id, str(e))
                     await nested_transaction.rollback()
-                    await asyncio.sleep(0.5)
+                    await asyncio.sleep(2)
             attempts += 1
-
-        origin_logger.success("Done updating mon IV in DB")
+        else:
+            logger.warning("Failed committing mon IV {} (tried multiple times)", encounter_id)
 
         return True
 
