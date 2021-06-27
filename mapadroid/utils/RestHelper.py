@@ -56,12 +56,14 @@ class RestHelper:
             async with aiohttp.ClientSession(timeout=timeout, json_serialize=mad_json_dumps) as session:
                 async with session.post(url, json=data, headers=headers, params=params, allow_redirects=True) as resp:
                     result.status_code = resp.status
-                    try:
-                        result.result_body = json.loads(await resp.text())
-                        logger.success("Successfully got data from our request to {}: {}", url, result)
-                    except Exception as e:
-                        logger.warning("Failed converting response of request to '{}' with raw result '{}' to json: {}",
-                                       url, result.result_body, e)
+                    raw_text = await resp.text()
+                    if raw_text:
+                        try:
+                            result.result_body = json.loads(raw_text)
+                            logger.success("Successfully got data from our request to {}: {}", url, result)
+                        except Exception as e:
+                            logger.debug("Failed converting response of request to '{}' with raw result '{}' to json: {}",
+                                           url, result.result_body, e)
         except ClientConnectionError as e:
             logger.warning("Connecting to {} failed: ", url, e)
         except ClientError as e:
