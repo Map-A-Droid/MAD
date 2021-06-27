@@ -371,8 +371,8 @@ async def questtask(typeid, condition, target, quest_template):
                 text = text.replace(_('Battle'), _('Defeat'))
 
     quest_templates = open_json_file('quest_templates')
-    if quest_template is not None and quest_template in quest_templates:
-        text = _(quest_templates[quest_template])
+    if quest_template is not None and quest_template in await quest_templates:
+        text = _((await quest_templates)[quest_template])
 
     if int(target) == int(1):
         text = text.replace(_(' Eggs'), _('n Egg'))

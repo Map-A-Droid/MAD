@@ -209,13 +209,13 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             await self.__playerstats.get(origin).stats_collect_mon(encounter_id)
 
-    def collect_mon_iv_stats(self, origin: str, encounter_id: str, shiny: int):
+    async def collect_mon_iv_stats(self, origin: str, encounter_id: str, shiny: int):
         if self.__playerstats.get(origin, None) is not None:
-            self.__playerstats.get(origin).stats_collect_mon_iv(encounter_id, shiny)
+            await self.__playerstats.get(origin).stats_collect_mon_iv(encounter_id, shiny)
 
-    def collect_quest_stats(self, origin: str, stop_id: str):
+    async def collect_quest_stats(self, origin: str, stop_id: str):
         if self.__playerstats.get(origin, None) is not None:
-            self.__playerstats.get(origin).stats_collect_quest(stop_id)
+            await self.__playerstats.get(origin).stats_collect_quest(stop_id)
 
     async def generate_player_stats(self, origin: str, inventory_proto: dict):
         if self.__playerstats.get(origin, None) is not None:

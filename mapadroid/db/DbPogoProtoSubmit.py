@@ -96,21 +96,20 @@ class DbPogoProtoSubmit:
                         mon: Pokemon = Pokemon()
                         mon.encounter_id = encounter_id
                         mon.spawnpoint_id = spawnid
-                        mon.pokemon_id = mon_id
                         mon.latitude = lat
                         mon.longitude = lon
-                        mon.disappear_time = despawn_time
-                        mon.individual_attack = mon.individual_defense = mon.individual_stamina = None
-                        mon.move_1 = mon.move_2 = mon.cp = mon.cp_multiplier = mon.weight = mon.height = None
-                        mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
-                        mon.catch_prob_1 = mon.catch_prob_2 = mon.catch_prob_3 = None
-                        mon.rating_attack = mon.rating_defense = None
-                        mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
-                        mon.costume = wild_mon["pokemon_data"]["display"]["costume_value"]
-                        mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
-                    mon.last_modified = datetime.utcnow()
+                    mon.pokemon_id = mon_id
                     mon.disappear_time = despawn_time
                     await session.merge(mon)
+                    #mon.individual_attack = mon.individual_defense = mon.individual_stamina = None
+                    #mon.move_1 = mon.move_2 = mon.cp = mon.cp_multiplier = mon.weight = mon.height = None
+                    mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
+                    #mon.catch_prob_1 = mon.catch_prob_2 = mon.catch_prob_3 = None
+                    #mon.rating_attack = mon.rating_defense = None
+                    mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
+                    mon.costume = wild_mon["pokemon_data"]["display"]["costume_value"]
+                    mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
+                    mon.last_modified = datetime.utcnow()
 
                     try:
                         await nested_transaction.commit()
@@ -156,7 +155,7 @@ class DbPogoProtoSubmit:
         if await cache.exists(cache_key):
             return True
 
-        mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
+        await mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if spawnpoint is None:
             origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
@@ -193,6 +192,7 @@ class DbPogoProtoSubmit:
             mon.longitude = longitude
         mon.pokemon_id = mon_id
         mon.disappear_time = despawn_time
+        await session.merge(mon)
         mon.individual_attack = pokemon_data.get("individual_attack")
         mon.individual_defense = pokemon_data.get("individual_defense")
         mon.individual_stamina = pokemon_data.get("individual_stamina")
@@ -212,7 +212,6 @@ class DbPogoProtoSubmit:
         mon.form = form
         mon.last_modified = datetime.utcnow()
         mon.disappear_time = despawn_time
-        await session.merge(mon)
 
         cache_time = int(despawn_time_unix - datetime.now().timestamp())
         if cache_time > 0:
@@ -379,7 +378,7 @@ class DbPogoProtoSubmit:
         json_condition = json.dumps(condition)
         task = questtask(int(quest_type), json_condition, int(target), str(quest_template))
 
-        mitm_mapper.collect_quest_stats(origin, fort_id)
+        await mitm_mapper.collect_quest_stats(origin, fort_id)
 
         quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id)
         if not quest:

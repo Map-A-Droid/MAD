@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, Optional, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -16,6 +17,8 @@ from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import LatestReceivedType, MITMBase
 from loguru import logger
+
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class WorkerMITM(MITMBase):
@@ -116,19 +119,19 @@ class WorkerMITM(MITMBase):
             # worker has to sleep, just empty out the settings...
             ids_iv = []
             scanmode = "nothing"
-        elif routemanager_mode == "mon_mitm":
+        elif routemanager_mode == WorkerType.MON_MITM:
             scanmode = "mons"
             routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_id)
             if routemanager_settings is not None:
                 # TODO: Moving to async
                 ids_iv = self._mapping_manager.get_monlist(self._routemanager_id)
-        elif routemanager_mode == "raids_mitm":
+        elif routemanager_mode == WorkerType.RAID_MITM:
             scanmode = "raids"
             routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._routemanager_id)
             if routemanager_settings is not None:
                 # TODO: Moving to async
                 ids_iv = self._mapping_manager.get_monlist(self._routemanager_id)
-        elif routemanager_mode == "iv_mitm":
+        elif routemanager_mode == WorkerType.IV_MITM:
             scanmode = "ivs"
             ids_iv = await self._mapping_manager.routemanager_get_encounter_ids_left(self._routemanager_id)
         else:
@@ -142,10 +145,11 @@ class WorkerMITM(MITMBase):
 
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv:
-            # TODO
-            (self._latest_encounter_update, encounter_ids) = await self._db_wrapper.update_encounters_from_db(
-                await self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_id),
-                self._latest_encounter_update)
+            async with self._db_wrapper as session, session:
+                (self._latest_encounter_update, encounter_ids) = await PokemonHelper.get_encountered(
+                    session,
+                    await self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_id),
+                    self._latest_encounter_update)
             if encounter_ids:
                 logger.debug("Found {} new encounter_ids", len(encounter_ids))
             self._encounter_ids = {**encounter_ids, **self._encounter_ids}
