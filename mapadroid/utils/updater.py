@@ -544,7 +544,7 @@ class DeviceUpdater(object):
                 return await ws_conn.start_app("com.nianticlabs.pokemongo")
             elif jobtype == JobType.PASSTHROUGH:
                 command = self._log[str(item)]['file']
-                returning = await ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
+                returning = (await ws_conn.passthrough(command)).replace('\r', '').replace('\n', '').replace('  ', '')
                 await self.__write_status_log(str(item), field='returning', value=returning)
                 self.set_returning(origin=self._log[str(item)]['origin'],
                                    fieldname=self._log[str(item)].get('fieldname'),
