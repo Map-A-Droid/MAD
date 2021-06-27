@@ -1,7 +1,7 @@
 import asyncio
 import glob
 import json
-from asyncio import Task
+from asyncio import Task, CancelledError
 
 import math
 import os
@@ -372,7 +372,7 @@ class DeviceUpdater(object):
                     errorcount = 0
                     await asyncio.sleep(10)
 
-            except KeyboardInterrupt:
+            except (KeyboardInterrupt, CancelledError):
                 logger.info("process_update_queue-{} received keyboard interrupt, stopping", threadnumber)
                 break
 

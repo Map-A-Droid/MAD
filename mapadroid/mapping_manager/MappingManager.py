@@ -165,7 +165,7 @@ class MappingManager:
         await self.update(full_lock=True)
 
     def shutdown(self):
-        logger.fatal("MappingManager exiting")
+        logger.info("MappingManager exiting")
 
     async def get_auths(self) -> Optional[Dict[str, str]]:
         return self._auths
@@ -723,7 +723,7 @@ class MappingManager:
             elif mode == "pokestops":
                 coords = await PokestopHelper.get_locations_in_fence(session, geofence_helper)
             else:
-                logger.fatal("Mode not implemented yet: {}", mode)
+                logger.info("Mode not implemented yet: {}", mode)
                 exit(1)
         else:
             # calculate all level N cells (mapping back from mapping above linked to mode)

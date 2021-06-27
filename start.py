@@ -5,12 +5,14 @@ import gc
 import logging
 import os
 import sys
+from asyncio import Task, CancelledError
 from multiprocessing import Process
-from threading import Thread, active_count
-from typing import Optional
+from typing import Optional, Tuple, Any
 
+import functools
 import pkg_resources
 import psutil
+from threading import active_count
 
 from mapadroid.db.DbFactory import DbFactory
 
@@ -43,7 +45,7 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
 
 
 # Patch to make exceptions in threads cause an exception.
-def install_thread_excepthook():
+def install_task_create_excepthook():
     """
     Workaround for sys.excepthook thread bug
     (https://sourceforge.net/tracker/?func=detail&atid=105470&aid=1230540&group_id=5470).
@@ -51,31 +53,40 @@ def install_thread_excepthook():
     If using psyco, call psycho.cannotcompile(threading.Thread.run)
     since this replaces a new-style class method.
     """
-    run_thread_old = Thread.run
-    run_process_old = Process.run
+    create_task_old = loop.create_task
 
-    def run_thread(*args, **kwargs):
+    def _handle_task_result(
+            task: asyncio.Task,
+            *,
+            logger: logging.Logger,
+            message: str,
+            message_args: Tuple[Any, ...] = (),
+    ) -> None:
         try:
-            run_thread_old(*args, **kwargs)
+            task.result()
+        except asyncio.CancelledError:
+            pass  # Task cancellation should not be logged as an error.
+        # Ad the pylint ignore: we want to handle all exceptions here so that the result of the task
+        # is properly logged. There is no point re-raising the exception in this callback.
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception(e)
+            logger.exception(message, *message_args)
+
+    def create_task(*args, **kwargs) -> Task:
+        try:
+            task = create_task_old(*args, **kwargs)
+            task.add_done_callback(
+                functools.partial(_handle_task_result, logger=logger)
+            )
+            return task
         except (KeyboardInterrupt, SystemExit):
             raise
         except BrokenPipeError:
             pass
-        except Exception:
-            logger.opt(exception=True).critical("An unhanded exception occurred!")
+        except Exception as e:
+            logger.opt(exception=True).critical("An unhandled exception occurred!")
 
-    def run_process(*args, **kwargs):
-        try:
-            run_process_old(*args, **kwargs)
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except BrokenPipeError:
-            pass
-        except Exception:
-            logger.opt(exception=True).critical("An unhanded exception occurred!")
-
-    Thread.run = run_thread
-    Process.run = run_process
+    loop.create_task = create_task
 
 
 def find_referring_graphs(obj):
@@ -162,8 +173,8 @@ async def start():
     pogo_win_manager: Optional[PogoWindows] = None
     storage_elem: Optional[AbstractAPKStorage] = None
     # storage_manager: Optional[StorageSyncManager] = None
-    t_whw: Thread = None  # Thread for WebHooks
-    t_ws: Thread = None  # Thread - WebSocket Server
+    t_whw: Task = None  # Thread for WebHooks
+    t_ws: Task = None  # Thread - WebSocket Server
     webhook_worker: Optional[WebhookWorker] = None
     ws_server: WebsocketServer = None
 
@@ -188,7 +199,7 @@ async def start():
         logger.info('Starting MAD')
     # check_dependencies()
     # TODO: globally destroy all threads upon sys.exit() for example
-    install_thread_excepthook()
+    install_task_create_excepthook()
     create_folder(args.file_path)
     create_folder(args.upload_path)
     create_folder(args.temp_path)
@@ -338,7 +349,7 @@ async def start():
         else:
             while True:
                 await asyncio.sleep(10)
-    except KeyboardInterrupt or Exception:
+    except (KeyboardInterrupt, CancelledError):
         logger.info("Shutdown signal received")
     finally:
         try:
@@ -364,12 +375,12 @@ async def start():
                 device_updater.stop_updater()
             if t_whw is not None:
                 logger.info("Waiting for webhook-thread to exit")
-                t_whw.join()
+                t_whw.cancel()
             if ws_server is not None:
                 logger.info("Stopping websocket server")
                 await ws_server.stop_server()
                 logger.info("Waiting for websocket-thread to exit")
-                t_ws.join()
+                # t_ws.cancel()
             if mapping_manager is not None:
                 mapping_manager.shutdown()
             # if storage_manager is not None:
@@ -377,7 +388,7 @@ async def start():
             #    storage_manager.shutdown()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
-                db_exec.shutdown()
+                # db_exec.shutdown()
                 logger.debug("Done shutting down db_pool_manager")
         except Exception:
             logger.opt(exception=True).critical("An unhanded exception occurred during shutdown!")

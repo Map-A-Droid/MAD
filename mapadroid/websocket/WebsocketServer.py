@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import random as rand
+from asyncio import CancelledError
 from threading import current_thread
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -197,12 +198,15 @@ class WebsocketServer(object):
                     if origin in self.__users_connecting:
                         self.__users_connecting.remove(origin)
                 await self.__client_message_receiver(origin, entry)
+            except CancelledError as e:
+                logger.info("Connection to {} has been cancelled", origin)
             except Exception as e:
                 origin_logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
             # also check if thread is already running to not start it again. If it is not alive, we need to create it..
             finally:
                 origin_logger.info("Awaiting unregister")
-                del self.__current_users[origin]
+                async with self.__current_users_mutex:
+                    del self.__current_users[origin]
         finally:
             async with self.__users_connecting_mutex:
                 if origin in self.__users_connecting:

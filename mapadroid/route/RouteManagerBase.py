@@ -121,7 +121,7 @@ class RouteManagerBase(ABC):
         self.init_mode_rounds: int = 1
         self._mon_ids_iv: List[int] = mon_ids_iv
         # initialize priority queue variables
-        self._prio_queue: Optional[List] = None
+        self._prio_queue: List = []
         self._update_prio_queue_thread = None
         self._check_routepools_thread: Optional[Task] = None
         self._stop_update_thread: asyncio.Event = asyncio.Event()
@@ -339,7 +339,7 @@ class RouteManagerBase(ABC):
                     break
 
     async def _merge_priority_queue(self, new_queue):
-        if new_queue is not None:
+        if new_queue:
             new_queue = list(new_queue)
             logger.info("Got {} new events", len(new_queue))
             # TODO: verify if this procedure is good for other modes, too
@@ -356,7 +356,7 @@ class RouteManagerBase(ABC):
                 merged = await self._filter_priority_queue_internal(new_queue)
             heapq.heapify(merged)
             self._prio_queue = merged
-            logger.info("Finalized new priority queue with {} entries", len(merged))
+            logger.success("Finalized new priority queue with {} entries", len(merged))
             logger.debug2("Priority queue entries: {}", str(merged))
 
     def date_diff_in_seconds(self, dt2, dt1):
@@ -539,11 +539,12 @@ class RouteManagerBase(ABC):
 
         # check priority queue for items of priority that are past our time...
         # if that is not the case, simply increase the index in route and return the location on route
-
+        logger.info("Trying to fetch a location from routepool")
         # determine whether we move to the next location or the prio queue top's item
         # TODO: Better use a strategy pattern or observer for extendability?
         if self.delay_after_timestamp_prio and (not routepool_entry.last_position_type == PositionType.PRIO
                                                 or self.starve_route):
+            logger.info("Checking for prioQ entries")
             # Check the PrioQ
             try:
                 next_timestamp, next_coord = None, None
@@ -556,7 +557,11 @@ class RouteManagerBase(ABC):
                             # No item available yet, sleep
                             await asyncio.sleep(1)
                 else:
-                    next_timestamp, next_coord = heapq.heappop(self._prio_queue)
+                    logger.info("Popping prioQ: {}", self._prio_queue)
+                    val = heapq.heappop(self._prio_queue)
+                    logger.info("Got location of prioQ: {}", val)
+
+                    next_timestamp, next_coord = val
                 next_readable_time = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
                 if next_timestamp < time.time():
                     raise IndexError("Next event at {} has not taken place yet", next_readable_time)
@@ -568,6 +573,7 @@ class RouteManagerBase(ABC):
 
                     while next_timestamp < delete_before:
                         # TODO: Move task_done elsewhere?
+                        logger.debug("Popping prio Q")
                         next_timestamp, next_coord = heapq.heappop(self._prio_queue)
                         next_readable_time = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
                         if next_timestamp < delete_before:
