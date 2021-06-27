@@ -1,11 +1,12 @@
 import asyncio
 import io
-from threading import Thread
 from typing import Optional
 from zipfile import LargeZipFile, BadZipFile
 
-from aiohttp import web
+from aiohttp import MultipartReader, web
 from loguru import logger
+from mapadroid.madmin.functions import allowed_file
+from werkzeug.utils import secure_filename
 
 from mapadroid.db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
@@ -44,14 +45,24 @@ class MadApkEndpoint(AbstractMadminRootEndpoint):
         is_upload: bool = False
         apk: Optional[io.BytesIO] = None
         filename: Optional[str] = None
+
         if self.request.content_type == 'multipart/form-data':
-            # TODO: Use multipart properly? It appears we did not use request.form of flask either tho....
-            # async for field in (await self.request.multipart()):
-            # if field == "filename"
-            json_data = await self.request.json()
-            filename = json_data['data'].get('filename', None)
+            reader: MultipartReader = await self._request.multipart()
+            file = await reader.next()
+            # check if the post request has the file part
+            if not file:
+                await self._add_notice_message('No file part')
+                raise web.HTTPFound(self._url_for("upload"))
+            elif not file.filename:
+                await self._add_notice_message('No file selected for uploading')
+                raise web.HTTPFound(self._url_for("upload"))
+            elif not allowed_file(file.filename):
+                await self._add_notice_message('Allowed file type is apk only!')
+                raise web.HTTPFound(self._url_for("upload"))
+            filename = secure_filename(file.filename)
+
             try:
-                apk = io.BytesIO(json_data['files'].get('file').read())
+                apk = io.BytesIO(await file.read())
             except AttributeError:
                 return self._json_response(text="No file present", status=406)
             is_upload = True
@@ -115,8 +126,6 @@ class MadApkEndpoint(AbstractMadminRootEndpoint):
             package_importer: PackageImporter = PackageImporter(apk_type, apk_arch, self._get_storage_obj(),
                                                                 apk, mimetype)
             await package_importer.import_configured()
-            if self.request.content_type == 'multipart/form-data':
-                raise web.HTTPCreated()
             return web.Response(status=201)
         except (BadZipFile, LargeZipFile) as err:
             return web.Response(text=str(err), status=406)
