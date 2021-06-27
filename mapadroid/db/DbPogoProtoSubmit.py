@@ -109,6 +109,7 @@ class DbPogoProtoSubmit:
                     mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
                     mon.last_modified = datetime.utcnow()
                     try:
+                        session.add(mon)
                         await nested_transaction.commit()
                         cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                         if cache_time > 0:
