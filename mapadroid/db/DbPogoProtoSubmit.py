@@ -181,8 +181,8 @@ class DbPogoProtoSubmit:
             move_1 = pokemon_data.get("move_1")
             move_2 = pokemon_data.get("move_2")
             form = pokemon_display.get("form_value", None)
-
-        while True:
+        attempts = 0
+        while attempts < 3:
             async with session.begin_nested() as nested_transaction:
                 try:
                     mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
@@ -193,7 +193,7 @@ class DbPogoProtoSubmit:
                         mon.latitude = latitude
                         mon.longitude = longitude
                     else:
-                        await session.merge(mon)
+                        await session.refresh(mon)
                     mon.pokemon_id = mon_id
                     mon.disappear_time = despawn_time
                     mon.individual_attack = pokemon_data.get("individual_attack")
@@ -225,7 +225,8 @@ class DbPogoProtoSubmit:
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed committing mon IV {} ({})", encounter_id, str(e))
                     await nested_transaction.rollback()
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.5)
+            attempts += 1
 
         origin_logger.success("Done updating mon IV in DB")
 
