@@ -108,7 +108,7 @@ class DbPogoProtoSubmit:
                     mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
                     mon.last_modified = datetime.utcnow()
                     try:
-                        session.add(mon)
+                        await session.merge(mon)
                         await nested_transaction.commit()
                         cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                         if cache_time > 0:
@@ -181,7 +181,7 @@ class DbPogoProtoSubmit:
             move_2 = pokemon_data.get("move_2")
             form = pokemon_display.get("form_value", None)
         attempts = 0
-        while attempts < 3:
+        while attempts < 5:
             async with session.begin_nested() as nested_transaction:
                 try:
                     mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
@@ -213,7 +213,7 @@ class DbPogoProtoSubmit:
                     mon.last_modified = datetime.utcnow()
                     mon.disappear_time = despawn_time
 
-                    session.add(mon)
+                    await session.merge(mon)
                     await nested_transaction.commit()
                     cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                     if cache_time > 0:
