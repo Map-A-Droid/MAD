@@ -1,3 +1,4 @@
+import asyncio
 import json
 import math
 import time
@@ -98,19 +99,15 @@ class DbPogoProtoSubmit:
                         mon.spawnpoint_id = spawnid
                         mon.latitude = lat
                         mon.longitude = lon
+                    else:
+                        await session.merge(mon)
                     mon.pokemon_id = mon_id
                     mon.disappear_time = despawn_time
-                    await session.merge(mon)
-                    #mon.individual_attack = mon.individual_defense = mon.individual_stamina = None
-                    #mon.move_1 = mon.move_2 = mon.cp = mon.cp_multiplier = mon.weight = mon.height = None
                     mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
-                    #mon.catch_prob_1 = mon.catch_prob_2 = mon.catch_prob_3 = None
-                    #mon.rating_attack = mon.rating_defense = None
                     mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
                     mon.costume = wild_mon["pokemon_data"]["display"]["costume_value"]
                     mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
                     mon.last_modified = datetime.utcnow()
-
                     try:
                         await nested_transaction.commit()
                         cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
@@ -183,40 +180,53 @@ class DbPogoProtoSubmit:
             move_1 = pokemon_data.get("move_1")
             move_2 = pokemon_data.get("move_2")
             form = pokemon_display.get("form_value", None)
-        mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
-        if not mon:
-            mon: Pokemon = Pokemon()
-            mon.encounter_id = encounter_id
-            mon.spawnpoint_id = spawnid
-            mon.latitude = latitude
-            mon.longitude = longitude
-        mon.pokemon_id = mon_id
-        mon.disappear_time = despawn_time
-        await session.merge(mon)
-        mon.individual_attack = pokemon_data.get("individual_attack")
-        mon.individual_defense = pokemon_data.get("individual_defense")
-        mon.individual_stamina = pokemon_data.get("individual_stamina")
-        mon.move_1 = move_1
-        mon.move_2 = move_2
-        mon.cp = pokemon_data.get("cp")
-        mon.cp_multiplier = pokemon_data.get("cp_multiplier")
-        mon.weight = pokemon_data.get("weight")
-        mon.height = pokemon_data.get("height")
-        mon.gender = gender
-        mon.catch_prob_1 = float(capture_probability_list[0])
-        mon.catch_prob_2 = float(capture_probability_list[1])
-        mon.catch_prob_3 = float(capture_probability_list[2])
-        mon.rating_attack = mon.rating_defense = None
-        mon.weather_boosted_condition = weather_boosted
-        mon.costume = pokemon_display.get("costume_value", None)
-        mon.form = form
-        mon.last_modified = datetime.utcnow()
-        mon.disappear_time = despawn_time
 
-        cache_time = int(despawn_time_unix - datetime.now().timestamp())
-        if cache_time > 0:
-            await cache.set(cache_key, 1, expire=int(cache_time))
-        origin_logger.debug3("Done updating mon in DB")
+        while True:
+            async with session.begin_nested() as nested_transaction:
+                try:
+                    mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
+                    if not mon:
+                        mon: Pokemon = Pokemon()
+                        mon.encounter_id = encounter_id
+                        mon.spawnpoint_id = spawnid
+                        mon.latitude = latitude
+                        mon.longitude = longitude
+                    else:
+                        await session.merge(mon)
+                    mon.pokemon_id = mon_id
+                    mon.disappear_time = despawn_time
+                    mon.individual_attack = pokemon_data.get("individual_attack")
+                    mon.individual_defense = pokemon_data.get("individual_defense")
+                    mon.individual_stamina = pokemon_data.get("individual_stamina")
+                    mon.move_1 = move_1
+                    mon.move_2 = move_2
+                    mon.cp = pokemon_data.get("cp")
+                    mon.cp_multiplier = pokemon_data.get("cp_multiplier")
+                    mon.weight = pokemon_data.get("weight")
+                    mon.height = pokemon_data.get("height")
+                    mon.gender = gender
+                    mon.catch_prob_1 = float(capture_probability_list[0])
+                    mon.catch_prob_2 = float(capture_probability_list[1])
+                    mon.catch_prob_3 = float(capture_probability_list[2])
+                    mon.rating_attack = mon.rating_defense = None
+                    mon.weather_boosted_condition = weather_boosted
+                    mon.costume = pokemon_display.get("costume_value", None)
+                    mon.form = form
+                    mon.last_modified = datetime.utcnow()
+                    mon.disappear_time = despawn_time
+
+                    session.add(mon)
+                    await nested_transaction.commit()
+                    cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
+                    if cache_time > 0:
+                        await cache.set(cache_key, 1, expire=cache_time)
+                    break
+                except sqlalchemy.exc.IntegrityError as e:
+                    logger.warning("Failed committing mon IV {} ({})", encounter_id, str(e))
+                    await nested_transaction.rollback()
+                    await asyncio.sleep(1)
+
+        origin_logger.success("Done updating mon IV in DB")
 
         return True
 

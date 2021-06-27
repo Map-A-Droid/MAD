@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.utils.logging import get_origin_logger
+from mapadroid.utils.logging import get_logger
 from loguru import logger
 
 
@@ -52,29 +52,28 @@ class SerializedMitmDataProcessor:
 
     #@logger.catch
     async def process_data(self, session: AsyncSession, received_timestamp, data, origin):
-        origin_logger = get_origin_logger(logger, origin=origin)
         data_type = data.get("type", None)
-        origin_logger.debug("Processing received data")
+        logger.debug("Processing received data")
         processed_timestamp = datetime.fromtimestamp(received_timestamp)
 
         if data_type and not data.get("raw", False):
             await self.__mitm_mapper.run_stats_collector(origin)
 
-            origin_logger.debug4("Received data: {}", data)
+            logger.debug4("Received data: {}", data)
             threshold_seconds = self.__application_args.mitm_ignore_proc_time_thresh
 
             start_time = self.get_time_ms()
             if threshold_seconds > 0:
                 minimum_timestamp = (start_time / 1000) - threshold_seconds
                 if received_timestamp < minimum_timestamp:
-                    origin_logger.debug(
+                    logger.debug(
                         "Data received at {} is older than configured threshold of {}s ({}). Ignoring data.",
                         processed_timestamp, threshold_seconds, datetime.fromtimestamp(minimum_timestamp))
                     return
 
             # We can use the current session easily...
             if data_type == 106:
-                origin_logger.info("Processing GMO. Received at {}", processed_timestamp)
+                logger.info("Processing GMO. Received at {}", processed_timestamp)
                 weather_time = await self.__process_weather(data, origin, received_timestamp, session)
                 stops_time = await self.__process_stops(data, origin, session)
                 gyms_time = await self.__process_gyms(data, origin, session)
@@ -90,39 +89,39 @@ class SerializedMitmDataProcessor:
 
                 full_time = self.get_time_ms() - start_time
 
-                origin_logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
+                logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
                                     "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
                                     full_time, weather_time, stops_time, gyms_time, raids_time,
                                     spawnpoints_time, mons_time, cells_time, gmo_loc_time)
             elif data_type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
-                    origin_logger.debug("Processing encounter received at {}", processed_timestamp)
+                    logger.debug("Processing encounter received at {}", processed_timestamp)
                     await self.__db_submit.mon_iv(session, origin, received_timestamp, data["payload"], self.__mitm_mapper)
                     end_time = self.get_time_ms() - start_time
-                    origin_logger.debug("Done processing encounter in {}ms", end_time)
+                    logger.debug("Done processing encounter in {}ms", end_time)
                 else:
-                    origin_logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
+                    logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
             elif data_type == 101:
-                origin_logger.debug("Processing proto 101 (FORT_SEARCH)")
+                logger.debug("Processing proto 101 (FORT_SEARCH)")
                 await self.__db_submit.quest(session, origin, data["payload"], self.__mitm_mapper)
                 end_time = self.get_time_ms() - start_time
-                origin_logger.debug("Done processing proto 101 in {}ms", end_time)
+                logger.debug("Done processing proto 101 in {}ms", end_time)
             elif data_type == 104:
-                origin_logger.debug("Processing proto 104 (FORT_DETAILS)")
+                logger.debug("Processing proto 104 (FORT_DETAILS)")
                 await self.__db_submit.stop_details(session, data["payload"])
                 end_time = self.get_time_ms() - start_time
-                origin_logger.debug("Done processing proto 104 in {}ms", end_time)
+                logger.debug("Done processing proto 104 in {}ms", end_time)
             elif data_type == 4:
-                origin_logger.debug("Processing proto 4 (GET_HOLO_INVENTORY)")
+                logger.debug("Processing proto 4 (GET_HOLO_INVENTORY)")
                 await self.__mitm_mapper.generate_player_stats(origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
-                origin_logger.debug("Done processing proto 4 in {}ms", end_time)
+                logger.debug("Done processing proto 4 in {}ms", end_time)
             elif data_type == 156:
-                origin_logger.debug("Processing proto 156 (GYM_GET_INFO)")
+                logger.debug("Processing proto 156 (GYM_GET_INFO)")
                 await self.__db_submit.gym(session, origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
-                origin_logger.debug("Done processing proto 156 in {}ms", end_time)
+                logger.debug("Done processing proto 156 in {}ms", end_time)
 
     async def __process_wild_mons(self, data, origin, received_timestamp, session):
         mons_time_start = self.get_time_ms()
