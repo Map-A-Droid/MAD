@@ -19,7 +19,7 @@ class ClusteringHelper:
         self.useS2 = use_s2
         self.S2level = s2_level
 
-    def _get_relations_in_range_within_time(self, queue, max_radius):
+    def _get_relations_in_range_within_time(self, queue: List[Tuple[int, Location]], max_radius):
         relations = {}
         for event in queue:
             for other_event in queue:
@@ -199,7 +199,7 @@ class ClusteringHelper:
                 logger.exception(e)
         return final_set
 
-    def get_clustered(self, queue) -> List[Tuple[int, Location]]:
+    def get_clustered(self, queue: List[Tuple[int, Location]]) -> List[Tuple[int, Location]]:
         relations = self._get_relations_in_range_within_time(
             queue, max_radius=self.max_radius)
         summed_up = self._sum_up_relations(relations)

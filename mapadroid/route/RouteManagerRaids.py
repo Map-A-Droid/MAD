@@ -58,7 +58,7 @@ class RouteManagerRaids(RouteManagerBase):
         async with self.db_wrapper as session, session:
             coords: List[Location] = await GymHelper.get_locations_in_fence(session, self.geofence_helper)
             if self._settings.including_stops:
-                self.logger.info("Include stops in coords list too!")
+                logger.info("Include stops in coords list too!")
                 coords.extend(await PokestopHelper.get_locations_in_fence(session, self.geofence_helper))
 
         return coords
@@ -71,7 +71,7 @@ class RouteManagerRaids(RouteManagerBase):
         async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
-                self.logger.info("Starting routemanager")
+                logger.info("Starting routemanager")
                 if self._mode != WorkerType.IDLE:
                     await self._start_priority_queue()
                     await self._start_check_routepools()
@@ -79,7 +79,7 @@ class RouteManagerRaids(RouteManagerBase):
         return True
 
     def _quit_route(self):
-        self.logger.info("Shutdown Route")
+        logger.info("Shutdown Route")
         self._is_started = False
         self._round_started_time = None
 

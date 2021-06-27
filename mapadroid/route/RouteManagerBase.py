@@ -2,6 +2,8 @@ import asyncio
 import collections
 import concurrent.futures
 import heapq
+from copy import copy
+
 import math
 import time
 from abc import ABC, abstractmethod
@@ -328,6 +330,7 @@ class RouteManagerBase(ABC):
             return
         while not self._stop_update_thread.is_set():
             # retrieve the latest hatches from DB
+            logger.success("Trying to update prioQ")
             new_queue = await self._retrieve_latest_priority_queue()
             await self._merge_priority_queue(new_queue)
             redocounter = 0
@@ -341,14 +344,14 @@ class RouteManagerBase(ABC):
     async def _merge_priority_queue(self, new_queue):
         if new_queue:
             new_queue = list(new_queue)
-            logger.info("Got {} new events", len(new_queue))
+            logger.success("Got {} new events", len(new_queue))
             # TODO: verify if this procedure is good for other modes, too
             # TODO: Async Executor as clustering takes time..
             if self._mode == WorkerType.MON_MITM:
                 new_queue = await self._filter_priority_queue_internal(new_queue)
                 logger.debug2("Merging existing Q of {} events with {} clustered new events",
                                    len(self._prio_queue), len(new_queue))
-                merged: List[Tuple[int, Location]] = list(set(new_queue + self._prio_queue))
+                merged: List[Tuple[int, Location]] = list(set(new_queue + copy(self._prio_queue)))
                 merged = list(merged)
                 logger.info("Merging resulted in queue with {} entries", len(merged))
                 merged = await self._filter_priority_queue_internal(merged, cluster=False)
@@ -481,16 +484,16 @@ class RouteManagerBase(ABC):
             delete_before = 0
         if self._mode == WorkerType.MON_MITM:
             delete_after = time.time() + 600
-            latest = [to_keep for to_keep in latest if
-                      not to_keep[0] < delete_before and not to_keep[0] > delete_after]
+            latest: List[Tuple[int, Location]] = [to_keep for to_keep in latest if
+                                                  not to_keep[0] < delete_before and not to_keep[0] > delete_after]
         else:
-            latest = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
+            latest: List[Tuple[int, Location]] = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
         # TODO: sort latest by modified flag of event
         if cluster:
             loop = asyncio.get_running_loop()
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 merged = await loop.run_in_executor(
-                    pool, self.clustering_helper.get_clustered, (latest,))
+                    pool, self.clustering_helper.get_clustered, latest)
             # merged = self.clustering_helper.get_clustered(latest)
             return merged
         else:

@@ -75,12 +75,12 @@ class RouteManagerIV(RouteManagerBase):
         async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
-                self.logger.info("Starting routemanager")
+                logger.info("Starting routemanager")
                 await self._start_priority_queue()
         return True
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route')
+        logger.info('Shutdown Route')
         self._is_started = False
         self._round_started_time = None
 

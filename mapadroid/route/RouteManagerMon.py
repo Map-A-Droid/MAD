@@ -6,9 +6,7 @@ from mapadroid.db.model import SettingsAreaMonMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LoggerEnums, get_logger
-
-logger = get_logger(LoggerEnums.routemanager)
+from loguru import logger
 
 
 class RouteManagerMon(RouteManagerBase):
@@ -55,10 +53,10 @@ class RouteManagerMon(RouteManagerBase):
     async def _get_coords_post_init(self):
         async with self.db_wrapper as session, session:
             if self.coords_spawns_known:
-                self.logger.info("Reading known Spawnpoints from DB")
+                logger.info("Reading known Spawnpoints from DB")
                 coords = await TrsSpawnHelper.get_known_of_area(session, self.geofence_helper, self.include_event_id)
             else:
-                self.logger.info("Reading unknown Spawnpoints from DB")
+                logger.info("Reading unknown Spawnpoints from DB")
                 coords = await TrsSpawnHelper.get_known_without_despawn_of_area(session, self.geofence_helper,
                                                                                 self.include_event_id)
         await self._start_priority_queue()
@@ -71,7 +69,7 @@ class RouteManagerMon(RouteManagerBase):
         async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
-                self.logger.info("Starting routemanager {}", self.name)
+                logger.info("Starting routemanager {}", self.name)
                 if not self.init:
                     await self._start_priority_queue()
                 await self._start_check_routepools()
@@ -82,7 +80,7 @@ class RouteManagerMon(RouteManagerBase):
         return False
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route {}', self.name)
+        logger.info('Shutdown Route {}', self.name)
         self._is_started = False
         self._round_started_time = None
 
