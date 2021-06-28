@@ -36,12 +36,12 @@ class RouteManagerQuests(RouteManagerBase):
 
     async def generate_stop_list(self):
         await asyncio.sleep(5)
-        # stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
-        # TODO
-        stops = []
-        logger.info('Detected stops without quests: {}', len(stops))
-        logger.debug('Detected stops without quests: {}', stops)
-        self._stoplist: List[Location] = stops
+        async with self.db_wrapper as session, session:
+            stops = await PokestopHelper.get_without_quests(session, self.geofence_helper)
+        locations_of_stops: List[Location] = [Location(stop.latitude, stop.longitude) for stop_id, stop in stops.values()]
+        logger.info('Detected stops without quests: {}', len(locations_of_stops))
+        logger.debug('Detected stops without quests: {}', locations_of_stops)
+        self._stoplist: List[Location] = locations_of_stops
 
     def _retrieve_latest_priority_queue(self):
         return None

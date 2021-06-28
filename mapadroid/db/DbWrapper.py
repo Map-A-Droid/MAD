@@ -70,51 +70,6 @@ class DbWrapper:
     def set_event_id(self, eventid: int):
         self._event_id = eventid
 
-    def __db_timestring_to_unix_timestamp(self, timestring):
-        try:
-            dt = datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
-        except ValueError:
-            dt = datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
-        unixtime = (dt - datetime(1970, 1, 1)).total_seconds()
-        return unixtime
-
-    def stop_from_db_without_quests(self, geofence_helper, latlng=True):
-        # TODO: Refactor for sqlalchemy
-        logger.debug3("DbWrapper::stop_from_db_without_quests called")
-        fields = "pokestop.latitude, pokestop.longitude"
-
-        min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
-        if not latlng:
-            fields = "pokestop.pokestop_id"
-
-        query = (
-                "SELECT " + fields + " "
-                                     "FROM pokestop "
-                                     "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
-                                     "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
-                                     "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
-                                     "AND (DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
-                                     "OR trs_quest.GUID IS NULL)"
-        ).format(min_lat, min_lon, max_lat, max_lon)
-
-        res = self.execute(query)
-        list_of_coords: List[Location] = []
-
-        if not latlng:
-            list_of_ids: List = []
-            for stopid in res:
-                list_of_ids.append(''.join(stopid))
-            return list_of_ids
-
-        for (latitude, longitude) in res:
-            list_of_coords.append(Location(latitude, longitude))
-
-        if geofence_helper is not None:
-            geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
-            return geofenced_coords
-        else:
-            return list_of_coords
-
     async def update_instance_id(self, session: AsyncSession, instance_name: Optional[str] = None) -> MadminInstance:
         if instance_name is None:
             instance_name = self.application_args.status_name

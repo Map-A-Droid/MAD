@@ -246,6 +246,40 @@ class PokestopHelper:
         return stop_with_quest
 
     @staticmethod
+    async def get_without_quests(session: AsyncSession,
+                                 geofence_helper: GeofenceHelper) -> Dict[int, Pokestop]:
+        """
+        stop_from_db_without_quests
+        Args:
+            geofence_helper:
+            session:
+
+        Returns:
+
+        """
+        stmt = select(Pokestop, TrsQuest) \
+            .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)
+        where_conditions = []
+        # TODO: Verify this works for all timezones...
+        today_midnight = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+        where_conditions.append(or_(TrsQuest.quest_timestamp < today_midnight.timestamp(),
+                                    TrsQuest.GUID == None))
+
+        min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
+        where_conditions.append(and_(Pokestop.latitude >= min_lat,
+                                     Pokestop.longitude >= min_lon,
+                                     Pokestop.latitude <= max_lat,
+                                     Pokestop.longitude <= max_lon))
+
+        stmt = stmt.where(and_(*where_conditions))
+        result = await session.execute(stmt)
+        stops_without_quests: Dict[int, Pokestop] = {}
+        for stop in result.all():
+            if geofence_helper.is_coord_inside_include_geofence(Location(stop.latitude, stop.longitude)):
+                stops_without_quests[stop.pokestop_id] = stop
+        return stops_without_quests
+
+    @staticmethod
     async def get_in_rectangle(session: AsyncSession,
                               ne_corner: Optional[Location], sw_corner: Optional[Location],
                               old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
