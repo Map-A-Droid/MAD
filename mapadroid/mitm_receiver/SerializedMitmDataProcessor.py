@@ -55,7 +55,6 @@ class SerializedMitmDataProcessor:
                     logger.debug("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
                 except KeyboardInterrupt:
                     logger.info("Received keyboard interrupt, stopping MITM data processor")
-                    break
 
     #@logger.catch
     async def process_data(self, session: AsyncSession, received_timestamp, data, origin):
