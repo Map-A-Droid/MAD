@@ -2,6 +2,7 @@ import asyncio
 import time
 from datetime import datetime
 
+import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
@@ -38,10 +39,15 @@ class SerializedMitmDataProcessor:
                             try:
                                 await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
                                 await session.commit()
+                            except sqlalchemy.exc.IntegrityError as e:
+                                logger.warning("Failed submitting data to DB, rescheduling. {}", e)
+                                await transaction.rollback()
+                                await self.__queue.put(item)
                             except Exception as e:
                                 logger.info("Failed processing data... {}", e)
                                 logger.exception(e)
                                 await transaction.rollback()
+                                await self.__queue.put(item)
                     # await self.process_data(item[0], item[1], item[2])
                     self.__queue.task_done()
                     end_time = self.get_time_ms() - start_time
