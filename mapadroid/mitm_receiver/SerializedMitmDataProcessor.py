@@ -11,6 +11,8 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils.logging import get_logger
 from loguru import logger
 
+from mapadroid.utils.madGlobals import MitmReceiverRetry
+
 
 class SerializedMitmDataProcessor:
     def __init__(self, data_queue: asyncio.Queue, application_args, mitm_mapper: MitmMapper,
@@ -39,7 +41,7 @@ class SerializedMitmDataProcessor:
                             try:
                                 await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
                                 await session.commit()
-                            except sqlalchemy.exc.IntegrityError as e:
+                            except (sqlalchemy.exc.IntegrityError, MitmReceiverRetry) as e:
                                 logger.warning("Failed submitting data to DB, rescheduling. {}", e)
                                 await transaction.rollback()
                                 await self.__queue.put(item)

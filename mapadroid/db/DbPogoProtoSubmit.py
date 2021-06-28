@@ -28,6 +28,7 @@ from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
 from mapadroid.utils.logging import get_origin_logger
+from mapadroid.utils.madGlobals import MitmReceiverRetry
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
 from loguru import logger
@@ -128,6 +129,15 @@ class DbPogoProtoSubmit:
         if wild_pokemon is None or wild_pokemon.get("encounter_id", 0) == 0 or not str(wild_pokemon["spawnpoint_id"]):
             return False
 
+        encounter_id = wild_pokemon["encounter_id"]
+
+        if encounter_id < 0:
+            encounter_id = encounter_id + 2 ** 64
+        cache_key = "mon{}".format(encounter_id)
+        if isinstance(cache, Redis) and not await cache.exists(cache_key):
+            # Raise exception to requeue item before doing any DB operations
+            raise MitmReceiverRetry
+
         origin_logger.debug3("Updating IV sent for encounter at {}", timestamp)
 
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
@@ -140,13 +150,9 @@ class DbPogoProtoSubmit:
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
-        encounter_id = wild_pokemon["encounter_id"]
         shiny = wild_pokemon["pokemon_data"]["display"].get("is_shiny", 0)
         pokemon_display = pokemon_data.get("display", {})
         weather_boosted = pokemon_display.get('weather_boosted_value', None)
-
-        if encounter_id < 0:
-            encounter_id = encounter_id + 2 ** 64
 
         cache_key = "moniv{}{}".format(encounter_id, weather_boosted)
         if await cache.exists(cache_key):

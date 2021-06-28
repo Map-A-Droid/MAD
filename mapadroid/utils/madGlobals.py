@@ -8,6 +8,10 @@ class WebsocketWorkerRemovedException(Exception):
     pass
 
 
+class MitmReceiverRetry(Exception):
+    pass
+
+
 class WebsocketWorkerConnectionClosedException(Exception):
     pass
 
