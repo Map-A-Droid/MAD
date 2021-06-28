@@ -92,7 +92,7 @@ class WorkerQuests(MITMBase):
         self._latest_quest = 0
         self._clear_box_failcount = 0
         self._spinnable_data_failcount = 0
-        self._rotation_waittime: int = self._rotation_waittime
+        self._rotation_waittime: int = 0
         self._always_cleanup: bool = False
 
     async def start_worker(self):

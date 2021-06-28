@@ -257,7 +257,7 @@ class PokestopHelper:
         Returns:
 
         """
-        stmt = select(Pokestop, TrsQuest) \
+        stmt = select(Pokestop) \
             .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)
         where_conditions = []
         # TODO: Verify this works for all timezones...
@@ -274,7 +274,7 @@ class PokestopHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         stops_without_quests: Dict[int, Pokestop] = {}
-        for stop in result.all():
+        for stop in result.scalars().all():
             if geofence_helper.is_coord_inside_include_geofence(Location(stop.latitude, stop.longitude)):
                 stops_without_quests[stop.pokestop_id] = stop
         return stops_without_quests

@@ -328,103 +328,106 @@ class WorkerBase(AbstractWorker, ABC):
         logger.info("Internal cleanup of finished")
 
     async def _main_work_thread(self):
-        # TODO: signal websocketserver the removal
-        with logger.contextualize(name=self.origin):
-            try:
-                await self._internal_pre_work()
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                    WebsocketWorkerConnectionClosedException) as e:
-                logger.error("Failed initializing worker, connection terminated exceptionally")
-                await self._internal_cleanup()
-                return
-
-            if not await self.check_max_walkers_reached():
-                logger.warning('Max. Walkers in Area {} - closing connections',
-                                    self._mapping_manager.routemanager_get_name(self._routemanager_id))
-                await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-                await self._internal_cleanup()
-                return
-
-            # TODO: Async event?
-            while not self._stop_worker_event.is_set():
+        try:
+            # TODO: signal websocketserver the removal
+            with logger.contextualize(name=self.origin):
                 try:
-                    # TODO: consider getting results of health checks and aborting the entire worker?
-                    walkercheck = await self.check_walker()
-                    if not walkercheck:
-                        await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-                        break
+                    await self._internal_pre_work()
                 except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException):
-                    logger.warning("Worker killed by walker settings")
-                    break
+                        WebsocketWorkerConnectionClosedException) as e:
+                    logger.error("Failed initializing worker, connection terminated exceptionally")
+                    await self._internal_cleanup()
+                    return
 
-                try:
-                    # TODO: consider getting results of health checks and aborting the entire worker?
-                    await self._internal_health_check()
-                    await self._health_check()
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException):
-                    logger.error("Websocket connection to {} lost while running healthchecks, connection terminated "
-                                      "exceptionally", self._origin)
-                    break
+                if not await self.check_max_walkers_reached():
+                    logger.warning('Max. Walkers in Area {} - closing connections',
+                                        self._mapping_manager.routemanager_get_name(self._routemanager_id))
+                    await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+                    await self._internal_cleanup()
+                    return
 
-                try:
-                    settings = await self._internal_grab_next_location()
-                    if settings is None:
-                        continue
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException):
-                    logger.warning("Worker of does not support mode that's to be run, connection terminated "
-                                        "exceptionally")
-                    break
-
-                try:
-                    logger.debug('Checking if new location is valid')
-                    if not await self._check_location_is_valid():
-                        break
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException):
-                    logger.warning("Worker received invalid coords!")
-                    break
-
-                try:
-                    await self._pre_location_update()
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException):
-                    logger.warning("Worker of stopping because of stop signal in pre_location_update, connection "
-                                        "terminated exceptionally")
-                    break
-
-                try:
-                    last_location: Location = await self.get_devicesettings_value(
-                        MappingManagerDevicemappingKey.LAST_LOCATION, Location(0, 0))
-                    logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
-                                       last_location.lat, last_location.lng,
-                                       self.current_location.lat, self.current_location.lng)
-                    time_snapshot, process_location = await self._move_to_location()
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException):
-                    logger.warning("Worker failed moving to new location, stopping worker, connection terminated "
-                                        "exceptionally")
-                    break
-
-                if process_location:
-                    self._location_count += 1
-                    logger.debug("Seting new 'scannedlocation' in Database")
-                    loop = asyncio.get_event_loop()
-                    loop.create_task(
-                        self.update_scanned_location(self.current_location.lat, self.current_location.lng, time_snapshot))
-
-                    # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
+                # TODO: Async event?
+                while not self._stop_worker_event.is_set():
                     try:
-                        await self._post_move_location_routine(time_snapshot)
+                        # TODO: consider getting results of health checks and aborting the entire worker?
+                        walkercheck = await self.check_walker()
+                        if not walkercheck:
+                            await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+                            break
                     except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                             WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker failed running post_move_location_routine, stopping worker")
+                        logger.warning("Worker killed by walker settings")
                         break
-                    logger.info("Worker finished iteration, continuing work")
 
-            await self._internal_cleanup()
+                    try:
+                        # TODO: consider getting results of health checks and aborting the entire worker?
+                        await self._internal_health_check()
+                        await self._health_check()
+                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
+                        logger.error("Websocket connection to {} lost while running healthchecks, connection terminated "
+                                          "exceptionally", self._origin)
+                        break
+
+                    try:
+                        settings = await self._internal_grab_next_location()
+                        if settings is None:
+                            continue
+                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
+                        logger.warning("Worker of does not support mode that's to be run, connection terminated "
+                                            "exceptionally")
+                        break
+
+                    try:
+                        logger.debug('Checking if new location is valid')
+                        if not await self._check_location_is_valid():
+                            break
+                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
+                        logger.warning("Worker received invalid coords!")
+                        break
+
+                    try:
+                        await self._pre_location_update()
+                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
+                        logger.warning("Worker of stopping because of stop signal in pre_location_update, connection "
+                                            "terminated exceptionally")
+                        break
+
+                    try:
+                        last_location: Location = await self.get_devicesettings_value(
+                            MappingManagerDevicemappingKey.LAST_LOCATION, Location(0, 0))
+                        logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
+                                           last_location.lat, last_location.lng,
+                                           self.current_location.lat, self.current_location.lng)
+                        time_snapshot, process_location = await self._move_to_location()
+                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
+                        logger.warning("Worker failed moving to new location, stopping worker, connection terminated "
+                                            "exceptionally")
+                        break
+
+                    if process_location:
+                        self._location_count += 1
+                        logger.debug("Seting new 'scannedlocation' in Database")
+                        loop = asyncio.get_event_loop()
+                        loop.create_task(
+                            self.update_scanned_location(self.current_location.lat, self.current_location.lng, time_snapshot))
+
+                        # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
+                        try:
+                            await self._post_move_location_routine(time_snapshot)
+                        except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                                WebsocketWorkerConnectionClosedException):
+                            logger.warning("Worker failed running post_move_location_routine, stopping worker")
+                            break
+                        logger.info("Worker finished iteration, continuing work")
+
+                await self._internal_cleanup()
+        except Exception as e:
+            logger.exception(e)
 
     async def update_scanned_location(self, latitude: float, longitude: float, utc_timestamp: float):
         async with self._db_wrapper as session, session:

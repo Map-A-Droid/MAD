@@ -378,7 +378,7 @@ class DbPogoProtoSubmit:
         condition = goal.get("condition", None)
 
         json_condition = json.dumps(condition)
-        task = questtask(int(quest_type), json_condition, int(target), str(quest_template))
+        task = await questtask(int(quest_type), json_condition, int(target), str(quest_template))
 
         await mitm_mapper.collect_quest_stats(origin, fort_id)
 

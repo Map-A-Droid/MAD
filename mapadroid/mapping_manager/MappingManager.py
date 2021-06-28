@@ -332,6 +332,12 @@ class MappingManager:
         # Extra keys to e.g. retrieve PTC accounts
         elif key == MappingManagerDevicemappingKey.PTC_LOGIN:
             return devicemapping_entry.ptc_logins
+        elif key == MappingManagerDevicemappingKey.ROTATION_WAITTIME:
+            return devicemapping_entry.device_settings.rotation_waittime
+        elif key == MappingManagerDevicemappingKey.ACCOUNT_ROTATION:
+            return devicemapping_entry.device_settings.account_rotation
+        elif key == MappingManagerDevicemappingKey.ROTATE_ON_LVL_30:
+            return devicemapping_entry.device_settings.rotate_on_lvl_30
         else:
             # TODO: Get all the DB values...
             pass
