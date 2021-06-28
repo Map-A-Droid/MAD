@@ -26,7 +26,7 @@ class SendGpsEndpoint(AbstractControlEndpoint):
         # origin_logger.info('MADmin: Set GPS Coords {}, {} - WS Mode only!', coords[0], coords[1])
         try:
             temp_comm = self._get_ws_server().get_origin_communicator(origin)
-            await temp_comm.set_location(Location(coords[0], coords[1]), 0)
+            await temp_comm.set_location(Location(float(coords[0]), float(coords[1])), 0)
             if int(sleeptime) > 0:
                 # origin_logger.info("MADmin: Set additional sleeptime: {}", sleeptime)
                 self._get_ws_server().set_geofix_sleeptime_worker(origin, int(sleeptime))

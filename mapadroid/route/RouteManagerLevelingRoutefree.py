@@ -8,9 +8,7 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.RouteManagerLeveling import RouteManagerLeveling
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LoggerEnums, get_logger
-
-logger = get_logger(LoggerEnums.routemanager)
+from loguru import logger
 
 
 class RouteManagerLevelingRoutefree(RouteManagerLeveling):
@@ -29,9 +27,9 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
 
     async def _worker_changed_update_routepools(self):
         async with self._manager_mutex:
-            self.logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
+            logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
             if len(self._workers_registered) == 0:
-                self.logger.info("No registered workers, aborting __worker_changed_update_routepools...")
+                logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
 
             any_at_all = False
@@ -41,7 +39,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                     entry: RoutePoolEntry = self._routepool[origin]
 
                     if len(entry.queue) > 0:
-                        self.logger.debug("origin {} already has a queue, do not touch...", origin)
+                        logger.debug("origin {} already has a queue, do not touch...", origin)
                         continue
                     current_worker_pos = entry.current_pos
                     unvisited_stops: List[Pokestop] = await PokestopHelper.get_nearby_increasing_range_within_area(
@@ -53,25 +51,25 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                         ignore_spinned=self._settings.ignore_spinned_stops == 1,
                         max_distance=5)
                     if not unvisited_stops:
-                        self.logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
+                        logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
                         continue
 
                     for stop in unvisited_stops:
-                        coord_location = Location(stop.latitude, stop.longitude)
+                        coord_location = Location(float(stop.latitude), float(stop.longitude))
                         if coord_location in self._coords_to_be_ignored:
-                            self.logger.info('Already tried this Stop but it failed spinnable test, skip it')
+                            logger.info('Already tried this Stop but it failed spinnable test, skip it')
                             continue
                         origin_local_list.append(coord_location)
 
                     if unvisited_stops:
-                        self.logger.info("Recalc a route")
+                        logger.info("Recalc a route")
                         new_route = await self._local_recalc_subroute(unvisited_stops)
                         origin_local_list.clear()
                         for coord in new_route:
                             origin_local_list.append(Location(coord["lat"], coord["lng"]))
 
                     # subroute is all stops unvisited
-                    self.logger.info("Origin {} has {} unvisited stops for this route", origin, len(origin_local_list))
+                    logger.info("Origin {} has {} unvisited stops for this route", origin, len(origin_local_list))
                     entry.subroute = origin_local_list
                     # let's clean the queue just to make sure
                     entry.queue.clear()
@@ -92,7 +90,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
 
     async def _get_coords_after_finish_route(self) -> bool:
         if self._shutdown_route:
-            self.logger.info('Other worker shutdown route - leaving it')
+            logger.info('Other worker shutdown route - leaving it')
             return False
 
         await self._worker_changed_update_routepools()
@@ -108,10 +106,10 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         async with self._manager_mutex:
             if not self._is_started:
                 self._is_started = True
-                self.logger.info("Starting routemanager")
+                logger.info("Starting routemanager")
 
                 if self._shutdown_route:
-                    self.logger.info('Other worker shutdown route - leaving it')
+                    logger.info('Other worker shutdown route - leaving it')
                     return False
 
                 self._prio_queue = None
@@ -130,7 +128,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         self._init_route_queue()
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route')
+        logger.info('Shutdown Route')
         if self._is_started:
             self._is_started = False
             self._round_started_time = None
@@ -143,14 +141,14 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         self._coords_to_be_ignored.clear()
         self._stoplist.clear()
 
-    def _check_coords_before_returning(self, lat, lng, origin):
+    def _check_coords_before_returning(self, lat: float, lng: float, origin):
         if self.init:
-            self.logger.debug('Init Mode - coord is valid')
+            logger.debug('Init Mode - coord is valid')
             return True
         stop = Location(lat, lng)
-        self.logger.info('Checking Stop with ID {}', stop)
+        logger.info('Checking Stop with ID {}', stop)
         if stop in self._coords_to_be_ignored:
-            self.logger.info('Already tried this Stop and failed it')
+            logger.info('Already tried this Stop and failed it')
             return False
-        self.logger.info('DB knows nothing of this stop for {} lets try and go there', origin)
+        logger.info('DB knows nothing of this stop for {} lets try and go there', origin)
         return True

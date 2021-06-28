@@ -24,8 +24,8 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
             await PokemonHelper.get_mons_in_rectangle(self._session,
                                                       ne_corner=Location(ne_lat, ne_lng),
                                                       sw_corner=Location(sw_lat, sw_lng),
-                                                      old_ne_corner=Location(o_ne_lat, o_ne_lng),
-                                                      old_sw_corner=Location(o_sw_lat, o_sw_lng),
+                                                      old_ne_corner=Location(o_ne_lat, o_ne_lng) if o_ne_lat and o_ne_lng else None,
+                                                      old_sw_corner=Location(o_sw_lat, o_sw_lng) if o_sw_lat and o_sw_lng else None,
                                                       timestamp=timestamp)
 
         mons_serialized: List[Dict] = []

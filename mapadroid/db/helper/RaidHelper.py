@@ -34,7 +34,7 @@ class RaidHelper:
                 # logger.debug3("Excluded hatch at {}, {} since the coordinate is not inside the given include fences",
                 #              latitude, longitude)
                 continue
-            next_hatches.append((int(start.timestamp()), Location(latitude, longitude)))
+            next_hatches.append((int(start.timestamp()), Location(float(latitude), float(longitude))))
 
         # logger.debug4("Latest Q: {}", data)
         return next_hatches

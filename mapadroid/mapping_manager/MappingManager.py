@@ -77,7 +77,7 @@ class DeviceMappingsEntry:
         self.pool_settings: SettingsDevicepool = None
         self.walker_areas: List[SettingsWalkerarea] = []
         # TODO: Ensure those values are being set properly from whereever...
-        self.last_location: Location = Location(0, 0)
+        self.last_location: Location = Location(0.0, 0.0)
         self.last_known_mode: WorkerType = WorkerType.UNDEFINED
         self.account_index: int = 0
         self.account_rotation_started: bool = False
@@ -725,7 +725,7 @@ class MappingManager:
                     spawns = await TrsSpawnHelper.get_known_without_despawn_of_area(session, geofence_helper,
                                                                                     include_event_id)
                 for spawn in spawns:
-                    coords.append(Location(spawn.latitude, spawn.longitude))
+                    coords.append(Location(float(spawn.latitude), float(spawn.longitude)))
             elif mode == "pokestops":
                 coords = await PokestopHelper.get_locations_in_fence(session, geofence_helper)
             else:

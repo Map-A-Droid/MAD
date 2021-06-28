@@ -51,7 +51,7 @@ class PokestopHelper:
         result = await session.execute(stmt)
         list_of_coords: List[Location] = []
         for pokestop in result.scalars():
-            list_of_coords.append(Location(pokestop.latitude, pokestop.longitude))
+            list_of_coords.append(Location(float(pokestop.latitude), float(pokestop.longitude)))
         if geofence_helper:
             return geofence_helper.get_geofenced_coordinates(list_of_coords)
         else:
@@ -275,7 +275,7 @@ class PokestopHelper:
         result = await session.execute(stmt)
         stops_without_quests: Dict[int, Pokestop] = {}
         for stop in result.scalars().all():
-            if geofence_helper.is_coord_inside_include_geofence(Location(stop.latitude, stop.longitude)):
+            if geofence_helper.is_coord_inside_include_geofence(Location(float(stop.latitude), float(stop.longitude))):
                 stops_without_quests[stop.pokestop_id] = stop
         return stops_without_quests
 

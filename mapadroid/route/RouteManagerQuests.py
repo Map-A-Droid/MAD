@@ -38,7 +38,7 @@ class RouteManagerQuests(RouteManagerBase):
         await asyncio.sleep(5)
         async with self.db_wrapper as session, session:
             stops = await PokestopHelper.get_without_quests(session, self.geofence_helper)
-        locations_of_stops: List[Location] = [Location(stop.latitude, stop.longitude) for stop_id, stop in stops.items()]
+        locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for stop_id, stop in stops.items()]
         logger.info('Detected stops without quests: {}', len(locations_of_stops))
         logger.debug('Detected stops without quests: {}', locations_of_stops)
         self._stoplist: List[Location] = locations_of_stops
@@ -215,7 +215,7 @@ class RouteManagerQuests(RouteManagerBase):
         self._stops_not_processed.clear()
         self._coords_to_be_ignored.clear()
 
-    def _check_coords_before_returning(self, lat, lng, origin):
+    def _check_coords_before_returning(self, lat: float, lng: float, origin):
         if self.init:
             logger.debug('Init Mode - coord is valid')
             return True

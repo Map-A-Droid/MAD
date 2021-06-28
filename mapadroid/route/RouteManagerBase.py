@@ -1047,14 +1047,14 @@ class RouteManagerBase(ABC):
     def get_calc_type(self):
         return self._calctype
 
-    def redo_stop(self, worker, lat, lon):
+    def redo_stop(self, worker, lat: float, lon: float):
         logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
         if worker in self._routepool:
             self._routepool[worker].prio_coords = Location(lat, lon)
             return True
         return False
 
-    def set_worker_startposition(self, worker, lat, lon):
+    def set_worker_startposition(self, worker, lat: float, lon: float):
         logger.info("Getting startposition ({} / {})", lat, lon)
         if worker not in self._worker_start_position:
             self._worker_start_position[worker] = Location(0.0, 0.0)

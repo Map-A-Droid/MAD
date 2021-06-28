@@ -14,6 +14,7 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_lat_lng_offsets_by_distance)
 from mapadroid.utils.madGlobals import InternalStopWorkerException
@@ -33,8 +34,6 @@ MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO = 5
 # Since GMOs may arrive during walks, we define sort of a buffer to use.
 # That buffer can be subtracted in case a walk was longer than that buffer.
 SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER = 10
-
-Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
 class LatestReceivedType(Enum):

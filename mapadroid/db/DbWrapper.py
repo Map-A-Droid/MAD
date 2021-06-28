@@ -22,7 +22,6 @@ from mapadroid.db.helper.SettingsAreaRaidsMitm import \
     SettingsAreaRaidsMitmHelper
 from mapadroid.db.model import SettingsArea, MadminInstance, SettingsAreaIdle, SettingsAreaIvMitm, SettingsAreaMonMitm, \
     SettingsAreaPokestop, SettingsAreaRaidsMitm
-from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType
 

@@ -56,13 +56,13 @@ class RouteManagerLeveling(RouteManagerQuests):
                                 logger.info('Already tried this Stop but it failed spinnable test, skip it')
                                 continue
                             for stop in unvisited_stops:
-                                if coord_location == Location(stop.latitude, stop.longitude):
+                                if coord_location == Location(float(stop.latitude), float(stop.longitude)):
                                     origin_local_list.append(coord_location)
                     if len(origin_local_list) == 0:
                         logger.info("None of the stops in original route was unvisited, recalc a route")
                         new_route = await self._local_recalc_subroute(unvisited_stops)
                         for coord in new_route:
-                            origin_local_list.append(Location(coord["lat"], coord["lng"]))
+                            origin_local_list.append(Location(coord.lat, coord.lng))
 
                     # subroute is all stops unvisited
                     logger.info("Origin {} has {} unvisited stops for this route", origin, len(origin_local_list))
@@ -76,7 +76,7 @@ class RouteManagerLeveling(RouteManagerQuests):
     async def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]):
         coords: List[Location] = []
         for stop in unvisited_stops:
-            coords.append(Location(stop.latitude, stop.longitude))
+            coords.append(Location(float(stop.latitude), float(stop.longitude)))
         new_route = await self._calculate_new_route(coords, self._max_radius, self._max_coords_within_radius,
                                                     False, 1, True)
         return new_route
@@ -205,7 +205,7 @@ class RouteManagerLeveling(RouteManagerQuests):
         super()._quit_route()
         self._stoplist.clear()
 
-    def _check_coords_before_returning(self, lat, lng, origin):
+    def _check_coords_before_returning(self, lat: float, lng: float, origin):
         if self.init:
             logger.debug('Init Mode - coord is valid')
             return True

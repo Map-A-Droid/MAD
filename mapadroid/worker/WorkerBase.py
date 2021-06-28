@@ -266,7 +266,7 @@ class WorkerBase(AbstractWorker, ABC):
                 startcoords = start_position.replace(' ', '').replace('_', '').split(',')
 
             logger.info('Setting startcoords or walker lat {} / lng {}', startcoords[0], startcoords[1])
-            await self._communicator.set_location(Location(startcoords[0], startcoords[1]), 0)
+            await self._communicator.set_location(Location(float(startcoords[0]), float(startcoords[1])), 0)
             logger.info("Updating startposition")
             await self._mapping_manager.set_worker_startposition(routemanager_id=self._routemanager_id,
                                                                  worker_name=self._origin,
@@ -398,7 +398,7 @@ class WorkerBase(AbstractWorker, ABC):
 
                     try:
                         last_location: Location = await self.get_devicesettings_value(
-                            MappingManagerDevicemappingKey.LAST_LOCATION, Location(0, 0))
+                            MappingManagerDevicemappingKey.LAST_LOCATION, Location(0.0, 0.0))
                         logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
                                            last_location.lat, last_location.lng,
                                            self.current_location.lat, self.current_location.lng)

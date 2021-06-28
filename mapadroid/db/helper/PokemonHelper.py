@@ -99,7 +99,7 @@ class PokemonHelper:
                               " fences", pokemon.latitude, pokemon.longitude)
                 continue
 
-            next_to_encounter.append((pokemon.pokemon_id, Location(pokemon.latitude, pokemon.longitude),
+            next_to_encounter.append((pokemon.pokemon_id, Location(float(pokemon.latitude), float(pokemon.longitude)),
                                       pokemon.encounter_id))
         # now filter by the order of eligible_mon_ids
         to_be_encountered = []
@@ -281,7 +281,7 @@ class PokemonHelper:
         result = await session.execute(stmt)
         results: List[Tuple[int, Location]] = []
         for count, lat, lng in result.all():
-            results.append((count, Location(lat, lng)))
+            results.append((count, Location(float(lat), float(lng))))
         return results
 
     @staticmethod

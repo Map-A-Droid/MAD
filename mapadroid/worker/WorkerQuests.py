@@ -911,7 +911,7 @@ class WorkerQuests(MITMBase):
         timedelta_to_consider_deletion = timedelta(days=3)
         for fort_id, stop in stops.values():
             # Call delete of stops that have been not been found within 100m range of current position
-            stop_location: Location = Location(stop.latitude, stop.longitude)
+            stop_location: Location = Location(float(stop.latitude), float(stop.longitude))
             logger.debug("Considering stop {} at {} (last updated {}) for deletion",
                               fort_id, stop_location, stop.last_updated)
             if stop.last_updated and stop.last_updated > datetime.now() - timedelta_to_consider_deletion:

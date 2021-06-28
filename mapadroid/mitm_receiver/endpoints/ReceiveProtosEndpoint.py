@@ -58,7 +58,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
                 location_of_data.lng > 180 or location_of_data.lng < -180):
-            location_of_data: Location = Location(0, 0)
+            location_of_data: Location = Location(0.0, 0.0)
         await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
                                                     timestamp_received_receiver=time.time(), key=proto_type,
                                                     values_dict=data,

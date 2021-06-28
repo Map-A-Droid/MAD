@@ -387,7 +387,7 @@ class DbPogoProtoSubmit:
             quest = TrsQuest()
             quest.GUID = fort_id
         quest.quest_type = quest_type
-        quest.quest_timestamp = datetime.utcnow()
+        quest.quest_timestamp = int(time.time())
         quest.quest_stardust = stardust
         quest.quest_pokemon_id = pokemon_id
         quest.quest_pokemon_form_id = form_id
