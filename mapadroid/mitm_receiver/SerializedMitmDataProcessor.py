@@ -42,15 +42,14 @@ class SerializedMitmDataProcessor:
                                 await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
                                 await session.commit()
                             except (sqlalchemy.exc.IntegrityError, MitmReceiverRetry) as e:
-                                logger.warning("Failed submitting data to DB, rescheduling. {}", e)
+                                logger.info("Failed submitting data to DB, rescheduling. {}", e)
                                 await transaction.rollback()
                                 await self.__queue.put(item)
                             except Exception as e:
-                                logger.info("Failed processing data... {}", e)
+                                logger.warning("Failed processing data... {}", e)
                                 logger.exception(e)
                                 await transaction.rollback()
                                 await self.__queue.put(item)
-                    # await self.process_data(item[0], item[1], item[2])
                     self.__queue.task_done()
                     end_time = self.get_time_ms() - start_time
                     logger.debug("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
