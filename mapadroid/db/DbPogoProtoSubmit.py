@@ -73,6 +73,9 @@ class DbPogoProtoSubmit:
                     encounter_id = encounter_id + 2 ** 64
 
                 await mitm_mapper.collect_mon_stats(origin, str(encounter_id))
+                cache_key = "mon{}".format(encounter_id)
+                if await cache.exists(cache_key):
+                    continue
 
                 now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -89,9 +92,6 @@ class DbPogoProtoSubmit:
                     origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
                                          despawn_time.strftime("%Y-%m-%d %H:%M:%S"), spawnid)
 
-                cache_key = "mon{}".format(encounter_id)
-                if await cache.exists(cache_key):
-                    continue
                 async with session.begin_nested() as nested_transaction:
                     mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
                     if not mon:
@@ -130,13 +130,14 @@ class DbPogoProtoSubmit:
             return False
 
         encounter_id = wild_pokemon["encounter_id"]
-
+        pokemon_data = wild_pokemon.get("pokemon_data")
+        pokemon_display = pokemon_data.get("display", {})
+        weather_boosted = pokemon_display.get('weather_boosted_value', None)
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
-        cache_key = "mon{}".format(encounter_id)
-        if isinstance(cache, Redis) and not await cache.exists(cache_key):
-            # Raise exception to requeue item before doing any DB operations
-            raise MitmReceiverRetry
+        cache_key = "moniv{}{}".format(encounter_id, weather_boosted)
+        if await cache.exists(cache_key):
+            return True
 
         origin_logger.debug3("Updating IV sent for encounter at {}", timestamp)
 
@@ -149,14 +150,7 @@ class DbPogoProtoSubmit:
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
-        pokemon_data = wild_pokemon.get("pokemon_data")
         shiny = wild_pokemon["pokemon_data"]["display"].get("is_shiny", 0)
-        pokemon_display = pokemon_data.get("display", {})
-        weather_boosted = pokemon_display.get('weather_boosted_value', None)
-
-        cache_key = "moniv{}{}".format(encounter_id, weather_boosted)
-        if await cache.exists(cache_key):
-            return True
 
         await mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
