@@ -39,9 +39,10 @@ class MITMReceiver:
     async def start(self) -> web.AppRunner:
         self.__mitmreceiver_startup_time: float = time.time()
 
-        client_max_size = (1024 * 10) ** 2
+        # ~5 MB max size
+        client_max_size = (1024 ** 2) * 5
         self._app = web.Application(client_max_size=client_max_size)
-        self._app['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
+        self._app['MAX_CONTENT_LENGTH'] = client_max_size
         self._app.secret_key = "8bc96865945be733f3973ba21d3c5949"
         self._app['SEND_FILE_MAX_AGE_DEFAULT'] = 0
         self._app['db_wrapper'] = self._db_wrapper

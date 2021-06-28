@@ -99,7 +99,6 @@ class DbPogoProtoSubmit:
                         mon.spawnpoint_id = spawnid
                         mon.latitude = lat
                         mon.longitude = lon
-
                     mon.pokemon_id = mon_id
                     mon.disappear_time = despawn_time
                     mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
@@ -114,7 +113,7 @@ class DbPogoProtoSubmit:
                         if cache_time > 0:
                             await cache.set(cache_key, 1, expire=cache_time)
                     except sqlalchemy.exc.IntegrityError as e:
-                        logger.warning("Failed committing mon {} ({})", encounter_id, str(e))
+                        logger.debug("Failed committing mon {} ({}). Safe to ignore.", encounter_id, str(e))
                         await nested_transaction.rollback()
         return True
 
@@ -181,9 +180,9 @@ class DbPogoProtoSubmit:
             move_2 = pokemon_data.get("move_2")
             form = pokemon_display.get("form_value", None)
         attempts = 0
-        while attempts < 5:
+        mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
+        while attempts < 2:
             async with session.begin_nested() as nested_transaction:
-                mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
                 if not mon:
                     mon: Pokemon = Pokemon()
                     mon.encounter_id = encounter_id
@@ -223,7 +222,8 @@ class DbPogoProtoSubmit:
                     logger.debug("Failed committing mon IV {} ({})", encounter_id, str(e))
                     # TODO: Do not use expire, rather try without a nested rollback? session.expire(mon)
                     await nested_transaction.rollback()
-                    await asyncio.sleep(2)
+            mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
+            await asyncio.sleep(0.5)
             attempts += 1
         else:
             logger.warning("Failed committing mon IV {} (tried multiple times)", encounter_id)

@@ -78,15 +78,15 @@ class MADmin(object):
         return runner
 
     def __init_app(self):
-        client_max_size = (1024 * 200) ** 2
-
+        # ~200 MB max size
+        client_max_size = (1024 ** 2) * 200
         self._app = web.Application(client_max_size=client_max_size)
         static_folder_path = os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static')
         template_folder_path = os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates')
         self._app.router.add_static("/static", static_folder_path, append_version=True)
         self._app['static_root_url'] = '/static'
         self._app['UPLOAD_FOLDER'] = 'temp'
-        self._app['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
+        self._app['MAX_CONTENT_LENGTH'] = client_max_size
         self._app.secret_key = "8bc96865945be733f3973ba21d3c5949"
         self._app['SEND_FILE_MAX_AGE_DEFAULT'] = 0
         self._app['db_wrapper'] = self._db_wrapper
