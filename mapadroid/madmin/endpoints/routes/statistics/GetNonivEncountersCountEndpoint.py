@@ -12,9 +12,7 @@ class GetNonivEncountersCountEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        minutes: Optional[int] = self._request.query.get("minutes_spawn")
-        if minutes:
-            minutes = 240
+        minutes = self._get_minutes_usage_query_args()
         data: List[Tuple[int, Location]] = await PokemonHelper.get_noniv_encounters_count(self._session,
                                                                                           last_n_minutes=minutes)
         # TODO: Maybe a __str__ for Location is needed
