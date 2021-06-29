@@ -15,17 +15,14 @@ class GameStatsMonEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        try:
-            minutes_spawn: Optional[int] = int(self._request.query.get("minutes_spawn"))
-        except ValueError:
-            minutes_spawn = 10
+        minutes_usage = self._get_minutes_usage_query_args()
         # Spawn
         iv = []
         noniv = []
         sumg = []
         sumup = {}
 
-        data: List[Tuple[int, int, int]] = await PokemonHelper.get_pokemon_count(self._session, minutes_spawn)
+        data: List[Tuple[int, int, int]] = await PokemonHelper.get_pokemon_count(self._session, minutes_usage)
         for dat in data:
             if dat[2] == 1:
                 iv.append([(self._utc2local(dat[0]) * 1000), dat[1]])

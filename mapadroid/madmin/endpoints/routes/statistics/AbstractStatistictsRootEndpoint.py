@@ -38,8 +38,9 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
         return "{}/pokemon_icon_{:03d}{}{}{}.png".format(base_path, mon_id, form_str, costume_str, shiny_str)
 
     def _get_minutes_usage_query_args(self) -> int:
-        minutes_usage: Optional[int] = self._request.query.get("minutes_usage")
-        if not minutes_usage:
+        try:
+            minutes_usage: Optional[int] = int(self._request.query.get("minutes_usage"))
+        except (ValueError, TypeError):
             minutes_usage = 120
         return minutes_usage
 

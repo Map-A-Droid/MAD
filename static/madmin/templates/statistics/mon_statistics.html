@@ -113,7 +113,7 @@
         loadingBlockUI("Loading");
 
       $.ajax({
-          "url": "get_game_stats_mon?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
+          "url": "get_game_stats_mon?minutes_usage={{ minutes_usage }}",
           "type": "GET",
           "cache": false,
           "dataType": "json",
@@ -386,14 +386,14 @@
 {% block content %}
 <h2>Spawn Statistics</h2>
 <div id="selector">
-    View {{ minutes_spawn }} minutes <br>Set:
-    <a href="statistics_mon?minutes_spawn=10">10</a>
-    <a href="statistics_mon?minutes_spawn=60">60</a>
-    <a href="statistics_mon?minutes_spawn=120">120</a>
-    <a href="statistics_mon?minutes_spawn=240">240</a>
-    <a href="statistics_mon?minutes_spawn=480">480</a>
-    <a href="statistics_mon?minutes_spawn=1440">1440</a>
-    <a href="statistics_mon?minutes_spawn=10080">One Week</a>
+    View {{ minutes_usage }} minutes <br>Set:
+    <a href="statistics_mon?minutes_usage=10">10</a>
+    <a href="statistics_mon?minutes_usage=60">60</a>
+    <a href="statistics_mon?minutes_usage=120">120</a>
+    <a href="statistics_mon?minutes_usage=240">240</a>
+    <a href="statistics_mon?minutes_usage=480">480</a>
+    <a href="statistics_mon?minutes_usage=1440">1440</a>
+    <a href="statistics_mon?minutes_usage=10080">One Week</a>
     </div>
 <br>
 <div id="legendContainer_spawn"></div>
