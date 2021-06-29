@@ -111,7 +111,7 @@
         loadingBlockUI("Loading");
 
         $.ajax({
-            "url": "get_game_stats?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
+            "url": "get_game_stats?minutes_usage={{ minutes_usage }}",
             "type": "GET",
             "cache": false,
             "dataType": "json",
@@ -421,13 +421,13 @@
 <h2>CPU / Memory Usage</h2>
 <div id="selector">
     View {{ minutes_usage }} minutes <br>Set:
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=10">10</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=60">60</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=120">120</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=240">240</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=480">480</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=1440">1440</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=10080">One Week</a>
+    <a href="statistics?minutes_usage={{ minutes_usage }}&amp;minutes_usage=10">10</a>
+    <a href="statistics?minutes_usage={{ minutes_usage }}&amp;minutes_usage=60">60</a>
+    <a href="statistics?minutes_usage={{ minutes_usage }}&amp;minutes_usage=120">120</a>
+    <a href="statistics?minutes_usage={{ minutes_usage }}&amp;minutes_usage=240">240</a>
+    <a href="statistics?minutes_usage={{ minutes_usage }}&amp;minutes_usage=480">480</a>
+    <a href="statistics?minutes_usage={{ minutes_usage }}&amp;minutes_usage=1440">1440</a>
+    <a href="statistics?minutes_usage={{ minutes_usage }}&amp;minutes_usage=10080">One Week</a>
     </div>
 <div id="legendContainer_usage"></div>
 <div id="flot_usage"></div>
