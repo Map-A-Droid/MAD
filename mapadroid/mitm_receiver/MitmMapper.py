@@ -189,7 +189,7 @@ class MitmMapper(object):
                                                                        positiontype,
                                                                        rec_timestamp, walker, transporttype)
 
-    def get_playerlevel(self, origin: str):
+    async def get_playerlevel(self, origin: str):
         if self.__playerstats.get(origin, None) is not None:
             return self.__playerstats.get(origin).get_level()
         else:

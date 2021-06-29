@@ -100,7 +100,7 @@ class SerializedMitmDataProcessor:
                                     full_time, weather_time, stops_time, gyms_time, raids_time,
                                     spawnpoints_time, mons_time, cells_time, gmo_loc_time)
             elif data_type == 102:
-                playerlevel = self.__mitm_mapper.get_playerlevel(origin)
+                playerlevel = await self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
                     logger.debug("Processing encounter received at {}", processed_timestamp)
                     await self.__db_submit.mon_iv(session, origin, received_timestamp, data["payload"], self.__mitm_mapper)
