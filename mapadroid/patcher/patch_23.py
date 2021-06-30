@@ -15,7 +15,7 @@ class Patch(PatchBase):
         try:
             existing_data = self._db.autofetch_all(sql, raise_exc=True)
         except Exception:
-            pass
+            existing_data = False
         if not existing_data:
             existing_data = {}
         sql = "DROP TABLE IF EXISTS `trs_status`"
