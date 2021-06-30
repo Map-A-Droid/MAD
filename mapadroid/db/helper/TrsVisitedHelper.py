@@ -21,4 +21,3 @@ class TrsVisitedHelper:
             return
         stmt = insert(TrsVisited).values(pokestop_id=pokestop.pokestop_id, origin=origin).prefix_with("IGNORE")
         await session.execute(stmt)
-

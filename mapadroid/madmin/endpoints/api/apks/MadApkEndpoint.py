@@ -5,7 +5,6 @@ from zipfile import LargeZipFile, BadZipFile
 
 from aiohttp import MultipartReader, web
 from loguru import logger
-from mapadroid.madmin.functions import allowed_file
 from werkzeug.utils import secure_filename
 
 from mapadroid.db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
@@ -14,6 +13,7 @@ from mapadroid.mad_apk.custom_types import MADapks
 from mapadroid.mad_apk.utils import convert_to_backend, get_apk_status
 from mapadroid.mad_apk.wizard import APKWizard, WizardError, PackageImporter
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.functions import allowed_file
 
 
 class MadApkEndpoint(AbstractMadminRootEndpoint):

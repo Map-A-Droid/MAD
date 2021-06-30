@@ -3,7 +3,6 @@ from typing import Dict, Optional, List, Tuple
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
@@ -65,7 +64,8 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
             'element': pogoauth,
             'settings_vars': settings_vars,
             'method': 'POST' if not pogoauth else 'PATCH',
-            'uri': self._url_for('api_pogoauth') if not pogoauth else '%s/%s' % (self._url_for('api_pogoauth'), identifier),
+            'uri': self._url_for('api_pogoauth') if not pogoauth else '%s/%s' % (
+            self._url_for('api_pogoauth'), identifier),
             # TODO: Above is pretty generic in theory...
             'devices': devices,
             'devs_google': devs_google,
@@ -75,8 +75,10 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
 
     @aiohttp_jinja2.template('settings_pogoauth.html')
     async def _render_overview(self):
-        devices: Dict[int, SettingsDevice] = await SettingsDeviceHelper.get_all_mapped(self._session, self._get_instance_id())
-        pogoauth: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_all_mapped(self._session, self._get_instance_id())
+        devices: Dict[int, SettingsDevice] = await SettingsDeviceHelper.get_all_mapped(self._session,
+                                                                                       self._get_instance_id())
+        pogoauth: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_all_mapped(self._session,
+                                                                                            self._get_instance_id())
         template_data: Dict = {
             'base_uri': self._url_for('api_pogoauth'),
             'redirect': self._url_for('settings_pogoauth'),

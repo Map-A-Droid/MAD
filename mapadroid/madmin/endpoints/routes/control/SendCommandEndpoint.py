@@ -30,7 +30,8 @@ class SendCommandEndpoint(AbstractControlEndpoint):
             adb_cmd = "input keyevent 3"
         elif command == 'back':
             adb_cmd = "input keyevent 4"
-        if useadb and await self._adb_connect.send_shell_command(devicemapping.device_settings.adbname, origin, adb_cmd):
+        if useadb and await self._adb_connect.send_shell_command(devicemapping.device_settings.adbname, origin,
+                                                                 adb_cmd):
             pass
         else:
             temp_comm = self._get_ws_server().get_origin_communicator(origin)

@@ -3,7 +3,6 @@ from typing import Dict, Optional
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
@@ -36,7 +35,8 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
         if self.identifier == "new":
             pass
         else:
-            auth: SettingsAuth = await SettingsAuthHelper.get(self._session, self._get_instance_id(), int(self.identifier))
+            auth: SettingsAuth = await SettingsAuthHelper.get(self._session, self._get_instance_id(),
+                                                              int(self.identifier))
             if not auth:
                 raise web.HTTPFound(self._url_for("settings_auth"))
 

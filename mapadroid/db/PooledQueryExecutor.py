@@ -53,4 +53,5 @@ class PooledQueryExecutor:
     def _init_pool(self):
         logger.info("Connecting to DB")
         with self._pool_mutex:
-            self._db_accessor: DbAccessor = DbAccessor(f"mysql+aiomysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}", self._poolsize)
+            self._db_accessor: DbAccessor = DbAccessor(
+                f"mysql+aiomysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}", self._poolsize)

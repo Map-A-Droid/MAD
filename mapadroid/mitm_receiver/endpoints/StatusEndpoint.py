@@ -16,9 +16,9 @@ class StatusEndpoint(AbstractMitmReceiverRootEndpoint):
             origin_return[origin] = {}
             origin_return[origin]['injection_status'] = await self._get_mitm_mapper().get_injection_status(origin)
             origin_return[origin]['latest_data'] = await self._get_mitm_mapper().request_latest(origin,
-                                                                                           'timestamp_last_data')
+                                                                                                'timestamp_last_data')
             origin_return[origin]['mode_value'] = await self._get_mitm_mapper().request_latest(origin,
-                                                                                          'injected_settings')
+                                                                                               'injected_settings')
             origin_return[origin][
                 'last_possibly_moved'] = await self._get_mitm_mapper().get_last_timestamp_possible_moved(origin)
 

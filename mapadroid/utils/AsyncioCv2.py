@@ -8,6 +8,7 @@ class AsyncioCv2:
     """
     Util wrapping the Cv2 calls in asyncio ThreadPoolExecutor-usage
     """
+
     @staticmethod
     async def imread(path: str):
         if not path:
@@ -57,7 +58,7 @@ class AsyncioCv2:
 
     @staticmethod
     async def morphologyEx(src, op, kernel, dst=None, anchor=None, iterations: int = 1,
-                           borderType = cv2.BORDER_CONSTANT, borderValue=None):
+                           borderType=cv2.BORDER_CONSTANT, borderValue=None):
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return await loop.run_in_executor(

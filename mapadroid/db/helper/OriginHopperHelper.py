@@ -1,4 +1,5 @@
-from typing import List, Optional
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -11,4 +12,3 @@ class OriginHopperHelper:
         stmt = select(OriginHopper).where(OriginHopper.origin == origin)
         result = await session.execute(stmt)
         return result.scalars().first()
-

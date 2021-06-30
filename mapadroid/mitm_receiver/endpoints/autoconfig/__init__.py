@@ -12,4 +12,3 @@ def register_autoconfig_endpoints(app: web.Application):
     app.router.add_view('/autoconfig/{session_id}/{operation}', AutoconfStatusOperationEndpoint,
                         name='autoconfig_status_operation')
     app.router.add_view('/origin_generator', OriginGeneratorEndpoint, name='origin_generator')
-

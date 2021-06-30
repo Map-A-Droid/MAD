@@ -49,18 +49,16 @@ class TrsQuestHelper:
             )
         )
 
-        stmt = select(date_query, func.COUNT(TrsQuest.GUID))\
+        stmt = select(date_query, func.COUNT(TrsQuest.GUID)) \
             .select_from(TrsQuest)
         if last_n_days:
             time_to_check_after = datetime.utcnow() - timedelta(days=last_n_days)
             stmt = stmt.where(TrsQuest.quest_timestamp > time_to_check_after.timestamp())
         stmt = stmt.group_by(func.day(func.FROM_UNIXTIME(TrsQuest.quest_timestamp)),
-                             func.hour(func.FROM_UNIXTIME(TrsQuest.quest_timestamp)))\
+                             func.hour(func.FROM_UNIXTIME(TrsQuest.quest_timestamp))) \
             .order_by(TrsQuest.quest_timestamp)
         result = await session.execute(stmt)
         results: List[Tuple[int, int]] = []
         for timestamp, count in result.all():
             results.append((timestamp, count))
         return results
-
-

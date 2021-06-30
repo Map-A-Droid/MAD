@@ -40,7 +40,8 @@ class SettingsMonivlistHelper:
         with that ID, None is returned.
 
         """
-        mon_iv_list: Optional[SettingsMonivlist] = await SettingsMonivlistHelper.get_entry(session, instance_id, monlist_id)
+        mon_iv_list: Optional[SettingsMonivlist] = await SettingsMonivlistHelper.get_entry(session, instance_id,
+                                                                                           monlist_id)
         if not mon_iv_list:
             return None
         stmt = select(SettingsMonivlistToMon) \
@@ -83,4 +84,3 @@ class SettingsMonivlistHelper:
             entry.mon_id = mon_id
             entry.mon_order = ind
             session.add(entry)
-

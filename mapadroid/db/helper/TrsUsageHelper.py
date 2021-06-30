@@ -57,7 +57,7 @@ class TrsUsageHelper:
             where_conditions.append(TrsUsage.timestamp > time_to_check_after.timestamp())
         if instance_name:
             where_conditions.append(TrsUsage.instance == instance_name)
-        stmt = stmt.where(and_(*where_conditions))\
+        stmt = stmt.where(and_(*where_conditions)) \
             .order_by(TrsUsage.timestamp)
         result = await session.execute(stmt)
         return result.scalars().all()

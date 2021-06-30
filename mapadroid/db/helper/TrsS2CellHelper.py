@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional, List
 
 from sqlalchemy import and_
@@ -18,9 +17,9 @@ class TrsS2CellHelper:
 
     @staticmethod
     async def get_cells_in_rectangle(session: AsyncSession,
-                                    ne_corner: Optional[Location], sw_corner: Optional[Location],
-                                    old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
-                                    timestamp: Optional[int] = None) -> List[TrsS2Cell]:
+                                     ne_corner: Optional[Location], sw_corner: Optional[Location],
+                                     old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
+                                     timestamp: Optional[int] = None) -> List[TrsS2Cell]:
         stmt = select(TrsS2Cell)
         where_conditions = []
         where_conditions.append(and_(TrsS2Cell.center_latitude >= sw_corner.lat,

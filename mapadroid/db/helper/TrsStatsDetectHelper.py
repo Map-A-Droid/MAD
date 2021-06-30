@@ -12,7 +12,8 @@ class TrsStatsDetectHelper:
     @staticmethod
     async def get_detection_count_per_worker(session: AsyncSession, include_last_n_minutes: Optional[int] = None,
                                              hourly: bool = True,
-                                             worker: Optional[str] = None) -> Dict[str, Dict[int, Tuple[int, int, int, int]]]:
+                                             worker: Optional[str] = None) -> Dict[
+        str, Dict[int, Tuple[int, int, int, int]]]:
         """
         Fetches the stats of workers (or only one if specified) with hourly-timestamps in the inner dict as keys
         Args:
@@ -24,12 +25,13 @@ class TrsStatsDetectHelper:
         Returns:
 
         """
-        stmt = select(func.unix_timestamp(func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsDetect.timestamp_scan)), '%y-%m-%d %k:00:00')),
+        stmt = select(func.unix_timestamp(
+            func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsDetect.timestamp_scan)), '%y-%m-%d %k:00:00')),
                       TrsStatsDetect.worker,
                       func.sum(TrsStatsDetect.mon),
                       func.sum(TrsStatsDetect.mon_iv),
                       func.sum(TrsStatsDetect.raid),
-                      func.sum(TrsStatsDetect.quest))\
+                      func.sum(TrsStatsDetect.quest)) \
             .select_from(TrsStatsDetect)
         where_conditions = []
         if worker:

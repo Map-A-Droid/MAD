@@ -36,7 +36,8 @@ class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
                 "lat": spawn.latitude,
                 "lon": spawn.longitude,
                 "spawndef": spawn.spawndef,
-                "lastnonscan": spawn.last_non_scanned.strftime(self._datetimeformat) if spawn.last_non_scanned else None,
+                "lastnonscan": spawn.last_non_scanned.strftime(
+                    self._datetimeformat) if spawn.last_non_scanned else None,
                 "lastscan": spawn.last_scanned.strftime(self._datetimeformat) if spawn.last_scanned else None,
                 "first_detection": spawn.first_detection.strftime(self._datetimeformat),
                 "event": event.event_name

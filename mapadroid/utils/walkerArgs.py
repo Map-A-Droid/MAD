@@ -83,7 +83,7 @@ def parse_args():
     # Walk Settings
     parser.add_argument('--enable_worker_specific_extra_start_stop_handling', default=False,
                         help='Option to enable/disable extra handling for the start/stop routine of workers. Default: '
-                        'False')
+                             'False')
     parser.add_argument('-mvd', '--maximum_valid_distance', required=False, type=int, default=50,
                         help='The maximum distance for a scan of a location to be considered a valid/correct scan of'
                              ' that location in meters. Default: 50m')
@@ -168,7 +168,7 @@ def parse_args():
                         help='MADmin deactivate responsive tables')
     parser.add_argument('-qpub', '--quests_public', action='store_true', default=False,
                         help='Enables MADmin /quests_pub, /get_quests, and pushassets endpoints for public quests'
-                        'overview')
+                             'overview')
     parser.add_argument('-ods', '--outdated_spawnpoints', type=int, default=3,
                         help='Define when a spawnpoint is out of date (in days). Default: 3.')
     parser.add_argument('--quest_stats_fences', default="",
@@ -271,7 +271,7 @@ def parse_args():
                         help='Google Mail User for interacting with the Google Play Store')
     parser.add_argument('-gp', '--gmail_passwd', default='',
                         help='Google Mail Password for interacting with the Google Play Store.  Must be an app'
-                        ' password or 2fa will be triggered (this should be enabled on your account anyways')
+                             ' password or 2fa will be triggered (this should be enabled on your account anyways')
 
     # Auto-Configuration
     parser.add_argument('-acna', '--autoconfig_no_auth', action='store_true', default=False,

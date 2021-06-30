@@ -45,7 +45,8 @@ class MitmMapper(object):
         # self.__playerstats_db_update_consumer: Thread = Thread(**pstat_args)
         # TODO: Move to async init method.......
         if self.__mapping_manager is not None:
-            devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = await self.__mapping_manager.get_all_devicemappings()
+            devicemappings: Optional[
+                Dict[str, DeviceMappingsEntry]] = await self.__mapping_manager.get_all_devicemappings()
             for origin in devicemappings.keys():
                 await self.__add_new_device(origin)
 
@@ -95,15 +96,16 @@ class MitmMapper(object):
         await TrsStatsLocationHelper.add(session, *data_send_location)
         if self.__application_args.game_stats_raw:
             data_send_location_raw: List = PlayerStats.stats_location_raw_parser(client_id, stats,
-                                                                           last_processed_timestamp)
+                                                                                 last_processed_timestamp)
             data_send_detection_raw: List = PlayerStats.stats_detection_raw_parser(client_id, stats,
-                                                                             last_processed_timestamp)
+                                                                                   last_processed_timestamp)
             for raw_location_data in data_send_location_raw:
                 await TrsStatsLocationRawHelper.add(session, *raw_location_data)
             raw_mons_data = [mon for mon in data_send_detection_raw if (mon[2] in ['mon', 'mon_iv'])]
             for raw_mon_data in raw_mons_data:
                 await TrsStatsDetectMonRawHelper.add(session, *raw_mon_data)
-            raw_forts_data = [(d[0], d[1], d[3], d[4], d[5]) for d in data_send_detection_raw if (d[2] == 'quest' or d[2] == 'raid')]
+            raw_forts_data = [(d[0], d[1], d[3], d[4], d[5]) for d in data_send_detection_raw if
+                              (d[2] == 'quest' or d[2] == 'raid')]
             for raw_fort_data in raw_forts_data:
                 await TrsStatsDetectFortRawHelper.add(session, *raw_fort_data)
 
@@ -133,7 +135,8 @@ class MitmMapper(object):
         return False
 
     async def get_safe_items(self, origin) -> List[int]:
-        devicesettings: Optional[Tuple[SettingsDevice, SettingsDevicepool]] = await self.__mapping_manager.get_devicesettings_of(origin)
+        devicesettings: Optional[
+            Tuple[SettingsDevice, SettingsDevicepool]] = await self.__mapping_manager.get_devicesettings_of(origin)
         values: str = ""
         if devicesettings[1] and devicesettings[1].enhanced_mode_quest_safe_items:
             values = devicesettings[1].enhanced_mode_quest_safe_items
@@ -203,12 +206,13 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             await self.__playerstats.get(origin).stats_collector()
 
-    async def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, positiontype,
-                               rec_timestamp: float, walker, transporttype):
+    async def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float,
+                                     positiontype,
+                                     rec_timestamp: float, walker, transporttype):
         if self.__playerstats.get(origin, None) is not None and location is not None:
             await self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp,
-                                                                       positiontype,
-                                                                       rec_timestamp, walker, transporttype)
+                                                                             positiontype,
+                                                                             rec_timestamp, walker, transporttype)
 
     async def get_playerlevel(self, origin: str):
         if self.__playerstats.get(origin, None) is not None:

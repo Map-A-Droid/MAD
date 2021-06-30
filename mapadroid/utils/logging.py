@@ -32,6 +32,8 @@ class LoggerEnums(IntEnum):
     aiohttp_web: int = 21
     aioredis: int = 22
     endpoint: int = 23
+
+
 # ==================================
 # ========== Core Logging ==========
 # ==================================
@@ -64,13 +66,13 @@ def init_logging(args):
     fs_log_format = ' '.join(log_format_fs)
     log_format_console = ' '.join(log_format_c)
     logconfig = {
-        #"levels": [
-         #   {"name": "DEBUG2", "no": 9, "color": "<blue>"},
-         #   {"name": "DEBUG3", "no": 8, "color": "<blue>"},
-         #   {"name": "DEBUG4", "no": 7, "color": "<blue>"},
-         #   {"name": "DEBUG5", "no": 6, "color": "<blue>"},
-         #   {"name": "BAN", "no": 35, "color": "<yellow>"},
-        #],
+        # "levels": [
+        #   {"name": "DEBUG2", "no": 9, "color": "<blue>"},
+        #   {"name": "DEBUG3", "no": 8, "color": "<blue>"},
+        #   {"name": "DEBUG4", "no": 7, "color": "<blue>"},
+        #   {"name": "DEBUG5", "no": 6, "color": "<blue>"},
+        #   {"name": "BAN", "no": 35, "color": "<yellow>"},
+        # ],
         "handlers": [
             {
                 "sink": sys.stdout,
@@ -103,7 +105,7 @@ def init_logging(args):
         "encoding": "UTF-8",
         "filter": lambda record: True if record["extra"]["name"] in ("system", "Unknown", "asyncio",
                                                                      "endpoint") else False
-        },
+    },
         {
             "sink": os.path.join(args.log_path, "app" + "_database.log"),
             "format": fs_log_format,
@@ -211,6 +213,7 @@ def apply_custom(func):
             init_custom(log)
         finally:
             return log
+
     return decorated
 
 

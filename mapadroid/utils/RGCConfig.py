@@ -177,4 +177,3 @@ class RGCConfig(AutoConfigCreator):
         auths: List[SettingsAuth] = await SettingsAuthHelper.get_all(self._session, self._instance_id)
         if len(auths) > 0:
             self.sections['Socket']['mad_auth']['required'] = True
-

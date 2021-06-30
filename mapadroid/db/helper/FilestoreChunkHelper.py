@@ -25,7 +25,7 @@ class FilestoreChunkHelper:
         result = await session.stream(stmt)
         return result
         ## TODO: Async iteratble possible?
-        #async for data_chunk in result:
+        # async for data_chunk in result:
         #    yield data_chunk
 
     @staticmethod

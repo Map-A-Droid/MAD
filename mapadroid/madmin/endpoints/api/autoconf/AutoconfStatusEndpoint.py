@@ -36,7 +36,8 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
             ac_issues = AutoConfIssueGenerator()
             await ac_issues.setup(self._session, self._get_instance_id(), self._get_mad_args(), self._get_storage_obj())
             if ac_issues.has_blockers():
-                return self._json_response(data=ac_issues.get_issues(self.request), status=406, headers=ac_issues.get_headers())
+                return self._json_response(data=ac_issues.get_issues(self.request), status=406,
+                                           headers=ac_issues.get_headers())
             # Set the device id.  If it was not requested use the origin hopper to create one
             try:
                 dev_id = request_body['device_id'].split('/')[-1]

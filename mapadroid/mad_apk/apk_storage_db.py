@@ -3,7 +3,6 @@ from typing import Optional
 
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import LoggerEnums, get_logger
-
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKType
 from .custom_types import MADPackages
@@ -27,6 +26,7 @@ class APKStorageDatabase(AbstractAPKStorage):
     Attributes:
         db_wrapper: Database wrapper
     """
+
     def __init__(self, db_wrapper: DbWrapper):
         logger.debug('Initializing Database storage')
         self.db_wrapper = db_wrapper
@@ -72,7 +72,7 @@ class APKStorageDatabase(AbstractAPKStorage):
         pass
 
     async def save_file(self, package: APKType, architecture: APKArch, version: str, mimetype: str, data: BytesIO,
-                  retry: bool = False) -> bool:
+                        retry: bool = False) -> bool:
         """ Save the package to the database.  Remove the old version if it existed
 
         Args:

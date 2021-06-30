@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from mapadroid.utils.collections import Location
 from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import ScreenshotType
 
 
@@ -97,7 +97,7 @@ class AbstractCommunicator(ABC):
 
     @abstractmethod
     async def get_screenshot(self, path: str, quality: int = 70,
-                       screenshot_type: ScreenshotType = ScreenshotType.JPEG) -> bool:
+                             screenshot_type: ScreenshotType = ScreenshotType.JPEG) -> bool:
         """
 
         :param path: the screenshot is to be stored at
@@ -155,7 +155,8 @@ class AbstractCommunicator(ABC):
         """
 
     @abstractmethod
-    async def walk_from_to(self, location_from: Location, location_to: Location, speed: float) -> Optional[MessageTyping]:
+    async def walk_from_to(self, location_from: Location, location_to: Location, speed: float) -> Optional[
+        MessageTyping]:
         """
 
         :param location_from:

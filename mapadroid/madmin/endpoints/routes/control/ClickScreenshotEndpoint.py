@@ -1,5 +1,4 @@
 import asyncio
-import concurrent
 from typing import Optional
 
 from aiohttp import web
@@ -36,7 +35,7 @@ class ClickScreenshotEndpoint(AbstractControlEndpoint):
         real_click_y = int(height / float(click_y))
 
         if useadb and await self._adb_connect.make_screenclick(devicemapping.device_settings.adbname, origin,
-                                                         real_click_x, real_click_y):
+                                                               real_click_x, real_click_y):
             # TODO: origin_logger.info('MADmin: ADB screenclick successfully')
             pass
         else:
@@ -47,4 +46,3 @@ class ClickScreenshotEndpoint(AbstractControlEndpoint):
         await asyncio.sleep(2)
         creationdate = await self._take_screenshot()
         return web.Response(text=creationdate)
-

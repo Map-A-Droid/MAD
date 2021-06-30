@@ -25,11 +25,12 @@ class TrsStatsLocationHelper:
         Returns:
 
         """
-        stmt = select(func.unix_timestamp(func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocation.timestamp_scan)), '%y-%m-%d %k:00:00')),
+        stmt = select(func.unix_timestamp(
+            func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocation.timestamp_scan)), '%y-%m-%d %k:00:00')),
                       TrsStatsLocation.worker,
                       func.sum(TrsStatsLocation.location_count),
                       func.sum(TrsStatsLocation.location_ok),
-                      func.sum(TrsStatsLocation.location_nok))\
+                      func.sum(TrsStatsLocation.location_nok)) \
             .select_from(TrsStatsLocation)
         where_conditions = []
         if worker:
@@ -98,4 +99,3 @@ class TrsStatsLocationHelper:
     async def cleanup(session: AsyncSession, delete_before_timestap_scan: int) -> None:
         stmt = delete(TrsStatsLocation).where(TrsStatsLocation.timestamp_scan < delete_before_timestap_scan)
         await session.execute(stmt)
-

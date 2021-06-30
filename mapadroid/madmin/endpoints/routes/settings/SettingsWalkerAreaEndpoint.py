@@ -3,7 +3,6 @@ from typing import Dict, Optional
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
@@ -56,7 +55,8 @@ class SettingsWalkerAreaEndpoint(AbstractMadminRootEndpoint):
             'redirect': self._url_for('settings_walkers'),
             'subtab': 'walker',
             'element': walkerarea,
-            'uri': self._url_for('api_walkerarea') if not walkerarea_id else '%s/%s' % (self._url_for('api_walkerarea'), walkerarea_id),
+            'uri': self._url_for('api_walkerarea') if not walkerarea_id else '%s/%s' % (
+            self._url_for('api_walkerarea'), walkerarea_id),
             # TODO: Above is pretty generic in theory...
             'walkertypes': walkertypes,
             'areas': areas,

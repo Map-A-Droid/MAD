@@ -1,8 +1,8 @@
 from aiohttp import web
 
-from mapadroid.madmin.endpoints.routes.map.GetGeofencesEndpoint import GetGeofencesEndpoint
 from mapadroid.madmin.endpoints.routes.map.GetAreasEndpoint import GetAreasEndpoint
 from mapadroid.madmin.endpoints.routes.map.GetCellsEndpoint import GetCellsEndpoint
+from mapadroid.madmin.endpoints.routes.map.GetGeofencesEndpoint import GetGeofencesEndpoint
 from mapadroid.madmin.endpoints.routes.map.GetGymcoords import GetGymcoordsEndpoint
 from mapadroid.madmin.endpoints.routes.map.GetMapMonsEndpoint import GetMapMonsEndpoint
 from mapadroid.madmin.endpoints.routes.map.GetPriorouteEndpoint import GetPriorouteEndpoint

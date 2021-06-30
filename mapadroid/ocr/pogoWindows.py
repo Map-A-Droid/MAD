@@ -1,17 +1,17 @@
 import asyncio
+import concurrent.futures
 import math
 import os
 import os.path
-import concurrent.futures
 from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
 
-from mapadroid.ocr.utils import check_pogo_mainscreen, screendetection_get_type_internal, most_frequent_colour_internal, \
-    get_screen_text, get_inventory_text
 from mapadroid.ocr.matching_trash import trash_image_matching
 from mapadroid.ocr.screen_type import ScreenType
+from mapadroid.ocr.utils import check_pogo_mainscreen, screendetection_get_type_internal, most_frequent_colour_internal, \
+    get_screen_text, get_inventory_text
 from mapadroid.utils.AsyncioCv2 import AsyncioCv2
 from mapadroid.utils.AsyncioOsUtil import AsyncioOsUtil
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
@@ -26,12 +26,13 @@ class PogoWindows:
             os.makedirs(temp_dir_path)
             logger.info('PogoWindows: Temp directory created')
         self.temp_dir_path = temp_dir_path
-        self.__process_executor_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(thread_count)
+        self.__process_executor_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(
+            thread_count)
         # TODO: SHutdown pool...
 
     async def __read_circle_count(self, filename, identifier, ratio, communicator, xcord=False, crop=False,
-                            click=False,
-                            canny=False, secondratio=False):
+                                  click=False,
+                                  canny=False, secondratio=False):
         origin_logger = get_origin_logger(logger, origin=identifier)
         origin_logger.debug2("__read_circle_count: Reading circles")
 
@@ -49,8 +50,8 @@ class PogoWindows:
 
         if crop:
             screenshot_read = screenshot_read[int(height) - int(int(height / 4)):int(height),
-                                              int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
-                                              int(width) / 8)]
+                              int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
+                                  int(width) / 8)]
 
         origin_logger.debug("__read_circle_count: Determined screenshot scale: {} x {}", height, width)
         gray = await AsyncioCv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
@@ -68,8 +69,8 @@ class PogoWindows:
 
         origin_logger.debug("__read_circle_count: Detect radius of circle: Min {} / Max {}", radius_min, radius_max)
         circles = await AsyncioCv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
-                                   minRadius=radius_min,
-                                   maxRadius=radius_max)
+                                                minRadius=radius_min,
+                                                maxRadius=radius_max)
         circle = 0
         # ensure at least some circles were found
         if circles is not None:
@@ -151,7 +152,7 @@ class PogoWindows:
 
         num_lines = 0
         lines = await AsyncioCv2.HoughLinesP(edges, 1, math.pi / 180, 90, min_line_length,
-                                5)
+                                             5)
         if lines is None:
             return False
         loop = asyncio.get_running_loop()
@@ -205,7 +206,7 @@ class PogoWindows:
         elif num_lines > 6:
             origin_logger.debug('lookForButton: found to much Buttons :) - close it')
             await communicator.click(int(width - (width / 7.2)),
-                               int(height - (height / 12.19)))
+                                     int(height - (height / 12.19)))
             await asyncio.sleep(4)
 
             return True
@@ -253,16 +254,16 @@ class PogoWindows:
             return False
 
         if await self.__read_circle_count(os.path.join('', filename), identifier, float(11), communicator,
-                                    xcord=False,
-                                    crop=True,
-                                    click=False, canny=True) == -1:
+                                          xcord=False,
+                                          crop=True,
+                                          click=False, canny=True) == -1:
             origin_logger.debug("__check_raid_line: Not active")
             return False
 
         height, width, _ = screenshot_read.shape
         # TODO: Async?
         screenshot_read = screenshot_read[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
-                                          int(0):int(width)]
+                          int(0):int(width)]
         gray = await AsyncioCv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = await AsyncioCv2.GaussianBlur(gray, (5, 5), 0)
         origin_logger.debug("__check_raid_line: Determined screenshot scale: {} x {}", height, width)
@@ -323,9 +324,9 @@ class PogoWindows:
             return False
 
         return await self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'),
-                                    identifier,
-                                    float(radiusratio), communicator, xcord=False, crop=True, click=True,
-                                    canny=True) > 0
+                                              identifier,
+                                              float(radiusratio), communicator, xcord=False, crop=True, click=True,
+                                              canny=True) > 0
 
     async def check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
         origin_logger = get_origin_logger(logger, origin=identifier)
@@ -336,7 +337,7 @@ class PogoWindows:
 
     # checks for X button on any screen... could kill raidscreen, handle properly
     async def __internal_check_close_except_nearby_button(self, filename, identifier, communicator,
-                                                    close_raid=False):
+                                                          close_raid=False):
         origin_logger = get_origin_logger(logger, origin=identifier)
         origin_logger.debug("__internal_check_close_except_nearby_button: Checking close except nearby with: file {}",
                             filename)
@@ -353,8 +354,8 @@ class PogoWindows:
         if not close_raid:
             origin_logger.debug("__internal_check_close_except_nearby_button: Raid is not to be closed...")
             if not await AsyncioOsUtil.isfile(filename) \
-               or await self.__check_raid_line(filename, identifier, communicator) \
-               or await self.__check_raid_line(filename, identifier, communicator, True):
+                    or await self.__check_raid_line(filename, identifier, communicator) \
+                    or await self.__check_raid_line(filename, identifier, communicator, True):
                 # file not found or raid tab present
                 origin_logger.debug("__internal_check_close_except_nearby_button: Not checking for close button (X). "
                                     "Input wrong OR nearby window open")
@@ -389,7 +390,7 @@ class PogoWindows:
 
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(self.__process_executor_pool, get_inventory_text,
-                                              self.temp_dir_path, filename, identifier, x1, x2, y1, y2)
+                                          self.temp_dir_path, filename, identifier, x1, x2, y1, y2)
 
     async def check_pogo_mainscreen(self, filename, identifier):
         origin_logger = get_origin_logger(logger, origin=identifier)
@@ -398,7 +399,7 @@ class PogoWindows:
             return False
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(self.__process_executor_pool, check_pogo_mainscreen,
-                                              filename, identifier)
+                                          filename, identifier)
 
     async def get_screen_text(self, screenpath: str, identifier) -> Optional[dict]:
         origin_logger = get_origin_logger(logger, origin=identifier)
@@ -408,7 +409,7 @@ class PogoWindows:
 
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(self.__process_executor_pool, get_screen_text,
-                                              screenpath, identifier)
+                                          screenpath, identifier)
 
     async def most_frequent_colour(self, screenshot, identifier) -> Optional[List[int]]:
         origin_logger = get_origin_logger(logger, origin=identifier)
@@ -417,13 +418,12 @@ class PogoWindows:
             return None
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(self.__process_executor_pool, most_frequent_colour_internal,
-                                              screenshot, identifier)
+                                          screenshot, identifier)
 
     async def screendetection_get_type_by_screen_analysis(self, image,
-                                                    identifier) -> Optional[Tuple[ScreenType,
-                                                                                  Optional[
-                                                                                      dict], int, int, int]]:
+                                                          identifier) -> Optional[Tuple[ScreenType,
+                                                                                        Optional[
+                                                                                            dict], int, int, int]]:
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(self.__process_executor_pool, screendetection_get_type_internal,
-                                              image, identifier)
-
+                                          image, identifier)

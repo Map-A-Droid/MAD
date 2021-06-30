@@ -181,7 +181,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                     await self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
                     logger.warning("Something wrong with area: it has a lot of new stops - you should delete the "
-                                        "routefile!!")
+                                   "routefile!!")
                     logger.info("Recalc new route for area")
                     await self._recalc_stop_route(stops)
                 else:

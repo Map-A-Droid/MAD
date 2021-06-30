@@ -3,7 +3,6 @@ from typing import List
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper

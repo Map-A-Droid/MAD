@@ -1,7 +1,6 @@
 import asyncio
 from typing import Optional
 
-from PIL import Image
 from aiohttp import web
 from loguru import logger
 

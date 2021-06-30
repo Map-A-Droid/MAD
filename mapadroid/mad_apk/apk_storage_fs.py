@@ -7,9 +7,9 @@ from typing import Any, ClassVar, Optional
 
 from aiofile import async_open
 from asyncio_rlock import RLock
+
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.logging import LoggerEnums, get_logger
-
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKType
 from .custom_types import MADapks, MADPackage, MADPackages
@@ -27,9 +27,11 @@ def ensure_exists(func) -> Any:
     Returns:
 
     """
+
     async def decorated(self, *args, **kwargs):
         await self.validate_file(args[0], args[1])
         return await func(self, *args, **kwargs)
+
     return decorated
 
 
@@ -45,6 +47,7 @@ def ensure_config_file(func) -> Any:
             logger.warning('Corrupted MAD APK json file.  Recreating')
             await self.reload()
             return await func(self, *args, **kwargs)
+
     return wrapped
 
 
@@ -162,7 +165,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     def get_package_path(self, filename: str):
         "Generate the packpage path based off the filename"
-        return'{}/{}'.format(self.config_apk_dir, filename)
+        return '{}/{}'.format(self.config_apk_dir, filename)
 
     @ensure_config_file
     @ensure_exists
@@ -213,7 +216,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         async with self._lock:
             async with async_open(self.config_filepath, 'w+') as fh:
                 # TODO: pass async read data to dump
-                json_encoded: str = json.dumps(self.apks, indent=2, cls= MADEncoder)
+                json_encoded: str = json.dumps(self.apks, indent=2, cls=MADEncoder)
                 await fh.write(json_encoded)
                 # json.dump(self.apks, fh, indent=2, cls=MADEncoder)
 

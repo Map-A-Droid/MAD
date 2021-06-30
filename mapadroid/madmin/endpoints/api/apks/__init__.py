@@ -18,4 +18,3 @@ def register_api_apk_endpoints(app: web.Application):
 
     # Reload GET
     app.router.add_view('/api/mad_apk/reload', MadApkReloadEndpoint, name='api_madapk_reload')
-

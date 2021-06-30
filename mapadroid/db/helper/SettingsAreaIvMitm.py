@@ -11,7 +11,7 @@ class SettingsAreaIvMitmHelper:
     @staticmethod
     async def get(session: AsyncSession, instance_id: int, area_id: int) -> Optional[SettingsAreaIvMitm]:
         stmt = select(SettingsAreaIvMitm).where(and_(SettingsAreaIvMitm.instance_id == instance_id,
-                                                 SettingsAreaIvMitm.area_id == area_id))
+                                                     SettingsAreaIvMitm.area_id == area_id))
         result = await session.execute(stmt)
         return result.scalars().first()
 

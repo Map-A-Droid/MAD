@@ -347,7 +347,8 @@ class WebsocketServer(object):
         await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE, True)
 
     async def set_job_deactivated(self, origin) -> None:
-        await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE, False)
+        await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE,
+                                                                False)
 
     async def __close_and_signal_stop(self, origin: str) -> None:
         origin_logger = get_origin_logger(logger, origin=origin)

@@ -6,9 +6,10 @@ from abc import ABC, abstractmethod
 from copy import copy
 from typing import Dict
 
-from aiohttp import web
 import aiohttp_jinja2
 import jinja2
+from aiohttp import web
+
 from mapadroid.plugins.endpoints import register_plugin_endpoints
 
 

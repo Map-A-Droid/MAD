@@ -3,14 +3,12 @@ import time
 from datetime import datetime
 
 import sqlalchemy
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.utils.logging import get_logger
-from loguru import logger
-
 from mapadroid.utils.madGlobals import MitmReceiverRetry
 
 
@@ -39,7 +37,8 @@ class SerializedMitmDataProcessor:
                     async with self.__db_wrapper as session, session:
                         async with session.begin() as transaction:
                             try:
-                                await self.process_data(session, received_timestamp=item[0], data=item[1], origin=item[2])
+                                await self.process_data(session, received_timestamp=item[0], data=item[1],
+                                                        origin=item[2])
                                 await session.commit()
                             except (sqlalchemy.exc.IntegrityError, MitmReceiverRetry) as e:
                                 logger.info("Failed submitting data to DB, rescheduling. {}", e)
@@ -56,7 +55,7 @@ class SerializedMitmDataProcessor:
                 except KeyboardInterrupt:
                     logger.info("Received keyboard interrupt, stopping MITM data processor")
 
-    #@logger.catch
+    # @logger.catch
     async def process_data(self, session: AsyncSession, received_timestamp, data, origin):
         data_type = data.get("type", None)
         logger.debug("Processing received data")
@@ -96,14 +95,15 @@ class SerializedMitmDataProcessor:
                 full_time = self.get_time_ms() - start_time
 
                 logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
-                                    "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
-                                    full_time, weather_time, stops_time, gyms_time, raids_time,
-                                    spawnpoints_time, mons_time, cells_time, gmo_loc_time)
+                             "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
+                             full_time, weather_time, stops_time, gyms_time, raids_time,
+                             spawnpoints_time, mons_time, cells_time, gmo_loc_time)
             elif data_type == 102:
                 playerlevel = await self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
                     logger.debug("Processing encounter received at {}", processed_timestamp)
-                    await self.__db_submit.mon_iv(session, origin, received_timestamp, data["payload"], self.__mitm_mapper)
+                    await self.__db_submit.mon_iv(session, origin, received_timestamp, data["payload"],
+                                                  self.__mitm_mapper)
                     end_time = self.get_time_ms() - start_time
                     logger.debug("Done processing encounter in {}ms", end_time)
                 else:

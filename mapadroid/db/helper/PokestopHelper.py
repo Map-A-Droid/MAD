@@ -1,11 +1,12 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from operator import or_
 from typing import Optional, List, Dict, Tuple
 
 from sqlalchemy import and_, update
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
+
 from mapadroid.db.model import Pokestop, TrsVisited, TrsQuest
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
@@ -45,9 +46,9 @@ class PokestopHelper:
                                                                 func.POINT(Pokestop.latitude, Pokestop.longitude))))
         else:
             stmt = select(Pokestop).where(and_(Pokestop.latitude >= min_lat,
-                                          Pokestop.longitude >= min_lon,
-                                          Pokestop.latitude <= max_lat,
-                                          Pokestop.longitude <= max_lon))
+                                               Pokestop.longitude >= min_lon,
+                                               Pokestop.latitude <= max_lat,
+                                               Pokestop.longitude <= max_lon))
         result = await session.execute(stmt)
         list_of_coords: List[Location] = []
         for pokestop in result.scalars():
@@ -75,9 +76,9 @@ class PokestopHelper:
         """
         logger.debug3("DbWrapper::any_stops_unvisited called")
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
-        stmt = select(Pokestop)\
+        stmt = select(Pokestop) \
             .join(TrsVisited, and_(Pokestop.pokestop_id == TrsVisited.pokestop_id,
-                                   TrsVisited.origin == origin), isouter=True)\
+                                   TrsVisited.origin == origin), isouter=True) \
             .where(and_(Pokestop.latitude >= min_lat, Pokestop.longitude >= min_lon,
                         Pokestop.latitude <= max_lat, Pokestop.longitude <= max_lon,
                         TrsVisited.origin == None))
@@ -121,7 +122,7 @@ class PokestopHelper:
 
         stmt = select(Pokestop).where(func.sqrt(func.pow(69.1 * (Pokestop.latitude - location.lat), 2)
                                                 + func.pow(69.1 * (location.lng - Pokestop.longitude), 2))
-                                        <= max_distance)
+                                      <= max_distance)
         result = await session.execute(stmt)
         stops: Dict[str, Pokestop] = {}
         for pokestop in result.scalars():
@@ -166,7 +167,7 @@ class PokestopHelper:
             stmt = select(Pokestop,
                           func.sqrt(func.pow(69.1 * (Pokestop.latitude - location.lat), 2)
                                     + func.pow(69.1 * (location.lng - Pokestop.longitude), 2)).label("distance")) \
-                .select_from(Pokestop)\
+                .select_from(Pokestop) \
                 .join(TrsVisited, and_(Pokestop.pokestop_id == TrsVisited.pokestop_id,
                                        TrsVisited.origin == origin), isouter=True) \
                 .where(where_condition).order_by("distance")
@@ -177,7 +178,6 @@ class PokestopHelper:
                 if not geofence_helper.is_coord_inside_include_geofence([stop.latitude, stop.longitude]):
                     continue
                 stops_retrieved.append(stop)
-
 
             if len(stops_retrieved) == 0 or limit > 0 and len(stops_retrieved) <= limit:
                 logger.debug("No location found or not getting enough locations - increasing distance")
@@ -212,7 +212,7 @@ class PokestopHelper:
         Returns:
 
         """
-        stmt = select(Pokestop, TrsQuest)\
+        stmt = select(Pokestop, TrsQuest) \
             .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)
         where_conditions = []
         # TODO: Verify this works for all timezones...
@@ -281,9 +281,9 @@ class PokestopHelper:
 
     @staticmethod
     async def get_in_rectangle(session: AsyncSession,
-                              ne_corner: Optional[Location], sw_corner: Optional[Location],
-                              old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
-                              timestamp: Optional[int] = None) -> List[Pokestop]:
+                               ne_corner: Optional[Location], sw_corner: Optional[Location],
+                               old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
+                               timestamp: Optional[int] = None) -> List[Pokestop]:
         stmt = select(Pokestop)
         where_conditions = [and_(Pokestop.latitude >= sw_corner.lat,
                                  Pokestop.longitude >= sw_corner.lng,
@@ -319,8 +319,8 @@ class PokestopHelper:
             func.IF(min_quest_timestamp == None, "No quest",
                     min_quest_timestamp),
             func.COUNT(Pokestop.pokestop_id)
-        ).select_from(Pokestop)\
-            .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)\
+        ).select_from(Pokestop) \
+            .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True) \
             .group_by(func.FROM_UNIXTIME(TrsQuest.quest_timestamp, '%y-%m-%d'))
         result = await session.execute(stmt)
         results: List[Tuple[str, int]] = []
@@ -336,11 +336,10 @@ class PokestopHelper:
 
     @staticmethod
     async def get_changed_since_or_incident(session: AsyncSession, utc_timestamp: int) -> List[Pokestop]:
-        stmt = select(Pokestop)\
+        stmt = select(Pokestop) \
             .where(and_(Pokestop.last_updated > datetime.utcfromtimestamp(utc_timestamp),
                         or_(Pokestop.incident_start != None,
                             Pokestop.lure_expiration > datetime.utcfromtimestamp(0))))
         # TODO: Validate lure_expiration comparison works rather than DATEDIFF
         result = await session.execute(stmt)
         return result.scalars().all()
-

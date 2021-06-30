@@ -159,7 +159,7 @@ class TrsSpawnHelper:
                               timestamp: Optional[int] = None, fence: Optional[str] = None,
                               event_id: Optional[int] = None, today_only: bool = False,
                               older_than_x_days: Optional[int] = None) -> Dict[int, Tuple[TrsSpawn, TrsEvent]]:
-        stmt = select(TrsSpawn, TrsEvent)\
+        stmt = select(TrsSpawn, TrsEvent) \
             .join(TrsEvent, TrsSpawn.eventid == TrsEvent.id, isouter=False)
         where_conditions = []
 
@@ -211,7 +211,7 @@ class TrsSpawnHelper:
         Returns: amount of all spawnpoints known
 
         """
-        stmt = select(func.COUNT("*"))\
+        stmt = select(func.COUNT("*")) \
             .select_from(TrsSpawn)
         result = await session.execute(stmt)
         return result.scalar()

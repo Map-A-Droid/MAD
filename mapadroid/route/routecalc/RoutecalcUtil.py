@@ -5,12 +5,12 @@ from typing import List, Tuple, Optional
 
 import numpy as np
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.model import SettingsRoutecalc
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class RoutecalcUtil:

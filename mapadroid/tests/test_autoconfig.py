@@ -86,6 +86,7 @@ def basic_autoconf(func) -> Any:
                     self.mitm.delete('/autoconfig/{}/complete'.format(session_id))
                 if gacct is not None:
                     self.api.delete(gacct)
+
     return decorated
 
 

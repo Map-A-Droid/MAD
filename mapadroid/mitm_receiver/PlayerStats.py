@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Tuple, List
 
 from aiofile import async_open
+
 from mapadroid.mitm_receiver import MitmMapper
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 
@@ -65,7 +66,7 @@ class PlayerStats(object):
                         'poke_stop_visits': str(player_stats['poke_stop_visits'])
                     })
                     async with async_open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'),
-                              'w') as outfile:
+                                          'w') as outfile:
                         await outfile.write(json.dumps(data, indent=4, sort_keys=True))
 
     async def open_player_stats(self):
@@ -101,7 +102,7 @@ class PlayerStats(object):
                     self._last_processed_timestamp = time.time()
 
                     await self.__mitm_mapper_parent.add_stats_to_process(self._id, self.__stats_collected.copy(),
-                                                                   self._last_processed_timestamp)
+                                                                         self._last_processed_timestamp)
                     self.__stats_collected.clear()
             else:
                 self._stats_collector_start = False
@@ -186,7 +187,7 @@ class PlayerStats(object):
                 self.__stats_collected[106]['quest'][stop_id] += 1
 
     async def stats_collect_location_data(self, location, datarec, start_timestamp, positiontype, rec_timestamp, walker,
-                                    transporttype):
+                                          transporttype):
         if not self._generate_stats:
             return
         async with self.__mapping_mutex:

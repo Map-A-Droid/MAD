@@ -6,7 +6,6 @@ from typing import List, NoReturn
 
 import mapadroid.tests.test_variables as global_variables
 from mapadroid.db.DbFactory import DbFactory
-
 from mapadroid.tests.local_api import LocalAPI
 from mapadroid.utils.walkerArgs import parse_args
 

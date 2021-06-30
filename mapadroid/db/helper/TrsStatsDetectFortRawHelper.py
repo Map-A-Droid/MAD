@@ -1,17 +1,13 @@
-from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
-
-from sqlalchemy import and_, func, delete
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
-from mapadroid.db.model import TrsStatsDetectMonRaw, TrsStatsDetectFortRaw
+from mapadroid.db.model import TrsStatsDetectFortRaw
 
 
 class TrsStatsDetectFortRawHelper:
     @staticmethod
     async def add(session: AsyncSession, worker: str, guid: str, type_of_mon_detection: str,
-                     count: int, timestamp_scan: int) -> None:
+                  count: int, timestamp_scan: int) -> None:
         stat = TrsStatsDetectFortRaw()
         stat.worker = worker
         stat.guid = guid
@@ -24,4 +20,3 @@ class TrsStatsDetectFortRawHelper:
     async def cleanup(session: AsyncSession, delete_before_timestap_scan: int) -> None:
         stmt = delete(TrsStatsDetectFortRaw).where(TrsStatsDetectFortRaw.timestamp_scan < delete_before_timestap_scan)
         await session.execute(stmt)
-

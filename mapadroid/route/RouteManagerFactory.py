@@ -21,7 +21,8 @@ class RouteManagerFactory:
     def get_routemanager(db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
                          max_radius: int, max_coords_within_radius: int,
                          geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc, use_s2: bool = False,
-                         s2_level: int = 15, joinqueue=None, mon_ids_iv: Optional[List[int]] = None) -> RouteManagerBase:
+                         s2_level: int = 15, joinqueue=None,
+                         mon_ids_iv: Optional[List[int]] = None) -> RouteManagerBase:
         if area.mode == WorkerType.RAID_MITM.value:
             area: SettingsAreaRaidsMitm = area
             route_manager = RouteManagerRaids(db_wrapper=db_wrapper, area=area, coords=coords, max_radius=max_radius,

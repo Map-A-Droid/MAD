@@ -1,12 +1,13 @@
 from typing import List, Optional, Tuple
 
+from loguru import logger
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import SettingsAreaMonMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.collections import Location
-from loguru import logger
 
 
 class RouteManagerMon(RouteManagerBase):

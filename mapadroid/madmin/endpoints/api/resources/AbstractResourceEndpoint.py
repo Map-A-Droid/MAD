@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Dict, Optional, Set, List
 
 from aiohttp import web
+from loguru import logger
 from sqlalchemy import Column
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.properties import ColumnProperty
@@ -10,7 +11,6 @@ from yarl import URL
 
 from mapadroid.db.model import Base
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
-from loguru import logger
 
 
 class DataHandlingMethodology(Enum):
@@ -72,7 +72,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
             else:
                 found_entries[identifier] = self._translate_object_for_response(value)
                 additional_keys: Dict = await self._get_additional_keys(identifier)
-                for key, key_value in additional_keys.items(): # TODO: Recursive...
+                for key, key_value in additional_keys.items():  # TODO: Recursive...
                     if isinstance(key_value, Base):
                         additional_keys[key] = self._translate_object_for_response(key_value)
                     elif isinstance(key_value, list) and all(isinstance(x, Base) for x in key_value):
@@ -142,7 +142,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                     continue
                 # validate whether a field is required...
                 elif ((vars_of_type.get(key).primary_key or not vars_of_type.get(key).nullable)
-                        and getattr(db_entry, key, None) is None and value is None):
+                      and getattr(db_entry, key, None) is None and value is None):
                     self._commit_trigger = False
                     return self._json_response({"missing": [key]},
                                                status=405)

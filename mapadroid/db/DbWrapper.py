@@ -1,14 +1,12 @@
 import re
 import time
-from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
-from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.MadminInstanceHelper import MadminInstanceHelper
 from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
@@ -41,7 +39,6 @@ class DbWrapper:
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
         self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args)
-        self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec, args)
         self.__instance_id: Optional[int] = None
 
     async def setup(self) -> None:

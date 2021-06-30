@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import and_, case, desc, func
+from sqlalchemy import and_, case, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -74,12 +74,12 @@ class GymHelper:
 
         """
         stmt = select(
-                case((Gym.team_id == 0, TeamColours.WHITE.value),
-                     (Gym.team_id == 1, TeamColours.BLUE.value),
-                     (Gym.team_id == 2, TeamColours.RED.value),
-                     else_=TeamColours.YELLOW.value),
-                func.count(Gym.team_id))\
-            .select_from(Gym)\
+            case((Gym.team_id == 0, TeamColours.WHITE.value),
+                 (Gym.team_id == 1, TeamColours.BLUE.value),
+                 (Gym.team_id == 2, TeamColours.RED.value),
+                 else_=TeamColours.YELLOW.value),
+            func.count(Gym.team_id)) \
+            .select_from(Gym) \
             .group_by(Gym.team_id)
         result = await session.execute(stmt)
         team_count: Dict[str, int] = {}
@@ -90,7 +90,7 @@ class GymHelper:
     @staticmethod
     async def get_changed_since(session: AsyncSession, utc_timestamp: int) -> List[Tuple[Gym, GymDetail]]:
         stmt = select(Gym, GymDetail) \
-            .join(GymDetail, GymDetail.gym_id == Gym.gym_id, isouter=False)\
+            .join(GymDetail, GymDetail.gym_id == Gym.gym_id, isouter=False) \
             .where(Gym.last_modified >= datetime.utcfromtimestamp(utc_timestamp))
         # TODO: Consider last_scanned above
         result = await session.execute(stmt)

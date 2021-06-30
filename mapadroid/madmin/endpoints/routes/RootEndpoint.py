@@ -1,4 +1,3 @@
-
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
 

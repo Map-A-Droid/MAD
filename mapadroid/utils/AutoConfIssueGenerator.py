@@ -1,6 +1,8 @@
 import json
 from enum import IntEnum
 from typing import List, Dict, Tuple
+
+from aiohttp.abc import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
@@ -10,7 +12,6 @@ from mapadroid.mad_apk.utils import get_apk_status
 from mapadroid.utils.PDConfig import PDConfig
 from mapadroid.utils.RGCConfig import RGCConfig
 from mapadroid.utils.autoconfig import validate_hopper_ready
-from aiohttp.abc import Request
 
 
 class AutoConfIssues(IntEnum):

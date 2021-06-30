@@ -41,4 +41,3 @@ class TeamColours(Enum):
     BLUE = "Blue"
     RED = "Red"
     WHITE = "White"
-

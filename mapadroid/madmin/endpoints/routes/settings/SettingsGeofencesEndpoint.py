@@ -50,7 +50,8 @@ class SettingsGeofenceEndpoint(AbstractMadminRootEndpoint):
             'section': geofence,
             'settings_vars': settings_vars,
             'method': 'POST' if not geofence else 'PATCH',
-            'uri': self._url_for('api_geofence') if not geofence else '%s/%s' % (self._url_for('api_geofence'), self.identifier),
+            'uri': self._url_for('api_geofence') if not geofence else '%s/%s' % (
+            self._url_for('api_geofence'), self.identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data

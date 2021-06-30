@@ -23,7 +23,7 @@ def validate_session(func) -> Any:
             body = await self.request.json()
             session_id: Optional[int] = body.get('session_id', None)
             session_id = int(session_id)
-            autoconfig_registration: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+            autoconfig_registration: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
                 .get_by_session_id(self._session, self._get_instance_id(), session_id)
 
             if not autoconfig_registration:
@@ -88,7 +88,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
         session_id: Optional[int] = body.get('session_id', None)
         operation: Optional[str] = body.get('operation', None)
         try:
-            device_settings: Optional[SettingsDevice] = await SettingsDeviceHelper\
+            device_settings: Optional[SettingsDevice] = await SettingsDeviceHelper \
                 .get_device_settings_with_autoconfig_registration_pending(self._session, self._get_instance_id(),
                                                                           session_id)
             if operation in ['pd', 'rgc']:
@@ -101,7 +101,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
                 return web.FileResponse(await config.generate_config(device_settings.name),
                                         headers={'Content-Disposition': f"Attachment; filename=conf.xml"})
             elif operation in ['google']:
-                login: Optional[SettingsPogoauth] = await SettingsPogoauthHelper\
+                login: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
                     .get_google_credentials_of_autoconfig_registered_device(self._session, self._get_instance_id(),
                                                                             session_id)
                 if login:
@@ -119,7 +119,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
         body = await self.request.json()
         session_id: Optional[int] = body.get('session_id', None)
         try:
-            max_msg_level: Optional[int] = await AutoconfigLogsHelper\
+            max_msg_level: Optional[int] = await AutoconfigLogsHelper \
                 .get_max_level_of_session(self._session, self._get_instance_id(), session_id)
             if max_msg_level and max_msg_level == 4:
                 logger.warning('Unable to clear session due to a failure.  Manual deletion required')

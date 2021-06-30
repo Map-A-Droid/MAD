@@ -1,12 +1,11 @@
 from datetime import datetime
-
 from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsStatus
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from sqlalchemy.future import select
 
 logger = get_logger(LoggerEnums.database)
 

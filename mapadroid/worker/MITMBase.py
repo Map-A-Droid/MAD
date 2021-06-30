@@ -1,5 +1,4 @@
 import asyncio
-import collections
 import math
 import time
 from abc import abstractmethod, ABC
@@ -7,18 +6,20 @@ from asyncio import Task
 from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional, Tuple, Union
+
 from loguru import logger
+
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsArea, TrsStatus
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_lat_lng_offsets_by_distance)
 from mapadroid.utils.madGlobals import InternalStopWorkerException
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerBase import FortSearchResultTypes, WorkerBase
 
@@ -75,9 +76,10 @@ class MITMBase(WorkerBase, ABC):
             await session.commit()
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 2, 0,
                                                        await self._mapping_manager.routemanager_get_mode(
-                                                     self._routemanager_id),
+                                                           self._routemanager_id),
                                                        99)
-        self._enhanced_mode = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST, False)
+        self._enhanced_mode = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST,
+                                                                  False)
         return await super().start_worker()
 
     async def _walk_after_teleport(self, walk_distance_post_teleport) -> float:
@@ -98,31 +100,32 @@ class MITMBase(WorkerBase, ABC):
         logger.info("Walking roughly: {:.2f}m", to_walk)
         await asyncio.sleep(0.3)
         await self._communicator.walk_from_to(self.current_location,
-                                        Location(self.current_location.lat + lat_offset,
-                                                 self.current_location.lng + lng_offset),
-                                        WALK_AFTER_TELEPORT_SPEED)
+                                              Location(self.current_location.lat + lat_offset,
+                                                       self.current_location.lng + lng_offset),
+                                              WALK_AFTER_TELEPORT_SPEED)
         logger.debug("Walking back")
         await asyncio.sleep(0.3)
         await self._communicator.walk_from_to(Location(self.current_location.lat + lat_offset,
-                                                 self.current_location.lng + lng_offset),
-                                        self.current_location,
-                                        WALK_AFTER_TELEPORT_SPEED)
+                                                       self.current_location.lng + lng_offset),
+                                              self.current_location,
+                                              WALK_AFTER_TELEPORT_SPEED)
         logger.debug("Done walking")
         return to_walk
 
     async def _wait_for_data(self, timestamp: float = None,
-                       proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \
+                             proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \
             -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
         if timestamp is None:
             timestamp = time.time()
         # Cut off decimal places of timestamp as PD also does that...
         timestamp = int(timestamp)
         if timeout is None:
-            timeout = await self.get_devicesettings_value(MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT, FALLBACK_MITM_WAIT_TIMEOUT)
+            timeout = await self.get_devicesettings_value(MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT,
+                                                          FALLBACK_MITM_WAIT_TIMEOUT)
 
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         logger.info('Waiting for data after {}',
-                         datetime.fromtimestamp(timestamp))
+                    datetime.fromtimestamp(timestamp))
         position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_id,
                                                                                    self._origin)
         type_of_data_returned = LatestReceivedType.UNDEFINED
@@ -140,9 +143,9 @@ class MITMBase(WorkerBase, ABC):
             else:
                 last_time_received = latest_proto_entry.get("timestamp", TIMESTAMP_NEVER)
         logger.debug("Waiting for data ({}) after {} with timeout of {}s. "
-                          "Last received timestamp of that type was: {}",
-                          proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout,
-                          datetime.fromtimestamp(timestamp) if last_time_received != TIMESTAMP_NEVER else "never")
+                     "Last received timestamp of that type was: {}",
+                     proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout,
+                     datetime.fromtimestamp(timestamp) if last_time_received != TIMESTAMP_NEVER else "never")
         while type_of_data_returned == LatestReceivedType.UNDEFINED and \
                 (int(timestamp + timeout) >= int(time.time()) or last_time_received >= timestamp) \
                 and not self._stop_worker_event.is_set():
@@ -166,7 +169,7 @@ class MITMBase(WorkerBase, ABC):
                             -90.0 <= latest_location.lat <= 90.0 and
                             -180.0 <= latest_location.lng <= 180.0)):
                 logger.debug("Data may be valid but does not contain a proper location yet: {}",
-                                  str(latest_location))
+                             str(latest_location))
                 check_data = False
             elif proto_to_wait_for == ProtoIdentifier.GMO:
                 check_data = await self._is_location_within_allowed_range(latest_location)
@@ -196,7 +199,7 @@ class MITMBase(WorkerBase, ABC):
 
     async def _handle_proto_timeout(self, position_type, proto_to_wait_for: ProtoIdentifier, type_of_data_returned):
         logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
-                         proto_to_wait_for, type_of_data_returned)
+                    proto_to_wait_for, type_of_data_returned)
         await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
                                                        self._waittime_without_delays,
                                                        position_type, 0,
@@ -207,7 +210,7 @@ class MITMBase(WorkerBase, ABC):
         restart_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.RESTART_THRESH, 5)
         reboot_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT_THRESH, 3)
         if await self._mapping_manager.routemanager_get_route_stats(self._routemanager_id,
-                                                              self._origin) is not None:
+                                                                    self._origin) is not None:
             if self._init:
                 restart_thresh = restart_thresh * 2
                 reboot_thresh = reboot_thresh * 2
@@ -234,7 +237,7 @@ class MITMBase(WorkerBase, ABC):
                                                        self._waittime_without_delays,
                                                        position_type, time.time(),
                                                        await self._mapping_manager.routemanager_get_mode(
-                                                     self._routemanager_id), self._transporttype)
+                                                           self._routemanager_id), self._transporttype)
 
     async def raise_stop_worker_if_applicable(self):
         """
@@ -253,9 +256,9 @@ class MITMBase(WorkerBase, ABC):
 
     async def _is_location_within_allowed_range(self, latest_location):
         logger.debug2("Checking (data) location reported by {} at {} against real data location {}",
-                           self._origin,
-                           self.current_location,
-                           latest_location)
+                      self._origin,
+                      self.current_location,
+                      latest_location)
         distance_to_data = get_distance_of_two_points_in_meters(float(latest_location.lat),
                                                                 float(latest_location.lng),
                                                                 float(self.current_location.lat),
@@ -269,7 +272,7 @@ class MITMBase(WorkerBase, ABC):
         logger.debug2("Distance of worker {} to (data) location: {}", self._origin, distance_to_data)
         if distance_to_data > max_distance_for_worker:
             logger.debug("Location too far from worker position, max distance allowed: {}m",
-                              max_distance_for_worker)
+                         max_distance_for_worker)
         return distance_to_data <= max_distance_for_worker
 
     async def _start_pogo(self) -> bool:
@@ -287,7 +290,8 @@ class MITMBase(WorkerBase, ABC):
         reboot = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True)
         injection_thresh_reboot = 'Unlimited'
         if reboot:
-            injection_thresh_reboot = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
+            injection_thresh_reboot = int(
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
         window_check_frequency = 3
         while not await self._mitm_mapper.get_injection_status(self._origin):
             await self._check_for_mad_job()
@@ -296,11 +300,11 @@ class MITMBase(WorkerBase, ABC):
                 await self._reboot(self._mitm_mapper)
                 return False
             logger.info("Didn't receive any data yet. (Retry count: {}/{})", self._not_injected_count,
-                             injection_thresh_reboot)
+                        injection_thresh_reboot)
             if (self._not_injected_count != 0 and self._not_injected_count % window_check_frequency == 0) \
                     and not self._stop_worker_event.is_set():
                 logger.info("Retry check_windows while waiting for injection at count {}",
-                                 self._not_injected_count)
+                            self._not_injected_count)
                 await self._ensure_pogo_topmost()
             self._not_injected_count += 1
             wait_time = 0
@@ -405,7 +409,8 @@ class MITMBase(WorkerBase, ABC):
         logger.debug('Routemanager: {} [{}]', self._routemanager_id, self._area_id)
         logger.debug('Restart Counter: {}', self._restart_count)
         logger.debug('Reboot Counter: {}', self._reboot_count)
-        logger.debug('Reboot Option: {}', await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True))
+        logger.debug('Reboot Option: {}',
+                     await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True))
         logger.debug('Current Pos: {} {}', self.current_location.lat, self.current_location.lng)
         logger.debug('Last Pos: {} {}', self.last_location.lat, self.last_location.lng)
         routemanager_status = await self._mapping_manager.routemanager_get_route_stats(self._routemanager_id,

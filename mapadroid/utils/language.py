@@ -2,14 +2,15 @@ import json
 import os
 from typing import Dict
 
-from aiofile import async_open
 from aiocache import cached
+from aiofile import async_open
 
 
 @cached(ttl=30 * 60)
 async def open_json_file(jsonfile):
     try:
-        async with async_open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json', encoding='utf8', mode="r") as f:
+        async with async_open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json', encoding='utf8',
+                              mode="r") as f:
             derp = await f.read()
             file_open = json.loads(derp)
     except (OSError, json.decoder.JSONDecodeError):

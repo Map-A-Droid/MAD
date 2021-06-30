@@ -35,7 +35,7 @@ class WalkerareaEndpoint(AbstractResourceEndpoint):
     async def _handle_additional_keys(self, db_entry: SettingsWalkerarea, key: str, value) -> bool:
         if key == "walker_id":
             # Make sure a SettingsWalkerToWalkerarea row is present, else create one to make sure a connection exists
-            walkerarea_mappings_of_walker: List[SettingsWalkerToWalkerarea] = await SettingsWalkerToWalkerareaHelper\
+            walkerarea_mappings_of_walker: List[SettingsWalkerToWalkerarea] = await SettingsWalkerToWalkerareaHelper \
                 .get(self._session, self._get_instance_id(), value)
             walkerarea_mappings_of_walker.sort(key=lambda x: x.area_order)
             for walkerarea_mapping in walkerarea_mappings_of_walker:

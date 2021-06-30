@@ -11,6 +11,6 @@ class SettingsAreaHelper:
     @staticmethod
     async def get(session: AsyncSession, instance_id: int, area_id: int) -> Optional[SettingsArea]:
         stmt = select(SettingsArea).where(and_(SettingsArea.instance_id == instance_id,
-                                                 SettingsArea.area_id == area_id))
+                                               SettingsArea.area_id == area_id))
         result = await session.execute(stmt)
         return result.scalars().first()

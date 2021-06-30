@@ -29,9 +29,9 @@ class SettingsDeviceHelper:
         entries inserted IF there is more than one device for the given MAC...
         """
         # TODO: This won't work, we need to adjust it.. (group_by, see PokemonHelper::get_all_shiny
-        stmt = select(SettingsDevice.mac_address, SettingsDevice)\
-            .select_from(SettingsDevice)\
-            .group_by(SettingsDevice.mac_address)\
+        stmt = select(SettingsDevice.mac_address, SettingsDevice) \
+            .select_from(SettingsDevice) \
+            .group_by(SettingsDevice.mac_address) \
             .having(and_(func.count("*") > 1,
                          SettingsDevice.mac_address != None))
         result = await session.execute(stmt)
@@ -74,9 +74,9 @@ class SettingsDeviceHelper:
     @staticmethod
     async def get_device_settings_with_autoconfig_registration_pending(session: AsyncSession, instance_id: int,
                                                                        session_id: int) -> Optional[SettingsDevice]:
-        stmt = select(SettingsDevice)\
-            .select_from(SettingsDevice)\
-            .join(AutoconfigRegistration, AutoconfigRegistration.device_id == SettingsDevice.device_id)\
+        stmt = select(SettingsDevice) \
+            .select_from(SettingsDevice) \
+            .join(AutoconfigRegistration, AutoconfigRegistration.device_id == SettingsDevice.device_id) \
             .where(and_(AutoconfigRegistration.instance_id == instance_id,
                         AutoconfigRegistration.session_id == session_id))
         result = await session.execute(stmt)

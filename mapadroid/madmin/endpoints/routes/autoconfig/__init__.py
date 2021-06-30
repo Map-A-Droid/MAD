@@ -18,4 +18,3 @@ def register_routes_autoconfig_endpoints(app: web.Application):
     app.router.add_view('/autoconfig/rgc', AutoconfigRgcEndpoint, name='autoconf_rgc')
     app.router.add_view('/autoconfig/pd', AutoconfigPdEndpoint, name='autoconf_pd')
     app.router.add_view('/autoconfig/download', AutoconfigDownloadEndpoint, name='autoconfig_download_file')
-

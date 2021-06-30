@@ -40,7 +40,7 @@ class SettingsWalkerEndpoint(AbstractMadminRootEndpoint):
                                                                     int(self.identifier))
             if not walker:
                 raise web.HTTPFound(self._url_for("settings_walkers"))
-            walkerareas_mapped: Optional[List[SettingsWalkerarea]] = await SettingsWalkerareaHelper\
+            walkerareas_mapped: Optional[List[SettingsWalkerarea]] = await SettingsWalkerareaHelper \
                 .get_mapped_to_walker(self._session, self._get_instance_id(), walker.walker_id)
             if walkerareas_mapped:
                 walkerareas.extend(walkerareas_mapped)
@@ -55,7 +55,8 @@ class SettingsWalkerEndpoint(AbstractMadminRootEndpoint):
             'element': walker,
             'settings_vars': settings_vars,
             'method': 'POST' if not walker else 'PATCH',
-            'uri': self._url_for('api_walker') if not walker else '%s/%s' % (self._url_for('api_walker'), self.identifier),
+            'uri': self._url_for('api_walker') if not walker else '%s/%s' % (
+            self._url_for('api_walker'), self.identifier),
             # TODO: Above is pretty generic in theory...
             'walkerareas': walkerareas,
             "areas": areas
@@ -66,7 +67,7 @@ class SettingsWalkerEndpoint(AbstractMadminRootEndpoint):
     async def _render_overview(self):
         walkers: Dict[int, SettingsWalker] = await SettingsWalkerHelper.get_all_mapped(self._session,
                                                                                        self._get_instance_id())
-        walker_to_walkerares: Dict[int, List[SettingsWalkerarea]] = await SettingsWalkerareaHelper\
+        walker_to_walkerares: Dict[int, List[SettingsWalkerarea]] = await SettingsWalkerareaHelper \
             .get_all_mapped_by_walker(self._session, self._get_instance_id())
         areas: Dict[int, SettingsArea] = await self._get_db_wrapper().get_all_areas(self._session)
         template_data: Dict = {

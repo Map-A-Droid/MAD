@@ -4,7 +4,6 @@ import os
 from mysql.connector.errors import IntegrityError
 
 from mapadroid.utils.logging import LoggerEnums, get_logger
-
 from ._patch_base import PatchBase
 
 logger = get_logger(LoggerEnums.patcher)
@@ -18,8 +17,8 @@ class Patch(PatchBase):
         # Backup the tables
         # Assume that the user has not been given GRANT FILE permissions so just do a manual export
         if self._schema_updater.check_column_exists('settings_device', 'ptc_login'):
-            sql = "SELECT `device_id`, `ptc_login`\n"\
-                  "FROM `settings_device`\n"\
+            sql = "SELECT `device_id`, `ptc_login`\n" \
+                  "FROM `settings_device`\n" \
                   "WHERE `ptc_login` IS NOT NULL"
             with open(os.path.join(self._application_args.temp_path, 'ptc_backup.json'), 'w+') as fh:
                 json.dump(self._db.autofetch_all(sql), fh)
@@ -29,16 +28,16 @@ class Patch(PatchBase):
                   "     ADD `device_id` int(10) unsigned NULL\n" \
                   "     AFTER `account_id`;"
             self._db.execute(sql, raise_exc=True, suppress_log=True, commit=True)
-            sql = "ALTER TABLE `settings_pogoauth`\n"\
-                  "     ADD CONSTRAINT `fk_spa_device_id`\n"\
-                  "     FOREIGN KEY (`device_id`)\n"\
-                  "           REFERENCES `settings_device` (`device_id`)\n"\
+            sql = "ALTER TABLE `settings_pogoauth`\n" \
+                  "     ADD CONSTRAINT `fk_spa_device_id`\n" \
+                  "     FOREIGN KEY (`device_id`)\n" \
+                  "           REFERENCES `settings_device` (`device_id`)\n" \
                   "           ON DELETE CASCADE"
             self._db.execute(sql, raise_exc=True, suppress_log=True, commit=True)
         # Move PTC
         if self._schema_updater.check_column_exists('settings_device', 'ptc_login'):
-            sql = "SELECT `device_id`, `ptc_login`, `instance_id`\n"\
-                  "FROM `settings_device`\n"\
+            sql = "SELECT `device_id`, `ptc_login`, `instance_id`\n" \
+                  "FROM `settings_device`\n" \
                   "WHERE `ptc_login` IS NOT NULL"
             ptc_logins = self._db.autofetch_all(sql)
             if ptc_logins:
@@ -86,7 +85,7 @@ class Patch(PatchBase):
                   "DROP COLUMN ptc_login;"
             self._db.execute(sql, raise_exc=False, suppress_log=True)
         if self._schema_updater.check_column_exists('settings_device', 'account_id'):
-            sql = "ALTER TABLE settings_device\n"\
+            sql = "ALTER TABLE settings_device\n" \
                   " DROP FOREIGN KEY settings_device_ibfk_3"
             self._db.execute(sql, raise_exc=False, suppress_log=True)
             sql = "ALTER TABLE settings_device\n" \

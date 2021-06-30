@@ -1,4 +1,3 @@
-import asyncio
 import json
 import math
 import time
@@ -8,9 +7,11 @@ from typing import Dict, List, Optional, Union
 import sqlalchemy
 from aioredis import Redis
 from bitstring import BitArray
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.cache import NoopCache
+from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.GymDetailHelper import GymDetailHelper
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
@@ -24,14 +25,11 @@ from mapadroid.db.helper.WeatherHelper import WeatherHelper
 from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
                                 TrsEvent, TrsQuest, TrsS2Cell, TrsSpawn,
                                 Weather)
-from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
 from mapadroid.utils.logging import get_origin_logger
-from mapadroid.utils.madGlobals import MitmReceiverRetry
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
-from loguru import logger
 
 
 class DbPogoProtoSubmit:
@@ -41,6 +39,7 @@ class DbPogoProtoSubmit:
      moved outside the db package.
     """
     default_spawndef = 240
+
     # TODO: Redis Cache access needs to be async...
 
     def __init__(self, db_exec: PooledQueryExecutor, args):
@@ -80,7 +79,7 @@ class DbPogoProtoSubmit:
                 now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
                 # get known spawn end time and feed into despawn time calculation
-                #getdetspawntime = self._get_detected_endtime(str(spawnid))
+                # getdetspawntime = self._get_detected_endtime(str(spawnid))
                 spawnpoint: Optional[TrsSpawn] = await TrsSpawnHelper.get(session, spawnid)
                 despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp)
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix)
@@ -446,10 +445,10 @@ class DbPogoProtoSubmit:
                     gym_obj.team_id = team_id
                     gym_obj.guard_pokemon_id = guard_pokemon_id
                     gym_obj.slots_available = slots_available
-                    gym_obj.enabled = 1 # TODO: read in proto?
+                    gym_obj.enabled = 1  # TODO: read in proto?
                     gym_obj.latitude = latitude
                     gym_obj.longitude = longitude
-                    gym_obj.total_cp = 0 # TODO: Read from proto..
+                    gym_obj.total_cp = 0  # TODO: Read from proto..
                     gym_obj.is_in_battle = 0
                     gym_obj.last_modified = last_modified
                     gym_obj.last_scanned = datetime.utcnow()
@@ -717,7 +716,7 @@ class DbPogoProtoSubmit:
         if not pokestop:
             pokestop: Pokestop = Pokestop()
             pokestop.pokestop_id = stop_id
-        pokestop.enabled = 1 # TODO: Shouldn't this be in the proto?
+        pokestop.enabled = 1  # TODO: Shouldn't this be in the proto?
         pokestop.latitude = stop_data["latitude"]
         pokestop.longitude = stop_data["longitude"]
         pokestop.last_modified = last_modified

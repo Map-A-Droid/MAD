@@ -3,18 +3,19 @@ import math
 import time
 from typing import Optional, Any
 
+from loguru import logger
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsWalkerarea
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException, WebsocketWorkerConnectionClosedException,
     WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException)
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
-from loguru import logger
 
 
 class WorkerConfigmode(AbstractWorker):
@@ -35,7 +36,6 @@ class WorkerConfigmode(AbstractWorker):
         self._mitm_mapper = mitm_mapper
         self._db_wrapper = db_wrapper
 
-
     async def set_devicesettings_value(self, key: MappingManagerDevicemappingKey, value: Optional[Any]):
         await self._mapping_manager.set_devicesetting_value_of(self._origin, key, value)
 
@@ -47,7 +47,7 @@ class WorkerConfigmode(AbstractWorker):
 
     async def start_worker(self):
         logger.warning("Worker started in configmode! This is special, configuration only mode - do not expect"
-                            " scans or avatar moving. After you are done with initial configuration remove -cm flag")
+                       " scans or avatar moving. After you are done with initial configuration remove -cm flag")
         await self._mapping_manager.register_worker_to_routemanager(self._routemanager_id, self._origin)
         logger.debug("Setting device to idle for routemanager")
         await self._db_wrapper.save_idle_status(self._dev_id, True)
@@ -174,7 +174,8 @@ class WorkerConfigmode(AbstractWorker):
             await self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
             logger.info("Turning screen on")
             await self._communicator.turn_screen_on()
-            await asyncio.sleep(await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 7))
+            await asyncio.sleep(
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 7))
 
         while not pogo_topmost:
             await self._mitm_mapper.set_injection_status(self._origin, False)
@@ -192,14 +193,15 @@ class WorkerConfigmode(AbstractWorker):
         reboot = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True)
         injection_thresh_reboot = 'Unlimited'
         if reboot:
-            injection_thresh_reboot = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
+            injection_thresh_reboot = int(
+                await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
         while not await self._mitm_mapper.get_injection_status(self._origin):
             if reboot and self._not_injected_count >= injection_thresh_reboot:
                 logger.error("Not injected in time - reboot")
                 await self._reboot()
                 return False
             logger.info("Didn't receive any data yet. (Retry count: {}/{})", str(self._not_injected_count),
-                             str(injection_thresh_reboot))
+                        str(injection_thresh_reboot))
             if self._stop_worker_event.is_set():
                 logger.error("Killed while waiting for injection")
                 return False
@@ -229,7 +231,8 @@ class WorkerConfigmode(AbstractWorker):
 
     async def _wait_pogo_start_delay(self):
         delay_count: int = 0
-        pogo_start_delay: int = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_POGO_START_DELAY, 60)
+        pogo_start_delay: int = await self.get_devicesettings_value(
+            MappingManagerDevicemappingKey.POST_POGO_START_DELAY, 60)
         logger.info('Waiting for pogo start: {} seconds', pogo_start_delay)
 
         while delay_count <= pogo_start_delay:

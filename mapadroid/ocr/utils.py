@@ -2,8 +2,8 @@ from typing import Optional, Tuple, List
 
 import cv2
 import numpy as np
-from pytesseract import pytesseract, Output
 from PIL import Image
+from pytesseract import pytesseract, Output
 
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.logging import get_origin_logger, LoggerEnums, get_logger
@@ -36,7 +36,7 @@ screen_texts: dict = {1: ['Geburtdatum', 'birth.', 'naissance.', 'date'],
 
 
 def screendetection_get_type_internal(image,
-                                        identifier) -> Optional[Tuple[ScreenType, Optional[dict], int, int, int]]:
+                                      identifier) -> Optional[Tuple[ScreenType, Optional[dict], int, int, int]]:
     origin_logger = get_origin_logger(logger, origin=identifier)
     returntype: ScreenType = ScreenType.UNDEFINED
     globaldict: Optional[dict] = {}
@@ -108,7 +108,7 @@ def check_pogo_mainscreen(filename, identifier):
 
     height, width, _ = screenshot_read.shape
     gray = screenshot_read[int(height) - int(round(height / 5)):int(height),
-                           0: int(int(width) / 4)]
+           0: int(int(width) / 4)]
     _, width_, _ = gray.shape
     radius_min = int((width / float(6.8) - 3) / 2)
     radius_max = int((width / float(6) + 3) / 2)

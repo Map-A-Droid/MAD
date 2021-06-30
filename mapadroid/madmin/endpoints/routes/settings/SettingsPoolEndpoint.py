@@ -1,13 +1,11 @@
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
-from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
-from mapadroid.db.model import SettingsDevicepool, SettingsWalkerarea
+from mapadroid.db.model import SettingsDevicepool
 from mapadroid.db.resource_definitions.Devicepool import Devicepool
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
@@ -50,7 +48,8 @@ class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
             'element': device_pool,
             'settings_vars': settings_vars,
             'method': 'POST' if not device_pool else 'PATCH',
-            'uri': self._url_for('api_devicepool') if not device_pool else '%s/%s' % (self._url_for('api_devicepool'), self.identifier),
+            'uri': self._url_for('api_devicepool') if not device_pool else '%s/%s' % (
+            self._url_for('api_devicepool'), self.identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data

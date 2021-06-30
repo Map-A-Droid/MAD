@@ -9,9 +9,9 @@ from typing import List, Optional, Tuple
 import numpy as np
 
 from mapadroid.db.model import SettingsPogoauth
-from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Login_GGL, Login_PTC
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import ScreenshotType

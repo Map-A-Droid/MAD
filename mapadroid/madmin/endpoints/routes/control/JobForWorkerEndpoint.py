@@ -1,10 +1,7 @@
 import asyncio
 import math
 import time
-from typing import List, Optional, Union
-
-from aiohttp_jinja2.helpers import url_for
-from multidict._multidict import MultiDictProxy
+from typing import List, Optional
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint

@@ -3,7 +3,6 @@ import time
 from typing import Optional
 
 import aiohttp_jinja2
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint

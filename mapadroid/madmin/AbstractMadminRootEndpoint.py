@@ -13,8 +13,8 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import Base
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin import apiException
-from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.mapping_manager.MappingManager import MappingManager
+from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -155,4 +155,3 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         if query is None:
             query = {}
         return self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
-

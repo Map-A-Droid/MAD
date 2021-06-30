@@ -4,11 +4,10 @@ import os
 import shutil
 import sys
 from collections import OrderedDict
-
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 import mysql.connector
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db import DbSchemaUpdater
 from mapadroid.db.DbWrapper import DbWrapper
@@ -168,11 +167,11 @@ class MADPatcher(object):
             raise e
 
     def __install_instance_table(self):
-        sql = "CREATE TABLE `madmin_instance` (\n"\
-              "`instance_id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n"\
-              "`name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
-              "PRIMARY KEY (`instance_id`),\n"\
-              "UNIQUE KEY `name` (`name`)\n"\
+        sql = "CREATE TABLE `madmin_instance` (\n" \
+              "`instance_id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n" \
+              "`name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n" \
+              "PRIMARY KEY (`instance_id`),\n" \
+              "UNIQUE KEY `name` (`name`)\n" \
               ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
         self.dbwrapper.execute(sql, commit=True, suppress_log=True)
 

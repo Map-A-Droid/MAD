@@ -43,8 +43,11 @@ class SettingsWalkerareaHelper:
         Returns: Dict mapping walker_id to list of walkerarea instances
 
         """
-        all_walkerareas: Dict[int, SettingsWalkerarea] = await SettingsWalkerareaHelper.get_all_mapped(session, instance_id)
-        walker_area_mappings_by_walker: Dict[int, List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper.get_all_mapped(session, instance_id)
+        all_walkerareas: Dict[int, SettingsWalkerarea] = await SettingsWalkerareaHelper.get_all_mapped(session,
+                                                                                                       instance_id)
+        walker_area_mappings_by_walker: Dict[
+            int, List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper.get_all_mapped(session,
+                                                                                                           instance_id)
         mapped: Dict[int, List[SettingsWalkerarea]] = {}
         for walker_id, walker_to_walkerarea_mappings in walker_area_mappings_by_walker.items():
             if walker_id not in mapped:
@@ -64,7 +67,7 @@ class SettingsWalkerareaHelper:
     @staticmethod
     async def get_mapped_to_walker(session: AsyncSession, instance_id: int,
                                    walker_id: int) -> Optional[List[SettingsWalkerarea]]:
-        all_walkerareas_mapped: Optional[List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper\
+        all_walkerareas_mapped: Optional[List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper \
             .get(session, instance_id, walker_id)
         if not all_walkerareas_mapped:
             return None

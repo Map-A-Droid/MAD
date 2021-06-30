@@ -242,7 +242,7 @@ async def start():
     storage_elem = await get_storage_obj(args, db_wrapper)
     if not args.config_mode:
         pogo_win_manager = PogoWindows(args.temp_path, args.ocr_thread_count)
-        mitm_mapper = MitmMapper(args, mapping_manager, db_wrapper.stats_submit)
+        mitm_mapper = MitmMapper(args, mapping_manager, db_wrapper)
         await mitm_mapper.init()
     logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
 

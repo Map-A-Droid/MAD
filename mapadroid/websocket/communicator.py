@@ -3,8 +3,8 @@ from typing import Optional
 
 from aiofile import async_open
 
-from mapadroid.utils.collections import Location
 from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import (
@@ -45,12 +45,12 @@ class Communicator(AbstractCommunicator):
         async with self.__send_mutex:
             timeout = self.__command_timeout if timeout is None else timeout
             return await self.websocket_client_entry.send_and_wait(message, timeout=timeout,
-                                                             worker_instance=self.worker_instance_ref)
+                                                                   worker_instance=self.worker_instance_ref)
 
     async def __run_and_ok_bytes(self, message, timeout: float, byte_command: int = None) -> bool:
         async with self.__send_mutex:
             result = await self.websocket_client_entry.send_and_wait(message, timeout, self.worker_instance_ref,
-                                                               byte_command=byte_command)
+                                                                     byte_command=byte_command)
             return result is not None and "OK" == result.strip()
 
     async def install_apk(self, timeout: float, filepath: str = None, data=None) -> bool:
@@ -77,8 +77,8 @@ class Communicator(AbstractCommunicator):
 
     async def passthrough(self, command) -> Optional[MessageTyping]:
         return await self.websocket_client_entry.send_and_wait("passthrough {}".format(command),
-                                                             self.__command_timeout,
-                                                             self.worker_instance_ref)
+                                                               self.__command_timeout,
+                                                               self.worker_instance_ref)
 
     async def reboot(self) -> bool:
         return await self.__run_and_ok("more reboot now\r\n", self.__command_timeout)
@@ -103,17 +103,19 @@ class Communicator(AbstractCommunicator):
 
     async def click(self, click_x: int, click_y: int) -> bool:
         self.logger.debug('Click {} / {}', click_x, click_y)
-        return await self.__run_and_ok("screen click {} {}\r\n".format(str(int(round(click_x))), str(int(round(click_y)))),
-                                 self.__command_timeout)
+        return await self.__run_and_ok(
+            "screen click {} {}\r\n".format(str(int(round(click_x))), str(int(round(click_y)))),
+            self.__command_timeout)
 
     async def swipe(self, x1: int, y1: int, x2: int, y2: int) -> Optional[MessageTyping]:
-        return await self.__run_get_gesponse("touch swipe {} {} {} {}\r\n".format(str(int(round(x1))), str(int(round(y1))),
-                                                                            str(int(round(x2))), str(int(round(y2)))))
+        return await self.__run_get_gesponse(
+            "touch swipe {} {} {} {}\r\n".format(str(int(round(x1))), str(int(round(y1))),
+                                                 str(int(round(x2))), str(int(round(y2)))))
 
     async def touch_and_hold(self, x1: int, y1: int, x2: int, y2: int, duration: int = 3000) -> bool:
         return await self.__run_and_ok("touch swipe {} {} {} {} {}".format(str(int(round(x1))), str(int(round(y1))),
-                                                                     str(int(round(x2))), str(int(round(y2))),
-                                                                     str(int(duration))), self.__command_timeout)
+                                                                           str(int(round(x2))), str(int(round(y2))),
+                                                                           str(int(duration))), self.__command_timeout)
 
     async def get_screensize(self) -> Optional[MessageTyping]:
         return await self.__run_get_gesponse("screen size")
@@ -122,7 +124,7 @@ class Communicator(AbstractCommunicator):
         return await self.__run_get_gesponse("more uiautomator")
 
     async def get_screenshot(self, path: str, quality: int = 70,
-                       screenshot_type: ScreenshotType = ScreenshotType.JPEG) -> bool:
+                             screenshot_type: ScreenshotType = ScreenshotType.JPEG) -> bool:
         if quality < 10 or quality > 100:
             self.logger.error("Invalid quality value passed for screenshots")
             return False
@@ -192,7 +194,8 @@ class Communicator(AbstractCommunicator):
     #######
     # This blocks!
     #######
-    async def walk_from_to(self, location_from: Location, location_to: Location, speed: float) -> Optional[MessageTyping]:
+    async def walk_from_to(self, location_from: Location, location_to: Location, speed: float) -> Optional[
+        MessageTyping]:
         # calculate the time it will take to walk and add it to the timeout!
         distance = get_distance_of_two_points_in_meters(
             location_from.lat, location_from.lng,
@@ -202,9 +205,9 @@ class Communicator(AbstractCommunicator):
         speed_meters = speed / 3.6
         seconds_traveltime = distance / speed_meters
         return await self.__run_get_gesponse("geo walk {} {} {} {} {}\r\n".format(location_from.lat, location_from.lng,
-                                                                            location_to.lat, location_to.lng,
-                                                                            speed),
-                                       self.__command_timeout + seconds_traveltime)
+                                                                                  location_to.lat, location_to.lng,
+                                                                                  speed),
+                                             self.__command_timeout + seconds_traveltime)
 
     # TODO: may require update for asyncio I/O
     async def get_compressed_logcat(self, path: str) -> bool:

@@ -45,4 +45,3 @@ class MonIvListEndpoint(AbstractResourceEndpoint):
 
     async def _delete_connected(self, db_entry: SettingsMonivlist):
         await SettingsMonivlistHelper.delete_mapped_ids(self._session, db_entry.monlist_id)
-

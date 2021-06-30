@@ -5,8 +5,9 @@ from abc import ABC
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
-from aiohttp.abc import Request
 from PIL import Image
+from aiohttp.abc import Request
+from loguru import logger
 
 import mapadroid
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
@@ -16,7 +17,6 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType
-from loguru import logger
 
 
 class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
@@ -55,10 +55,10 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         if not temp_comm:
             logger.warning("Unable to fetch screenshot of a device that is not connected")
             return
-        screenshot_type: ScreenshotType = await self._get_mapping_manager()\
+        screenshot_type: ScreenshotType = await self._get_mapping_manager() \
             .get_devicesetting_value_of_device(mapping_entry.device_settings.name,
                                                MappingManagerDevicemappingKey.SCREENSHOT_TYPE)
-        screenshot_quality: int = await self._get_mapping_manager()\
+        screenshot_quality: int = await self._get_mapping_manager() \
             .get_devicesetting_value_of_device(mapping_entry.device_settings.name,
                                                MappingManagerDevicemappingKey.SCREENSHOT_QUALITY)
         filename = generate_device_screenshot_path(mapping_entry.device_settings.name, mapping_entry,

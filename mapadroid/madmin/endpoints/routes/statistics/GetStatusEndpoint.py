@@ -3,7 +3,6 @@ from typing import Optional, Dict
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsArea
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
-from mapadroid.worker.WorkerType import WorkerType
 
 
 class GetStatusEndpoint(AbstractStatisticsRootEndpoint):
@@ -18,11 +17,14 @@ class GetStatusEndpoint(AbstractStatisticsRootEndpoint):
         serialized = []
         for stat in stats:
             stat_serialized = {var: val for var, val in vars(stat).items() if not var.startswith("_")}
-            routemanager_id_device_is_using: Optional[int] = await self._get_mapping_manager().get_routemanager_id_where_device_is_registered(stat.name)
+            routemanager_id_device_is_using: Optional[
+                int] = await self._get_mapping_manager().get_routemanager_id_where_device_is_registered(stat.name)
             if routemanager_id_device_is_using:
                 # append routemanager name, routemanager mode and area id...
-                stat_serialized["rmname"] = await self._get_mapping_manager().routemanager_get_name(routemanager_id_device_is_using)
-                stat_serialized["mode"] = (await self._get_mapping_manager().routemanager_get_mode(routemanager_id_device_is_using)).value
+                stat_serialized["rmname"] = await self._get_mapping_manager().routemanager_get_name(
+                    routemanager_id_device_is_using)
+                stat_serialized["mode"] = (
+                    await self._get_mapping_manager().routemanager_get_mode(routemanager_id_device_is_using)).value
             else:
                 stat_serialized["rmname"] = areas.get(stat.area_id).name
                 stat_serialized["mode"] = areas.get(stat.area_id).mode

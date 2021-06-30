@@ -1,5 +1,4 @@
 import asyncio
-import time
 from typing import List, Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
@@ -38,7 +37,8 @@ class RouteManagerQuests(RouteManagerBase):
         await asyncio.sleep(5)
         async with self.db_wrapper as session, session:
             stops = await PokestopHelper.get_without_quests(session, self.geofence_helper)
-        locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for stop_id, stop in stops.items()]
+        locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for stop_id, stop in
+                                              stops.items()]
         logger.info('Detected stops without quests: {}', len(locations_of_stops))
         logger.debug('Detected stops without quests: {}', locations_of_stops)
         self._stoplist: List[Location] = locations_of_stops
@@ -59,10 +59,10 @@ class RouteManagerQuests(RouteManagerBase):
     async def _recalc_route_workertype(self):
         if self.init:
             await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                              in_memory=False)
+                                    in_memory=False)
         else:
             await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                              in_memory=True)
+                                    in_memory=True)
 
         self._init_route_queue()
 
@@ -181,7 +181,7 @@ class RouteManagerQuests(RouteManagerBase):
                     self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
                     logger.warning("Something wrong with area: it contains a lot of new stops - "
-                                        "better recalc the route!")
+                                   "better recalc the route!")
                     logger.info("Recalc new route for area")
                     self._recalc_stop_route(stops)
                 else:

@@ -1,6 +1,6 @@
 from typing import Optional, Dict
 
-from sqlalchemy import and_, update
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -14,7 +14,7 @@ logger = get_logger(LoggerEnums.database)
 class SettingsRoutecalcHelper:
     @staticmethod
     async def update_instance_id(session: AsyncSession, routecalc_id: int, instance_id: int) -> None:
-        stmt = update(SettingsRoutecalc).where(SettingsRoutecalc.routecalc_id == routecalc_id)\
+        stmt = update(SettingsRoutecalc).where(SettingsRoutecalc.routecalc_id == routecalc_id) \
             .values(instance_id=instance_id)
         await session.execute(stmt)
 

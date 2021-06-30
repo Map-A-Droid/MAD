@@ -37,8 +37,8 @@ class WalkerEndpoint(AbstractResourceEndpoint):
 
     async def _get_additional_keys(self, identifier: int) -> Dict:
         setup: Optional[List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper.get(self._session,
-                                                   self._get_instance_id(),
-                                                   identifier)
+                                                                                                       self._get_instance_id(),
+                                                                                                       identifier)
         additional_keys: Dict = {"setup": setup}
         return additional_keys
 

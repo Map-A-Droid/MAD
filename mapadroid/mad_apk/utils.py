@@ -3,16 +3,15 @@ import json
 import zipfile
 from distutils.version import LooseVersion
 from typing import Tuple, Union, Optional, List, AsyncGenerator
-from aiocache import cached
 
 import apkutils
+from aiocache import cached
 from aiofile import async_open
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
 from mapadroid.utils.logging import LoggerEnums, get_logger
-
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKPackage, APKType
 from .custom_types import MADapks, MADPackage, MADPackages
@@ -122,7 +121,8 @@ async def get_apk_status(storage_obj: AbstractAPKStorage) -> MADapks:
         if package == APKType.pogo:
             for arch in [APKArch.armeabi_v7a, APKArch.arm64_v8a]:
                 try:
-                    package_info: Optional[Union[MADPackage, MADPackages]] = await lookup_package_info(storage_obj, package, arch)
+                    package_info: Optional[Union[MADPackage, MADPackages]] = await lookup_package_info(storage_obj,
+                                                                                                       package, arch)
                 except ValueError:
                     package_info: Optional[Union[MADPackage, MADPackages]] = None
                 if package_info is None:
@@ -130,7 +130,8 @@ async def get_apk_status(storage_obj: AbstractAPKStorage) -> MADapks:
                 data[package][arch] = package_info
         if package in [APKType.pd, APKType.rgc]:
             try:
-                package_info: Optional[Union[MADPackage, MADPackages]] = await lookup_package_info(storage_obj, package, APKArch.noarch)
+                package_info: Optional[Union[MADPackage, MADPackages]] = await lookup_package_info(storage_obj, package,
+                                                                                                   APKArch.noarch)
             except ValueError:
                 package_info: Optional[Union[MADPackage, MADPackages]] = None
             if package_info is None:
@@ -269,7 +270,7 @@ async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
 
 
 async def stream_package(session: AsyncSession, storage_obj,
-                   package: APKType, architecture: APKArch) -> Tuple[AsyncGenerator, str, str]:
+                         package: APKType, architecture: APKArch) -> Tuple[AsyncGenerator, str, str]:
     """ Stream the package to the user
 
     Args:

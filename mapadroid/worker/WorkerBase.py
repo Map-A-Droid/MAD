@@ -7,6 +7,8 @@ from asyncio import Task
 from enum import Enum
 from typing import Optional, Any
 
+from loguru import logger
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
@@ -28,7 +30,6 @@ from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerType import WorkerType
-from loguru import logger
 
 
 class FortSearchResultTypes(Enum):
@@ -120,7 +121,7 @@ class WorkerBase(AbstractWorker, ABC):
         if not self._walker:
             return True
         reg_workers = await self._mapping_manager.routemanager_get_registered_workers(self._routemanager_id)
-        if self._walker.max_walkers and len(reg_workers) > int(self._walker.max_walkers): # TODO: What if 0?
+        if self._walker.max_walkers and len(reg_workers) > int(self._walker.max_walkers):  # TODO: What if 0?
             return False
         return True
 
@@ -280,7 +281,7 @@ class WorkerBase(AbstractWorker, ABC):
                 await self._get_screen_size()
                 # register worker  in routemanager
                 logger.info("Try to register in Routemanager {}",
-                                 await self._mapping_manager.routemanager_get_name(self._routemanager_id))
+                            await self._mapping_manager.routemanager_get_name(self._routemanager_id))
                 await self._mapping_manager.register_worker_to_routemanager(self._routemanager_id, self._origin)
             except WebsocketWorkerRemovedException:
                 logger.error("Timeout during init of worker")
@@ -319,7 +320,7 @@ class WorkerBase(AbstractWorker, ABC):
             await self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_id, self._origin)
         except ConnectionResetError as e:
             logger.warning("Failed unregistering from routemanager, routemanager may have stopped running already."
-                                "Exception: {}", e)
+                           "Exception: {}", e)
         logger.info("Internal cleanup of started")
         await self._cleanup()
         logger.info("Internal cleanup signaling end to websocketserver")
@@ -341,7 +342,7 @@ class WorkerBase(AbstractWorker, ABC):
 
                 if not await self.check_max_walkers_reached():
                     logger.warning('Max. Walkers in Area {} - closing connections',
-                                        self._mapping_manager.routemanager_get_name(self._routemanager_id))
+                                   self._mapping_manager.routemanager_get_name(self._routemanager_id))
                     await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
                     await self._internal_cleanup()
                     return
@@ -354,8 +355,9 @@ class WorkerBase(AbstractWorker, ABC):
                         if not walkercheck:
                             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
                             break
-                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
+                    except (
+                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker killed by walker settings")
                         break
 
@@ -363,50 +365,56 @@ class WorkerBase(AbstractWorker, ABC):
                         # TODO: consider getting results of health checks and aborting the entire worker?
                         await self._internal_health_check()
                         await self._health_check()
-                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.error("Websocket connection to {} lost while running healthchecks, connection terminated "
-                                          "exceptionally", self._origin)
+                    except (
+                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
+                        logger.error(
+                            "Websocket connection to {} lost while running healthchecks, connection terminated "
+                            "exceptionally", self._origin)
                         break
 
                     try:
                         settings = await self._internal_grab_next_location()
                         if settings is None:
                             continue
-                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
+                    except (
+                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker of does not support mode that's to be run, connection terminated "
-                                            "exceptionally")
+                                       "exceptionally")
                         break
 
                     try:
                         logger.debug('Checking if new location is valid')
                         if not await self._check_location_is_valid():
                             break
-                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
+                    except (
+                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker received invalid coords!")
                         break
 
                     try:
                         await self._pre_location_update()
-                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
+                    except (
+                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker of stopping because of stop signal in pre_location_update, connection "
-                                            "terminated exceptionally")
+                                       "terminated exceptionally")
                         break
 
                     try:
                         last_location: Location = await self.get_devicesettings_value(
                             MappingManagerDevicemappingKey.LAST_LOCATION, Location(0.0, 0.0))
                         logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
-                                           last_location.lat, last_location.lng,
-                                           self.current_location.lat, self.current_location.lng)
+                                      last_location.lat, last_location.lng,
+                                      self.current_location.lat, self.current_location.lng)
                         time_snapshot, process_location = await self._move_to_location()
-                    except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
+                    except (
+                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker failed moving to new location, stopping worker, connection terminated "
-                                            "exceptionally")
+                                       "exceptionally")
                         break
 
                     if process_location:
@@ -414,13 +422,15 @@ class WorkerBase(AbstractWorker, ABC):
                         logger.debug("Seting new 'scannedlocation' in Database")
                         loop = asyncio.get_event_loop()
                         loop.create_task(
-                            self.update_scanned_location(self.current_location.lat, self.current_location.lng, time_snapshot))
+                            self.update_scanned_location(self.current_location.lat, self.current_location.lng,
+                                                         time_snapshot))
 
                         # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
                         try:
                             await self._post_move_location_routine(time_snapshot)
-                        except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                                WebsocketWorkerConnectionClosedException):
+                        except (
+                        InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                        WebsocketWorkerConnectionClosedException):
                             logger.warning("Worker failed running post_move_location_routine, stopping worker")
                             break
                         logger.info("Worker finished iteration, continuing work")
@@ -608,7 +618,7 @@ class WorkerBase(AbstractWorker, ABC):
                 self._loginerrorcounter += 1
             elif screen_type == ScreenType.NOGGL:
                 logger.warning('Detected login select screen missing the Google'
-                                    ' button - likely entered an invalid birthdate previously')
+                               ' button - likely entered an invalid birthdate previously')
                 self._loginerrorcounter += 1
             elif screen_type == ScreenType.GPS:
                 logger.warning("Detected GPS error - reboot device")
@@ -811,7 +821,7 @@ class WorkerBase(AbstractWorker, ABC):
 
     async def _check_pogo_main_screen(self, max_attempts, again=False):
         logger.debug("_check_pogo_main_screen: Trying to get to the Mainscreen with {} max attempts...",
-                          max_attempts)
+                     max_attempts)
         pogo_topmost = await self._communicator.is_pogo_topmost()
         if not pogo_topmost:
             return False
@@ -835,7 +845,7 @@ class WorkerBase(AbstractWorker, ABC):
             if attempts == max_attempts:
                 # could not reach raidtab in given max_attempts
                 logger.warning("_check_pogo_main_screen: Could not get to Mainscreen within {} attempts",
-                                    max_attempts)
+                               max_attempts)
                 return False
 
             found = await self._pogoWindowManager.check_close_except_nearby_button(await self.get_screenshot_path(),
@@ -953,7 +963,7 @@ class WorkerBase(AbstractWorker, ABC):
         x_offset = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET, 0)
         y_offset = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
         logger.debug('Get Screensize: X: {}, Y: {}, X-Offset: {}, Y-Offset: {}', self._screen_x, self._screen_y,
-                          x_offset, y_offset)
+                     x_offset, y_offset)
         # self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, x_offset, y_offset)
         # TODO: Why is there a faulty typecheck here?
         self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, x_offset, y_offset)

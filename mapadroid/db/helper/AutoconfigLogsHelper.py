@@ -1,7 +1,7 @@
 import time
-from sqlalchemy import and_, case, desc, func
 from typing import List, Optional, Tuple
 
+from sqlalchemy import and_, func
 from sqlalchemy import desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -45,6 +45,6 @@ class AutoconfigLogsHelper:
     async def get_max_level_of_session(session: AsyncSession, instance_id: int,
                                        session_id: int) -> Optional[int]:
         stmt = select(func.MAX(AutoconfigLog.level)).where(and_(AutoconfigLog.instance_id == instance_id,
-                                                AutoconfigLog.session_id == session_id))
+                                                                AutoconfigLog.session_id == session_id))
         result = await session.execute(stmt)
         return result.scalars().first()

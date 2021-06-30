@@ -4,7 +4,6 @@ from typing import Dict, Optional, List
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import SettingsMonivlist
@@ -70,7 +69,8 @@ class SettingsIvlistsEndpoint(AbstractMadminRootEndpoint):
             'section': monivlist,
             'settings_vars': settings_vars,
             'method': 'POST' if not monivlist else 'PATCH',
-            'uri': self._url_for('api_monivlist') if not monivlist else '%s/%s' % (self._url_for('api_monivlist'), self.identifier),
+            'uri': self._url_for('api_monivlist') if not monivlist else '%s/%s' % (
+            self._url_for('api_monivlist'), self.identifier),
             # TODO: Above is pretty generic in theory...
             'current_mons_list': current_mons_list
         }

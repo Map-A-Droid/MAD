@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Gym, GymDetail
+from mapadroid.db.model import GymDetail
 
 
 class GymDetailHelper:

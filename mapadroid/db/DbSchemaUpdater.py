@@ -2,7 +2,6 @@ import sys
 
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.logging import LoggerEnums, get_logger
-
 from . import madmin_conversion
 
 logger = get_logger(LoggerEnums.database)

@@ -3,7 +3,6 @@ from typing import Dict, Optional
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 from loguru import logger
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
@@ -80,7 +79,8 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
             'subtab': 'area',
             'element': area,
             'redirect': self._url_for('settings_areas'),
-            'uri': self._url_for('api_area', query={"mode": mode.value}) if not area else '%s/%s' % (self._url_for('api_area'), self._identifier),
+            'uri': self._url_for('api_area', query={"mode": mode.value}) if not area else '%s/%s' % (
+            self._url_for('api_area'), self._identifier),
             'section': area
         }
         return template_data

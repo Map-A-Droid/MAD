@@ -80,7 +80,7 @@ class PokemonHelper:
                                           Pokemon.encounter_id != 0,
                                           Pokemon.disappear_time.between(datetime.datetime.utcnow()
                                                                          + datetime.timedelta(
-                                                                            seconds=min_time_left_seconds),
+                                              seconds=min_time_left_seconds),
                                                                          datetime.datetime.utcnow()
                                                                          + datetime.timedelta(minutes=60)))
                                      .order_by(Pokemon.disappear_time))
@@ -140,7 +140,8 @@ class PokemonHelper:
 
     @staticmethod
     async def get_all_shiny(session: AsyncSession, timestamp_after: Optional[int] = None,
-                            timestamp_before: Optional[int] = None) -> Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]]:
+                            timestamp_before: Optional[int] = None) -> Dict[
+        int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]]:
         """
         Used to be DbStatsReader::get_shiny_stats_v2
         Args:
@@ -151,7 +152,7 @@ class PokemonHelper:
         Returns: Dict of {encounterID : Tuple[Pokemon, List[TrsStatsDetectMonRaw]}
 
         """
-        stmt = select(Pokemon, TrsStatsDetectMonRaw)\
+        stmt = select(Pokemon, TrsStatsDetectMonRaw) \
             .join(TrsStatsDetectMonRaw, Pokemon.encounter_id == TrsStatsDetectMonRaw.encounter_id)
         where_conditions = [TrsStatsDetectMonRaw.is_shiny == 1]
         if timestamp_after:
@@ -172,7 +173,8 @@ class PokemonHelper:
     @staticmethod
     async def get_count_iv_scanned_of_mon_ids(session: AsyncSession, mon_ids: Set[int],
                                               timestamp_after: Optional[int] = None,
-                                              timestamp_before: Optional[int] = None) -> List[Tuple[int, int, int, int, int]]:
+                                              timestamp_before: Optional[int] = None) -> List[
+        Tuple[int, int, int, int, int]]:
         """
         used to be DbStatsReader::get_shiny_stats_global_v2
         Args:
@@ -185,7 +187,7 @@ class PokemonHelper:
             of all mons that have been scanned for IV
 
         """
-        stmt = select(func.count('*'), Pokemon.pokemon_id, Pokemon.form, Pokemon.gender, Pokemon.costume)\
+        stmt = select(func.count('*'), Pokemon.pokemon_id, Pokemon.form, Pokemon.gender, Pokemon.costume) \
             .select_from(Pokemon)
         where_conditions = [Pokemon.individual_attack != None,
                             Pokemon.pokemon_id.in_(mon_ids)]
@@ -194,7 +196,7 @@ class PokemonHelper:
         if timestamp_before:
             where_conditions.append(Pokemon.last_modified < datetime.datetime.utcfromtimestamp(timestamp_before))
         # Group_by works in this case as we use COUNT
-        stmt = stmt.where(and_(*where_conditions))\
+        stmt = stmt.where(and_(*where_conditions)) \
             .group_by(Pokemon.pokemon_id, Pokemon.form)
         result = await session.execute(stmt)
         results = []
@@ -216,12 +218,12 @@ class PokemonHelper:
         """
         iv = func.IF(Pokemon.cp == None, 0, 1).label("iv")
         timestamp = func.unix_timestamp(
-                func.DATE_FORMAT(func.min(Pokemon.last_modified), '%y-%m-%d %k:00:00'))\
+            func.DATE_FORMAT(func.min(Pokemon.last_modified), '%y-%m-%d %k:00:00')) \
             .label("timestamp")
         stmt = select(
             timestamp,
             func.count(Pokemon.encounter_id.distinct()),
-            iv)\
+            iv) \
             .select_from(Pokemon)
         if include_last_n_minutes:
             minutes = datetime.datetime.utcnow().replace(
@@ -229,7 +231,7 @@ class PokemonHelper:
             stmt = stmt.where(Pokemon.last_modified >= minutes)
         stmt = stmt.group_by(iv,
                              func.day(func.TIMESTAMP(Pokemon.last_modified)),
-                             func.hour(func.TIMESTAMP(Pokemon.last_modified)))\
+                             func.hour(func.TIMESTAMP(Pokemon.last_modified))) \
             .order_by(timestamp)
         result = await session.execute(stmt)
         results = []
@@ -250,7 +252,7 @@ class PokemonHelper:
         """
         stmt = select(Pokemon).where(and_(Pokemon.individual_attack == 15,
                                           Pokemon.individual_defense == 15,
-                                          Pokemon.individual_stamina == 15))\
+                                          Pokemon.individual_stamina == 15)) \
             .order_by(desc(Pokemon.last_modified))
         if limit:
             stmt = stmt.limit(limit)

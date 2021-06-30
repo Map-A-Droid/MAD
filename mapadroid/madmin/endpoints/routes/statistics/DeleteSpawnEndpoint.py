@@ -1,7 +1,5 @@
 from typing import Optional, Dict
 
-from aiohttp_jinja2.helpers import url_for
-
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import TrsSpawn

@@ -5,18 +5,18 @@ from asyncio import Task
 from typing import Dict, NoReturn, Optional, Tuple, List
 
 import aiohttp
+import apkutils
+import urllib3
+from aiocache import cached
+from aiohttp import ClientConnectionError, ClientError
 from apksearch import package_search_async
 from apksearch.entities import PackageBase, PackageVariant
-import apkutils
-from aiocache import cached
 from apksearch.search import HEADERS
-import urllib3
 from apkutils.apkfile import BadZipFile, LargeZipFile
-from aiohttp import ClientConnectionError, ClientError
-from mapadroid.utils import global_variables
-from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.functions import get_version_codes
 
+from mapadroid.utils import global_variables
+from mapadroid.utils.functions import get_version_codes
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKPackage, APKType
 from .utils import (get_apk_info, lookup_arch_enum,
@@ -220,7 +220,7 @@ class APKWizard(object):
                         if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
                             package_importer: PackageImporter = PackageImporter(package, architecture, self.storage,
                                                                                 downloaded_file,
-                                            'application/vnd.android.package-archive')
+                                                                                'application/vnd.android.package-archive')
                             successful = await package_importer.import_configured()
                     if not successful:
                         logger.info("Issue downloading apk")
@@ -350,8 +350,8 @@ class APKWizard(object):
 
     @staticmethod
     async def get_latest_supported(architecture: APKArch,
-                             available_versions: Dict[str, PackageBase]
-                             ) -> Tuple[str, PackageVariant]:
+                                   available_versions: Dict[str, PackageBase]
+                                   ) -> Tuple[str, PackageVariant]:
         latest_supported: Dict[APKArch, Tuple[Optional[str], Optional[PackageVariant]]] = {
             APKArch.armeabi_v7a: (None, None),
             APKArch.arm64_v8a: (None, None)
@@ -393,7 +393,7 @@ class APKWizard(object):
         return data.get(latest_version, 0)
 
     async def set_last_searched(self, package: APKType, architecture: APKArch, version: str = None,
-                          url: str = None) -> None:
+                                url: str = None) -> None:
         """ Updates the last search information for the package / architecture
 
         Args:
@@ -423,6 +423,7 @@ class PackageImporter(object):
         mimetype (str): Mimetype of the package
         version (str): Version of the package
     """
+
     def __init__(self, package: APKType, architecture: APKArch, storage_obj: AbstractAPKStorage,
                  downloaded_file: io.BytesIO, mimetype: str, version: str = None):
         self.package_version: Optional[str] = None
@@ -461,7 +462,6 @@ class PackageImporter(object):
         else:
             logger.warning('Unable to determine apk information')
             return False
-
 
     def normalize_package(self) -> NoReturn:
         """ Normalize the package

@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,7 @@ class SettingsAreaPokestopHelper:
     @staticmethod
     async def get(session: AsyncSession, instance_id: int, area_id: int) -> Optional[SettingsAreaPokestop]:
         stmt = select(SettingsAreaPokestop).where(and_(SettingsAreaPokestop.instance_id == instance_id,
-                                                 SettingsAreaPokestop.area_id == area_id))
+                                                       SettingsAreaPokestop.area_id == area_id))
         result = await session.execute(stmt)
         return result.scalars().first()
 

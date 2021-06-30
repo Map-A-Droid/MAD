@@ -7,6 +7,7 @@ from difflib import SequenceMatcher
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 
+from loguru import logger
 from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,7 +31,6 @@ from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import LatestReceivedType, MITMBase
 from mapadroid.worker.WorkerBase import FortSearchResultTypes
-from loguru import logger
 
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
 S2_GMO_CELL_LEVEL = 15
@@ -228,7 +228,7 @@ class WorkerQuests(MITMBase):
         else:
             delay_used = math.floor(delay_used)
             logger.info("Real sleep time: {} seconds: next action {}", delay_used,
-                             datetime.now() + timedelta(seconds=delay_used))
+                        datetime.now() + timedelta(seconds=delay_used))
             cleanupbox: bool = False
             lastcleanupbox = await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_CLEANUP_TIME, None)
 
@@ -374,7 +374,7 @@ class WorkerQuests(MITMBase):
                         self._clear_box_failcount += 1
                         if self._clear_box_failcount < 3:
                             logger.warning("Failed clearing box {} time(s) in a row, retry later...",
-                                                self._clear_box_failcount)
+                                           self._clear_box_failcount)
                         else:
                             logger.error("Unable to delete any items 3 times in a row - restart pogo ...")
                             if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
@@ -448,7 +448,7 @@ class WorkerQuests(MITMBase):
                                 logger.warning("Did not receive confirmation of deletion of items in time")
                         else:
                             logger.warning('Deletion not confirmed within {}s for item: {}', deletion_timeout,
-                                                item_text)
+                                           item_text)
                             stop_screen_clear.set()
                             stop_inventory_clear.set()
                 except UnicodeEncodeError:
@@ -577,7 +577,7 @@ class WorkerQuests(MITMBase):
 
             # by now we should've found the stop in the GMO
             logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
-                                "- likely not standing exactly on top ...", str(self.current_location))
+                           "- likely not standing exactly on top ...", str(self.current_location))
             await self._check_if_stop_was_nearby_and_update_location(session, gmo_cells)
             await self._spinnable_data_failure()
             return PositionStopType.NO_FORT
@@ -602,7 +602,7 @@ class WorkerQuests(MITMBase):
 
         if not PositionStopType.type_contains_stop_at_all(stop_type):
             logger.info("Location {}, {} considered to be ignored in the next round due to failed "
-                             "spinnable check", self.current_location.lat, self.current_location.lng)
+                        "spinnable check", self.current_location.lat, self.current_location.lng)
             await self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_id,
                                                                               self.current_location.lat,
                                                                               self.current_location.lng)
@@ -754,7 +754,7 @@ class WorkerQuests(MITMBase):
                     elif to > 2 and self._level_mode and await self._mitm_mapper.get_poke_stop_visits(
                             self._origin) > 6800:
                         logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
-                                            await self._mitm_mapper.get_poke_stop_visits(self._origin))
+                                       await self._mitm_mapper.get_poke_stop_visits(self._origin))
 
                     await self._turn_map(self._delay_add)
                     await asyncio.sleep(1)
@@ -797,9 +797,9 @@ class WorkerQuests(MITMBase):
             ]
             replacement = max(x for x in potential_replacements if isinstance(x, int) or isinstance(x, float))
             logger.debug("timestamp {} being replaced with {} because we're waiting for proto {}",
-                              datetime.fromtimestamp(timestamp).strftime('%H:%M:%S'),
-                              datetime.fromtimestamp(replacement).strftime('%H:%M:%S'),
-                              proto_to_wait_for)
+                         datetime.fromtimestamp(timestamp).strftime('%H:%M:%S'),
+                         datetime.fromtimestamp(replacement).strftime('%H:%M:%S'),
+                         proto_to_wait_for)
             timestamp = replacement
         # proto has previously been received, let's check the timestamp...
         latest_proto_entry = latest.get(proto_to_wait_for.value, None)
@@ -809,7 +809,7 @@ class WorkerQuests(MITMBase):
         timestamp_of_proto = latest_proto_entry.get("timestamp", 0)
         if timestamp_of_proto < timestamp:
             logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
-                              timestamp_of_proto, timestamp)
+                         timestamp_of_proto, timestamp)
             # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
             # TODO: latter indicates too high speeds for example
             return type_of_data_found, data_found
@@ -823,7 +823,7 @@ class WorkerQuests(MITMBase):
         logger.debug2("Checking for Quest related data in proto {}", proto_to_wait_for)
         if latest_proto is None:
             logger.debug("No proto data for {} at {} after {}", proto_to_wait_for,
-                              timestamp_of_proto, timestamp)
+                         timestamp_of_proto, timestamp)
         elif proto_to_wait_for == ProtoIdentifier.FORT_SEARCH:
             quest_type: int = latest_proto.get('challenge_quest', {}) \
                 .get('quest', {}) \
@@ -874,7 +874,7 @@ class WorkerQuests(MITMBase):
 
         stops: Dict[str, Pokestop] = await PokestopHelper.get_nearby(session, self.current_location)
         logger.debug("Checking if GMO contains location changes or DB has stops that are already deleted. In DB: "
-                          "{}. GMO cells: {}", str(stops), gmo_cells)
+                     "{}. GMO cells: {}", str(stops), gmo_cells)
         # stops may contain multiple stops now. We can check each ID (key of dict) with the IDs in the GMO.
         # Then cross check against the location. If that differs, we need to update/delete the entries in the DB
         for cell in gmo_cells:
@@ -905,7 +905,7 @@ class WorkerQuests(MITMBase):
                     # the one we are currently processing, thus SAME fort_id
                     # now update the stop
                     logger.warning("Updating fort {} with previous location {}, {} now placed at {}, {}",
-                                        fort_id, stop.latitude, stop.longitude, latitude, longitude)
+                                   fort_id, stop.latitude, stop.longitude, latitude, longitude)
                     await PokestopHelper.update_location(session, fort_id, Location(latitude, longitude))
 
         timedelta_to_consider_deletion = timedelta(days=3)
@@ -913,17 +913,17 @@ class WorkerQuests(MITMBase):
             # Call delete of stops that have been not been found within 100m range of current position
             stop_location: Location = Location(float(stop.latitude), float(stop.longitude))
             logger.debug("Considering stop {} at {} (last updated {}) for deletion",
-                              fort_id, stop_location, stop.last_updated)
+                         fort_id, stop_location, stop.last_updated)
             if stop.last_updated and stop.last_updated > datetime.now() - timedelta_to_consider_deletion:
                 logger.debug3("Stop considered for deletion was last updated recently, not gonna delete it for"
-                                   " now.", stop.last_updated)
+                              " now.", stop.last_updated)
                 continue
             distance_to_location = get_distance_of_two_points_in_meters(float(stop_location.lat),
                                                                         float(stop_location.lng),
                                                                         float(self.current_location.lat),
                                                                         float(self.current_location.lng))
             logger.debug("Distance to {} at {} (last updated {})",
-                              fort_id, stop_location, stop.last_updated)
+                         fort_id, stop_location, stop.last_updated)
             if distance_to_location < 100:
                 logger.warning(
                     "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and within "

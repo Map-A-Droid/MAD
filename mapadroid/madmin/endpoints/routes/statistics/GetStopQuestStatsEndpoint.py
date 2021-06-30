@@ -17,8 +17,9 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
     async def get(self):
         stats_process = []
         processed_fences = []
-        possible_fences: Dict[int, Dict] = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id(),
-                                              fence_type="pokestops")
+        possible_fences: Dict[int, Dict] = await get_geofences(self._get_mapping_manager(), self._session,
+                                                               self._get_instance_id(),
+                                                               fence_type="pokestops")
         wanted_fences = []
         if self._get_mad_args().quest_stats_fences != "":
             wanted_fences = [item.lower().replace(" ", "") for item in

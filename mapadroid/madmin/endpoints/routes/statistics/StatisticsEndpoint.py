@@ -1,5 +1,3 @@
-from typing import Optional
-
 import aiohttp_jinja2
 
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint

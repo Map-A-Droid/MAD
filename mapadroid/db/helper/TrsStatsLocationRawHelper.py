@@ -14,8 +14,9 @@ from mapadroid.worker.WorkerType import WorkerType
 class TrsStatsLocationRawHelper:
     @staticmethod
     async def get_avg_data_time(session: AsyncSession, include_last_n_minutes: Optional[int] = None,
-                                             hourly: bool = True,
-                                             worker: Optional[str] = None) -> Dict[str, Dict[int, List[Tuple[str, int, float, str]]]]:
+                                hourly: bool = True,
+                                worker: Optional[str] = None) -> Dict[
+        str, Dict[int, List[Tuple[str, int, float, str]]]]:
         """
         Fetches { worker : { timestamp_hour : [transport_type, locations_with_data, avg data receiving time, walker_type]}}
         Args:
@@ -27,12 +28,13 @@ class TrsStatsLocationRawHelper:
         Returns:
 
         """
-        stmt = select(func.unix_timestamp(func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocationRaw.period)), '%y-%m-%d %k:00:00')),
+        stmt = select(func.unix_timestamp(
+            func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocationRaw.period)), '%y-%m-%d %k:00:00')),
                       TrsStatsLocationRaw.transporttype,
                       TrsStatsLocationRaw.worker,
                       func.count(TrsStatsLocationRaw.fix_ts),
                       func.avg(TrsStatsLocationRaw.data_ts - TrsStatsLocationRaw.fix_ts),
-                      TrsStatsLocationRaw.walker)\
+                      TrsStatsLocationRaw.walker) \
             .select_from(TrsStatsLocationRaw)
         where_conditions = [TrsStatsLocationRaw.success == 1,
                             TrsStatsLocationRaw.type.in_([0, 1]),
@@ -65,13 +67,15 @@ class TrsStatsLocationRawHelper:
                 transport_type_readable = "Teleport"
             elif transport_type == 1:
                 transport_type_readable = "Walk"
-            results[worker][hour_timestamp].append((transport_type_readable, count_of_fix_ts, float(avg_data_ts), walker))
+            results[worker][hour_timestamp].append(
+                (transport_type_readable, count_of_fix_ts, float(avg_data_ts), walker))
         return results
 
     @staticmethod
     async def get_locations_dataratio(session: AsyncSession, include_last_n_minutes: Optional[int] = None,
-                                             grouped: bool = True,
-                                             worker: Optional[str] = None) -> Dict[str, Dict[int, List[Tuple[int, int, int, str]]]]:
+                                      grouped: bool = True,
+                                      worker: Optional[str] = None) -> Dict[
+        str, Dict[int, List[Tuple[int, int, int, str]]]]:
         """
         Used to be DbStatsReader::get_locations_dataratio
         Fetches { worker : { timestamp_hour : [Tuple(count_period, location_type, success, success_locationtype_readable)]}}
@@ -85,11 +89,12 @@ class TrsStatsLocationRawHelper:
 
         """
         # TODO
-        stmt = select(func.unix_timestamp(func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocationRaw.period)), '%y-%m-%d %k:00:00')),
+        stmt = select(func.unix_timestamp(
+            func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocationRaw.period)), '%y-%m-%d %k:00:00')),
                       TrsStatsLocationRaw.worker,
                       func.count(TrsStatsLocationRaw.period),
                       TrsStatsLocationRaw.type,
-                      TrsStatsLocationRaw.success)\
+                      TrsStatsLocationRaw.success) \
             .select_from(TrsStatsLocationRaw)
         where_conditions = [TrsStatsLocationRaw.type.in_([0, 1])]
         if worker:
@@ -141,11 +146,11 @@ class TrsStatsLocationRawHelper:
         """
         alias_b = aliased(TrsStatsLocationRaw)
         alias_c = aliased(TrsStatsLocationRaw)
-        successcount = select(func.count(alias_c.id))\
-            .select_from(alias_c)\
+        successcount = select(func.count(alias_c.id)) \
+            .select_from(alias_c) \
             .where(and_(alias_b.lat == alias_c.lat,
                         alias_b.lng == alias_c.lng,
-                        alias_c.success == 1))\
+                        alias_c.success == 1)) \
             .label("successcount")
 
         stmt = select(func.count(alias_b.id),
@@ -155,11 +160,11 @@ class TrsStatsLocationRawHelper:
                       func.IF(alias_b.type == 0, "Normal", "PrioQ"),
                       func.max(alias_b.period),
                       successcount
-                      )\
-            .select_from(alias_b)\
-            .where(alias_b.success == 0)\
-            .group_by(alias_b.lat, alias_b.lng, alias_b.type)\
-            .having(and_(func.count() > 5, successcount == 0))\
+                      ) \
+            .select_from(alias_b) \
+            .where(alias_b.success == 0) \
+            .group_by(alias_b.lat, alias_b.lng, alias_b.type) \
+            .having(and_(func.count() > 5, successcount == 0)) \
             .order_by(desc(func.count(alias_b.id)))
         result = await session.execute(stmt)
         empty_scans: List[Tuple[int, Location, str, str, int, int]] = []
@@ -193,12 +198,13 @@ class TrsStatsLocationRawHelper:
                            else_="Restart"),
                       func.IF(TrsStatsLocationRaw.success == 1, "OK", "NOK"),
                       TrsStatsLocationRaw.fix_ts,
-                      func.IF(TrsStatsLocationRaw.data_ts == 0, TrsStatsLocationRaw.fix_ts, TrsStatsLocationRaw.data_ts),
+                      func.IF(TrsStatsLocationRaw.data_ts == 0, TrsStatsLocationRaw.fix_ts,
+                              TrsStatsLocationRaw.data_ts),
                       TrsStatsLocationRaw.count,
                       case((TrsStatsLocationRaw.transporttype == 0, "Teleport"),
                            (TrsStatsLocationRaw.transporttype == 1, "Walk"),
                            else_="other"),
-                      )\
+                      ) \
             .select_from(TrsStatsLocationRaw)
 
         where_conditions = []
@@ -254,4 +260,3 @@ class TrsStatsLocationRawHelper:
     async def cleanup(session: AsyncSession, delete_before_timestap_scan: int) -> None:
         stmt = delete(TrsStatsLocationRaw).where(TrsStatsLocationRaw.timestamp_scan < delete_before_timestap_scan)
         await session.execute(stmt)
-

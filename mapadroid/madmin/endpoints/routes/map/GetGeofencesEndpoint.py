@@ -18,7 +18,8 @@ class GetGeofencesEndpoint(AbstractControlEndpoint):
                                                                                              self._get_instance_id())
         export = []
         for geofence_id, geofence in geofences.items():
-            geofence_helper: Optional[GeofenceHelper] = await self._get_mapping_manager().get_geofence_helper(geofence_id)
+            geofence_helper: Optional[GeofenceHelper] = await self._get_mapping_manager().get_geofence_helper(
+                geofence_id)
             if not geofence_helper:
                 continue
             if len(geofence_helper.geofenced_areas) == 1:
@@ -31,4 +32,3 @@ class GetGeofencesEndpoint(AbstractControlEndpoint):
                     })
 
         return self._json_response(export)
-

@@ -2,22 +2,22 @@ import asyncio
 import math
 import time
 from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
+
+from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import SettingsWalkerarea
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import InternalStopWorkerException
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import LatestReceivedType, MITMBase
-from loguru import logger
-
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -48,7 +48,7 @@ class WorkerMITM(MITMBase):
         type_received, data = await self._wait_for_data(timestamp)
         if type_received != LatestReceivedType.GMO:
             logger.warning("Worker failed to retrieve proper data at {}, {}. Worker will continue with "
-                                "the next location", self.current_location.lat, self.current_location.lng)
+                           "the next location", self.current_location.lat, self.current_location.lng)
 
     async def _move_to_location(self):
         distance, routemanager_settings = await self._get_route_manager_settings_and_distance_to_current_location()
@@ -79,7 +79,8 @@ class WorkerMITM(MITMBase):
                 elif distance > 2500:
                     delay_used = 8
                 logger.debug("Need more sleep after Teleport: {} seconds!", delay_used)
-            walk_distance_post_teleport = await self.get_devicesettings_value(MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE, 0)
+            walk_distance_post_teleport = await self.get_devicesettings_value(
+                MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE, 0)
             if 0 < walk_distance_post_teleport < distance:
                 await self._walk_after_teleport(walk_distance_post_teleport)
         else:
@@ -169,10 +170,12 @@ class WorkerMITM(MITMBase):
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.
-        await self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered", values_dict=self._encounter_ids)
+        await self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered",
+                                              values_dict=self._encounter_ids)
         await self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
         await self._mitm_mapper.update_latest(origin=self._origin, key="unquest_stops", values_dict=self.unquestStops)
-        await self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
+        await self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings",
+                                              values_dict=injected_settings)
 
     async def _check_for_data_content(self, latest_data, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
             -> Tuple[LatestReceivedType, Optional[object]]:
@@ -187,11 +190,11 @@ class WorkerMITM(MITMBase):
         mode = await self._mapping_manager.routemanager_get_mode(self._routemanager_id)
         timestamp_of_proto: float = latest_proto_entry.get("timestamp", None)
         logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
-                          datetime.fromtimestamp(timestamp_of_proto), datetime.fromtimestamp(timestamp),
-                          proto_to_wait_for)
+                     datetime.fromtimestamp(timestamp_of_proto), datetime.fromtimestamp(timestamp),
+                     proto_to_wait_for)
         if timestamp_of_proto < timestamp:
             logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
-                              timestamp_of_proto, timestamp)
+                         timestamp_of_proto, timestamp)
             # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
             # TODO: latter indicates too high speeds for example
             return type_of_data_found, data_found

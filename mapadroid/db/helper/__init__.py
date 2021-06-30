@@ -1,8 +1,8 @@
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from sqlalchemy import text
 
 logger = get_logger(LoggerEnums.database)
 

@@ -3,10 +3,9 @@ from typing import Dict, Optional
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
-from aiohttp_jinja2.helpers import url_for
 
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
-from mapadroid.db.model import SettingsMonivlist, SettingsArea, SettingsRoutecalc
+from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.db.resource_definitions.Routecalc import Routecalc
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
@@ -58,7 +57,8 @@ class SettingsRoutecalcEndpoint(AbstractMadminRootEndpoint):
             'element': routecalc,
             'settings_vars': settings_vars,
             'method': 'POST' if not routecalc else 'PATCH',
-            'uri': self._url_for('api_routecalc') if not routecalc else '%s/%s' % (self._url_for('api_routecalc'), self.identifier),
+            'uri': self._url_for('api_routecalc') if not routecalc else '%s/%s' % (
+            self._url_for('api_routecalc'), self.identifier),
             # TODO: Above is pretty generic in theory...
             'area': area,
         }

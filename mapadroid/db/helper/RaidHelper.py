@@ -43,8 +43,8 @@ class RaidHelper:
     async def get_raids_changed_since(session: AsyncSession, utc_timestamp: int,
                                       geofence_helper: GeofenceHelper = None) -> List[Tuple[Raid, GymDetail, Gym]]:
         stmt = select(Raid, GymDetail, Gym) \
-            .select_from(Raid)\
-            .join(GymDetail, GymDetail.gym_id == Raid.gym_id)\
+            .select_from(Raid) \
+            .join(GymDetail, GymDetail.gym_id == Raid.gym_id) \
             .join(Gym, Gym.gym_id == Raid.gym_id) \
             .where(Raid.last_scanned > datetime.utcfromtimestamp(utc_timestamp))
         result = await session.execute(stmt)

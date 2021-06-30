@@ -2,7 +2,6 @@ import asyncio
 import copy
 from asyncio import Task, QueueEmpty
 from multiprocessing import Event
-from threading import Thread
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,9 +29,9 @@ from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsWalker, SettingsWalkerarea,
                                 SettingsWalkerToWalkerarea, TrsSpawn)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
@@ -315,11 +314,13 @@ class MappingManager:
             return devicemapping_entry.pool_settings.restart_thresh if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.restart_thresh else devicemapping_entry.device_settings.restart_thresh
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_TYPE:
             try:
-                return ScreenshotType(devicemapping_entry.pool_settings.screenshot_type if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_type else devicemapping_entry.device_settings.screenshot_type)
+                return ScreenshotType(
+                    devicemapping_entry.pool_settings.screenshot_type if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_type else devicemapping_entry.device_settings.screenshot_type)
             except ValueError:
                 return ScreenshotType.JPEG
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_QUALITY:
-            quality: Optional[int] = devicemapping_entry.pool_settings.screenshot_quality if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_quality else devicemapping_entry.device_settings.screenshot_quality
+            quality: Optional[
+                int] = devicemapping_entry.pool_settings.screenshot_quality if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_quality else devicemapping_entry.device_settings.screenshot_quality
             return quality if quality else 80
         elif key == MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT:
             return devicemapping_entry.pool_settings.injection_thresh_reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.injection_thresh_reboot else devicemapping_entry.device_settings.injection_thresh_reboot
@@ -386,13 +387,13 @@ class MappingManager:
                 return routemanager
         return None
 
-    #def device_set_disabled(self, device_name: str) -> bool:
+    # def device_set_disabled(self, device_name: str) -> bool:
     #    routemanager = self.get_routemanager_id_where_device_is_registered(device_name)
     #    if routemanager is None:
     #        logger.info('Device {} is not registered so it cannot be paused', device_name)
     #        return False
 
-#        return True
+    #        return True
 
     async def register_worker_to_routemanager(self, routemanager_id: int, worker_name: str) -> bool:
         routemanager = self.__fetch_routemanager(routemanager_id)
@@ -460,8 +461,8 @@ class MappingManager:
             return None
 
     async def routemanager_get_current_route(self, routemanager_id: int) -> Optional[Tuple[List[Location],
-                                                                                             Dict[
-                                                                                                 str, List[Location]]]]:
+                                                                                           Dict[
+                                                                                               str, List[Location]]]]:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_current_route() if routemanager is not None else None
 
@@ -867,4 +868,3 @@ class MappingManager:
 
     def get_jobstatus(self) -> Dict:
         return self.__jobstatus
-

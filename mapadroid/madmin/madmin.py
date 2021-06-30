@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Dict, List
 
@@ -25,7 +24,7 @@ from mapadroid.madmin.endpoints.routes.settings import register_routes_settings_
 from mapadroid.madmin.endpoints.routes.statistics import register_routes_statistics_endpoints
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.JinjaFilters import base64Filter, mad_json_filter, subapp_url, subapp_static
-from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -57,7 +56,7 @@ class MADmin(object):
                 if len(duplicate_macs) > 0:
                     pass
                 # TODO
-                    # self._app.add_template_global(name='app_dupe_macs_devs', f=duplicate_macs)
+                # self._app.add_template_global(name='app_dupe_macs_devs', f=duplicate_macs)
                 # self._app.add_template_global(name='app_dupe_macs', f=bool(len(duplicate_macs) > 0))
         except Exception as e:  # noqa: E722 B001
             logger.exception(e)

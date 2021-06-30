@@ -5,11 +5,11 @@ import os
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 
+from aiofile import async_open
 from aiohttp import MultipartReader, web
 from aiohttp.abc import Request
-from werkzeug.utils import secure_filename
-from aiofile import async_open
 from loguru import logger
+from werkzeug.utils import secure_filename
 
 from mapadroid.plugins.endpoints.AbstractPluginEndpoint import AbstractPluginEndpoint
 
@@ -116,6 +116,3 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
 
     def __allowed_filename(self, filename) -> bool:
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['mp']
-
-
-

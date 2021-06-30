@@ -62,8 +62,9 @@ class RestHelper:
                             result.result_body = json.loads(raw_text)
                             logger.success("Successfully got data from our request to {}: {}", url, result)
                         except Exception as e:
-                            logger.debug("Failed converting response of request to '{}' with raw result '{}' to json: {}",
-                                           url, result.result_body, e)
+                            logger.debug(
+                                "Failed converting response of request to '{}' with raw result '{}' to json: {}",
+                                url, result.result_body, e)
         except ClientConnectionError as e:
             logger.warning("Connecting to {} failed: ", url, e)
         except ClientError as e:

@@ -1,5 +1,4 @@
 import asyncio
-import time
 from asyncio import Task
 from timeit import default_timer
 from typing import Optional

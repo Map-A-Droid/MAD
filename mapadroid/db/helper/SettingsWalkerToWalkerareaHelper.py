@@ -10,10 +10,10 @@ from mapadroid.db.model import SettingsWalker, SettingsWalkerToWalkerarea
 class SettingsWalkerToWalkerareaHelper:
     @staticmethod
     async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsWalkerToWalkerarea]:
-        stmt = select(SettingsWalkerToWalkerarea)\
-            .select_from(SettingsWalkerToWalkerarea)\
+        stmt = select(SettingsWalkerToWalkerarea) \
+            .select_from(SettingsWalkerToWalkerarea) \
             .join(SettingsWalker, and_(SettingsWalkerToWalkerarea.walker_id == SettingsWalker.walker_id,
-                                       SettingsWalker.instance_id == instance_id), isouter=True)\
+                                       SettingsWalker.instance_id == instance_id), isouter=True) \
             .order_by(SettingsWalkerToWalkerarea.area_order)
         result = await session.execute(stmt)
         return result.scalars().all()
@@ -28,7 +28,8 @@ class SettingsWalkerToWalkerareaHelper:
         Returns: Dict mapping walker_id to list of walker to area mappings
 
         """
-        all_walkerarea_mappings: List[SettingsWalkerToWalkerarea] = await SettingsWalkerToWalkerareaHelper.get_all(session, instance_id)
+        all_walkerarea_mappings: List[SettingsWalkerToWalkerarea] = await SettingsWalkerToWalkerareaHelper.get_all(
+            session, instance_id)
         mapped: Dict[int, List[SettingsWalkerToWalkerarea]] = {}
         for walkerarea_mapping in all_walkerarea_mappings:
             if walkerarea_mapping.walker_id not in mapped:

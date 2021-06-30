@@ -1,6 +1,6 @@
-from sqlalchemy import and_, delete
 from typing import Optional
 
+from sqlalchemy import and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -51,9 +51,9 @@ class MadApkHelper:
     @staticmethod
     async def get_current_package_info(session: AsyncSession, package: APKType) -> Optional[MADPackages]:
         data = MADPackages()
-        stmt = select(MadApk.version, MadApk.arch, FilestoreMeta.filename, FilestoreMeta.size, FilestoreMeta.mimetype)\
-            .select_from(MadApk)\
-            .join(FilestoreMeta, MadApk.filestore_id == FilestoreMeta.filestore_id)\
+        stmt = select(MadApk.version, MadApk.arch, FilestoreMeta.filename, FilestoreMeta.size, FilestoreMeta.mimetype) \
+            .select_from(MadApk) \
+            .join(FilestoreMeta, MadApk.filestore_id == FilestoreMeta.filestore_id) \
             .where(MadApk.usage == package.value)
         result = await session.execute(stmt)
         for row in result.scalars():
@@ -95,5 +95,3 @@ class MadApkHelper:
             mad_apk.version = version
             await session.flush([mad_apk])
             await nested_transaction.commit()
-
-

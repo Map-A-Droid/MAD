@@ -481,7 +481,8 @@ class Weather(Base):
 class AutoconfigFile(Base):
     __tablename__ = 'autoconfig_file'
 
-    instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), primary_key=True,
+                         nullable=False)
     name = Column(String(128, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
     data = Column(LONGBLOB, nullable=False)
 
@@ -770,7 +771,8 @@ class TrsStatus(SettingsDevice):
 class SettingsMonivlistToMon(Base):
     __tablename__ = 'settings_monivlist_to_mon'
 
-    monlist_id = Column(ForeignKey('settings_monivlist.monlist_id', ondelete='CASCADE'), primary_key=True, nullable=False, index=True)
+    monlist_id = Column(ForeignKey('settings_monivlist.monlist_id', ondelete='CASCADE'), primary_key=True,
+                        nullable=False, index=True)
     mon_id = Column(INTEGER(11), primary_key=True, nullable=False, index=True)
     mon_order = Column(INTEGER(11), nullable=False)
 
@@ -827,8 +829,10 @@ class SettingsPogoauth(Base):
 class SettingsWalkerToWalkerarea(Base):
     __tablename__ = 'settings_walker_to_walkerarea'
 
-    walker_id = Column(ForeignKey('settings_walker.walker_id', ondelete='CASCADE'), primary_key=True, nullable=False, index=True)
-    walkerarea_id = Column(ForeignKey('settings_walkerarea.walkerarea_id'), primary_key=True, nullable=False, index=True)
+    walker_id = Column(ForeignKey('settings_walker.walker_id', ondelete='CASCADE'), primary_key=True, nullable=False,
+                       index=True)
+    walkerarea_id = Column(ForeignKey('settings_walkerarea.walkerarea_id'), primary_key=True, nullable=False,
+                           index=True)
     area_order = Column(INTEGER(11), primary_key=True, nullable=False)
 
     walker = relationship('SettingsWalker')
@@ -843,7 +847,8 @@ class AutoconfigLog(Base):
 
     log_id = Column(INTEGER(10), primary_key=True)
     instance_id = Column(INTEGER(10), nullable=False)
-    session_id = Column(ForeignKey('autoconfig_registration.session_id', ondelete='CASCADE'), nullable=False, index=True)
+    session_id = Column(ForeignKey('autoconfig_registration.session_id', ondelete='CASCADE'), nullable=False,
+                        index=True)
     log_time = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     level = Column(INTEGER(10), nullable=False, server_default=text("'2'"))
     msg = Column(String(1024, 'utf8mb4_unicode_ci'), nullable=False)

@@ -1,8 +1,8 @@
 import os
 
 import aiohttp_jinja2
-from aiohttp import MultipartReader, web
 from aiofile import async_open
+from aiohttp import MultipartReader, web
 from werkzeug.utils import secure_filename
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \

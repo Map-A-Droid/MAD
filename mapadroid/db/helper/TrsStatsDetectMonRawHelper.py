@@ -22,13 +22,12 @@ class TrsStatsDetectMonRawHelper:
     @staticmethod
     async def cleanup(session: AsyncSession, delete_before_timestap_scan: int, raw_delete_shiny_days: int = 0) -> None:
         where_condition = and_(TrsStatsDetectMonRaw.timestamp_scan < delete_before_timestap_scan,
-                                   TrsStatsDetectMonRaw.is_shiny == 0)
+                               TrsStatsDetectMonRaw.is_shiny == 0)
         if raw_delete_shiny_days > 0:
             delete_shinies_before_timestamp = int(time.time()) - raw_delete_shiny_days * 86400
             shiny_condition = and_(TrsStatsDetectMonRaw.timestamp_scan < delete_shinies_before_timestamp,
-                                  TrsStatsDetectMonRaw.is_shiny == 1)
+                                   TrsStatsDetectMonRaw.is_shiny == 1)
             where_condition = or_(where_condition, shiny_condition)
-        stmt = delete(TrsStatsDetectMonRaw)\
+        stmt = delete(TrsStatsDetectMonRaw) \
             .where(where_condition)
         await session.execute(stmt)
-

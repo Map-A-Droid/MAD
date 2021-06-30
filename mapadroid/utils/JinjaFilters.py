@@ -22,11 +22,10 @@ def mad_json_filter(input: object) -> str:
 @jinja2.contextfunction
 def subapp_url(context,
                subapp_name: str,
-    __route_name: str,
-    query_: Optional[Dict[str, str]] = None,
-    **parts: Union[str, int]
-) -> URL:
-
+               __route_name: str,
+               query_: Optional[Dict[str, str]] = None,
+               **parts: Union[str, int]
+               ) -> URL:
     # allows chaining of subapps...
     subapps = subapp_name.split("/")
     app = context["app"]

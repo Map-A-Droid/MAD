@@ -60,7 +60,8 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
             'section': device,
             'settings_vars': settings_vars,
             'method': 'POST' if not device else 'PATCH',
-            'uri': self._url_for('api_device') if not device else '%s/%s' % (self._url_for('api_device'), self.identifier),
+            'uri': self._url_for('api_device') if not device else '%s/%s' % (
+            self._url_for('api_device'), self.identifier),
             # TODO: Above is pretty generic in theory...
             'ggl_accounts': await SettingsPogoauthHelper.get_avail_accounts(self._session, self._get_instance_id(),
                                                                             LoginType.GOOGLE),

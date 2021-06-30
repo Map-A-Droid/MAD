@@ -30,7 +30,8 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
             phones = await self._get_ws_server().get_reg_origins()
         else:
             phones = []
-        devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = await self._get_mapping_manager().get_all_devicemappings()
+        devicemappings: Optional[
+            Dict[str, DeviceMappingsEntry]] = await self._get_mapping_manager().get_all_devicemappings()
 
         # Sort devices by name.
         phones = sorted(phones)
@@ -81,9 +82,10 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
                         add_text = '<b>ADB - no WS <i class="fa fa-exclamation-triangle"></i></b>'
                         filename = generate_device_screenshot_path(device_name, entry, self._get_mad_args())
                         if os.path.isfile(filename):
-                            await image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path,
-                                                                "madmin"),
-                                         width=250)
+                            await image_resize(filename,
+                                               os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path,
+                                                            "madmin"),
+                                               width=250)
                             screenshot_ending: str = ".jpg"
                             screen = "screenshot/screenshot_" + str(device_name) + screenshot_ending + "?madmin=1"
                             screens_phone.append(generate_phones(device_name, add_text, adb_option, screen, filename,
