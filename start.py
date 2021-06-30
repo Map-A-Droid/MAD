@@ -6,7 +6,6 @@ import logging
 import os
 import sys
 from asyncio import Task, CancelledError
-from multiprocessing import Process
 from typing import Optional, Tuple, Any
 
 import functools

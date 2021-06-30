@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
 
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -82,3 +82,20 @@ class TrsStatsLocationHelper:
                 failure_rate = 0
             results[worker] = (int(location_count), int(location_ok), int(location_nok), failure_rate)
         return results
+
+    @staticmethod
+    async def add(session: AsyncSession, worker: str, timestamp_scan: int, location_count: int, location_ok: int,
+                  location_nok: int) -> None:
+        stat = TrsStatsLocation()
+        stat.worker = worker
+        stat.timestamp_scan = timestamp_scan
+        stat.location_count = location_count
+        stat.location_ok = location_ok
+        stat.location_nok = location_nok
+        session.add(stat)
+
+    @staticmethod
+    async def cleanup(session: AsyncSession, delete_before_timestap_scan: int) -> None:
+        stmt = delete(TrsStatsLocation).where(TrsStatsLocation.timestamp_scan < delete_before_timestap_scan)
+        await session.execute(stmt)
+

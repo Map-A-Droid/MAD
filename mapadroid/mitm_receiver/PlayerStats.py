@@ -5,6 +5,8 @@ import os
 import time
 from math import floor
 from pathlib import Path
+from typing import Tuple, List
+
 from aiofile import async_open
 from mapadroid.mitm_receiver import MitmMapper
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
@@ -220,7 +222,7 @@ class PlayerStats(object):
                     self.__stats_collected['location_nok'] += 1
 
     @staticmethod
-    def stats_complete_parser(client_id: str, data, period):
+    def stats_complete_parser(client_id: str, data, period) -> Tuple[str, str, str, str, str, str]:
         raid_count = 0
         mon_count = 0
         mon_iv_count = 0
@@ -263,7 +265,7 @@ class PlayerStats(object):
         return location_data
 
     @staticmethod
-    def stats_location_raw_parser(client_id: str, data, period):
+    def stats_location_raw_parser(client_id: str, data, period) -> List:
         origin_logger = get_origin_logger(logger, client_id)
         data_location_raw = []
 

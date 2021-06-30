@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import and_, asc, case, desc, func, or_
+from sqlalchemy import and_, asc, case, desc, func, or_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased
@@ -216,3 +216,42 @@ class TrsStatsLocationRawHelper:
             locations.append((Location(float(lat), float(lng)), location_type, success, int(fix_timestamp),
                               int(data_fix_timestamp), int(count), transporttype))
         return locations
+
+    @staticmethod
+    async def add(session: AsyncSession, worker: str, fix_ts: int, location: Location, data_ts: int,
+                  type_of_location: bool, walker: str, success: bool, period: int, transporttype: bool):
+        stat: Optional[TrsStatsLocationRaw] = await TrsStatsLocationRawHelper.get(session, worker, location,
+                                                                                  type_of_location, period)
+        if not stat:
+            stat = TrsStatsLocationRaw()
+            # TODO: Query to see if update applies
+            stat.worker = worker
+            stat.fix_ts = fix_ts
+            stat.lat = location.lat
+            stat.lng = location.lng
+            stat.data_ts = data_ts
+            stat.type = 1 if type_of_location else 0
+            stat.walker = walker
+            stat.success = 1 if success else 0
+            stat.period = period
+            stat.transporttype = 1 if transporttype else 0
+        else:
+            stat.count += 1
+        session.add(stat)
+
+    @staticmethod
+    async def get(session: AsyncSession, worker: str, location: Location, type_of_location: bool,
+                  period: int) -> Optional[TrsStatsLocationRaw]:
+        stmt = select(TrsStatsLocationRaw).where(and_(TrsStatsLocationRaw.worker == worker,
+                                                      TrsStatsLocationRaw.lat == location.lat,
+                                                      TrsStatsLocationRaw.lng == location.lng,
+                                                      TrsStatsLocationRaw.period == period,
+                                                      TrsStatsLocationRaw.type == 1 if type_of_location else 0))
+        result = await session.execute(stmt)
+        return result.scalars().first()
+
+    @staticmethod
+    async def cleanup(session: AsyncSession, delete_before_timestap_scan: int) -> None:
+        stmt = delete(TrsStatsLocationRaw).where(TrsStatsLocationRaw.timestamp_scan < delete_before_timestap_scan)
+        await session.execute(stmt)
+

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -55,3 +55,20 @@ class TrsStatsDetectHelper:
                 results[worker] = {}
             results[worker][hour_timestamp] = (int(sum_mons), int(sum_iv), int(sum_raids), int(sum_quests))
         return results
+
+    @staticmethod
+    async def add(session: AsyncSession, worker: str, timestamp_scan: int, raid: int, mon: int,
+                  mon_iv: int, quest: int) -> None:
+        stat = TrsStatsDetect()
+        stat.worker = worker
+        stat.timestamp_scan = timestamp_scan
+        stat.raid = raid
+        stat.mon = mon
+        stat.mon_iv = mon_iv
+        stat.quest = quest
+        session.add(stat)
+
+    @staticmethod
+    async def cleanup(session: AsyncSession, delete_before_timestap_scan: int) -> None:
+        stmt = delete(TrsStatsDetect).where(TrsStatsDetect.timestamp_scan < delete_before_timestap_scan)
+        await session.execute(stmt)

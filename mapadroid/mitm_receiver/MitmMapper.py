@@ -3,7 +3,14 @@ import time
 from queue import Empty
 from typing import Dict, Optional, Tuple, List
 
-from mapadroid.db.DbStatsSubmit import DbStatsSubmit
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.TrsStatsDetectFortRawHelper import TrsStatsDetectFortRawHelper
+from mapadroid.db.helper.TrsStatsDetectHelper import TrsStatsDetectHelper
+from mapadroid.db.helper.TrsStatsDetectMonRawHelper import TrsStatsDetectMonRawHelper
+from mapadroid.db.helper.TrsStatsLocationHelper import TrsStatsLocationHelper
+from mapadroid.db.helper.TrsStatsLocationRawHelper import TrsStatsLocationRawHelper
 from mapadroid.db.model import SettingsDevice, SettingsDevicepool
 from mapadroid.mapping_manager.MappingManager import MappingManager, DeviceMappingsEntry
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
@@ -14,7 +21,7 @@ logger = get_logger(LoggerEnums.mitm)
 
 
 class MitmMapper(object):
-    def __init__(self, args, mapping_manager: MappingManager, db_stats_submit: DbStatsSubmit):
+    def __init__(self, args, mapping_manager: MappingManager, db_wrapper: DbWrapper):
         self.__mapping = {}
         self.__playerstats: Dict[str, PlayerStats] = {}
         self.__mapping_manager: MappingManager = mapping_manager
@@ -22,7 +29,7 @@ class MitmMapper(object):
         self.__last_cellsid = {}
         self.__last_possibly_moved = {}
         self.__application_args = args
-        self._db_stats_submit: DbStatsSubmit = db_stats_submit
+        self.__db_wrapper: DbWrapper = db_wrapper
         self.__playerstats_db_update_stop: asyncio.Event = asyncio.Event()
         self.__playerstats_db_update_queue: asyncio.Queue = asyncio.Queue()
         pstat_args = {
@@ -65,37 +72,51 @@ class MitmMapper(object):
                 if next_item is not None:
                     client_id, stats, last_processed_timestamp = next_item
                     logger.info("Running stats processing on {}", client_id)
-                    await self.__process_stats(stats, client_id, last_processed_timestamp)
+                    async with self.__db_wrapper as session, session:
+                        await self.__process_stats(session, stats, client_id, last_processed_timestamp)
+                        try:
+                            await session.commit()
+                        except Exception as e:
+                            logger.exception(e)
+                            await session.rollback()
         except Exception as e:
             logger.error("Playerstats consumer stopping because of {}", e)
         logger.info("Shutting down Playerstats update consumer")
 
-    async def __process_stats(self, stats, client_id: str, last_processed_timestamp: float):
+    async def __process_stats(self, session: AsyncSession, stats, client_id: str, last_processed_timestamp: float):
         origin_logger = get_origin_logger(logger, origin=client_id)
         origin_logger.debug('Submitting stats')
-        data_send_stats = []
-        data_send_location = []
 
-        data_send_stats.append(PlayerStats.stats_complete_parser(client_id, stats, last_processed_timestamp))
-        data_send_location.append(
-            PlayerStats.stats_location_parser(client_id, stats, last_processed_timestamp))
+        data_send_stats = PlayerStats.stats_complete_parser(client_id, stats, last_processed_timestamp)
+        data_send_location = PlayerStats.stats_location_parser(client_id, stats, last_processed_timestamp)
 
         # TODO: Single transaction!
-        await self._db_stats_submit.submit_stats_complete(data_send_stats)
-        await self._db_stats_submit.submit_stats_locations(data_send_location)
+        await TrsStatsDetectHelper.add(session, *data_send_stats)
+        await TrsStatsLocationHelper.add(session, *data_send_location)
         if self.__application_args.game_stats_raw:
-            # TODO: Do these need to be run elsewhere as well?
-            data_send_location_raw = PlayerStats.stats_location_raw_parser(client_id, stats,
+            data_send_location_raw: List = PlayerStats.stats_location_raw_parser(client_id, stats,
                                                                            last_processed_timestamp)
-            data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats,
+            data_send_detection_raw: List = PlayerStats.stats_detection_raw_parser(client_id, stats,
                                                                              last_processed_timestamp)
-            await self._db_stats_submit.submit_stats_locations_raw(data_send_location_raw)
-            await self._db_stats_submit.submit_stats_detections_raw(data_send_detection_raw)
+            for raw_location_data in data_send_location_raw:
+                await TrsStatsLocationRawHelper.add(session, *raw_location_data)
+            raw_mons_data = [mon for mon in data_send_detection_raw if (mon[2] in ['mon', 'mon_iv'])]
+            for raw_mon_data in raw_mons_data:
+                await TrsStatsDetectMonRawHelper.add(session, *raw_mon_data)
+            raw_forts_data = [(d[0], d[1], d[3], d[4], d[5]) for d in data_send_detection_raw if (d[2] == 'quest' or d[2] == 'raid')]
+            for raw_fort_data in raw_forts_data:
+                await TrsStatsDetectFortRawHelper.add(session, *raw_fort_data)
 
-        data_send_stats.clear()
-        data_send_location.clear()
+        await self.__cleanup_stats(session)
 
-        await self._db_stats_submit.cleanup_statistics()
+    async def __cleanup_stats(self, session: AsyncSession) -> None:
+        delete_before_timestamp: int = int(time.time()) - 604800
+        await TrsStatsDetectHelper.cleanup(session, delete_before_timestamp)
+        await TrsStatsDetectMonRawHelper.cleanup(session, delete_before_timestamp,
+                                                 raw_delete_shiny_days=self.__application_args.raw_delete_shiny)
+        await TrsStatsDetectFortRawHelper.cleanup(session, delete_before_timestamp)
+        await TrsStatsLocationHelper.cleanup(session, delete_before_timestamp)
+        await TrsStatsLocationRawHelper.cleanup(session, delete_before_timestamp)
 
     def shutdown(self):
         self.__playerstats_db_update_stop.set()
