@@ -143,6 +143,10 @@ class PooledQueryExecutor:
         :param commit: commit or not.
         :return: if commit, return None, else, return result
         """
+        # If no args were provided, there is no need to try to connect to the database
+        if not args:
+            return None
+
         # get connection form connection pool instead of create one.
         self._connection_semaphore.acquire()
         conn = self._pool.get_connection()

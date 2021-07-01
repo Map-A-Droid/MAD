@@ -197,39 +197,6 @@ class DbPogoProtoSubmit:
 
                 spawnpoint = 0
 
-                """
-                if self._args.nearby_spawn_matching:
-                    #possible_spawns = self._db_exec.execute(query_spawns.format(lat=lat, lon=lon))
-                    query_spawns = (
-                        "SELECT last_non_scanned, "
-                        "spawndef, calc_endminsec, latitude, longitude, spawnpoint "
-                        "FROM trs_spawn ts WHERE nearby_stop = '{}' AND "
-                        "ts.eventid in (select id FROM trs_event WHERE now() "
-                        "BETWEEN event_start AND event_end)"
-                    )
-                    possible_spawns = self._db_exec.execute(query_spawns.format(stopid))
-
-                    likely_spawns = []
-                    if possible_spawns:
-                        for last_scanned, spawndef, endminsec, s_lat, s_lon, s_id in possible_spawns:
-                            if not endminsec or not last_scanned:
-                                likely_spawns.append((now, disappear_time, s_lat, s_lon, s_id))
-                                continue
-                            despawn_time_unix = gen_despawn_timestamp(endminsec, now.timestamp())
-                            despawn_time = datetime.fromtimestamp(despawn_time_unix)
-                            spawn_time = despawn_time - timedelta(minutes=30)
-                            if last_scanned > spawn_time:
-                                continue
-                            if spawndef == 15 or now > spawn_time:
-                                likely_spawns.append((spawn_time, despawn_time, s_lat, s_lon, s_id))
-
-                        if len(likely_spawns) == 1:
-                            _, disappear_time, lat, lon, spawnpoint = likely_spawns[0]
-                        elif len(likely_spawns) > 1:
-                            _, disappear_time, lat, lon, spawnpoint = max(likely_spawns, key=lambda s: s[0])
-                """
-                # possible TODO: nearby spawn matching. See https://github.com/Map-A-Droid/MAD/pull/1120
-
                 nearby_args.append(
                     (
                         encounter_id, spawnpoint, mon_id, stopid, db_cell, disappear_time,
