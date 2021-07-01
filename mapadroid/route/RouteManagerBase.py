@@ -573,9 +573,9 @@ class RouteManagerBase(ABC):
 
             # determine whether we move to the next location or the prio queue top's item
             if self.delay_after_timestamp_prio is not None \
-               and ((not self._last_round_prio.get(origin, False) or self.starve_route) and
-                    self._prio_queue and len(self._prio_queue) > 0 and
-                    self._prio_queue[0][0] < time.time()):
+                    and (self.mode == 'iv_mitm' or self.starve_route or not self._last_round_prio.get(origin, False)) \
+                    and self._prio_queue \
+                    and (self.mode == 'iv_mitm' or self._prio_queue[0][0] < time.time()):
                 next_prio = heapq.heappop(self._prio_queue)
                 next_timestamp = next_prio[0]
                 next_coord = next_prio[1]
@@ -594,9 +594,8 @@ class RouteManagerBase(ABC):
                                              "sure you run enough workers or reduce the size of the area! (event was "
                                              "scheduled for {})", next_readable_time)
                         return self.get_next_location(origin)
-                if self._other_worker_closer_to_prioq(next_coord, origin):
-                    self._last_round_prio[origin] = True
-                    self._positiontyp[origin] = 1
+                # Passed prioq coords are never looked at by 'iv_mitm' per above.
+                if self.mode != 'iv_mitm' and self._other_worker_closer_to_prioq(next_coord, origin):
                     route_logger.info("Prio event scheduled for {} passed to a closer worker.", next_readable_time)
                     # Let's recurse and find another location
                     return self.get_next_location(origin)
@@ -611,6 +610,12 @@ class RouteManagerBase(ABC):
 
                 # Return the prioQ coordinate.
                 return next_coord
+            elif self.mode == 'iv_mitm':
+                # Must be no entry in queue, which means we lost a race
+                # with another worker after the 'got_location' checking above.
+                # Recurse..
+                return self.get_next_location(origin)
+
             # End of if block for prioQ handling.
 
             # logic for when PrioQ is disabled
@@ -751,8 +756,7 @@ class RouteManagerBase(ABC):
         temp_distance = distance_worker
 
         for worker in self._routepool.keys():
-            if worker == origin or self._routepool[worker].has_prio_event \
-                    or self._routepool[origin].last_round_prio_event:
+            if worker == origin or self._routepool[worker].has_prio_event:
                 continue
             worker_pos = self._routepool[worker].current_pos
             prio_distance = get_distance_of_two_points_in_meters(worker_pos.lat, worker_pos.lng,
@@ -765,9 +769,9 @@ class RouteManagerBase(ABC):
                 closer_worker = worker
 
         if closer_worker is not None:
-            with self._manager_mutex:
-                self._routepool[closer_worker].has_prio_event = True
-                self._routepool[closer_worker].prio_coords = prioqcoord
+            # caller is already holding self._manager_mutex
+            self._routepool[closer_worker].has_prio_event = True
+            self._routepool[closer_worker].prio_coords = prioqcoord
             route_logger.debug("Worker {} is closer to PrioQ event {}", closer_worker, prioqcoord)
             return True
 
