@@ -1,3 +1,5 @@
+import time
+
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -53,6 +55,17 @@ class RouteManagerMon(RouteManagerBase):
             return self.settings.get("priority_queue_clustering_timedelta", 300)
         else:
             return 300
+
+    def _should_skip_prioq_entry(self, queue_entry) -> bool:
+        # Override the base class:
+        # TODO: Consider if we want to have the following functionality for other modes, too
+        # Problem: delete_seconds_passed = 0 makes sense in _filter_priority_queue_internal,
+        # because it will remove past events only at the moment of prioQ calculation,
+        # but here it would skip ALL events, because events can only be due when they are in the past
+        if self.remove_from_queue_backlog in [None, 0]:
+            return False
+        delete_before = time.time() - self.remove_from_queue_backlog
+        return queue_entry[0] < delete_before
 
     def _start_routemanager(self):
         with self._manager_mutex:
