@@ -23,11 +23,11 @@ class Patch(PatchBase):
             "ALTER TABLE pokemon ADD KEY `individual_attack` (`individual_attack`)"
         )
         try:
-            self._db.execute(populate_mons, commit=True)
-            self._db.execute(populate_forts, commit=True)
-            self._db.execute(del_old_table, commit=True)
+            await self._run_raw_sql_query(populate_mons)
+            await self._run_raw_sql_query(populate_forts)
+            await self._run_raw_sql_query(del_old_table)
             if not self._schema_updater.check_index_exists('pokemon', 'individual_attack'):
-                self._db.execute(iv_attack, commit=True)
+                await self._run_raw_sql_query(iv_attack)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True

@@ -13,7 +13,7 @@ class Patch(PatchBase):
             CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL DEFAULT NULL ;
         """
         try:
-            self._db.execute(origin_sql, commit=True, raise_exec=True)
+            await self._run_raw_sql_query(origin_sql)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True

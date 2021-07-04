@@ -8,7 +8,7 @@ class Patch(PatchBase):
         'IV list it will be added to the list based on mon id'
     )
 
-    def _execute(self):
+    async def _execute(self):
         tables = ["settings_area_iv_mitm", "settings_area_mon_mitm", "settings_area_raids_mitm"]
         for table in tables:
             if not self._schema_updater.check_column_exists(table, "all_mons"):
@@ -18,7 +18,7 @@ class Patch(PatchBase):
                     AFTER `monlist_id`;
                 """.format(table)
                 try:
-                    self._db.execute(alter, commit=True, raise_exec=True)
+                    await self._run_raw_sql_query(alter)
                 except Exception as e:
                     self._logger.exception("Unexpected error: {}", e)
                     self.issues = True

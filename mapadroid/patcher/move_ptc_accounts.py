@@ -1,10 +1,12 @@
 import json
 import os
+from typing import List
 
 from mysql.connector.errors import IntegrityError
 
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from ._patch_base import PatchBase
+from ..db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 
 logger = get_logger(LoggerEnums.patcher)
 
@@ -13,7 +15,7 @@ class Patch(PatchBase):
     name = 'Move PTC Accounts'
     descr = 'Move PTC accounts from device to pogoauth'
 
-    def _execute(self):
+    async def _execute(self):
         # Backup the tables
         # Assume that the user has not been given GRANT FILE permissions so just do a manual export
         if self._schema_updater.check_column_exists('settings_device', 'ptc_login'):
@@ -27,13 +29,14 @@ class Patch(PatchBase):
             sql = "ALTER TABLE `settings_pogoauth`\n" \
                   "     ADD `device_id` int(10) unsigned NULL\n" \
                   "     AFTER `account_id`;"
-            self._db.execute(sql, raise_exc=True, suppress_log=True, commit=True)
+            await self._run_raw_sql_query(sql)
+            # TODO: Maybe we need commits inbetween?
             sql = "ALTER TABLE `settings_pogoauth`\n" \
                   "     ADD CONSTRAINT `fk_spa_device_id`\n" \
                   "     FOREIGN KEY (`device_id`)\n" \
                   "           REFERENCES `settings_device` (`device_id`)\n" \
                   "           ON DELETE CASCADE"
-            self._db.execute(sql, raise_exc=True, suppress_log=True, commit=True)
+            await self._run_raw_sql_query(sql)
         # Move PTC
         if self._schema_updater.check_column_exists('settings_device', 'ptc_login'):
             sql = "SELECT `device_id`, `ptc_login`, `instance_id`\n" \
@@ -83,11 +86,11 @@ class Patch(PatchBase):
         if self._schema_updater.check_column_exists('settings_device', 'ptc_login'):
             sql = "ALTER TABLE settings_device\n" \
                   "DROP COLUMN ptc_login;"
-            self._db.execute(sql, raise_exc=False, suppress_log=True)
+            await self._run_raw_sql_query(sql)
         if self._schema_updater.check_column_exists('settings_device', 'account_id'):
             sql = "ALTER TABLE settings_device\n" \
                   " DROP FOREIGN KEY settings_device_ibfk_3"
-            self._db.execute(sql, raise_exc=False, suppress_log=True)
+            await self._run_raw_sql_query(sql)
             sql = "ALTER TABLE settings_device\n" \
                   "DROP COLUMN account_id;"
-            self._db.execute(sql, raise_exc=False, suppress_log=True)
+            await self._run_raw_sql_query(sql)

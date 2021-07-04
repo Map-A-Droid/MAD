@@ -13,7 +13,7 @@ class Patch(PatchBase):
         )
 
         try:
-            self._db.execute(sql, commit=True, raise_exec=True)
+            await self._run_raw_sql_query(sql)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True

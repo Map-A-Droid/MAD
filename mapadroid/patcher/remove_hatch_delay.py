@@ -13,8 +13,8 @@ class Patch(PatchBase):
         if self._schema_updater.check_column_exists('settings_devicepool', 'delay_after_hatch'):
             sql = "ALTER TABLE settings_devicepool\n" \
                   "DROP COLUMN delay_after_hatch;"
-            self._db.execute(sql, raise_exc=False, suppress_log=True)
+            await self._run_raw_sql_query(sql)
         if self._schema_updater.check_column_exists('settings_device', 'delay_after_hatch'):
             sql = "ALTER TABLE settings_device\n" \
                   "DROP COLUMN delay_after_hatch;"
-            self._db.execute(sql, raise_exc=False, suppress_log=True)
+            await self._run_raw_sql_query(sql)

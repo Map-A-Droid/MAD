@@ -7,7 +7,7 @@ from ._patch_base import PatchBase
 class Patch(PatchBase):
     name = 'Implement MADROM Auto-configuration'
 
-    def _execute(self):
+    async def _execute(self):
         # This is odd and it shouldnt occur.  Some fields were missing in
         # master sql so we need to re-run that patch that applied them
         patch_base = importlib.import_module('mapadroid.patcher.patch_30')
@@ -36,7 +36,7 @@ class Patch(PatchBase):
                   "  REFERENCES `settings_device` (`device_id`)\n" \
                   "  ON DELETE CASCADE\n" \
                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
-            self._db.execute(sql, commit=True, raise_exc=True)
+            await self._run_raw_sql_query(sql)
 
             sql = "CREATE TABLE IF NOT EXISTS `autoconfig_file` (\n" \
                   " `instance_id` int(10) unsigned NOT NULL,\n" \
@@ -47,7 +47,7 @@ class Patch(PatchBase):
                   "   REFERENCES `madmin_instance` (`instance_id`)\n" \
                   "   ON DELETE CASCADE\n" \
                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
-            self._db.execute(sql, commit=True, raise_exc=True)
+            await self._run_raw_sql_query(sql)
 
             sql = "CREATE TABLE IF NOT EXISTS `settings_pogoauth` (\n" \
                   " `instance_id` int(10) unsigned NOT NULL,\n" \
@@ -61,7 +61,7 @@ class Patch(PatchBase):
                   "  ON DELETE CASCADE,\n" \
                   " CONSTRAINT `settings_pogoauth_u1` UNIQUE (`login_type`, `username`)\n" \
                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
-            self._db.execute(sql, commit=True, raise_exc=True)
+            await self._run_raw_sql_query(sql)
 
             sql = "CREATE TABLE IF NOT EXISTS `autoconfig_logs` (\n" \
                   " `log_id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n" \
@@ -76,28 +76,28 @@ class Patch(PatchBase):
                   "  REFERENCES `autoconfig_registration` (`session_id`)\n" \
                   "  ON DELETE CASCADE\n" \
                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
-            self._db.execute(sql, commit=True, raise_exc=True)
+            await self._run_raw_sql_query(sql)
 
             if not self._schema_updater.check_column_exists('settings_device', 'mac_address'):
                 sql = "ALTER TABLE `settings_device`\n" \
                       " ADD `mac_address` VARCHAR(17) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL\n" \
                       " AFTER `enhanced_mode_quest_safe_items`;"
-                self._db.execute(sql, commit=True, raise_exec=True)
+                await self._run_raw_sql_query(sql)
             if not self._schema_updater.check_column_exists('settings_device', 'interface_type'):
                 sql = "ALTER TABLE `settings_device`\n" \
                       " ADD `interface_type` enum('lan','wlan') COLLATE utf8mb4_unicode_ci DEFAULT 'lan'\n" \
                       " AFTER `mac_address`;"
-                self._db.execute(sql, commit=True, raise_exec=True)
+                await self._run_raw_sql_query(sql)
             if not self._schema_updater.check_column_exists('settings_device', 'account_id'):
                 sql = "ALTER TABLE `settings_device`\n" \
                       "     ADD `account_id` int(10) unsigned NULL\n" \
                       "     AFTER `interface_type`;"
-                self._db.execute(sql, commit=True, raise_exec=True)
+                await self._run_raw_sql_query(sql)
             sql = "ALTER TABLE `settings_device`\n" \
                   "     ADD CONSTRAINT `settings_device_ibfk_3`\n" \
                   "     FOREIGN KEY (`account_id`)\n" \
                   "           REFERENCES `settings_pogoauth` (`account_id`);"
-            self._db.execute(sql, commit=True, raise_exec=False)
+            await self._run_raw_sql_query(sql)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True

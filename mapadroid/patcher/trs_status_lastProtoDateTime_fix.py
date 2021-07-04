@@ -15,7 +15,7 @@ class Patch(PatchBase):
                 update = "ALTER TABLE `%s`.`trs_status`\n" \
                          "CHANGE `lastProtoDateTime`\n" \
                          "lastProtoDateTime TIMESTAMP NULL" % (self._application_args.dbname,)
-                self._db.execute(update, args=(), commit=True, raise_exc=True)
+                await self._run_raw_sql_query(update)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True

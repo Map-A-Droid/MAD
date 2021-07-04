@@ -1,10 +1,11 @@
 from ._patch_base import PatchBase
+from sqlalchemy.sql import text
 
 
 class Patch(PatchBase):
     name = 'Add encounter_all column to mon_mitm, iv_mitm, raids_mitm'
 
-    def _execute(self):
+    async def _execute(self):
         # Adding column encounter_all for settings_area_mon_mitm
         if not self._schema_updater.check_column_exists('settings_area_mon_mitm', 'encounter_all'):
             query = (
@@ -12,7 +13,7 @@ class Patch(PatchBase):
                 "ADD encounter_all TINYINT(1) DEFAULT NULL"
             )
             try:
-                self._db.execute(query, commit=True)
+                await self._run_raw_sql_query(query)
             except Exception as e:
                 self._logger.exception("Unexpected error: {}", e)
                 self.issues = True
@@ -24,7 +25,7 @@ class Patch(PatchBase):
                 "ADD encounter_all TINYINT(1) DEFAULT NULL"
             )
             try:
-                self._db.execute(query, commit=True)
+                await self._run_raw_sql_query(query)
             except Exception as e:
                 self._logger.exception("Unexpected error: {}", e)
                 self.issues = True
@@ -36,7 +37,7 @@ class Patch(PatchBase):
                 "ADD encounter_all TINYINT(1) DEFAULT NULL"
             )
             try:
-                self._db.execute(query, commit=True)
+                await self._run_raw_sql_query(query)
             except Exception as e:
                 self._logger.exception("Unexpected error: {}", e)
                 self.issues = True

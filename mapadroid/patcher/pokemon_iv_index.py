@@ -16,9 +16,9 @@ class Patch(PatchBase):
 
         try:
             if not self._schema_updater.check_index_exists('pokemon', 'pokemon_iv'):
-                self._db.execute(add_new_index, commit=True)
+                await self._run_raw_sql_query(add_new_index)
             if self._schema_updater.check_index_exists('pokemon', 'pokemon_individual_attack'):
-                self._db.execute(drop_old_index, commit=True)
+                await self._run_raw_sql_query(drop_old_index)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
