@@ -636,17 +636,16 @@ class MappingManager:
                 else:
                     logger.info("Init mode enabled. Going row-based for {}", area.name)
                     # we are in init, let's write the init route to file to make it visible in madmin
-                    calc_coords = []
-                    if getattr(area, "routecalc", None) is not None:
-                        for loc in coords:
-                            calc_coord = '%s,%s' % (str(loc.lat), str(loc.lng))
-                            calc_coords.append(calc_coord)
-                        calc_coords = str(calc_coords).replace("\'", "\"")
-                        routecalc.routefile = str(calc_coords)
-                        session.add(routecalc)
-                        await session.flush()
-                    # gotta feed the route to routemanager... TODO: without recalc...
-                    # TODO: proper usage in asnycio loop
+                    # async with session.begin_nested() as nested:
+                    #     calc_coords = []
+                    #     if getattr(area, "routecalc", None) is not None:
+                    #         for loc in coords:
+                    #             calc_coord = '%s,%s' % (str(loc.lat), str(loc.lng))
+                    #             calc_coords.append(calc_coord)
+                    #         calc_coords = str(calc_coords).replace("\'", "\"")
+                    #         routecalc.routefile = str(calc_coords)
+                    #         session.add(routecalc)
+                    #         await nested.commit()
                     task = loop.create_task(route_manager.recalc_route(1, 99999999, 0, False))
                 areas_procs[area_id] = task
 

@@ -116,6 +116,7 @@ class RoutecalcUtil:
 
             session.add(routecalc_entry)
             try:
+                # await session.flush([routecalc_entry])
                 await nested.commit()
             except Exception as e:
                 logger.exception(e)
