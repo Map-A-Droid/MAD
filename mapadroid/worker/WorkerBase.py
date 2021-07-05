@@ -356,8 +356,9 @@ class WorkerBase(AbstractWorker, ABC):
                             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
                             break
                     except (
-                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                    WebsocketWorkerConnectionClosedException):
+                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker killed by walker settings")
                         break
 
@@ -366,8 +367,9 @@ class WorkerBase(AbstractWorker, ABC):
                         await self._internal_health_check()
                         await self._health_check()
                     except (
-                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                    WebsocketWorkerConnectionClosedException):
+                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
                         logger.error(
                             "Websocket connection to {} lost while running healthchecks, connection terminated "
                             "exceptionally", self._origin)
@@ -378,8 +380,9 @@ class WorkerBase(AbstractWorker, ABC):
                         if settings is None:
                             continue
                     except (
-                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                    WebsocketWorkerConnectionClosedException):
+                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker of does not support mode that's to be run, connection terminated "
                                        "exceptionally")
                         break
@@ -389,16 +392,18 @@ class WorkerBase(AbstractWorker, ABC):
                         if not await self._check_location_is_valid():
                             break
                     except (
-                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                    WebsocketWorkerConnectionClosedException):
+                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker received invalid coords!")
                         break
 
                     try:
                         await self._pre_location_update()
                     except (
-                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                    WebsocketWorkerConnectionClosedException):
+                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker of stopping because of stop signal in pre_location_update, connection "
                                        "terminated exceptionally")
                         break
@@ -411,8 +416,9 @@ class WorkerBase(AbstractWorker, ABC):
                                       self.current_location.lat, self.current_location.lng)
                         time_snapshot, process_location = await self._move_to_location()
                     except (
-                    InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                    WebsocketWorkerConnectionClosedException):
+                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerTimeoutException,
+                            WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker failed moving to new location, stopping worker, connection terminated "
                                        "exceptionally")
                         break
@@ -429,8 +435,9 @@ class WorkerBase(AbstractWorker, ABC):
                         try:
                             await self._post_move_location_routine(time_snapshot)
                         except (
-                        InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException):
+                                InternalStopWorkerException, WebsocketWorkerRemovedException,
+                                WebsocketWorkerTimeoutException,
+                                WebsocketWorkerConnectionClosedException):
                             logger.warning("Worker failed running post_move_location_routine, stopping worker")
                             break
                         logger.info("Worker finished iteration, continuing work")
@@ -741,7 +748,7 @@ class WorkerBase(AbstractWorker, ABC):
         await asyncio.sleep(5)
         if mitm_mapper is not None:
             await mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 3, 0,
-                                                     self._mapping_manager.routemanager_get_mode(
+                                                     await self._mapping_manager.routemanager_get_mode(
                                                          self._routemanager_id),
                                                      99)
         async with self._db_wrapper as session, session:
@@ -763,7 +770,7 @@ class WorkerBase(AbstractWorker, ABC):
             await asyncio.sleep(1)
             if mitm_mapper is not None:
                 await mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 4, 0,
-                                                         self._mapping_manager.routemanager_get_mode(
+                                                         await self._mapping_manager.routemanager_get_mode(
                                                              self._routemanager_id),
                                                          99)
             return await self._start_pogo()
