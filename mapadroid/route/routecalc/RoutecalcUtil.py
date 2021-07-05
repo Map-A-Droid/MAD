@@ -19,26 +19,33 @@ class RoutecalcUtil:
                              max_coords_within_radius,
                              in_memory, num_processes, algorithm, use_s2, s2_level, route_name,
                              delete_old_route: bool = False):
-        routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
-        if not routecalc_entry:
-            # TODO: Can this even be the case? Handle correctly
-            #  Missing instance_id...
-            routecalc_entry = SettingsRoutecalc()
-            routecalc_entry.routecalc_id = routecalc_id
-        await session.merge(routecalc_entry)
+        async with session.begin_nested() as nested:
+            routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
+            if not routecalc_entry:
+                # TODO: Can this even be the case? Handle correctly
+                #  Missing instance_id...
+                routecalc_entry = SettingsRoutecalc()
+                routecalc_entry.routecalc_id = routecalc_id
 
-        routecalc_entry.recalc_status = 1
-        session.add(routecalc_entry)
-        # Commit to make the recalc_status visible to others
-        await session.commit()
+            routecalc_entry.recalc_status = 1
+            # Commit to make the recalc_status visible to others
+            session.add(routecalc_entry)
+
+            try:
+                await nested.commit()
+            except Exception as e:
+                logger.exception(e)
+                await nested.rollback()
         await session.refresh(routecalc_entry)
+
         # TODO: Ensure the object is still valid later on
         if not in_memory:
             if delete_old_route:
                 logger.debug("Deleting routefile...")
-                routecalc_entry.routefile = []
-                session.add(routecalc_entry)
-                await session.commit()
+                async with session.begin_nested() as nested:
+                    routecalc_entry.routefile = []
+                    session.add(routecalc_entry)
+                    await nested.commit()
                 await session.refresh(routecalc_entry)
             else:
                 saved_route = RoutecalcUtil._read_saved_json_route(routecalc_entry)
@@ -95,17 +102,24 @@ class RoutecalcUtil:
             for i in range(len(sol_best)):
                 export_data.append({'lat': less_coords[int(sol_best[i])][0].item(),
                                     'lng': less_coords[int(sol_best[i])][1].item()})
-        if not in_memory:
-            calc_coords = []
-            for coord in export_data:
-                calc_coord = '%s,%s' % (coord['lat'], coord['lng'])
-                calc_coords.append(calc_coord)
-            # Only save if we aren't calculating in memory
-            routecalc_entry.routefile = calc_coords
-            routecalc_entry.last_updated = datetime.datetime.utcnow()
-        routecalc_entry.recalc_status = 0
-        session.add(routecalc_entry)
-        await session.commit()
+        async with session.begin_nested() as nested:
+            if not in_memory:
+                calc_coords = []
+                for coord in export_data:
+                    calc_coord = '%s,%s' % (coord['lat'], coord['lng'])
+                    calc_coords.append(calc_coord)
+                # Only save if we aren't calculating in memory
+                to_be_written = str(calc_coords).replace("\'", "\"")
+                routecalc_entry.routefile = to_be_written
+                routecalc_entry.last_updated = datetime.datetime.utcnow()
+            routecalc_entry.recalc_status = 0
+
+            session.add(routecalc_entry)
+            try:
+                await nested.commit()
+            except Exception as e:
+                logger.exception(e)
+                await nested.rollback()
         return export_data
 
     @staticmethod

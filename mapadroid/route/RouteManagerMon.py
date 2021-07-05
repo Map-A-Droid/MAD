@@ -33,7 +33,7 @@ class RouteManagerMon(RouteManagerBase):
         self.starve_route: bool = True if area.starve_route == 1 else False
         if area.max_clustering:
             self._max_clustering: int = area.max_clustering
-        self.init_mode_rounds: int = area.init_mode_rounds
+        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
 
     def _priority_queue_update_interval(self):
         return 600
@@ -51,15 +51,18 @@ class RouteManagerMon(RouteManagerBase):
         async with self.db_wrapper as session, session:
             return await TrsSpawnHelper.get_next_spawns(session, self.geofence_helper, self.include_event_id)
 
-    async def _get_coords_post_init(self):
+    async def _get_coords_post_init(self) -> List[Location]:
         async with self.db_wrapper as session, session:
             if self.coords_spawns_known:
                 logger.info("Reading known Spawnpoints from DB")
-                coords = await TrsSpawnHelper.get_known_of_area(session, self.geofence_helper, self.include_event_id)
+                spawns = await TrsSpawnHelper.get_known_of_area(session, self.geofence_helper, self.include_event_id)
             else:
                 logger.info("Reading unknown Spawnpoints from DB")
-                coords = await TrsSpawnHelper.get_known_without_despawn_of_area(session, self.geofence_helper,
+                spawns = await TrsSpawnHelper.get_known_without_despawn_of_area(session, self.geofence_helper,
                                                                                 self.include_event_id)
+        coords: List[Location] = []
+        for spawn in spawns:
+            coords.append(Location(spawn.latitude, spawn.longitude))
         await self._start_priority_queue()
         return coords
 

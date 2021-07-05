@@ -255,12 +255,19 @@ class RouteManagerBase(ABC):
                 calctype = 'route'
 
             async with self.db_wrapper as session, session:
-                new_route = await RoutecalcUtil.get_json_route(session, self._routecalc.routecalc_id, coords,
-                                                               max_radius, max_coords_within_radius, in_memory,
-                                                               num_processes=num_procs,
-                                                               algorithm=calctype, use_s2=self.useS2,
-                                                               s2_level=self.S2level,
-                                                               route_name=self.name, delete_old_route=delete_old_route)
+                async with session.begin() as transaction:
+                    try:
+                        new_route = await RoutecalcUtil.get_json_route(session, self._routecalc.routecalc_id, coords,
+                                                                   max_radius, max_coords_within_radius, in_memory,
+                                                                   num_processes=num_procs,
+                                                                   algorithm=calctype, use_s2=self.useS2,
+                                                                   s2_level=self.S2level,
+                                                                   route_name=self.name, delete_old_route=delete_old_route)
+                        await transaction.commit()
+                    except Exception as e:
+                        logger.exception(e)
+                        await transaction.rollback()
+                        new_route = []
             if self._overwrite_calculation:
                 self._overwrite_calculation = False
             return new_route
