@@ -143,7 +143,8 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                 elif await self._handle_additional_keys(db_entry, key, value):
                     continue
                 # validate whether a field is required...
-                elif ((getattr(vars_of_type.get(key), "primary_key", None) or not vars_of_type.get(key).nullable)
+                elif ((getattr(vars_of_type.get(key), "primary_key", None)
+                       or not getattr(vars_of_type.get(key), "primary_key", None))
                       and getattr(db_entry, key, None) is None and value is None):
                     self._commit_trigger = False
                     return self._json_response({"missing": [key]},

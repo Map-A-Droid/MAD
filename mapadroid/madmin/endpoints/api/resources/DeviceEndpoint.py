@@ -37,10 +37,13 @@ class DeviceEndpoint(AbstractResourceEndpoint):
                 if pogoauth_to_use:
                     pogoauth_to_use.device_id = db_entry.device_id
             return True
+        elif key == "walker":
+            db_entry.walker_id = int(value)
+            return True
         return False
 
     def _attributes_to_ignore(self) -> Set[str]:
-        return {"device_id", "guid", "walker"}
+        return {"device_id", "guid"}
 
     async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
         return await SettingsDeviceHelper.get_all_mapped(self._session, self._get_instance_id())
