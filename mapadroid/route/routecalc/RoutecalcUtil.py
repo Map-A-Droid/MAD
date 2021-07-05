@@ -43,7 +43,7 @@ class RoutecalcUtil:
             if delete_old_route:
                 logger.debug("Deleting routefile...")
                 async with session.begin_nested() as nested:
-                    routecalc_entry.routefile = []
+                    routecalc_entry.routefile = "[]"
                     session.add(routecalc_entry)
                     await nested.commit()
                 await session.refresh(routecalc_entry)
