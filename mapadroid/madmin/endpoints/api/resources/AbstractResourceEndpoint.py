@@ -140,8 +140,10 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                 elif vars_of_type.get(key) and not isinstance(vars_of_type.get(key), InstrumentedAttribute):
                     # We only allow modifying columns ;)
                     continue
+                elif await self._handle_additional_keys(db_entry, key, value):
+                    continue
                 # validate whether a field is required...
-                elif ((vars_of_type.get(key).primary_key or not vars_of_type.get(key).nullable)
+                elif ((getattr(vars_of_type.get(key), "primary_key", None) or not vars_of_type.get(key).nullable)
                       and getattr(db_entry, key, None) is None and value is None):
                     self._commit_trigger = False
                     return self._json_response({"missing": [key]},
@@ -311,7 +313,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         Returns: True if key was handled, False otherwise
 
         """
-        return True
+        return False
 
     @abstractmethod
     async def _delete_connected(self, db_entry):

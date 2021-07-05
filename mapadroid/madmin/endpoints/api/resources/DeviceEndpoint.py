@@ -40,7 +40,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
         return False
 
     def _attributes_to_ignore(self) -> Set[str]:
-        return {"device_id", "guid"}
+        return {"device_id", "guid", "walker"}
 
     async def _fetch_all_from_db(self, **kwargs) -> Dict[int, Base]:
         return await SettingsDeviceHelper.get_all_mapped(self._session, self._get_instance_id())

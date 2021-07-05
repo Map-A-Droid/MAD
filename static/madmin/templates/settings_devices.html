@@ -180,7 +180,7 @@ $(document).ready(function () {
           <td class="align-middle">
             <select class="form-control form-control-sm walker_sel_single" data-identifier="{{ dev_uri }}">
               {% for walker_uri, walker in walkers.items() %}
-               <option name="{{ url('api_walker') / walker_uri|string }}" {{ 'selected=selected' if device.walker_id == walker_uri else "" }}>{{ walker.name }}</option>
+               <option name="{{ walker_uri }}" {{ 'selected=selected' if device.walker_id == walker_uri else "" }}>{{ walker.name }}</option>
               {% endfor %}
             </select>
           </td>

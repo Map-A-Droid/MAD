@@ -947,7 +947,7 @@ class WorkerBase(AbstractWorker, ABC):
             return False
 
         logger.debug("checkPogoClose: checking for CloseX")
-        found = await self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path(),
+        found = await self._pogoWindowManager.check_close_except_nearby_button(await self.get_screenshot_path(),
                                                                                self._origin,
                                                                                self._communicator)
         if found:

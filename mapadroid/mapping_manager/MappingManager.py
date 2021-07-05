@@ -824,10 +824,10 @@ class MappingManager:
                 geofence_helpers_tmp = await self.__get_latest_geofence_helpers(session)
                 auths_tmp = await self.__get_latest_auths(session)
 
-            for area_id, routemanager in self._routemanagers:
+            for area_id, routemanager in self._routemanagers.items():
                 logger.info("Stopping all routemanagers and join threads")
-                routemanager.stop_routemanager(joinwithqueue=False)
-                routemanager.join_threads()
+                await routemanager.stop_routemanager(joinwithqueue=False)
+                await routemanager.join_threads()
 
             logger.info("Restoring old devicesettings")
             for dev, mapping in self._devicemappings.items():

@@ -274,19 +274,20 @@ class RouteManagerBase(ABC):
                                     in_memory=True,
                                     calctype='quick')
             # Route has not previously been calculated.  Recalculate a quick route then calculate the optimized route
-            # TODO: Executor
-            args = (self._max_radius, self._max_coords_within_radius)
-            kwargs = {
-                'num_procs': 0
-            }
-            Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs).start()
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.recalc_route_adhoc(self._max_radius, self._max_coords_within_radius, num_procs=0))
         else:
             await self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
 
     async def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                            delete_old_route: bool = False, in_memory: bool = False, calctype: str = None):
         async with self._manager_mutex:
-            current_coords = self._coords_unstructured
+            current_coords: List[Location] = []
+            for coord in self._coords_unstructured:
+                if isinstance(coord, Location):
+                    current_coords.append(coord)
+                else:
+                    current_coords.append(Location(coord[0], coord[1]))
             new_route = await self._calculate_new_route(current_coords, max_radius, max_coords_within_radius,
                                                         delete_old_route, num_procs,
                                                         in_memory=in_memory,

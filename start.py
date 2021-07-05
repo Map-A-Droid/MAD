@@ -390,7 +390,7 @@ async def start():
                 # db_exec.shutdown()
                 logger.debug("Done shutting down db_pool_manager")
         except Exception:
-            logger.opt(exception=True).critical("An unhanded exception occurred during shutdown!")
+            logger.opt(exception=True).critical("An unhandled exception occurred during shutdown!")
         logger.info("Done shutting down")
         logger.debug(str(sys.exc_info()))
         sys.exit(exit_code)
@@ -412,3 +412,4 @@ if __name__ == "__main__":
     except (KeyboardInterrupt, Exception) as e:
         #shutdown(loop_being_run)
         logger.info(f"Shutting down. {e}")
+        logger.exception(e)

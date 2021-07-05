@@ -37,16 +37,20 @@ class WalkerareaEndpoint(AbstractResourceEndpoint):
             # Make sure a SettingsWalkerToWalkerarea row is present, else create one to make sure a connection exists
             walkerarea_mappings_of_walker: List[SettingsWalkerToWalkerarea] = await SettingsWalkerToWalkerareaHelper \
                 .get(self._session, self._get_instance_id(), value)
-            walkerarea_mappings_of_walker.sort(key=lambda x: x.area_order)
-            for walkerarea_mapping in walkerarea_mappings_of_walker:
-                if walkerarea_mapping.walkerarea_id == db_entry.walkerarea_id:
-                    # already present, nothing to do
-                    return True
+            if walkerarea_mappings_of_walker:
+                walkerarea_mappings_of_walker.sort(key=lambda x: x.area_order)
+                for walkerarea_mapping in walkerarea_mappings_of_walker:
+                    if walkerarea_mapping.walkerarea_id == db_entry.walkerarea_id:
+                        # already present, nothing to do
+                        return True
 
             mapping: SettingsWalkerToWalkerarea = SettingsWalkerToWalkerarea()
             mapping.walkerarea_id = db_entry.walkerarea_id
             mapping.walker_id = value
-            order = walkerarea_mappings_of_walker[-1].area_order + 1
+            if walkerarea_mappings_of_walker:
+                order = walkerarea_mappings_of_walker[-1].area_order + 1
+            else:
+                order = 0
             mapping.area_order = order
             self._save(mapping)
             return True

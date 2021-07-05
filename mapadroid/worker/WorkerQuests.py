@@ -642,7 +642,7 @@ class WorkerQuests(MITMBase):
                 await asyncio.sleep(1)
             elif type_received == LatestReceivedType.UNDEFINED:
                 logger.info('Getting timeout - or other unknown error. Trying again')
-                if not self._check_pogo_button():
+                if not await self._check_pogo_button():
                     await self._check_pogo_close(takescreen=True)
 
             to += 1

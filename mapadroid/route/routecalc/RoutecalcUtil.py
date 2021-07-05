@@ -57,8 +57,8 @@ class RoutecalcUtil:
             loop = asyncio.get_running_loop()
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 new_coords = await loop.run_in_executor(
-                    pool, RoutecalcUtil.get_less_coords, (coords, max_radius, max_coords_within_radius, use_s2,
-                                                          s2_level,))
+                    pool, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
+                                                          s2_level)
             less_coords = np.zeros(shape=(len(new_coords), 2))
             for i in range(len(less_coords)):
                 less_coords[i][0] = new_coords[i][0]
@@ -80,7 +80,7 @@ class RoutecalcUtil:
             loop = asyncio.get_running_loop()
             with concurrent.futures.ProcessPoolExecutor() as pool:
                 sol_best = await loop.run_in_executor(
-                    pool, route_calc_all, (less_coords, route_name, num_processes, algorithm,))
+                    pool, route_calc_all, less_coords, route_name, num_processes, algorithm)
 
             end = timer()
 

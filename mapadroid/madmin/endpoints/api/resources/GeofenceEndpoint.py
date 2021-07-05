@@ -12,7 +12,7 @@ class GeofenceEndpoint(AbstractResourceEndpoint):
         pass
 
     async def _handle_additional_keys(self, db_entry: SettingsGeofence, key: str, value) -> bool:
-        if key == "fence_data_raw":
+        if key == "fence_data_raw" or key == "fence_data":
             to_be_written = str(value).replace("\'", "\"")
             db_entry.fence_data = to_be_written
             return True
