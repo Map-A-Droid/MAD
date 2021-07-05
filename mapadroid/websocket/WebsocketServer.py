@@ -167,12 +167,15 @@ class WebsocketServer(object):
             await self.__close_websocket_client_connection(origin, websocket_client_connection)
             return
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.info("New connection from {}", websocket_client_connection.remote_address)
+
+        remote_address = websocket_client_connection.remote_address
+
+        origin_logger.info("New connection from {}", remote_address)
         if self.__enable_configmode:
             origin_logger.warning('Connected in ConfigMode.  No mapping will occur in the current mode')
         async with self.__users_connecting_mutex:
             if origin in self.__users_connecting:
-                origin_logger.info("Client is already connecting")
+                origin_logger.info("Done with connection ({}) -- Client is already connecting", remote_address)
                 return
             else:
                 self.__users_connecting.add(origin)
@@ -207,20 +210,24 @@ class WebsocketServer(object):
                     origin_logger.error("Old connection open while a new one is attempted to be established, "
                                         "aborting handling of connection")
                     continue_register = False
-
-                entry.websocket_client_connection = websocket_client_connection
-                # TODO: also change the worker's Communicator? idk yet
-                if entry.worker_thread.is_alive() and not entry.worker_instance.is_stopping():
-                    origin_logger.info("Worker thread still alive, continue as usual")
-                    # TODO: does this need more handling? probably update communicator or whatever?
+                elif entry.worker_thread.is_alive() and not entry.worker_instance.is_stopping():
+                    # Ideally we just set the new connection in the entry and the worker starts using it.
+                    # The problem is that the above check is racey. The worker could be stopping right
+                    # now (because it shut itself down, etc). It's best to just disallow a new connection
+                    # until the old connection is detected dead and the worker completely stops.
+                    origin_logger.info("Worker thread still alive, rejecting new conn ({}) because thread "
+                                       "should be stopped when old connection is found dead", remote_address)
+                    continue_register = False
                 elif not entry.worker_thread.is_alive():
-                    origin_logger.info("Old thread is dead, trying to start a new one")
+                    origin_logger.info("Old thread is dead, trying to start a new one ({})", remote_address)
                     if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
                         continue_register = False
                 else:
-                    origin_logger.info("Old thread is about to stop. Wait a little and reconnect")
+                    origin_logger.info("Old thread is about to stop. Wait a little and reconnect ({})", remote_address)
                     # random sleep to not have clients try again in sync
                     continue_register = False
+                if continue_register:
+                    entry.websocket_client_connection = websocket_client_connection
             if continue_register:
                 self.__current_users[origin] = entry
 
@@ -229,25 +236,36 @@ class WebsocketServer(object):
             async with self.__users_connecting_mutex:
                 origin_logger.debug("Removing from users_connecting")
                 self.__users_connecting.remove(origin)
+            origin_logger.info("Done with connection ({}) (not allowing register)", remote_address)
             return
 
+        worker_instance = entry.worker_instance
+        worker_thread = entry.worker_thread
         try:
-            if not entry.worker_thread.is_alive():
-                entry.worker_thread.start()
+            if not worker_thread.is_alive():
+                origin_logger.debug('starting worker thread ({})', remote_address)
+                worker_thread.start()
             # TODO: we need to somehow check threads and synchronize connection status with worker status?
             async with self.__users_connecting_mutex:
                 self.__users_connecting.remove(origin)
             receiver_task = asyncio.ensure_future(
                 self.__client_message_receiver(origin, entry))
+            origin_logger.debug('awaiting __client_message_receiver for connection {}', remote_address)
             await receiver_task
         except Exception as e:
             origin_logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
         # also check if thread is already running to not start it again. If it is not alive, we need to create it..
         finally:
-            origin_logger.info("Awaiting unregister")
             # TODO: cleanup thread is not really desired, I'd prefer to only restart a worker if the route changes :(
-            self.__worker_shutdown_queue.put(entry.worker_thread)
-        origin_logger.info("Done with connection ({})", websocket_client_connection.remote_address)
+            cur_connection = entry.websocket_client_connection
+            if cur_connection == websocket_client_connection:
+                origin_logger.debug('stopping worker (connection {} done)', remote_address)
+                worker_instance.stop_worker()
+                self.__worker_shutdown_queue.put(worker_thread)
+            else:
+                origin_logger.warning('Not stopping worker (connection {} done): we raced (connection {} active)',
+                                      remote_address, cur_connection.remote_address)
+        origin_logger.info("Done with connection ({})", remote_address)
 
     async def __add_worker_and_thread_to_entry(self, entry, origin, use_configmode: bool = None) -> bool:
         communicator: AbstractCommunicator = Communicator(
@@ -309,8 +327,10 @@ class WebsocketServer(object):
         if client_entry is None:
             return
         connection: websockets.WebSocketClientProtocol = client_entry.websocket_client_connection
+        remote_address = connection.remote_address
         origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.info("Consumer handler starting")
+        origin_logger.info("Consumer handler starting ({})", remote_address)
+
         while connection.open:
             message = None
             try:
@@ -318,19 +338,14 @@ class WebsocketServer(object):
             except asyncio.TimeoutError:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
-                # TODO: cleanup needed here? better suited for the handler
-                origin_logger.warning("Connection was closed, stopping receiver. Exception: {}", cc)
-                entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-                if entry is not None:
-                    entry.worker_instance.stop_worker()
+                origin_logger.warning("Connection was closed ({}), stopping receiver. Exception: {}",
+                                      remote_address, cc)
                 return
-
             if message is not None:
                 await self.__on_message(client_entry, message)
-        origin_logger.warning("Connection closed in __client_message_receiver")
-        entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-        if entry is not None:
-            entry.worker_instance.stop_worker()
+
+        origin_logger.warning("Connection closed ({}) in __client_message_receiver)",
+                              remote_address)
 
     @staticmethod
     async def __on_message(client_entry: WebsocketConnectedClientEntry, message: MessageTyping) -> None:
