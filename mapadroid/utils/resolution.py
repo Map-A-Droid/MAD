@@ -27,7 +27,9 @@ class Resocalculator(object):
 
     def get_gym_click_coords(self):
         click_x = int(self._screen_x) / 2
-        if float(self._xyratio) >= 2:
+        if float(self._xyratio) >= 2.1:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.25)
+        elif float(self._xyratio) >= 2:
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.30)
         elif float(self._xyratio) >= 1.9:
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.35)

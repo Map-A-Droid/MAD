@@ -159,13 +159,11 @@ class RouteManagerBase(ABC):
                 self._update_prio_queue_thread.cancel()
         logger.debug("Shutdown Prio Queue Thread - done...")
         if self._check_routepools_thread is not None:
-            while self._check_routepools_thread.isAlive():
-                await asyncio.sleep(1)
-                logger.debug("Shutdown Routepool Thread - waiting...")
-                self._check_routepools_thread.join(5)
-
+            while not self._check_routepools_thread.done():
+                self._check_routepools_thread.cancel()
+                await asyncio.sleep(5)
         self._update_prio_queue_thread: Optional[Task] = None
-        self._check_routepools_thread = None
+        self._check_routepools_thread: Optional[Task] = None
         self._stop_update_thread.clear()
         logger.info("Shutdown Route Threads completed")
 
