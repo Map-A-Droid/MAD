@@ -300,7 +300,7 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.MARKETING:
             await self.__handle_marketing_screen(diff, global_dict)
         elif screentype == ScreenType.CONSENT:
-            self._nextscreen = ScreenType.UNDEFINED
+            self._nextscreen = await self.__handle_ggl_consent_screen()
         elif screentype == ScreenType.SN:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.UPDATE:
@@ -445,6 +445,15 @@ class WordToScreenMatching(object):
 
     async def __handle_failure_screen(self) -> None:
         await self.__handle_returning_player_or_wrong_credentials()
+
+    async def __handle_ggl_consent_screen(self) -> ScreenType:
+        if self._width != 720 and self._height != 1280:
+            logger.warning("The google consent screen can only be handled on 720x1280 screens")
+            return ScreenType.ERROR
+
+        await self._communicator.click(520, 1185)
+        await asyncio.sleep(10)
+        return ScreenType.UNDEFINED
 
     async def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
