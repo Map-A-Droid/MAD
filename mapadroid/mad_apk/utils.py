@@ -18,6 +18,7 @@ from .custom_types import MADapks, MADPackage, MADPackages
 from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
 from ..db.helper.MadApkHelper import MadApkHelper
 from ..utils.RestHelper import RestHelper, RestApiResult
+from ..utils.functions import get_version_codes
 
 logger = get_logger(LoggerEnums.package_mgr)
 
@@ -308,29 +309,10 @@ async def supported_pogo_version(architecture: APKArch, version: str, version_co
     else:
         bits = '64'
     composite_key = '%s_%s' % (version, bits,)
-    async with async_open('configs/version_codes.json', "r") as fh:
-        raw = await fh.read()
-        content = json.loads(raw)
-        version_code_supported = content.get(composite_key, None)
-        if version_code:
-            valid = version_code_supported == version_code
-        else:
-            valid = version_code_supported is not None
+    valid = composite_key in await get_version_codes(force_gh=False)
+    if not valid:
+        valid = composite_key in await get_version_codes(force_gh=True)
 
     if not valid:
-        result: RestApiResult = await get_latest_version_codes_from_github()
-        if result.result_body and result.status_code == 200:
-            version_code_supported = result.result_body.get(composite_key)
-            if version_code:
-                valid = version_code_supported == version_code
-            else:
-                valid = version_code_supported is not None
-    if not valid:
-        logger.info('Current version of PoGo [{}] is not supported', composite_key)
+        logger.debug("PoGo [{}] is not supported", composite_key)
     return valid
-
-
-@cached(ttl=5 * 60)
-async def get_latest_version_codes_from_github() -> RestApiResult:
-    result: RestApiResult = await RestHelper.send_get(VERSIONCODES_URL)
-    return result

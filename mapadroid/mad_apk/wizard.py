@@ -16,7 +16,6 @@ from apkutils.apkfile import BadZipFile, LargeZipFile
 
 from mapadroid.utils import global_variables
 from mapadroid.utils.functions import get_version_codes
-from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKPackage, APKType
 from .utils import (get_apk_info, lookup_arch_enum,
@@ -25,8 +24,9 @@ from ..db.DbWrapper import DbWrapper
 from ..db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from ..db.model import MadApkAutosearch
 from ..utils.RestHelper import RestHelper
+from loguru import logger
 
-logger = get_logger(LoggerEnums.package_mgr)
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 APK_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3',
@@ -510,7 +510,6 @@ async def get_available_versions() -> Dict[str, PackageBase]:
     """Query apkmirror for the available packages"""
     logger.info("Querying APKMirror for the latest releases")
     try:
-        # TODO: package_search needs to be async...
         available: Dict[str, PackageBase] = await package_search_async(["com.nianticlabs.pokemongo"])
     except IndexError:
         logger.warning(
