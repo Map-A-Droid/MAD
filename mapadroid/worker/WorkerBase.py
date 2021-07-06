@@ -741,7 +741,10 @@ class WorkerBase(AbstractWorker, ABC):
 
     async def _reboot(self, mitm_mapper: Optional[MitmMapper] = None):
         try:
-            start_result = await self._communicator.reboot()
+            if self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
+                start_result = await self._communicator.reboot()
+            else:
+                start_result = True
         except WebsocketWorkerRemovedException:
             logger.error("Could not reboot due to client already disconnected")
             start_result = False
@@ -751,8 +754,9 @@ class WorkerBase(AbstractWorker, ABC):
                                                      await self._mapping_manager.routemanager_get_mode(
                                                          self._routemanager_id),
                                                      99)
-        async with self._db_wrapper as session, session:
-            await TrsStatusHelper.save_last_reboot(session, self._db_wrapper.get_instance_id(), self._dev_id)
+        if self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
+            async with self._db_wrapper as session, session:
+                await TrsStatusHelper.save_last_reboot(session, self._db_wrapper.get_instance_id(), self._dev_id)
         self._reboot_count = 0
         self._restart_count = 0
         await self.stop_worker()

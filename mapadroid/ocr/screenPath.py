@@ -384,7 +384,7 @@ class WordToScreenMatching(object):
             username = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, '@gmail.com')
         else:
             ggl_login = await self.get_next_account()
-            username = ggl_login.username
+            username = ggl_login.username if ggl_login else None
         if await self.parse_ggl(await self._communicator.uiautomator(), username):
             logger.info("Sleeping 50 seconds - please wait!")
             await asyncio.sleep(50)
@@ -528,7 +528,7 @@ class WordToScreenMatching(object):
         logger.warning('Could not find any button...')
         return False
 
-    async def parse_ggl(self, xml, mail: str) -> bool:
+    async def parse_ggl(self, xml, mail: Optional[str]) -> bool:
         if xml is None:
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
@@ -536,7 +536,9 @@ class WordToScreenMatching(object):
             parser = ET.XMLParser(encoding="utf-8")
             xmlroot = ET.fromstring(xml, parser=parser)
             for item in xmlroot.iter('node'):
-                if mail.lower() in str(item.attrib['text']).lower():
+                if (mail and mail.lower() in str(item.attrib['text']).lower()
+                    or not mail and (item.attrib["resource-id"] == "com.google.android.gms:id/account_name"
+                                     or "@" in str(item.attrib['text']))):
                     logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
                     bounds = item.attrib['bounds']
                     logger.debug("Bounds {}", item.attrib['bounds'])
@@ -544,7 +546,7 @@ class WordToScreenMatching(object):
                     click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
                     click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
                     await self._communicator.click(int(click_x), int(click_y))
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(5)
                     return True
         except Exception as e:
             logger.error('Something wrong while parsing xml: {}', e)

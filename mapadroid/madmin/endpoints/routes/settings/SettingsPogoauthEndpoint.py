@@ -21,23 +21,23 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        identifier: Optional[str] = self.request.query.get("id")
-        if identifier:
-            return await self._render_single_element(identifier=identifier)
+        self._identifier: Optional[str] = self.request.query.get("id")
+        if self._identifier:
+            return await self._render_single_element()
         else:
             return await self._render_overview()
 
     # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlepogoauth.html')
-    async def _render_single_element(self, identifier: str):
+    async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
-        pogoauth: Optional[SettingsMonivlist] = None
-        if identifier == "new":
+        pogoauth: Optional[SettingsPogoauth] = None
+        if self._identifier == "new":
             pass
         else:
-            pogoauth: SettingsMonivlist = await SettingsPogoauthHelper.get(self._session,
+            pogoauth: SettingsPogoauth = await SettingsPogoauthHelper.get(self._session,
                                                                            self._get_instance_id(),
-                                                                           int(identifier))
+                                                                           int(self._identifier))
             if not pogoauth:
                 raise web.HTTPFound(self._url_for("settings_pogoauth"))
 
@@ -49,7 +49,7 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
 
         available_devices: Dict[int, SettingsDevice] = await SettingsPogoauthHelper.get_available_devices(self._session,
                                                                                                           self._get_instance_id(),
-                                                                                                          int(identifier))
+                                                                                                          int(self._identifier) if self._identifier != "new" else None)
         # TODO: Does this make sense?
         for dev_id, dev in available_devices.items():
             devs_google.append((dev_id, dev.name))
@@ -57,7 +57,7 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
             devs_ptc.append((dev_id, dev.name))
 
         template_data: Dict = {
-            'identifier': identifier,
+            'identifier': self._identifier,
             'base_uri': self._url_for('api_pogoauth'),
             'redirect': self._url_for('settings_pogoauth'),
             'subtab': 'pogoauth',
@@ -65,7 +65,7 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
             'settings_vars': settings_vars,
             'method': 'POST' if not pogoauth else 'PATCH',
             'uri': self._url_for('api_pogoauth') if not pogoauth else '%s/%s' % (
-            self._url_for('api_pogoauth'), identifier),
+            self._url_for('api_pogoauth'), self._identifier),
             # TODO: Above is pretty generic in theory...
             'devices': devices,
             'devs_google': devs_google,

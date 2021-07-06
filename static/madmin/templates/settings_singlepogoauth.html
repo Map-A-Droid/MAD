@@ -63,9 +63,9 @@ $(document).ready(function () {
 <div class="row">
   <div class="col-sm">
     <div class="form-group">
-      <select class="form-control login_type" name="login_type" data-default="{{ element.login_type if 'login_type' in element else 'None' }}">
-        <option value="google" {% if 'login_type' in element and element.login_type == 'google' %}{{ 'selected="selected"' }}{% endif %}>google</option>
-        <option value="ptc" {% if 'login_type' in element and element.login_type == 'ptc' %}{{ 'selected="selected"' }}{% endif %}>ptc</option>
+      <select class="form-control login_type" name="login_type" data-default="{{ element.login_type if element.login_type else 'None' }}">
+        <option value="google" {% if element.login_type and element.login_type == 'google' %}{{ 'selected="selected"' }}{% endif %}>google</option>
+        <option value="ptc" {% if element.login_type and element.login_type == 'ptc' %}{{ 'selected="selected"' }}{% endif %}>ptc</option>
       </select>
     </div>
     <div class="form-group">
@@ -80,7 +80,7 @@ $(document).ready(function () {
     </div>
     <div class="form-group">
       <label for="device_id">Assigned Device</label>
-      <select id="device_id" class="form-control" name="device_id" data-default="{{ url('api_device') / element.device_id|string if element.device_id else 'None' }}">
+      <select id="device_id" class="form-control" name="device_id" data-default="{{ element.device_id if element.device_id else 'None' }}">
       </select>
       <small class="form-text text-muted">Aligned Device</small>
     </div>
