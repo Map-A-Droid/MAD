@@ -292,11 +292,11 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.GAMEDATA:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.GGL:
-            screentype = self.__handle_google_login(screentype)
+            screentype = await self.__handle_google_login(screentype)
         elif screentype == ScreenType.PERMISSION:
-            screentype = self.__handle_permissions_screen(screentype)
+            screentype = await self.__handle_permissions_screen(screentype)
         elif screentype == ScreenType.CREDENTIALS:
-            screentype = self.__handle_permissions_screen(screentype)
+            screentype = await self.__handle_permissions_screen(screentype)
         elif screentype == ScreenType.MARKETING:
             await self.__handle_marketing_screen(diff, global_dict)
         elif screentype == ScreenType.CONSENT:
