@@ -635,6 +635,9 @@ class WorkerBase(AbstractWorker, ABC):
                 logger.warning('Getting SN Screen - restart PoGo and later PD')
                 await self._restart_pogo_safe()
                 break
+            elif screen_type == ScreenType.NOTRESPONDING:
+                await self._reboot()
+                break
 
             if self._loginerrorcounter > 1:
                 logger.warning('Could not login again - (clearing game data + restarting device')

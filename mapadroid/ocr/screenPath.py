@@ -150,6 +150,9 @@ class WordToScreenMatching(object):
             return ScreenType.CREDENTIALS, global_dict, diff
         elif "ConsentActivity" in topmost_app:
             return ScreenType.CONSENT, global_dict, diff
+        elif "/a.m" in topmost_app:
+            logger.error("Likely found 'not responding' popup - reboot device (topmost app: {})", topmost_app)
+            return ScreenType.NOTRESPONDING, global_dict, diff
         elif "com.nianticlabs.pokemongo" not in topmost_app:
             logger.warning("PoGo is not opened! Current topmost app: {}", topmost_app)
             return ScreenType.CLOSE, global_dict, diff
