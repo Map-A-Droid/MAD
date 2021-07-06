@@ -479,6 +479,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_id)
         routemanager.set_worker_sleeping(worker_name, sleep_duration)
 
+    async def routemanager_get_routecalc_id(self, routemanager_id: int) -> Optional[int]:
+        routemanager = self.__fetch_routemanager(routemanager_id)
+        return routemanager.get_routecalc_id() if routemanager is not None else None
+
     async def set_worker_startposition(self, routemanager_id: int, worker_name: str,
                                        lat: float, lon: float):
         logger.debug("Fetching routemanager")

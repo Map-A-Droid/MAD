@@ -12,7 +12,7 @@ class RoutecalcEndpoint(AbstractResourceEndpoint):
         pass
 
     async def _handle_additional_keys(self, db_entry: SettingsRoutecalc, key: str, value) -> bool:
-        if key == "routefile_raw":
+        if key == "routefile_raw" or key == "routefile":
             to_be_written = str(value).replace("\'", "\"")
             db_entry.routefile = to_be_written
             return True

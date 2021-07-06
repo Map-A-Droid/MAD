@@ -174,6 +174,15 @@ li.list-group-item.layer-item {
     right: 10px;
 }
 
+.leaflet-sidebar-content .list-group .badge {
+    margin-right: 0.5em;
+}
+
+.leaflet-sidebar-content li.list-group-item.layer-item.list-group-subitem {
+    padding-left: 2.5em;
+    font-size: 10pt;
+}
+
 .raidIcon {
     font-size: 12px;
     display: block;

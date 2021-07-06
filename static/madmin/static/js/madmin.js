@@ -249,6 +249,11 @@ new Vue({
             return Object.values(this.layers.dyn.geofences).sort(function (x, y) {
                 return x.name.localeCompare(y.name, "en", {sensitivity: "base"});
             });
+        },
+        sortedRoutes() {
+            return Object.values(this.layers.dyn.routes).sort(function (x, y) {
+                return x.name.localeCompare(y.name, "en", {sensitivity: "base"});
+            });
         }
     },
     watch: {
@@ -523,130 +528,38 @@ new Vue({
         map_fetch_routes() {
             this.mapGuardedFetch("routes", "get_route", function (res) {
                 res.data.forEach(function (route) {
-                    const name = route.name;
+                    route.editableId = route.id
 
-                    if (this.layers.dyn.routes[name]) {
-                        return;
-                    }
-
-                    let mode;
-                    let cradius;
-
-                    if (route.mode === "mon_mitm") {
-                        mode = "mons";
-                        cradius = this.settings.routes.coordinateRadius.mons;
-                    }
-                    else if (route.mode === "pokestops") {
-                        mode = "quests";
-                        cradius = this.settings.routes.coordinateRadius.quests;
-                    }
-                    else if (route.mode === "raids_mitm") {
-                        mode = "raids";
-                        cradius = this.settings.routes.coordinateRadius.raids;
-                    }
-                    else {
-                        mode = route.mode;
-                    }
-
-                    let stack = []
-                    let processedCells = {};
-
-                    const group = L.layerGroup();
-                    const color = this.getRandomColor();
-
-                    route.coordinates.forEach(function (coord) {
-                        const circle = L.circle(coord, {
-                            radius: cradius,
-                            color: color,
-                            fillColor: color,
-                            weight: 1,
-                            opacity: 0.4,
-                            fillOpacity: 0.1,
-                            interactive: false,
-                            pane: layerOrders.routes.pane,
-                            pmIgnore: true
-                        });
-
-                        circle.addTo(group);
-
-                        if (mode === "raids") {
-                            // super dirty workaround to get bounds
-                            // of a circle. The getbounds() function
-                            // is only available if it has been added
-                            // to the map.
-                            // See https://github.com/Leaflet/Leaflet/issues/4978
-                            circle.addTo(map);
-                            const bounds = circle.getBounds();
-                            circle.removeFrom(map);
-
-                            const centerCell = S2.S2Cell.FromLatLng(circle.getLatLng(), 15)
-                            processedCells[centerCell.toString()] = true
-                            stack.push(centerCell)
-                            L.polygon(centerCell.getCornerLatLngs(), {
-                                color: color,
-                                opacity: 0.5,
-                                weight: 1,
-                                fillOpacity: 0,
-                                interactive: false,
-                                pane: layerOrders.cells.pane,
-                                pmIgnore: true
-                            }).addTo(group);
-
-                            while (stack.length > 0) {
-                                const cell = stack.pop();
-                                const neighbors = cell.getNeighbors()
-                                neighbors.forEach(function (ncell) {
-                                    if (processedCells[ncell.toString()] !== true) {
-                                        const cornerLatLngs = ncell.getCornerLatLngs();
-
-                                        for (let i = 0; i < 4; i++) {
-                                            const item = cornerLatLngs[i];
-                                            const distance = L.latLng(item.lat, item.lng).distanceTo(circle.getLatLng());
-                                            if (item.lat >= bounds.getSouthWest().lat
-                                                && item.lng >= bounds.getSouthWest().lng
-                                                && item.lat <= bounds.getNorthEast().lat
-                                                && item.lng <= bounds.getNorthEast().lng
-                                                && distance <= cradius) {
-                                                processedCells[ncell.toString()] = true;
-                                                stack.push(ncell);
-                                                L.polygon(ncell.getCornerLatLngs(), {
-                                                    color: color,
-                                                    opacity: 0.5,
-                                                    weight: 1,
-                                                    fillOpacity: 0,
-                                                    interactive: false,
-                                                    pane: layerOrders.cells.pane,
-                                                    pmIgnore: true,
-                                                }).addTo(group);
-                                                break
-                                            }
-                                        }
-                                    }
-                                })
+                    let hasUnappliedCounterpart = false;
+                    if (Array.isArray(route.subroutes)) {
+                        route.subroutes.forEach(function (subroute) {
+                            subroute.mode = route.mode;
+                            if (subroute.tag === "unapplied") {
+                                hasUnappliedCounterpart = true;
+                                subroute.editableId = route.id;
                             }
-                        }
-                    });
+                        }, this);
+                    }
 
-                    // add route to layergroup
-                    L.polyline(route.coordinates, {
-                        color: color,
-                        weight: 2,
-                        opacity: 0.4,
-                        pane: layerOrders.routes.pane
-                    })
-                    .bindPopup(this.build_route_popup(route), { className: "routepopup" })
-                    .addTo(group);
+                    const settingPrefix = "layers-dyn-routes-";
+                    const routeSettingName = settingPrefix + route.id;
+                    let show = this.getStoredSetting(routeSettingName, false);
 
-                    // add layergroup to management object
-                    leaflet_data.routes[name] = group;
+                    // if the unapplied route was visible last time, but has been applied since, show the normal route instead
+                    if (!hasUnappliedCounterpart) {
+                        const unappliedRouteSettingName = routeSettingName + "_unapplied";
+                        show = show || this.getStoredSetting(unappliedRouteSettingName, false);
+                        this.updateStoredSetting(routeSettingName, show);
+                        this.removeStoredSetting(unappliedRouteSettingName);
+                    }
 
-                    const settings = {
-                        "show": this.getStoredSetting("layers-dyn-routes-" + name, false),
-                        "mode": mode
-                    };
+                    this.mapAddRoute(route, show);
 
-                    this.$set(this.layers.dyn.routes, name, settings);
-
+                    if (Array.isArray(route.subroutes)) {
+                         route.subroutes.forEach(function (subroute) {
+                             this.mapAddRoute(subroute, this.getStoredSetting(settingPrefix + subroute.id, false));
+                         }, this);
+                     }
                 }, this);
             });
         },
@@ -918,7 +831,7 @@ new Vue({
                     }
 
                     const polygon = L.polygon(area.coordinates, {
-                        color: this.getRandomColor(),
+                        color: this.getRandomBackgroundColor(),
                         weight: 2,
                         opacity: 0.5,
                         pane: layerOrders.areas.pane,
@@ -1054,7 +967,7 @@ new Vue({
             }
 
             const polygon = L.polygon(geofence.coordinates, {
-                color: this.getRandomColor(),
+                color: this.getRandomBackgroundColor(),
                 weight: 2,
                 opacity: 0.5,
                 pane: layerOrders.geofences.pane
@@ -1066,8 +979,141 @@ new Vue({
 
             leaflet_data.geofences[id] = polygon;
 
-            geofence.show = show;
-            this.$set(this.layers.dyn.geofences, id, geofence);
+            this.$set(this.layers.dyn.geofences, id, {
+                id: geofence.id,
+                name: geofence.name,
+                show: show
+            });
+        },
+        mapAddRoute(route, show) {
+            const id = route.id;
+
+            if (this.layers.dyn.routes[id]) {
+                return;
+            }
+
+            let modeDisplay;
+            let cradius;
+
+            if (route.mode === "mon_mitm") {
+                modeDisplay = "mons";
+                cradius = this.settings.routes.coordinateRadius.mons;
+            }
+            else if (route.mode === "pokestops") {
+                modeDisplay = "quests";
+                cradius = this.settings.routes.coordinateRadius.quests;
+            }
+            else if (route.mode === "raids_mitm") {
+                modeDisplay = "raids";
+                cradius = this.settings.routes.coordinateRadius.raids;
+            }
+            else {
+                modeDisplay = route.mode;
+                cradius = 0;
+            }
+
+            let stack = [];
+            let processedCells = {};
+
+            const group = L.layerGroup();
+            const color = this.getRandomForegroundColor();
+            const circleOptions = {
+                radius: cradius,
+                color: color,
+                fillColor: color,
+                weight: 1,
+                opacity: 0.4,
+                fillOpacity: 0.2,
+                interactive: false,
+                pane: layerOrders.routes.pane,
+                pmIgnore: true
+            };
+
+            const circles = [];
+
+            route.coordinates.forEach(function (coord) {
+                const circle = L.circle(coord, circleOptions);
+                circles.push(circle);
+                circle.addTo(group);
+
+                if (route.mode === "raids_mitm") {
+                    // super dirty workaround to get bounds
+                    // of a circle. The getbounds() function
+                    // is only available if it has been added
+                    // to the map.
+                    // See https://github.com/Leaflet/Leaflet/issues/4978
+                    circle.addTo(map);
+                    const bounds = circle.getBounds();
+                    circle.removeFrom(map);
+
+                    const centerCell = S2.S2Cell.FromLatLng(circle.getLatLng(), 15)
+                    processedCells[centerCell.toString()] = true
+                    stack.push(centerCell)
+                    L.polygon(centerCell.getCornerLatLngs(), {
+                        color: color,
+                        opacity: 0.5,
+                        weight: 1,
+                        fillOpacity: 0,
+                        interactive: false,
+                        pane: layerOrders.cells.pane,
+                        pmIgnore: true
+                    }).addTo(group);
+
+                    while (stack.length > 0) {
+                        const cell = stack.pop();
+                        const neighbors = cell.getNeighbors()
+                        neighbors.forEach(function (ncell) {
+                            if (processedCells[ncell.toString()] !== true) {
+                                const cornerLatLngs = ncell.getCornerLatLngs();
+
+                                for (let i = 0; i < 4; i++) {
+                                    const item = cornerLatLngs[i];
+                                    const distance = L.latLng(item.lat, item.lng).distanceTo(circle.getLatLng());
+                                    if (item.lat >= bounds.getSouthWest().lat
+                                        && item.lng >= bounds.getSouthWest().lng
+                                        && item.lat <= bounds.getNorthEast().lat
+                                        && item.lng <= bounds.getNorthEast().lng
+                                        && distance <= cradius) {
+                                        processedCells[ncell.toString()] = true;
+                                        stack.push(ncell);
+                                        L.polygon(ncell.getCornerLatLngs(), {
+                                            color: color,
+                                            opacity: 0.5,
+                                            weight: 1,
+                                            fillOpacity: 0,
+                                            interactive: false,
+                                            pane: layerOrders.cells.pane,
+                                            pmIgnore: true,
+                                        }).addTo(group);
+                                        break
+                                    }
+                                }
+                            }
+                        })
+                    }
+                }
+            });
+
+            const polyline = L.polyline(route.coordinates, {
+                color: color,
+                weight: 3,
+                opacity: 1.0,
+                pane: layerOrders.routes.pane
+            });
+
+            polyline
+                .bindPopup(this.build_route_popup(route, polyline, circles, group, circleOptions), { className: "routepopup" })
+                .addTo(group);
+
+            leaflet_data.routes[id] = group;
+
+            this.$set(this.layers.dyn.routes, id, {
+                id: id,
+                name: route.name,
+                tag: route.tag,
+                mode: modeDisplay,
+                show: show
+            });
         },
         mapAddLayer(layer, bringTo) {
             map.addLayer(layer);
@@ -1097,7 +1143,7 @@ new Vue({
 
             function onMouseOver() {
                 if (!mouseEventsIgnore.isIgnored()) {
-                    layer.setStyle({ opacity: 1.0, weight: originalWeight + 1.0 })
+                    layer.setStyle({ opacity: 1.0, weight: originalWeight + 2.0 })
                 }
             }
 
@@ -1176,28 +1222,14 @@ new Vue({
                 weight: 1
             };
         },
-        getRandomColor() {
-            // generates only dark colors for better contrast
-            var letters = '0123456789'.split('');
-            var color = '#';
-            for (var i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 10)];
-            }
-            return color;
+        getRandomForegroundColor() {
+            return this.getHslColor(Math.floor(Math.random() * 360), 80, 30);
         },
-        getPercentageColor(percentage) {
-            var r, g, b = 0;
-
-            if (percentage < 50) {
-                r = 255;
-                g = Math.round(5.1 * percentage);
-            } else {
-                g = 255;
-                r = Math.round(510 - 5.10 * percentage);
-            }
-
-            var h = r * 0x10000 + g * 0x100 + b * 0x1;
-            return "#" + ("000000" + h.toString(16)).slice(-6);
+        getRandomBackgroundColor() {
+            return this.getHslColor(Math.floor(Math.random() * 360), 30, 50);
+        },
+        getHslColor(hue, saturation, lightness) {
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
         },
         build_cell_popup(marker) {
             var cell = this.cellupdates[marker.options.id];
@@ -1535,9 +1567,8 @@ new Vue({
         </div>
       `;
         },
-        build_route_popup(route) {
-
-            const popupContainer = $(`
+        build_route_popup(route, polyline, circles, layerGroup, circleOptions) {
+            const mainContent = $(`
               <div>
                 <div class="name"><i class="fa fa-route"></i> <strong></strong></div>
                 <div><i class="fas fa-adjust"></i> Mode: <span class="badge badge-secondary"></span></div>
@@ -1545,14 +1576,111 @@ new Vue({
               </div>
             `);
 
-            $(".name strong", popupContainer).text(route.name);
-            $(".badge", popupContainer).text(route.mode);
-            $(".length", popupContainer).text(route.coordinates.length);
+            $(".name strong", mainContent).text(route.name);
+            $(".badge", mainContent).text(route.mode);
+            $(".length", mainContent).text(route.coordinates.length);
 
-            return popupContainer[0];
+if (route.mode === "mon_mitm" && typeof route.editableId === "number") {
+
+                function getCircleIndex(event) {
+                    return event.indexPath[0];
+                }
+
+                function onMarkerDrag(event) {
+                    const circle = event.target.associatedCircle;
+                    if (circle) {
+                        circle.setLatLng(event.latlng);
+                    }
+                }
+
+                function onMarkerDragStart(event) {
+                    const marker = event.markerEvent.target;
+                    marker.associatedCircle = circles[getCircleIndex(event)];
+                    marker.on("drag", onMarkerDrag);
+                }
+
+                function onMarkerDragEnd(event) {
+                    const marker = event.markerEvent.target;
+                    delete marker.associatedCircle;
+                    marker.off("drag", onMarkerDrag);
+                }
+
+                function onVertexAdded(event) {
+                    const circle = L.circle(event.latlng, circleOptions);
+                    circles.splice(getCircleIndex(event), 0, circle);
+                    circle.addTo(layerGroup);
+                }
+
+                function onVertexRemoved(event) {
+                    const index = getCircleIndex(event);
+                    const circle = circles[index]
+                    circle.remove()
+                    circles.splice(index, 1)
+                }
+
+                polyline.on("pm:enable", function () {
+                    polyline.on("pm:markerdragstart", onMarkerDragStart);
+                    polyline.on("pm:markerdragend", onMarkerDragEnd);
+                    polyline.on("pm:vertexadded", onVertexAdded);
+                    polyline.on("pm:vertexremoved", onVertexRemoved);
+                })
+
+                polyline.on("pm:disable", function () {
+                    polyline.off("pm:markerdragstart", onMarkerDragStart);
+                    polyline.off("pm:markerdragend", onMarkerDragEnd);
+                    polyline.off("pm:vertexadded", onVertexAdded);
+                    polyline.off("pm:vertexremoved", onVertexRemoved);
+                })
+
+                function restoreOriginalCircles(originalLatLngs) {
+                    circles.forEach(function (circle) { circle.remove() })
+                    circles.splice(0, circles.length)
+
+                    if (Array.isArray(originalLatLngs)) {
+                        originalLatLngs.forEach(function (latLng) {
+                            const circle = L.circle(latLng, circleOptions);
+                            circles.push(circle);
+                            circle.addTo(layerGroup);
+                        })
+                    }
+                }
+
+                return this.build_editable_popup(
+                    mainContent, route.editableId, polyline, "route", true,
+                    function (coords) {
+                        return axios.patch("api/routecalc/" + route.editableId, { routefile: coords })
+                    },
+                    function (result, originalLatLngs) {
+                        // we've just edited an applied route:
+                        //  - clone that edited routed has an unapplied route
+                        //  - restore the route before modifications as the applied one
+                        if (route.id === route.editableId) {
+                            const unappliedRouteId = route.id + "_unapplied";
+                            if (this.layers.dyn.routes[unappliedRouteId]) {
+                                this.$delete(this.layers.dyn.routes, unappliedRouteId);
+                                leaflet_data.routes[unappliedRouteId].removeFrom(map);
+                            }
+
+                            const unappliedRoute = Object.assign({ }, route);
+                            unappliedRoute.id = unappliedRouteId;
+                            unappliedRoute.name = route.name + " (unapplied)";
+                            unappliedRoute.tag = "unapplied";
+                            unappliedRoute.coordinates = polyline.getLatLngs().map(function (latLng) { return [latLng.lat, latLng.lng] });
+                            this.mapAddRoute(unappliedRoute, true);
+
+                            polyline.setLatLngs(originalLatLngs);
+                            restoreOriginalCircles(originalLatLngs);
+                            this.layers.dyn.routes[route.id].show = false;
+                        }
+                    },
+                    restoreOriginalCircles
+                )
+            }
+
+            return mainContent[0];
         },
         build_geofence_popup(id, name, layer, onNameChanged) {
-            const popupContainer = $(`
+            const mainContent = $(`
               <div>
                 <div class="name">
                   <i class="fa fa-draw-polygon"></i>
@@ -1560,7 +1688,57 @@ new Vue({
                     <span class="map-popup-group-edit"></span>
                     <input type="text" class="map-popup-group-save hidden" />
                   </strong>
-                </div>
+                </div>              
+              </div>`
+            );
+
+            const nameSpan = $(".name span", mainContent);
+            const nameInput = $(".name input", mainContent);
+            nameSpan.text(name);
+            nameInput.val(name);
+
+            return this.build_editable_popup(
+                mainContent, id, layer, "geofence", false,
+                function (coords) {
+                    const json = {
+                        name: nameInput.val(),
+                        fence_type: "polygon",
+                        fence_data: coords
+                    }
+
+                    return id === null
+                        ? axios.post("api/geofence", json)
+                        : axios.patch("api/geofence/" + id, json);
+                },
+                function (result) {
+                    if (id === null) {
+                        // we've added a new geofence, remove the temporary polygon (which is on a top-most pane)
+                        // and add a standard geofence on the correct pane instead
+                        map.removeLayer(layer);
+
+                        const match = /\/(\d+)$/.exec(result.headers["x-uri"]);
+                        if (match !== null) {
+                            this.mapAddGeofence({
+                                id: match[1],
+                                name: nameInput.val(),
+                                coordinates: layer.getLatLngs()
+                            }, true);
+                        }
+                    }
+                    else {
+                        nameSpan.text(nameInput.val());
+                        if (typeof onNameChanged === "function") {
+                            onNameChanged(name);
+                        }
+                    }
+                },
+                null
+            )
+        },
+        build_editable_popup(mainContent, id, layer, typeDisplay, allowSelfIntersection, makeRequest, onSaved, onCancelled) {
+            const popupContainer = $(`
+              <div>
+                <div class="map-popup-group-main"></div>
                 <div class="m-1">
                   <div class="map-popup-group-edit">
                     <button type="button" class="btn btn-sm btn-outline-secondary map-popup-button-edit"><i class="fas fa-edit"></i> Edit</button>
@@ -1576,11 +1754,10 @@ new Vue({
               </div>
             `);
 
+            $(".map-popup-group-main", popupContainer).append(mainContent);
+
             const standardOpacity = layer.options.opacity;
             let originalLatLngs;
-
-            $(".name span", popupContainer).text(name);
-            $(".name input", popupContainer).val(name);
 
             function showGroup(suffix) {
                 $(".map-popup-group-" + suffix, popupContainer).removeClass("hidden");
@@ -1595,7 +1772,7 @@ new Vue({
                 showGroup("save");
 
                 layer.setStyle({ opacity: 1.0 });
-                layer.pm.enable({ snappable: false, allowSelfIntersection: false });
+                layer.pm.enable({ snappable: false, allowSelfIntersection: allowSelfIntersection });
 
                 layer.on("pm:markerdragstart", function() {
                     mouseEventsIgnore.enableIgnore();
@@ -1620,8 +1797,8 @@ new Vue({
 
             cancelButton.on("click", function () {
                 const message = id === null
-                    ? "Do you really want to delete this newly created geofence?"
-                    : "Do you really want to stop editing and reset all changes made to this geofence?";
+                    ? `Do you really want to delete this newly created ${typeDisplay}?`
+                    : `Do you really want to stop editing and reset all changes made to this ${typeDisplay}?`;
 
                 if (!window.confirm(message)) {
                     return;
@@ -1630,19 +1807,22 @@ new Vue({
                 disableEdit();
                 layer.closePopup();
 
+                if (typeof onCancelled === "function") {
+                    onCancelled.call(this, originalLatLngs)
+                }
+
                 if (id === null) {
                     map.removeLayer(layer);
                 }
                 else {
                     if (originalLatLngs) {
                         layer.setLatLngs(originalLatLngs);
-                        delete originalLatLngs;
                     }
 
                     hideGroup("save");
                     showGroup("edit");
                 }
-            });
+            }.bind(this));
 
             $(".map-popup-button-save", popupContainer).on("click", function () {
                 disableEdit();
@@ -1666,48 +1846,25 @@ new Vue({
 
                 buildCoords(layer.getLatLngs());
 
-                const name = $(".name input", popupContainer).val();
-                const json = {
-                    name: name,
-                    fence_type: "polygon",
-                    fence_data: coords
-                }
-
-                const request = id === null
-                    ? axios.post("api/geofence", json)
-                    : axios.patch("api/geofence/" + id, json);
+                const request = makeRequest(coords)
 
                 request.then(
                     function (result) {
                         layer.closePopup();
 
-                        if (id === null) {
-                            // we've added a new geofence, remove the temporary polygon (which is on a top-most pane)
-                            // and add a standard geofence on the correct pane instead
-                            map.removeLayer(layer);
-
-                            const match = /\/(\d+)$/.exec(result.headers["x-uri"]);
-                            if (match !== null) {
-                                this.mapAddGeofence({
-                                    id: match[1],
-                                    name: json.name,
-                                    coordinates: layer.getLatLngs()
-                                }, true);
-                            }
+                        if (typeof onSaved === "function") {
+                            onSaved.call(this, result, originalLatLngs);
                         }
-                        else {
+
+                        if (id !== null) {
                             hideGroup("saving");
                             showGroup("edit");
-                            $(".name span", popupContainer).text(name);
-                            if (typeof onNameChanged === "function") {
-                                onNameChanged(name);
-                            }
                         }
                     }.bind(this),
                     function () {
                         hideGroup("saving");
                         enableEdit();
-                        alert("Unable to save the geofence.");
+                        alert(`Unable to save the ${typeDisplay}.`);
                     }.bind(this)
                 );
             }.bind(this));

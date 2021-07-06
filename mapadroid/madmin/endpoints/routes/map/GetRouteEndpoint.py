@@ -1,9 +1,13 @@
-from typing import List
+from typing import List, Dict
 
+from mapadroid.db.helper import SettingsRoutecalcHelper
+from mapadroid.db.model import SettingsRoutecalc
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import get_coord_float
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
+from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
+from mapadroid.utils.collections import Location
 
 
 class GetRouteEndpoint(AbstractControlEndpoint):
@@ -13,33 +17,68 @@ class GetRouteEndpoint(AbstractControlEndpoint):
 
     # TODO: Auth
     async def get(self):
-        routeexport = []
+        routeinfo_by_id = {}
+
         routemanager_ids: List[int] = await self._get_mapping_manager().get_all_routemanager_ids()
         for routemanager_id in routemanager_ids:
-            mode = await self._get_mapping_manager().routemanager_get_mode(routemanager_id)
-            name = await self._get_mapping_manager().routemanager_get_name(routemanager_id)
             (route, workers) = await self._get_mapping_manager().routemanager_get_current_route(routemanager_id)
-
             if route is None:
                 continue
-            routeexport.append(GetRouteEndpoint.get_routepool_route(name, mode, route))
+
+            mode = await self._get_mapping_manager().routemanager_get_mode(routemanager_id)
+            name = await self._get_mapping_manager().routemanager_get_name(routemanager_id)
+            routecalc_id = await self._get_mapping_manager().routemanager_get_routecalc_id(routemanager_id)
+            routeinfo_by_id[routecalc_id] = routeinfo = {
+                "id": routecalc_id,
+                "route": route,
+                "name": name,
+                "mode": mode,
+                "subroutes": []
+            }
+
             if len(workers) > 1:
                 for worker, worker_route in workers.items():
-                    disp_name = '%s - %s' % (name, worker,)
-                    routeexport.append(GetRouteEndpoint.get_routepool_route(disp_name, mode, worker_route))
-        return self._json_response(routeexport)
+                    routeinfo["subroutes"].append({
+                        "id": "%d_sub_%s" % (routecalc_id, worker),
+                        "route": worker_route,
+                        "name": "%s - %s" % (routeinfo["name"], worker),
+                        "tag": "subroute"
+                    })
+
+            if len(routeinfo_by_id) > 0:
+                routecalcs: Dict[int, SettingsRoutecalc] = await SettingsRoutecalcHelper\
+                    .get_all(self._session, self._get_instance_id())
+                for routecalc_id, routecalc in routecalcs.items():
+                    if routecalc_id in routeinfo_by_id:
+                        routeinfo = routeinfo_by_id[routecalc_id]
+                        db_route = list(map(lambda coord: Location(coord["lat"], coord["lng"]),
+                                            RoutecalcUtil.read_saved_json_route(routecalc)))
+                        if db_route != routeinfo["route"]:
+                            routeinfo["subroutes"].append({
+                                "id": "%d_unapplied" % routeinfo["id"],
+                                "route": db_route,
+                                "name": "%s (unapplied)" % routeinfo["name"],
+                                "tag": "unapplied"
+                            })
+        return self._json_response(list(map(lambda r: self.get_routepool_route(r), routeinfo_by_id.values())))
 
     @staticmethod
-    def get_routepool_route(name, mode, coords):
-        parsed_coords = GetRouteEndpoint.get_routepool_coords(coords, mode)
+    def get_routepool_route(route):
         return {
-            "name": name,
-            "mode": mode,
-            "coordinates": parsed_coords,
+            "id": route["id"],
+            "name": route["name"],
+            "mode": route["mode"],
+            "coordinates": GetRouteEndpoint.get_routepool_coords(route["route"]),
+            "subroutes": list(map(lambda subroute: {
+                "id": subroute["id"],
+                "name": subroute["name"],
+                "tag": subroute["tag"],
+                "coordinates": GetRouteEndpoint.get_routepool_coords(subroute["route"])
+            }, route["subroutes"]))
         }
 
     @staticmethod
-    def get_routepool_coords(coord_list, mode):
+    def get_routepool_coords(coord_list):
         route_serialized = []
         prepared_coords = coord_list
         if isinstance(coord_list, RoutePoolEntry):

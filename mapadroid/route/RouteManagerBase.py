@@ -1064,3 +1064,6 @@ class RouteManagerBase(ABC):
             self._worker_start_position[worker] = Location(0.0, 0.0)
 
         self._worker_start_position[worker] = Location(lat, lon)
+
+    def get_routecalc_id(self) -> Optional[int]:
+        return getattr(self._settings, "routecalc", None)

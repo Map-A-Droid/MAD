@@ -63,12 +63,13 @@ var setlng = {{ setlng if setlng else "0" }};
         <div class="sidebar-pane-content">
           <ul class="list-group list-group-flush">
             {% raw %}
-            <li v-for="(route, index) in layers.dyn.routes" class="list-group-item layer-item justify-content-between d-flex align-items-center">
-              <div class="flex-grow-1">{{ index }}</div>
-              <span class="badge badge-secondary" style="margin-right: 5px;">{{ route.mode }}</span>
+            <li v-for="route in sortedRoutes" v-bind:key="route.id" v-bind:class="{ 'list-group-subitem': route.tag }" class="list-group-item layer-item justify-content-between d-flex align-items-center">
+              <div class="flex-grow-1">{{ route.name }}</div>
+              <span class="badge badge-secondary">{{ route.mode }}</span>
+              <span v-if="route.tag" class="badge badge-info">{{ route.tag }}</span>
               <div class="custom-control custom-switch">
-                <input :id="'layers-dyn-routes-'+index" type="checkbox" v-model="layers.dyn.routes[index].show" class="custom-control-input" />
-                <label :for="'layers-dyn-routes-'+index" class="custom-control-label"></label>
+                <input :id="'layers-dyn-routes-'+route.id" type="checkbox" v-model="route.show" class="custom-control-input" />
+                <label :for="'layers-dyn-routes-'+route.id" class="custom-control-label"></label>
               </div>
             </li>
             {% endraw %}

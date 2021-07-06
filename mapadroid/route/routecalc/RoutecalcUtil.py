@@ -21,6 +21,13 @@ class RoutecalcUtil:
                              delete_old_route: bool = False):
         async with session.begin_nested() as nested:
             routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
+            if not in_memory:
+                saved_route = RoutecalcUtil.read_saved_json_route(routecalc_entry)
+                if saved_route:
+                    logger.debug('Using routefile from DB')
+                    return saved_route
+
+            routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
             if not routecalc_entry:
                 # TODO: Can this even be the case? Handle correctly
                 #  Missing instance_id...
@@ -38,20 +45,13 @@ class RoutecalcUtil:
                 await nested.rollback()
         await session.refresh(routecalc_entry)
 
-        # TODO: Ensure the object is still valid later on
-        if not in_memory:
-            if delete_old_route:
-                logger.debug("Deleting routefile...")
-                async with session.begin_nested() as nested:
-                    routecalc_entry.routefile = "[]"
-                    session.add(routecalc_entry)
-                    await nested.commit()
-                await session.refresh(routecalc_entry)
-            else:
-                saved_route = RoutecalcUtil._read_saved_json_route(routecalc_entry)
-                if saved_route:
-                    logger.debug('Using routefile from DB')
-                    return saved_route
+        if not in_memory and delete_old_route:
+            logger.debug("Deleting routefile...")
+            async with session.begin_nested() as nested:
+                routecalc_entry.routefile = "[]"
+                session.add(routecalc_entry)
+                await nested.commit()
+            await session.refresh(routecalc_entry)
 
         export_data = []
         if use_s2:
@@ -153,7 +153,7 @@ class RoutecalcUtil:
         return coords_cleaned_up
 
     @staticmethod
-    def _read_saved_json_route(routecalc_entry: SettingsRoutecalc):
+    def read_saved_json_route(routecalc_entry: SettingsRoutecalc):
         result = []
         if routecalc_entry.routefile is not None:
             for line in routecalc_entry.routefile.split("\","):
