@@ -445,7 +445,8 @@ class WordToScreenMatching(object):
 
     async def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        await self._pogoWindowManager.look_for_button(self.origin, await self.get_screenshot_path(), 2.20, 3.01,
+        screenshot_path = await self.get_screenshot_path()
+        await self._pogoWindowManager.look_for_button(self.origin, screenshot_path, 2.20, 3.01,
                                                       self._communicator, upper=True)
         await asyncio.sleep(2)
 

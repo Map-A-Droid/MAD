@@ -28,7 +28,7 @@ commands.json
 __pycache__/
 *.py[cod]
 *$py.class
-
+alembic.ini
 # C extensions
 *.so
 
