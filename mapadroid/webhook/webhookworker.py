@@ -12,12 +12,10 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.json_encoder import MADEncoder
-from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
-
-logger = get_logger(LoggerEnums.webhook)
+from loguru import logger
 
 
 class WebhookWorker:
@@ -95,8 +93,8 @@ class WebhookWorker:
                                                                          params=None,
                                                                          timeout=5)
                     if response.status_code != 200:
-                        logger.warning("Got status code other than 200 OK from webhook destination: {}",
-                                       response.status_code)
+                        logger.warning("Webhook destination {} returned status code other than 200 OK: {}",
+                                       webhook.get('url'), response.status_code)
                     else:
                         if len(self.__webhook_receivers) > 1:
                             whcount_text = " [wh {}/{}]".format(current_wh_num, len(self.__webhook_receivers))
