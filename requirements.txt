@@ -36,3 +36,4 @@ aiocache
 asyncio-rlock
 
 werkzeug
+alembic
