@@ -3,7 +3,7 @@ You need to have the gettext toolkit installed (on ubuntu run sudo apt install g
 Translate task texts from questGen.py:
 
 From the MAD base folder:
-> xgettext -d base -o locale/quest.po mapadroid/utils/questGen.py
+> xgettext -d base -o locale/quest.pot mapadroid/utils/questGen.py
 
 Go into the locale folder and update the translation files for german and french:
 
