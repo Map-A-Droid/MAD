@@ -152,11 +152,11 @@
     "text": "Mega Entwickle {0} Pokemon"
   },
   "46": {
-    "protoext": "GEOTARGETED_AR_SCAN",
-    "text": "Pok\u00e9stop scannen",
+    "prototext": "GEOTARGETED_AR_SCAN",
+    "text": "Pok\u00e9stop scannen"
   },
   "57": {
-    "prototext": "QUEST_TAKE_WILD_SNAPSHOT ",
+    "prototext": "QUEST_TAKE_WILD_SNAPSHOT",
     "text": "Mache {0} Schnappschüsse von wilden Pokémon"
   }
 }
