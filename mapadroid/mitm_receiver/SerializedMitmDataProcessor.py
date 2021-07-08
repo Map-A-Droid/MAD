@@ -86,7 +86,9 @@ class SerializedMitmDataProcessor:
                 raids_time = await self.__process_raids(data, origin, session)
                 spawnpoints_time = await self.__process_spawnpoints(data, origin, processed_timestamp, session)
                 cells_time = await self.__process_cells(data, origin, session)
-
+                mons_time, wild_encounter_ids_processed = await self.__process_wild_mons(data, origin,
+                                                                                         received_timestamp,
+                                                                                         session)
                 gmo_loc_start = self.get_time_ms()
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 gmo_loc_time = self.get_time_ms() - gmo_loc_start
@@ -113,9 +115,6 @@ class SerializedMitmDataProcessor:
                     stop_encounters = []
                     nearby_mons_time = 0
 
-                mons_time, wild_encounter_ids_processed = await self.__process_wild_mons(data, origin,
-                                                                                         received_timestamp,
-                                                                                         session)
                 if self.__application_args.game_stats:
                     await self.__db_submit.update_seen_type_stats(session,
                                                                   wild=wild_encounter_ids_processed,
