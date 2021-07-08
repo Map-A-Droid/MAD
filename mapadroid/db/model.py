@@ -145,6 +145,10 @@ class Pokemon(Base):
     rating_defense = Column(String(2, 'utf8mb4_unicode_ci'))
     weather_boosted_condition = Column(SMALLINT(6))
     last_modified = Column(DateTime, index=True)
+    fort_id = Column(String(50, 'utf8mb4_unicode_ci'), default=None)
+    cell_id = Column(BIGINT(20), default=None)
+    seen_type = Column(ENUM('wild', 'encounter', 'nearby_stop', 'nearby_cell', 'lure_wild',
+                            'lure_encounter'), nullable=False)
 
 
 class Pokestop(Base):
@@ -362,6 +366,18 @@ class TrsStatsDetectMonRaw(Base):
     count = Column(INTEGER(11), nullable=False)
     is_shiny = Column(TINYINT(1), nullable=False, index=True, server_default=text("'0'"))
     timestamp_scan = Column(INTEGER(11), nullable=False)
+
+
+class TrsStatsDetectSeenType(Base):
+    __tablename__ = 'trs_stats_detect_seen_type'
+
+    encounter_id = Column(BIGINT(20), primary_key=True)
+    encounter = Column(DateTime, default=None, nullable=True)
+    wild = Column(DateTime, default=None, nullable=True)
+    nearby_stop = Column(DateTime, default=None, nullable=True)
+    nearby_cell = Column(DateTime, default=None, nullable=True)
+    lure_encounter = Column(DateTime, default=None, nullable=True)
+    lure_wild = Column(DateTime, default=None, nullable=True)
 
 
 class TrsStatsLocation(Base):

@@ -41,3 +41,12 @@ class TeamColours(Enum):
     BLUE = "Blue"
     RED = "Red"
     WHITE = "White"
+
+
+class MonSeenTypes(Enum):
+    WILD = "wild"
+    ENCOUNTER = "encounter"
+    LURE_ENCOUNTER = "lure_encounter"
+    LURE_WILD = "lure_wild"
+    NEARBY_STOP = "nearby_stop"
+    NEARBY_CELL = "nearby_cell"

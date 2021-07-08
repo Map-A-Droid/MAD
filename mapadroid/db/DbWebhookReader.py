@@ -1,5 +1,5 @@
 from datetime import timezone
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional, Set
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
 from mapadroid.db.model import Raid, Gym, GymDetail, Weather, TrsQuest, Pokestop, Pokemon, TrsSpawn
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import MonSeenTypes
 
 logger = get_logger(LoggerEnums.database)
 
@@ -154,13 +155,17 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    async def get_mon_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_mon_changed_since(session: AsyncSession, utc_timestamp: int,
+                                    mon_types: Optional[Set[MonSeenTypes]] = None):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
-        mons_with_changes: List[Tuple[Pokemon, TrsSpawn]] = await PokemonHelper.get_changed_since(session,
-                                                                                                  utc_timestamp)
+        mons_with_changes: List[Tuple[Pokemon, TrsSpawn, Pokestop]] = await PokemonHelper.get_changed_since(session,
+                                                                                                  utc_timestamp,
+                                                                                                  mon_types)
 
         ret = []
         for (mon, spawn) in mons_with_changes:
+            if mon.latitude == 0 and mon.seen_type == MonSeenTypes.LURE_ENCOUNTER.value:
+                continue
             ret.append({
                 "encounter_id": mon.encounter_id,
                 "pokemon_id": mon.pokemon_id,

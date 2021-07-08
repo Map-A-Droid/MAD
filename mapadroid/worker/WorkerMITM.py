@@ -44,7 +44,7 @@ class WorkerMITM(MITMBase):
         pass
 
     async def _post_move_location_routine(self, timestamp):
-        # TODO: pass the appropiate proto number if IV?
+        # TODO: pass the appropriate proto number if IV?
         type_received, data = await self._wait_for_data(timestamp)
         if type_received != LatestReceivedType.GMO:
             logger.warning("Worker failed to retrieve proper data at {}, {}. Worker will continue with "
@@ -203,7 +203,7 @@ class WorkerMITM(MITMBase):
         if latest_proto_data is None:
             return LatestReceivedType.UNDEFINED, data_found
         latest_proto = latest_proto_data.get("payload")
-        key_to_check: str = "wild_pokemon" if mode in ["mon_mitm", "iv_mitm"] else "forts"
+        key_to_check: str = "wild_pokemon" if mode in [WorkerType.MON_MITM.value, WorkerType.IV_MITM.value] else "forts"
         if self._gmo_cells_contain_multiple_of_key(latest_proto, key_to_check):
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GMO

@@ -1517,22 +1517,45 @@ new Vue({
         build_mon_popup(marker) {
             mon = this.mons[marker.options.id];
 
-            var form = mon["form"] == 0 ? "00" : mon["form"];
+            var form = mon["form"] === 0 ? "00" : mon["form"];
             var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(mon["pokemon_id"], 3, 0)}_${form}.png`;
 
             var iv = (mon["individual_attack"] + mon["individual_defense"] + mon["individual_stamina"]) * 100 / 45;
             var end = moment(mon["disappear_time"] * 1000);
 
-            if (iv == 100) {
-                var ivcolor = "lime";
+            let ivcolor = "red";
+            if (iv === 100) {
+                ivcolor = "lime";
             } else if (iv >= 82) {
-                var ivcolor = "green";
+                ivcolor = "green";
             } else if (iv >= 66) {
-                var ivcolor = "olive";
+                ivcolor = "olive";
             } else if (iv >= 51) {
-                var ivcolor = "orange";
-            } else {
-                var ivcolor = "red";
+                ivcolor = "orange";
+            }
+
+            let seentype = '';
+            switch (mon["seen_type"]) {
+                case "encounter":
+                    seentype = "in an encounter"
+                    break;
+                case "wild":
+                    seentype = "in the wild"
+                    break;
+                case "nearby_stop":
+                    seentype = "at a Pokéstop"
+                    break;
+                case "nearby_cell":
+                    seentype = "in a L15 S2 cell"
+                    break;
+                case "lure_wild":
+                    seentype = "at a lure (no encounter)"
+                    break;
+                case "lure_enconter":
+                    seentype = "at a lure (with encounter)"
+                    break;
+                default:
+                    seentype = "unknown"
             }
 
             var ivtext = "";
@@ -1558,6 +1581,7 @@ new Vue({
             <a onclick=copyClipboard("${mon["latitude"].toFixed(6)}|${mon["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
          </div>
           <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified'] * 1000).format("YYYY-MM-DD HH:mm:ss")}</div>
+          <div id="seentype"><i class="fa fa-eye"></i> Seen <strong>${seentype}</strong></div>
           <br>
           ${ivtext}
         <div class="end"><i class="fas fa-hourglass-end"></i> Despawn: <strong>${end.format("YYYY-MM-DD HH:mm:ss")} (${end.from(moment())})</strong></div>

@@ -40,5 +40,6 @@ class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
 
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
-                    "lvl_mode": level_mode, 'unquest_stops': unquest_stops}
+                    "lvl_mode": level_mode, 'unquest_stops': unquest_stops,
+                    "check_lured": self._get_mad_args().scan_lured_mons}
         return self._json_response(response)

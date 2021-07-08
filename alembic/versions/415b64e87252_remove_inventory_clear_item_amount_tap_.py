@@ -17,9 +17,15 @@ depends_on = None
 
 
 def upgrade():
-    op.drop_column('settings_devicepool', 'inventory_clear_item_amount_tap_duration')
+    try:
+        op.drop_column('settings_devicepool', 'inventory_clear_item_amount_tap_duration')
+    except Exception as e:
+        print(e)
 
 
 def downgrade():
-    op.add_column('settings_devicepool', sa.Column('inventory_clear_item_amount_tap_duration', sa.Integer,
-                                                   default=None))
+    try:
+        op.add_column('settings_devicepool', sa.Column('inventory_clear_item_amount_tap_duration', sa.Integer,
+                                                       default=None))
+    except Exception as e:
+        print(e)

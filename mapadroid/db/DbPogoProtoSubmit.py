@@ -2,7 +2,7 @@ import json
 import math
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple
 
 import sqlalchemy
 from aioredis import Redis
@@ -21,13 +21,15 @@ from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.helper.TrsS2CellHelper import TrsS2CellHelper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
+from mapadroid.db.helper.TrsStatsDetectSeenTypeHelper import TrsStatsDetectSeenTypeHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
 from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
                                 TrsEvent, TrsQuest, TrsS2Cell, TrsSpawn,
-                                Weather)
+                                Weather, TrsStatsDetectSeenType)
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
 from mapadroid.utils.logging import get_origin_logger
+from mapadroid.utils.madGlobals import MonSeenTypes
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
 
@@ -48,7 +50,8 @@ class DbPogoProtoSubmit:
         self._cache: Optional[Union[Redis, NoopCache]] = None
         # TODO: Async setup
 
-    async def mons(self, session: AsyncSession, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
+    async def mons(self, session: AsyncSession, origin: str, timestamp: float, map_proto: dict,
+                   mitm_mapper) -> List[Tuple[int, datetime]]:
         """
         Update/Insert mons from a map_proto dict
         """
@@ -57,9 +60,9 @@ class DbPogoProtoSubmit:
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::mons called with data received")
         cells = map_proto.get("cells", None)
-        if cells is None:
-            return False
-
+        encounters = []
+        if not cells:
+            return encounters
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
@@ -72,16 +75,17 @@ class DbPogoProtoSubmit:
                     encounter_id = encounter_id + 2 ** 64
 
                 await mitm_mapper.collect_mon_stats(origin, str(encounter_id))
-                cache_key = "mon{}".format(encounter_id)
+                cache_key = "mon{}-{}".format(encounter_id, mon_id)
                 if await cache.exists(cache_key):
                     continue
 
-                now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+                now = datetime.utcfromtimestamp(timestamp)
 
                 # get known spawn end time and feed into despawn time calculation
                 # getdetspawntime = self._get_detected_endtime(str(spawnid))
                 spawnpoint: Optional[TrsSpawn] = await TrsSpawnHelper.get(session, spawnid)
-                despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp)
+                despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp,
+                                                          self._args.default_unknown_timeleft)
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix)
 
                 if spawnpoint is None:
@@ -100,12 +104,13 @@ class DbPogoProtoSubmit:
                         mon.latitude = lat
                         mon.longitude = lon
                     mon.pokemon_id = mon_id
+                    mon.seen_type = MonSeenTypes.WILD.value
                     mon.disappear_time = despawn_time
                     mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
                     mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
                     mon.costume = wild_mon["pokemon_data"]["display"]["costume_value"]
                     mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
-                    mon.last_modified = datetime.utcnow()
+                    mon.last_modified = now
                     try:
                         logger.debug("Submitting mon {}", encounter_id)
                         session.add(mon)
@@ -113,38 +118,128 @@ class DbPogoProtoSubmit:
                         cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                         if cache_time > 0:
                             await cache.set(cache_key, 1, expire=cache_time)
+                        encounters.append((encounter_id, now))
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.debug("Failed committing mon {} ({}). Safe to ignore.", encounter_id, str(e))
                         await nested_transaction.rollback()
-        return True
+        return encounters
 
-    async def mon_iv(self, session: AsyncSession, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
+    async def mons_nearby(self, session: AsyncSession, origin: str, timestamp: float, map_proto: dict,
+                   mitm_mapper) -> Tuple[List[Tuple[int, datetime]], List[Tuple[int, datetime]]]:
+        """
+        Insert nearby mons
+        """
+        cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
+        stop_encounters: List[Tuple[int, datetime]] = []
+        cell_encounters: List[Tuple[int, datetime]] = []
+        logger.debug3("DbPogoProtoSubmit::nearby_mons called with data received")
+        cells = map_proto.get("cells", [])
+        if not cells:
+            return cell_encounters, stop_encounters
+
+        for cell in cells:
+            cell_id = cell.get("id")
+            nearby_mons = cell.get("nearby_pokemon", [])
+            if nearby_mons:
+                logger.success("Trying to handle {} nearby mons", len(nearby_mons))
+            for nearby_mon in nearby_mons:
+                display = nearby_mon["display"]
+                weather_boosted = display["weather_boosted_value"]
+                mon_id = nearby_mon["id"]
+                encounter_id = nearby_mon["encounter_id"]
+                if encounter_id < 0:
+                    encounter_id = encounter_id + 2 ** 64
+
+                cache_key = "monnear{}-{}".format(encounter_id, mon_id)
+                encounter_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
+                wild_key = "mon{}-{}".format(encounter_id, mon_id)
+                if await cache.exists(cache_key) or await cache.exists(encounter_key) or await cache.exists(wild_key):
+                    continue
+                stop_id = nearby_mon["fort_id"]
+                form = display["form_value"]
+                costume = display["costume_value"]
+                gender = display["gender_value"]
+
+                now = datetime.utcfromtimestamp(timestamp)
+                disappear_time = now + timedelta(minutes=self._args.default_nearby_timeleft)
+
+                if not self._args.disable_nearby_cell and not stop_id and cell_id:
+                    lat, lon, _ = S2Helper.get_position_from_cell(cell_id)
+                    stop_id = None
+                    db_cell = cell_id
+                    seen_type: MonSeenTypes = MonSeenTypes.NEARBY_CELL
+                    cell_encounters.append((encounter_id, now))
+                else:
+                    db_cell = None
+                    seen_type: MonSeenTypes = MonSeenTypes.NEARBY_STOP
+                    fort: Optional[Union[Pokestop, Gym]] = await PokestopHelper.get(session, stop_id)
+                    if not fort:
+                        fort: Optional[Gym] = await GymHelper.get(session, stop_id)
+
+                    if fort:
+                        lat, lon = fort.latitude, fort.longitude
+                    else:
+                        lat, lon = (0, 0)
+                    stop_encounters.append((encounter_id, now))
+
+                spawnpoint = 0
+                async with session.begin_nested() as nested_transaction:
+                    mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
+                    if not mon:
+                        mon: Pokemon = Pokemon()
+                        mon.encounter_id = encounter_id
+                        mon.spawnpoint_id = spawnpoint
+                        mon.latitude = lat
+                        mon.longitude = lon
+                    mon.cell_id = db_cell
+                    mon.fort_id = stop_id
+                    mon.seen_type = seen_type.value
+                    mon.pokemon_id = mon_id
+                    mon.disappear_time = disappear_time
+                    mon.gender = gender
+                    mon.weather_boosted_condition = weather_boosted
+                    mon.costume = costume
+                    mon.form = form
+                    mon.last_modified = now
+                    try:
+                        logger.debug("Submitting nearby mon {}", encounter_id)
+                        session.add(mon)
+                        await nested_transaction.commit()
+                        await cache.set(cache_key, 1, expire=self._args.default_nearby_timeleft * 60)
+                        logger.success("Successfully submitted nearby mon...")
+                    except sqlalchemy.exc.IntegrityError as e:
+                        logger.warning("Failed committing nearby mon {} ({}). Safe to ignore.", encounter_id, str(e))
+                        await nested_transaction.rollback()
+
+        return cell_encounters, stop_encounters
+
+    async def mon_iv(self, session: AsyncSession, origin: str, timestamp: float, encounter_proto: dict,
+                     mitm_mapper) -> Optional[Tuple[int, datetime]]:
         """
         Update/Insert a mon with IVs
         """
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
-        origin_logger = get_origin_logger(logger, origin=origin)
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None or wild_pokemon.get("encounter_id", 0) == 0 or not str(wild_pokemon["spawnpoint_id"]):
-            return False
+            return None
 
         encounter_id = wild_pokemon["encounter_id"]
         pokemon_data = wild_pokemon.get("pokemon_data")
+        mon_id = pokemon_data.get("id")
         pokemon_display = pokemon_data.get("display", {})
         weather_boosted = pokemon_display.get('weather_boosted_value', None)
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
-        cache_key = "moniv{}{}".format(encounter_id, weather_boosted)
+        cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
         if await cache.exists(cache_key):
-            return True
+            return None
 
-        origin_logger.debug3("Updating IV sent for encounter at {}", timestamp)
-
-        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        logger.debug3("Updating IV sent for encounter at {}", timestamp)
 
         spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
         spawnpoint: Optional[TrsSpawn] = await TrsSpawnHelper.get(session, spawnid)
-        despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp)
+        despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp,
+                                                  self._args.default_unknown_timeleft)
         despawn_time = datetime.utcfromtimestamp(despawn_time_unix)
 
         latitude = wild_pokemon.get("latitude")
@@ -154,10 +249,10 @@ class DbPogoProtoSubmit:
         await mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if spawnpoint is None:
-            origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
+            logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
                                  longitude, despawn_time)
         else:
-            origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (non-init)", pokemon_data["id"],
+            logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (non-init)", pokemon_data["id"],
                                  latitude, longitude, despawn_time)
 
         capture_probability = encounter_proto.get("capture_probability")
@@ -166,7 +261,7 @@ class DbPogoProtoSubmit:
             capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
 
         # ditto detector
-        if is_mon_ditto(origin_logger, pokemon_data):
+        if is_mon_ditto(pokemon_data):
             # mon must be a ditto :D
             mon_id = 132
             gender = 3
@@ -179,16 +274,19 @@ class DbPogoProtoSubmit:
             move_1 = pokemon_data.get("move_1")
             move_2 = pokemon_data.get("move_2")
             form = pokemon_display.get("form_value", None)
+        now = datetime.utcfromtimestamp(timestamp)
         time_start_submit = time.time()
         async with session.begin_nested() as nested_transaction:
             mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
             if not mon:
                 mon: Pokemon = Pokemon()
                 mon.encounter_id = encounter_id
-                mon.spawnpoint_id = spawnid
-                mon.latitude = latitude
-                mon.longitude = longitude
+            mon.spawnpoint_id = spawnid
             mon.pokemon_id = mon_id
+            mon.latitude = latitude
+            mon.longitude = longitude
+            mon.cell_id = None
+            mon.seen_type = MonSeenTypes.ENCOUNTER.value
             mon.disappear_time = despawn_time
             mon.individual_attack = pokemon_data.get("individual_attack")
             mon.individual_defense = pokemon_data.get("individual_defense")
@@ -207,8 +305,7 @@ class DbPogoProtoSubmit:
             mon.weather_boosted_condition = weather_boosted
             mon.costume = pokemon_display.get("costume_value", None)
             mon.form = form
-            mon.last_modified = datetime.utcnow()
-            mon.disappear_time = despawn_time
+            mon.last_modified = now
             logger.debug("Submitting IV {}", encounter_id)
             session.add(mon)
             await nested_transaction.commit()
@@ -216,9 +313,206 @@ class DbPogoProtoSubmit:
             if cache_time > 0:
                 await cache.set(cache_key, 1, expire=cache_time)
             time_done = time.time() - time_start_submit
-            origin_logger.success("Done updating mon IV in DB in {} seconds", time_done)
+            logger.success("Done updating mon IV in DB in {} seconds", time_done)
 
-        return True
+        return encounter_id, now
+
+    async def mon_lure_iv(self, session: AsyncSession, origin: str, timestamp: float, encounter_proto: dict,
+                          mitm_mapper) -> Optional[Tuple[int, datetime]]:
+        """
+        Update/Insert a lure mon with IVs
+        """
+        cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
+        logger.debug3("Updating IV sent for encounter at {}", timestamp)
+
+        pokemon_data = encounter_proto.get("pokemon", {})
+        mon_id = pokemon_data.get("id")
+        display = pokemon_data.get("display", {})
+        weather_boosted = display.get('weather_boosted_value')
+        encounter_id = display.get("display_id", 0)
+
+        if encounter_id < 0:
+            encounter_id = encounter_id + 2 ** 64
+
+        cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
+        if await cache.exists(cache_key):
+            return None
+
+        # ditto detector
+        if is_mon_ditto(pokemon_data):
+            # mon must be a ditto :D
+            mon_id = 132
+            gender = 3
+            move_1 = 242
+            move_2 = 133
+            form = 0
+        else:
+            gender = display.get("gender_value", None)
+            move_1 = pokemon_data.get("move_1")
+            move_2 = pokemon_data.get("move_2")
+            form = display.get("form_value", None)
+
+        capture_probability = encounter_proto.get("capture_probability", {})
+        capture_probability_list = capture_probability.get("capture_probability_list", None)
+        if capture_probability_list is not None:
+            capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
+
+        now = datetime.utcfromtimestamp(timestamp)
+        time_start_submit = time.time()
+        async with session.begin_nested() as nested_transaction:
+            mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
+            if not mon:
+                mon: Pokemon = Pokemon()
+                mon.encounter_id = encounter_id
+                mon.latitude = 0
+                mon.longitude = 0
+                mon.spawnpoint_id = 0
+                # TODO: Does this make sense? 2 Minute despawn to at least show it?
+                mon.disappear_time = now + timedelta(minutes=2)
+                mon.rating_attack = mon.rating_defense = None
+            mon.pokemon_id = mon_id
+            mon.costume = display.get("costume_value", None)
+            mon.form = form
+            mon.gender = gender
+            mon.seen_type = MonSeenTypes.LURE_ENCOUNTER.value
+            mon.individual_attack = pokemon_data.get("individual_attack")
+            mon.individual_defense = pokemon_data.get("individual_defense")
+            mon.individual_stamina = pokemon_data.get("individual_stamina")
+            mon.move_1 = move_1
+            mon.move_2 = move_2
+            mon.cp = pokemon_data.get("cp")
+            mon.cp_multiplier = pokemon_data.get("cp_multiplier")
+            mon.weight = pokemon_data.get("weight")
+            mon.height = pokemon_data.get("height")
+            if capture_probability_list:
+                mon.catch_prob_1 = float(capture_probability_list[0])
+                mon.catch_prob_2 = float(capture_probability_list[1])
+                mon.catch_prob_3 = float(capture_probability_list[2])
+            mon.weather_boosted_condition = weather_boosted
+            mon.last_modified = now
+
+            logger.debug("Submitting IV {}", encounter_id)
+            session.add(mon)
+            await nested_transaction.commit()
+            await cache.set(cache_key, 1, expire=60 * 3)
+
+            time_done = time.time() - time_start_submit
+            logger.success("Done updating mon lure IV in DB in {} seconds", time_done)
+        return encounter_id, now
+
+    async def mon_lure_noiv(self, session: AsyncSession, origin: str, timestamp: float, gmo: dict,
+                            mitm_mapper) -> List[Tuple[int, datetime]]:
+        """
+        Update/Insert Lure mons from a map_proto dict
+        """
+        cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
+        logger.debug3("DbPogoProtoSubmit::mon_lure_noiv called with data received")
+        cells = gmo.get("cells", None)
+        encounters: List[Tuple[int, datetime]] = []
+        if cells is None:
+            return encounters
+
+        for cell in cells:
+            for fort in cell["forts"]:
+                lure_mon = fort.get("active_pokemon", {})
+                mon_id = lure_mon.get("id", 0)
+                if fort["type"] == 1 and mon_id > 0:
+                    encounter_id = lure_mon["encounter_id"]
+
+                    if encounter_id < 0:
+                        encounter_id = encounter_id + 2 ** 64
+
+                    cache_key = "monlurenoiv{}".format(encounter_id)
+                    if await cache.exists(cache_key):
+                        continue
+
+                    lat = fort["latitude"]
+                    lon = fort["longitude"]
+                    stopid = fort["id"]
+                    disappear_time = datetime.utcfromtimestamp(
+                        lure_mon["expiration_timestamp"] / 1000)
+
+                    now = datetime.utcfromtimestamp(timestamp)
+
+                    display = lure_mon["display"]
+                    form = display["form_value"]
+                    costume = display["costume_value"]
+                    gender = display["gender_value"]
+                    weather_boosted = display["weather_boosted_value"]
+
+                    async with session.begin_nested() as nested_transaction:
+                        mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
+                        if not mon:
+                            mon: Pokemon = Pokemon()
+                            mon.encounter_id = encounter_id
+                            mon.spawnpoint_id = 0
+                            mon.seen_type = MonSeenTypes.LURE_WILD.value
+                            mon.pokemon_id = mon_id
+                            mon.gender = gender
+                            mon.weather_boosted_condition = weather_boosted
+                            mon.costume = costume
+                            mon.form = form
+                        mon.latitude = lat
+                        mon.longitude = lon
+                        mon.disappear_time = disappear_time
+                        mon.fort_id = stopid
+                        mon.last_modified = now
+                        try:
+                            logger.debug("Submitting lured non-IV mon {}", encounter_id)
+                            session.add(mon)
+                            await nested_transaction.commit()
+                            await cache.set(cache_key, 1, expire=60 * 3)
+                            encounters.append((encounter_id, now))
+                        except sqlalchemy.exc.IntegrityError as e:
+                            logger.debug("Failed committing lured non-IV mon {} ({}). Safe to ignore.", encounter_id, str(e))
+                            await nested_transaction.rollback()
+        return encounters
+
+    async def update_seen_type_stats(self, session: AsyncSession, **kwargs):
+        insert: Dict[int, Dict[MonSeenTypes, datetime]] = {}
+        for seen_type in [MonSeenTypes.ENCOUNTER, MonSeenTypes.WILD, MonSeenTypes.NEARBY_STOP,
+                          MonSeenTypes.NEARBY_CELL, MonSeenTypes.LURE_ENCOUNTER, MonSeenTypes.LURE_WILD]:
+            encounters = kwargs.get(seen_type.value, None)
+            if encounters is None:
+                continue
+
+            for encounter_id, seen_time in encounters:
+                if encounter_id not in insert:
+                    insert[encounter_id] = {}
+                insert[encounter_id][seen_type] = seen_time
+
+        for encounter_id, values in insert.items():
+            encounter: Optional[datetime] = values.get(MonSeenTypes.ENCOUNTER, None)
+            wild: Optional[datetime] = values.get(MonSeenTypes.WILD, None)
+            nearby_stop: Optional[datetime] = values.get(MonSeenTypes.NEARBY_STOP, None)
+            nearby_cell: Optional[datetime] = values.get(MonSeenTypes.NEARBY_CELL, None)
+            lure_encounter: Optional[datetime] = values.get(MonSeenTypes.LURE_ENCOUNTER, None)
+            lure_wild: Optional[datetime] = values.get(MonSeenTypes.LURE_WILD, None)
+            async with session.begin_nested() as nested_transaction:
+                stat_seen_type: Optional[TrsStatsDetectSeenType] = await TrsStatsDetectSeenTypeHelper.get(session,
+                                                                                                          encounter_id)
+                if not stat_seen_type:
+                    stat_seen_type: TrsStatsDetectSeenType = TrsStatsDetectSeenType()
+                    stat_seen_type.encounter_id = encounter_id
+                if encounter:
+                    stat_seen_type.encounter = encounter
+                if wild:
+                    stat_seen_type.wild = wild
+                if nearby_stop:
+                    stat_seen_type.nearby_stop = nearby_stop
+                if nearby_cell:
+                    stat_seen_type.nearby_cell = nearby_cell
+                if lure_encounter:
+                    stat_seen_type.lure_encounter = lure_encounter
+                if lure_wild:
+                    stat_seen_type.lure_wild = lure_wild
+                try:
+                    logger.debug("Submitting mon seen stat {}", encounter_id)
+                    session.add(stat_seen_type)
+                    await nested_transaction.commit()
+                except sqlalchemy.exc.IntegrityError as e:
+                    logger.debug("Failed committing  mon seen stat {} ({}). Safe to ignore.", encounter_id, str(e))
+                    await nested_transaction.rollback()
 
     async def spawnpoints(self, session: AsyncSession, origin: str, map_proto: dict, proto_dt: datetime):
         origin_logger = get_origin_logger(logger, origin=origin)
@@ -329,7 +623,7 @@ class DbPogoProtoSubmit:
                 return True
             async with session.begin_nested() as nested_transaction:
                 try:
-                    await session.merge(stop)
+                    session.add(stop)
                     await nested_transaction.commit()
                     await cache.set(cache_key, 1, expire=900)
                 except sqlalchemy.exc.IntegrityError as e:
@@ -402,7 +696,7 @@ class DbPogoProtoSubmit:
         origin_logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
         async with session.begin_nested() as nested_transaction:
             try:
-                await session.merge(quest)
+                session.add(quest)
                 await nested_transaction.commit()
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing quest of stop {}, ({})", fort_id, str(e))
@@ -454,7 +748,7 @@ class DbPogoProtoSubmit:
                     gym_obj.last_scanned = datetime.utcnow()
                     gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
                     gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
-                    await session.merge(gym_obj)
+                    session.add(gym_obj)
 
                     gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gymid)
                     if not gym_detail:
@@ -463,7 +757,7 @@ class DbPogoProtoSubmit:
                         gym_detail.name = "unknown"
                     gym_detail.url = gym.get("image_url", "")
                     gym_detail.last_scanned = datetime.utcnow()
-                    await session.merge(gym_detail)
+                    session.add(gym_detail)
                     async with session.begin_nested() as nested_transaction:
                         try:
                             await cache.set(cache_key, 1, expire=900)
@@ -508,7 +802,7 @@ class DbPogoProtoSubmit:
         if touched:
             async with session.begin_nested() as nested_transaction:
                 try:
-                    await session.merge(gym_detail)
+                    session.add(gym_detail)
                     await nested_transaction.commit()
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed committing gym info {} ({})", gym_id, str(e))
@@ -594,7 +888,7 @@ class DbPogoProtoSubmit:
                     raid.evolution = evolution
                     async with session.begin_nested() as nested_transaction:
                         try:
-                            await session.merge(raid)
+                            session.add(raid)
 
                             await nested_transaction.commit()
                             await cache.set(cache_key, 1, expire=900)
@@ -638,18 +932,20 @@ class DbPogoProtoSubmit:
             s2cell: Optional[TrsS2Cell] = await TrsS2CellHelper.get(session, cell_id)
             if not s2cell:
                 s2cell: TrsS2Cell = TrsS2Cell()
+                s2cell.id = cell_id
                 s2cell.level = 15
                 s2cell.center_latitude = lat
                 s2cell.center_longitude = lng
             s2cell.updated = cell["current_timestamp"] / 1000
             async with session.begin_nested() as nested_transaction:
                 try:
-                    await session.merge(s2cell)
+                    session.add(s2cell)
+                    await nested_transaction.commit()
                     # Only update s2cell's current_timestamp every 30s at most to avoid too many UPDATE operations
                     # in dense areas being covered by a number of devices
                     await cache.set(cache_key, 1, expire=30)
                 except sqlalchemy.exc.IntegrityError as e:
-                    logger.warning("Failed committing cell for gym {} ({})", cell_id, str(e))
+                    logger.debug("Failed committing cell {} ({})", cell_id, str(e))
                     await nested_transaction.rollback()
 
     async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache, stop_data) -> Optional[Pokestop]:
@@ -729,7 +1025,7 @@ class DbPogoProtoSubmit:
         pokestop.is_ar_scan_eligible = is_ar_scan_eligible
         async with session.begin_nested() as nested_transaction:
             try:
-                await session.merge(pokestop)
+                session.add(pokestop)
                 await nested_transaction.commit()
                 await cache.set(cache_key, 1, expire=900)
             except sqlalchemy.exc.IntegrityError as e:
@@ -798,7 +1094,7 @@ class DbPogoProtoSubmit:
                 if not weather:
                     return
 
-                await session.merge(weather)
+                session.add(weather)
                 await cache.set(cache_key, 1, expire=900)
                 await nested_transaction.commit()
             except sqlalchemy.exc.IntegrityError as e:

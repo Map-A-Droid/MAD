@@ -7,10 +7,11 @@ from sqlalchemy import and_, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokemon, TrsStatsDetectMonRaw, TrsSpawn
+from mapadroid.db.model import Pokemon, TrsStatsDetectMonRaw, TrsSpawn, Pokestop
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import MonSeenTypes
 
 logger = get_logger(LoggerEnums.database)
 
@@ -78,6 +79,7 @@ class PokemonHelper:
                                           Pokemon.individual_defense == None,
                                           Pokemon.individual_stamina == None,
                                           Pokemon.encounter_id != 0,
+                                          Pokemon.seen_type != MonSeenTypes.NEARBY_CELL.value,
                                           Pokemon.disappear_time.between(datetime.datetime.utcnow()
                                                                          + datetime.timedelta(
                                               seconds=min_time_left_seconds),
@@ -100,7 +102,7 @@ class PokemonHelper:
                 continue
 
             next_to_encounter.append((pokemon.pokemon_id, Location(float(pokemon.latitude), float(pokemon.longitude)),
-                                      pokemon.encounter_id))
+                                      pokemon.encounter_id, pokemon.seen_type, pokemon.cell_id))
         # now filter by the order of eligible_mon_ids
         to_be_encountered = []
         i = 0
@@ -287,9 +289,21 @@ class PokemonHelper:
         return results
 
     @staticmethod
-    async def get_changed_since(session: AsyncSession, utc_timestamp: int) -> List[Tuple[Pokemon, TrsSpawn]]:
-        stmt = select(Pokemon, TrsSpawn) \
-            .join(TrsSpawn, TrsSpawn.spawnpoint == Pokemon.spawnpoint_id, isouter=False) \
-            .where(Pokemon.last_modified > datetime.datetime.utcfromtimestamp(utc_timestamp))
+    async def get_changed_since(session: AsyncSession, utc_timestamp: int,
+                                mon_types: Optional[Set[MonSeenTypes]] = None) -> List[Tuple[Pokemon, TrsSpawn,
+                                                                                             Optional[Pokestop]]]:
+        if not mon_types:
+            mon_types = {MonSeenTypes.ENCOUNTER, MonSeenTypes.LURE_ENCOUNTER}
+        stmt = select(Pokemon, TrsSpawn, Pokestop) \
+            .join(TrsSpawn, TrsSpawn.spawnpoint == Pokemon.spawnpoint_id, isouter=True)
+
+        raw_types: List[str] = [x.value for x in mon_types]
+        if {MonSeenTypes.NEARBY_STOP, MonSeenTypes.LURE_WILD, MonSeenTypes.LURE_ENCOUNTER} & mon_types:
+            # Lured/Nearby stops are to be included in the result set...
+            stmt = stmt.join(Pokestop, Pokestop.pokestop_id == Pokemon.fort_id)
+
+        stmt = stmt.where(and_(Pokemon.last_modified > datetime.datetime.utcfromtimestamp(utc_timestamp),
+                               Pokemon.seen_type.in_(raw_types)))
+
         result = await session.execute(stmt)
         return result.all()

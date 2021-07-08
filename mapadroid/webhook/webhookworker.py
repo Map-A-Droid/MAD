@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 from asyncio import Task
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict, Tuple, Set
 
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.DbWrapper import DbWrapper
@@ -12,14 +12,13 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.json_encoder import MADEncoder
-from mapadroid.utils.madGlobals import terminate_mad
+from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
 from loguru import logger
 
 
 class WebhookWorker:
-    __IV_MON: List[int] = List[int]
     __excluded_areas = {}
 
     def __init__(self, args, db_wrapper: DbWrapper, mapping_manager: MappingManager, rarity):
@@ -29,9 +28,16 @@ class WebhookWorker:
         self.__rarity = rarity
         self.__last_check = int(time.time())
         self.__webhook_receivers = []
-        self.__webhook_types = []
+        self.__webhook_types: Set[str] = set()
+        self.__pokemon_types: Set[MonSeenTypes] = set()
         self.__mapping_manager: MappingManager = mapping_manager
-        self.__valid_types = ['pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop']
+        self.__valid_types: Set[str] = {
+            'pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop'
+        }
+        self.__valid_mon_types: Set[MonSeenTypes] = {
+            MonSeenTypes.ENCOUNTER, MonSeenTypes.WILD, MonSeenTypes.NEARBY_STOP, MonSeenTypes.NEARBY_CELL,
+            MonSeenTypes.LURE_WILD, MonSeenTypes.LURE_ENCOUNTER
+        }
 
     def __payload_type_count(self, payload):
         count = {}
@@ -66,7 +72,8 @@ class WebhookWorker:
 
             if sub_types is not None:
                 for payload in payloads:
-                    if payload["type"] in sub_types:
+                    if payload["type"] in sub_types or \
+                       (payload["message"].get("seen_type", None) in sub_types):
                         payload_to_send.append(payload)
             else:
                 payload_to_send = payloads
@@ -397,20 +404,15 @@ class WebhookWorker:
             if self.__is_in_excluded_area([mon["latitude"], mon["longitude"]]):
                 continue
 
-            if not self.__args.pokemon_webhook_nonivs \
-                    and mon["pokemon_id"] in self.__IV_MON \
-                    and (mon["individual_attack"] is None):
-                # skipping this mon since IV has not been scanned yet
-                continue
-
             mon_payload = {
-                "encounter_id": mon["encounter_id"],
+                "encounter_id": str(mon["encounter_id"]),
                 "pokemon_id": mon["pokemon_id"],
                 "spawnpoint_id": mon["spawnpoint_id"],
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
                 "disappear_time": mon["disappear_time"],
                 "verified": mon["spawn_verified"],
+                "seen_type": str(mon["seen_type"])
             }
 
             # get rarity
@@ -467,6 +469,24 @@ class WebhookWorker:
                     mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
                 if self.__args.quest_webhook_flavor == "poracle":
                     mon_payload["weather"] = mon["weather_boosted_condition"]
+
+            if mon["seen_type"] in (MonSeenTypes.NEARBY_STOP.value, MonSeenTypes.LURE_WILD.value,
+                                    MonSeenTypes.LURE_ENCOUNTER.value):
+                mon_payload["pokestop_id"] = mon["fort_id"]
+                mon_payload["pokestop_name"] = mon.get("stop_name")
+                mon_payload["pokestop_url"] = mon.get("stop_url")
+
+                if mon["seen_type"] == MonSeenTypes.NEARBY_STOP.value:
+                    mon_payload["verified"] = False
+                else:
+                    mon_payload["verified"] = True
+
+            if mon["seen_type"] == MonSeenTypes.NEARBY_CELL.value:
+                mon_payload["cell_coords"] = S2Helper.coords_of_cell(
+                    mon["cell_id"]
+                )
+                mon_payload["cell_id"] = mon["cell_id"]
+                mon_payload["verified"] = False
 
             entire_payload = {"type": "pokemon", "message": mon_payload}
             ret.append(entire_payload)
@@ -542,40 +562,38 @@ class WebhookWorker:
         return ret
 
     def __build_webhook_receivers(self):
-        webhooks = self.__args.webhook_url.replace(" ", "").split(",")
+        webhooks = self.__args.webhook_url.split(",")
 
         for webhook in webhooks:
             sub_types = None
             url = webhook.strip()
 
             if url.startswith("["):
-                end_index = webhook.index("]")
-                end_index += 1
-                sub_types = webhook[:end_index]
-                url = url[end_index:]
+                end_pos = url.index("]")
+                raw_sub_types = url[1:end_pos]
+                url = url[end_pos + 1:]
+                sub_types = raw_sub_types[1:].split(" ")
+                sub_types = [t.replace(" ", "") for t in sub_types]
+
+                if "pokemon" in sub_types:
+                    sub_types.append("encounter")
 
                 for vtype in self.__valid_types:
-                    if vtype not in self.__webhook_types and vtype in sub_types:
-                        self.__webhook_types.append(vtype)
+                    if vtype in sub_types:
+                        self.__webhook_types.add(vtype)
+                    for vmtype in self.__valid_mon_types:
+                        if vmtype.value in sub_types:
+                            self.__pokemon_types.add(vmtype)
             else:
-                for vtype in self.__valid_types:
-                    if vtype not in self.__webhook_types:
-                        self.__webhook_types.append(vtype)
+                for valid_mon_type in self.__valid_mon_types:
+                    self.__webhook_types.add(valid_mon_type.value)
+                for valid_type in self.__valid_types:
+                    self.__webhook_types.add(valid_type)
 
             self.__webhook_receivers.append({
-                "url": url,
+                "url": url.replace(" ", ""),
                 "types": sub_types
             })
-
-    async def __build_ivmon_list(self):
-        self.__IV_MON: List[int] = []
-
-        for routemanager_name in await self.__mapping_manager.get_all_routemanager_ids():
-            ids_iv_list: Optional[List[int]] = await self.__mapping_manager.routemanager_get_ids_iv(routemanager_name)
-
-            if ids_iv_list is not None:
-                # TODO check if area/routemanager is actually active before adding the IDs
-                self.__IV_MON = self.__IV_MON + list(set(ids_iv_list) - set(self.__IV_MON))
 
     async def __build_excluded_areas(self):
         self.__excluded_areas: List[GeofenceHelper] = []
@@ -645,9 +663,9 @@ class WebhookWorker:
                     full_payload += pokestops
 
                 # mon
-                if 'pokemon' in self.__webhook_types:
+                if self.__pokemon_types:
                     mon = self.__prepare_mon_data(
-                        await DbWebhookReader.get_mon_changed_since(session, self.__last_check)
+                        await DbWebhookReader.get_mon_changed_since(session, self.__last_check, self.__pokemon_types)
                     )
                     full_payload += mon
             except Exception:
@@ -665,7 +683,6 @@ class WebhookWorker:
         logger.info("Starting webhook worker thread")
 
         self.__build_webhook_receivers()
-        await self.__build_ivmon_list()
         await self.__build_excluded_areas()
 
         if self.__args.webhook_start_time != 0:

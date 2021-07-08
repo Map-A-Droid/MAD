@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
@@ -49,10 +49,12 @@ class RouteManagerIV(RouteManagerBase):
                                                                           min_time_left_seconds=self._settings.min_time_left_seconds,
                                                                           eligible_mon_ids=self._mon_ids_iv)
         # extract the encounterIDs and set them in the routeManager...
-        new_list = []
+        new_list: Set = set()
+        # TODO: I do not think this will work considering the collection consists of tuples of different values...
+        #  => Filter by encounterID should be done
         for prio in latest_priorities:
-            new_list.append(prio[2])
-        self.encounter_ids_left = new_list
+            new_list.add(prio[2])
+        self.encounter_ids_left = list(new_list)
         # Clear old encounters in the list...
         self._prio_queue.clear()
         return latest_priorities

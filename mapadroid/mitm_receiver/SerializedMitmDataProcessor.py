@@ -1,6 +1,7 @@
 import asyncio
 import time
 from datetime import datetime
+from typing import List, Tuple, Optional
 
 import sqlalchemy
 from loguru import logger
@@ -84,30 +85,86 @@ class SerializedMitmDataProcessor:
                 gyms_time = await self.__process_gyms(data, origin, session)
                 raids_time = await self.__process_raids(data, origin, session)
                 spawnpoints_time = await self.__process_spawnpoints(data, origin, processed_timestamp, session)
-                mons_time = await self.__process_wild_mons(data, origin, received_timestamp, session)
-
                 cells_time = await self.__process_cells(data, origin, session)
 
                 gmo_loc_start = self.get_time_ms()
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 gmo_loc_time = self.get_time_ms() - gmo_loc_start
 
+                lure_wild: List[Tuple[int, datetime]] = []
+                if self.__application_args.scan_lured_mons:
+                    lurenoiv_start = self.get_time_ms()
+                    lure_wild = await self.__db_submit.mon_lure_noiv(session, origin, received_timestamp,
+                                                                     data["payload"],
+                                                                     self.__mitm_mapper)
+                    lurenoiv_time = self.get_time_ms() - lurenoiv_start
+                else:
+                    lurenoiv_time = 0
+
+                if self.__application_args.scan_nearby_mons:
+                    nearby_mons_time_start = self.get_time_ms()
+                    try:
+                        cell_encounters, stop_encounters = await self.__db_submit.mons_nearby(session,
+                                                                                              origin, received_timestamp,
+                                                                                              data["payload"],
+                                                                                              self.__mitm_mapper)
+                    except Exception as e:
+                        logger.exception(e)
+                    nearby_mons_time = self.get_time_ms() - nearby_mons_time_start
+                else:
+                    cell_encounters = []
+                    stop_encounters = []
+                    nearby_mons_time = 0
+
+                mons_time, wild_encounter_ids_processed = await self.__process_wild_mons(data, origin,
+                                                                                         received_timestamp,
+                                                                                         session)
+                if self.__application_args.game_stats:
+                    await self.__db_submit.update_seen_type_stats(session,
+                                                                  wild=wild_encounter_ids_processed,
+                                                                  lure_wild=lure_wild,
+                                                                  nearby_cell=cell_encounters,
+                                                                  nearby_stop=stop_encounters
+                                                                  )
+
                 full_time = self.get_time_ms() - start_time
 
                 logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
-                             "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
+                             "spawnpoints={}ms, mons={}ms, "
+                             "nearby_mons={}, lure_noiv={}, cells={}ms, "
+                             "gmo_loc={}ms)",
                              full_time, weather_time, stops_time, gyms_time, raids_time,
-                             spawnpoints_time, mons_time, cells_time, gmo_loc_time)
+                             spawnpoints_time, mons_time, nearby_mons_time, lurenoiv_time,
+                             cells_time, gmo_loc_time)
             elif data_type == 102:
                 playerlevel = await self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
                     logger.debug("Processing encounter received at {}", processed_timestamp)
-                    await self.__db_submit.mon_iv(session, origin, received_timestamp, data["payload"],
-                                                  self.__mitm_mapper)
+                    encounter: Optional[Tuple[int, datetime]] = await self.__db_submit.mon_iv(session, origin,
+                                                                                              received_timestamp,
+                                                                                              data["payload"],
+                                                                                              self.__mitm_mapper)
+
+                    if self.__application_args.game_stats and encounter:
+                        await self.__db_submit.update_seen_type_stats(session, encounter=encounter)
                     end_time = self.get_time_ms() - start_time
                     logger.debug("Done processing encounter in {}ms", end_time)
                 else:
                     logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
+            elif data_type == 145:
+                # lure mons with iv
+                playerlevel = await self.__mitm_mapper.get_playerlevel(origin)
+                if self.__application_args.scan_lured_mons and (playerlevel >= 30):
+                    logger.debug("Processing lure encounter received at {}", processed_timestamp)
+
+                    lure_encounter: Optional[Tuple[int, datetime]] = await self.__db_submit \
+                        .mon_lure_iv(session, origin, received_timestamp, data["payload"], self.__mitm_mapper)
+
+                    if self.__application_args.game_stats:
+                        await self.__db_submit.update_seen_type_stats(session, lure_encounter=lure_encounter)
+
+                    end_time = self.get_time_ms() - start_time
+                    logger.debug("Done processing lure encounter in {}ms", end_time)
             elif data_type == 101:
                 logger.debug("Processing proto 101 (FORT_SEARCH)")
                 await self.__db_submit.quest(session, origin, data["payload"], self.__mitm_mapper)
@@ -131,9 +188,13 @@ class SerializedMitmDataProcessor:
 
     async def __process_wild_mons(self, data, origin, received_timestamp, session):
         mons_time_start = self.get_time_ms()
-        await self.__db_submit.mons(session, origin, received_timestamp, data["payload"], self.__mitm_mapper)
+        encounter_ids_processed: List[Tuple[int, datetime]] = await self.__db_submit.mons(session, origin,
+                                                                                          received_timestamp,
+                                                                                          data["payload"],
+                                                                                          self.__mitm_mapper)
+
         mons_time = self.get_time_ms() - mons_time_start
-        return mons_time
+        return mons_time, encounter_ids_processed
 
     async def __process_cells(self, data, origin, session):
         cells_time_start = self.get_time_ms()

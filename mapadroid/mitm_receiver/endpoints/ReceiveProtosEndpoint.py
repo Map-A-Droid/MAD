@@ -47,7 +47,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
-        if proto_type not in (106, 102, 101, 104, 4, 156):
+        if proto_type not in (106, 102, 101, 104, 4, 156, 145):
             # trash protos - ignoring
             return
 

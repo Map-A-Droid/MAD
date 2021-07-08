@@ -1,3 +1,4 @@
+import random
 from datetime import timezone
 from typing import Optional, Dict, List
 
@@ -7,6 +8,7 @@ from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoi
 from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_name
+from mapadroid.utils.madGlobals import MonSeenTypes
 
 
 class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
@@ -39,6 +41,10 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
                 serialized_entry["last_modified"] = int(mon.last_modified.replace(tzinfo=timezone.utc).timestamp())
             else:
                 serialized_entry["last_modified"] = 0
+
+            if mon.seen_type in (MonSeenTypes.NEARBY_STOP.value, MonSeenTypes.NEARBY_CELL.value):
+                serialized_entry["latitude"] = float(serialized_entry["latitude"]) + random.uniform(-0.0003, 0.0003)
+                serialized_entry["longitude"] = float(serialized_entry["longitude"]) + random.uniform(-0.0005, 0.0005)
             try:
                 if mon.pokemon_id in mon_name_cache:
                     mon_name = mon_name_cache[mon.pokemon_id]
