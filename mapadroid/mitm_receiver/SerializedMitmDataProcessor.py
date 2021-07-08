@@ -103,13 +103,10 @@ class SerializedMitmDataProcessor:
 
                 if self.__application_args.scan_nearby_mons:
                     nearby_mons_time_start = self.get_time_ms()
-                    try:
-                        cell_encounters, stop_encounters = await self.__db_submit.mons_nearby(session,
-                                                                                              origin, received_timestamp,
-                                                                                              data["payload"],
-                                                                                              self.__mitm_mapper)
-                    except Exception as e:
-                        logger.exception(e)
+                    cell_encounters, stop_encounters = await self.__db_submit.mons_nearby(session,
+                                                                                          origin, received_timestamp,
+                                                                                          data["payload"],
+                                                                                          self.__mitm_mapper)
                     nearby_mons_time = self.get_time_ms() - nearby_mons_time_start
                 else:
                     cell_encounters = []
@@ -146,7 +143,7 @@ class SerializedMitmDataProcessor:
                                                                                               self.__mitm_mapper)
 
                     if self.__application_args.game_stats and encounter:
-                        await self.__db_submit.update_seen_type_stats(session, encounter=encounter)
+                        await self.__db_submit.update_seen_type_stats(session, encounter=[encounter])
                     end_time = self.get_time_ms() - start_time
                     logger.debug("Done processing encounter in {}ms", end_time)
                 else:
@@ -161,7 +158,7 @@ class SerializedMitmDataProcessor:
                         .mon_lure_iv(session, origin, received_timestamp, data["payload"], self.__mitm_mapper)
 
                     if self.__application_args.game_stats:
-                        await self.__db_submit.update_seen_type_stats(session, lure_encounter=lure_encounter)
+                        await self.__db_submit.update_seen_type_stats(session, lure_encounter=[lure_encounter])
 
                     end_time = self.get_time_ms() - start_time
                     logger.debug("Done processing lure encounter in {}ms", end_time)
