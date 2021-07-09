@@ -150,7 +150,7 @@ class DbPogoProtoSubmit:
                 cache_key = "monnear{}-{}".format(encounter_id, mon_id)
                 encounter_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
                 wild_key = "mon{}-{}".format(encounter_id, mon_id)
-                if await cache.exists(cache_key) or await cache.exists(encounter_key) or await cache.exists(wild_key):
+                if await cache.exists(wild_key) or await cache.exists(encounter_key) or await cache.exists(cache_key):
                     continue
                 stop_id = nearby_mon["fort_id"]
                 form = display["form_value"]
