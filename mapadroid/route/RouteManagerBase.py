@@ -852,8 +852,8 @@ class RouteManagerBase(ABC):
                 subroute_index += 1
                 new_subroute.append(temp_total_round.popleft())
 
-            logger.debug("New Subroute for worker {}: {}", origin, new_subroute)
-            logger.debug("Old Subroute for worker {}: {}", origin, entry.subroute)
+            logger.debug3("New Subroute for worker {}: {}", origin, new_subroute)
+            logger.debug3("Old Subroute for worker {}: {}", origin, entry.subroute)
 
             i += 1
             if len(entry.subroute) == 0:
@@ -872,8 +872,8 @@ class RouteManagerBase(ABC):
                 else:
                     logger.info("Subroute of {} has changed. Replacing entirely", origin)
                     # TODO: what now?
-                    logger.debug('new_subroute: {}', new_subroute)
-                    logger.debug('entry.subroute: {}', entry.subroute)
+                    logger.debug4('new_subroute: {}', new_subroute)
+                    logger.debug4('entry.subroute: {}', entry.subroute)
                     logger.debug('new_subroute == entry.subroute: {}', new_subroute == entry.subroute)
                     entry.subroute = new_subroute
                     entry.queue.clear()
@@ -980,7 +980,6 @@ class RouteManagerBase(ABC):
             if less_coords:
                 new_subroute_length = 0
 
-        logger.debug("Current routepool: {}", self._routepool)
         logger.debug("Done updating subroutes")
         return True
         # TODO: A worker has been removed or added, we need to update the individual workerpools/queues
