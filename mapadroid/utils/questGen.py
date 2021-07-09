@@ -213,9 +213,9 @@ async def questtask(typeid, condition, target, quest_template):
     elif typeid == 8:
         if re.search(r'"type": 6', condition) is not None:
             text = _("Win {0} Raids")
-            if re.search(r'"raid_level": \[3, 4, 5\]', condition) is not None:
+            if re.search(r'"raid_level": \[3, 4, 5(.*)\]', condition) is not None:
                 text = _('Win a level 3 or higher raid')
-            if re.search(r'"raid_level": \[2, 3, 4, 5\]', condition) is not None:
+            if re.search(r'"raid_level": \[2, 3, 4, 5(.*)\]', condition) is not None:
                 text = _('Win a level 2 or higher raid')
             if re.search(r'"raid_level": \[6\]', condition) is not None:
                 text = _('Win a Mega raid')
