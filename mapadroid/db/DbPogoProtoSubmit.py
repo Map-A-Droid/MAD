@@ -508,7 +508,11 @@ class DbPogoProtoSubmit:
                     stat_seen_type.lure_wild = lure_wild
                 logger.debug("Submitting mon seen stat {}", encounter_id)
                 session.add(stat_seen_type)
-                await nested_transaction.commit()
+                try:
+                    await nested_transaction.commit()
+                except sqlalchemy.exc.IntegrityError as e:
+                    await nested_transaction.rollback()
+                    logger.debug("Failed submitting stat...")
 
     async def spawnpoints(self, session: AsyncSession, origin: str, map_proto: dict, proto_dt: datetime):
         origin_logger = get_origin_logger(logger, origin=origin)
