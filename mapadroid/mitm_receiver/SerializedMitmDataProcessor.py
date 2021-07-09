@@ -157,8 +157,7 @@ class SerializedMitmDataProcessor:
         lure_no_iv_task = None
         if self.__application_args.scan_lured_mons:
             lure_no_iv_task = loop.create_task(self.__process_lure_no_iv(data, lure_wild, origin, received_timestamp))
-        else:
-            lurenoiv_time = 0
+        lurenoiv_time = 0
 
         nearby_task = None
         if self.__application_args.scan_nearby_mons:
@@ -171,17 +170,6 @@ class SerializedMitmDataProcessor:
             cell_encounters, nearby_mons_time, stop_encounters = await nearby_task
         if lure_no_iv_task:
             lure_wild, lurenoiv_time = await lure_no_iv_task
-        stats_time = 0
-        if self.__application_args.game_stats:
-            stats_start = self.get_time_ms()
-            async with self.__db_wrapper as session, session:
-                await self.__db_submit.update_seen_type_stats(session,
-                                                              wild=wild_encounter_ids_processed,
-                                                              lure_wild=lure_wild,
-                                                              nearby_cell=cell_encounters,
-                                                              nearby_stop=stop_encounters)
-                await session.commit()
-            stats_time = self.get_time_ms() - stats_start
 
         weather_time = await weather_task
         raids_time = await raids_task
@@ -192,11 +180,30 @@ class SerializedMitmDataProcessor:
         full_time = self.get_time_ms() - start_time
         logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
                      "spawnpoints={}ms, mons={}ms, "
-                     "nearby_mons={}, lure_noiv={}, cells={}ms, "
-                     "gmo_loc={}ms, stats={}ms)",
+                     "nearby_mons={}ms, lure_noiv={}ms, cells={}ms, "
+                     "gmo_loc={}ms)",
                      full_time, weather_time, stops_time, gyms_time, raids_time,
                      spawnpoints_time, mons_time, nearby_mons_time, lurenoiv_time,
-                     cells_time, gmo_loc_time, stats_time)
+                     cells_time, gmo_loc_time)
+        await self.__fire_stats_submission(cell_encounters, lure_wild, stop_encounters, wild_encounter_ids_processed)
+
+    async def __fire_stats_submission(self, cell_encounters, lure_wild, stop_encounters, wild_encounter_ids_processed):
+        stats_time = 0
+        if self.__application_args.game_stats:
+            stats_start = self.get_time_ms()
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.__process_gmo_mon_stats(cell_encounters, lure_wild, stop_encounters,
+                                                          wild_encounter_ids_processed))
+            stats_time = self.get_time_ms() - stats_start
+
+    async def __process_gmo_mon_stats(self, cell_encounters, lure_wild, stop_encounters, wild_encounter_ids_processed):
+        async with self.__db_wrapper as session, session:
+            await self.__db_submit.update_seen_type_stats(session,
+                                                          wild=wild_encounter_ids_processed,
+                                                          lure_wild=lure_wild,
+                                                          nearby_cell=cell_encounters,
+                                                          nearby_stop=stop_encounters)
+            await session.commit()
 
     async def __process_lure_no_iv(self, data, lure_wild, origin, received_timestamp):
         lurenoiv_start = self.get_time_ms()
