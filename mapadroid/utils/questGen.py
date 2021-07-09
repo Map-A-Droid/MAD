@@ -119,7 +119,7 @@ async def pokemonname(id):
     return file[str(int(id))]["name"]
 
 
-def get_pokemon_type_str(pt):
+async def get_pokemon_type_str(pt):
     pokemon_types = await open_json_file('pokemonTypes')
     return pokemon_types[str(pt)].title() + _('-type')
 
@@ -155,9 +155,9 @@ async def questtask(typeid, condition, target, quest_template):
                 if num_of_pokemon_types > 1:
                     arr['type'] = "{}- or {} ".format(
                         _('-, ').join(pokemon_types[str(pt)].title() for pt in pokemon_type_array[::-1]),
-                        get_pokemon_type_str(pokemon_type_array[-1]))
+                        await get_pokemon_type_str(pokemon_type_array[-1]))
                 elif num_of_pokemon_types == 1:
-                    arr['type'] = get_pokemon_type_str(pokemon_type_array[0]) + " "
+                    arr['type'] = await get_pokemon_type_str(pokemon_type_array[0]) + " "
             elif condition_type == 2:
                 # Condition type 2 is to catch certain kind of pokemons
                 pokemon_id_array = con.get('with_pokemon_category', {}).get('pokemon_ids', [])
