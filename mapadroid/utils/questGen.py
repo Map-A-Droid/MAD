@@ -52,6 +52,13 @@ async def generate_quest(stop: Pokestop, quest: TrsQuest):
         else:
             pokemon_name = ''
         item_amount = quest.quest_item_amount
+    elif quest_reward_type == _("Candy"):
+        # TODO maybe we should be doing deep parsing against the reward array
+        item_amount = quest.quest_item_amount
+        item_type = quest_reward_type
+        pokemon_id = quest.quest_pokemon_id
+        pokemon_name = await i8ln(await pokemonname(str(pokemon_id)))
+
 
     if not quest.quest_task:
         quest_task = await questtask(
@@ -92,6 +99,7 @@ def questreward(quest_reward_type):
     quest_rewards = {
         2: _("Item"),
         3: _("Stardust"),
+        4: _("Candy"),
         7: _("Pokemon"),
         12: _("Energy")
     }
