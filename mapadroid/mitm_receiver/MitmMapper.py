@@ -53,7 +53,6 @@ class MitmMapper(object):
     async def __add_new_device(self, origin: str) -> None:
         self.__mapping[origin] = {}
         self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
-        await self.__playerstats[origin].open_player_stats()
 
     async def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
         if self.__application_args.game_stats:
