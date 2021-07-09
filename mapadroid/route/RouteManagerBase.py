@@ -347,24 +347,31 @@ class RouteManagerBase(ABC):
 
     async def _merge_priority_queue(self, new_queue):
         if new_queue:
-            new_queue = list(new_queue)
-            logger.success("Got {} new events", len(new_queue))
-            # TODO: verify if this procedure is good for other modes, too
-            # TODO: Async Executor as clustering takes time..
-            if self._mode == WorkerType.MON_MITM:
-                new_queue = await self._filter_priority_queue_internal(new_queue)
-                logger.debug2("Merging existing Q of {} events with {} clustered new events",
-                              len(self._prio_queue), len(new_queue))
-                merged: List[Tuple[int, Location]] = list(set(new_queue + copy(self._prio_queue)))
-                merged = list(merged)
-                logger.info("Merging resulted in queue with {} entries", len(merged))
-                merged = await self._filter_priority_queue_internal(merged, cluster=False)
-            else:
-                merged = await self._filter_priority_queue_internal(new_queue)
-            heapq.heapify(merged)
+            loop = asyncio.get_running_loop()
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                merged = await loop.run_in_executor(
+                    pool, self.__process_merge, new_queue)
             self._prio_queue = merged
             logger.success("Finalized new priority queue with {} entries", len(merged))
             logger.debug2("Priority queue entries: {}", str(merged))
+
+    def __process_merge(self, new_queue):
+        new_queue = list(new_queue)
+        logger.success("Got {} new events", len(new_queue))
+        # TODO: verify if this procedure is good for other modes, too
+        # TODO: Async Executor as clustering takes time..
+        if self._mode == WorkerType.MON_MITM:
+            new_queue = self._filter_priority_queue_internal(new_queue)
+            logger.debug2("Merging existing Q of {} events with {} clustered new events",
+                          len(self._prio_queue), len(new_queue))
+            merged: List[Tuple[int, Location]] = list(set(new_queue + copy(self._prio_queue)))
+            merged = list(merged)
+            logger.info("Merging resulted in queue with {} entries", len(merged))
+            merged = self._filter_priority_queue_internal(merged, cluster=False)
+        else:
+            merged = self._filter_priority_queue_internal(new_queue)
+        heapq.heapify(merged)
+        return merged
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
@@ -464,7 +471,7 @@ class RouteManagerBase(ABC):
         :return:
         """
 
-    async def _filter_priority_queue_internal(self, latest, cluster=True) -> List[Tuple[int, Location]]:
+    def _filter_priority_queue_internal(self, latest, cluster=True) -> List[Tuple[int, Location]]:
         """
         Filter through the internal priority queue and cluster events within the timedelta and distance returned by
         _cluster_priority_queue_criteria
@@ -494,10 +501,7 @@ class RouteManagerBase(ABC):
             latest: List[Tuple[int, Location]] = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
         # TODO: sort latest by modified flag of event
         if cluster:
-            loop = asyncio.get_running_loop()
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                merged = await loop.run_in_executor(
-                    pool, self.clustering_helper.get_clustered, latest)
+            merged = self.clustering_helper.get_clustered(latest)
             # merged = self.clustering_helper.get_clustered(latest)
             return merged
         else:
