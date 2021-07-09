@@ -112,7 +112,6 @@ class DbPogoProtoSubmit:
                     mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
                     mon.last_modified = now
                     try:
-                        logger.debug("Submitting mon {}", encounter_id)
                         session.add(mon)
                         await nested_transaction.commit()
                         cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
@@ -140,8 +139,6 @@ class DbPogoProtoSubmit:
         for cell in cells:
             cell_id = cell.get("id")
             nearby_mons = cell.get("nearby_pokemon", [])
-            if nearby_mons:
-                logger.success("Trying to handle {} nearby mons", len(nearby_mons))
             for nearby_mon in nearby_mons:
                 display = nearby_mon["display"]
                 weather_boosted = display["weather_boosted_value"]
@@ -202,11 +199,9 @@ class DbPogoProtoSubmit:
                     mon.form = form
                     mon.last_modified = now
                     try:
-                        logger.debug("Submitting nearby mon {}", encounter_id)
                         session.add(mon)
                         await nested_transaction.commit()
                         await cache.set(cache_key, 1, expire=self._args.default_nearby_timeleft * 60)
-                        logger.success("Successfully submitted nearby mon...")
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.warning("Failed committing nearby mon {} ({}). Safe to ignore.", encounter_id, str(e))
                         await nested_transaction.rollback()
