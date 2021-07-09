@@ -195,7 +195,6 @@ class TrsSpawnHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         spawns: Dict[int, Tuple[TrsSpawn, TrsEvent]] = {}
-        # TODO: Ensure .scalars() is correct here...
         for (spawn, event) in result.all():
             spawns[spawn.spawnpoint] = (spawn, event)
 

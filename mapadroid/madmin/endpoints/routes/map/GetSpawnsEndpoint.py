@@ -1,3 +1,5 @@
+import asyncio
+import concurrent
 from typing import List, Optional, Dict, Tuple
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
@@ -27,6 +29,15 @@ class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
                                                  old_sw_corner=Location(o_sw_lat, o_sw_lng),
                                                  timestamp=timestamp)
 
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            cluster_spawns = await loop.run_in_executor(
+                pool, self.__serialize_spawns, coords, data)
+
+        return await self._json_response(cluster_spawns)
+
+    def __serialize_spawns(self, coords, data):
+        # TODO: Starmap/multiprocess if possible given the possible huge amount of data here?
         for (spawn_id, (spawn, event)) in data.items():
             if event.event_name not in coords:
                 coords[event.event_name] = []
@@ -42,9 +53,7 @@ class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
                 "first_detection": spawn.first_detection.strftime(self._datetimeformat),
                 "event": event.event_name
             })
-
         cluster_spawns = []
         for spawn in coords:
             cluster_spawns.append({"EVENT": spawn, "Coords": coords[spawn]})
-
-        return await self._json_response(cluster_spawns)
+        return cluster_spawns
