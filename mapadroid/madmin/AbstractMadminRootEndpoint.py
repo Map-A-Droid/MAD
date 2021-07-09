@@ -121,6 +121,9 @@ class AbstractMadminRootEndpoint(web.View, ABC):
     def _get_plugin_hotlinks(self) -> List[Dict]:
         return self.request.app["plugin_hotlink"]
 
+    def _get_mon_name_cache(self) -> Dict[int, str]:
+        return self.request.app["mon_name_cache"]
+
     def _convert_to_json_string(self, content) -> str:
         try:
             return json.dumps(content, cls=MADEncoder)

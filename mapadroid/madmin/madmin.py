@@ -95,6 +95,7 @@ class MADmin(object):
         self._app["plugin_hotlink"] = self._plugin_hotlink
         self._app["storage_obj"] = self._storage_obj
         self._app['device_updater'] = self._device_updater
+        self._app['mon_name_cache'] = {}
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader([template_folder_path]))
         jinja2_env.filters["base64"] = base64Filter
         jinja2_env.filters["madJson"] = mad_json_filter
