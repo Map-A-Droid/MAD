@@ -140,11 +140,13 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         if data is not sentinel:
             if text or body:
                 raise ValueError("only one of data, text, or body should be specified")
-            else:
+            elif data:
                 loop = asyncio.get_running_loop()
                 with concurrent.futures.ThreadPoolExecutor() as pool:
                     text = await loop.run_in_executor(
                         pool, self.__json_dumps_proxy, data)
+            else:
+                text = ""
         return web.Response(
             text=text,
             body=body,

@@ -1,3 +1,5 @@
+import asyncio
+import concurrent
 from typing import List, Dict
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
@@ -45,22 +47,37 @@ class GetRouteEndpoint(AbstractControlEndpoint):
                         "tag": "subroute"
                     })
 
-            if len(routeinfo_by_id) > 0:
-                routecalcs: Dict[int, SettingsRoutecalc] = await SettingsRoutecalcHelper\
-                    .get_all(self._session, self._get_instance_id())
-                for routecalc_id, routecalc in routecalcs.items():
-                    if routecalc_id in routeinfo_by_id:
-                        routeinfo = routeinfo_by_id[routecalc_id]
-                        db_route = list(map(lambda coord: Location(coord["lat"], coord["lng"]),
-                                            RoutecalcUtil.read_saved_json_route(routecalc)))
-                        if db_route != routeinfo["route"]:
-                            routeinfo["subroutes"].append({
-                                "id": "%d_unapplied" % routeinfo["id"],
-                                "route": db_route,
-                                "name": "%s (unapplied)" % routeinfo["name"],
-                                "tag": "unapplied"
-                            })
-        return await self._json_response(list(map(lambda r: self.get_routepool_route(r), routeinfo_by_id.values())))
+        if len(routeinfo_by_id) > 0:
+            routecalcs: Dict[int, SettingsRoutecalc] = await SettingsRoutecalcHelper\
+                .get_all(self._session, self._get_instance_id())
+            loop = asyncio.get_running_loop()
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                await loop.run_in_executor(
+                    pool, self.__serialize_routecalcs, routecalcs, routeinfo_by_id)
+                # self.__serialize_routecalcs(routecalcs, routeinfo_by_id)
+                data = await loop.run_in_executor(
+                    pool, self.__prepare_data, routeinfo_by_id)
+        else:
+            data = []
+        return await self._json_response(data)
+
+    def __prepare_data(self, routeinfo_by_id):
+        data = list(map(lambda r: self.get_routepool_route(r), routeinfo_by_id.values()))
+        return data
+
+    def __serialize_routecalcs(self, routecalcs, routeinfo_by_id):
+        for routecalc_id, routecalc in routecalcs.items():
+            if routecalc_id in routeinfo_by_id:
+                routeinfo = routeinfo_by_id[routecalc_id]
+                db_route = list(map(lambda coord: Location(coord["lat"], coord["lng"]),
+                                    RoutecalcUtil.read_saved_json_route(routecalc)))
+                if db_route != routeinfo["route"]:
+                    routeinfo["subroutes"].append({
+                        "id": "%d_unapplied" % routeinfo["id"],
+                        "route": db_route,
+                        "name": "%s (unapplied)" % routeinfo["name"],
+                        "tag": "unapplied"
+                    })
 
     @staticmethod
     def get_routepool_route(route):

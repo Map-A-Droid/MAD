@@ -36,24 +36,6 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
                                                  timestamp=timestamp,
                                                  fence=fence)
 
-        # questinfo = {}
-        # for pokestop_id, (pokestop, quest) in data.items():
-        #     mon = "%03d" % quest.quest_pokemon_id
-        #     form_id = "%02d" % quest.quest_pokemon_form_id
-        #     costume_id = "%02d" % quest.quest_pokemon_costume_id
-        #     questinfo[pokestop_id] = ({
-        #         'pokestop_id': pokestop_id, 'latitude': pokestop.latitude, 'longitude': pokestop.longitude,
-        #         'quest_type': quest.quest_type, 'quest_stardust': quest.quest_stardust,
-        #         'quest_pokemon_id': mon, 'quest_pokemon_form_id': form_id,
-        #         'quest_pokemon_costume_id': costume_id,
-        #         'quest_reward_type': quest.quest_reward_type, 'quest_item_id': quest.quest_item_id,
-        #         'quest_item_amount': quest.quest_item_amount, 'name': pokestop.name, 'image': pokestop.image,
-        #         'quest_target': quest.quest_target,
-        #         'quest_condition': quest.quest_condition, 'quest_timestamp': quest.quest_timestamp,
-        #         'task': quest.quest_task, 'quest_reward': quest.quest_reward, 'quest_template': quest.quest_template,
-        #         'is_ar_scan_eligible': pokestop.is_ar_scan_eligible
-        #     })
-
         for stop_id, (stop, quest) in data.items():
             quests.append(await generate_quest(stop, quest))
 

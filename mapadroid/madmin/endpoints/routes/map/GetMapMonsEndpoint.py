@@ -1,3 +1,5 @@
+import asyncio
+import concurrent
 import random
 from datetime import timezone
 from typing import Optional, Dict, List
@@ -31,7 +33,11 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
                                                       old_sw_corner=Location(o_sw_lat,
                                                                              o_sw_lng) if o_sw_lat and o_sw_lng else None,
                                                       timestamp=timestamp)
+        mons_serialized = await self.__serialize_mons(data)
 
+        return await self._json_response(mons_serialized)
+
+    async def __serialize_mons(self, data):
         mons_serialized: List[Dict] = []
         mon_name_cache: Dict[int, str] = {}
         for mon in data:
@@ -56,5 +62,4 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
             except Exception:
                 pass
             mons_serialized.append(serialized_entry)
-
-        return await self._json_response(mons_serialized)
+        return mons_serialized

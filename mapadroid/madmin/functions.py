@@ -141,12 +141,12 @@ async def get_geofences(mapping_manager: MappingManager, session: AsyncSession, 
     for area_id, area_entry in areas.items():
         if area_id_req is not None and int(area_id) is not int(area_id_req):
             continue
-        geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
-                                                                                         area_entry.geofence_included)
-        geofence_excluded: Optional[SettingsGeofence] = None
-        if area_entry.geofence_excluded is not None:
-            geofence_excluded: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
-                                                                                             area_entry.geofence_excluded)
+        #geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
+        #                                                                                 area_entry.geofence_included)
+        #geofence_excluded: Optional[SettingsGeofence] = None
+        #if area_entry.geofence_excluded is not None:
+        #    geofence_excluded: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
+        #                                                                                     area_entry.geofence_excluded)
         if fence_type is not None and area_entry.settings.mode != fence_type:
             continue
 
