@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import time
 from math import floor
@@ -18,7 +17,6 @@ class PlayerStats(object):
         self._stats_collector_start = True
         self._last_processed_timestamp = 0
         self._generate_stats = application_args.game_stats
-        self.__mapping_mutex = asyncio.Lock()
         self.__mitm_mapper_parent: MitmMapper = mitm_mapper_parent
 
     def set_level(self, level: int) -> None:
@@ -60,132 +58,126 @@ class PlayerStats(object):
 
     async def stats_collector(self):
         logger.debug2("Creating stats_collector task")
-        async with self.__mapping_mutex:
-            if not self._stats_collector_start:
-                if time.time() - self._last_processed_timestamp >= self.__application_args.game_stats_save_time or \
-                        self.compare_hour(self._last_processed_timestamp):
-                    self._last_processed_timestamp = time.time()
-
-                    await self.__mitm_mapper_parent.add_stats_to_process(self._id, self.__stats_collected.copy(),
-                                                                         self._last_processed_timestamp)
-                    self.__stats_collected.clear()
-            else:
-                self._stats_collector_start = False
+        if not self._stats_collector_start:
+            if time.time() - self._last_processed_timestamp >= self.__application_args.game_stats_save_time or \
+                    self.compare_hour(self._last_processed_timestamp):
                 self._last_processed_timestamp = time.time()
+                copied = self.__stats_collected.copy()
+                self.__stats_collected.clear()
+                await self.__mitm_mapper_parent.add_stats_to_process(self._id, copied,
+                                                                     self._last_processed_timestamp)
+        else:
+            self._stats_collector_start = False
+            self._last_processed_timestamp = time.time()
 
     async def stats_collect_mon(self, encounter_id: str):
         if not self._generate_stats:
             return
-        async with self.__mapping_mutex:
-            if 106 not in self.__stats_collected:
-                self.__stats_collected[106] = {}
+        if 106 not in self.__stats_collected:
+            self.__stats_collected[106] = {}
 
-            if 'mon' not in self.__stats_collected[106]:
-                self.__stats_collected[106]['mon'] = {}
+        if 'mon' not in self.__stats_collected[106]:
+            self.__stats_collected[106]['mon'] = {}
 
-            if 'mon_count' not in self.__stats_collected[106]:
-                self.__stats_collected[106]['mon_count'] = 0
+        if 'mon_count' not in self.__stats_collected[106]:
+            self.__stats_collected[106]['mon_count'] = 0
 
-            if encounter_id not in self.__stats_collected[106]['mon']:
-                self.__stats_collected[106]['mon'][encounter_id] = 1
-                self.__stats_collected[106]['mon_count'] += 1
-            else:
-                self.__stats_collected[106]['mon'][encounter_id] += 1
+        if encounter_id not in self.__stats_collected[106]['mon']:
+            self.__stats_collected[106]['mon'][encounter_id] = 1
+            self.__stats_collected[106]['mon_count'] += 1
+        else:
+            self.__stats_collected[106]['mon'][encounter_id] += 1
 
     async def stats_collect_mon_iv(self, encounter_id: str, shiny: int):
         if not self._generate_stats:
             return
-        async with self.__mapping_mutex:
-            if 102 not in self.__stats_collected:
-                self.__stats_collected[102] = {}
+        if 102 not in self.__stats_collected:
+            self.__stats_collected[102] = {}
 
-            if 'mon_iv' not in self.__stats_collected[102]:
-                self.__stats_collected[102]['mon_iv'] = {}
+        if 'mon_iv' not in self.__stats_collected[102]:
+            self.__stats_collected[102]['mon_iv'] = {}
 
-            if 'mon_iv_count' not in self.__stats_collected[102]:
-                self.__stats_collected[102]['mon_iv_count'] = 0
+        if 'mon_iv_count' not in self.__stats_collected[102]:
+            self.__stats_collected[102]['mon_iv_count'] = 0
 
-            if encounter_id not in self.__stats_collected[102]['mon_iv']:
-                self.__stats_collected[102]['mon_iv'][encounter_id] = {}
-                self.__stats_collected[102]['mon_iv'][encounter_id]['count'] = 1
-                self.__stats_collected[102]['mon_iv'][encounter_id]['shiny'] = shiny
-                self.__stats_collected[102]['mon_iv_count'] += 1
-            else:
-                self.__stats_collected[102]['mon_iv'][encounter_id]['count'] += 1
+        if encounter_id not in self.__stats_collected[102]['mon_iv']:
+            self.__stats_collected[102]['mon_iv'][encounter_id] = {}
+            self.__stats_collected[102]['mon_iv'][encounter_id]['count'] = 1
+            self.__stats_collected[102]['mon_iv'][encounter_id]['shiny'] = shiny
+            self.__stats_collected[102]['mon_iv_count'] += 1
+        else:
+            self.__stats_collected[102]['mon_iv'][encounter_id]['count'] += 1
 
     async def stats_collect_raid(self, gym_id: str):
         if not self._generate_stats:
             return
-        async with self.__mapping_mutex:
-            if 106 not in self.__stats_collected:
-                self.__stats_collected[106] = {}
+        if 106 not in self.__stats_collected:
+            self.__stats_collected[106] = {}
 
-            if 'raid' not in self.__stats_collected[106]:
-                self.__stats_collected[106]['raid'] = {}
+        if 'raid' not in self.__stats_collected[106]:
+            self.__stats_collected[106]['raid'] = {}
 
-            if 'raid_count' not in self.__stats_collected[106]:
-                self.__stats_collected[106]['raid_count'] = 0
+        if 'raid_count' not in self.__stats_collected[106]:
+            self.__stats_collected[106]['raid_count'] = 0
 
-            if gym_id not in self.__stats_collected[106]['raid']:
-                self.__stats_collected[106]['raid'][gym_id] = 1
-                self.__stats_collected[106]['raid_count'] += 1
-            else:
-                self.__stats_collected[106]['raid'][gym_id] += 1
+        if gym_id not in self.__stats_collected[106]['raid']:
+            self.__stats_collected[106]['raid'][gym_id] = 1
+            self.__stats_collected[106]['raid_count'] += 1
+        else:
+            self.__stats_collected[106]['raid'][gym_id] += 1
 
     async def stats_collect_quest(self, stop_id):
         if not self._generate_stats:
             return
-        async with self.__mapping_mutex:
-            if 106 not in self.__stats_collected:
-                self.__stats_collected[106] = {}
+        if 106 not in self.__stats_collected:
+            self.__stats_collected[106] = {}
 
-            if 'quest' not in self.__stats_collected[106]:
-                self.__stats_collected[106]['quest'] = {}
+        if 'quest' not in self.__stats_collected[106]:
+            self.__stats_collected[106]['quest'] = {}
 
-            if 'quest_count' not in self.__stats_collected[106]:
-                self.__stats_collected[106]['quest_count'] = 0
+        if 'quest_count' not in self.__stats_collected[106]:
+            self.__stats_collected[106]['quest_count'] = 0
 
-            if stop_id not in self.__stats_collected[106]['quest']:
-                self.__stats_collected[106]['quest'][stop_id] = 1
-                self.__stats_collected[106]['quest_count'] += 1
-            else:
-                self.__stats_collected[106]['quest'][stop_id] += 1
+        if stop_id not in self.__stats_collected[106]['quest']:
+            self.__stats_collected[106]['quest'][stop_id] = 1
+            self.__stats_collected[106]['quest_count'] += 1
+        else:
+            self.__stats_collected[106]['quest'][stop_id] += 1
 
     async def stats_collect_location_data(self, location, datarec, start_timestamp, positiontype, rec_timestamp, walker,
                                           transporttype):
         if not self._generate_stats:
             return
-        async with self.__mapping_mutex:
-            if 'location' not in self.__stats_collected:
-                self.__stats_collected['location'] = []
+        if 'location' not in self.__stats_collected:
+            self.__stats_collected['location'] = []
 
-            loc_data = (str(self._id),
-                        start_timestamp,
-                        location.lat,
-                        location.lng,
-                        rec_timestamp,
-                        positiontype,
-                        walker,
-                        datarec,
-                        int(floor(time.time())),
-                        transporttype)
+        loc_data = (str(self._id),
+                    start_timestamp,
+                    location.lat,
+                    location.lng,
+                    rec_timestamp,
+                    positiontype,
+                    walker,
+                    datarec,
+                    int(floor(time.time())),
+                    transporttype)
 
-            self.__stats_collected['location'].append(loc_data)
+        self.__stats_collected['location'].append(loc_data)
 
-            if 'location_count' not in self.__stats_collected:
-                self.__stats_collected['location_count'] = 1
-                self.__stats_collected['location_ok'] = 0
-                self.__stats_collected['location_nok'] = 0
-                if datarec:
-                    self.__stats_collected['location_ok'] = 1
-                else:
-                    self.__stats_collected['location_nok'] = 1
+        if 'location_count' not in self.__stats_collected:
+            self.__stats_collected['location_count'] = 1
+            self.__stats_collected['location_ok'] = 0
+            self.__stats_collected['location_nok'] = 0
+            if datarec:
+                self.__stats_collected['location_ok'] = 1
             else:
-                self.__stats_collected['location_count'] += 1
-                if datarec:
-                    self.__stats_collected['location_ok'] += 1
-                else:
-                    self.__stats_collected['location_nok'] += 1
+                self.__stats_collected['location_nok'] = 1
+        else:
+            self.__stats_collected['location_count'] += 1
+            if datarec:
+                self.__stats_collected['location_ok'] += 1
+            else:
+                self.__stats_collected['location_nok'] += 1
 
     @staticmethod
     def stats_complete_parser(client_id: str, data, period) -> Tuple[str, str, str, str, str, str]:

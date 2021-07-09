@@ -126,6 +126,14 @@ class TrsSpawnHelper:
                                            TrsSpawn.longitude <= max_lon,
                                            TrsSpawn.calc_endminsec != None))
         result = await session.execute(stmt)
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            next_up = await loop.run_in_executor(
+                pool, TrsSpawnHelper.__process_next_to_encounter, result, geofence_helper)
+
+        return next_up
+
+    def __process_next_to_encounter(self, result, geofence_helper) -> List[Tuple[int, Location]]:
         next_up: List[Tuple[int, Location]] = []
         current_time = time.time()
         current_time_of_day = datetime.now().replace(microsecond=0)
@@ -162,7 +170,7 @@ class TrsSpawnHelper:
                               event_id: Optional[int] = None, today_only: bool = False,
                               older_than_x_days: Optional[int] = None) -> Dict[int, Tuple[TrsSpawn, TrsEvent]]:
         stmt = select(TrsSpawn, TrsEvent) \
-            .join(TrsEvent, TrsSpawn.eventid == TrsEvent.id, isouter=False)
+            .join(TrsEvent, TrsEvent.id == TrsSpawn.eventid, isouter=False)
         where_conditions = []
 
         if (ne_corner and sw_corner
