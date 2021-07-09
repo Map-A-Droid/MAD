@@ -509,14 +509,13 @@ class DbPogoProtoSubmit:
                     await nested_transaction.rollback()
                     logger.debug("Failed submitting stat...")
 
-    async def spawnpoints(self, session: AsyncSession, origin: str, map_proto: dict, proto_dt: datetime):
+    async def spawnpoints(self, session: AsyncSession, origin: str, map_proto: dict, received_timestamp: int):
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::spawnpoints called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
         spawn_ids = []
-        dt = proto_dt
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
                 spawn_ids.append(int(str(wild_mon['spawnpoint_id']), 16))
@@ -524,6 +523,7 @@ class DbPogoProtoSubmit:
         spawndef: Dict[int, TrsSpawn] = await self._get_spawndef(session, spawn_ids)
         current_event: Optional[TrsEvent] = await TrsEventHelper.get_current_event(session, True)
         spawns_do_add: List[TrsSpawn] = []
+        received_time: datetime = datetime.utcfromtimestamp(received_timestamp)
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
@@ -541,7 +541,7 @@ class DbPogoProtoSubmit:
 
                 # TODO: This may break another known timer...
                 if 0 <= int(despawntime) <= 90000:
-                    fulldate = dt + timedelta(milliseconds=despawntime)
+                    fulldate = received_time + timedelta(milliseconds=despawntime)
                     earliest_unseen = int(despawntime)
                     calcendtime = fulldate.strftime("%M:%S")
 

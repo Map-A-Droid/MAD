@@ -51,10 +51,10 @@ class SerializedMitmDataProcessor:
                     logger.info("Received keyboard interrupt, stopping MITM data processor")
 
     # @logger.catch
-    async def process_data(self, received_timestamp, data, origin):
+    async def process_data(self, received_timestamp: int, data, origin):
         data_type = data.get("type", None)
         logger.debug("Processing received data")
-        processed_timestamp = datetime.fromtimestamp(received_timestamp)
+        processed_timestamp: datetime = datetime.fromtimestamp(received_timestamp)
 
         if data_type and not data.get("raw", False):
             await self.__mitm_mapper.run_stats_collector(origin)
@@ -139,52 +139,56 @@ class SerializedMitmDataProcessor:
         else:
             logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
 
-    async def __process_gmo(self, data, origin, processed_timestamp, received_timestamp, start_time):
+    async def __process_gmo(self, data, origin, processed_timestamp: datetime, received_timestamp: int, start_time):
         logger.info("Processing GMO. Received at {}", processed_timestamp)
-        async with self.__db_wrapper as session, session:
-            weather_time = await self.__process_weather(data, origin, received_timestamp, session)
-            stops_time = await self.__process_stops(data, origin, session)
-            gyms_time = await self.__process_gyms(data, origin, session)
-            raids_time = await self.__process_raids(data, origin, session)
-            spawnpoints_time = await self.__process_spawnpoints(data, origin, processed_timestamp, session)
-            cells_time = await self.__process_cells(data, origin, session)
-            mons_time, wild_encounter_ids_processed = await self.__process_wild_mons(data, origin,
-                                                                                     received_timestamp,
-                                                                                     session)
-            gmo_loc_start = self.get_time_ms()
-            self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
-            gmo_loc_time = self.get_time_ms() - gmo_loc_start
-            lure_wild: List[Tuple[int, datetime]] = []
-            if self.__application_args.scan_lured_mons:
-                lurenoiv_start = self.get_time_ms()
-                lure_wild = await self.__db_submit.mon_lure_noiv(session, origin, received_timestamp,
-                                                                 data["payload"],
-                                                                 self.__mitm_mapper)
-                lurenoiv_time = self.get_time_ms() - lurenoiv_start
-            else:
-                lurenoiv_time = 0
-            if self.__application_args.scan_nearby_mons:
-                nearby_mons_time_start = self.get_time_ms()
-                cell_encounters, stop_encounters = await self.__db_submit.mons_nearby(session,
-                                                                                      origin, received_timestamp,
-                                                                                      data["payload"],
-                                                                                      self.__mitm_mapper)
-                nearby_mons_time = self.get_time_ms() - nearby_mons_time_start
-            else:
-                cell_encounters = []
-                stop_encounters = []
-                nearby_mons_time = 0
-            stats_time = 0
-            if self.__application_args.game_stats:
-                stats_start = self.get_time_ms()
+        loop = asyncio.get_running_loop()
+        weather_task = loop.create_task(self.__process_weather(data, origin, received_timestamp))
+        stops_task = loop.create_task(self.__process_stops(data, origin))
+        gyms_task = loop.create_task(self.__process_gyms(data, origin))
+        raids_task = loop.create_task(self.__process_raids(data, origin))
+        spawnpoints_task = loop.create_task(self.__process_spawnpoints(data, origin, received_timestamp))
+        cells_task = loop.create_task(self.__process_cells(data, origin))
+        mons_task = loop.create_task(self.__process_wild_mons(data, origin, received_timestamp))
+
+        gmo_loc_start = self.get_time_ms()
+        self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
+        gmo_loc_time = self.get_time_ms() - gmo_loc_start
+        lure_wild: List[Tuple[int, datetime]] = []
+        lure_no_iv_task = None
+        if self.__application_args.scan_lured_mons:
+            lure_no_iv_task = loop.create_task(self.__process_lure_no_iv(data, lure_wild, origin, received_timestamp))
+        else:
+            lurenoiv_time = 0
+
+        nearby_task = None
+        if self.__application_args.scan_nearby_mons:
+            nearby_task = loop.create_task(self.__process_nearby_mons(data, origin, received_timestamp))
+        cell_encounters = []
+        stop_encounters = []
+        nearby_mons_time = 0
+        mons_time, wild_encounter_ids_processed = await mons_task
+        if nearby_task:
+            cell_encounters, nearby_mons_time, stop_encounters = await nearby_task
+        if lure_no_iv_task:
+            lure_wild, lurenoiv_time = await lure_no_iv_task
+        stats_time = 0
+        if self.__application_args.game_stats:
+            stats_start = self.get_time_ms()
+            async with self.__db_wrapper as session, session:
                 await self.__db_submit.update_seen_type_stats(session,
                                                               wild=wild_encounter_ids_processed,
                                                               lure_wild=lure_wild,
                                                               nearby_cell=cell_encounters,
-                                                              nearby_stop=stop_encounters
-                                                              )
-                stats_time = self.get_time_ms() - stats_start
-            await session.commit()
+                                                              nearby_stop=stop_encounters)
+                await session.commit()
+            stats_time = self.get_time_ms() - stats_start
+
+        weather_time = await weather_task
+        raids_time = await raids_task
+        spawnpoints_time = await spawnpoints_task
+        cells_time = await cells_task
+        stops_time = await stops_task
+        gyms_time = await gyms_task
         full_time = self.get_time_ms() - start_time
         logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
                      "spawnpoints={}ms, mons={}ms, "
@@ -194,51 +198,84 @@ class SerializedMitmDataProcessor:
                      spawnpoints_time, mons_time, nearby_mons_time, lurenoiv_time,
                      cells_time, gmo_loc_time, stats_time)
 
-    async def __process_wild_mons(self, data, origin, received_timestamp, session):
-        mons_time_start = self.get_time_ms()
-        encounter_ids_processed: List[Tuple[int, datetime]] = await self.__db_submit.mons(session, origin,
-                                                                                          received_timestamp,
-                                                                                          data["payload"],
-                                                                                          self.__mitm_mapper)
+    async def __process_lure_no_iv(self, data, lure_wild, origin, received_timestamp):
+        lurenoiv_start = self.get_time_ms()
+        async with self.__db_wrapper as session, session:
+            lure_wild = await self.__db_submit.mon_lure_noiv(session, origin, received_timestamp,
+                                                             data["payload"],
+                                                             self.__mitm_mapper)
+            await session.commit()
+        lurenoiv_time = self.get_time_ms() - lurenoiv_start
+        return lure_wild, lurenoiv_time
 
+    async def __process_nearby_mons(self, data, origin, received_timestamp):
+        nearby_mons_time_start = self.get_time_ms()
+        async with self.__db_wrapper as session, session:
+            cell_encounters, stop_encounters = await self.__db_submit.mons_nearby(session,
+                                                                                  origin, received_timestamp,
+                                                                                  data["payload"],
+                                                                                  self.__mitm_mapper)
+            await session.commit()
+        nearby_mons_time = self.get_time_ms() - nearby_mons_time_start
+        return cell_encounters, nearby_mons_time, stop_encounters
+
+    async def __process_wild_mons(self, data, origin, received_timestamp):
+        mons_time_start = self.get_time_ms()
+        async with self.__db_wrapper as session, session:
+            encounter_ids_processed: List[Tuple[int, datetime]] = await self.__db_submit.mons(session, origin,
+                                                                                              received_timestamp,
+                                                                                              data["payload"],
+                                                                                              self.__mitm_mapper)
+            await session.commit()
         mons_time = self.get_time_ms() - mons_time_start
         return mons_time, encounter_ids_processed
 
-    async def __process_cells(self, data, origin, session):
+    async def __process_cells(self, data, origin):
         cells_time_start = self.get_time_ms()
-        await self.__db_submit.cells(session, origin, data["payload"])
+        async with self.__db_wrapper as session, session:
+            await self.__db_submit.cells(session, origin, data["payload"])
+            await session.commit()
         cells_time = self.get_time_ms() - cells_time_start
         return cells_time
 
-    async def __process_spawnpoints(self, data, origin, processed_timestamp, session):
+    async def __process_spawnpoints(self, data, origin, received_timestamp: int):
         spawnpoints_time_start = self.get_time_ms()
-        await self.__db_submit.spawnpoints(session, origin, data["payload"], processed_timestamp)
+        async with self.__db_wrapper as session, session:
+            await self.__db_submit.spawnpoints(session, origin, data["payload"], received_timestamp)
+            await session.commit()
         spawnpoints_time = self.get_time_ms() - spawnpoints_time_start
         return spawnpoints_time
 
-    async def __process_raids(self, data, origin, session):
+    async def __process_raids(self, data, origin):
         raids_time_start = self.get_time_ms()
-        await self.__db_submit.raids(session, origin, data["payload"], self.__mitm_mapper)
+        async with self.__db_wrapper as session, session:
+            await self.__db_submit.raids(session, origin, data["payload"], self.__mitm_mapper)
+            await session.commit()
         raids_time = self.get_time_ms() - raids_time_start
         return raids_time
 
-    async def __process_gyms(self, data, origin, session):
+    async def __process_gyms(self, data, origin):
         gyms_time_start = self.get_time_ms()
         # TODO: If return value False, rollback transaction?
-        await self.__db_submit.gyms(session, origin, data["payload"])
+        async with self.__db_wrapper as session, session:
+            await self.__db_submit.gyms(session, origin, data["payload"])
+            await session.commit()
         gyms_time = self.get_time_ms() - gyms_time_start
         return gyms_time
 
-    async def __process_stops(self, data, origin, session):
+    async def __process_stops(self, data, origin):
         stops_time_start = self.get_time_ms()
-        # TODO: If return value False, rollback transaction?
-        await self.__db_submit.stops(session, origin, data["payload"])
+        async with self.__db_wrapper as session, session:
+            await self.__db_submit.stops(session, origin, data["payload"])
+            await session.commit()
         stops_time = self.get_time_ms() - stops_time_start
         return stops_time
 
-    async def __process_weather(self, data, origin, received_timestamp, session):
+    async def __process_weather(self, data, origin, received_timestamp):
         weather_time_start = self.get_time_ms()
-        await self.__db_submit.weather(session, origin, data["payload"], received_timestamp)
+        async with self.__db_wrapper as session, session:
+            await self.__db_submit.weather(session, origin, data["payload"], received_timestamp)
+            await session.commit()
         weather_time = self.get_time_ms() - weather_time_start
         return weather_time
 
