@@ -119,6 +119,11 @@ async def pokemonname(id):
     return file[str(int(id))]["name"]
 
 
+def get_pokemon_type_str(pt):
+    pokemon_types = await open_json_file('pokemonTypes')
+    return pokemon_types[str(pt)].title() + _('-type')
+
+
 async def questtask(typeid, condition, target, quest_template):
     pokemon_types = await open_json_file('pokemonTypes')
     items = await open_json_file('items')
