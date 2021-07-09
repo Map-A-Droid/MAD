@@ -174,22 +174,25 @@ class SerializedMitmDataProcessor:
                 cell_encounters = []
                 stop_encounters = []
                 nearby_mons_time = 0
+            stats_time = 0
             if self.__application_args.game_stats:
+                stats_start = self.get_time_ms()
                 await self.__db_submit.update_seen_type_stats(session,
                                                               wild=wild_encounter_ids_processed,
                                                               lure_wild=lure_wild,
                                                               nearby_cell=cell_encounters,
                                                               nearby_stop=stop_encounters
                                                               )
+                stats_time = self.get_time_ms() - stats_start
             await session.commit()
         full_time = self.get_time_ms() - start_time
         logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
                      "spawnpoints={}ms, mons={}ms, "
                      "nearby_mons={}, lure_noiv={}, cells={}ms, "
-                     "gmo_loc={}ms)",
+                     "gmo_loc={}ms, stats={}ms)",
                      full_time, weather_time, stops_time, gyms_time, raids_time,
                      spawnpoints_time, mons_time, nearby_mons_time, lurenoiv_time,
-                     cells_time, gmo_loc_time)
+                     cells_time, gmo_loc_time, stats_time)
 
     async def __process_wild_mons(self, data, origin, received_timestamp, session):
         mons_time_start = self.get_time_ms()

@@ -203,7 +203,7 @@ class DbPogoProtoSubmit:
                         await nested_transaction.commit()
                         await cache.set(cache_key, 1, expire=self._args.default_nearby_timeleft * 60)
                     except sqlalchemy.exc.IntegrityError as e:
-                        logger.warning("Failed committing nearby mon {} ({}). Safe to ignore.", encounter_id, str(e))
+                        logger.debug("Failed committing nearby mon {} ({}). Safe to ignore.", encounter_id, str(e))
                         await nested_transaction.rollback()
 
         return cell_encounters, stop_encounters
