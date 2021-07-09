@@ -149,7 +149,8 @@ class AbstractMadminRootEndpoint(web.View, ABC):
                     text = await loop.run_in_executor(
                         pool, self.__json_dumps_proxy, data)
             else:
-                text = ""
+                # Depending on whether a list or dict is returned... just dumps...
+                text = json.dumps(data)
         return web.Response(
             text=text,
             body=body,

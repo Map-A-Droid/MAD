@@ -532,8 +532,8 @@ class MappingManager:
             geofence_helpers[geofence_id] = geofence_helper
         return geofence_helpers
 
-    async def get_geofence_helper(self, geofence_id: int):
-        pass
+    async def get_geofence_helper(self, geofence_id: int) -> Optional[GeofenceHelper]:
+        return self._geofence_helpers.get(geofence_id)
 
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
