@@ -12,6 +12,6 @@ class AutoconfEndpoint(AbstractMadminRootEndpoint):
         entries: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
             .get_all_of_instance(self._session, self._get_instance_id(), None)
         if entries:
-            return self._json_response(data=entries)
+            return await self._json_response(data=entries)
         else:
             raise web.HTTPNotFound()

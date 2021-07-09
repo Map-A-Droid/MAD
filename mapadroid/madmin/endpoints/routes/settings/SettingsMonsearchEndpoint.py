@@ -27,7 +27,7 @@ class SettingsMonsearchEndpoint(AbstractMadminRootEndpoint):
             for name in sorted(mon_names):
                 mon_id = all_pokemon['locale'][name]
                 pokemon.append({"mon_name": name, "mon_id": str(mon_id)})
-        return self._json_response(pokemon)
+        return await self._json_response(pokemon)
 
     async def get_pokemon(self):
         mondata = await open_json_file('pokemon')

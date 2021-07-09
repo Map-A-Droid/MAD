@@ -50,4 +50,4 @@ class GetStopsEndpoint(AbstractMadminRootEndpoint):
             stop_serialized["has_quest"] = stop.pokestop_id in stops_with_quests
             prepared_for_serialization.append(stop_serialized)
 
-        return self._json_response(prepared_for_serialization)
+        return await self._json_response(prepared_for_serialization)

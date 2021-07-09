@@ -8,4 +8,4 @@ class JobstatusEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        return self._json_response(self._get_mapping_manager().get_jobstatus())
+        return await self._json_response(self._get_mapping_manager().get_jobstatus())

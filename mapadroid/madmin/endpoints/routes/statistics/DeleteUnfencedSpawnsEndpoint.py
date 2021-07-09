@@ -30,4 +30,4 @@ class DeleteUnfencedSpawnsEndpoint(AbstractStatisticsRootEndpoint):
                     spawns.add(spawn_id)
 
         await TrsSpawnHelper.delete_all_except(self._session, spawns)
-        return self._json_response({'status': 'success'})
+        return await self._json_response({'status': 'success'})

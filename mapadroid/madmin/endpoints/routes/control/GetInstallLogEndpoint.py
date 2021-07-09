@@ -21,4 +21,4 @@ class GetInstallLogEndpoint(AbstractControlEndpoint):
             if 'jobname' not in entry:
                 entry['jobname'] = entry.get('file', 'Unknown Name')
             return_log.append(entry)
-        return self._json_response(return_log)
+        return await self._json_response(return_log)

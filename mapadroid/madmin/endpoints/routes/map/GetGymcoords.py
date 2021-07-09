@@ -55,4 +55,4 @@ class GetGymcoordsEndpoint(AbstractMadminRootEndpoint):
                 "raid": raid_data
             })
 
-        return self._json_response(coords)
+        return await self._json_response(coords)

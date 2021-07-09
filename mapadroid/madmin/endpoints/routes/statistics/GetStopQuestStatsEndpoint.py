@@ -73,4 +73,4 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
             stop.append({'label': label, 'data': timestamp})
 
         stats = {'stop_quest_stats': stats_process, 'quest': quest, 'stop': stop}
-        return self._json_response(stats)
+        return await self._json_response(stats)

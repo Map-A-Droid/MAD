@@ -25,7 +25,7 @@ class AutoconfigDownloadEndpoint(AbstractMadminRootEndpoint):
         await ac_issues.setup(self._session, self._get_instance_id(),
                               self._get_mad_args(), self._get_storage_obj())
         if ac_issues.has_blockers():
-            return self._json_response('Basic requirements not met', status=406, headers=ac_issues.get_headers())
+            return await self._json_response('Basic requirements not met', status=406, headers=ac_issues.get_headers())
         pd_conf = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())
         await pd_conf.load_config()
         config_file = BytesIO()

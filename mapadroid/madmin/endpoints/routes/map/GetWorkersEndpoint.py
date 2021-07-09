@@ -23,4 +23,4 @@ class GetWorkersEndpoint(AbstractControlEndpoint):
             }
             positions.append(worker)
 
-        return self._json_response(positions)
+        return await self._json_response(positions)

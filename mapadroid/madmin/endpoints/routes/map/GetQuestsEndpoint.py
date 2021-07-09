@@ -57,4 +57,4 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
         for stop_id, (stop, quest) in data.items():
             quests.append(await generate_quest(stop, quest))
 
-        return self._json_response(quests)
+        return await self._json_response(quests)

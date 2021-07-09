@@ -17,6 +17,6 @@ class ResetStatusEntryEndpoint(AbstractStatisticsRootEndpoint):
         status: Optional[TrsStatus] = await TrsStatusHelper.get(self._session, device_id)
         if status:
             await TrsStatusHelper.reset_status(self._session, self._get_instance_id(), device_id=device_id)
-            return self._json_response({'status': 'success'})
+            return await self._json_response({'status': 'success'})
         else:
-            return self._json_response({'status': 'Unknown device ID'})
+            return await self._json_response({'status': 'Unknown device ID'})

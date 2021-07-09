@@ -31,4 +31,4 @@ class GetStatusEndpoint(AbstractStatisticsRootEndpoint):
 
             stat_serialized["area_id"] = stat.area_id
             serialized.append(stat_serialized)
-        return self._json_response(serialized)
+        return await self._json_response(serialized)

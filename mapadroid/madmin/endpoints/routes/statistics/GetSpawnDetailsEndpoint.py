@@ -31,4 +31,4 @@ class GetSpawnDetailsEndpoint(AbstractStatisticsRootEndpoint):
                                                                     older_than_x_days=older_than_x_days,
                                                                     today_only=today_only,
                                                                     index=index)
-        return self._json_response(spawn_details_helper)
+        return await self._json_response(spawn_details_helper)

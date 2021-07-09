@@ -42,4 +42,4 @@ class ApkUpdateStatusEndpoint(AbstractMadminRootEndpoint):
                     update_info[composite_key]['update'] = 1
             if not update_info[composite_key]:
                 del update_info[composite_key]
-        return self._json_response(data=update_info)
+        return await self._json_response(data=update_info)

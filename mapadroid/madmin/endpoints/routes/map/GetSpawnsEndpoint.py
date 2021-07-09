@@ -47,4 +47,4 @@ class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
         for spawn in coords:
             cluster_spawns.append({"EVENT": spawn, "Coords": coords[spawn]})
 
-        return self._json_response(cluster_spawns)
+        return await self._json_response(cluster_spawns)

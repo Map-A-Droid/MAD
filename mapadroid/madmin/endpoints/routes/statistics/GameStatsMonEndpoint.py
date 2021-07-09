@@ -57,4 +57,4 @@ class GameStatsMonEndpoint(AbstractStatisticsRootEndpoint):
                                     'periode': datetime.fromtimestamp(self._utc2local(mon.last_modified.timestamp()))
                                    .strftime(self._datetimeformat)})
         stats = {'spawn': spawn, 'good_spawns': good_spawns}
-        return self._json_response(stats)
+        return await self._json_response(stats)

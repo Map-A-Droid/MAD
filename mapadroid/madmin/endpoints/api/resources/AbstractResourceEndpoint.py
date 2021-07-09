@@ -31,7 +31,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
     async def patch(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
         if not identifier:
-            return self._json_response(self.request.method, status=405)
+            return await self._json_response(self.request.method, status=405)
         api_request_data = await self.request.json()
         return await self._update_or_create_object(identifier, api_request_data,
                                                    methodology=DataHandlingMethodology.UPDATE)
@@ -40,16 +40,16 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         # TODO: Handle dependencies/foreign key restraints
         identifier = self.request.match_info.get('identifier', None)
         if not identifier:
-            return self._json_response(self.request.method, status=405)
+            return await self._json_response(self.request.method, status=405)
         db_entry: Optional[Base] = await self._fetch_from_db(identifier)
         if not db_entry:
-            return self._json_response(self.request.method, status=404)
+            return await self._json_response(self.request.method, status=404)
         await self._delete_connected(db_entry)
         await self._delete(db_entry)
         headers = {
             'X-Status': 'Successfully deleted the object'
         }
-        return self._json_response(None, status=202, headers=headers)
+        return await self._json_response(None, status=202, headers=headers)
 
     async def get(self) -> web.Response:
         result: Dict = {}
@@ -62,7 +62,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         else:
             entry: Optional[Base] = await self._fetch_from_db(identifier)
             if not entry:
-                return self._json_response(self.request.method, status=404)
+                return await self._json_response(self.request.method, status=404)
             else:
                 found_entries[identifier] = entry
         for identifier, value in found_entries.items():
@@ -83,12 +83,12 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         if self.request.query.get("hide_resource", "0") == "0":
             # Include the resource info as it's not to be hidden...
             result["resource"] = self._resource_info()
-        return self._json_response(data=result)
+        return await self._json_response(data=result)
 
     async def put(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
         if not identifier:
-            return self._json_response(self.request.method, status=405)
+            return await self._json_response(self.request.method, status=405)
         api_request_data = await self.request.json()
         return await self._update_or_create_object(identifier, api_request_data,
                                                    methodology=DataHandlingMethodology.REPLACE)
@@ -106,10 +106,10 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                 # Try to create an area if possible...
                 db_entry = await self._create_instance(identifier)
             elif not db_entry and methodology in DataHandlingMethodology.UPDATE:
-                return self._json_response("DB entry with ID {} could not be found.".format(str(identifier)),
+                return await self._json_response("DB entry with ID {} could not be found.".format(str(identifier)),
                                            status=404)
             elif not db_entry:
-                return self._json_response("DB entry with ID {} could not be created.".format(str(identifier)),
+                return await self._json_response("DB entry with ID {} could not be created.".format(str(identifier)),
                                            status=405)
             type_of_obj = type(db_entry)
             vars_of_type = vars(type_of_obj)
@@ -131,7 +131,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                         missing.append(variable)
             if missing:
                 self._commit_trigger = False
-                return self._json_response({"missing": missing},
+                return await self._json_response({"missing": missing},
                                            status=405)
 
             for key, value in api_request_data.items():
@@ -147,7 +147,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                        or not getattr(vars_of_type.get(key), "primary_key", None))
                       and getattr(db_entry, key, None) is None and value is None):
                     self._commit_trigger = False
-                    return self._json_response({"missing": [key]},
+                    return await self._json_response({"missing": [key]},
                                                status=405)
                 # TODO: Support "legacy" translations of fields? e.g. origin -> name
                 if isinstance(value, str) and value.lower() in ["none", "undefined"]:
@@ -169,7 +169,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
             self._commit_trigger = False
             await self._session.rollback()
             logger.exception(err)
-            return self._json_response(str(err), status=400)
+            return await self._json_response(str(err), status=400)
 
         headers = {
             'Location': str(identifier),
@@ -179,10 +179,10 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
 
         if methodology in (DataHandlingMethodology.CREATE, DataHandlingMethodology.REPLACE):
             headers["X-Status"] = 'Successfully created the object'
-            return self._json_response({}, status=201, headers=headers)
+            return await self._json_response({}, status=201, headers=headers)
         else:
             headers["X-Status"] = 'Successfully updated the object'
-            return self._json_response({}, status=204, headers=headers)
+            return await self._json_response({}, status=204, headers=headers)
 
     # TODO: lateron: Derive resource_def from model class.
     #  Column nullable=False => required=True

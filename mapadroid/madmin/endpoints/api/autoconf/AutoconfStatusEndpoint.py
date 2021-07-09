@@ -18,7 +18,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
         entries: List[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
             .get_all_of_instance(self._session, self._get_instance_id(), session_id)
         if entries:
-            return self._json_response(data=entries)
+            return await self._json_response(data=entries)
         else:
             raise web.HTTPNotFound()
 
@@ -36,7 +36,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
             ac_issues = AutoConfIssueGenerator()
             await ac_issues.setup(self._session, self._get_instance_id(), self._get_mad_args(), self._get_storage_obj())
             if ac_issues.has_blockers():
-                return self._json_response(data=ac_issues.get_issues(self.request), status=406,
+                return await self._json_response(data=ac_issues.get_issues(self.request), status=406,
                                            headers=ac_issues.get_headers())
             # Set the device id.  If it was not requested use the origin hopper to create one
             try:
@@ -46,7 +46,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                                                                                         self._get_instance_id(),
                                                                                         dev_id)
                 if not device_entry:
-                    return self._json_response(text="Unknown device ID", status=400)
+                    return await self._json_response(text="Unknown device ID", status=400)
             except (AttributeError, KeyError):
                 hopper_name = 'madrom'
                 hopper_response = await origin_generator(self._session, self._get_instance_id(),
@@ -67,7 +67,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                 unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper \
                     .get_unassigned(self._session, self._get_instance_id(), auth_type)
                 if not unassigned_accounts:
-                    return self._json_response(text="No configured emails", status=400)
+                    return await self._json_response(text="No configured emails", status=400)
                 auth: SettingsPogoauth = unassigned_accounts.pop()
                 auth.device_id = device_entry.device_id
                 if is_hopper and auth_type != 'google':
@@ -76,10 +76,10 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']
         await AutoconfigRegistrationHelper.update_status(self._session, self._get_instance_id(), session_id, status)
-        return self._json_response()
+        return await self._json_response()
 
     async def delete(self) -> web.Response:
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']
         await AutoconfigRegistrationHelper.delete(self._session, self._get_instance_id(), session_id)
-        return self._json_response()
+        return await self._json_response()

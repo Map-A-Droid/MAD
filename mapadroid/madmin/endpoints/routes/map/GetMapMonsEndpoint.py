@@ -57,4 +57,4 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
                 pass
             mons_serialized.append(serialized_entry)
 
-        return self._json_response(mons_serialized)
+        return await self._json_response(mons_serialized)

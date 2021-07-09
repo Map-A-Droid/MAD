@@ -80,7 +80,7 @@ class AreaEndpoint(AbstractResourceEndpoint):
         api_request_data = await self.request.json()
         if self.request.content_type == 'application/json-rpc':
             if not identifier:
-                return self._json_response(self.request.method, status=405)
+                return await self._json_response(self.request.method, status=405)
             try:
                 call = api_request_data['call']
                 # args = api_request_data.get('args', {})
@@ -88,21 +88,21 @@ class AreaEndpoint(AbstractResourceEndpoint):
                     return await self._recalc_area(identifier)
                 else:
                     # RPC not implemented
-                    return self._json_response(call, status=501)
+                    return await self._json_response(call, status=501)
             except KeyError:
-                return self._json_response("Invalid key found in request.", status=501)
+                return await self._json_response("Invalid key found in request.", status=501)
         else:
             return await super().post()
 
     async def _recalc_area(self, identifier):
         area: Optional[SettingsArea] = await self._get_db_wrapper().get_area(self._session, identifier)
         if not area:
-            return self._json_response(text="Unable to recalc, area not found", status=422)
+            return await self._json_response(text="Unable to recalc, area not found", status=422)
         routecalc_id: Optional[int] = getattr(area, "routecalc", None)
         # iv_mitm is PrioQ driven and idle does not have a route.  This are not recalcable and the returned
         # status should be representative of that
         if area.mode in ['iv_mitm', 'idle']:
-            return self._json_response(text='Unable to recalc mode %s' % (area.mode,), status=422)
+            return await self._json_response(text='Unable to recalc mode %s' % (area.mode,), status=422)
         routecalc: Optional[SettingsRoutecalc] = None
         if routecalc_id:
             routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper \
@@ -111,11 +111,11 @@ class AreaEndpoint(AbstractResourceEndpoint):
             # Start the recalculation.  This can take a little bit if the routemanager needs to be started
             status = await self._get_mapping_manager().routemanager_recalcualte(area.area_id)
             if status:
-                return self._json_response(status=204)
+                return await self._json_response(status=204)
             else:
                 # Unable to turn on the routemanager.  Probably should use another error code
-                return self._json_response(status=409)
+                return await self._json_response(status=409)
         else:
             # Do not allow another recalculation if one is already running.  This value is reset on startup
             # so it will not be stuck in this state
-            return self._json_response(text='Recalc is already running on this Area', status=422)
+            return await self._json_response(text='Recalc is already running on this Area', status=422)

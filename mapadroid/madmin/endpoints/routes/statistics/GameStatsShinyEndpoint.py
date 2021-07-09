@@ -36,7 +36,7 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
 
         if data is None or len(data) == 0:
             # Whyyyyy....
-            return self._json_response({'empty': True})
+            return await self._json_response({'empty': True})
 
         shiny_stats_v2 = []
         for encounter_id, (mon, stats) in data.items():
@@ -93,4 +93,4 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
         stats = {'empty': False, 'shiny_statistics': shiny_stats_v2,
                  'global_shiny_statistics': global_shiny_stats_v2, 'per_worker': shiny_stats_perworker_v2,
                  'per_hour': shiny_stats_perhour_v2}
-        return self._json_response(stats)
+        return await self._json_response(stats)

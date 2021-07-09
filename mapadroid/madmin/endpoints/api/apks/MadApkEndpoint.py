@@ -30,12 +30,12 @@ class MadApkEndpoint(AbstractMadminRootEndpoint):
 
         data = await get_apk_status(self._get_storage_obj())
         if apk_type is None and apk_arch is APKArch.noarch:
-            return self._json_response(data=data)
+            return await self._json_response(data=data)
         else:
             try:
-                return self._json_response(data=data[apk_type][apk_arch])
+                return await self._json_response(data=data[apk_type][apk_arch])
             except KeyError:
-                return self._json_response(data=data[apk_type])
+                return await self._json_response(data=data[apk_type])
 
     async def post(self):
         apk_type_raw: str = self.request.match_info.get('apk_type')
@@ -64,7 +64,7 @@ class MadApkEndpoint(AbstractMadminRootEndpoint):
             try:
                 apk = io.BytesIO(await file.read())
             except AttributeError:
-                return self._json_response(text="No file present", status=406)
+                return await self._json_response(text="No file present", status=406)
             is_upload = True
         elif self.request.content_type == 'application/octet-stream':
             filename = self.request.headers.get('filename')

@@ -19,4 +19,4 @@ class GetSpawnpointStatsSummaryEndpoint(AbstractStatisticsRootEndpoint):
         spawnpoints_total: int = await TrsSpawnHelper.get_all_spawnpoints_count(self._session)
         stats = {'fences': possible_fences, 'events': events, 'spawnpoints_count': spawnpoints_total}
         # TODO: Any component using it needs to determine "locked" (event.event_name == "DEFAULT") by itself
-        return self._json_response(stats)
+        return await self._json_response(stats)

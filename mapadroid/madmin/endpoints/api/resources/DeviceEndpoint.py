@@ -60,12 +60,12 @@ class DeviceEndpoint(AbstractResourceEndpoint):
         # TODO: if not identifier
         if self.request.content_type == 'application/json-rpc':
             if not identifier:
-                return self._json_response(self.request.method, status=405)
+                return await self._json_response(self.request.method, status=405)
             device: Optional[SettingsDevice] = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),
                                                                               identifier)
             try:
                 if not device:
-                    return self._json_response(status=404)
+                    return await self._json_response(status=404)
                 call = api_request_data['call']
                 args = api_request_data.get('args', {})
                 if call == 'device_state':
@@ -74,15 +74,15 @@ class DeviceEndpoint(AbstractResourceEndpoint):
                     # TODO:..
                     # self._get_mapping_manager().device_set_disabled(device.name)
                     await self._get_ws_server().force_disconnect(device.name)
-                    return self._json_response(status=200)
+                    return await self._json_response(status=200)
                 elif call == 'flush_level':
                     await TrsVisitedHelper.flush_all_of_origin(self._session, device.name)
                     self._commit_trigger = True
-                    return self._json_response(status=204)
+                    return await self._json_response(status=204)
                 else:
-                    return self._json_response(call, status=501)
+                    return await self._json_response(call, status=501)
             except KeyError:
-                return self._json_response("Invalid key found in request.", status=501)
+                return await self._json_response("Invalid key found in request.", status=501)
         else:
             return await super().post()
 

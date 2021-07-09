@@ -111,4 +111,4 @@ class GetGameStatsEndpoint(AbstractStatisticsRootEndpoint):
 
         stats = {'gym': gyms, 'detection_empty': detection_empty, 'usage': usages,
                  'location_info': location_info, 'detection': detection}
-        return self._json_response(stats)
+        return await self._json_response(stats)

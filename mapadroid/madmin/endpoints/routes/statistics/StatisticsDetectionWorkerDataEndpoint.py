@@ -138,4 +138,4 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         workerstats = {'avg': locations_avg, 'receiving': usage, 'locations': locations,
                        'ratio': loctionratio, 'allspawns': all_spawns,
                        'location_raw': location_raw}
-        return self._json_response(workerstats)
+        return await self._json_response(workerstats)

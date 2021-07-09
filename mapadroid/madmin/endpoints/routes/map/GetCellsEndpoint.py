@@ -34,4 +34,4 @@ class GetCellsEndpoint(AbstractMadminRootEndpoint):
                 "polygon": S2Helper.coords_of_cell(cell.id),
                 "updated": cell.updated
             })
-        return self._json_response(ret)
+        return await self._json_response(ret)

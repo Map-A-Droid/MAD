@@ -1,3 +1,5 @@
+import asyncio
+import concurrent
 import json
 from abc import ABC
 from typing import Any, Optional, List, Dict
@@ -132,14 +134,17 @@ class AbstractMadminRootEndpoint(web.View, ABC):
     def _get_device_updater(self) -> DeviceUpdater:
         return self.request.app['device_updater']
 
-    def _json_response(self, data: Any = sentinel, *, text: Optional[str] = None, body: Optional[bytes] = None,
+    async def _json_response(self, data: Any = sentinel, *, text: Optional[str] = None, body: Optional[bytes] = None,
                        status: int = 200, reason: Optional[str] = None, headers: Optional[LooseHeaders] = None,
                        content_type: str = "application/json") -> web.Response:
         if data is not sentinel:
             if text or body:
                 raise ValueError("only one of data, text, or body should be specified")
             else:
-                text = json.dumps(data, indent=None, cls=MADEncoder)
+                loop = asyncio.get_running_loop()
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    text = await loop.run_in_executor(
+                        pool, self.__json_dumps_proxy, data)
         return web.Response(
             text=text,
             body=body,
@@ -148,6 +153,9 @@ class AbstractMadminRootEndpoint(web.View, ABC):
             headers=headers,
             content_type=content_type,
         )
+
+    def __json_dumps_proxy(self, data):
+        return json.dumps(data, indent=None, cls=MADEncoder)
 
     def _url_for(self, path_name: str, query: Optional[Dict] = None, dynamic_path: Optional[Dict] = None):
         if dynamic_path is None:

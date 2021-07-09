@@ -17,4 +17,4 @@ class GetNonivEncountersCountEndpoint(AbstractStatisticsRootEndpoint):
                                                                                           last_n_minutes=minutes)
         # TODO: Maybe a __str__ for Location is needed
         stats = {'data': data}
-        return self._json_response(stats)
+        return await self._json_response(stats)

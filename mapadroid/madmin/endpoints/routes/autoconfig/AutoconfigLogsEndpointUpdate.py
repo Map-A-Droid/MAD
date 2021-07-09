@@ -29,4 +29,4 @@ class AutoconfigLogsEndpointUpdate(AbstractMadminRootEndpoint):
         logs: List[Tuple[int, int, str]] = await AutoconfigLogsHelper.get_transformed(self._session,
                                                                                       self._get_instance_id())
 
-        return self._json_response(logs)
+        return await self._json_response(logs)

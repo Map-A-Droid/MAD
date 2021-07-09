@@ -14,4 +14,4 @@ class GetEventsEndpoint(AbstractControlEndpoint):
     # TODO: Auth
     async def get(self):
         all_events: List[TrsEvent] = await TrsEventHelper.get_all(self._session)
-        return self._json_response(all_events)
+        return await self._json_response(all_events)

@@ -16,4 +16,4 @@ class GetAllWorkersEndpoint(AbstractControlEndpoint):
         for device in devices:
             devicesreturn.append({'worker': device})
 
-        return self._json_response(devicesreturn)
+        return await self._json_response(devicesreturn)

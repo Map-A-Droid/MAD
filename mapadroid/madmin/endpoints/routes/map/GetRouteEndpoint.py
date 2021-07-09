@@ -60,7 +60,7 @@ class GetRouteEndpoint(AbstractControlEndpoint):
                                 "name": "%s (unapplied)" % routeinfo["name"],
                                 "tag": "unapplied"
                             })
-        return self._json_response(list(map(lambda r: self.get_routepool_route(r), routeinfo_by_id.values())))
+        return await self._json_response(list(map(lambda r: self.get_routepool_route(r), routeinfo_by_id.values())))
 
     @staticmethod
     def get_routepool_route(route):
