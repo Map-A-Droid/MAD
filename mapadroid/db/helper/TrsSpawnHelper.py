@@ -1,3 +1,5 @@
+import asyncio
+import concurrent
 import time
 from _datetime import timedelta
 from datetime import datetime
@@ -194,10 +196,19 @@ class TrsSpawnHelper:
                                         older_than_date <= TrsSpawn.last_non_scanned))
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
-        spawns: Dict[int, Tuple[TrsSpawn, TrsEvent]] = {}
-        for (spawn, event) in result.all():
-            spawns[spawn.spawnpoint] = (spawn, event)
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            spawns = await loop.run_in_executor(
+                pool, TrsSpawnHelper.__transform_result, result)
 
+        return spawns
+
+    @staticmethod
+    def __transform_result(result):
+        result_full = result.all()
+        spawns: Dict[int, Tuple[TrsSpawn, TrsEvent]] = {}
+        for (spawn, event) in result_full:
+            spawns[spawn.spawnpoint] = (spawn, event)
         return spawns
 
     @staticmethod

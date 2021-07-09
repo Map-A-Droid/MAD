@@ -1,5 +1,6 @@
 import asyncio
 import concurrent
+import time
 from typing import List, Optional, Dict, Tuple
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
@@ -7,6 +8,7 @@ from mapadroid.db.model import TrsSpawn, TrsEvent
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
+from loguru import logger
 
 
 class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
@@ -28,13 +30,15 @@ class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
                                                  old_ne_corner=Location(o_ne_lat, o_ne_lng),
                                                  old_sw_corner=Location(o_sw_lat, o_sw_lng),
                                                  timestamp=timestamp)
-
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             cluster_spawns = await loop.run_in_executor(
                 pool, self.__serialize_spawns, coords, data)
-
         return await self._json_response(cluster_spawns)
+
+    @staticmethod
+    def get_time_ms():
+        return int(time.time() * 1000)
 
     def __serialize_spawns(self, coords, data):
         # TODO: Starmap/multiprocess if possible given the possible huge amount of data here?
