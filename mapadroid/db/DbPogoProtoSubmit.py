@@ -125,7 +125,7 @@ class DbPogoProtoSubmit:
         return encounters
 
     async def mons_nearby(self, session: AsyncSession, origin: str, timestamp: float, map_proto: dict,
-                   mitm_mapper) -> Tuple[List[Tuple[int, datetime]], List[Tuple[int, datetime]]]:
+                          mitm_mapper) -> Tuple[List[Tuple[int, datetime]], List[Tuple[int, datetime]]]:
         """
         Insert nearby mons
         """
@@ -506,13 +506,9 @@ class DbPogoProtoSubmit:
                     stat_seen_type.lure_encounter = lure_encounter
                 if lure_wild:
                     stat_seen_type.lure_wild = lure_wild
-                try:
-                    logger.debug("Submitting mon seen stat {}", encounter_id)
-                    session.add(stat_seen_type)
-                    await nested_transaction.commit()
-                except sqlalchemy.exc.IntegrityError as e:
-                    logger.debug("Failed committing  mon seen stat {} ({}). Safe to ignore.", encounter_id, str(e))
-                    await nested_transaction.rollback()
+                logger.debug("Submitting mon seen stat {}", encounter_id)
+                session.add(stat_seen_type)
+                await nested_transaction.commit()
 
     async def spawnpoints(self, session: AsyncSession, origin: str, map_proto: dict, proto_dt: datetime):
         origin_logger = get_origin_logger(logger, origin=origin)
