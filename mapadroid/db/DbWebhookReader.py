@@ -163,7 +163,7 @@ class DbWebhookReader:
                                                                                                   mon_types)
 
         ret = []
-        for (mon, spawn) in mons_with_changes:
+        for (mon, spawn, stop) in mons_with_changes:
             if mon.latitude == 0 and mon.seen_type == MonSeenTypes.LURE_ENCOUNTER.value:
                 continue
             ret.append({
@@ -190,6 +190,11 @@ class DbWebhookReader:
                 "base_catch": mon.catch_prob_1,
                 "great_catch": mon.catch_prob_2,
                 "ultra_catch": mon.catch_prob_3,
-                "spawn_verified": True if spawn.calc_endminsec else False
+                "spawn_verified": True if spawn.calc_endminsec else False,
+                "fort_id": mon.fort_id,
+                "stop_name": stop.name if stop else None,
+                "stop_url": stop.image if stop else None,
+                "cell_id": mon.cell_id,
+                "seen_type": mon.seen_type
             })
         return ret
