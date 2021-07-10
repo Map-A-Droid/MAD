@@ -190,7 +190,7 @@ class DbWebhookReader:
                 "base_catch": mon.catch_prob_1,
                 "great_catch": mon.catch_prob_2,
                 "ultra_catch": mon.catch_prob_3,
-                "spawn_verified": True if spawn.calc_endminsec else False,
+                "spawn_verified": True if spawn and spawn.calc_endminsec else False,
                 "fort_id": mon.fort_id,
                 "stop_name": stop.name if stop else None,
                 "stop_url": stop.image if stop else None,

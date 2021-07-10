@@ -300,7 +300,7 @@ class PokemonHelper:
         raw_types: List[str] = [x.value for x in mon_types]
         if {MonSeenTypes.NEARBY_STOP, MonSeenTypes.LURE_WILD, MonSeenTypes.LURE_ENCOUNTER} & mon_types:
             # Lured/Nearby stops are to be included in the result set...
-            stmt = stmt.join(Pokestop, Pokestop.pokestop_id == Pokemon.fort_id)
+            stmt = stmt.join(Pokestop, Pokestop.pokestop_id == Pokemon.fort_id, isouter=True)
 
         stmt = stmt.where(and_(Pokemon.last_modified > datetime.datetime.utcfromtimestamp(utc_timestamp),
                                Pokemon.seen_type.in_(raw_types)))
