@@ -134,21 +134,23 @@ class PogoWindows:
 
         gray = await AsyncioCv2.GaussianBlur(gray, (3, 3), 0)
         edges = await AsyncioCv2.Canny(gray, 50, 200, apertureSize=3)
-        # checking for all possible button lines
 
+        # checking for all possible button lines
         max_line_length = (width / ratiomin) + (width * 0.18)
         logger.debug("lookForButton: MaxLineLength: {}", max_line_length)
         min_line_length = (width / ratiomax) - (width * 0.02)
         logger.debug("lookForButton: MinLineLength: {}", min_line_length)
 
         kernel = np.ones((2, 2), np.uint8)
-        edges = await AsyncioCv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
+        # not async since the results were different to what they should've looked like - no idea as to why
+        edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
 
         num_lines = 0
-        lines = await AsyncioCv2.HoughLinesP(edges, 1, math.pi / 180, 90, min_line_length,
-                                             5)
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=90, minLineLength=min_line_length,
+                                maxLineGap=5)
         if lines is None:
             return False
+
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             lines = await loop.run_in_executor(
@@ -265,8 +267,8 @@ class PogoWindows:
         logger.debug("__check_raid_line: MaxLineLength: {}", max_line_length)
         min_line_length = width / 6.35 - width * 0.03
         logger.debug("__check_raid_line: MinLineLength: {}", min_line_length)
-        lines = await AsyncioCv2.HoughLinesP(edges, 1, math.pi / 180, 70,
-                                             min_line_length, 2)
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=min_line_length,
+                                maxLineGap=2)
         if lines is None:
             return False
         for line in lines:

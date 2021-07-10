@@ -48,9 +48,11 @@ class AsyncioCv2:
             return await loop.run_in_executor(
                 pool, cv2.Canny, image, threshold1, threshold2, edges, apertureSize)
 
+    # TODO: Tests comparing results to opencv
     @staticmethod
     async def HoughLinesP(image, rho: float, theta: float, threshold: int, lines=None,
                           minLineLength: float = 0, maxLineGap: float = 0):
+        raise ValueError("Do not use for now")
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return await loop.run_in_executor(
@@ -59,6 +61,7 @@ class AsyncioCv2:
     @staticmethod
     async def morphologyEx(src, op, kernel, dst=None, anchor=None, iterations: int = 1,
                            borderType=cv2.BORDER_CONSTANT, borderValue=None):
+        raise ValueError("Do not use for now")
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             return await loop.run_in_executor(
