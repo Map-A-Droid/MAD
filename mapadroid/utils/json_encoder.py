@@ -1,3 +1,5 @@
+import asyncio
+import concurrent.futures
 import json
 from datetime import timezone, datetime
 from decimal import Decimal
@@ -6,6 +8,16 @@ from enum import Enum
 from mapadroid.db.model import Base
 from mapadroid.mad_apk.apk_enums import APKArch, APKType
 from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
+
+
+async def mad_json_dumps(data):
+    loop = asyncio.get_running_loop()
+    with concurrent.futures.ThreadPoolExecutor() as pool:
+        return await loop.run_in_executor(pool, mad_json_dumps_sync, data)
+
+
+def mad_json_dumps_sync(data):
+    return json.dumps(data, cls=MADEncoder)
 
 
 class MADEncoder(json.JSONEncoder):
