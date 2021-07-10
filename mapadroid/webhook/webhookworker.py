@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 from asyncio import Task
-from typing import List, Optional, Dict, Tuple, Set
+from typing import List, Dict, Tuple, Set
 
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.DbWrapper import DbWrapper
@@ -400,7 +400,7 @@ class WebhookWorker:
 
         return ret
 
-    def __prepare_mon_data(self, mon_data):
+    def __prepare_mon_data(self, mon_data: List[Dict]):
         ret = []
 
         for mon in mon_data:
@@ -671,7 +671,8 @@ class WebhookWorker:
                         await DbWebhookReader.get_mon_changed_since(session, self.__last_check, self.__pokemon_types)
                     )
                     full_payload += mon
-            except Exception:
+            except Exception as e:
+                logger.exception(e)
                 logger.exception("Error while creating webhook payload")
 
         logger.debug("Done fetching data + building payload")
