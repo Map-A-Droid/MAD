@@ -912,7 +912,7 @@ class WorkerQuests(MITMBase):
                     await PokestopHelper.update_location(session, fort_id, Location(latitude, longitude))
 
         timedelta_to_consider_deletion = timedelta(days=3)
-        for fort_id, stop in stops.values():
+        for fort_id, stop in stops.items():
             # Call delete of stops that have been not been found within 100m range of current position
             stop_location: Location = Location(float(stop.latitude), float(stop.longitude))
             logger.debug("Considering stop {} at {} (last updated {}) for deletion",
