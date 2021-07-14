@@ -323,16 +323,6 @@ class TrsSpawn(Base):
     eventid = Column(INTEGER(11), nullable=False, server_default=text("'1'"))
 
 
-class TrsSpawnsighting(Base):
-    __tablename__ = 'trs_spawnsightings'
-
-    id = Column(INTEGER(11), primary_key=True)
-    encounter_id = Column(BIGINT(20), nullable=False)
-    spawnpoint_id = Column(BIGINT(20), nullable=False, index=True)
-    scan_time = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    tth_secs = Column(INTEGER(11))
-
-
 class TrsStatsDetect(Base):
     __tablename__ = 'trs_stats_detect'
 
@@ -345,27 +335,16 @@ class TrsStatsDetect(Base):
     quest = Column(INTEGER(100))
 
 
-class TrsStatsDetectFortRaw(Base):
-    __tablename__ = 'trs_stats_detect_fort_raw'
+class TrsStatsDetectWildMonRaw(Base):
+    __tablename__ = 'trs_stats_detect_wild_mon_raw'
 
-    id = Column(INTEGER(11), primary_key=True)
-    worker = Column(String(100, 'utf8mb4_unicode_ci'), nullable=False, index=True)
-    guid = Column(String(50, 'utf8mb4_unicode_ci'), nullable=False, index=True)
-    type = Column(String(10, 'utf8mb4_unicode_ci'), nullable=False)
-    count = Column(INTEGER(11), nullable=False)
-    timestamp_scan = Column(INTEGER(11), nullable=False)
-
-
-class TrsStatsDetectMonRaw(Base):
-    __tablename__ = 'trs_stats_detect_mon_raw'
-
-    id = Column(INTEGER(11), primary_key=True)
-    worker = Column(String(100, 'utf8mb4_unicode_ci'), nullable=False, index=True)
-    encounter_id = Column(BIGINT(20), nullable=False, index=True)
-    type = Column(String(10, 'utf8mb4_unicode_ci'), nullable=False)
-    count = Column(INTEGER(11), nullable=False)
-    is_shiny = Column(TINYINT(1), nullable=False, index=True, server_default=text("'0'"))
-    timestamp_scan = Column(INTEGER(11), nullable=False)
+    worker = Column(String(128, 'utf8mb4_unicode_ci'), primary_key=True),
+    encounter_id = Column('encounter_id', BIGINT(), ForeignKey('pokemon.encounter_id', ondelete='CASCADE'),
+                          onupdate='CASCADE', primary_key=True),
+    count = Column('count', INTEGER(), nullable=False),
+    is_shiny = Column('is_shiny', TINYINT(1), server_default=0),
+    first_scanned = Column('first_scanned', DateTime(), nullable=False),
+    last_scanned = Column('last_scanned', DateTime(), nullable=False),
 
 
 class TrsStatsDetectSeenType(Base):
@@ -386,7 +365,6 @@ class TrsStatsLocation(Base):
     id = Column(INTEGER(11), primary_key=True)
     worker = Column(String(100, 'utf8mb4_unicode_ci'), nullable=False, index=True)
     timestamp_scan = Column(INTEGER(11), nullable=False)
-    location_count = Column(INTEGER(11), nullable=False)
     location_ok = Column(INTEGER(11), nullable=False)
     location_nok = Column(INTEGER(11), nullable=False)
 
@@ -408,7 +386,6 @@ class TrsStatsLocationRaw(Base):
     walker = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False)
     success = Column(TINYINT(1), nullable=False)
     period = Column(INTEGER(11), nullable=False)
-    count = Column(INTEGER(11), nullable=False)
     transporttype = Column(TINYINT(1), nullable=False)
 
 
@@ -430,7 +407,7 @@ class TrsVisited(Base):
     origin = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
 
 
-class Trshash(Base):
+class TrsHash(Base):
     __tablename__ = 'trshash'
 
     hashid = Column(MEDIUMINT(9), primary_key=True)

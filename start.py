@@ -21,7 +21,7 @@ from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin.madmin import MADmin
 from mapadroid.mitm_receiver.MitmDataProcessorManager import \
     MitmDataProcessorManager
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.event import Event

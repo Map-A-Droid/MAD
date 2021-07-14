@@ -197,6 +197,28 @@ class MappingManager:
         else:
             return devicemapping_entry.device_settings, devicemapping_entry.pool_settings
 
+    async def get_levelmode(self, origin):
+        device_routemananger = await self.get_routemanager_id_where_device_is_registered(origin)
+        if device_routemananger is None:
+            return False
+
+        if await self.routemanager_get_level(device_routemananger):
+            return True
+
+        return False
+
+    async def get_safe_items(self, origin) -> List[int]:
+        devicesettings: Optional[
+            Tuple[SettingsDevice, SettingsDevicepool]] = await self.get_devicesettings_of(origin)
+        values: str = ""
+        if devicesettings[1] and devicesettings[1].enhanced_mode_quest_safe_items:
+            values = devicesettings[1].enhanced_mode_quest_safe_items
+        else:
+            values = devicesettings[0].enhanced_mode_quest_safe_items
+        if not values:
+            values = "1301, 1401,1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
+        return list(map(int, values.split(",")))
+
     # TODO: Move all devicesettings/mappings functionality/handling to dedicated class
     async def __devicesettings_setter_consumer(self):
         logger.info("Starting Devicesettings consumer Thread")

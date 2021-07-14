@@ -8,7 +8,7 @@ from aiohttp.web_runner import TCPSite, UnixSite
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mapping_manager import MappingManager
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.endpoints import register_mitm_receiver_root_endpoints
 from mapadroid.mitm_receiver.endpoints.autoconfig import register_autoconfig_endpoints
 from mapadroid.mitm_receiver.endpoints.mad_apk import register_mad_apk_endpoints

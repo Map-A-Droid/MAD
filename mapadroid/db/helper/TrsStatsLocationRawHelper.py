@@ -8,6 +8,7 @@ from sqlalchemy.orm import aliased
 
 from mapadroid.db.model import TrsStatsLocationRaw
 from mapadroid.utils.collections import Location
+from mapadroid.utils.madGlobals import TransportType, PositionType
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -201,8 +202,8 @@ class TrsStatsLocationRawHelper:
                       func.IF(TrsStatsLocationRaw.data_ts == 0, TrsStatsLocationRaw.fix_ts,
                               TrsStatsLocationRaw.data_ts),
                       TrsStatsLocationRaw.count,
-                      case((TrsStatsLocationRaw.transporttype == 0, "Teleport"),
-                           (TrsStatsLocationRaw.transporttype == 1, "Walk"),
+                      case((TrsStatsLocationRaw.transporttype == TransportType.TELEPORT.value, "Teleport"),
+                           (TrsStatsLocationRaw.transporttype == TransportType.WALK.value, "Walk"),
                            else_="other"),
                       ) \
             .select_from(TrsStatsLocationRaw)
@@ -224,35 +225,30 @@ class TrsStatsLocationRawHelper:
         return locations
 
     @staticmethod
-    async def add(session: AsyncSession, worker: str, fix_ts: int, location: Location, data_ts: int,
-                  type_of_location: bool, walker: str, success: bool, period: int, transporttype: bool):
-        stat: Optional[TrsStatsLocationRaw] = await TrsStatsLocationRawHelper.get(session, worker, location,
-                                                                                  type_of_location, period)
-        if not stat:
-            stat = TrsStatsLocationRaw()
-            # TODO: Query to see if update applies
-            stat.worker = worker
-            stat.fix_ts = fix_ts
-            stat.lat = location.lat
-            stat.lng = location.lng
-            stat.data_ts = data_ts
-            stat.type = 1 if type_of_location else 0
-            stat.walker = walker
-            stat.success = 1 if success else 0
-            stat.period = period
-            stat.transporttype = 1 if transporttype else 0
-        else:
-            stat.count += 1
+    async def add(session: AsyncSession, worker: str, fix_timestamp: int, location: Location, data_timestamp: int,
+                  type_of_location: PositionType, walker: str, success: bool, period: int,
+                  transporttype: TransportType):
+        stat = TrsStatsLocationRaw()
+        stat.worker = worker
+        stat.fix_ts = fix_timestamp
+        stat.lat = location.lat
+        stat.lng = location.lng
+        stat.data_ts = data_timestamp
+        stat.type = type_of_location.value
+        stat.walker = walker
+        stat.success = 1 if success else 0
+        stat.period = period
+        stat.transporttype = transporttype.value
         session.add(stat)
 
     @staticmethod
-    async def get(session: AsyncSession, worker: str, location: Location, type_of_location: bool,
+    async def get(session: AsyncSession, worker: str, location: Location, type_of_location: PositionType,
                   period: int) -> Optional[TrsStatsLocationRaw]:
         stmt = select(TrsStatsLocationRaw).where(and_(TrsStatsLocationRaw.worker == worker,
                                                       TrsStatsLocationRaw.lat == location.lat,
                                                       TrsStatsLocationRaw.lng == location.lng,
                                                       TrsStatsLocationRaw.period == period,
-                                                      TrsStatsLocationRaw.type == 1 if type_of_location else 0))
+                                                      TrsStatsLocationRaw.type == type_of_location.value))
         result = await session.execute(stmt)
         return result.scalars().first()
 

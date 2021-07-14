@@ -854,8 +854,6 @@ class DbPogoProtoSubmit:
                     level = gym["gym_details"]["raid_info"]["level"]
                     gymid = gym["id"]
 
-                    await mitm_mapper.collect_raid_stats(origin, gymid)
-
                     origin_logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, level,
                                          raidend_date)
 

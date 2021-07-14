@@ -5,11 +5,10 @@ from typing import List, Tuple, Optional
 
 import sqlalchemy
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.mitm_receiver.MitmMapper import MitmMapper
+from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.utils.madGlobals import MitmReceiverRetry
 
 

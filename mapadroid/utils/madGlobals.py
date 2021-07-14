@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 from multiprocessing import Event
 
 terminate_mad = Event()
@@ -50,3 +50,20 @@ class MonSeenTypes(Enum):
     LURE_WILD = "lure_wild"
     NEARBY_STOP = "nearby_stop"
     NEARBY_CELL = "nearby_cell"
+
+
+class PositionType(IntEnum):
+    NORMAL = 0
+    PRIOQ = 1
+    STARTUP = 2
+    REBOOT = 3
+    RESTART = 4
+
+
+class TransportType(IntEnum):
+    TELEPORT = 0
+    WALK = 1
+
+
+
+

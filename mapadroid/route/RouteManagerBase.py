@@ -24,6 +24,7 @@ from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.madGlobals import PositionType
 from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -31,11 +32,6 @@ args = parse_args()
 
 Relation = collections.namedtuple(
     'Relation', ['other_event', 'distance', 'timedelta'])
-
-
-class PositionType(IntEnum):
-    NORMAL = 0,
-    PRIO = 1
 
 
 @dataclass
