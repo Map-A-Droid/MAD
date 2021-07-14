@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatsDetectFortRawHelper import TrsStatsDetectFortRawHelper
 from mapadroid.db.helper.TrsStatsDetectHelper import TrsStatsDetectHelper
-from mapadroid.db.helper.TrsStatsDetectMonRawHelper import TrsStatsDetectMonRawHelper
+from mapadroid.db.helper.TrsStatsDetectWildMonRawHelper import TrsStatsDetectMonRawHelper
 from mapadroid.db.helper.TrsStatsLocationHelper import TrsStatsLocationHelper
 from mapadroid.db.helper.TrsStatsLocationRawHelper import TrsStatsLocationRawHelper
 from mapadroid.mapping_manager.MappingManager import MappingManager, DeviceMappingsEntry

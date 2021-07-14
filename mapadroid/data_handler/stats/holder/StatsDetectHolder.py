@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
@@ -11,7 +12,7 @@ class StatsDetectEntry(TrsStatsDetect):
     def __init__(self, worker: str):
         super().__init__()
         self.worker = worker
-        self.timestamp_scan = datetime.utcnow()
+        self.timestamp_scan = time.time()
         self.mon = 0
         self.raid = 0
         self.mon_iv = 0
@@ -23,8 +24,8 @@ class StatsDetectEntry(TrsStatsDetect):
         self.raid += new_raids
         self.mon_iv += new_mon_ivs
         self.quest += new_quests
-        if time_scanned > self.timestamp_scan:
-            self.timestamp_scan = time_scanned
+        if time_scanned.timestamp() > self.timestamp_scan:
+            self.timestamp_scan = time_scanned.timestamp()
 
 
 class StatsDetectHolder(AbstractStatsHolder, AbstractWorkerStats):
@@ -35,6 +36,7 @@ class StatsDetectHolder(AbstractStatsHolder, AbstractWorkerStats):
 
     async def submit(self, session: AsyncSession) -> None:
         async with session.begin_nested() as nested:
+            self._entry.timestamp_scan = time.time()
             session.add(self._entry)
             await nested.commit()
             # TODO: Catch IntegrityError/handle update
