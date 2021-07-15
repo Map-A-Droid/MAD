@@ -233,7 +233,7 @@ class WorkerBase(AbstractWorker):
         t_main_work.daemon = True
         t_main_work.start()
         # do some other stuff in the main process
-        while not self._stop_worker_event.isSet():
+        while not self._stop_worker_event.is_set():
             time.sleep(1)
 
         while t_main_work.is_alive():
@@ -243,8 +243,8 @@ class WorkerBase(AbstractWorker):
         return self._last_known_state
 
     def stop_worker(self):
-        if self._stop_worker_event.set():
-            self.logger.info('Worker already stopped - waiting for it')
+        if self._stop_worker_event.is_set():
+            self.logger.info('Worker stop called, but worker is already stopping...')
         else:
             self._stop_worker_event.set()
             self.logger.info("Worker stop called")
@@ -372,7 +372,7 @@ class WorkerBase(AbstractWorker):
             self._internal_cleanup()
             return
 
-        while not self._stop_worker_event.isSet():
+        while not self._stop_worker_event.is_set():
             try:
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 walkercheck = self.check_walker()
@@ -561,7 +561,7 @@ class WorkerBase(AbstractWorker):
             if check_walker_value_type(sleeptime):
                 self._stop_pogo()
                 killpogo = True
-            while not self._stop_worker_event.isSet() and check_walker_value_type(sleeptime):
+            while not self._stop_worker_event.is_set() and check_walker_value_type(sleeptime):
                 time.sleep(1)
             self.logger.info('just woke up')
             if killpogo:
