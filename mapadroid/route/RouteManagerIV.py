@@ -68,6 +68,18 @@ class RouteManagerIV(RouteManagerBase):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
+    def _should_check_prioq(self, origin: str) -> bool:
+        # Override the base class. We only require the prioq to not be empty.
+        return self._prio_queue
+
+    def _has_normal_route(self) -> bool:
+        # Override the base class. We only use coords from prioq.
+        return False
+
+    def _can_pass_prioq_coords(self) -> bool:
+        # Override the base class. No need to pass prioq coords.
+        return False
+
     def _start_routemanager(self):
         with self._manager_mutex:
             if not self._is_started:
