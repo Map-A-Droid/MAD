@@ -42,10 +42,11 @@ class StatsHandler:
             self.__worker_stats[worker] = PlayerStats(worker, self.__application_args)
         return self.__worker_stats[worker]
 
-    def stats_collect_wild_mon(self, worker: str, encounter_id: int, time_scanned: datetime) -> None:
+    def stats_collect_wild_mon(self, worker: str, encounter_ids: List[int], time_scanned: datetime) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
-        player_stats.stats_collect_wild_mon(encounter_id, time_scanned)
-        self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.WILD, time_scanned)
+        for encounter_id in encounter_ids:
+            player_stats.stats_collect_wild_mon(encounter_id, time_scanned)
+            self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.WILD, time_scanned)
 
     def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime, is_shiny: bool) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
@@ -67,9 +68,10 @@ class StatsHandler:
         player_stats.stats_collect_location_data(location, success, fix_timestamp, position_type, data_timestamp,
                                                  walker, transport_type, timestamp_of_record)
 
-    def stats_collect_seen_type(self, encounter_id: int, type_of_detection: MonSeenTypes,
+    def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
                                 time_of_scan: datetime) -> None:
-        self.__stats_detect_seen_type_holder.add(encounter_id, type_of_detection, time_of_scan)
+        for encounter_id in encounter_ids:
+            self.__stats_detect_seen_type_holder.add(encounter_id, type_of_detection, time_of_scan)
 
     async def __stats_submission_loop(self):
         repetition_duration: int = self.__application_args.game_stats_save_time

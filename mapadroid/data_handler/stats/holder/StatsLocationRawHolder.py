@@ -1,7 +1,7 @@
 from typing import List
 
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.stats.holder.AbstractWorkerStats import AbstractWorkerStats
+from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.model import TrsStatsLocationRaw
@@ -9,9 +9,9 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType
 
 
-class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerStats):
+class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
     def __init__(self, worker: str):
-        AbstractWorkerStats.__init__(self, worker)
+        AbstractWorkerHolder.__init__(self, worker)
         self._entries: List[TrsStatsLocationRaw] = []
 
     async def submit(self, session: AsyncSession) -> None:

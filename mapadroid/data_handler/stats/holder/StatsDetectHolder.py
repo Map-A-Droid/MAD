@@ -2,7 +2,7 @@ import time
 from datetime import datetime
 
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.stats.holder.AbstractWorkerStats import AbstractWorkerStats
+from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.model import TrsStatsDetect
@@ -28,10 +28,10 @@ class StatsDetectEntry(TrsStatsDetect):
             self.timestamp_scan = time_scanned.timestamp()
 
 
-class StatsDetectHolder(AbstractStatsHolder, AbstractWorkerStats):
+class StatsDetectHolder(AbstractStatsHolder, AbstractWorkerHolder):
     def __init__(self, worker: str):
         # Wild mon encounterID to counts seen mapping
-        AbstractWorkerStats.__init__(self, worker)
+        AbstractWorkerHolder.__init__(self, worker)
         self._entry: StatsDetectEntry = StatsDetectEntry(worker)
 
     async def submit(self, session: AsyncSession) -> None:

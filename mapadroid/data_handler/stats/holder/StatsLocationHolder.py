@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.stats.holder.AbstractWorkerStats import AbstractWorkerStats
+from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.model import TrsStatsLocation
@@ -23,9 +23,9 @@ class StatsLocationEntry(TrsStatsLocation):
             self.location_nok += 1
 
 
-class StatsLocationHolder(AbstractStatsHolder, AbstractWorkerStats):
+class StatsLocationHolder(AbstractStatsHolder, AbstractWorkerHolder):
     def __init__(self, worker: str):
-        AbstractWorkerStats.__init__(self, worker)
+        AbstractWorkerHolder.__init__(self, worker)
         self._entry: StatsLocationEntry = StatsLocationEntry(worker)
 
     async def submit(self, session: AsyncSession) -> None:

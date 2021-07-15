@@ -16,7 +16,6 @@ class PlayerStats(AbstractStatsHolder):
     def __init__(self, origin: str, application_args):
         self._worker: str = origin
         self.__application_args = application_args
-
         self.__init_holders()
 
     def __init_holders(self):

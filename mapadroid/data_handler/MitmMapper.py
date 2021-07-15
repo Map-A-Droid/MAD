@@ -44,40 +44,9 @@ class MitmMapper(object):
         self.__mapping[origin] = {}
         self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
 
-    async def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
-        if self.__application_args.game_stats:
-            await self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
-
-    async def __internal_playerstats_db_update_consumer(self):
-        try:
-            while not self.__playerstats_db_update_stop.is_set():
-                if not self.__application_args.game_stats:
-                    logger.info("Playerstats are disabled")
-                    break
-                try:
-                    next_item = self.__playerstats_db_update_queue.get_nowait()
-                except Empty:
-                    await asyncio.sleep(0.5)
-                    continue
-                if next_item is not None:
-                    client_id, stats, last_processed_timestamp = next_item
-                    # TODO: Place data in dict accordingly
-        except Exception as e:
-            logger.error("Playerstats consumer stopping because of {}", e)
-        logger.info("Shutting down Playerstats update consumer")
-
     def shutdown(self):
         self.__playerstats_db_update_stop.set()
         self.__playerstats_db_update_consumer.cancel()
-
-    # TODO: Move to MappingManager?
-    async def set_injection_status(self, origin, status=True):
-        if origin not in self.__injected or not self.__injected[origin] and status is True:
-            logger.success("Worker is injected now")
-        self.__injected[origin] = status
-
-    async def get_injection_status(self, origin):
-        return self.__injected.get(origin, False)
 
     async def run_stats_collector(self, origin: str):
         if not self.__application_args.game_stats:

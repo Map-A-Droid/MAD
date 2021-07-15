@@ -4,7 +4,7 @@ from typing import Dict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.stats.holder.AbstractWorkerStats import AbstractWorkerStats
+from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from mapadroid.db.model import TrsStatsDetectWildMonRaw
 
 
@@ -25,10 +25,10 @@ class MonEntry(TrsStatsDetectWildMonRaw):
         self.last_scanned = last_scanned
 
 
-class WildMonStatsHolder(AbstractStatsHolder, AbstractWorkerStats):
+class WildMonStatsHolder(AbstractStatsHolder, AbstractWorkerHolder):
     def __init__(self, worker: str):
         # Wild mon encounterID to counts seen mapping
-        AbstractWorkerStats.__init__(self, worker)
+        AbstractWorkerHolder.__init__(self, worker)
         self._wild_mons_seen: Dict[int, MonEntry] = {}
 
     async def submit(self, session: AsyncSession) -> None:
