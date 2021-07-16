@@ -75,16 +75,16 @@ def downgrade():
             'trs_stats_detect_mon_raw',
             sa.Column('id', sa.INT(), primary_key=True, autoincrement=True),
             sa.Column('worker', sa.String(128, 'utf8mb4_unicode_ci'), nullable=False, index=True),
-            sa.Column('encounter_id', sa.BIGINT(), nullable=False, index=True),
+            sa.Column('encounter_id', BIGINT(20, unsigned=True), nullable=False, index=True),
             sa.Column('type', sa.String(10, 'utf8mb4_unicode_ci'), nullable=False),
             sa.Column('count', sa.INT(), nullable=False),
             sa.Column('is_shiny', sa.SMALLINT(), nullable=False, index=True, server_default='0'),
             sa.Column('timestamp_scan', sa.INT(), nullable=False, index=True),
         )
-        op.create_index('worker', 'trs_stats_detect_mon_raw', ['worker'])
-        op.create_index('encounter_id', 'trs_stats_detect_mon_raw', ['encounter_id'])
-        op.create_index('is_shiny', 'trs_stats_detect_mon_raw', ['is_shiny'])
-        op.create_index('timestamp_scan', 'trs_stats_detect_mon_raw', ['timestamp_scan'])
+        # op.create_index('worker', 'trs_stats_detect_mon_raw', ['worker'])
+        # op.create_index('encounter_id', 'trs_stats_detect_mon_raw', ['encounter_id'])
+        # op.create_index('is_shiny', 'trs_stats_detect_mon_raw', ['is_shiny'])
+        # op.create_index('timestamp_scan', 'trs_stats_detect_mon_raw', ['timestamp_scan'])
     except Exception as e:
         print("Failed creating table trs_stats_detect_mon_raw")
 
@@ -96,10 +96,10 @@ def downgrade():
             sa.Column('guid', sa.String(50, 'utf8mb4_unicode_ci'), nullable=False, index=True),
             sa.Column('type', sa.String(10, 'utf8mb4_unicode_ci'), nullable=False),
             sa.Column('count', sa.INTEGER(), nullable=False),
-            sa.Column('timestamp_scan', sa.INTEGER(), nullable=False)
+            sa.Column('timestamp_scan', sa.INTEGER(), nullable=False, index=True)
         )
-        op.create_index('worker', 'trs_stats_detect_fort_raw', ['worker'])
-        op.create_index('guid', 'trs_stats_detect_fort_raw', ['guid'])
+        # op.create_index('worker', 'trs_stats_detect_fort_raw', ['worker'])
+        # op.create_index('guid', 'trs_stats_detect_fort_raw', ['guid'])
     except Exception as e:
         print("Failed creating table trs_stats_detect_fort_raw")
 
@@ -107,12 +107,12 @@ def downgrade():
         op.create_table(
             'trs_spawnsightings',
             sa.Column('id', sa.INTEGER(), primary_key=True, autoincrement=True),
-            sa.Column('encounter_id', sa.BIGINT(), nullable=False),
-            sa.Column('spawnpoint_id', sa.BIGINT(), nullable=False, index=True),
+            sa.Column('encounter_id', BIGINT(20, unsigned=True), nullable=False),
+            sa.Column('spawnpoint_id', BIGINT(20, unsigned=True), nullable=False, index=True),
             sa.Column('scan_time', sa.DATETIME(), nullable=False),
             sa.Column('tth_secs', sa.INTEGER(), nullable=False)
         )
-        op.create_index('trs_spawnpointdd_spawnpoint_id', 'trs_spawnsightings', ['spawnpoint_id'])
+        # op.create_index('trs_spawnpointdd_spawnpoint_id', 'trs_spawnsightings', ['spawnpoint_id'])
     except Exception as e:
         print("Failed creating table trs_spawnsightings")
 

@@ -89,8 +89,8 @@ class StatsHandler:
     async def __run_stats_processing(self):
         logger.info("Running stats processing")
         async with self.__db_wrapper as session, session:
-            await self.__process_stats(session)
             try:
+                await self.__process_stats(session)
                 await session.commit()
             except Exception as e:
                 logger.exception(e)

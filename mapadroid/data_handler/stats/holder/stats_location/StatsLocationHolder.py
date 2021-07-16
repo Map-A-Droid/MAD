@@ -18,8 +18,8 @@ class StatsLocationHolder(AbstractStatsHolder, AbstractWorkerHolder):
             await nested.commit()
             # TODO: Catch IntegrityError/handle update
 
-    def add_location_ok(self, time_of_scan: datetime) -> None:
+    def add_location_ok(self, time_of_scan: int) -> None:
         self._entry.update(time_of_scan, location_ok=True)
 
-    def add_location_not_ok(self, time_of_scan: datetime) -> None:
+    def add_location_not_ok(self, time_of_scan: int) -> None:
         self._entry.update(time_of_scan, location_ok=False)

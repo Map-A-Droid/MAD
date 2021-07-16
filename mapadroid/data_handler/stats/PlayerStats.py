@@ -52,6 +52,6 @@ class PlayerStats(AbstractStatsHolder):
         self._stats_location_raw_holder.add_location(location, success, fix_timestamp, position_type,
                                                      data_timestamp, walker, transport_type, timestamp_of_record)
         if data_timestamp > 0:
-            self._stats_location_holder.add_location_ok(datetime.utcfromtimestamp(timestamp_of_record))
+            self._stats_location_holder.add_location_ok(timestamp_of_record)
         else:
-            self._stats_location_holder.add_location_not_ok(datetime.utcfromtimestamp(timestamp_of_record))
+            self._stats_location_holder.add_location_not_ok(timestamp_of_record)
