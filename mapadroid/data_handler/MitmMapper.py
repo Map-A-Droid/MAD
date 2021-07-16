@@ -7,8 +7,6 @@ from mapadroid.data_handler.stats.StatsHandler import StatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
-from loguru import logger
-
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
 
 
