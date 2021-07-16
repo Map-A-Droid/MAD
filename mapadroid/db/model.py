@@ -338,13 +338,13 @@ class TrsStatsDetect(Base):
 class TrsStatsDetectWildMonRaw(Base):
     __tablename__ = 'trs_stats_detect_wild_mon_raw'
 
-    worker = Column(String(128, 'utf8mb4_unicode_ci'), primary_key=True),
-    encounter_id = Column('encounter_id', BIGINT(), ForeignKey('pokemon.encounter_id', ondelete='CASCADE'),
-                          onupdate='CASCADE', primary_key=True),
-    count = Column('count', INTEGER(), nullable=False),
-    is_shiny = Column('is_shiny', TINYINT(1), server_default=0),
-    first_scanned = Column('first_scanned', DateTime(), nullable=False),
-    last_scanned = Column('last_scanned', DateTime(), nullable=False),
+    worker = Column(String(128, 'utf8mb4_unicode_ci'), primary_key=True)
+    encounter_id = Column(BIGINT(), ForeignKey('pokemon.encounter_id', ondelete='CASCADE'),
+                          onupdate='CASCADE', primary_key=True)
+    count = Column(INTEGER(), nullable=False)
+    is_shiny = Column(TINYINT(1), server_default='0', nullable=False)
+    first_scanned = Column(DateTime(), nullable=False)
+    last_scanned = Column(DateTime(), nullable=False)
 
 
 class TrsStatsDetectSeenType(Base):

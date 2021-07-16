@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple, Dict
 from loguru import logger
 
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
-from mapadroid.db.model import Pokemon, TrsStatsDetectMonRaw
+from mapadroid.db.model import Pokemon, TrsStatsDetectWildMonRaw
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
 from mapadroid.utils.language import get_mon_name
 
@@ -27,7 +27,7 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
             logger.debug2('using timestamp_from: {}', timestamp_to)
 
         tmp_perworker_v2 = {}
-        data: Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]] = await PokemonHelper \
+        data: Dict[int, Tuple[Pokemon, List[TrsStatsDetectWildMonRaw]]] = await PokemonHelper \
             .get_all_shiny(self._session, timestamp_from, timestamp_to)
         found_shiny_mon_id = []
         shiny_count: Dict[int, Dict] = {}

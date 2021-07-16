@@ -28,7 +28,6 @@ from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
                                 Weather, TrsStatsDetectSeenType)
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
-from mapadroid.utils.logging import get_origin_logger
 from mapadroid.utils.madGlobals import MonSeenTypes
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
@@ -50,19 +49,20 @@ class DbPogoProtoSubmit:
         self._cache: Optional[Union[Redis, NoopCache]] = None
         # TODO: Async setup
 
-    async def mons(self, session: AsyncSession, origin: str, timestamp: float, map_proto: dict,
-                   mitm_mapper) -> List[Tuple[int, datetime]]:
+    async def mons(self, session: AsyncSession, timestamp: float,
+                   map_proto: dict) -> List[int]:
         """
         Update/Insert mons from a map_proto dict
+
+        Returns: List of encounterIDs of wild mons in GMO
         """
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
-
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug3("DbPogoProtoSubmit::mons called with data received")
+        logger.debug3("DbPogoProtoSubmit::mons called with data received")
         cells = map_proto.get("cells", None)
-        encounters = []
+        encounter_ids_in_gmo = []
+        now = datetime.utcfromtimestamp(timestamp)
         if not cells:
-            return encounters
+            return encounter_ids_in_gmo
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
@@ -73,13 +73,12 @@ class DbPogoProtoSubmit:
 
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
+                encounter_ids_in_gmo.append(encounter_id)
 
-                await mitm_mapper.collect_mon_stats(origin, str(encounter_id))
                 cache_key = "mon{}-{}".format(encounter_id, mon_id)
                 if await cache.exists(cache_key):
                     continue
 
-                now = datetime.utcfromtimestamp(timestamp)
 
                 # get known spawn end time and feed into despawn time calculation
                 # getdetspawntime = self._get_detected_endtime(str(spawnid))
@@ -89,10 +88,10 @@ class DbPogoProtoSubmit:
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix)
 
                 if spawnpoint is None:
-                    origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", mon_id, lat, lon,
+                    logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", mon_id, lat, lon,
                                          despawn_time.strftime("%Y-%m-%d %H:%M:%S"), spawnid)
                 else:
-                    origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
+                    logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
                                          despawn_time.strftime("%Y-%m-%d %H:%M:%S"), spawnid)
 
                 async with session.begin_nested() as nested_transaction:
@@ -117,20 +116,19 @@ class DbPogoProtoSubmit:
                         cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                         if cache_time > 0:
                             await cache.set(cache_key, 1, expire=cache_time)
-                        encounters.append((encounter_id, now))
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.debug("Failed committing mon {} ({}). Safe to ignore.", encounter_id, str(e))
                         await nested_transaction.rollback()
-        return encounters
+        return encounter_ids_in_gmo
 
-    async def mons_nearby(self, session: AsyncSession, origin: str, timestamp: float, map_proto: dict,
-                          mitm_mapper) -> Tuple[List[Tuple[int, datetime]], List[Tuple[int, datetime]]]:
+    async def mons_nearby(self, session: AsyncSession, timestamp: float,
+                          map_proto: dict) -> Tuple[List[int], List[int]]:
         """
         Insert nearby mons
         """
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
-        stop_encounters: List[Tuple[int, datetime]] = []
-        cell_encounters: List[Tuple[int, datetime]] = []
+        stop_encounters: List[int] = []
+        cell_encounters: List[int] = []
         logger.debug3("DbPogoProtoSubmit::nearby_mons called with data received")
         cells = map_proto.get("cells", [])
         if not cells:
@@ -165,7 +163,8 @@ class DbPogoProtoSubmit:
                     stop_id = None
                     db_cell = cell_id
                     seen_type: MonSeenTypes = MonSeenTypes.NEARBY_CELL
-                    cell_encounters.append((encounter_id, now))
+                    # TODO: Move above cache check...
+                    cell_encounters.append(encounter_id)
                 else:
                     db_cell = None
                     seen_type: MonSeenTypes = MonSeenTypes.NEARBY_STOP
@@ -177,7 +176,8 @@ class DbPogoProtoSubmit:
                         lat, lon = fort.latitude, fort.longitude
                     else:
                         lat, lon = (0, 0)
-                    stop_encounters.append((encounter_id, now))
+                    # TODO: Move above cache check...
+                    stop_encounters.append(encounter_id)
 
                 spawnpoint = 0
                 async with session.begin_nested() as nested_transaction:
@@ -208,8 +208,8 @@ class DbPogoProtoSubmit:
 
         return cell_encounters, stop_encounters
 
-    async def mon_iv(self, session: AsyncSession, origin: str, timestamp: float, encounter_proto: dict,
-                     mitm_mapper) -> Optional[Tuple[int, datetime]]:
+    async def mon_iv(self, session: AsyncSession, timestamp: float,
+                     encounter_proto: dict) -> Optional[Tuple[int, bool]]:
         """
         Update/Insert a mon with IVs
         """
@@ -240,9 +240,7 @@ class DbPogoProtoSubmit:
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
         shiny = wild_pokemon["pokemon_data"]["display"].get("is_shiny", 0)
-
-        await mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
-
+        is_shiny: bool = True if shiny == 1 else False
         if spawnpoint is None:
             logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
                                  longitude, despawn_time)
@@ -310,10 +308,10 @@ class DbPogoProtoSubmit:
             time_done = time.time() - time_start_submit
             logger.success("Done updating mon IV in DB in {} seconds", time_done)
 
-        return encounter_id, now
+        return encounter_id, is_shiny
 
-    async def mon_lure_iv(self, session: AsyncSession, origin: str, timestamp: float, encounter_proto: dict,
-                          mitm_mapper) -> Optional[Tuple[int, datetime]]:
+    async def mon_lure_iv(self, session: AsyncSession, timestamp: float,
+                          encounter_proto: dict) -> Optional[Tuple[int, datetime]]:
         """
         Update/Insert a lure mon with IVs
         """
@@ -395,17 +393,16 @@ class DbPogoProtoSubmit:
             logger.success("Done updating mon lure IV in DB in {} seconds", time_done)
         return encounter_id, now
 
-    async def mon_lure_noiv(self, session: AsyncSession, origin: str, timestamp: float, gmo: dict,
-                            mitm_mapper) -> List[Tuple[int, datetime]]:
+    async def mon_lure_noiv(self, session: AsyncSession, timestamp: float, gmo: dict) -> List[int]:
         """
         Update/Insert Lure mons from a map_proto dict
         """
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
         logger.debug3("DbPogoProtoSubmit::mon_lure_noiv called with data received")
         cells = gmo.get("cells", None)
-        encounters: List[Tuple[int, datetime]] = []
+        encounter_ids: List[int] = []
         if cells is None:
-            return encounters
+            return encounter_ids
 
         for cell in cells:
             for fort in cell["forts"]:
@@ -416,7 +413,7 @@ class DbPogoProtoSubmit:
 
                     if encounter_id < 0:
                         encounter_id = encounter_id + 2 ** 64
-
+                    encounter_ids.append(encounter_id)
                     cache_key = "monlurenoiv{}".format(encounter_id)
                     if await cache.exists(cache_key):
                         continue
@@ -457,7 +454,6 @@ class DbPogoProtoSubmit:
                             session.add(mon)
                             await nested_transaction.commit()
                             await cache.set(cache_key, 1, expire=60 * 3)
-                            encounters.append((encounter_id, now))
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.debug("Failed committing lured non-IV mon {} ({}). Safe to ignore.", encounter_id, str(e))
                             await nested_transaction.rollback()
@@ -509,9 +505,8 @@ class DbPogoProtoSubmit:
                     await nested_transaction.rollback()
                     logger.debug("Failed submitting stat...")
 
-    async def spawnpoints(self, session: AsyncSession, origin: str, map_proto: dict, received_timestamp: int):
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug3("DbPogoProtoSubmit::spawnpoints called with data received")
+    async def spawnpoints(self, session: AsyncSession, map_proto: dict, received_timestamp: int):
+        logger.debug3("DbPogoProtoSubmit::spawnpoints called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -580,13 +575,12 @@ class DbPogoProtoSubmit:
                 spawns_do_add.append(spawn)
         session.add_all(spawns_do_add)
 
-    async def stops(self, session: AsyncSession, origin: str, map_proto: dict):
+    async def stops(self, session: AsyncSession, map_proto: dict):
         """
         Update/Insert pokestops from a map_proto dict
         """
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug3("DbPogoProtoSubmit::stops called with data received")
+        logger.debug3("DbPogoProtoSubmit::stops called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -626,9 +620,8 @@ class DbPogoProtoSubmit:
                     await nested_transaction.rollback()
         return stop is not None
 
-    async def quest(self, session: AsyncSession, origin: str, quest_proto: dict, mitm_mapper):
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug3("DbPogoProtoSubmit::quest called")
+    async def quest(self, session: AsyncSession, quest_proto: dict):
+        logger.debug3("DbPogoProtoSubmit::quest called")
         fort_id = quest_proto.get("fort_id", None)
         if fort_id is None:
             return False
@@ -667,8 +660,6 @@ class DbPogoProtoSubmit:
         json_condition = json.dumps(condition)
         task = await questtask(int(quest_type), json_condition, int(target), str(quest_template))
 
-        await mitm_mapper.collect_quest_stats(origin, fort_id)
-
         quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id)
         if not quest:
             quest = TrsQuest()
@@ -688,7 +679,7 @@ class DbPogoProtoSubmit:
         quest.quest_task = task
         quest.quest_template = quest_template
 
-        origin_logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
+        logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
         async with session.begin_nested() as nested_transaction:
             try:
                 session.add(quest)
@@ -698,13 +689,12 @@ class DbPogoProtoSubmit:
                 await nested_transaction.rollback()
         return True
 
-    async def gyms(self, session: AsyncSession, origin: str, map_proto: dict):
+    async def gyms(self, session: AsyncSession, map_proto: dict):
         """
         Update/Insert gyms from a map_proto dict
         """
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug3("DbPogoProtoSubmit::gyms called with data received from")
+        logger.debug3("DbPogoProtoSubmit::gyms called with data received from")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -762,12 +752,11 @@ class DbPogoProtoSubmit:
                             await nested_transaction.rollback()
         return True
 
-    async def gym(self, session: AsyncSession, origin: str, map_proto: dict):
+    async def gym(self, session: AsyncSession, map_proto: dict):
         """
         Update gyms from a map_proto dict
         """
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug3("Updating gyms")
+        logger.debug3("Updating gyms")
         if map_proto.get("result", 0) != 1:
             return False
         status = map_proto.get("gym_status_and_defenders", None)
@@ -804,13 +793,12 @@ class DbPogoProtoSubmit:
                     await nested_transaction.rollback()
         return True
 
-    async def raids(self, session: AsyncSession, origin: str, map_proto: dict, mitm_mapper):
+    async def raids(self, session: AsyncSession, map_proto: dict):
         """
         Update/Insert raids from a map_proto dict
         """
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug3("DbPogoProtoSubmit::raids called with data received")
+        logger.debug3("DbPogoProtoSubmit::raids called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -854,7 +842,7 @@ class DbPogoProtoSubmit:
                     level = gym["gym_details"]["raid_info"]["level"]
                     gymid = gym["id"]
 
-                    origin_logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, level,
+                    logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, level,
                                          raidend_date)
 
                     cache_key = "raid{}{}{}".format(gymid, pokemon_id, raid_end_sec)
@@ -888,16 +876,15 @@ class DbPogoProtoSubmit:
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.warning("Failed committing raid for gym {} ({})", gymid, str(e))
                             await nested_transaction.rollback()
-        origin_logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
+        logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
         return True
 
-    async def weather(self, session: AsyncSession, origin, map_proto, received_timestamp) -> bool:
+    async def weather(self, session: AsyncSession, map_proto, received_timestamp) -> bool:
         """
         Update/Insert weather from a map_proto dict
         """
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.debug3("DbPogoProtoSubmit::weather called with data received")
+        logger.debug3("DbPogoProtoSubmit::weather called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -907,7 +894,7 @@ class DbPogoProtoSubmit:
             await self._handle_weather_data(session, cache, client_weather, time_of_day, received_timestamp)
         return True
 
-    async def cells(self, session: AsyncSession, origin: str, map_proto: dict):
+    async def cells(self, session: AsyncSession, map_proto: dict):
         protocells = map_proto.get("cells", [])
         cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
 

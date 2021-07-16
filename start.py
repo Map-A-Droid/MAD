@@ -244,7 +244,7 @@ async def start():
     if not args.config_mode:
         pogo_win_manager = PogoWindows(args.temp_path, args.ocr_thread_count)
         mitm_mapper = MitmMapper(args, mapping_manager, db_wrapper)
-        await mitm_mapper.init()
+        await mitm_mapper.start()
     logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
 
     # TODO: Enable and properly integrate...

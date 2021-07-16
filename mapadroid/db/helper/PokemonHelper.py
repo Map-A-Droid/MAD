@@ -7,7 +7,7 @@ from sqlalchemy import and_, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokemon, TrsStatsDetectMonRaw, TrsSpawn, Pokestop
+from mapadroid.db.model import Pokemon, TrsSpawn, Pokestop, TrsStatsDetectWildMonRaw
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -142,8 +142,9 @@ class PokemonHelper:
 
     @staticmethod
     async def get_all_shiny(session: AsyncSession, timestamp_after: Optional[int] = None,
-                            timestamp_before: Optional[int] = None) -> Dict[
-        int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]]:
+                            timestamp_before: Optional[int] = None) -> Dict[int,
+                                                                            Tuple[Pokemon,
+                                                                                  List[TrsStatsDetectWildMonRaw]]]:
         """
         Used to be DbStatsReader::get_shiny_stats_v2
         Args:
@@ -154,9 +155,9 @@ class PokemonHelper:
         Returns: Dict of {encounterID : Tuple[Pokemon, List[TrsStatsDetectMonRaw]}
 
         """
-        stmt = select(Pokemon, TrsStatsDetectMonRaw) \
-            .join(TrsStatsDetectMonRaw, Pokemon.encounter_id == TrsStatsDetectMonRaw.encounter_id)
-        where_conditions = [TrsStatsDetectMonRaw.is_shiny == 1]
+        stmt = select(Pokemon, TrsStatsDetectWildMonRaw) \
+            .join(TrsStatsDetectWildMonRaw, Pokemon.encounter_id == TrsStatsDetectWildMonRaw.encounter_id)
+        where_conditions = [TrsStatsDetectWildMonRaw.is_shiny == 1]
         if timestamp_after:
             where_conditions.append(Pokemon.last_modified > datetime.datetime.utcfromtimestamp(timestamp_after))
         if timestamp_before:
@@ -164,7 +165,7 @@ class PokemonHelper:
         stmt = stmt.where(and_(*where_conditions))
         # SQLAlchemy does not handle group by very well it appears so we will do it in python...
         result = await session.execute(stmt)
-        mapped: Dict[int, Tuple[Pokemon, List[TrsStatsDetectMonRaw]]] = {}
+        mapped: Dict[int, Tuple[Pokemon, List[TrsStatsDetectWildMonRaw]]] = {}
         for (mon, stats) in result.all():
             if mon.encounter_id not in mapped:
                 mapped[mon.encounter_id] = (mon, [])

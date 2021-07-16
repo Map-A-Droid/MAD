@@ -14,6 +14,12 @@ class LatestMitmDataHolder(AbstractWorkerHolder):
     def update(self, key: str, value: Any, timestamp_received: Optional[int] = None,
                timestamp_of_data_retrieval: Optional[int] = None,
                location: Optional[Location] = None) -> None:
+        latest_entry: Optional[LatestMitmDataEntry] = self.__entries.get(key)
+        if (latest_entry and latest_entry.timestamp_received
+                and (not timestamp_of_data_retrieval
+                     or latest_entry.timestamp_of_data_retrieval > timestamp_of_data_retrieval)):
+            # Ignore update as it yields an older timestamp than the one known to us
+            return
         self.__entries[key] = LatestMitmDataEntry(location, timestamp_received,
                                                   timestamp_of_data_retrieval, value)
 
