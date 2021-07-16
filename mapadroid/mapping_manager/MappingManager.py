@@ -36,7 +36,7 @@ from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import ScreenshotType
+from mapadroid.utils.madGlobals import ScreenshotType, PositionType
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -202,7 +202,7 @@ class MappingManager:
         if device_routemananger is None:
             return False
 
-        if await self.routemanager_get_level(device_routemananger):
+        if await self.routemanager_is_levelmode(device_routemananger):
             return True
 
         return False
@@ -459,7 +459,7 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_init() if routemanager is not None else False
 
-    async def routemanager_get_level(self, routemanager_id: int) -> bool:
+    async def routemanager_is_levelmode(self, routemanager_id: int) -> bool:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_level_mode() if routemanager is not None else None
 
@@ -512,7 +512,7 @@ class MappingManager:
         logger.info("Setting routemanager's startposition")
         routemanager.set_worker_startposition(worker_name, lat, lon)
 
-    async def routemanager_get_position_type(self, routemanager_id: int, worker_name: str) -> Optional[str]:
+    async def routemanager_get_position_type(self, routemanager_id: int, worker_name: str) -> Optional[PositionType]:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
 
@@ -893,3 +893,7 @@ class MappingManager:
 
     def get_jobstatus(self) -> Dict:
         return self.__jobstatus
+
+    async def routemanager_of_origin_is_levelmode(self, origin) -> bool:
+        device_routemananger: int = await self.get_routemanager_id_where_device_is_registered(origin)
+        return await self.routemanager_is_levelmode(device_routemananger)

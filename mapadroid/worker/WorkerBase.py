@@ -24,7 +24,7 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException, ScreenshotType,
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException)
+    WebsocketWorkerTimeoutException, TransportType)
 from mapadroid.utils.resolution import Resocalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
@@ -68,7 +68,7 @@ class WorkerBase(AbstractWorker, ABC):
         self._geofix_sleeptime = 0
         self._pogoWindowManager = pogo_window_manager
         self._waittime_without_delays = 0
-        self._transporttype = 0
+        self._transporttype: TransportType = TransportType.TELEPORT
         self._not_injected_count: int = 0
         self._same_screen_count: int = 0
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
@@ -204,7 +204,7 @@ class WorkerBase(AbstractWorker, ABC):
         self._init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_id)
         self._stop_worker_event: asyncio.Event = asyncio.Event()
         self._mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._routemanager_id)
-        self._levelmode: bool = await self._mapping_manager.routemanager_get_level(self._routemanager_id)
+        self._levelmode: bool = await self._mapping_manager.routemanager_is_levelmode(self._routemanager_id)
         self._geofencehelper: Optional[GeofenceHelper] = await self._mapping_manager.routemanager_get_geofence_helper(
             self._routemanager_id)
         self.last_location: Optional[Location] = await self.get_devicesettings_value(

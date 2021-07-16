@@ -549,7 +549,7 @@ class RouteManagerBase(ABC):
         logger.debug("Trying to fetch a location from routepool")
         # determine whether we move to the next location or the prio queue top's item
         # TODO: Better use a strategy pattern or observer for extendability?
-        if self.delay_after_timestamp_prio and (not routepool_entry.last_position_type == PositionType.PRIO
+        if self.delay_after_timestamp_prio and (not routepool_entry.last_position_type == PositionType.PRIOQ
                                                 or self.starve_route):
             logger.debug2("Checking for prioQ entries")
             # Check the PrioQ

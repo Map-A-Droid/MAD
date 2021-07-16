@@ -98,7 +98,7 @@ class WorkerQuests(MITMBase):
     async def start_worker(self):
         # TODO: own InjectionSettings class
         self._delay_add = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.VPS_DELAY, 0))
-        self._level_mode = await self._mapping_manager.routemanager_get_level(self._routemanager_id)
+        self._level_mode = await self._mapping_manager.routemanager_is_levelmode(self._routemanager_id)
         area_settings: Optional[SettingsAreaPokestop] = await self._mapping_manager.routemanager_get_settings(
             self._routemanager_id)
         self._ignore_spinned_stops: bool = False if area_settings.ignore_spinned_stops == 0 else True
@@ -281,7 +281,7 @@ class WorkerQuests(MITMBase):
             raise InternalStopWorkerException
 
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATE_ON_LVL_30, False) and \
-                await self._mitm_mapper.get_playerlevel(self._origin) >= 30 and self._level_mode:
+                await self._mitm_mapper.get_level(self._origin) >= 30 and self._level_mode:
             # switch if player lvl >= 30
             await self.switch_account()
 
@@ -468,12 +468,12 @@ class WorkerQuests(MITMBase):
         injected_settings["scanmode"] = scanmode
         ids_iv: List[int] = []
         self._encounter_ids = {}
-        await self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered",
-                                              values_dict=self._encounter_ids)
-        await self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
+        await self._mitm_mapper.update_latest(worker=self._origin, key="ids_encountered",
+                                              value=self._encounter_ids)
+        await self._mitm_mapper.update_latest(worker=self._origin, key="ids_iv", value=ids_iv)
 
-        await self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings",
-                                              values_dict=injected_settings)
+        await self._mitm_mapper.update_latest(worker=self._origin, key="injected_settings",
+                                              value=injected_settings)
 
     def _directly_surrounding_gmo_cells_containing_stops_around_current_position(self, gmo_cells) -> List:
         """

@@ -48,6 +48,11 @@ class MitmDataHandler:
         logger.debug2("Request latest called")
         return player_data.get_specific_latest_data(key)
 
+    def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
+        player_data: PlayerData = self.__ensure_worker_data(worker)
+        logger.debug2("Request full latest called")
+        return player_data.get_full_latest_data()
+
     def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         player_data: PlayerData = self.__ensure_worker_data(worker)
@@ -62,3 +67,7 @@ class MitmDataHandler:
     async def get_last_possibly_moved(self, worker: str) -> int:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         return await player_data.get_last_possibly_moved()
+
+    def get_last_known_location(self, worker) -> Optional[Location]:
+        player_data: PlayerData = self.__ensure_worker_data(worker)
+        return player_data.get_last_known_location()

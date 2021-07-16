@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 
 from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
@@ -79,6 +79,9 @@ class MitmMapper(object):
     async def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
         return self.__mitm_data_handler.request_latest(worker, key)
 
+    async def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
+        return self.__mitm_data_handler.get_full_latest_data(worker)
+
     async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:
         await self.__mitm_data_handler.handle_inventory_data(worker, inventory_proto)
 
@@ -93,3 +96,6 @@ class MitmMapper(object):
 
     async def set_injection_status(self, worker: str, status: bool) -> None:
         await self.__mitm_data_handler.set_injection_status(worker, status)
+
+    async def get_last_known_location(self, worker: str) -> Optional[Location]:
+        return self.__mitm_data_handler.get_last_known_location(worker)

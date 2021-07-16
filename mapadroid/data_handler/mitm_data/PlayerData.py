@@ -20,6 +20,7 @@ class PlayerData(AbstractWorkerHolder):
         self.__last_cell_ids: List = []
         # Timestamp when the GMO last contained different cell IDs than the GMO before that
         self.__last_possibly_moved: int = 0
+        self.__last_known_location: Optional[Location] = None
 
     # TODO: Move to MappingManager?
     async def set_injection_status(self, status: bool):
@@ -70,8 +71,9 @@ class PlayerData(AbstractWorkerHolder):
                       timestamp_of_data_retrieval: Optional[int] = None,
                       location: Optional[Location] = None) -> None:
         self._latest_data_holder.update(key, value, timestamp_received, timestamp_of_data_retrieval, location)
-        if key == "106":
-            self.__parse_gmo_for_location(value, timestamp_received)
+        # TODO: Keys "should" be str...
+        if key == 106:
+            self.__parse_gmo_for_location(value, timestamp_received, location)
 
     # Async since we may move it to DB for persistence, same for above methods like level and
     # pokestops visited (today/week/total/whatever)
@@ -79,12 +81,17 @@ class PlayerData(AbstractWorkerHolder):
         return self.__last_possibly_moved
 
     # TODO: Call it from within update_latest accordingly rather than externally...
-    def __parse_gmo_for_location(self, gmo_payload: Dict, timestamp: int):
+    def __parse_gmo_for_location(self, gmo_payload: Dict, timestamp: int, location: Optional[Location]):
         cells = gmo_payload.get("cells", None)
         if not cells:
             return
-
-        if bool(set(cells).intersection(self.__last_cell_ids)):
-            self.__last_cell_ids = cells
+        cell_ids: List[int] = [cell['id'] for cell in cells]
+        if not bool(set(cell_ids).intersection(self.__last_cell_ids)):
+            self.__last_cell_ids = cell_ids
             self.__last_possibly_moved = timestamp
-        logger.debug4("Done __parse_gmo_for_location with {}", cells)
+        if location:
+            self.__last_known_location = location
+        logger.debug4("Done __parse_gmo_for_location with {}", cell_ids)
+
+    def get_last_known_location(self) -> Optional[Location]:
+        return self.__last_known_location

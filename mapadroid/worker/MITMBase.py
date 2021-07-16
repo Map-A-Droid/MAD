@@ -9,17 +9,18 @@ from typing import Dict, Optional, Tuple, Union
 
 from loguru import logger
 
+from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsArea, TrsStatus
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
-from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_lat_lng_offsets_by_distance)
-from mapadroid.utils.madGlobals import InternalStopWorkerException
+from mapadroid.utils.madGlobals import InternalStopWorkerException, PositionType, TransportType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerBase import FortSearchResultTypes, WorkerBase
 
@@ -74,10 +75,15 @@ class MITMBase(WorkerBase, ABC):
             await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
                                                    self._dev_id, 0)
             await session.commit()
-        await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 2, 0,
-                                                       await self._mapping_manager.routemanager_get_mode(
-                                                           self._routemanager_id),
-                                                       99)
+
+        now_ts: int = int(time.time())
+        await self._mitm_mapper.stats_collect_location_data(self._origin, self.current_location, True,
+                                                            now_ts,
+                                                            PositionType.STARTUP,
+                                                            TIMESTAMP_NEVER,
+                                                            self._walker.name, self._transporttype,
+                                                            now_ts)
+
         self._enhanced_mode = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST,
                                                                   False)
         return await super().start_worker()
@@ -130,18 +136,21 @@ class MITMBase(WorkerBase, ABC):
                                                                                    self._origin)
         type_of_data_returned = LatestReceivedType.UNDEFINED
         data = None
-        latest = await self._mitm_mapper.request_latest(self._origin)
+        latest: Dict[str, LatestMitmDataEntry] = await self._mitm_mapper.get_full_latest_data(self._origin)
 
         # Any data after timestamp + timeout should be valid!
         last_time_received = TIMESTAMP_NEVER
         if latest is None:
             logger.debug("Nothing received from worker since MAD started")
         else:
-            latest_proto_entry = latest.get(proto_to_wait_for.value, None)
+            latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(proto_to_wait_for.value, None)
             if not latest_proto_entry:
                 logger.debug("No data linked to the requested proto since MAD started.")
             else:
-                last_time_received = latest_proto_entry.get("timestamp", TIMESTAMP_NEVER)
+                if latest_proto_entry.timestamp_of_data_retrieval:
+                    last_time_received = latest_proto_entry.timestamp_of_data_retrieval
+                else:
+                    last_time_received = TIMESTAMP_NEVER
         logger.debug("Waiting for data ({}) after {} with timeout of {}s. "
                      "Last received timestamp of that type was: {}",
                      proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout,
@@ -149,20 +158,20 @@ class MITMBase(WorkerBase, ABC):
         while type_of_data_returned == LatestReceivedType.UNDEFINED and \
                 (int(timestamp + timeout) >= int(time.time()) or last_time_received >= timestamp) \
                 and not self._stop_worker_event.is_set():
-            latest = await self._mitm_mapper.request_latest(self._origin)
+            latest: Dict[str, LatestMitmDataEntry] = await self._mitm_mapper.get_full_latest_data(self._origin)
 
             if latest is None:
                 logger.info("Nothing received from worker since MAD started")
                 await asyncio.sleep(WAIT_FOR_DATA_NEXT_ROUND_SLEEP)
                 continue
-            latest_proto_entry = latest.get(proto_to_wait_for.value, None)
+            latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(proto_to_wait_for.value, None)
             if not latest_proto_entry:
                 logger.info("No data linked to the requested proto since MAD started.")
                 await asyncio.sleep(WAIT_FOR_DATA_NEXT_ROUND_SLEEP)
                 continue
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
-            latest_location: Optional[Location] = latest.get("location", None)
+            latest_location: Optional[Location] = await self._mitm_mapper.get_last_known_location(self._origin)
             check_data = True
             if (latest_location is None or latest_location.lat == latest_location.lng == 1000
                     or not (latest_location.lat != 0.0 and latest_location.lng != 0.0 and
@@ -187,9 +196,10 @@ class MITMBase(WorkerBase, ABC):
             last_time_received = TIMESTAMP_NEVER
 
         if type_of_data_returned != LatestReceivedType.UNDEFINED:
-            await self._reset_restart_count_and_collect_stats(position_type)
+            await self._reset_restart_count_and_collect_stats(timestamp, last_time_received, position_type)
         else:
-            await self._handle_proto_timeout(position_type, proto_to_wait_for, type_of_data_returned)
+            await self._handle_proto_timeout(timestamp, position_type, proto_to_wait_for,
+                                             type_of_data_returned)
 
         loop = asyncio.get_running_loop()
         loop.create_task(self.worker_stats())
@@ -197,15 +207,19 @@ class MITMBase(WorkerBase, ABC):
         # await self.worker_stats()
         return type_of_data_returned, data
 
-    async def _handle_proto_timeout(self, position_type, proto_to_wait_for: ProtoIdentifier, type_of_data_returned):
+    async def _handle_proto_timeout(self, fix_ts: int,
+                                    position_type: PositionType, proto_to_wait_for: ProtoIdentifier,
+                                    type_of_data_returned):
         logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
                     proto_to_wait_for, type_of_data_returned)
-        await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 0,
-                                                       self._waittime_without_delays,
-                                                       position_type, 0,
-                                                       await self._mapping_manager.routemanager_get_mode(
-                                                           self._routemanager_id),
-                                                       self._transporttype)
+        now_ts: int = int(time.time())
+        await self._mitm_mapper.stats_collect_location_data(self._origin, self.current_location, False,
+                                                            fix_ts,
+                                                            position_type,
+                                                            TIMESTAMP_NEVER,
+                                                            self._walker.name, self._transporttype,
+                                                            now_ts)
+
         self._restart_count += 1
         restart_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.RESTART_THRESH, 5)
         reboot_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT_THRESH, 3)
@@ -227,17 +241,19 @@ class MITMBase(WorkerBase, ABC):
             logger.warning("Too many timeouts - Restarting game")
             await self._restart_pogo(True, self._mitm_mapper)
 
-    async def _reset_restart_count_and_collect_stats(self, position_type):
+    async def _reset_restart_count_and_collect_stats(self, fix_ts: int, timestamp_received_raw: int,
+                                                     position_type: PositionType):
         logger.success('Received data')
         self._reboot_count = 0
         self._restart_count = 0
         self._rec_data_time = datetime.now()
         # TODO: Fire and forget async?
-        await self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1,
-                                                       self._waittime_without_delays,
-                                                       position_type, time.time(),
-                                                       await self._mapping_manager.routemanager_get_mode(
-                                                           self._routemanager_id), self._transporttype)
+        now_ts: int = int(time.time())
+        await self._mitm_mapper.stats_collect_location_data(self._origin, self.current_location, True,
+                                                            fix_ts,
+                                                            position_type, timestamp_received_raw,
+                                                            self._walker.name, self._transporttype,
+                                                            now_ts)
 
     async def raise_stop_worker_if_applicable(self):
         """
@@ -334,7 +350,7 @@ class MITMBase(WorkerBase, ABC):
         Returns:
 
         """
-        self._transporttype = 1
+        self._transporttype = TransportType.WALK
         time_before_walk = math.floor(time.time())
         await self._communicator.walk_from_to(self.last_location, self.current_location, speed)
         # We need to roughly estimate when data could have been available, just picking half way for now, distance

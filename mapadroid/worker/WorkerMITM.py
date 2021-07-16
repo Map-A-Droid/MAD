@@ -6,6 +6,7 @@ from typing import Optional, Tuple
 
 from loguru import logger
 
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import SettingsWalkerarea
@@ -15,7 +16,7 @@ from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import InternalStopWorkerException
+from mapadroid.utils.madGlobals import InternalStopWorkerException, TransportType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import LatestReceivedType, MITMBase
 from mapadroid.worker.WorkerType import WorkerType
@@ -63,7 +64,7 @@ class WorkerMITM(MITMBase):
                 (max_distance and 0 < max_distance < distance) or
                 (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             logger.debug("main: Teleporting...")
-            self._transporttype = 0
+            self._transporttype = TransportType.TELEPORT
             await self._communicator.set_location(
                 Location(self.current_location.lat, self.current_location.lng), 0)
             # the time we will take as a starting point to wait for data...
@@ -170,25 +171,25 @@ class WorkerMITM(MITMBase):
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.
-        await self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered",
-                                              values_dict=self._encounter_ids)
-        await self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
-        await self._mitm_mapper.update_latest(origin=self._origin, key="unquest_stops", values_dict=self.unquestStops)
-        await self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings",
-                                              values_dict=injected_settings)
+        await self._mitm_mapper.update_latest(worker=self._origin, key="ids_encountered",
+                                              value=self._encounter_ids)
+        await self._mitm_mapper.update_latest(worker=self._origin, key="ids_iv", value=ids_iv)
+        await self._mitm_mapper.update_latest(worker=self._origin, key="unquest_stops", value=self.unquestStops)
+        await self._mitm_mapper.update_latest(worker=self._origin, key="injected_settings",
+                                              value=injected_settings)
 
-    async def _check_for_data_content(self, latest_data, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
+    async def _check_for_data_content(self, latest_data, proto_to_wait_for: ProtoIdentifier, timestamp: int) \
             -> Tuple[LatestReceivedType, Optional[object]]:
         type_of_data_found: LatestReceivedType = LatestReceivedType.UNDEFINED
         data_found: Optional[object] = None
-        latest_proto_entry = latest_data.get(proto_to_wait_for.value, None)
+        latest_proto_entry: Optional[LatestMitmDataEntry] = latest_data.get(proto_to_wait_for.value, None)
         if not latest_proto_entry:
             logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found
 
         # proto has previously been received, let's check the timestamp...
         mode = await self._mapping_manager.routemanager_get_mode(self._routemanager_id)
-        timestamp_of_proto: float = latest_proto_entry.get("timestamp", None)
+        timestamp_of_proto: int = latest_proto_entry.timestamp_of_data_retrieval
         logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
                      datetime.fromtimestamp(timestamp_of_proto), datetime.fromtimestamp(timestamp),
                      proto_to_wait_for)
@@ -199,13 +200,12 @@ class WorkerMITM(MITMBase):
             # TODO: latter indicates too high speeds for example
             return type_of_data_found, data_found
 
-        latest_proto_data: dict = latest_proto_entry.get("values", None)
+        latest_proto_data: dict = latest_proto_entry.data
         if latest_proto_data is None:
             return LatestReceivedType.UNDEFINED, data_found
-        latest_proto = latest_proto_data.get("payload")
         key_to_check: str = "wild_pokemon" if mode in [WorkerType.MON_MITM.value, WorkerType.IV_MITM.value] else "forts"
-        if self._gmo_cells_contain_multiple_of_key(latest_proto, key_to_check):
-            data_found = latest_proto
+        if self._gmo_cells_contain_multiple_of_key(latest_proto_data, key_to_check):
+            data_found = latest_proto_data
             type_of_data_found = LatestReceivedType.GMO
         else:
             logger.debug("{} not in GMO", key_to_check)
