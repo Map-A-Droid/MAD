@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 
 from mapadroid.data_handler.stats.PlayerStats import PlayerStats
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.stats.holder.StatsDetectSeenTypeHolder import StatsDetectSeenTypeHolder
+from mapadroid.data_handler.stats.holder.stats_detect_seen.StatsDetectSeenTypeHolder import StatsDetectSeenTypeHolder
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatsDetectWildMonRawHelper import TrsStatsDetectWildMonRawHelper
 from mapadroid.db.helper.TrsStatsDetectHelper import TrsStatsDetectHelper
@@ -30,8 +30,15 @@ class StatsHandler:
         self.__init_stats_holders()
 
     async def start(self):
-        loop = asyncio.get_running_loop()
-        self.__submission_loop_task = loop.create_task(self.__stats_submission_loop())
+        if not self.__submission_loop_task:
+            logger.debug2("Starting stats collector")
+            loop = asyncio.get_running_loop()
+            self.__submission_loop_task = loop.create_task(self.__stats_submission_loop())
+
+    async def stop(self):
+        if self.__submission_loop_task:
+            self.__submission_loop_task.cancel()
+            self.__submission_loop_task = None
 
     def __init_stats_holders(self) -> None:
         self.__worker_stats: Dict[str, PlayerStats] = {}

@@ -3,7 +3,8 @@ from typing import Dict, Any, Optional, List
 from loguru import logger
 
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
-from mapadroid.data_handler.mitm_data.holder.LatestMitmDataHolder import LatestMitmDataHolder, LatestMitmDataHolderEntry
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataHolder import LatestMitmDataHolder
 from mapadroid.utils.collections import Location
 
 
@@ -44,7 +45,7 @@ class PlayerData(AbstractWorkerHolder):
     async def get_poke_stop_visits(self) -> int:
         return self._poke_stop_visits
 
-    async def gen_player_stats(self, data: dict) -> None:
+    async def handle_inventory_data(self, data: dict) -> None:
         if 'inventory_delta' not in data:
             logger.debug2('gen_player_stats cannot generate new stats')
             return
@@ -59,19 +60,21 @@ class PlayerData(AbstractWorkerHolder):
                     await self.__set_poke_stop_visits(int(player_stats['poke_stop_visits']))
                     return
 
-    async def get_specific_latest_data(self, key: str) -> LatestMitmDataHolderEntry:
+    def get_specific_latest_data(self, key: str) -> LatestMitmDataEntry:
         return self._latest_data_holder.get_latest(key)
 
-    async def get_full_latest_data(self) -> Dict[str, LatestMitmDataHolderEntry]:
+    def get_full_latest_data(self) -> Dict[str, LatestMitmDataEntry]:
         return self._latest_data_holder.get_all()
 
-    async def update_latest(self, key: str, value: Any, timestamp_received: Optional[int] = None,
-                            timestamp_of_data_retrieval: Optional[int] = None,
-                            location: Optional[Location] = None) -> None:
+    def update_latest(self, key: str, value: Any, timestamp_received: Optional[int] = None,
+                      timestamp_of_data_retrieval: Optional[int] = None,
+                      location: Optional[Location] = None) -> None:
         self._latest_data_holder.update(key, value, timestamp_received, timestamp_of_data_retrieval, location)
         if key == "106":
             self.__parse_gmo_for_location(value, timestamp_received)
 
+    # Async since we may move it to DB for persistence, same for above methods like level and
+    # pokestops visited (today/week/total/whatever)
     async def get_last_possibly_moved(self) -> int:
         return self.__last_possibly_moved
 
@@ -85,4 +88,3 @@ class PlayerData(AbstractWorkerHolder):
             self.__last_cell_ids = cells
             self.__last_possibly_moved = timestamp
         logger.debug4("Done __parse_gmo_for_location with {}", cells)
-

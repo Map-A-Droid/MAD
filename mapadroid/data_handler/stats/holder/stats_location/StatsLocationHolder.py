@@ -4,23 +4,7 @@ from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStat
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.db.model import TrsStatsLocation
-
-
-class StatsLocationEntry(TrsStatsLocation):
-    def __init__(self, worker: str):
-        super().__init__()
-        self.worker = worker
-        self.timestamp_scan = datetime.utcnow()
-        self.location_ok = 0
-        self.location_nok = 0
-
-    def update(self, time_of_scan: datetime, location_ok: bool):
-        self.timestamp_scan = time_of_scan
-        if location_ok:
-            self.location_ok += 1
-        else:
-            self.location_nok += 1
+from mapadroid.data_handler.stats.holder.stats_location.StatsLocationEntry import StatsLocationEntry
 
 
 class StatsLocationHolder(AbstractStatsHolder, AbstractWorkerHolder):

@@ -4,10 +4,10 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.stats.holder.StatsDetectHolder import StatsDetectHolder
-from mapadroid.data_handler.stats.holder.StatsLocationHolder import StatsLocationHolder
-from mapadroid.data_handler.stats.holder.StatsLocationRawHolder import StatsLocationRawHolder
-from mapadroid.data_handler.stats.holder.WildMonStatsHolder import WildMonStatsHolder
+from mapadroid.data_handler.stats.holder.stats_detect.StatsDetectHolder import StatsDetectHolder
+from mapadroid.data_handler.stats.holder.stats_location.StatsLocationHolder import StatsLocationHolder
+from mapadroid.data_handler.stats.holder.stats_location_raw.StatsLocationRawHolder import StatsLocationRawHolder
+from mapadroid.data_handler.stats.holder.wild_mon_stats.WildMonStatsHolder import WildMonStatsHolder
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType
 
@@ -47,8 +47,8 @@ class PlayerStats(AbstractStatsHolder):
         self._stats_detect_holder.add_raid(time_scanned)
 
     def stats_collect_location_data(self, location: Location, success: bool, fix_timestamp: int,
-                                          position_type: PositionType, data_timestamp: int, walker: str,
-                                          transport_type: TransportType, timestamp_of_record: int):
+                                    position_type: PositionType, data_timestamp: int, walker: str,
+                                    transport_type: TransportType, timestamp_of_record: int):
         self._stats_location_raw_holder.add_location(location, success, fix_timestamp, position_type,
                                                      data_timestamp, walker, transport_type, timestamp_of_record)
         if data_timestamp > 0:

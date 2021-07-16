@@ -1,94 +1,97 @@
-import asyncio
-import time
-from queue import Empty
-from typing import Dict, Optional, Tuple, List
+from datetime import datetime
+from typing import Optional, List, Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.stats.StatsHandler import StatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.TrsStatsDetectFortRawHelper import TrsStatsDetectFortRawHelper
-from mapadroid.db.helper.TrsStatsDetectHelper import TrsStatsDetectHelper
-from mapadroid.db.helper.TrsStatsDetectWildMonRawHelper import TrsStatsDetectMonRawHelper
-from mapadroid.db.helper.TrsStatsLocationHelper import TrsStatsLocationHelper
-from mapadroid.db.helper.TrsStatsLocationRawHelper import TrsStatsLocationRawHelper
-from mapadroid.mapping_manager.MappingManager import MappingManager, DeviceMappingsEntry
-from mapadroid.data_handler.stats.PlayerStats import PlayerStats
+from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
 from loguru import logger
+
+from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
 
 
 class MitmMapper(object):
     def __init__(self, args, mapping_manager: MappingManager, db_wrapper: DbWrapper):
-        self.__mapping = {}
-        self.__playerstats: Dict[str, PlayerStats] = {}
         self.__mapping_manager: MappingManager = mapping_manager
-        self.__injected = {}
-        self.__last_cellsid = {}
-        self.__last_possibly_moved = {}
         self.__application_args = args
         self.__db_wrapper: DbWrapper = db_wrapper
-        self.__playerstats_db_update_stop: asyncio.Event = asyncio.Event()
-        self.__playerstats_db_update_queue: asyncio.Queue = asyncio.Queue()
-        self.__playerstats_db_update_consumer = None
+        self.__init_handlers()
 
-    async def init(self):
-        loop = asyncio.get_event_loop()
-        self.__playerstats_db_update_consumer = loop.create_task(self.__internal_playerstats_db_update_consumer())
-        if self.__mapping_manager is not None:
-            devicemappings: Optional[
-                Dict[str, DeviceMappingsEntry]] = await self.__mapping_manager.get_all_devicemappings()
-            for origin in devicemappings.keys():
-                await self.__add_new_device(origin)
-
-    async def __add_new_device(self, origin: str) -> None:
-        self.__mapping[origin] = {}
-        self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
-
-    def shutdown(self):
-        self.__playerstats_db_update_stop.set()
-        self.__playerstats_db_update_consumer.cancel()
-
-    async def run_stats_collector(self, origin: str):
-        if not self.__application_args.game_stats:
-            pass
-
-        logger.debug2("Running stats collector")
-        if self.__playerstats.get(origin, None) is not None:
-            await self.__playerstats.get(origin).stats_collector()
-
-    async def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float,
-                                     positiontype,
-                                     rec_timestamp: float, walker, transporttype):
-        if self.__playerstats.get(origin, None) is not None and location is not None:
-            await self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp,
-                                                                             positiontype,
-                                                                             rec_timestamp, walker, transporttype)
-
-    # TODO: Move to TrsStatus DB entry
-    async def get_playerlevel(self, origin: str):
-        if self.__playerstats.get(origin, None) is not None:
-            return self.__playerstats.get(origin).get_level()
+    def __init_handlers(self):
+        if self.__application_args.game_stats:
+            self.__stats_handler: Optional[StatsHandler] = StatsHandler(self.__db_wrapper, self.__application_args)
         else:
-            return -1
+            self.__stats_handler: Optional[StatsHandler] = None
+        self.__mitm_data_handler: MitmDataHandler = MitmDataHandler(self.__db_wrapper, self.__application_args)
 
-    async def get_poke_stop_visits(self, origin: str) -> int:
-        if self.__playerstats.get(origin, None) is not None:
-            return self.__playerstats.get(origin).get_poke_stop_visits()
-        else:
-            return -1
+    async def start(self):
+        if self.__stats_handler:
+            await self.__stats_handler.start()
 
-    async def collect_mon_stats(self, origin: str, encounter_id: str):
-        if self.__playerstats.get(origin, None) is not None:
-            await self.__playerstats.get(origin).stats_collect_mon(encounter_id)
+    async def shutdown(self):
+        if self.__stats_handler:
+            await self.__stats_handler.stop()
 
-    async def collect_mon_iv_stats(self, origin: str, encounter_id: str, shiny: int):
-        if self.__playerstats.get(origin, None) is not None:
-            await self.__playerstats.get(origin).stats_collect_mon_iv(encounter_id, shiny)
+    # ##
+    # Stats related methods
+    # ##
+    async def stats_collect_wild_mon(self, worker: str, encounter_ids: List[int], time_scanned: datetime) -> None:
+        if self.__stats_handler:
+            self.__stats_handler.stats_collect_wild_mon(worker, encounter_ids, time_scanned)
 
-    async def collect_quest_stats(self, origin: str, stop_id: str):
-        if self.__playerstats.get(origin, None) is not None:
-            await self.__playerstats.get(origin).stats_collect_quest(stop_id)
+    async def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime,
+                                   is_shiny: bool) -> None:
+        if self.__stats_handler:
+            self.__stats_handler.stats_collect_mon_iv(worker, encounter_id, time_scanned, is_shiny)
 
-    async def generate_player_stats(self, origin: str, inventory_proto: dict):
-        if self.__playerstats.get(origin, None) is not None:
-            await self.__playerstats.get(origin).gen_player_stats(inventory_proto)
+    async def stats_collect_quest(self, worker: str, stop_id: str, time_scanned: datetime) -> None:
+        if self.__stats_handler:
+            self.__stats_handler.stats_collect_quest(worker, time_scanned)
+
+    async def stats_collect_raid(self, worker: str, fort_id: str, time_scanned: datetime) -> None:
+        if self.__stats_handler:
+            self.__stats_handler.stats_collect_raid(worker, time_scanned)
+
+    async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
+                                            position_type: PositionType, data_timestamp: int, walker: str,
+                                            transport_type: TransportType, timestamp_of_record: int) -> None:
+        if self.__stats_handler:
+            self.__stats_handler.stats_collect_location_data(worker, location, success, fix_timestamp, position_type,
+                                                             data_timestamp, walker,
+                                                             transport_type, timestamp_of_record)
+
+    async def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
+                                time_of_scan: datetime) -> None:
+        if self.__stats_handler:
+            self.__stats_handler.stats_collect_seen_type(encounter_ids, type_of_detection, time_of_scan)
+
+    # ##
+    # Data related methods
+    # ##
+    async def get_last_possibly_moved(self, worker: str) -> int:
+        return await self.__mitm_data_handler.get_last_possibly_moved(worker)
+
+    async def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
+                            timestamp_received_receiver: float = None, location: Location = None) -> None:
+        self.__mitm_data_handler.update_latest(worker, key, value, timestamp_received_raw,
+                                               timestamp_received_receiver, location)
+
+    async def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
+        return self.__mitm_data_handler.request_latest(worker, key)
+
+    async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:
+        await self.__mitm_data_handler.handle_inventory_data(worker, inventory_proto)
+
+    async def get_poke_stop_visits(self, worker: str) -> int:
+        return await self.__mitm_data_handler.get_poke_stop_visits(worker)
+
+    async def get_level(self, worker: str) -> int:
+        return await self.__mitm_data_handler.get_level(worker)
+
+    async def get_injection_status(self, worker: str) -> bool:
+        return await self.__mitm_data_handler.get_injection_status(worker)
+
+    async def set_injection_status(self, worker: str, status: bool) -> None:
+        await self.__mitm_data_handler.set_injection_status(worker, status)

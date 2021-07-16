@@ -1,7 +1,8 @@
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.collections import Location
 from loguru import logger
@@ -38,17 +39,17 @@ class MitmDataHandler:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         return await player_data.get_poke_stop_visits()
 
-    async def gen_player_stats(self, worker: str, inventory_proto: dict) -> None:
+    async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:
         player_data: PlayerData = self.__ensure_worker_data(worker)
-        await player_data.gen_player_stats(inventory_proto)
+        await player_data.handle_inventory_data(inventory_proto)
 
-    async def request_latest(self, worker: str, key: str):
+    def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         logger.debug2("Request latest called")
-        return await player_data.get_specific_latest_data(key)
+        return player_data.get_specific_latest_data(key)
 
-    async def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
-                            timestamp_received_receiver: float = None, location: Location = None):
+    def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
+                            timestamp_received_receiver: float = None, location: Location = None) -> None:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         if timestamp_received_raw is None:
             timestamp_received_raw = int(time.time())
@@ -56,7 +57,7 @@ class MitmDataHandler:
         if timestamp_received_receiver is None:
             timestamp_received_receiver = int(time.time())
 
-        await player_data.update_latest(key, value, timestamp_received_raw, timestamp_received_receiver, location)
+        player_data.update_latest(key, value, timestamp_received_raw, timestamp_received_receiver, location)
 
     async def get_last_possibly_moved(self, worker: str) -> int:
         player_data: PlayerData = self.__ensure_worker_data(worker)
