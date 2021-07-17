@@ -56,7 +56,7 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
                     tmp_perworker_v2[stat.worker] = 0
                 tmp_perworker_v2[stat.worker] += 1
                 # there is later strftime which converts to local time too, can't use utc2local - it will do double shift
-                timestamp = datetime.fromtimestamp(stat.timestamp_scan)
+                timestamp = stat.first_scanned
 
                 # TODO: This can trigger too often...
                 if timestamp.hour in tmp_perhour_v2:
