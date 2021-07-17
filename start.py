@@ -140,6 +140,12 @@ async def get_system_infos(db_wrapper):
         async with db_wrapper as session, session:
             await TrsUsageHelper.add(session, args.status_name, cpu_usage, mem_usage, collected, unixnow)
             await session.commit()
+        try:
+            from mem_top import mem_top
+            logger.info(mem_top())
+        except:
+            pass
+        #tracker.print_diff()
         await asyncio.sleep(args.statistic_interval)
 
 
