@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 
 from loguru import logger
 
@@ -61,10 +61,10 @@ class PlayerData(AbstractWorkerHolder):
                     await self.__set_poke_stop_visits(int(player_stats['poke_stop_visits']))
                     return
 
-    def get_specific_latest_data(self, key: str) -> LatestMitmDataEntry:
+    def get_specific_latest_data(self, key: Union[int, str]) -> LatestMitmDataEntry:
         return self._latest_data_holder.get_latest(key)
 
-    def get_full_latest_data(self) -> Dict[str, LatestMitmDataEntry]:
+    def get_full_latest_data(self) -> Dict[Union[int, str], LatestMitmDataEntry]:
         return self._latest_data_holder.get_all()
 
     def update_latest(self, key: str, value: Any, timestamp_received: Optional[int] = None,

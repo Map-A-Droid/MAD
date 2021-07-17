@@ -9,6 +9,7 @@ from typing import Optional, Any
 
 from loguru import logger
 
+from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
@@ -16,7 +17,6 @@ from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
-from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.ocr.screen_type import ScreenType
@@ -24,7 +24,7 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException, ScreenshotType,
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException, TransportType)
+    WebsocketWorkerTimeoutException, TransportType, PositionType)
 from mapadroid.utils.resolution import Resocalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
@@ -753,10 +753,11 @@ class WorkerBase(AbstractWorker, ABC):
             start_result = False
         await asyncio.sleep(5)
         if mitm_mapper is not None:
-            await mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 3, 0,
-                                                     await self._mapping_manager.routemanager_get_mode(
-                                                         self._routemanager_id),
-                                                     99)
+            now_ts: int = int(time.time())
+            await mitm_mapper.stats_collect_location_data(self._origin, self.current_location, True,
+                                                          now_ts, PositionType.REBOOT, 0,
+                                                          self._walker.name, TransportType.TELEPORT,
+                                                          now_ts)
         if self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
             async with self._db_wrapper as session, session:
                 await TrsStatusHelper.save_last_reboot(session, self._db_wrapper.get_instance_id(), self._dev_id)
@@ -776,10 +777,10 @@ class WorkerBase(AbstractWorker, ABC):
                 await self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
             await asyncio.sleep(1)
             if mitm_mapper is not None:
-                await mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 4, 0,
-                                                         await self._mapping_manager.routemanager_get_mode(
-                                                             self._routemanager_id),
-                                                         99)
+                now_ts: int = int(time.time())
+                await mitm_mapper.stats_collect_location_data(self._origin, self.current_location, True, now_ts,
+                                                              PositionType.RESTART, 0, self._walker.name,
+                                                              self._transporttype, now_ts)
             return await self._start_pogo()
         else:
             logger.warning("Failed restarting PoGo - reboot device")

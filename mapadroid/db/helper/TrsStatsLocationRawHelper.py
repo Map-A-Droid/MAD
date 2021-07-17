@@ -177,11 +177,11 @@ class TrsStatsLocationRawHelper:
     @staticmethod
     async def get_location_raw(session: AsyncSession,
                                include_last_n_minutes: Optional[int] = None,
-                               worker: Optional[str] = None) -> List[Tuple[Location, str, str, int, int, int, str]]:
+                               worker: Optional[str] = None) -> List[Tuple[Location, str, str, int, int, str]]:
         """
         DbStatsReader::get_location_raw
         Fetches List of tuples containing (Location(lat,lng), location_type_as_str, success_as_str, timestamp_fix,
-        timestamp_data_or_fix, count, transporttype_as_str)
+        timestamp_data_or_fix, transporttype_as_str)
         Args:
             worker:
             include_last_n_minutes:
@@ -201,7 +201,6 @@ class TrsStatsLocationRawHelper:
                       TrsStatsLocationRaw.fix_ts,
                       func.IF(TrsStatsLocationRaw.data_ts == 0, TrsStatsLocationRaw.fix_ts,
                               TrsStatsLocationRaw.data_ts),
-                      TrsStatsLocationRaw.count,
                       case((TrsStatsLocationRaw.transporttype == TransportType.TELEPORT.value, "Teleport"),
                            (TrsStatsLocationRaw.transporttype == TransportType.WALK.value, "Walk"),
                            else_="other"),
@@ -218,10 +217,10 @@ class TrsStatsLocationRawHelper:
         stmt = stmt.where(and_(*where_conditions))
         stmt = stmt.order_by(asc(TrsStatsLocationRaw.id))
         result = await session.execute(stmt)
-        locations: List[Tuple[Location, str, str, int, int, int, str]] = []
-        for lat, lng, location_type, success, fix_timestamp, data_fix_timestamp, count, transporttype in result:
+        locations: List[Tuple[Location, str, str, int, int, str]] = []
+        for lat, lng, location_type, success, fix_timestamp, data_fix_timestamp, transporttype in result:
             locations.append((Location(float(lat), float(lng)), location_type, success, int(fix_timestamp),
-                              int(data_fix_timestamp), int(count), transporttype))
+                              int(data_fix_timestamp), transporttype))
         return locations
 
     @staticmethod

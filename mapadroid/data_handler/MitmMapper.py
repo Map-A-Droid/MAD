@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Union
 
 from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
@@ -79,7 +79,7 @@ class MitmMapper(object):
     async def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
         return self.__mitm_data_handler.request_latest(worker, key)
 
-    async def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
+    async def get_full_latest_data(self, worker: str) -> Dict[Union[int, str], LatestMitmDataEntry]:
         return self.__mitm_data_handler.get_full_latest_data(worker)
 
     async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:

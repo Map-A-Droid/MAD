@@ -128,7 +128,6 @@ class MITMBase(WorkerBase, ABC):
         if timeout is None:
             timeout = await self.get_devicesettings_value(MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT,
                                                           FALLBACK_MITM_WAIT_TIMEOUT)
-
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         logger.info('Waiting for data after {}',
                     datetime.fromtimestamp(timestamp))
@@ -136,29 +135,14 @@ class MITMBase(WorkerBase, ABC):
                                                                                    self._origin)
         type_of_data_returned = LatestReceivedType.UNDEFINED
         data = None
-        latest: Dict[str, LatestMitmDataEntry] = await self._mitm_mapper.get_full_latest_data(self._origin)
-
         # Any data after timestamp + timeout should be valid!
         last_time_received = TIMESTAMP_NEVER
-        if latest is None:
-            logger.debug("Nothing received from worker since MAD started")
-        else:
-            latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(proto_to_wait_for.value, None)
-            if not latest_proto_entry:
-                logger.debug("No data linked to the requested proto since MAD started.")
-            else:
-                if latest_proto_entry.timestamp_of_data_retrieval:
-                    last_time_received = latest_proto_entry.timestamp_of_data_retrieval
-                else:
-                    last_time_received = TIMESTAMP_NEVER
-        logger.debug("Waiting for data ({}) after {} with timeout of {}s. "
-                     "Last received timestamp of that type was: {}",
-                     proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout,
-                     datetime.fromtimestamp(timestamp) if last_time_received != TIMESTAMP_NEVER else "never")
-        while type_of_data_returned == LatestReceivedType.UNDEFINED and \
-                (int(timestamp + timeout) >= int(time.time()) or last_time_received >= timestamp) \
-                and not self._stop_worker_event.is_set():
-            latest: Dict[str, LatestMitmDataEntry] = await self._mitm_mapper.get_full_latest_data(self._origin)
+        logger.debug("Waiting for data ({}) after {} with timeout of {}s.",
+                     proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout)
+        while not self._stop_worker_event.is_set() and int(timestamp + timeout) >= int(time.time()) \
+                and last_time_received < timestamp:
+            latest: Dict[Union[int, str], LatestMitmDataEntry] = await self\
+                ._mitm_mapper.get_full_latest_data(self._origin)
 
             if latest is None:
                 logger.info("Nothing received from worker since MAD started")
@@ -191,13 +175,16 @@ class MITMBase(WorkerBase, ABC):
             if type_of_data_returned == LatestReceivedType.UNDEFINED:
                 # We don't want to sleep if we have received something that may be useful to us...
                 await asyncio.sleep(WAIT_FOR_DATA_NEXT_ROUND_SLEEP)
-            # In case last_time_received was set, we reset it after the first
-            # iteration to not run into trouble (endless loop)
-            last_time_received = TIMESTAMP_NEVER
+                # In case last_time_received was set, we reset it after the first
+                # iteration to not run into trouble (endless loop)
+                last_time_received = TIMESTAMP_NEVER
+            else:
+                last_time_received = latest_proto_entry.timestamp_of_data_retrieval
+                break
 
-        if type_of_data_returned != LatestReceivedType.UNDEFINED:
+        if type_of_data_returned != LatestReceivedType.UNDEFINED and data:
             await self._reset_restart_count_and_collect_stats(timestamp,
-                                                              latest_proto_entry.timestamp_of_data_retrieval,
+                                                              last_time_received,
                                                               position_type)
         else:
             await self._handle_proto_timeout(timestamp, position_type, proto_to_wait_for,

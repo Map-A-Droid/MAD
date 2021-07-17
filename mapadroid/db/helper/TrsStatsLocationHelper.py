@@ -28,7 +28,6 @@ class TrsStatsLocationHelper:
         stmt = select(func.unix_timestamp(
             func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocation.timestamp_scan)), '%y-%m-%d %k:00:00')),
                       TrsStatsLocation.worker,
-                      func.sum(TrsStatsLocation.location_count),
                       func.sum(TrsStatsLocation.location_ok),
                       func.sum(TrsStatsLocation.location_nok)) \
             .select_from(TrsStatsLocation)
@@ -49,10 +48,10 @@ class TrsStatsLocationHelper:
             stmt = stmt.group_by(TrsStatsLocation.worker)
         result = await session.execute(stmt)
         results: Dict[str, Dict[int, Tuple[int, int, int]]] = {}
-        for hour_timestamp, worker, location_count, locations_ok, locations_nok in result:
+        for hour_timestamp, worker, locations_ok, locations_nok in result:
             if worker not in results:
                 results[worker] = {}
-
+            location_count: int = locations_nok + locations_ok
             results[worker][hour_timestamp] = (int(location_count), int(locations_ok), int(locations_nok))
         return results
 

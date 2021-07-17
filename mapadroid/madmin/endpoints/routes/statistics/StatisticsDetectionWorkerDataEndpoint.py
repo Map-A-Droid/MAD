@@ -34,11 +34,11 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
                                             worker=worker)
         for worker, data_entry in data.items():
             for timestamp, data_of_worker in data_entry.items():
-                for (sum_mons, sum_iv, sum_raids, sum_quests) in data_of_worker:
-                    mon.append([timestamp * 1000, sum_mons])
-                    mon_iv.append([timestamp * 1000, sum_iv])
-                    raid.append([timestamp * 1000, sum_raids])
-                    quest.append([timestamp * 1000, sum_quests])
+                sum_mons, sum_iv, sum_raids, sum_quests = data_of_worker
+                mon.append([timestamp * 1000, sum_mons])
+                mon_iv.append([timestamp * 1000, sum_iv])
+                raid.append([timestamp * 1000, sum_raids])
+                quest.append([timestamp * 1000, sum_quests])
         usage.append({'label': 'Mon', 'data': mon})
         usage.append({'label': 'Mon_IV', 'data': mon_iv})
         usage.append({'label': 'Raid', 'data': raid})
@@ -50,8 +50,8 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         avg_data_time: Dict[str, Dict[int, List[Tuple[str, int, float, str]]]] = await TrsStatsLocationRawHelper \
             .get_avg_data_time(self._session, include_last_n_minutes=minutes, worker=worker)
         for worker, data_entry in avg_data_time.items():
-            for timestamp, list_of_data_of_worker in data_entry.items():
-                for transport_type_readable, count_of_fix_ts, avg_data_ts, walker in list_of_data_of_worker:
+            for timestamp, worker_location_raw_data in data_entry.items():
+                for transport_type_readable, count_of_fix_ts, avg_data_ts, walker in worker_location_raw_data:
                     dtime = datetime.fromtimestamp(timestamp).strftime(self._datetimeformat)
                     locations_avg.append(
                         {'dtime': dtime, 'ok_locations': count_of_fix_ts, 'avg_datareceive': avg_data_ts,
@@ -65,11 +65,11 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         locations_scanned_by_workers: Dict[str, Dict[int, Tuple[int, int, int]]] = await TrsStatsLocationHelper \
             .get_locations(self._session, include_last_n_minutes=minutes, worker=worker)
         for worker, data_entry in locations_scanned_by_workers.items():
-            for timestamp, list_of_data_of_worker in data_entry.items():
-                for location_count, locations_ok, locations_nok in list_of_data_of_worker:
-                    ok.append([timestamp * 1000, locations_ok])
-                    nok.append([timestamp * 1000, locations_nok])
-                    sumloc.append([timestamp * 1000, location_count])
+            for timestamp, location_data in data_entry.items():
+                location_count, locations_ok, locations_nok = location_data
+                ok.append([timestamp * 1000, locations_ok])
+                nok.append([timestamp * 1000, locations_nok])
+                sumloc.append([timestamp * 1000, location_count])
 
         locations.append({'label': 'Locations', 'data': sumloc})
         locations.append({'label': 'Locations_ok', 'data': ok})
@@ -81,8 +81,8 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
             .get_locations_dataratio(self._session, include_last_n_minutes=minutes, worker=worker)
         if location_dataratios:
             for worker, data_entry in location_dataratios.items():
-                for timestamp, list_of_data_of_worker in data_entry.items():
-                    for count_period, location_type, success, success_locationtype_readable in list_of_data_of_worker:
+                for timestamp, data_of_worker in data_entry.items():
+                    for count_period, location_type, success, success_locationtype_readable in data_of_worker:
                         loctionratio.append({'label': success_locationtype_readable, 'data': success})
         else:
             loctionratio.append({'label': '', 'data': 0})
@@ -97,11 +97,11 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         quest_count: int = 0
         for worker, data_entry in detection_count_not_grouped.items():
             for timestamp, data_of_worker in data_entry.items():
-                for (sum_mons, sum_iv, sum_raids, sum_quests) in data_of_worker:
-                    mon_spawn_count += sum_mons
-                    mon_iv_count += sum_iv
-                    raid_count += sum_raids
-                    quest_count += sum_quests
+                sum_mons, sum_iv, sum_raids, sum_quests = data_of_worker
+                mon_spawn_count += sum_mons
+                mon_iv_count += sum_iv
+                raid_count += sum_raids
+                quest_count += sum_quests
         all_spawns.append({'type': 'Mon', 'amount': mon_spawn_count})
         all_spawns.append({'type': 'Mon_IV', 'amount': mon_iv_count})
         all_spawns.append({'type': 'Raid', 'amount': raid_count})
@@ -112,10 +112,10 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         last_lat = 0
         last_lng = 0
         distance: float = -1.0
-        raw_location_details: List[Tuple[Location, str, str, int, int, int, str]] = await TrsStatsLocationRawHelper \
+        raw_location_details: List[Tuple[Location, str, str, int, int, str]] = await TrsStatsLocationRawHelper \
             .get_location_raw(self._session, include_last_n_minutes=minutes, worker=worker)
         for (location, location_type_str, success_str, timestamp_fix, timestamp_data_or_fix,
-             count, transport_type_readable) in raw_location_details:
+             transport_type_readable) in raw_location_details:
             if last_lat != 0 and last_lng != 0:
                 distance = round(get_distance_of_two_points_in_meters(last_lat, last_lng,
                                                                       location.lat, location.lng),

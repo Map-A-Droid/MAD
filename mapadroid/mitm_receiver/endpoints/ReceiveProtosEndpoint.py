@@ -49,7 +49,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             # trash protos - ignoring
             return
 
-        timestamp: float = data.get("timestamp", int(time.time()))
+        timestamp: int = data.get("timestamp", int(time.time()))
         if self._get_mad_args().mitm_ignore_pre_boot is True and timestamp < self._get_mitmreceiver_startup_time():
             return
 
@@ -57,8 +57,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
                 location_of_data.lng > 180 or location_of_data.lng < -180):
             location_of_data: Location = Location(0.0, 0.0)
+        time_received: int = int(time.time())
         await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
-                                                    timestamp_received_receiver=time.time(), key=proto_type,
+                                                    timestamp_received_receiver=time_received, key=proto_type,
                                                     value=data["payload"],
                                                     location=location_of_data)
         logger.debug2("Placing data received to data_queue")

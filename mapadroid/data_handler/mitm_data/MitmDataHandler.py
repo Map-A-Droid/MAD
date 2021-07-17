@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
@@ -43,12 +43,12 @@ class MitmDataHandler:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         await player_data.handle_inventory_data(inventory_proto)
 
-    def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
+    def request_latest(self, worker: str, key: Union[int, str]) -> Optional[LatestMitmDataEntry]:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         logger.debug2("Request latest called")
         return player_data.get_specific_latest_data(key)
 
-    def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
+    def get_full_latest_data(self, worker: str) -> Dict[Union[int, str], LatestMitmDataEntry]:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         logger.debug2("Request full latest called")
         return player_data.get_full_latest_data()
