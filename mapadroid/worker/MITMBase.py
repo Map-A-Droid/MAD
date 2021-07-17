@@ -182,7 +182,7 @@ class MITMBase(WorkerBase, ABC):
                 last_time_received = latest_proto_entry.timestamp_of_data_retrieval
                 break
 
-        if type_of_data_returned != LatestReceivedType.UNDEFINED and data:
+        if type_of_data_returned != LatestReceivedType.UNDEFINED:
             await self._reset_restart_count_and_collect_stats(timestamp,
                                                               last_time_received,
                                                               position_type)
