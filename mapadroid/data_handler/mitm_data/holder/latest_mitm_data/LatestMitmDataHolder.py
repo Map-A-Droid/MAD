@@ -20,6 +20,7 @@ class LatestMitmDataHolder(AbstractWorkerHolder):
                      or latest_entry.timestamp_of_data_retrieval > timestamp_of_data_retrieval)):
             # Ignore update as it yields an older timestamp than the one known to us
             return
+        del self.__entries[key]
         self.__entries[key] = LatestMitmDataEntry(location, timestamp_received,
                                                   timestamp_of_data_retrieval, value)
 
