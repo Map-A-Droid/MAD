@@ -97,7 +97,7 @@ class StatsHandler:
                 await session.rollback()
 
     async def __process_stats(self, session: AsyncSession):
-        logger.debug('Submitting stats')
+        logger.info('Submitting stats')
         submittable_stats: List[AbstractStatsHolder] = [self.__stats_detect_seen_type_holder]
         submittable_stats.extend(self.__worker_stats.values())
         self.__init_stats_holders()
@@ -105,6 +105,7 @@ class StatsHandler:
             await submittable.submit(session)
 
         await self.__cleanup_stats(session)
+        logger.info("Done submitting stats")
 
     async def __cleanup_stats(self, session: AsyncSession) -> None:
         delete_before_timestamp: int = int(time.time()) - 604800

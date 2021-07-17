@@ -10,7 +10,7 @@ class WildMonStatsEntry(TrsStatsDetectWildMonRaw):
         self.encounter_id = encounter_id
         self.count = 0
         self.is_shiny = False
-        self.first_seen = first_scanned
+        self.first_scanned = first_scanned
         self.last_scanned = first_scanned
 
     def update(self, last_scanned: datetime, is_shiny: bool = False) -> None:

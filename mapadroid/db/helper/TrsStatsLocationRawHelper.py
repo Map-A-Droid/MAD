@@ -254,5 +254,5 @@ class TrsStatsLocationRawHelper:
 
     @staticmethod
     async def cleanup(session: AsyncSession, delete_before_timestap_scan: int) -> None:
-        stmt = delete(TrsStatsLocationRaw).where(TrsStatsLocationRaw.timestamp_scan < delete_before_timestap_scan)
+        stmt = delete(TrsStatsLocationRaw).where(TrsStatsLocationRaw.period < delete_before_timestap_scan)
         await session.execute(stmt)

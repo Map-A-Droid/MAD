@@ -69,14 +69,14 @@ class TrsStatsLocationHelper:
 
         """
         stmt = select(TrsStatsLocation.worker,
-                      func.sum(TrsStatsLocation.location_count),
                       func.sum(TrsStatsLocation.location_ok),
                       func.sum(TrsStatsLocation.location_nok)) \
             .select_from(TrsStatsLocation) \
             .group_by(TrsStatsLocation.worker)
         result = await session.execute(stmt)
         results: Dict[str, Tuple[int, int, int, float]] = {}
-        for worker, location_count, location_ok, location_nok in result:
+        for worker, location_ok, location_nok in result:
+            location_count: int = location_ok + location_nok
             if location_count > 0:
                 failure_rate = int(location_nok) / int(location_count) * 100
             else:
@@ -85,12 +85,11 @@ class TrsStatsLocationHelper:
         return results
 
     @staticmethod
-    async def add(session: AsyncSession, worker: str, timestamp_scan: int, location_count: int, location_ok: int,
+    async def add(session: AsyncSession, worker: str, timestamp_scan: int, location_ok: int,
                   location_nok: int) -> None:
         stat = TrsStatsLocation()
         stat.worker = worker
         stat.timestamp_scan = timestamp_scan
-        stat.location_count = location_count
         stat.location_ok = location_ok
         stat.location_nok = location_nok
         session.add(stat)
