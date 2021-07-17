@@ -196,7 +196,9 @@ class MITMBase(WorkerBase, ABC):
             last_time_received = TIMESTAMP_NEVER
 
         if type_of_data_returned != LatestReceivedType.UNDEFINED:
-            await self._reset_restart_count_and_collect_stats(timestamp, last_time_received, position_type)
+            await self._reset_restart_count_and_collect_stats(timestamp,
+                                                              latest_proto_entry.timestamp_of_data_retrieval,
+                                                              position_type)
         else:
             await self._handle_proto_timeout(timestamp, position_type, proto_to_wait_for,
                                              type_of_data_returned)

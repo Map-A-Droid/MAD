@@ -280,6 +280,7 @@ async def start():
 
         if args.statistic:
             logger.info("Starting statistics collector")
+            loop = asyncio.get_running_loop()
             t_usage = loop.create_task(get_system_infos(db_wrapper))
 
     madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
