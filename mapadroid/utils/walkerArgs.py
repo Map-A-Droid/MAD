@@ -197,6 +197,8 @@ def parse_args():
                         help='Generate worker stats')
     parser.add_argument('-ggrs', '--game_stats_raw', action='store_true', default=False,
                         help='Generate worker raw stats (only with --game_stats)')
+    parser.add_argument('-gsms', '--game_stats_mon_seen', action='store_true', default=False,
+                        help='Generate mon seen stats (only with --game_stats)')
     parser.add_argument('-gsst', '--game_stats_save_time', default=300, type=int,
                         help='Number of seconds until worker information is saved to database')
     parser.add_argument('-rds', '--raw_delete_shiny', default=0,

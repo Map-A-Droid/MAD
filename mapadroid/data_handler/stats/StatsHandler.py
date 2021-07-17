@@ -27,6 +27,7 @@ class StatsHandler:
         self.__application_args = application_args
         self.__db_wrapper = db_wrapper
         self.__submission_loop_task: Optional[Task] = None
+        self.__stats_detect_seen_type_holder: Optional[StatsDetectSeenTypeHolder] = None
         self.__init_stats_holders()
 
     async def start(self):
@@ -42,7 +43,8 @@ class StatsHandler:
 
     def __init_stats_holders(self) -> None:
         self.__worker_stats: Dict[str, PlayerStats] = {}
-        self.__stats_detect_seen_type_holder: StatsDetectSeenTypeHolder = StatsDetectSeenTypeHolder()
+        if self.__application_args.game_stats_mon_seen:
+            self.__stats_detect_seen_type_holder: Optional[StatsDetectSeenTypeHolder] = StatsDetectSeenTypeHolder()
 
     def __ensure_player_stat(self, worker: str) -> PlayerStats:
         if worker not in self.__worker_stats:
@@ -53,12 +55,14 @@ class StatsHandler:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
         for encounter_id in encounter_ids:
             player_stats.stats_collect_wild_mon(encounter_id, time_scanned)
-            self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.WILD, time_scanned)
+            if self.__stats_detect_seen_type_holder:
+                self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.WILD, time_scanned)
 
     def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime, is_shiny: bool) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
         player_stats.stats_collect_mon_iv(encounter_id, time_scanned, is_shiny)
-        self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.ENCOUNTER, time_scanned)
+        if self.__stats_detect_seen_type_holder:
+            self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.ENCOUNTER, time_scanned)
 
     def stats_collect_quest(self, worker: str, time_scanned: datetime) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
@@ -77,6 +81,8 @@ class StatsHandler:
 
     def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
                                 time_of_scan: datetime) -> None:
+        if not self.__stats_detect_seen_type_holder:
+            return
         for encounter_id in encounter_ids:
             self.__stats_detect_seen_type_holder.add(encounter_id, type_of_detection, time_of_scan)
 
@@ -98,7 +104,9 @@ class StatsHandler:
 
     async def __process_stats(self, session: AsyncSession):
         logger.info('Submitting stats')
-        submittable_stats: List[AbstractStatsHolder] = [self.__stats_detect_seen_type_holder]
+        submittable_stats: List[AbstractStatsHolder] = []
+        if self.__stats_detect_seen_type_holder:
+            submittable_stats.append(self.__stats_detect_seen_type_holder)
         submittable_stats.extend(self.__worker_stats.values())
         self.__init_stats_holders()
         for submittable in submittable_stats:
@@ -109,6 +117,7 @@ class StatsHandler:
 
     async def __cleanup_stats(self, session: AsyncSession) -> None:
         delete_before_timestamp: int = int(time.time()) - 604800
+        # TODO: Cleanup seen stuff...
         await TrsStatsDetectHelper.cleanup(session, delete_before_timestamp)
         await TrsStatsDetectWildMonRawHelper.cleanup(session, datetime.utcfromtimestamp(delete_before_timestamp),
                                                      raw_delete_shiny_days=self.__application_args.raw_delete_shiny)
