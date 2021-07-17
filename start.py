@@ -1,5 +1,6 @@
 import asyncio
 import calendar
+import concurrent
 import datetime
 import gc
 import logging
@@ -106,47 +107,51 @@ def find_referring_graphs(obj):
 
 async def get_system_infos(db_wrapper):
     pid = os.getpid()
-    py = psutil.Process(pid)
+    process_running = psutil.Process(pid)
     gc.set_threshold(5, 1, 1)
     gc.enable()
-
+    await asyncio.sleep(60)
     while not terminate_mad.is_set():
         logger.debug('Starting internal Cleanup')
-        logger.debug('Collecting...')
-        unreachable_objs = gc.collect()
-        logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
-                     str(unreachable_objs), str(gc.garbage), str(active_count()))
-
-        for obj in gc.garbage:
-            for ref in find_referring_graphs(obj):
-                ref.set_next(None)
-                del ref  # remove local reference so the node can be deleted
-            del obj  # remove local reference so the node can be deleted
-
-        # Clear references held by gc.garbage
-        logger.debug('Clearing gc garbage')
-        del gc.garbage[:]
-
-        mem_usage = py.memory_info()[0] / 2. ** 30
-        cpu_usage = py.cpu_percent()
-        logger.info('Instance name: "{}" - Memory usage: {:.3f} GB - CPU usage: {}',
-                    str(args.status_name), mem_usage, str(cpu_usage))
-        collected = None
-        if args.stat_gc:
-            collected = gc.collect()
-            logger.debug("Garbage collector: collected %d objects." % collected)
-        zero = datetime.datetime.utcnow()
-        unixnow = calendar.timegm(zero.utctimetuple())
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            collected, cpu_usage, mem_usage, unixnow = await loop.run_in_executor(
+                pool, __run_system_stats, process_running)
         async with db_wrapper as session, session:
             await TrsUsageHelper.add(session, args.status_name, cpu_usage, mem_usage, collected, unixnow)
             await session.commit()
-        try:
-            from mem_top import mem_top
-            logger.info(mem_top())
-        except:
-            pass
-        #tracker.print_diff()
         await asyncio.sleep(args.statistic_interval)
+
+
+def __run_system_stats(py):
+    logger.debug('Collecting...')
+    unreachable_objs = gc.collect()
+    logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
+                 str(unreachable_objs), str(gc.garbage), str(active_count()))
+    for obj in gc.garbage:
+        for ref in find_referring_graphs(obj):
+            ref.set_next(None)
+            del ref  # remove local reference so the node can be deleted
+        del obj  # remove local reference so the node can be deleted
+    # Clear references held by gc.garbage
+    logger.debug('Clearing gc garbage')
+    del gc.garbage[:]
+    mem_usage = py.memory_info()[0] / 2. ** 30
+    cpu_usage = py.cpu_percent()
+    logger.info('Instance name: "{}" - Memory usage: {:.3f} GB - CPU usage: {}',
+                str(args.status_name), mem_usage, str(cpu_usage))
+    collected = None
+    if args.stat_gc:
+        collected = gc.collect()
+        logger.debug("Garbage collector: collected %d objects." % collected)
+    zero = datetime.datetime.utcnow()
+    unixnow = calendar.timegm(zero.utctimetuple())
+    try:
+        from mem_top import mem_top
+        logger.info(mem_top())
+    except:
+        pass
+    return collected, cpu_usage, mem_usage, unixnow
 
 
 def create_folder(folder):
@@ -284,11 +289,6 @@ async def start():
             webhook_task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
-        if args.statistic:
-            logger.info("Starting statistics collector")
-            loop = asyncio.get_running_loop()
-            t_usage = loop.create_task(get_system_infos(db_wrapper))
-
     madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
 
     # starting plugin system
@@ -317,6 +317,11 @@ async def start():
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         madmin_app_runner = await madmin.madmin_start()
 
+
+    if args.statistic:
+        logger.info("Starting statistics collector")
+        loop = asyncio.get_running_loop()
+        t_usage = loop.create_task(get_system_infos(db_wrapper))
     logger.info("MAD is now running.....")
     exit_code = 0
     device_creator = None
