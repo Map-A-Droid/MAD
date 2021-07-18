@@ -539,7 +539,7 @@ class RouteManagerBase(ABC):
             routepool_entry.prio_coords = None
             logger.info('getting a nearby prio event {}', prioevent)
             self.__set_routepool_entry_location(origin, prioevent)
-            routepool_entry.last_position_type = PositionType.PRIO
+            routepool_entry.last_position_type = PositionType.PRIOQ
             return prioevent
 
         # first check if a location is available, if not, block until we have one...
@@ -595,7 +595,7 @@ class RouteManagerBase(ABC):
                                 next_readable_time)
                     next_timestamp, next_coord = heapq.heappop(self._prio_queue)
 
-                routepool_entry.last_position_type = PositionType.PRIO
+                routepool_entry.last_position_type = PositionType.PRIOQ
                 logger.debug2("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
                               next_coord.lng, next_readable_time)
                 self.__set_routepool_entry_location(origin, next_coord)
@@ -740,7 +740,7 @@ class RouteManagerBase(ABC):
 
         for worker in self._routepool.keys():
             if worker == origin or self._routepool[worker].prio_coords \
-                    or self._routepool[origin].last_position_type == PositionType.PRIO:
+                    or self._routepool[origin].last_position_type == PositionType.PRIOQ:
                 continue
             worker_pos = self._routepool[worker].current_pos
             prio_distance = get_distance_of_two_points_in_meters(worker_pos.lat, worker_pos.lng,
