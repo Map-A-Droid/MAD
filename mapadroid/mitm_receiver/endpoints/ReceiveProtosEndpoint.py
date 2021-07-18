@@ -1,3 +1,4 @@
+import json
 import time
 
 from aiohttp import web
@@ -21,7 +22,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
     # TODO: Auth
     async def post(self):
-        data = await self.request.json()
+        data_text = await self.request.text()
+        # data = await self.request.json()
+        data = json.loads(data_text)
         origin = self.request.headers.get("origin")
         logger.debug2("Receiving proto")
         logger.debug4("Proto data received {}", data)

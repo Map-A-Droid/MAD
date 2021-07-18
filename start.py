@@ -122,13 +122,14 @@ async def get_system_infos(db_wrapper):
         with concurrent.futures.ThreadPoolExecutor() as pool:
             collected, cpu_usage, mem_usage, unixnow = await loop.run_in_executor(
                 pool, __run_system_stats, process_running)
-        async with db_wrapper as session, session:
-            await TrsUsageHelper.add(session, args.status_name, cpu_usage, mem_usage, collected, unixnow)
-            await session.commit()
+        #async with db_wrapper as session, session:
+        #    await TrsUsageHelper.add(session, args.status_name, cpu_usage, mem_usage, collected, unixnow)
+        #    await session.commit()
         await asyncio.sleep(args.statistic_interval)
 
 set_of_known_tuples = set()
 last_snapshot = None
+initial_snapshot = None
 
 
 def display_top(snapshot, key_type='lineno', limit=30):
@@ -156,7 +157,7 @@ def display_top(snapshot, key_type='lineno', limit=30):
 
 
 def __run_system_stats(py):
-    global last_snapshot
+    global last_snapshot, initial_snapshot
     logger.debug('Collecting...')
     unreachable_objs = gc.collect()
     logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
@@ -206,6 +207,16 @@ def __run_system_stats(py):
                 logger.info(stat)
             logger.info("Bottom of diff")
             for stat in top_stats[-15:]:
+                logger.info(stat)
+            if not initial_snapshot:
+                initial_snapshot = new_snapshot
+
+            top_stats_to_initial = new_snapshot.compare_to(initial_snapshot, 'traceback')
+            logger.info("Top of diff to initial")
+            for stat in top_stats_to_initial[:15]:
+                logger.info(stat)
+            logger.info("Bottom of diff to initial")
+            for stat in top_stats_to_initial[-15:]:
                 logger.info(stat)
         last_snapshot = new_snapshot
     logger.info("Done with GC")

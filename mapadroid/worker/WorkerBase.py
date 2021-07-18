@@ -744,7 +744,7 @@ class WorkerBase(AbstractWorker, ABC):
 
     async def _reboot(self, mitm_mapper: Optional[MitmMapper] = None):
         try:
-            if self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
+            if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 start_result = await self._communicator.reboot()
             else:
                 start_result = True
@@ -758,7 +758,7 @@ class WorkerBase(AbstractWorker, ABC):
                                                           now_ts, PositionType.REBOOT, 0,
                                                           self._walker.name, TransportType.TELEPORT,
                                                           now_ts)
-        if self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
             async with self._db_wrapper as session, session:
                 await TrsStatusHelper.save_last_reboot(session, self._db_wrapper.get_instance_id(), self._dev_id)
         self._reboot_count = 0
