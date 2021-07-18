@@ -6,7 +6,7 @@ import gc
 import logging
 import os
 import sys
-from asyncio import Task, CancelledError
+from asyncio import Task, CancelledError, AbstractEventLoop
 from typing import Optional, Tuple, Any
 
 import functools
@@ -54,6 +54,7 @@ def install_task_create_excepthook():
     If using psyco, call psycho.cannotcompile(threading.Thread.run)
     since this replaces a new-style class method.
     """
+    loop = asyncio.get_running_loop()
     create_task_old = loop.create_task
 
     def _handle_task_result(
