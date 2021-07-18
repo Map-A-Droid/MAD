@@ -70,7 +70,7 @@ class WebsocketServer(object):
     async def start_server(self) -> None:
         logger.info("Starting websocket-server...")
 
-        self.__loop = asyncio.get_event_loop()
+        self.__loop = asyncio.get_running_loop()
         await self.__setup_first_loop()
         # the type-check here is sorta wrong, not entirely sure why
         # noinspection PyTypeChecker

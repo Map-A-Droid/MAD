@@ -31,7 +31,7 @@ class Event:
 
     async def start_event_checker(self):
         if not self.args.no_event_checker:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             loop.create_task(self.event_checker())
 
     def get_current_event_id(self):

@@ -217,7 +217,7 @@ class RouteManagerBase(ABC):
                 self.clustering_helper = ClusteringHelper(self._max_radius,
                                                           self._max_clustering,
                                                           self._cluster_priority_queue_criteria())
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             self._update_prio_queue_thread = loop.create_task(self._update_priority_queue_loop())
             logger.info("Started PrioQ")
 

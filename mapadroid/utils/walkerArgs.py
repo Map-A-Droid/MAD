@@ -191,6 +191,9 @@ def parse_args():
                         help='Store collected objects (garbage collector) (Default: False)')
     parser.add_argument('-stiv', '--statistic_interval', default=60, type=int,
                         help='Store new local stats every N seconds (Default: 60)')
+    parser.add_argument('-trace', '--trace', action='store_true', default=False,
+                        help='Enable tracing of system stats, e.g. tracemalloc. '
+                             'ONLY TO BE USED FOR DEBUGGING ISSUES. (Default: False)')
 
     # Game Stats
     parser.add_argument('-ggs', '--game_stats', action='store_true', default=False,

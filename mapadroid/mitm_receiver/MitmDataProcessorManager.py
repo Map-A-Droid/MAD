@@ -50,7 +50,7 @@ class MitmDataProcessorManager():
             time.sleep(3)
 
     async def launch_processors(self):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         for i in range(self._args.mitmreceiver_data_workers):
             data_processor: SerializedMitmDataProcessor = SerializedMitmDataProcessor(
                 self._mitm_data_queue,

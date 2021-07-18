@@ -36,7 +36,7 @@ class Rarity(object):
         return spawn_group
 
     async def start_dynamic_rarity(self):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         self.rarity_updater_task = loop.create_task(self.dynamic_rarity_refresher())
 
     async def dynamic_rarity_refresher(self):

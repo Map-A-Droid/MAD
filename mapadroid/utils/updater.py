@@ -97,7 +97,7 @@ class DeviceUpdater(object):
                 logger.error('Cannot add job {} - Reason: {}', command_file, e)
         await self.kill_old_jobs()
         await self.load_automatic_jobs()
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         for i in range(self._args.job_thread_count):
             updater_task: Task = loop.create_task(self.process_update_queue(i))
             self.t_updater.append(updater_task)

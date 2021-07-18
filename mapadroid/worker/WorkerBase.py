@@ -198,7 +198,7 @@ class WorkerBase(AbstractWorker, ABC):
         Returns:
 
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         self._work_mutex: asyncio.Lock = asyncio.Lock()
         self._init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_id)
@@ -426,7 +426,7 @@ class WorkerBase(AbstractWorker, ABC):
                     if process_location:
                         self._location_count += 1
                         logger.debug("Seting new 'scannedlocation' in Database")
-                        loop = asyncio.get_event_loop()
+                        loop = asyncio.get_running_loop()
                         loop.create_task(
                             self.update_scanned_location(self.current_location.lat, self.current_location.lng,
                                                          time_snapshot))

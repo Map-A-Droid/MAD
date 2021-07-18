@@ -112,7 +112,7 @@ class WorkerQuests(MITMBase):
         if self.clear_inventory_task is not None:
             return
         # TODO: Remove that thread, useless for us
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         self.clear_inventory_task: Task = loop.create_task(self._clear_thread())
 
         if self._stop_worker_event.is_set() or not await self._wait_for_injection():

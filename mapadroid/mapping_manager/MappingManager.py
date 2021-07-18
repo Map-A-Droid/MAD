@@ -157,7 +157,7 @@ class MappingManager:
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
         await self.join_routes_queue.start()
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         # TODO: Restore...
         self.__devicesettings_setter_consumer_task = loop.create_task(self.__devicesettings_setter_consumer())
 

@@ -3,9 +3,11 @@ import calendar
 import concurrent
 import datetime
 import gc
+import linecache
 import logging
 import os
 import sys
+import tracemalloc
 from asyncio import Task, CancelledError, AbstractEventLoop
 from typing import Optional, Tuple, Any
 
@@ -76,7 +78,7 @@ def install_task_create_excepthook():
 
     def create_task(*args, **kwargs) -> Task:
         try:
-            task = create_task_old(*args, **kwargs)
+            task: Task = create_task_old(*args, **kwargs)
             task.add_done_callback(
                 functools.partial(_handle_task_result, logger=logger)
             )
@@ -112,6 +114,8 @@ async def get_system_infos(db_wrapper):
     gc.set_threshold(5, 1, 1)
     gc.enable()
     await asyncio.sleep(60)
+    if args.trace:
+        tracemalloc.start(5)
     while not terminate_mad.is_set():
         logger.debug('Starting internal Cleanup')
         loop = asyncio.get_running_loop()
@@ -123,8 +127,36 @@ async def get_system_infos(db_wrapper):
             await session.commit()
         await asyncio.sleep(args.statistic_interval)
 
+set_of_known_tuples = set()
+last_snapshot = None
+
+
+def display_top(snapshot, key_type='lineno', limit=30):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    logger.info("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        logger.info("#%s: %s:%s: %.1f KiB"
+              % (index, frame.filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            logger.info('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        logger.info("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    logger.info("Total allocated size: %.1f KiB" % (total / 1024))
+
 
 def __run_system_stats(py):
+    global last_snapshot
     logger.debug('Collecting...')
     unreachable_objs = gc.collect()
     logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
@@ -134,6 +166,7 @@ def __run_system_stats(py):
             ref.set_next(None)
             del ref  # remove local reference so the node can be deleted
         del obj  # remove local reference so the node can be deleted
+
     # Clear references held by gc.garbage
     logger.debug('Clearing gc garbage')
     del gc.garbage[:]
@@ -147,11 +180,30 @@ def __run_system_stats(py):
         logger.debug("Garbage collector: collected %d objects." % collected)
     zero = datetime.datetime.utcnow()
     unixnow = calendar.timegm(zero.utctimetuple())
-    try:
-        from mem_top import mem_top
-        logger.info(mem_top())
-    except:
-        pass
+    #try:
+    #    for obj in gc.get_objects():
+    #        if isinstance(obj, tuple):
+    #            try:
+    #                if obj not in set_of_known_tuples:
+    #                    if last_snapshot:
+    #                        logger.debug(obj)
+    #                    set_of_known_tuples.add(obj)
+    #            except Exception as e:
+    #                pass
+    #except Exception as e:
+    #    logger.exception(e)
+    if args.trace:
+        new_snapshot = tracemalloc.take_snapshot()
+        if last_snapshot:
+
+            try:
+                display_top(new_snapshot)
+            except Exception as e:
+                logger.exception(e)
+            top_stats = new_snapshot.compare_to(last_snapshot, 'traceback')
+            logger.info(top_stats)
+        last_snapshot = new_snapshot
+    logger.info("Done with GC")
     return collected, cpu_usage, mem_usage, unixnow
 
 
