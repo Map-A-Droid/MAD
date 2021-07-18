@@ -122,9 +122,9 @@ async def get_system_infos(db_wrapper):
         with concurrent.futures.ThreadPoolExecutor() as pool:
             collected, cpu_usage, mem_usage, unixnow = await loop.run_in_executor(
                 pool, __run_system_stats, process_running)
-        #async with db_wrapper as session, session:
-        #    await TrsUsageHelper.add(session, args.status_name, cpu_usage, mem_usage, collected, unixnow)
-        #    await session.commit()
+        async with db_wrapper as session, session:
+            await TrsUsageHelper.add(session, args.status_name, cpu_usage, mem_usage, collected, unixnow)
+            await session.commit()
         await asyncio.sleep(args.statistic_interval)
 
 set_of_known_tuples = set()
