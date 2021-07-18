@@ -24,6 +24,8 @@ class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
         injected_settings_entry: Optional[LatestMitmDataEntry] = await self._get_mitm_mapper().request_latest(
             origin, "injected_settings")
         injected_settings = injected_settings_entry.data if injected_settings_entry else None
+        # Workaround for PD...
+        injected_settings_dict = {"values": injected_settings}
 
         ids_iv: Optional[LatestMitmDataEntry] = await self._get_mitm_mapper().request_latest(origin, "ids_iv")
         if ids_iv is not None:
@@ -46,7 +48,7 @@ class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
             if not unquest_stops:
                 unquest_stops_res: List = []
 
-        response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
+        response = {"ids_iv": ids_iv, "injected_settings": injected_settings_dict,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
                     "lvl_mode": level_mode, 'unquest_stops': unquest_stops_res,
                     "check_lured": self._get_mad_args().scan_lured_mons}
