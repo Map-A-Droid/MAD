@@ -201,7 +201,11 @@ def __run_system_stats(py):
             except Exception as e:
                 logger.exception(e)
             top_stats = new_snapshot.compare_to(last_snapshot, 'traceback')
-            for stat in top_stats[:30]:
+            logger.info("Top of diff")
+            for stat in top_stats[:15]:
+                logger.info(stat)
+            logger.info("Bottom of diff")
+            for stat in top_stats[-15:]:
                 logger.info(stat)
         last_snapshot = new_snapshot
     logger.info("Done with GC")
