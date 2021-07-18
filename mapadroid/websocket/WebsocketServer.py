@@ -300,7 +300,7 @@ class WebsocketServer(object):
     async def __on_message(client_entry: WebsocketConnectedClientEntry, message: MessageTyping) -> None:
         response: Optional[MessageTyping] = None
         if isinstance(message, str):
-            client_entry.logger.debug("Receiving message: {}", message.strip())
+            logger.debug("Receiving message: {}", message.strip())
             splitup = message.split(";", 1)
             message_id = int(splitup[0])
             response = splitup[1]
