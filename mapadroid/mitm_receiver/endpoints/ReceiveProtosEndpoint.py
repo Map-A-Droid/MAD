@@ -34,7 +34,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         elif isinstance(data, dict):
             logger.debug2("Receiving single proto")
             # single proto, parse it...
-            await self.__handle_proto_data_dict(origin, data)
+            await self.__handle_proto_data_dict(origin, data.copy())
 
         await self._get_mitm_mapper().set_injection_status(origin, True)
         del data
