@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -30,19 +31,22 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         with ThreadPoolExecutor() as pool:
             data = await loop.run_in_executor(
                 pool, json.loads, data_text)
+        del data_text
         origin = self.request.headers.get("origin")
         logger.debug2("Receiving proto")
-        logger.debug4("Proto data received {}", data)
 
-        if isinstance(data, list):
+        copied_data = copy.deepcopy(data)
+        del data
+        logger.debug4("Proto data received {}", copied_data)
+        if isinstance(copied_data, list):
             # list of protos... we hope so at least....
             logger.debug2("Receiving list of protos")
-            for proto in data.copy():
+            for proto in copied_data:
                 await self.__handle_proto_data_dict(origin, proto)
-        elif isinstance(data, dict):
+        elif isinstance(copied_data, dict):
             logger.debug2("Receiving single proto")
             # single proto, parse it...
-            await self.__handle_proto_data_dict(origin, data.copy())
+            await self.__handle_proto_data_dict(origin, copied_data)
 
         await self._get_mitm_mapper().set_injection_status(origin, True)
         # del data
