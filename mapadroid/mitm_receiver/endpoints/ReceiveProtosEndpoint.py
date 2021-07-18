@@ -29,7 +29,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         if isinstance(data, list):
             # list of protos... we hope so at least....
             logger.debug2("Receiving list of protos")
-            for proto in data:
+            for proto in data.copy():
                 await self.__handle_proto_data_dict(origin, proto)
         elif isinstance(data, dict):
             logger.debug2("Receiving single proto")
@@ -37,6 +37,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             await self.__handle_proto_data_dict(origin, data)
 
         await self._get_mitm_mapper().set_injection_status(origin, True)
+        del data
         return web.Response(status=200)
 
     async def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
