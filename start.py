@@ -201,7 +201,8 @@ def __run_system_stats(py):
             except Exception as e:
                 logger.exception(e)
             top_stats = new_snapshot.compare_to(last_snapshot, 'traceback')
-            logger.info(top_stats)
+            for stat in top_stats:
+                logger.info(stat)
         last_snapshot = new_snapshot
     logger.info("Done with GC")
     return collected, cpu_usage, mem_usage, unixnow
