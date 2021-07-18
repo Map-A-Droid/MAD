@@ -11,6 +11,8 @@ from loguru import logger
 from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
@@ -18,7 +20,6 @@ from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
 from mapadroid.db.model import SettingsAreaPokestop, Pokestop, SettingsWalkerarea
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
-from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
@@ -514,7 +515,7 @@ class WorkerQuests(MITMBase):
         if type_received != LatestReceivedType.GMO or data_received is None:
             await self._spinnable_data_failure()
             return PositionStopType.GMO_NOT_AVAILABLE
-        latest_proto = data_received.get("payload")
+        latest_proto = data_received
         gmo_cells: list = latest_proto.get("cells", None)
 
         if not gmo_cells:
@@ -770,17 +771,20 @@ class WorkerQuests(MITMBase):
 
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
 
-    async def _check_for_data_content(self, latest, proto_to_wait_for: ProtoIdentifier, timestamp: float) \
+    async def _check_for_data_content(self, latest: Dict[Union[int, str], LatestMitmDataEntry],
+                                      proto_to_wait_for: ProtoIdentifier, timestamp: float) \
             -> Tuple[LatestReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
         type_of_data_found: LatestReceivedType = LatestReceivedType.UNDEFINED
         data_found: Optional[object] = None
         # Check if we have clicked a gym or mon...
         if ProtoIdentifier.GYM_INFO.value in latest \
-                and latest[ProtoIdentifier.GYM_INFO.value].get('timestamp', 0) >= timestamp:
+                and latest[ProtoIdentifier.GYM_INFO.value].timestamp_of_data_retrieval \
+                and latest[ProtoIdentifier.GYM_INFO.value].timestamp_of_data_retrieval >= timestamp:
             type_of_data_found = LatestReceivedType.GYM
             return type_of_data_found, data_found
         elif ProtoIdentifier.ENCOUNTER.value in latest \
-                and latest[ProtoIdentifier.ENCOUNTER.value].get('timestamp', 0) >= timestamp:
+                and latest[ProtoIdentifier.ENCOUNTER.value].timestamp_of_data_retrieval \
+                and latest[ProtoIdentifier.ENCOUNTER.value].timestamp_of_data_retrieval >= timestamp:
             type_of_data_found = LatestReceivedType.MON
             return type_of_data_found, data_found
         elif proto_to_wait_for.value not in latest:
@@ -809,8 +813,8 @@ class WorkerQuests(MITMBase):
         if not latest_proto_entry:
             logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found
-        timestamp_of_proto = latest_proto_entry.get("timestamp", 0)
-        if timestamp_of_proto < timestamp:
+        timestamp_of_proto = latest_proto_entry.timestamp_of_data_retrieval
+        if not timestamp_of_proto or timestamp_of_proto < timestamp:
             logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
                          timestamp_of_proto, timestamp)
             # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
@@ -818,11 +822,10 @@ class WorkerQuests(MITMBase):
             return type_of_data_found, data_found
 
         # TODO: consider reseting timestamp here since we clearly received SOMETHING
-        latest_proto_data = latest_proto_entry.get("values", None)
-        logger.debug4("Latest data received: {}", latest_proto_data)
-        if latest_proto_data is None:
+        latest_proto = latest_proto_entry.data
+        logger.debug4("Latest data received: {}", latest_proto)
+        if latest_proto is None:
             return type_of_data_found, data_found
-        latest_proto = latest_proto_data.get("payload", None)
         logger.debug2("Checking for Quest related data in proto {}", proto_to_wait_for)
         if latest_proto is None:
             logger.debug("No proto data for {} at {} after {}", proto_to_wait_for,
@@ -852,8 +855,8 @@ class WorkerQuests(MITMBase):
             type_of_data_found = LatestReceivedType.GYM if fort_type == 0 else LatestReceivedType.STOP
         elif proto_to_wait_for == ProtoIdentifier.GMO \
                 and self._directly_surrounding_gmo_cells_containing_stops_around_current_position(
-            latest_proto.get("cells")):
-            data_found = latest_proto_data
+                        latest_proto.get("cells")):
+            data_found = latest_proto
             type_of_data_found = LatestReceivedType.GMO
         elif proto_to_wait_for == ProtoIdentifier.INVENTORY and 'inventory_delta' in latest_proto and \
                 len(latest_proto['inventory_delta']['inventory_items']) > 0:

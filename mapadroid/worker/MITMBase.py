@@ -322,7 +322,9 @@ class MITMBase(WorkerBase, ABC):
         return True
 
     @abstractmethod
-    async def _check_for_data_content(self, latest, proto_to_wait_for: ProtoIdentifier, timestamp) \
+    async def _check_for_data_content(self, latest: Dict[Union[int, str], LatestMitmDataEntry],
+                                      proto_to_wait_for: ProtoIdentifier,
+                                      timestamp: int) \
             -> Tuple[LatestReceivedType, Optional[object]]:
         """
         Wait_for_data for each worker
