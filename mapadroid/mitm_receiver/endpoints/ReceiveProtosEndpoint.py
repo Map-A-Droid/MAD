@@ -1,5 +1,7 @@
+import asyncio
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from aiohttp import web
 from loguru import logger
@@ -24,7 +26,10 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
     async def post(self):
         data_text = await self.request.text()
         # data = await self.request.json()
-        data = json.loads(data_text)
+        loop = asyncio.get_running_loop()
+        with ThreadPoolExecutor() as pool:
+            data = await loop.run_in_executor(
+                pool, json.loads, data_text)
         origin = self.request.headers.get("origin")
         logger.debug2("Receiving proto")
         logger.debug4("Proto data received {}", data)
@@ -40,7 +45,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             await self.__handle_proto_data_dict(origin, data.copy())
 
         await self._get_mitm_mapper().set_injection_status(origin, True)
-        del data
+        # del data
         return web.Response(status=200)
 
     async def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
