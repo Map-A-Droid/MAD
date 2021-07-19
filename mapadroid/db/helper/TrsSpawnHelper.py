@@ -1,5 +1,6 @@
 import asyncio
 import concurrent
+import functools
 import time
 from _datetime import timedelta
 from datetime import datetime
@@ -129,11 +130,12 @@ class TrsSpawnHelper:
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             next_up = await loop.run_in_executor(
-                pool, TrsSpawnHelper.__process_next_to_encounter, result, geofence_helper)
+                pool, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result, geofence_helper=geofence_helper))
 
         return next_up
 
-    def __process_next_to_encounter(self, result, geofence_helper) -> List[Tuple[int, Location]]:
+    @staticmethod
+    def __process_next_to_encounter(result, geofence_helper = None) -> List[Tuple[int, Location]]:
         next_up: List[Tuple[int, Location]] = []
         current_time = time.time()
         current_time_of_day = datetime.now().replace(microsecond=0)
