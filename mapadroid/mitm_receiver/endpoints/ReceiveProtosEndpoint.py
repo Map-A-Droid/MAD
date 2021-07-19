@@ -26,7 +26,6 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
     # TODO: Auth
     async def post(self):
         data_text = await self.request.text()
-        # data = await self.request.json()
         loop = asyncio.get_running_loop()
         with ThreadPoolExecutor() as pool:
             data = await loop.run_in_executor(
@@ -35,18 +34,16 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         origin = self.request.headers.get("origin")
         logger.debug2("Receiving proto")
 
-        copied_data = copy.deepcopy(data)
-        del data
-        logger.debug4("Proto data received {}", copied_data)
-        if isinstance(copied_data, list):
+        logger.debug4("Proto data received {}", data)
+        if isinstance(data, list):
             # list of protos... we hope so at least....
             logger.debug2("Receiving list of protos")
-            for proto in copied_data:
+            for proto in data:
                 await self.__handle_proto_data_dict(origin, proto)
-        elif isinstance(copied_data, dict):
+        elif isinstance(data, dict):
             logger.debug2("Receiving single proto")
             # single proto, parse it...
-            await self.__handle_proto_data_dict(origin, copied_data)
+            await self.__handle_proto_data_dict(origin, data)
 
         await self._get_mitm_mapper().set_injection_status(origin, True)
         # del data
@@ -61,7 +58,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         if proto_type not in (106, 102, 101, 104, 4, 156, 145):
             # trash protos - ignoring
             return
-
+        elif proto_type == 106 and not data["payload"].get("cells", []):
+            logger.debug("Ignoring apparently empty GMO")
+            return
         timestamp: int = data.get("timestamp", int(time.time()))
         if self._get_mad_args().mitm_ignore_pre_boot is True and timestamp < self._get_mitmreceiver_startup_time():
             return

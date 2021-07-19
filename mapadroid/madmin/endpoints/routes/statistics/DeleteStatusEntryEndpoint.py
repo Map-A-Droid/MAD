@@ -16,7 +16,7 @@ class DeleteStatusEntryEndpoint(AbstractStatisticsRootEndpoint):
         device_id: Optional[int] = self._request.query.get("deviceid")
         status: Optional[TrsStatus] = await TrsStatusHelper.get(self._session, device_id)
         if status:
-            self._delete(status)
+            await self._delete(status)
             return await self._json_response({'status': 'success'})
         else:
             return await self._json_response({'status': 'Unknown device ID'})
