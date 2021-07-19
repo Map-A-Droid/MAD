@@ -119,7 +119,7 @@ class StatsHandler:
         delete_before_timestamp: int = int(time.time()) - 604800
         # TODO: Cleanup seen stuff...
         await TrsStatsDetectHelper.cleanup(session, delete_before_timestamp)
-        await TrsStatsDetectWildMonRawHelper.cleanup(session, datetime.utcfromtimestamp(delete_before_timestamp),
+        await TrsStatsDetectWildMonRawHelper.cleanup(session, datetime.fromtimestamp(delete_before_timestamp),
                                                      raw_delete_shiny_days=self.__application_args.raw_delete_shiny)
         await TrsStatsLocationHelper.cleanup(session, delete_before_timestamp)
         await TrsStatsLocationRawHelper.cleanup(session, delete_before_timestamp)

@@ -111,7 +111,7 @@ class RoutecalcUtil:
                 # Only save if we aren't calculating in memory
                 to_be_written = str(calc_coords).replace("\'", "\"")
                 routecalc_entry.routefile = to_be_written
-                routecalc_entry.last_updated = datetime.datetime.utcnow()
+                routecalc_entry.last_updated = datetime.datetime.now()
             routecalc_entry.recalc_status = 0
 
             session.add(routecalc_entry)

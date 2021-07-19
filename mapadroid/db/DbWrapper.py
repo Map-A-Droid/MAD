@@ -131,10 +131,10 @@ class DbWrapper:
 def adjust_tz_to_utc(column: str, as_name: str = None) -> str:
     # I would like to use convert_tz but this may not be populated.  Use offsets instead
     is_dst = time.daylight and time.localtime().tm_isdst > 0
-    utc_offset = - (time.altzone if is_dst else time.timezone)
+    _offset = - (time.altzone if is_dst else time.timezone)
     if not as_name:
         try:
             as_name = re.findall(r'(\w+)', column)[-1]
         except Exception:
             as_name = column
-    return "UNIX_TIMESTAMP(%s) + %s AS '%s'" % (column, utc_offset, as_name)
+    return "UNIX_TIMESTAMP(%s) + %s AS '%s'" % (column, _offset, as_name)

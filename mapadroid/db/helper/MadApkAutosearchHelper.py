@@ -31,7 +31,7 @@ class MadApkAutosearchHelper:
             autosearch_entry.arch = architecture.value
             autosearch_entry.usage = package.value
         # TODO: Ensure values are fetched...
-        autosearch_entry.last_checked = datetime.utcnow()
+        autosearch_entry.last_checked = datetime.now()
         for key, value in data.items():
             setattr(autosearch_entry, key, value)
         session.add(autosearch_entry)

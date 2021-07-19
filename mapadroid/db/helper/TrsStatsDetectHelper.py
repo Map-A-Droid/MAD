@@ -37,9 +37,9 @@ class TrsStatsDetectHelper:
         if worker:
             where_conditions.append(TrsStatsDetect.worker == worker)
         if include_last_n_minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsDetect.timestamp_scan >= int(minutes.utcnow().timestamp()))
+            where_conditions.append(TrsStatsDetect.timestamp_scan >= int(minutes.now().timestamp()))
         if where_conditions:
             # Avoid empty where
             stmt = stmt.where(and_(*where_conditions))

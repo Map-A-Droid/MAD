@@ -2,7 +2,7 @@ from ._patch_base import PatchBase
 
 
 class Patch(PatchBase):
-    name = 'Reset routcalc algorithm'
+    name = 'Reset roalc algorithm'
     descr = 'Resets the routecalc algorithm for all pokestop routes to fallback to "quick".'
 
     def _execute(self):

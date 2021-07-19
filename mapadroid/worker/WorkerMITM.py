@@ -157,11 +157,12 @@ class WorkerMITM(MITMBase):
             self._encounter_ids = {**encounter_ids, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.
-            max_age = time.time() - 60
-
+            max_age_ = datetime.now().timestamp() - 60
+            # max_age = time.time() - 60
+            print(max_age_)
             remove = []
             for key, value in self._encounter_ids.items():
-                if value < max_age:
+                if value < max_age_:
                     remove.append(key)
 
             for key in remove:

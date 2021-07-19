@@ -450,7 +450,7 @@ class MITMBase(WorkerBase, ABC):
             status.currentSleepTime = self._current_sleep_time
 
             if self._rec_data_time:
-                status.lastProtoDateTime = datetime.utcnow()
+                status.lastProtoDateTime = datetime.now()
                 self._rec_data_time = None
             session.add(status)
             await session.commit()

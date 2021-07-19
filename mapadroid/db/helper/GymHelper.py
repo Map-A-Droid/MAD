@@ -54,7 +54,7 @@ class GymHelper:
                                          Gym.latitude <= old_ne_corner.lat,
                                          Gym.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(Gym.last_scanned >= datetime.utcfromtimestamp(timestamp))
+            where_conditions.append(Gym.last_scanned >= datetime.fromtimestamp(timestamp))
 
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
@@ -88,10 +88,10 @@ class GymHelper:
         return team_count
 
     @staticmethod
-    async def get_changed_since(session: AsyncSession, utc_timestamp: int) -> List[Tuple[Gym, GymDetail]]:
+    async def get_changed_since(session: AsyncSession, timestamp: int) -> List[Tuple[Gym, GymDetail]]:
         stmt = select(Gym, GymDetail) \
             .join(GymDetail, GymDetail.gym_id == Gym.gym_id, isouter=False) \
-            .where(Gym.last_modified >= datetime.utcfromtimestamp(utc_timestamp))
+            .where(Gym.last_modified >= datetime.fromtimestamp(timestamp))
         # TODO: Consider last_scanned above
         result = await session.execute(stmt)
         return result.all()

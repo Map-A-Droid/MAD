@@ -188,7 +188,7 @@ class TrsSpawnHelper:
                                          TrsSpawn.latitude <= old_ne_corner.lat,
                                          TrsSpawn.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(TrsSpawn.last_scanned >= datetime.utcfromtimestamp(timestamp))
+            where_conditions.append(TrsSpawn.last_scanned >= datetime.fromtimestamp(timestamp))
 
         if fence:
             polygon = "POLYGON(({}))".format(fence)
@@ -197,11 +197,11 @@ class TrsSpawnHelper:
         if event_id:
             where_conditions.append(TrsSpawn.eventid == event_id)
         if today_only:
-            where_conditions.append(or_(datetime.utcnow().today() <= TrsSpawn.last_scanned,
-                                        datetime.utcnow().today() <= TrsSpawn.last_non_scanned))
+            where_conditions.append(or_(datetime.now().today() <= TrsSpawn.last_scanned,
+                                        datetime.now().today() <= TrsSpawn.last_non_scanned))
         elif older_than_x_days:
             # elif as it makes no sense to check for older than X days AND today
-            older_than_date: datetime = datetime.utcnow().today() - timedelta(days=older_than_x_days)
+            older_than_date: datetime = datetime.now().today() - timedelta(days=older_than_x_days)
             where_conditions.append(or_(older_than_date <= TrsSpawn.last_scanned,
                                         older_than_date <= TrsSpawn.last_non_scanned))
         stmt = stmt.where(and_(*where_conditions))

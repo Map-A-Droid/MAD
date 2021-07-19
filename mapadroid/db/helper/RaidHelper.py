@@ -20,7 +20,7 @@ class RaidHelper:
     @staticmethod
     async def get_next_hatches(session: AsyncSession,
                                geofence_helper: GeofenceHelper = None) -> List[Tuple[int, Location]]:
-        db_time_to_check = datetime.utcfromtimestamp(time.time())
+        db_time_to_check = datetime.fromtimestamp(time.time())
         stmt = select(Raid.start, Gym.latitude, Gym.longitude) \
             .select_from(Raid).join(Gym, Gym.gym_id == Raid.gym_id) \
             .where(and_(Raid.end > db_time_to_check, Raid.pokemon_id != None))
@@ -40,13 +40,13 @@ class RaidHelper:
         return next_hatches
 
     @staticmethod
-    async def get_raids_changed_since(session: AsyncSession, utc_timestamp: int,
+    async def get_raids_changed_since(session: AsyncSession, _timestamp: int,
                                       geofence_helper: GeofenceHelper = None) -> List[Tuple[Raid, GymDetail, Gym]]:
         stmt = select(Raid, GymDetail, Gym) \
             .select_from(Raid) \
             .join(GymDetail, GymDetail.gym_id == Raid.gym_id) \
             .join(Gym, Gym.gym_id == Raid.gym_id) \
-            .where(Raid.last_scanned > datetime.utcfromtimestamp(utc_timestamp))
+            .where(Raid.last_scanned > datetime.fromtimestamp(_timestamp))
         result = await session.execute(stmt)
         changed_data: List[Tuple[Raid, GymDetail, Gym]] = []
         raw = result.all()

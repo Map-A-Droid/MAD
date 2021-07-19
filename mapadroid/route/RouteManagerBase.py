@@ -314,7 +314,7 @@ class RouteManagerBase(ABC):
             async with self.db_wrapper as session, session:
                 await session.merge(self._routecalc)
                 self._routecalc.routefile = str(calc_coords).replace("\'", "\"")
-                self._routecalc.last_updated = datetime.utcnow()
+                self._routecalc.last_updated = datetime.now()
                 # TODO: First update the resource or simply set using helper which fetches the object first?
                 await session.flush([self._routecalc])
                 await session.commit()

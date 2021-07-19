@@ -19,11 +19,11 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
         logger.debug2('game_stats_shiny_v2')
         timestamp_from: Optional[int] = self._request.query.get("from")
         if timestamp_from:
-            timestamp_from = self._local2utc(int(timestamp_from))
+            timestamp_from = self._local2(int(timestamp_from))
             logger.debug2('using timestamp_from: {}', timestamp_from)
         timestamp_to: Optional[int] = self._request.query.get("to")
         if timestamp_to:
-            timestamp_to = self._local2utc(int(timestamp_to))
+            timestamp_to = self._local2(int(timestamp_to))
             logger.debug2('using timestamp_from: {}', timestamp_to)
 
         tmp_perworker_v2 = {}
@@ -55,7 +55,7 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
                 if stat.worker not in tmp_perworker_v2:
                     tmp_perworker_v2[stat.worker] = 0
                 tmp_perworker_v2[stat.worker] += 1
-                # there is later strftime which converts to local time too, can't use utc2local - it will do double shift
+                # there is later strftime which converts to local time too, can't use 2local - it will do double shift
                 timestamp = stat.first_scanned
 
                 # TODO: This can trigger too often...

@@ -26,7 +26,7 @@ class TrsStatsDetectWildMonRawHelper:
                                TrsStatsDetectWildMonRaw.is_shiny == 0)
         if raw_delete_shiny_days > 0:
             delete_shinies_before_timestamp = int(time.time()) - raw_delete_shiny_days * 86400
-            delete_shinies_before = datetime.datetime.utcfromtimestamp(delete_shinies_before_timestamp)
+            delete_shinies_before = datetime.datetime.fromtimestamp(delete_shinies_before_timestamp)
             shiny_condition = and_(TrsStatsDetectWildMonRaw.last_scanned < delete_shinies_before,
                                    TrsStatsDetectWildMonRaw.is_shiny == 1)
             where_condition = or_(where_condition, shiny_condition)

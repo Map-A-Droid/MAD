@@ -45,9 +45,9 @@ class TrsStatsLocationRawHelper:
         if worker:
             where_conditions.append(TrsStatsLocationRaw.worker == worker)
         if include_last_n_minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.utcnow().timestamp()))
+            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
         stmt = stmt.where(and_(*where_conditions))
         # Group_by needed to not cut off other workers using min function
         if hourly:
@@ -101,9 +101,9 @@ class TrsStatsLocationRawHelper:
         if worker:
             where_conditions.append(TrsStatsLocationRaw.worker == worker)
         if include_last_n_minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.utcnow().timestamp()))
+            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
         stmt = stmt.where(and_(*where_conditions))
         # Group_by needed to not cut off other workers using min function
         if grouped:
@@ -211,9 +211,9 @@ class TrsStatsLocationRawHelper:
         if worker:
             where_conditions.append(TrsStatsLocationRaw.worker == worker)
         if include_last_n_minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.utcnow().timestamp()))
+            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
         stmt = stmt.where(and_(*where_conditions))
         stmt = stmt.order_by(asc(TrsStatsLocationRaw.id))
         result = await session.execute(stmt)

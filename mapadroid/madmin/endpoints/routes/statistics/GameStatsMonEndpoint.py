@@ -25,14 +25,14 @@ class GameStatsMonEndpoint(AbstractStatisticsRootEndpoint):
         data: List[Tuple[int, int, int]] = await PokemonHelper.get_pokemon_count(self._session, minutes_usage)
         for dat in data:
             if dat[2] == 1:
-                iv.append([(self._utc2local(dat[0]) * 1000), dat[1]])
+                iv.append([(self._2local(dat[0]) * 1000), dat[1]])
             else:
-                noniv.append([(self._utc2local(dat[0]) * 1000), dat[1]])
+                noniv.append([(self._2local(dat[0]) * 1000), dat[1]])
 
-            if (self._utc2local(dat[0]) * 1000) in sumup:
-                sumup[(self._utc2local(dat[0]) * 1000)] += dat[1]
+            if (self._2local(dat[0]) * 1000) in sumup:
+                sumup[(self._2local(dat[0]) * 1000)] += dat[1]
             else:
-                sumup[(self._utc2local(dat[0]) * 1000)] = dat[1]
+                sumup[(self._2local(dat[0]) * 1000)] = dat[1]
 
         for dat in sumup:
             sumg.append([dat, sumup[dat]])
@@ -54,7 +54,7 @@ class GameStatsMonEndpoint(AbstractStatisticsRootEndpoint):
                                                                       0),
                                     'lvl': lvl, 'cp': mon.cp, 'img': mon_img,
                                     'name': mon_name,
-                                    'periode': datetime.fromtimestamp(self._utc2local(mon.last_modified.timestamp()))
+                                    'periode': datetime.fromtimestamp(self._2local(mon.last_modified.timestamp()))
                                    .strftime(self._datetimeformat)})
         stats = {'spawn': spawn, 'good_spawns': good_spawns}
         return await self._json_response(stats)

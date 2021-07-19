@@ -60,7 +60,7 @@ class DbPogoProtoSubmit:
         logger.debug3("DbPogoProtoSubmit::mons called with data received")
         cells = map_proto.get("cells", None)
         encounter_ids_in_gmo = []
-        now = datetime.utcfromtimestamp(timestamp)
+        now = datetime.fromtimestamp(timestamp)
         if not cells:
             return encounter_ids_in_gmo
         for cell in cells:
@@ -85,7 +85,7 @@ class DbPogoProtoSubmit:
                 spawnpoint: Optional[TrsSpawn] = await TrsSpawnHelper.get(session, spawnid)
                 despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp,
                                                           self._args.default_unknown_timeleft)
-                despawn_time = datetime.utcfromtimestamp(despawn_time_unix)
+                despawn_time = datetime.fromtimestamp(despawn_time_unix)
 
                 if spawnpoint is None:
                     logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", mon_id, lat, lon,
@@ -155,7 +155,7 @@ class DbPogoProtoSubmit:
                 costume = display["costume_value"]
                 gender = display["gender_value"]
 
-                now = datetime.utcfromtimestamp(timestamp)
+                now = datetime.fromtimestamp(timestamp)
                 disappear_time = now + timedelta(minutes=self._args.default_nearby_timeleft)
 
                 if not self._args.disable_nearby_cell and not stop_id and cell_id:
@@ -235,7 +235,7 @@ class DbPogoProtoSubmit:
         spawnpoint: Optional[TrsSpawn] = await TrsSpawnHelper.get(session, spawnid)
         despawn_time_unix = gen_despawn_timestamp(spawnpoint.calc_endminsec if spawnpoint else None, timestamp,
                                                   self._args.default_unknown_timeleft)
-        despawn_time = datetime.utcfromtimestamp(despawn_time_unix)
+        despawn_time = datetime.fromtimestamp(despawn_time_unix)
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
@@ -267,7 +267,7 @@ class DbPogoProtoSubmit:
             move_1 = pokemon_data.get("move_1")
             move_2 = pokemon_data.get("move_2")
             form = pokemon_display.get("form_value", None)
-        now = datetime.utcfromtimestamp(timestamp)
+        now = datetime.fromtimestamp(timestamp)
         time_start_submit = time.time()
         async with session.begin_nested() as nested_transaction:
             mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
@@ -350,7 +350,7 @@ class DbPogoProtoSubmit:
         if capture_probability_list is not None:
             capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
 
-        now = datetime.utcfromtimestamp(timestamp)
+        now = datetime.fromtimestamp(timestamp)
         time_start_submit = time.time()
         async with session.begin_nested() as nested_transaction:
             mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
@@ -421,10 +421,10 @@ class DbPogoProtoSubmit:
                     lat = fort["latitude"]
                     lon = fort["longitude"]
                     stopid = fort["id"]
-                    disappear_time = datetime.utcfromtimestamp(
+                    disappear_time = datetime.fromtimestamp(
                         lure_mon["expiration_timestamp"] / 1000)
 
-                    now = datetime.utcfromtimestamp(timestamp)
+                    now = datetime.fromtimestamp(timestamp)
 
                     display = lure_mon["display"]
                     form = display["form_value"]
@@ -518,7 +518,7 @@ class DbPogoProtoSubmit:
         spawndef: Dict[int, TrsSpawn] = await self._get_spawndef(session, spawn_ids)
         current_event: Optional[TrsEvent] = await TrsEventHelper.get_current_event(session, True)
         spawns_do_add: List[TrsSpawn] = []
-        received_time: datetime = datetime.utcfromtimestamp(received_timestamp)
+        received_time: datetime = datetime.fromtimestamp(received_timestamp)
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
@@ -556,7 +556,7 @@ class DbPogoProtoSubmit:
                         spawn.earliest_unseen = earliest_unseen
                         spawn.spawndef = newspawndef
                         spawn.eventid = current_event.id if current_event else 1
-                    spawn.last_scanned = datetime.utcnow()
+                    spawn.last_scanned = datetime.now()
                     spawn.calc_endminsec = calcendtime
                 else:
                     # TODO: Reduce "complexity..."
@@ -571,7 +571,7 @@ class DbPogoProtoSubmit:
                         spawn.earliest_unseen = 99999999
                         spawn.spawndef = newspawndef
                         spawn.eventid = current_event.id if current_event else 1
-                    spawn.last_non_scanned = datetime.utcnow()
+                    spawn.last_non_scanned = datetime.now()
                 spawns_do_add.append(spawn)
         session.add_all(spawns_do_add)
 
@@ -605,7 +605,7 @@ class DbPogoProtoSubmit:
 
         stop: Optional[Pokestop] = await self._extract_args_single_stop_details(session, stop_proto)
         if stop:
-            alt_modified_time = int(math.ceil(datetime.utcnow().timestamp() / 1000)) * 1000
+            alt_modified_time = int(math.ceil(datetime.now().timestamp() / 1000)) * 1000
             cache_key = "stopdetail{}{}".format(stop.pokestop_id,
                                                 stop_proto.get("last_modified_timestamp_ms", alt_modified_time))
             if await cache.exists(cache_key):
@@ -708,7 +708,7 @@ class DbPogoProtoSubmit:
                     longitude = gym["longitude"]
                     slots_available = gym["gym_details"]["slots_available"]
                     last_modified_ts = gym["last_modified_timestamp_ms"] / 1000
-                    last_modified = datetime.utcfromtimestamp(
+                    last_modified = datetime.fromtimestamp(
                         last_modified_ts)
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
                     is_ar_scan_eligible = gym["is_ar_scan_eligible"]
@@ -730,7 +730,7 @@ class DbPogoProtoSubmit:
                     gym_obj.total_cp = 0  # TODO: Read from proto..
                     gym_obj.is_in_battle = 0
                     gym_obj.last_modified = last_modified
-                    gym_obj.last_scanned = datetime.utcnow()
+                    gym_obj.last_scanned = datetime.now()
                     gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
                     gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
                     session.add(gym_obj)
@@ -741,7 +741,7 @@ class DbPogoProtoSubmit:
                         gym_detail.gym_id = gymid
                         gym_detail.name = "unknown"
                     gym_detail.url = gym.get("image_url", "")
-                    gym_detail.last_scanned = datetime.utcnow()
+                    gym_detail.last_scanned = datetime.now()
                     session.add(gym_detail)
                     async with session.begin_nested() as nested_transaction:
                         try:
@@ -831,11 +831,11 @@ class DbPogoProtoSubmit:
                     raid_spawn_sec = int(gym["gym_details"]["raid_info"]["raid_spawn"] / 1000)
                     raid_battle_sec = int(gym["gym_details"]["raid_info"]["raid_battle"] / 1000)
 
-                    raidend_date = datetime.utcfromtimestamp(
+                    raidend_date = datetime.fromtimestamp(
                         float(raid_end_sec)).strftime("%Y-%m-%d %H:%M:%S")
-                    raidspawn_date = datetime.utcfromtimestamp(float(raid_spawn_sec)).strftime(
+                    raidspawn_date = datetime.fromtimestamp(float(raid_spawn_sec)).strftime(
                         "%Y-%m-%d %H:%M:%S")
-                    raidstart_date = datetime.utcfromtimestamp(float(raid_battle_sec)).strftime(
+                    raidstart_date = datetime.fromtimestamp(float(raid_battle_sec)).strftime(
                         "%Y-%m-%d %H:%M:%S")
 
                     is_exclusive = gym["gym_details"]["raid_info"]["is_exclusive"]
@@ -861,7 +861,7 @@ class DbPogoProtoSubmit:
                     raid.cp = cp
                     raid.move_1 = move_1
                     raid.move_2 = move_2
-                    raid.last_scanned = datetime.utcnow()
+                    raid.last_scanned = datetime.now()
                     raid.form = form
                     raid.is_exclusive = is_exclusive
                     raid.gender = gender
@@ -932,13 +932,13 @@ class DbPogoProtoSubmit:
         if stop_data["type"] != 1:
             logger.info("{} is not a pokestop", stop_data)
             return
-        alt_modified_time = int(math.ceil(datetime.utcnow().timestamp() / 1000)) * 1000
+        alt_modified_time = int(math.ceil(datetime.now().timestamp() / 1000)) * 1000
         cache_key = "stop{}{}".format(stop_data["id"], stop_data.get("last_modified_timestamp_ms", alt_modified_time))
         if await cache.exists(cache_key):
             return
 
-        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
-        last_modified = datetime.utcfromtimestamp(
+        now = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        last_modified = datetime.fromtimestamp(
             stop_data["last_modified_timestamp_ms"] / 1000
         )
         lure = "1970-01-01 00:00:00"
@@ -957,7 +957,7 @@ class DbPogoProtoSubmit:
                 lure_duration = int(30)
 
             active_fort_modifier = stop_data["active_fort_modifier"][0]
-            lure = datetime.utcfromtimestamp(
+            lure = datetime.fromtimestamp(
                 lure_duration * 60 + (stop_data["last_modified_timestamp_ms"] / 1000)
             )
 
@@ -970,10 +970,10 @@ class DbPogoProtoSubmit:
             incident_grunt_type = stop_data["pokestop_displays"][0]["character_display"]["character"]
 
             if start_ms > 0:
-                incident_start = datetime.utcfromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                incident_start = datetime.fromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
 
             if expiration_ms > 0:
-                incident_expiration = datetime.utcfromtimestamp(expiration_ms / 1000).strftime(
+                incident_expiration = datetime.fromtimestamp(expiration_ms / 1000).strftime(
                     "%Y-%m-%d %H:%M:%S")
         elif "pokestop_display" in stop_data:
             start_ms = stop_data["pokestop_display"]["incident_start_ms"]
@@ -981,10 +981,10 @@ class DbPogoProtoSubmit:
             incident_grunt_type = stop_data["pokestop_display"]["character_display"]["character"]
 
             if start_ms > 0:
-                incident_start = datetime.utcfromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                incident_start = datetime.fromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
 
             if expiration_ms > 0:
-                incident_expiration = datetime.utcfromtimestamp(expiration_ms / 1000).strftime(
+                incident_expiration = datetime.fromtimestamp(expiration_ms / 1000).strftime(
                     "%Y-%m-%d %H:%M:%S")
         stop_id = stop_data["id"]
 
@@ -1017,14 +1017,14 @@ class DbPogoProtoSubmit:
             return None
         image = stop_data.get("image_urls", None)
         name = stop_data.get("name", None)
-        now = datetime.utcnow()
+        now = datetime.now()
         stop_id = stop_data["fort_id"]
         pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_id)
         if not pokestop:
             pokestop: Pokestop = Pokestop()
             pokestop.pokestop_id = stop_data["id"]
             pokestop.enabled = 1  # TODO: Shouldn't this be in the proto?
-            pokestop.last_modified = datetime.utcfromtimestamp(stop_data.get("last_modified_timestamp_ms", 0) / 1000)
+            pokestop.last_modified = datetime.fromtimestamp(stop_data.get("last_modified_timestamp_ms", 0) / 1000)
         pokestop.latitude = stop_data["latitude"]
         pokestop.longitude = stop_data["longitude"]
         pokestop.name = name
@@ -1069,7 +1069,7 @@ class DbPogoProtoSubmit:
                 weather.warn_weather = 0
                 weather.severity = 0
                 weather.world_time = time_of_day
-                weather.last_updated = datetime.utcnow()
+                weather.last_updated = datetime.now()
 
                 if not weather:
                     return

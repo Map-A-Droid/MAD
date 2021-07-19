@@ -24,7 +24,7 @@ def gen_despawn_timestamp(known_despawn, timestamp, default_time_left_minutes=3)
     known_despawn = datetime.now().replace(
         hour=0, minute=int(hrmi[0]), second=int(hrmi[1]), microsecond=0
     )
-    datatime = datetime.utcfromtimestamp(timestamp)
+    datatime = datetime.fromtimestamp(timestamp)
     if datatime.minute <= known_despawn.minute:
         despawn = datatime + timedelta(
             minutes=known_despawn.minute - datatime.minute,

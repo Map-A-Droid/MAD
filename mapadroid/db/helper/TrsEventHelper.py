@@ -14,11 +14,11 @@ class TrsEventHelper:
     async def get_current_event(session: AsyncSession, include_default: bool = False) -> Optional[TrsEvent]:
         if include_default:
             # TODO: order by event_start desc?
-            stmt = select(TrsEvent).where(and_(TrsEvent.event_start < datetime.utcnow(),
-                                               TrsEvent.event_end > datetime.utcnow()))
+            stmt = select(TrsEvent).where(and_(TrsEvent.event_start < datetime.now(),
+                                               TrsEvent.event_end > datetime.now()))
         else:
-            stmt = select(TrsEvent).where(and_(TrsEvent.event_start < datetime.utcnow(),
-                                               TrsEvent.event_end > datetime.utcnow(),
+            stmt = select(TrsEvent).where(and_(TrsEvent.event_start < datetime.now(),
+                                               TrsEvent.event_end > datetime.now(),
                                                TrsEvent.event_name != "DEFAULT"))
         result = await session.execute(stmt)
         return result.scalars().first()
@@ -95,7 +95,7 @@ class TrsEventHelper:
         if event_id == 1:
             return False
         stmt = select(TrsEvent).where(and_(TrsEvent.id == event_id,
-                                           between(datetime.utcnow(), TrsEvent.event_start, TrsEvent.event_end)))
+                                           between(datetime.now(), TrsEvent.event_start, TrsEvent.event_end)))
 
         result = await session.execute(stmt)
         return result.scalars().first() is not None

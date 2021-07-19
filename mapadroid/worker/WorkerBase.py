@@ -446,9 +446,9 @@ class WorkerBase(AbstractWorker, ABC):
         except Exception as e:
             logger.exception(e)
 
-    async def update_scanned_location(self, latitude: float, longitude: float, utc_timestamp: float):
+    async def update_scanned_location(self, latitude: float, longitude: float, _timestamp: float):
         async with self._db_wrapper as session, session:
-            await ScannedLocationHelper.set_scanned_location(session, latitude, longitude, utc_timestamp)
+            await ScannedLocationHelper.set_scanned_location(session, latitude, longitude, _timestamp)
             await session.commit()
 
     async def check_walker(self):

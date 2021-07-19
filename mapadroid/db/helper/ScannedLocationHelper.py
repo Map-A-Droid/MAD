@@ -16,7 +16,7 @@ class ScannedLocationHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def set_scanned_location(session: AsyncSession, lat: float, lng: float, utc_timestamp: float) -> None:
+    async def set_scanned_location(session: AsyncSession, lat: float, lng: float, _timestamp: float) -> None:
         """
         Update scannedlocation of a given lat/lng.
         Immediately calls insert/update accordingly (without committing!)
@@ -30,7 +30,7 @@ class ScannedLocationHelper:
             scanned_location.cellid = cell_id
         scanned_location.latitude = lat
         scanned_location.longitude = lng
-        scanned_location.last_modified = datetime.utcfromtimestamp(utc_timestamp)
+        scanned_location.last_modified = datetime.fromtimestamp(_timestamp)
         scanned_location.done = -1
         scanned_location.band1 = -1
         scanned_location.band2 = -1

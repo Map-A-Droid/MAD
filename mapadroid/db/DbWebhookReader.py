@@ -17,11 +17,11 @@ logger = get_logger(LoggerEnums.database)
 
 class DbWebhookReader:
     @staticmethod
-    async def get_raids_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_raids_changed_since(session: AsyncSession, _timestamp: int):
         logger.debug2("DbWebhookReader::get_raids_changed_since called")
         # TODO: Consider geofences?
         raids_changed: List[Tuple[Raid, GymDetail, Gym]] = await RaidHelper.get_raids_changed_since(session,
-                                                                                                    utc_timestamp=utc_timestamp)
+                                                                                                    _timestamp=_timestamp)
 
         ret = []
         for (raid, gym_detail, gym) in raids_changed:
@@ -52,9 +52,9 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    async def get_weather_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_weather_changed_since(session: AsyncSession, _timestamp: int):
         logger.debug2("DbWebhookReader::get_weather_changed_since called")
-        weather_changed: List[Weather] = await WeatherHelper.get_changed_since(session, utc_timestamp=utc_timestamp)
+        weather_changed: List[Weather] = await WeatherHelper.get_changed_since(session, _timestamp=_timestamp)
 
         ret = []
         for weather in weather_changed:
@@ -77,10 +77,10 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    async def get_quests_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_quests_changed_since(session: AsyncSession, _timestamp: int):
         logger.debug2("DbWebhookReader::get_quests_changed_since called")
         quests_with_changes: Dict[int, Tuple[Pokestop, TrsQuest]] = await PokestopHelper.get_with_quests(session,
-                                                                                                         timestamp=utc_timestamp)
+                                                                                                         timestamp=_timestamp)
         questinfo = {}
         for stop, quest in quests_with_changes.values():
             mon = "%03d" % quest.quest_pokemon_id
@@ -101,9 +101,9 @@ class DbWebhookReader:
         return questinfo
 
     @staticmethod
-    async def get_gyms_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_gyms_changed_since(session: AsyncSession, _timestamp: int):
         logger.debug2("DbWebhookReader::get_gyms_changed_since called")
-        gyms_changed: List[Tuple[Gym, GymDetail]] = await GymHelper.get_changed_since(session, utc_timestamp)
+        gyms_changed: List[Tuple[Gym, GymDetail]] = await GymHelper.get_changed_since(session, _timestamp)
 
         ret = []
         for (gym, gym_detail) in gyms_changed:
@@ -128,9 +128,9 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    async def get_stops_changed_since(session: AsyncSession, utc_timestamp: int):
+    async def get_stops_changed_since(session: AsyncSession, _timestamp: int):
         logger.debug2("DbWebhookReader::get_stops_changed_since called")
-        stops_with_changes: List[Pokestop] = await PokestopHelper.get_changed_since_or_incident(session, utc_timestamp)
+        stops_with_changes: List[Pokestop] = await PokestopHelper.get_changed_since_or_incident(session, _timestamp)
         ret = []
         for stop in stops_with_changes:
             ret.append({
@@ -155,11 +155,11 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    async def get_mon_changed_since(session: AsyncSession, utc_timestamp: int,
+    async def get_mon_changed_since(session: AsyncSession, _timestamp: int,
                                     mon_types: Optional[Set[MonSeenTypes]] = None):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
         mons_with_changes: List[Tuple[Pokemon, TrsSpawn, Pokestop]] = await PokemonHelper.get_changed_since(session,
-                                                                                                  utc_timestamp,
+                                                                                                  _timestamp,
                                                                                                   mon_types)
 
         ret = []

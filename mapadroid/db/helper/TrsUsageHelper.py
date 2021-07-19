@@ -53,7 +53,7 @@ class TrsUsageHelper:
         stmt = select(TrsUsage)
         where_conditions = []
         if last_n_minutes:
-            time_to_check_after = datetime.utcnow() - timedelta(minutes=last_n_minutes)
+            time_to_check_after = datetime.now() - timedelta(minutes=last_n_minutes)
             where_conditions.append(TrsUsage.timestamp > time_to_check_after.timestamp())
         if instance_name:
             where_conditions.append(TrsUsage.instance == instance_name)
