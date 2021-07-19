@@ -360,9 +360,10 @@ class RouteManagerBase(ABC):
             new_queue = self._filter_priority_queue_internal(new_queue)
             logger.debug2("Merging existing Q of {} events with {} clustered new events",
                           len(self._prio_queue), len(new_queue))
-            merged: List[Tuple[int, Location]] = list(set(new_queue + copy(self._prio_queue)))
-            merged = list(merged)
+            # merged: List[Tuple[int, Location]] = list(new_queue + copy(self._prio_queue))
+            merged = new_queue
             logger.info("Merging resulted in queue with {} entries", len(merged))
+            # TODO: Cluster after checking if new_queue has timestamp and distance within self._prio_queue
             merged = self._filter_priority_queue_internal(merged, cluster=False)
         else:
             merged = self._filter_priority_queue_internal(new_queue)

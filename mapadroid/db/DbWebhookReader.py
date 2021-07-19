@@ -28,14 +28,14 @@ class DbWebhookReader:
             ret.append({
                 "gym_id": raid.gym_id,
                 "level": raid.level,
-                "spawn": int(raid.spawn.replace(tzinfo=timezone.utc).timestamp()),
-                "start": int(raid.start.replace(tzinfo=timezone.utc).timestamp()),
-                "end": int(raid.end.replace(tzinfo=timezone.utc).timestamp()),
+                "spawn": int(raid.spawn.timestamp()),
+                "start": int(raid.start.timestamp()),
+                "end": int(raid.end.timestamp()),
                 "pokemon_id": raid.pokemon_id,
                 "cp": raid.cp,
                 "move_1": raid.move_1,
                 "move_2": raid.move_2,
-                "last_scanned": int(raid.last_scanned.replace(tzinfo=timezone.utc).timestamp()),
+                "last_scanned": int(raid.last_scanned.timestamp()),
                 "form": raid.form,
                 "name": gym_detail.name,
                 "url": gym_detail.url,
@@ -72,7 +72,7 @@ class DbWebhookReader:
                 "severity": weather.severity,
                 "warn_weather": weather.warn_weather,
                 "world_time": weather.world_time,
-                "last_updated": int(weather.last_updated.replace(tzinfo=timezone.utc).timestamp())
+                "last_updated": int(weather.last_updated.timestamp())
             })
         return ret
 
@@ -117,8 +117,8 @@ class DbWebhookReader:
                 "total_cp": gym.total_cp,
                 "is_in_battle": gym.is_in_battle,
                 "weather_boosted_condition": gym.weather_boosted_condition,
-                "last_scanned": int(gym.last_scanned.replace(tzinfo=timezone.utc).timestamp()),
-                "last_modified": int(gym.last_modified.replace(tzinfo=timezone.utc).timestamp()),
+                "last_scanned": int(gym.last_scanned.timestamp()),
+                "last_modified": int(gym.last_modified.timestamp()),
                 "name": gym_detail.name,
                 "url": gym_detail.url,
                 "description": gym_detail.description,
@@ -137,19 +137,14 @@ class DbWebhookReader:
                 'pokestop_id': stop.pokestop_id,
                 'latitude': stop.latitude,
                 'longitude': stop.longitude,
-                'lure_expiration': int(stop.lure_expiration.replace(
-                    tzinfo=timezone.utc).timestamp()) if stop.lure_expiration is not None else None,
+                'lure_expiration': int(stop.lure_expiration.timestamp()) if stop.lure_expiration is not None else None,
                 'name': stop.name,
                 'image': stop.image,
                 'active_fort_modifier': stop.active_fort_modifier,
-                "last_modified": int(stop.last_modified.replace(
-                    tzinfo=timezone.utc).timestamp()) if stop.last_modified is not None else None,
-                "last_updated": int(stop.last_updated.replace(
-                    tzinfo=timezone.utc).timestamp()) if stop.last_updated is not None else None,
-                "incident_start": int(stop.incident_start.replace(
-                    tzinfo=timezone.utc).timestamp()) if stop.incident_start is not None else None,
-                "incident_expiration": int(stop.incident_expiration.replace(
-                    tzinfo=timezone.utc).timestamp()) if stop.incident_expiration is not None else None,
+                "last_modified": int(stop.last_modified.timestamp()) if stop.last_modified is not None else None,
+                "last_updated": int(stop.last_updated.timestamp()) if stop.last_updated is not None else None,
+                "incident_start": int(stop.incident_start.timestamp()) if stop.incident_start is not None else None,
+                "incident_expiration": int(stop.incident_expiration.timestamp()) if stop.incident_expiration is not None else None,
                 "incident_grunt_type": stop.incident_grunt_type
             })
         return ret
@@ -173,7 +168,7 @@ class DbWebhookReader:
                 "spawnpoint_id": mon.spawnpoint_id,
                 "latitude": mon.latitude,
                 "longitude": mon.longitude,
-                "disappear_time": int(mon.disappear_time.replace(tzinfo=timezone.utc).timestamp()),
+                "disappear_time": int(mon.disappear_time.timestamp()),
                 "individual_attack": mon.individual_attack,
                 "individual_defense": mon.individual_defense,
                 "individual_stamina": mon.individual_stamina,
