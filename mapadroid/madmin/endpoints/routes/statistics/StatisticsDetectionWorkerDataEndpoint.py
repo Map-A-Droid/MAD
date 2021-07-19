@@ -52,6 +52,7 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
         for worker, data_entry in avg_data_time.items():
             for timestamp, worker_location_raw_data in data_entry.items():
                 for transport_type_readable, count_of_fix_ts, avg_data_ts, walker in worker_location_raw_data:
+                    # dtime is displayed in frontend, not parsing utcfromtimestamp
                     dtime = datetime.fromtimestamp(timestamp).strftime(self._datetimeformat)
                     locations_avg.append(
                         {'dtime': dtime, 'ok_locations': count_of_fix_ts, 'avg_datareceive': avg_data_ts,
@@ -131,6 +132,7 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
             location_raw.append(
                 {'lat': location.lat, 'lng': location.lng, 'distance': distance, 'type': location_type_str,
                  'data': success_str,
+                 # fix_ts and data_ts is displayed in frontend, not parsing utcfromtimestamp
                  'fix_ts': datetime.fromtimestamp(timestamp_fix).strftime(self._datetimeformat),
                  'data_ts': datetime.fromtimestamp(timestamp_data_or_fix).strftime(self._datetimeformat),
                  'transporttype': transport_type_readable})

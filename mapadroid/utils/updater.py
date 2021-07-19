@@ -256,7 +256,7 @@ class DeviceUpdater(object):
 
                     continue
 
-                if processtime is not None and datetime.fromtimestamp(processtime) > datetime.now():
+                if processtime is not None and datetime.utcfromtimestamp(processtime) > datetime.now():
                     await asyncio.sleep(1)
                     logger.debug('Job {} on device {} - File/Job: {} - queued of processtime in future (ID: {})',
                                  str(jobtype), str(origin), str(file_), str(job_id))
@@ -594,7 +594,7 @@ class DeviceUpdater(object):
             embed.add_embed_field(name='Retuning', value=returning)
             embed.add_embed_field(name='Status', value=JobReturn(status).name)
             embed.add_embed_field(name='Next run',
-                                  value=str(datetime.fromtimestamp(
+                                  value=str(datetime.utcfromtimestamp(
                                       processtime) if processtime is not None else "-"))
             _webhook.add_embed(embed)
             _webhook.execute()

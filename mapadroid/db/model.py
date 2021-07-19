@@ -736,6 +736,7 @@ class SettingsDevice(Base):
 
 
 class TrsStatus(SettingsDevice):
+#class TrsStatus(Base):
     __tablename__ = 'trs_status'
 
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)

@@ -54,7 +54,7 @@ class SerializedMitmDataProcessor:
     async def process_data(self, received_timestamp: int, data, origin):
         data_type = data.get("type", None)
         logger.debug("Processing received data")
-        processed_timestamp: datetime = datetime.fromtimestamp(received_timestamp)
+        processed_timestamp: datetime = datetime.utcfromtimestamp(received_timestamp)
 
         if data_type and not data.get("raw", False):
             logger.debug4("Received data: {}", data)

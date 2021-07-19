@@ -47,6 +47,8 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         else:
             await self._generate_screenshot(devicemapping)
         logger.info("Done taking screenshot")
+        # not using utcfromtimestamp as this timestamp is shown in the UI
+        # (tho the UI should render a timestamp itself...)
         return datetime.datetime.fromtimestamp(
             creation_date(filename)).strftime(self._datetimeformat)
 

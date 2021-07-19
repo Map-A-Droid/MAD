@@ -37,7 +37,7 @@ class PokemonHelper:
         stmt = select(Pokemon).where(and_(Pokemon.cp != None,
                                           Pokemon.disappear_time > datetime.datetime.utcnow() - datetime.timedelta(
                                               hours=1),
-                                          Pokemon.last_modified > datetime.datetime.fromtimestamp(latest),
+                                          Pokemon.last_modified > datetime.datetime.utcfromtimestamp(latest),
                                           Pokemon.latitude >= min_lat,
                                           Pokemon.longitude >= min_lon,
                                           Pokemon.latitude <= max_lat,
