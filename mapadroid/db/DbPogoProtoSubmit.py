@@ -457,7 +457,7 @@ class DbPogoProtoSubmit:
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.debug("Failed committing lured non-IV mon {} ({}). Safe to ignore.", encounter_id, str(e))
                             await nested_transaction.rollback()
-        return encounters
+        return encounter_ids
 
     async def update_seen_type_stats(self, session: AsyncSession, **kwargs):
         insert: Dict[int, Dict[MonSeenTypes, datetime]] = {}
@@ -832,18 +832,16 @@ class DbPogoProtoSubmit:
                     raid_battle_sec = int(gym["gym_details"]["raid_info"]["raid_battle"] / 1000)
 
                     raidend_date = datetime.fromtimestamp(
-                        float(raid_end_sec)).strftime("%Y-%m-%d %H:%M:%S")
-                    raidspawn_date = datetime.fromtimestamp(float(raid_spawn_sec)).strftime(
-                        "%Y-%m-%d %H:%M:%S")
-                    raidstart_date = datetime.fromtimestamp(float(raid_battle_sec)).strftime(
-                        "%Y-%m-%d %H:%M:%S")
+                        float(raid_end_sec))
+                    raidspawn_date = datetime.fromtimestamp(float(raid_spawn_sec))
+                    raidstart_date = datetime.fromtimestamp(float(raid_battle_sec))
 
                     is_exclusive = gym["gym_details"]["raid_info"]["is_exclusive"]
                     level = gym["gym_details"]["raid_info"]["level"]
                     gymid = gym["id"]
 
                     logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, level,
-                                         raidend_date)
+                                         raidend_date.strftime("%Y-%m-%d %H:%M:%S"))
 
                     cache_key = "raid{}{}{}".format(gymid, pokemon_id, raid_end_sec)
                     if await cache.exists(cache_key):
@@ -916,7 +914,7 @@ class DbPogoProtoSubmit:
                 s2cell.level = 15
                 s2cell.center_latitude = lat
                 s2cell.center_longitude = lng
-            s2cell.updated = cell["current_timestamp"] / 1000
+            s2cell.updated = int(cell["current_timestamp"] / 1000)
             async with session.begin_nested() as nested_transaction:
                 try:
                     session.add(s2cell)
@@ -928,7 +926,8 @@ class DbPogoProtoSubmit:
                     logger.debug("Failed committing cell {} ({})", cell_id, str(e))
                     await nested_transaction.rollback()
 
-    async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache, stop_data) -> Optional[Pokestop]:
+    async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache,
+                                    stop_data: Dict) -> Optional[Pokestop]:
         if stop_data["type"] != 1:
             logger.info("{} is not a pokestop", stop_data)
             return
@@ -937,11 +936,11 @@ class DbPogoProtoSubmit:
         if await cache.exists(cache_key):
             return
 
-        now = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.fromtimestamp(time.time())
         last_modified = datetime.fromtimestamp(
             stop_data["last_modified_timestamp_ms"] / 1000
         )
-        lure = "1970-01-01 00:00:00"
+        lure = datetime.fromtimestamp(0)
         active_fort_modifier = None
         incident_start = None
         incident_expiration = None
@@ -970,22 +969,20 @@ class DbPogoProtoSubmit:
             incident_grunt_type = stop_data["pokestop_displays"][0]["character_display"]["character"]
 
             if start_ms > 0:
-                incident_start = datetime.fromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                incident_start = datetime.fromtimestamp(start_ms / 1000)
 
             if expiration_ms > 0:
-                incident_expiration = datetime.fromtimestamp(expiration_ms / 1000).strftime(
-                    "%Y-%m-%d %H:%M:%S")
+                incident_expiration = datetime.fromtimestamp(expiration_ms / 1000)
         elif "pokestop_display" in stop_data:
             start_ms = stop_data["pokestop_display"]["incident_start_ms"]
             expiration_ms = stop_data["pokestop_display"]["incident_expiration_ms"]
             incident_grunt_type = stop_data["pokestop_display"]["character_display"]["character"]
 
             if start_ms > 0:
-                incident_start = datetime.fromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                incident_start = datetime.fromtimestamp(start_ms / 1000)
 
             if expiration_ms > 0:
-                incident_expiration = datetime.fromtimestamp(expiration_ms / 1000).strftime(
-                    "%Y-%m-%d %H:%M:%S")
+                incident_expiration = datetime.fromtimestamp(expiration_ms / 1000)
         stop_id = stop_data["id"]
 
         pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_id)

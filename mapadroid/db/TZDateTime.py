@@ -5,6 +5,13 @@ from loguru import logger
 
 
 class TZDateTime(TypeDecorator):
+    def process_literal_param(self, value, dialect):
+        pass
+
+    @property
+    def python_type(self):
+        pass
+
     impl = DateTime
     cache_ok = True
 

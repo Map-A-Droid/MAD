@@ -159,7 +159,6 @@ class WorkerMITM(MITMBase):
             # apears but it is a fact.
             max_age_ = datetime.now().timestamp() - 60
             # max_age = time.time() - 60
-            print(max_age_)
             remove = []
             for key, value in self._encounter_ids.items():
                 if value < max_age_:
