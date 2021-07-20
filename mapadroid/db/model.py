@@ -8,6 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 from mapadroid.db.GeometryColumnType import GeometryColumnType
+from mapadroid.db.TZDateTime import TZDateTime
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -54,8 +55,8 @@ class Gym(Base):
     costume = Column(SMALLINT(6))
     weather_boosted_condition = Column(SMALLINT(6))
     shiny = Column(TINYINT(1))
-    last_modified = Column(DateTime, nullable=False, index=True)
-    last_scanned = Column(DateTime, nullable=False, index=True)
+    last_modified = Column(TZDateTime, nullable=False, index=True)
+    last_scanned = Column(TZDateTime, nullable=False, index=True)
     is_ex_raid_eligible = Column(TINYINT(1))
     is_ar_scan_eligible = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
 
@@ -67,7 +68,7 @@ class GymDetail(Base):
     name = Column(String(191, 'utf8mb4_unicode_ci'), nullable=False)
     description = Column(LONGTEXT)
     url = Column(String(191, 'utf8mb4_unicode_ci'), nullable=False)
-    last_scanned = Column(DateTime, nullable=False)
+    last_scanned = Column(TZDateTime, nullable=False)
 
 
 class MadApkAutosearch(Base):
@@ -78,7 +79,7 @@ class MadApkAutosearch(Base):
     version = Column(String(32, 'utf8mb4_unicode_ci'))
     url = Column(String(256, 'utf8mb4_unicode_ci'))
     download_status = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    last_checked = Column(DateTime, nullable=False)
+    last_checked = Column(TZDateTime, nullable=False)
 
 
 class MadminInstance(Base):
@@ -125,7 +126,7 @@ class Pokemon(Base):
     pokemon_id = Column(SMALLINT(6), nullable=False, index=True)
     latitude = Column(Float(asdecimal=True), nullable=False)
     longitude = Column(Float(asdecimal=True), nullable=False)
-    disappear_time = Column(DateTime, nullable=False)
+    disappear_time = Column(TZDateTime, nullable=False)
     individual_attack = Column(SMALLINT(6), index=True)
     individual_defense = Column(SMALLINT(6))
     individual_stamina = Column(SMALLINT(6))
@@ -144,7 +145,7 @@ class Pokemon(Base):
     rating_attack = Column(String(2, 'utf8mb4_unicode_ci'))
     rating_defense = Column(String(2, 'utf8mb4_unicode_ci'))
     weather_boosted_condition = Column(SMALLINT(6))
-    last_modified = Column(DateTime, index=True)
+    last_modified = Column(TZDateTime, index=True)
     fort_id = Column(String(50, 'utf8mb4_unicode_ci'), default=None)
     cell_id = Column(BIGINT(20), default=None)
     seen_type = Column(ENUM('wild', 'encounter', 'nearby_stop', 'nearby_cell', 'lure_wild',
@@ -161,14 +162,14 @@ class Pokestop(Base):
     enabled = Column(TINYINT(1), nullable=False)
     latitude = Column(Float(asdecimal=True), nullable=False)
     longitude = Column(Float(asdecimal=True), nullable=False)
-    last_modified = Column(DateTime, nullable=False, index=True)
-    lure_expiration = Column(DateTime, index=True)
+    last_modified = Column(TZDateTime, nullable=False, index=True)
+    lure_expiration = Column(TZDateTime, index=True)
     active_fort_modifier = Column(SMALLINT(6), index=True)
-    last_updated = Column(DateTime, index=True)
+    last_updated = Column(TZDateTime, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'))
     image = Column(String(255, 'utf8mb4_unicode_ci'))
-    incident_start = Column(DateTime)
-    incident_expiration = Column(DateTime)
+    incident_start = Column(TZDateTime)
+    incident_expiration = Column(TZDateTime)
     incident_grunt_type = Column(SMALLINT(1))
     is_ar_scan_eligible = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
 
@@ -178,14 +179,14 @@ class Raid(Base):
 
     gym_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True)
     level = Column(INTEGER(11), nullable=False, index=True)
-    spawn = Column(DateTime, nullable=False, index=True)
-    start = Column(DateTime, nullable=False, index=True)
-    end = Column(DateTime, nullable=False, index=True)
+    spawn = Column(TZDateTime, nullable=False, index=True)
+    start = Column(TZDateTime, nullable=False, index=True)
+    end = Column(TZDateTime, nullable=False, index=True)
     pokemon_id = Column(SMALLINT(6))
     cp = Column(INTEGER(11))
     move_1 = Column(SMALLINT(6))
     move_2 = Column(SMALLINT(6))
-    last_scanned = Column(DateTime, nullable=False, index=True)
+    last_scanned = Column(TZDateTime, nullable=False, index=True)
     form = Column(SMALLINT(6))
     is_exclusive = Column(TINYINT(1))
     gender = Column(TINYINT(1))
@@ -209,7 +210,7 @@ class Scannedlocation(Base):
     cellid = Column(BIGINT(20), primary_key=True)
     latitude = Column(Float(asdecimal=True), nullable=False)
     longitude = Column(Float(asdecimal=True), nullable=False)
-    last_modified = Column(DateTime, index=True)
+    last_modified = Column(TZDateTime, index=True)
     done = Column(TINYINT(1), nullable=False)
     band1 = Column(SMALLINT(6), nullable=False)
     band2 = Column(SMALLINT(6), nullable=False)
@@ -244,7 +245,7 @@ class SettingsRoutecalc(Base):
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(INTEGER(10), nullable=False)
     recalc_status = Column(TINYINT(1), server_default=text("'0'"))
-    last_updated = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    last_updated = Column(TZDateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     routefile = Column(LONGTEXT)
 
 
@@ -257,7 +258,7 @@ class Spawnpoint(Base):
     id = Column(BIGINT(20), primary_key=True)
     latitude = Column(Float(asdecimal=True), nullable=False)
     longitude = Column(Float(asdecimal=True), nullable=False)
-    last_scanned = Column(DateTime, nullable=False, index=True)
+    last_scanned = Column(TZDateTime, nullable=False, index=True)
     kind = Column(String(4, 'utf8mb4_unicode_ci'), nullable=False)
     links = Column(String(4, 'utf8mb4_unicode_ci'), nullable=False)
     missed_count = Column(INTEGER(11), nullable=False)
@@ -270,8 +271,8 @@ class TrsEvent(Base):
 
     id = Column(INTEGER(11), primary_key=True)
     event_name = Column(String(100))
-    event_start = Column(DateTime)
-    event_end = Column(DateTime)
+    event_start = Column(TZDateTime)
+    event_end = Column(TZDateTime)
     event_lure_duration = Column(INTEGER(11), nullable=False, server_default=text("'30'"))
 
 
@@ -316,9 +317,9 @@ class TrsSpawn(Base):
     longitude = Column(Float(asdecimal=True), nullable=False)
     spawndef = Column(INTEGER(11), nullable=False, server_default=text("'240'"))
     earliest_unseen = Column(INTEGER(6), nullable=False)
-    last_scanned = Column(DateTime)
-    first_detection = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    last_non_scanned = Column(DateTime)
+    last_scanned = Column(TZDateTime)
+    first_detection = Column(TZDateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    last_non_scanned = Column(TZDateTime)
     calc_endminsec = Column(String(5, 'utf8mb4_unicode_ci'))
     eventid = Column(INTEGER(11), nullable=False, server_default=text("'1'"))
 
@@ -343,20 +344,20 @@ class TrsStatsDetectWildMonRaw(Base):
                           onupdate='CASCADE', primary_key=True)
     count = Column(INTEGER(), nullable=False)
     is_shiny = Column(TINYINT(1), server_default='0', nullable=False)
-    first_scanned = Column(DateTime(), nullable=False)
-    last_scanned = Column(DateTime(), nullable=False)
+    first_scanned = Column(TZDateTime, nullable=False)
+    last_scanned = Column(TZDateTime, nullable=False)
 
 
 class TrsStatsDetectSeenType(Base):
     __tablename__ = 'trs_stats_detect_seen_type'
 
     encounter_id = Column(BIGINT(20), primary_key=True)
-    encounter = Column(DateTime, default=None, nullable=True)
-    wild = Column(DateTime, default=None, nullable=True)
-    nearby_stop = Column(DateTime, default=None, nullable=True)
-    nearby_cell = Column(DateTime, default=None, nullable=True)
-    lure_encounter = Column(DateTime, default=None, nullable=True)
-    lure_wild = Column(DateTime, default=None, nullable=True)
+    encounter = Column(TZDateTime, default=None, nullable=True)
+    wild = Column(TZDateTime, default=None, nullable=True)
+    nearby_stop = Column(TZDateTime, default=None, nullable=True)
+    nearby_cell = Column(TZDateTime, default=None, nullable=True)
+    lure_encounter = Column(TZDateTime, default=None, nullable=True)
+    lure_wild = Column(TZDateTime, default=None, nullable=True)
 
 
 class TrsStatsLocation(Base):
@@ -415,7 +416,7 @@ class TrsHash(Base):
     type = Column(String(10, 'utf8mb4_unicode_ci'), nullable=False)
     id = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False)
     count = Column(INTEGER(10), nullable=False, server_default=text("'1'"))
-    modify = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    modify = Column(TZDateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
 
 t_v_trs_status = Table(
@@ -468,7 +469,7 @@ class Weather(Base):
     severity = Column(SMALLINT(6))
     warn_weather = Column(SMALLINT(6))
     world_time = Column(SMALLINT(6))
-    last_updated = Column(DateTime, index=True)
+    last_updated = Column(TZDateTime, index=True)
 
 
 class AutoconfigFile(Base):
@@ -843,7 +844,7 @@ class AutoconfigLog(Base):
     instance_id = Column(INTEGER(10), nullable=False)
     session_id = Column(ForeignKey('autoconfig_registration.session_id', ondelete='CASCADE'), nullable=False,
                         index=True)
-    log_time = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    log_time = Column(TZDateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     level = Column(INTEGER(10), nullable=False, server_default=text("'2'"))
     msg = Column(String(1024, 'utf8mb4_unicode_ci'), nullable=False)
 

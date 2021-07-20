@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Optional, Tuple, Dict
 
 from loguru import logger
@@ -19,11 +18,11 @@ class GameStatsShinyEndpoint(AbstractStatisticsRootEndpoint):
         logger.debug2('game_stats_shiny_v2')
         timestamp_from: Optional[int] = self._request.query.get("from")
         if timestamp_from:
-            timestamp_from = self._utc2local(int(timestamp_from))
+            timestamp_from = int(timestamp_from)
             logger.debug2('using timestamp_from: {}', timestamp_from)
         timestamp_to: Optional[int] = self._request.query.get("to")
         if timestamp_to:
-            timestamp_to = self._utc2local(int(timestamp_to))
+            timestamp_to = int(timestamp_to)
             logger.debug2('using timestamp_from: {}', timestamp_to)
 
         tmp_perworker_v2 = {}

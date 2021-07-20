@@ -44,18 +44,6 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
             minutes_usage = 120
         return minutes_usage
 
-    def _utc2local(self, ts):
-        utc = datetime.datetime.utcnow()
-        now = datetime.datetime.now()
-        offset = time.mktime(now.timetuple()) - time.mktime(utc.timetuple())
-        return float(ts) + offset
-
-    def _local2utc(self, ts):
-        utc = datetime.datetime.utcnow()
-        now = datetime.datetime.now()
-        offset = time.mktime(now.timetuple()) - time.mktime(utc.timetuple())
-        return float(ts) - offset
-
     async def _get_spawn_details_helper(self, area_id: int, event_id: int, today_only: bool = False,
                                         older_than_x_days: Optional[int] = None, sum_only: bool = False, index=0):
         active_spawns: list = []

@@ -31,7 +31,7 @@ class GetGymcoordsEndpoint(AbstractMadminRootEndpoint):
         for gym_id, (gym, gym_detail, raid) in data.items():
             raid_data = None
             # TODO: Validate time of spawn/end/start
-            if raid and raid.end > datetime.now():
+            if raid and raid.end > datetime.now(tz=timezone.utc):
                 raid_data = {
                     "spawn": int(raid.spawn.timestamp()),
                     "start": int(raid.start.timestamp()),
