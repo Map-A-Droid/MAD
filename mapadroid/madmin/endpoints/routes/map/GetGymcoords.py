@@ -33,9 +33,9 @@ class GetGymcoordsEndpoint(AbstractMadminRootEndpoint):
             # TODO: Validate time of spawn/end/start
             if raid and raid.end > datetime.now():
                 raid_data = {
-                    "spawn": int(raid.spawn.replace(tzinfo=timezone.utc).timestamp()),
-                    "start": int(raid.start.replace(tzinfo=timezone.utc).timestamp()),
-                    "end": int(raid.end.replace(tzinfo=timezone.utc).timestamp()),
+                    "spawn": int(raid.spawn.timestamp()),
+                    "start": int(raid.start.timestamp()),
+                    "end": int(raid.end.timestamp()),
                     "mon": raid.pokemon_id,
                     "form": raid.form,
                     "level": raid.level,
@@ -50,8 +50,8 @@ class GetGymcoordsEndpoint(AbstractMadminRootEndpoint):
                 "lat": gym.latitude,
                 "lon": gym.longitude,
                 "team_id": gym.team_id,
-                "last_updated": gym.last_modified.replace(tzinfo=timezone.utc).timestamp(),
-                "last_scanned": gym.last_scanned.replace(tzinfo=timezone.utc).timestamp(),
+                "last_updated": gym.last_modified.timestamp(),
+                "last_scanned": gym.last_scanned.timestamp(),
                 "raid": raid_data
             })
 

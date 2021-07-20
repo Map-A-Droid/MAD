@@ -51,9 +51,9 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
 
     def __serialize_single_mon(self, mon, mon_name_cache):
         serialized_entry: Dict = {x: y for x, y in vars(mon).items() if not x.startswith("_")}
-        serialized_entry["disappear_time"] = int(mon.disappear_time.replace(tzinfo=timezone.utc).timestamp())
+        serialized_entry["disappear_time"] = int(mon.disappear_time.timestamp())
         if mon.last_modified:
-            serialized_entry["last_modified"] = int(mon.last_modified.replace(tzinfo=timezone.utc).timestamp())
+            serialized_entry["last_modified"] = int(mon.last_modified.timestamp())
         else:
             serialized_entry["last_modified"] = 0
         if mon.seen_type in (MonSeenTypes.NEARBY_STOP.value, MonSeenTypes.NEARBY_CELL.value):

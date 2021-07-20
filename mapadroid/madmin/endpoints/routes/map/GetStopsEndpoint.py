@@ -38,15 +38,15 @@ class GetStopsEndpoint(AbstractMadminRootEndpoint):
             stop_serialized = {variable: value for variable, value in vars(stop).items() if
                                not variable.startswith("_")}
             stop_serialized["last_modified"] = int(
-                stop.last_modified.replace(tzinfo=timezone.utc).timestamp()) if stop.last_modified else 0
+                stop.last_modified.timestamp()) if stop.last_modified else 0
             stop_serialized["lure_expiration"] = int(
-                stop.lure_expiration.replace(tzinfo=timezone.utc).timestamp()) if stop.lure_expiration else 0
+                stop.lure_expiration.timestamp()) if stop.lure_expiration else 0
             stop_serialized["last_updated"] = int(
-                stop.last_updated.replace(tzinfo=timezone.utc).timestamp()) if stop.last_updated else 0
+                stop.last_updated.timestamp()) if stop.last_updated else 0
             stop_serialized["incident_start"] = int(
-                stop.incident_start.replace(tzinfo=timezone.utc).timestamp()) if stop.incident_start else 0
+                stop.incident_start.timestamp()) if stop.incident_start else 0
             stop_serialized["incident_expiration"] = int(
-                stop.incident_expiration.replace(tzinfo=timezone.utc).timestamp()) if stop.incident_expiration else 0
+                stop.incident_expiration.timestamp()) if stop.incident_expiration else 0
             stop_serialized["has_quest"] = stop.pokestop_id in stops_with_quests
             prepared_for_serialization.append(stop_serialized)
 
