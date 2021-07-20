@@ -7,10 +7,8 @@ import linecache
 import logging
 import os
 import sys
-import tracemalloc
-from asyncio import Task, CancelledError, AbstractEventLoop
+from asyncio import Task, CancelledError
 from typing import Optional, Tuple, Any
-
 import functools
 import pkg_resources
 import psutil
@@ -39,6 +37,14 @@ from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.websocket.WebsocketServer import WebsocketServer
+
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    uvloop.install()
+except Exception as e:
+    # uvloop is optional
+    pass
 
 py_version = sys.version_info
 if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 7):
@@ -115,6 +121,7 @@ async def get_system_infos(db_wrapper):
     gc.enable()
     await asyncio.sleep(60)
     if args.trace:
+        import tracemalloc
         tracemalloc.start(5)
     while not terminate_mad.is_set():
         logger.debug('Starting internal Cleanup')
@@ -132,7 +139,8 @@ last_snapshot = None
 initial_snapshot = None
 
 
-def display_top(snapshot, key_type='lineno', limit=30):
+def display_top(snapshot, key_type='traceback', limit=30):
+    import tracemalloc
     snapshot = snapshot.filter_traces((
         tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
         tracemalloc.Filter(False, "<unknown>"),
@@ -147,6 +155,7 @@ def display_top(snapshot, key_type='lineno', limit=30):
         line = linecache.getline(frame.filename, frame.lineno).strip()
         if line:
             logger.info('    %s' % line)
+            logger.info(stat.traceback.format(10))
 
     other = top_stats[limit:]
     if other:
@@ -181,19 +190,9 @@ def __run_system_stats(py):
         logger.debug("Garbage collector: collected %d objects." % collected)
     zero = datetime.datetime.utcnow()
     unixnow = calendar.timegm(zero.utctimetuple())
-    #try:
-    #    for obj in gc.get_objects():
-    #        if isinstance(obj, tuple):
-    #            try:
-    #                if obj not in set_of_known_tuples:
-    #                    if last_snapshot:
-    #                        logger.debug(obj)
-    #                    set_of_known_tuples.add(obj)
-    #            except Exception as e:
-    #                pass
-    #except Exception as e:
-    #    logger.exception(e)
+
     if args.trace:
+        import tracemalloc
         new_snapshot = tracemalloc.take_snapshot()
         if last_snapshot:
 
@@ -205,6 +204,7 @@ def __run_system_stats(py):
             logger.info("Top of diff")
             for stat in top_stats[:15]:
                 logger.info(stat)
+                logger.info(stat.traceback.format(15))
             logger.info("Bottom of diff")
             for stat in top_stats[-15:]:
                 logger.info(stat)
@@ -215,9 +215,20 @@ def __run_system_stats(py):
             logger.info("Top of diff to initial")
             for stat in top_stats_to_initial[:15]:
                 logger.info(stat)
+                logger.info(stat.traceback.format(15))
             logger.info("Bottom of diff to initial")
             for stat in top_stats_to_initial[-15:]:
                 logger.info(stat)
+            try:
+                import objgraph
+                logger.info("show_most_common_types")
+                objgraph.show_most_common_types(limit=50, shortnames=False)
+                logger.info("show_growth")
+                objgraph.show_growth(limit=50, shortnames=False)
+                logger.info("get_new_ids")
+                objgraph.get_new_ids(limit=50)
+            except Exception as e:
+                pass
         last_snapshot = new_snapshot
     logger.info("Done with GC")
     return collected, cpu_usage, mem_usage, unixnow
