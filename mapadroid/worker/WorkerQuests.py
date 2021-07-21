@@ -27,7 +27,7 @@ from mapadroid.utils.gamemechanicutil import calculate_cooldown
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException, WebsocketWorkerConnectionClosedException,
-    WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException)
+    WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException, TransportType)
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import LatestReceivedType, MITMBase
@@ -168,7 +168,7 @@ class WorkerQuests(MITMBase):
         if (area_settings.speed == 0 or (area_settings.max_distance and 0 < area_settings.max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             logger.debug("main: Teleporting...")
-            self._transporttype = 0
+            self._transporttype = TransportType.TELEPORT
             await self._communicator.set_location(
                 Location(self.current_location.lat, self.current_location.lng), 0)
             # the time we will take as a starting point to wait for data...
