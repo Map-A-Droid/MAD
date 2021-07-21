@@ -8,7 +8,7 @@ class StatsDetectEntry(TrsStatsDetect):
     def __init__(self, worker: str):
         super().__init__()
         self.worker = worker
-        self.timestamp_scan = time.time()
+        self.timestamp_scan = int(time.time())
         self.mon = 0
         self.raid = 0
         self.mon_iv = 0
@@ -20,5 +20,5 @@ class StatsDetectEntry(TrsStatsDetect):
         self.raid += new_raids
         self.mon_iv += new_mon_ivs
         self.quest += new_quests
-        if time_scanned.timestamp() > self.timestamp_scan:
-            self.timestamp_scan = time_scanned.timestamp()
+        if int(time_scanned.timestamp()) > self.timestamp_scan:
+            self.timestamp_scan = int(time_scanned.timestamp())
