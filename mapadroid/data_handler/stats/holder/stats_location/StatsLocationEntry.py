@@ -1,5 +1,4 @@
 import time
-from datetime import datetime
 
 from mapadroid.db.model import TrsStatsLocation
 

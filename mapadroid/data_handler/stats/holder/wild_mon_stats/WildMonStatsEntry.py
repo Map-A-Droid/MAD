@@ -18,4 +18,3 @@ class WildMonStatsEntry(TrsStatsDetectWildMonRaw):
             self.is_shiny = True
         self.count += 1
         self.last_scanned = last_scanned
-

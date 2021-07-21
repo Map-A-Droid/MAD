@@ -1,11 +1,15 @@
 from datetime import datetime
 from typing import Dict
 
+import sqlalchemy
+
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
 from mapadroid.data_handler.stats.holder.stats_detect_seen.StatsDetectSeenTypeEntry import StatsDetectSeenTypeEntry
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.db.helper.TrsStatsDetectSeenTypeHelper import TrsStatsDetectSeenTypeHelper
 from mapadroid.utils.madGlobals import MonSeenTypes
+from loguru import logger
 
 
 class StatsDetectSeenTypeHolder(AbstractStatsHolder):
@@ -15,9 +19,11 @@ class StatsDetectSeenTypeHolder(AbstractStatsHolder):
     async def submit(self, session: AsyncSession) -> None:
         for encounter_id, stat_entry in self._entries.items():
             async with session.begin_nested() as nested:
-                session.add(stat_entry)
-                await nested.commit()
-                # TODO: Catch IntegrityError/handle update
+                try:
+                    await TrsStatsDetectSeenTypeHelper.create_or_update(session, stat_entry)
+                    await nested.commit()
+                except sqlalchemy.exc.IntegrityError as e:
+                    logger.warning("Failed submitting seen type stats. {}", e)
 
     def __ensure_entry_available(self, encounter_id: int) -> StatsDetectSeenTypeEntry:
         if encounter_id not in self._entries:
