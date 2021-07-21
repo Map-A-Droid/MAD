@@ -14,7 +14,7 @@ class TrsStatsDetectWildMonRawHelper:
         stmt = select(TrsStatsDetectWildMonRaw).where(and_(TrsStatsDetectWildMonRaw.worker == worker,
                                                            TrsStatsDetectWildMonRaw.encounter_id == encounter_id))
         result = await session.execute(stmt)
-        return result.scalars().first
+        return result.scalars().first()
 
     @staticmethod
     async def create_or_update(session: AsyncSession, instance: TrsStatsDetectWildMonRaw) -> None:
