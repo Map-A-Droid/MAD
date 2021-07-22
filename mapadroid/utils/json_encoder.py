@@ -47,7 +47,7 @@ class MADEncoder(json.JSONEncoder):
         elif isinstance(obj, type):
             return str(obj)
         elif isinstance(obj, datetime):
-            return obj.timestamp()
+            return int(obj.timestamp())
         elif isinstance(obj, Decimal):
             return float(obj)
         elif isinstance(obj, Enum):
