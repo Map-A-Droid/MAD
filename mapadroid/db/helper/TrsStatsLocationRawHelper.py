@@ -247,8 +247,9 @@ class TrsStatsLocationRawHelper:
         stmt = select(TrsStatsLocationRaw).where(and_(TrsStatsLocationRaw.worker == worker,
                                                       TrsStatsLocationRaw.lat == location.lat,
                                                       TrsStatsLocationRaw.lng == location.lng,
-                                                      TrsStatsLocationRaw.period == period,
-                                                      TrsStatsLocationRaw.type == type_of_location.value))
+                                                      TrsStatsLocationRaw.type == type_of_location.value,
+                                                      TrsStatsLocationRaw.period == period
+                                                      ))
         result = await session.execute(stmt)
         return result.scalars().first()
 

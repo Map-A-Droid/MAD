@@ -7,6 +7,7 @@ from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStat
 from mapadroid.db.model import TrsStatsLocationRaw
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType
+from loguru import logger
 
 
 class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
@@ -16,9 +17,11 @@ class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
 
     async def submit(self, session: AsyncSession) -> None:
         async with session.begin_nested() as nested:
-            session.add_all(self._entries)
-            await nested.commit()
-            # TODO: Catch IntegrityError/handle update
+            try:
+                session.add_all(self._entries)
+                await nested.commit()
+            except Exception as e:
+                logger.info("Failed submitting raw location stats.")
 
     def add_location(self, location: Location, success: bool, fix_timestamp: int,
                      position_type: PositionType, data_timestamp: int, walker: str,

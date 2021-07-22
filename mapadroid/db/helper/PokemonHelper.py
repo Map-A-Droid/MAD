@@ -35,14 +35,15 @@ class PokemonHelper:
             latest = time.time() - 15 * 60
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
         # TODO: Likely having some DB foo...
-        stmt = select(Pokemon).where(and_(Pokemon.cp != None,
-                                          Pokemon.disappear_time > DatetimeWrapper.now() - datetime.timedelta(
+        stmt = select(Pokemon).where(and_(Pokemon.disappear_time > DatetimeWrapper.now() - datetime.timedelta(
                                               hours=1),
                                           Pokemon.last_modified > DatetimeWrapper.fromtimestamp(latest),
                                           Pokemon.latitude >= min_lat,
                                           Pokemon.longitude >= min_lon,
                                           Pokemon.latitude <= max_lat,
-                                          Pokemon.longitude <= max_lon))
+                                          Pokemon.longitude <= max_lon,
+                                          Pokemon.cp != None
+                                          ))
         result = await session.execute(stmt)
         encounter_id_infos: Dict[int, int] = {}
         for pokemon in result.scalars():
