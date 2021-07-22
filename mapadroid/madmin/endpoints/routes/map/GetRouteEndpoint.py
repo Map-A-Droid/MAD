@@ -48,7 +48,7 @@ class GetRouteEndpoint(AbstractControlEndpoint):
                     })
 
         if len(routeinfo_by_id) > 0:
-            routecalcs: Dict[int, SettingsRoutecalc] = await SettingsRoutecalcHelper\
+            routecalcs: Dict[int, SettingsRoutecalc] = await SettingsRoutecalcHelper \
                 .get_all(self._session, self._get_instance_id())
             loop = asyncio.get_running_loop()
             with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -65,7 +65,8 @@ class GetRouteEndpoint(AbstractControlEndpoint):
         data = list(map(lambda r: self.get_routepool_route(r), routeinfo_by_id.values()))
         return data
 
-    def __serialize_routecalcs(self, routecalcs, routeinfo_by_id):
+    @staticmethod
+    def __serialize_routecalcs(routecalcs, routeinfo_by_id):
         for routecalc_id, routecalc in routecalcs.items():
             if routecalc_id in routeinfo_by_id:
                 routeinfo = routeinfo_by_id[routecalc_id]

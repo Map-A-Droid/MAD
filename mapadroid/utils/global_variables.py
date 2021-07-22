@@ -2,7 +2,7 @@
 
 # MAD APK related elements
 CHUNK_MAX_SIZE = 1024 * 1024 * 8  # 8MiB
-MAD_APK_ALLOWED_EXTENSIONS = set(['apk', 'zip'])
+MAD_APK_ALLOWED_EXTENSIONS = {'apk', 'zip'}
 URL_RGC_APK = 'https://raw.githubusercontent.com/Map-A-Droid/MAD/master/APK/RemoteGpsController.apk'
 URL_PD_APK = 'https://www.maddev.eu/apk/PogoDroid.apk'
 

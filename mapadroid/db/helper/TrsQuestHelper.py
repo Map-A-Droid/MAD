@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsQuest, Pokestop
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 
 
@@ -28,7 +29,7 @@ class TrsQuestHelper:
         if quest is None:
             return False
         # Simply check if the quest_timestamp was of today...
-        return datetime.fromtimestamp(quest.quest_timestamp).date() == datetime.today().date()
+        return DatetimeWrapper.fromtimestamp(quest.quest_timestamp).date() == datetime.today().date()
 
     @staticmethod
     async def get_quests_counts(session: AsyncSession, last_n_days: Optional[int] = None) -> List[Tuple[int, int]]:
@@ -52,7 +53,7 @@ class TrsQuestHelper:
         stmt = select(date_query, func.COUNT(TrsQuest.GUID)) \
             .select_from(TrsQuest)
         if last_n_days:
-            time_to_check_after = datetime.now() - timedelta(days=last_n_days)
+            time_to_check_after = DatetimeWrapper.now() - timedelta(days=last_n_days)
             stmt = stmt.where(TrsQuest.quest_timestamp > time_to_check_after.timestamp())
         stmt = stmt.group_by(func.day(func.FROM_UNIXTIME(TrsQuest.quest_timestamp)),
                              func.hour(func.FROM_UNIXTIME(TrsQuest.quest_timestamp))) \

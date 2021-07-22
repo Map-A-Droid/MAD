@@ -1,6 +1,5 @@
 import asyncio
 import concurrent.futures
-import datetime
 from typing import List, Tuple, Optional
 
 import numpy as np
@@ -10,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.model import SettingsRoutecalc
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 
 
@@ -65,7 +65,7 @@ class RoutecalcUtil:
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 new_coords = await loop.run_in_executor(
                     pool, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
-                                                          s2_level)
+                    s2_level)
             less_coords = np.zeros(shape=(len(new_coords), 2))
             for i in range(len(less_coords)):
                 less_coords[i][0] = new_coords[i][0]
@@ -111,7 +111,7 @@ class RoutecalcUtil:
                 # Only save if we aren't calculating in memory
                 to_be_written = str(calc_coords).replace("\'", "\"")
                 routecalc_entry.routefile = to_be_written
-                routecalc_entry.last_updated = datetime.datetime.now()
+                routecalc_entry.last_updated = DatetimeWrapper.now()
             routecalc_entry.recalc_status = 0
 
             session.add(routecalc_entry)

@@ -2,7 +2,7 @@ import asyncio
 import math
 import time
 from asyncio import Task
-from datetime import datetime, timedelta
+from datetime import timedelta
 from difflib import SequenceMatcher
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
@@ -21,6 +21,7 @@ from mapadroid.db.model import SettingsAreaPokestop, Pokestop, SettingsWalkerare
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.gamemechanicutil import calculate_cooldown
@@ -229,7 +230,7 @@ class WorkerQuests(MITMBase):
         else:
             delay_used = math.floor(delay_used)
             logger.info("Real sleep time: {} seconds: next action {}", delay_used,
-                        datetime.now() + timedelta(seconds=delay_used))
+                        DatetimeWrapper.now() + timedelta(seconds=delay_used))
             cleanupbox: bool = False
             lastcleanupbox = await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_CLEANUP_TIME, None)
 
@@ -804,8 +805,8 @@ class WorkerQuests(MITMBase):
             ]
             replacement = max(x for x in potential_replacements if isinstance(x, int) or isinstance(x, float))
             logger.debug("timestamp {} being replaced with {} because we're waiting for proto {}",
-                         datetime.fromtimestamp(timestamp).strftime('%H:%M:%S'),
-                         datetime.fromtimestamp(replacement).strftime('%H:%M:%S'),
+                         DatetimeWrapper.fromtimestamp(timestamp).strftime('%H:%M:%S'),
+                         DatetimeWrapper.fromtimestamp(replacement).strftime('%H:%M:%S'),
                          proto_to_wait_for)
             timestamp = replacement
         # proto has previously been received, let's check the timestamp...
@@ -855,7 +856,7 @@ class WorkerQuests(MITMBase):
             type_of_data_found = LatestReceivedType.GYM if fort_type == 0 else LatestReceivedType.STOP
         elif proto_to_wait_for == ProtoIdentifier.GMO \
                 and self._directly_surrounding_gmo_cells_containing_stops_around_current_position(
-                        latest_proto.get("cells")):
+            latest_proto.get("cells")):
             data_found = latest_proto
             type_of_data_found = LatestReceivedType.GMO
         elif proto_to_wait_for == ProtoIdentifier.INVENTORY and 'inventory_delta' in latest_proto and \
@@ -920,7 +921,7 @@ class WorkerQuests(MITMBase):
             stop_location: Location = Location(float(stop.latitude), float(stop.longitude))
             logger.debug("Considering stop {} at {} (last updated {}) for deletion",
                          fort_id, stop_location, stop.last_updated)
-            if stop.last_updated and stop.last_updated > datetime.now() - timedelta_to_consider_deletion:
+            if stop.last_updated and stop.last_updated > DatetimeWrapper.now() - timedelta_to_consider_deletion:
                 logger.debug3("Stop considered for deletion was last updated recently, not gonna delete it for"
                               " now.", stop.last_updated)
                 continue

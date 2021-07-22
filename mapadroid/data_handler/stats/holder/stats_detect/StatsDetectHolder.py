@@ -1,10 +1,10 @@
 import time
 from datetime import datetime
 
-from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
+from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
 from mapadroid.data_handler.stats.holder.stats_detect.StatsDetectEntry import StatsDetectEntry
 
 

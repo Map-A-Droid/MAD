@@ -1,5 +1,5 @@
 # coding: utf-8
-from sqlalchemy import (TIMESTAMP, Column, DateTime, Float, ForeignKey, Index,
+from sqlalchemy import (TIMESTAMP, Column, Float, ForeignKey, Index,
                         String, Table, text)
 from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
                                        LONGTEXT, MEDIUMINT, SMALLINT, TINYINT,
@@ -737,7 +737,7 @@ class SettingsDevice(Base):
 
 
 class TrsStatus(SettingsDevice):
-#class TrsStatus(Base):
+    # class TrsStatus(Base):
     __tablename__ = 'trs_status'
 
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)

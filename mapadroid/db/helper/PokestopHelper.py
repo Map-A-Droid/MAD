@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 
 from mapadroid.db.model import Pokestop, TrsVisited, TrsQuest
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -232,7 +233,7 @@ class PokestopHelper:
                                          Pokestop.latitude <= old_ne_corner.lat,
                                          Pokestop.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(Pokestop.last_updated >= datetime.fromtimestamp(timestamp))
+            where_conditions.append(Pokestop.last_updated >= DatetimeWrapper.fromtimestamp(timestamp))
 
         if fence:
             polygon = "POLYGON(({}))".format(fence)
@@ -297,7 +298,7 @@ class PokestopHelper:
                                          Pokestop.latitude <= old_ne_corner.lat,
                                          Pokestop.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(Pokestop.last_updated >= datetime.fromtimestamp(timestamp))
+            where_conditions.append(Pokestop.last_updated >= DatetimeWrapper.fromtimestamp(timestamp))
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         return result.scalars().all()
@@ -337,9 +338,9 @@ class PokestopHelper:
     @staticmethod
     async def get_changed_since_or_incident(session: AsyncSession, _timestamp: int) -> List[Pokestop]:
         stmt = select(Pokestop) \
-            .where(and_(Pokestop.last_updated > datetime.fromtimestamp(_timestamp),
+            .where(and_(Pokestop.last_updated > DatetimeWrapper.fromtimestamp(_timestamp),
                         or_(Pokestop.incident_start != None,
-                            Pokestop.lure_expiration > datetime.fromtimestamp(0))))
+                            Pokestop.lure_expiration > DatetimeWrapper.fromtimestamp(0))))
         # TODO: Validate lure_expiration comparison works rather than DATEDIFF
         result = await session.execute(stmt)
         return result.scalars().all()

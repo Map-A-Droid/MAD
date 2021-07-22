@@ -3,7 +3,6 @@ import math
 import time
 from abc import abstractmethod, ABC
 from asyncio import Task
-from datetime import datetime
 from enum import Enum
 from typing import Dict, Optional, Tuple, Union
 
@@ -16,6 +15,7 @@ from mapadroid.db.model import SettingsArea, TrsStatus
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
@@ -130,7 +130,7 @@ class MITMBase(WorkerBase, ABC):
                                                           FALLBACK_MITM_WAIT_TIMEOUT)
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         logger.info('Waiting for data after {}',
-                    datetime.fromtimestamp(timestamp))
+                    DatetimeWrapper.fromtimestamp(timestamp))
         position_type = await self._mapping_manager.routemanager_get_position_type(self._routemanager_id,
                                                                                    self._origin)
         type_of_data_returned = LatestReceivedType.UNDEFINED
@@ -138,10 +138,10 @@ class MITMBase(WorkerBase, ABC):
         # Any data after timestamp + timeout should be valid!
         last_time_received = TIMESTAMP_NEVER
         logger.debug("Waiting for data ({}) after {} with timeout of {}s.",
-                     proto_to_wait_for, datetime.fromtimestamp(timestamp), timeout)
+                     proto_to_wait_for, DatetimeWrapper.fromtimestamp(timestamp), timeout)
         while not self._stop_worker_event.is_set() and int(timestamp + timeout) >= int(time.time()) \
                 and last_time_received < timestamp:
-            latest: Dict[Union[int, str], LatestMitmDataEntry] = await self\
+            latest: Dict[Union[int, str], LatestMitmDataEntry] = await self \
                 ._mitm_mapper.get_full_latest_data(self._origin)
 
             if latest is None:
@@ -235,7 +235,7 @@ class MITMBase(WorkerBase, ABC):
         logger.success('Received data')
         self._reboot_count = 0
         self._restart_count = 0
-        self._rec_data_time = datetime.now()
+        self._rec_data_time = DatetimeWrapper.now()
         # TODO: Fire and forget async?
         now_ts: int = int(time.time())
         await self._mitm_mapper.stats_collect_location_data(self._origin, self.current_location, True,
@@ -450,7 +450,7 @@ class MITMBase(WorkerBase, ABC):
             status.currentSleepTime = self._current_sleep_time
 
             if self._rec_data_time:
-                status.lastProtoDateTime = datetime.now()
+                status.lastProtoDateTime = DatetimeWrapper.now()
                 self._rec_data_time = None
             session.add(status)
             await session.commit()

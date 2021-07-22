@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
+from loguru import logger
 
 from mapadroid.ocr.matching_trash import trash_image_matching
 from mapadroid.ocr.screen_type import ScreenType
@@ -14,7 +15,6 @@ from mapadroid.ocr.utils import check_pogo_mainscreen, screendetection_get_type_
     get_screen_text, get_inventory_text
 from mapadroid.utils.AsyncioCv2 import AsyncioCv2
 from mapadroid.utils.AsyncioOsUtil import AsyncioOsUtil
-from loguru import logger
 
 
 class PogoWindows:
@@ -82,7 +82,7 @@ class PogoWindows:
                         await communicator.click(width / 2, ((int(height) - int(height / 4.5))) + pos_y)
                         await asyncio.sleep(2)
                 else:
-                    if pos_x >= (width / 2) - 100 and pos_x <= (width / 2) + 100 and pos_y >= (height - (height / 3)):
+                    if (width / 2) - 100 <= pos_x <= (width / 2) + 100 and pos_y >= (height - (height / 3)):
                         circle += 1
                         if click:
                             logger.debug('__read_circle_count: found Circle - click on: it')
@@ -161,9 +161,9 @@ class PogoWindows:
             line = [line]
             for x1, y1, x2, y2 in line:
 
-                if y1 == y2 and x2 - x1 <= max_line_length and x2 - x1 >= min_line_length \
+                if y1 == y2 and max_line_length >= x2 - x1 >= min_line_length \
                         and y1 > height / 3 \
-                        and (x2 - x1) / 2 + x1 < width / 2 + 50 and (x2 - x1) / 2 + x1 > width / 2 - 50:
+                        and width / 2 + 50 > (x2 - x1) / 2 + x1 > width / 2 - 50:
 
                     num_lines += 1
                     min_distance_to_middle_tmp = y1 - (height / 2)
@@ -187,7 +187,7 @@ class PogoWindows:
                         _x1 = x1
                         _x2 = x2
                     logger.debug("lookForButton: Found Buttonline Nr. {} - Line lenght: {}px Coords - X: {} {} "
-                                        "Y: {} {}", num_lines, x2 - x1, x1, x2, y1, y1)
+                                 "Y: {} {}", num_lines, x2 - x1, x1, x2, y1, y1)
 
         if 1 < num_lines <= 6:
             # recalculate click area for real resolution
@@ -278,13 +278,13 @@ class PogoWindows:
                             x2 - x1 >= min_line_length) and x1 > width / 2 and x2 > width / 2 and y1 < (
                             height / 2):
                         logger.debug("__check_raid_line: Raid-tab is active - Line length: {}px "
-                                            "Coords - x: {} {} Y: {} {}", x2 - x1, x1, x2, y1, y2)
+                                     "Coords - x: {} {} Y: {} {}", x2 - x1, x1, x2, y1, y2)
                         return True
                 else:
                     if y1 == y2 and (x2 - x1 <= max_line_length) and (
                             x2 - x1 >= min_line_length) and (
                             (x1 < width / 2 and x2 < width / 2) or (
-                            x1 < width / 2 and x2 > width / 2)) and y1 < (
+                            x1 < width / 2 < x2)) and y1 < (
                             height / 2):
                         logger.debug("__check_raid_line: Nearby is active - but not Raid-Tab")
                         if clickinvers:
@@ -314,7 +314,7 @@ class PogoWindows:
                                                                str(identifier) + '_exitcircle.jpg'), image)
         if not imwrite_status:
             logger.error("Could not save file: {} - check permissions and path",
-                                os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'))
+                         os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'))
             return False
 
         return await self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'),
@@ -332,7 +332,7 @@ class PogoWindows:
     async def __internal_check_close_except_nearby_button(self, filename, identifier, communicator,
                                                           close_raid=False):
         logger.debug("__internal_check_close_except_nearby_button: Checking close except nearby with: file {}",
-                            filename)
+                     filename)
         try:
             screenshot_read = await AsyncioCv2.imread(filename)
         except cv2.error:
@@ -350,10 +350,10 @@ class PogoWindows:
                     or await self.__check_raid_line(filename, identifier, communicator, True):
                 # file not found or raid tab present
                 logger.debug("__internal_check_close_except_nearby_button: Not checking for close button (X). "
-                                    "Input wrong OR nearby window open")
+                             "Input wrong OR nearby window open")
                 return False
         logger.debug("__internal_check_close_except_nearby_button: Checking for close button (X). Input wrong "
-                            "OR nearby window open")
+                     "OR nearby window open")
 
         if await self.__check_close_present(filename, identifier, communicator, 10, True):
             logger.debug("Found close button (X). Closing the window - Ratio: 10")

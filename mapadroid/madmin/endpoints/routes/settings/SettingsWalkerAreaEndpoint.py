@@ -20,8 +20,8 @@ class SettingsWalkerAreaEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        self.identifier: Optional[str] = self.request.query.get("id")
-        if self.identifier:
+        self._identifier: Optional[str] = self.request.query.get("id")
+        if self._identifier:
             return await self._render_single_element()
         else:
             raise web.HTTPFound(self._url_for("settings_walkers"))
@@ -31,11 +31,11 @@ class SettingsWalkerAreaEndpoint(AbstractMadminRootEndpoint):
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         walker: Optional[SettingsWalker] = None
-        if not self.identifier:
+        if not self._identifier:
             raise web.HTTPFound(self._url_for("settings_walkers"))
         else:
             walker: Optional[SettingsWalker] = await SettingsWalkerHelper.get(self._session, self._get_instance_id(),
-                                                                              int(self.identifier))
+                                                                              int(self._identifier))
             if not walker:
                 raise web.HTTPFound(self._url_for("settings_walkers"))
 
@@ -50,17 +50,17 @@ class SettingsWalkerAreaEndpoint(AbstractMadminRootEndpoint):
         walkertypes = ['coords', 'countdown', 'idle', 'period', 'round', 'timer']
 
         template_data: Dict = {
-            'identifier': self.identifier,
+            'identifier': self._identifier,
             'base_uri': self._url_for('api_walkerarea'),
             'redirect': self._url_for('settings_walkers'),
             'subtab': 'walker',
             'element': walkerarea,
             'uri': self._url_for('api_walkerarea') if not walkerarea_id else '%s/%s' % (
-            self._url_for('api_walkerarea'), walkerarea_id),
+                self._url_for('api_walkerarea'), walkerarea_id),
             # TODO: Above is pretty generic in theory...
             'walkertypes': walkertypes,
             'areas': areas,
             'walker': walker,
-            'walkeruri': self.identifier,
+            'walkeruri': self._identifier,
         }
         return template_data

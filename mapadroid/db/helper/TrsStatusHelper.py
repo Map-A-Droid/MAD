@@ -1,10 +1,10 @@
-from datetime import datetime
 from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsStatus
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -66,7 +66,7 @@ class TrsStatusHelper:
             status.globalrebootcount = 0
         else:
             status.globalrebootcount += 1
-        status.lastPogoReboot = datetime.now()
+        status.lastPogoReboot = DatetimeWrapper.now()
         status.restartCounter = 0
         status.rebootCounter = 0
         session.add(status)
@@ -91,7 +91,7 @@ class TrsStatusHelper:
             status.globalrestartcount = 0
         else:
             status.globalrestartcount += 1
-        status.lastPogoReboot = datetime.now()
+        status.lastPogoReboot = DatetimeWrapper.now()
         status.restartCounter = 0
         session.add(status)
 
@@ -100,6 +100,7 @@ class TrsStatusHelper:
         """
         DbWrapper::save_idle_status
         Args:
+            idle_state:
             session:
             instance_id:
             device_id:

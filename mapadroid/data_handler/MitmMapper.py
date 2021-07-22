@@ -53,15 +53,15 @@ class MitmMapper(object):
             self.__stats_handler.stats_collect_raid(worker, time_scanned)
 
     async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
-                                            position_type: PositionType, data_timestamp: int, walker: str,
-                                            transport_type: TransportType, timestamp_of_record: int) -> None:
+                                          position_type: PositionType, data_timestamp: int, walker: str,
+                                          transport_type: TransportType, timestamp_of_record: int) -> None:
         if self.__stats_handler:
             self.__stats_handler.stats_collect_location_data(worker, location, success, fix_timestamp, position_type,
                                                              data_timestamp, walker,
                                                              transport_type, timestamp_of_record)
 
     async def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
-                                time_of_scan: datetime) -> None:
+                                      time_of_scan: datetime) -> None:
         if self.__stats_handler:
             self.__stats_handler.stats_collect_seen_type(encounter_ids, type_of_detection, time_of_scan)
 

@@ -1,5 +1,3 @@
-import datetime
-import time
 from abc import ABC
 from typing import Optional, Dict, Tuple, List
 
@@ -20,7 +18,8 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
         super().__init__(request)
         self.outdatedays: int = self._get_mad_args().outdated_spawnpoints
 
-    def _generate_mon_icon_url(self, mon_id, form=None, costume=None, shiny=False):
+    @staticmethod
+    def _generate_mon_icon_url(mon_id, form=None, costume=None, shiny=False):
         base_path = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border'
 
         form_str = '_00'

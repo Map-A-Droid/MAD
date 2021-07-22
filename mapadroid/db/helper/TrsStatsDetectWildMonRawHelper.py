@@ -6,6 +6,7 @@ from sqlalchemy import delete, and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.model import TrsStatsDetectWildMonRaw
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 
 
 class TrsStatsDetectWildMonRawHelper:
@@ -35,12 +36,13 @@ class TrsStatsDetectWildMonRawHelper:
             session.add(existing)
 
     @staticmethod
-    async def cleanup(session: AsyncSession, delete_before_timestap_scan: datetime.datetime, raw_delete_shiny_days: int = 0) -> None:
+    async def cleanup(session: AsyncSession, delete_before_timestap_scan: datetime.datetime,
+                      raw_delete_shiny_days: int = 0) -> None:
         where_condition = and_(TrsStatsDetectWildMonRaw.last_scanned < delete_before_timestap_scan,
                                TrsStatsDetectWildMonRaw.is_shiny == 0)
         if raw_delete_shiny_days > 0:
             delete_shinies_before_timestamp = int(time.time()) - raw_delete_shiny_days * 86400
-            delete_shinies_before = datetime.datetime.fromtimestamp(delete_shinies_before_timestamp)
+            delete_shinies_before = DatetimeWrapper.fromtimestamp(delete_shinies_before_timestamp)
             shiny_condition = and_(TrsStatsDetectWildMonRaw.last_scanned < delete_shinies_before,
                                    TrsStatsDetectWildMonRaw.is_shiny == 1)
             where_condition = or_(where_condition, shiny_condition)

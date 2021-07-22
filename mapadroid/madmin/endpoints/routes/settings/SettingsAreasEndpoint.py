@@ -80,7 +80,7 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
             'element': area,
             'redirect': self._url_for('settings_areas'),
             'uri': self._url_for('api_area', query={"mode": mode.value}) if not area else '%s/%s' % (
-            self._url_for('api_area'), self._identifier),
+                self._url_for('api_area'), self._identifier),
             'section': area
         }
         return template_data

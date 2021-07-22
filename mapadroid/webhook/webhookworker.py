@@ -4,6 +4,8 @@ import time
 from asyncio import Task
 from typing import List, Dict, Tuple, Set
 
+from loguru import logger
+
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import TrsQuest, Pokestop
@@ -15,7 +17,6 @@ from mapadroid.utils.json_encoder import mad_json_dumps
 from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
-from loguru import logger
 
 
 class WebhookWorker:
@@ -73,7 +74,7 @@ class WebhookWorker:
             if sub_types is not None:
                 for payload in payloads:
                     if payload["type"] in sub_types or \
-                       (payload["message"].get("seen_type", None) in sub_types):
+                            (payload["message"].get("seen_type", None) in sub_types):
                         payload_to_send.append(payload)
             else:
                 payload_to_send = payloads

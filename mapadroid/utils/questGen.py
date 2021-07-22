@@ -59,7 +59,6 @@ async def generate_quest(stop: Pokestop, quest: TrsQuest):
         pokemon_id = quest.quest_pokemon_id
         pokemon_name = await i8ln(await pokemonname(str(pokemon_id)))
 
-
     if not quest.quest_task:
         quest_task = await questtask(
             quest.quest_type, quest.quest_condition, quest.quest_target, quest.quest_template)
@@ -136,7 +135,7 @@ async def questtask(typeid, condition, target, quest_template):
     pokemon_types = await open_json_file('pokemonTypes')
     items = await open_json_file('items')
     throw_types = {"10": _("Nice"), "11": _("Great"),
-                  "12": _("Excellent"), "13": _("Curveball")}
+                   "12": _("Excellent"), "13": _("Curveball")}
     buddy_levels = {2: _("Good"), 3: _("Great"), 4: _("Ultra"), 5: _("Best")}
     arr = {'0': target}
     text = await questtype(typeid)

@@ -1,4 +1,3 @@
-from datetime import timezone
 from typing import Tuple, List, Dict, Optional, Set
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -144,7 +143,8 @@ class DbWebhookReader:
                 "last_modified": int(stop.last_modified.timestamp()) if stop.last_modified is not None else None,
                 "last_updated": int(stop.last_updated.timestamp()) if stop.last_updated is not None else None,
                 "incident_start": int(stop.incident_start.timestamp()) if stop.incident_start is not None else None,
-                "incident_expiration": int(stop.incident_expiration.timestamp()) if stop.incident_expiration is not None else None,
+                "incident_expiration": int(
+                    stop.incident_expiration.timestamp()) if stop.incident_expiration is not None else None,
                 "incident_grunt_type": stop.incident_grunt_type
             })
         return ret
@@ -154,8 +154,8 @@ class DbWebhookReader:
                                     mon_types: Optional[Set[MonSeenTypes]] = None):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
         mons_with_changes: List[Tuple[Pokemon, TrsSpawn, Pokestop]] = await PokemonHelper.get_changed_since(session,
-                                                                                                  _timestamp,
-                                                                                                  mon_types)
+                                                                                                            _timestamp,
+                                                                                                            mon_types)
 
         ret = []
         for (mon, spawn, stop) in mons_with_changes:

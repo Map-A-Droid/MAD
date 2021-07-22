@@ -92,6 +92,7 @@ class DbAccessor:
                 logger.error("Unspecified exception in dbWrapper: {}", str(e))
                 return None
 
-    def __convert_to_dict(self, descr, rows):
+    @staticmethod
+    def __convert_to_dict(descr, rows):
         desc = [n for n in descr]
         return [dict(zip(desc, row)) for row in rows]

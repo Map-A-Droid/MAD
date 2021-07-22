@@ -22,8 +22,8 @@ class SettingsIvlistsEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        self.identifier: Optional[str] = self.request.query.get("id")
-        if self.identifier:
+        self._identifier: Optional[str] = self.request.query.get("id")
+        if self._identifier:
             return await self._render_single_element()
         else:
             return await self._render_overview()
@@ -33,12 +33,12 @@ class SettingsIvlistsEndpoint(AbstractMadminRootEndpoint):
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         monivlist: Optional[SettingsMonivlist] = None
-        if self.identifier == "new":
+        if self._identifier == "new":
             pass
         else:
             monivlist: SettingsMonivlist = await SettingsMonivlistHelper.get_entry(self._session,
                                                                                    self._get_instance_id(),
-                                                                                   int(self.identifier))
+                                                                                   int(self._identifier))
             if not monivlist:
                 raise web.HTTPFound(self._url_for("settings_ivlists"))
 
@@ -47,7 +47,7 @@ class SettingsIvlistsEndpoint(AbstractMadminRootEndpoint):
         try:
             current_mons: Optional[List[int]] = await SettingsMonivlistHelper.get_list(self._session,
                                                                                        self._get_instance_id(),
-                                                                                       int(self.identifier))
+                                                                                       int(self._identifier))
         except Exception:
             current_mons = []
         all_pokemon = await self.get_pokemon()
@@ -61,7 +61,7 @@ class SettingsIvlistsEndpoint(AbstractMadminRootEndpoint):
             current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
 
         template_data: Dict = {
-            'identifier': self.identifier,
+            'identifier': self._identifier,
             'base_uri': self._url_for('api_monivlist'),
             'redirect': self._url_for('settings_ivlists'),
             'subtab': 'monivlist',
@@ -70,7 +70,7 @@ class SettingsIvlistsEndpoint(AbstractMadminRootEndpoint):
             'settings_vars': settings_vars,
             'method': 'POST' if not monivlist else 'PATCH',
             'uri': self._url_for('api_monivlist') if not monivlist else '%s/%s' % (
-            self._url_for('api_monivlist'), self.identifier),
+                self._url_for('api_monivlist'), self._identifier),
             # TODO: Above is pretty generic in theory...
             'current_mons_list': current_mons_list
         }

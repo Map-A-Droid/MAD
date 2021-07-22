@@ -1,6 +1,9 @@
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
+
 from loguru import logger
+
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 
 
 def calculate_mon_level(cp_multiplier):
@@ -21,10 +24,10 @@ def gen_despawn_timestamp(known_despawn, timestamp, default_time_left_minutes=3)
         return int(int(time.time() + default_time_left_minutes * 60) // 60 * 60)
 
     hrmi = known_despawn.split(":")
-    known_despawn = datetime.now().replace(
+    known_despawn = DatetimeWrapper.now().replace(
         hour=0, minute=int(hrmi[0]), second=int(hrmi[1]), microsecond=0
     )
-    datatime = datetime.fromtimestamp(timestamp)
+    datatime = DatetimeWrapper.fromtimestamp(timestamp)
     if datatime.minute <= known_despawn.minute:
         despawn = datatime + timedelta(
             minutes=known_despawn.minute - datatime.minute,

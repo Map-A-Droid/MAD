@@ -3,8 +3,8 @@ import os
 from typing import Dict
 
 from aiocache import cached
-from cachetools.func import ttl_cache
 from aiofile import async_open
+from cachetools.func import ttl_cache
 
 
 @cached(ttl=30 * 60)
@@ -24,7 +24,7 @@ async def open_json_file(jsonfile):
 def open_json_file_sync(jsonfile):
     try:
         with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json', encoding='utf8',
-                        mode="r") as f:
+                  mode="r") as f:
             file_open = json.loads(f.read())
     except (OSError, json.decoder.JSONDecodeError):
         with open('locale/en/' + jsonfile + '.json', mode="r") as f:

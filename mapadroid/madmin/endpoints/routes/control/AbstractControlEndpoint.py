@@ -14,6 +14,7 @@ from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoi
 from mapadroid.madmin.functions import generate_device_screenshot_path
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType
@@ -49,7 +50,7 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         logger.info("Done taking screenshot")
         # not using fromtimestamp as this timestamp is shown in the UI
         # (tho the UI should render a timestamp itself...)
-        return datetime.datetime.fromtimestamp(
+        return DatetimeWrapper.fromtimestamp(
             creation_date(filename)).strftime(self._datetimeformat)
 
     async def _generate_screenshot(self, mapping_entry: DeviceMappingsEntry):
@@ -72,7 +73,8 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
                            width=250)
         logger.info("Done resizing screenshot")
 
-    def _process_read_screenshot_size(self, filename):
+    @staticmethod
+    def _process_read_screenshot_size(filename):
         with Image.open(filename) as screenshot:
             width, height = screenshot.size
         return height, width

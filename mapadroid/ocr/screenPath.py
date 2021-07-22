@@ -7,6 +7,7 @@ from enum import Enum
 from typing import List, Optional, Tuple
 
 import numpy as np
+from loguru import logger
 
 from mapadroid.db.model import SettingsPogoauth
 from mapadroid.mapping_manager import MappingManager
@@ -15,7 +16,6 @@ from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Login_GGL, Login_PTC
 from mapadroid.utils.madGlobals import ScreenshotType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from loguru import logger
 
 
 class LoginType(Enum):
@@ -103,11 +103,11 @@ class WordToScreenMatching(object):
 
         if self._logintype == LoginType.ptc:
             logger.info('Using PTC Account: {}',
-                              self.censor_account(self._PTC_accounts[self._accountindex - 1].username, is_ptc=True))
+                        self.censor_account(self._PTC_accounts[self._accountindex - 1].username, is_ptc=True))
             return self._PTC_accounts[self._accountindex - 1]
         else:
             logger.info('Using GGL Account: {}',
-                              self.censor_account(self._GGL_accounts[self._accountindex - 1].username))
+                        self.censor_account(self._GGL_accounts[self._accountindex - 1].username))
             return self._GGL_accounts[self._accountindex - 1]
 
     async def return_memory_account_count(self):
@@ -557,8 +557,8 @@ class WordToScreenMatching(object):
             xmlroot = ET.fromstring(xml, parser=parser)
             for item in xmlroot.iter('node'):
                 if (mail and mail.lower() in str(item.attrib['text']).lower()
-                    or not mail and (item.attrib["resource-id"] == "com.google.android.gms:id/account_name"
-                                     or "@" in str(item.attrib['text']))):
+                        or not mail and (item.attrib["resource-id"] == "com.google.android.gms:id/account_name"
+                                         or "@" in str(item.attrib['text']))):
                     logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
                     bounds = item.attrib['bounds']
                     logger.debug("Bounds {}", item.attrib['bounds'])

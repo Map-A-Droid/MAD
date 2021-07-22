@@ -1,5 +1,4 @@
 import asyncio
-import copy
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -9,7 +8,6 @@ from loguru import logger
 
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger
 
 
 class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):

@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional, List, Dict
 
 from sqlalchemy import and_, delete
@@ -7,6 +6,7 @@ from sqlalchemy.future import select
 
 from mapadroid.db.model import MadApkAutosearch
 from mapadroid.mad_apk.apk_enums import APKType, APKArch
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 
 
 class MadApkAutosearchHelper:
@@ -31,7 +31,7 @@ class MadApkAutosearchHelper:
             autosearch_entry.arch = architecture.value
             autosearch_entry.usage = package.value
         # TODO: Ensure values are fetched...
-        autosearch_entry.last_checked = datetime.now()
+        autosearch_entry.last_checked = DatetimeWrapper.now()
         for key, value in data.items():
             setattr(autosearch_entry, key, value)
         session.add(autosearch_entry)

@@ -24,8 +24,8 @@ class DeleteSpawnEndpoint(AbstractStatisticsRootEndpoint):
         elif spawn_id:
             spawn: Optional[TrsSpawn] = await TrsSpawnHelper.get(self._session, spawn_id)
             if spawn:
-                self._delete(spawn)
+                await self._delete(spawn)
         query: Dict[str, str] = {"id": area_id,
                                  "eventid": event_id,
                                  "event": event}
-        await self._redirect(self._url_for('spawn_details', query_=query), commit=True)
+        await self._redirect(self._url_for('spawn_details', query=query), commit=True)

@@ -5,13 +5,13 @@ from asyncio import Task
 from typing import Dict, Optional
 
 import websockets
+from loguru import logger
 
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.madGlobals import (
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
     WebsocketWorkerTimeoutException)
 from mapadroid.worker.AbstractWorker import AbstractWorker
-from loguru import logger
 
 
 class ReceivedMessageEntry:

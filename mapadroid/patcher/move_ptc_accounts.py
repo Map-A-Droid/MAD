@@ -1,12 +1,10 @@
 import json
 import os
-from typing import List
 
 from mysql.connector.errors import IntegrityError
 
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from ._patch_base import PatchBase
-from ..db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 
 logger = get_logger(LoggerEnums.patcher)
 

@@ -63,7 +63,3 @@ class PositionType(IntEnum):
 class TransportType(IntEnum):
     TELEPORT = 0
     WALK = 1
-
-
-
-

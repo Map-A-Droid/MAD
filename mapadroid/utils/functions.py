@@ -10,6 +10,7 @@ from aiocache import cached
 from aiofile import async_open
 
 import mapadroid
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.global_variables import VERSIONCODES_URL
 
@@ -59,7 +60,7 @@ def process_png_to_jpg(image):
 
 def generate_phones(phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=False):
     if not dummy:
-        creationdate = datetime.datetime.fromtimestamp(
+        creationdate = DatetimeWrapper.fromtimestamp(
             creation_date(filename)).strftime(datetimeformat)
     else:
         creationdate = 'No Screen available'

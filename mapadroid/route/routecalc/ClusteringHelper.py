@@ -43,7 +43,8 @@ class ClusteringHelper:
                             Relation(other_event, distance, timedelta))
         return relations
 
-    def _get_most_west_amongst_relations(self, relations):
+    @staticmethod
+    def _get_most_west_amongst_relations(relations):
         selected = list(relations.keys())[0]
         for event in relations.keys():
             if event[1].lng < selected[1].lng:
@@ -108,14 +109,16 @@ class ClusteringHelper:
 
         return len(inside_circle), inside_circle, highest_timedelta, latest_timestamp
 
-    def _get_earliest_timestamp_in_queue(self, queue):
+    @staticmethod
+    def _get_earliest_timestamp_in_queue(queue):
         earliest = queue[0][0]
         for item in queue:
             if earliest > item[0]:
                 earliest = item[0]
         return earliest
 
-    def _get_latest_timestamp_in_queue(self, queue):
+    @staticmethod
+    def _get_latest_timestamp_in_queue(queue):
         latest = queue[0][0]
         for item in queue:
             if latest < item[0]:
@@ -170,7 +173,8 @@ class ClusteringHelper:
         else:
             return middle_event, events_in_circle
 
-    def _remove_coords_from_relations(self, relations, events_to_be_removed):
+    @staticmethod
+    def _remove_coords_from_relations(relations, events_to_be_removed):
         for source_event, relations_to_source in list(relations.items()):
             # iterate relations, remove anything matching events_to_be_removed
             for event in events_to_be_removed:

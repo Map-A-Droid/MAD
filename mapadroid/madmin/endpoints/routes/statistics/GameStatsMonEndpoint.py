@@ -1,9 +1,9 @@
-from datetime import datetime
 from typing import List, Tuple
 
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import Pokemon
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv
 from mapadroid.utils.language import get_mon_name
 
@@ -54,7 +54,7 @@ class GameStatsMonEndpoint(AbstractStatisticsRootEndpoint):
                                                                       0),
                                     'lvl': lvl, 'cp': mon.cp, 'img': mon_img,
                                     'name': mon_name,
-                                    'periode': datetime.fromtimestamp(mon.last_modified.timestamp())
+                                    'periode': DatetimeWrapper.fromtimestamp(mon.last_modified.timestamp())
                                    .strftime(self._datetimeformat)})
         stats = {'spawn': spawn, 'good_spawns': good_spawns}
         return await self._json_response(stats)

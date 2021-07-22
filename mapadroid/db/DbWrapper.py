@@ -113,7 +113,8 @@ class DbWrapper:
         else:
             return None
 
-    def create_area_instance(self, mode: WorkerType) -> Optional[SettingsArea]:
+    @staticmethod
+    def create_area_instance(mode: WorkerType) -> Optional[SettingsArea]:
         if mode == WorkerType.IDLE:
             return SettingsAreaIdle()
         elif mode == WorkerType.IV_MITM:

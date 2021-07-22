@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy import and_, asc, case, desc, func, or_, delete
@@ -7,6 +7,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import aliased
 
 from mapadroid.db.model import TrsStatsLocationRaw
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import TransportType, PositionType
 from mapadroid.worker.WorkerType import WorkerType
@@ -31,11 +32,11 @@ class TrsStatsLocationRawHelper:
         """
         stmt = select(func.unix_timestamp(
             func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocationRaw.period)), '%y-%m-%d %k:00:00')),
-                      TrsStatsLocationRaw.transporttype,
-                      TrsStatsLocationRaw.worker,
-                      func.count(TrsStatsLocationRaw.fix_ts),
-                      func.avg(TrsStatsLocationRaw.data_ts - TrsStatsLocationRaw.fix_ts),
-                      TrsStatsLocationRaw.walker) \
+            TrsStatsLocationRaw.transporttype,
+            TrsStatsLocationRaw.worker,
+            func.count(TrsStatsLocationRaw.fix_ts),
+            func.avg(TrsStatsLocationRaw.data_ts - TrsStatsLocationRaw.fix_ts),
+            TrsStatsLocationRaw.walker) \
             .select_from(TrsStatsLocationRaw)
         where_conditions = [TrsStatsLocationRaw.success == 1,
                             TrsStatsLocationRaw.type.in_([0, 1]),
@@ -45,7 +46,7 @@ class TrsStatsLocationRawHelper:
         if worker:
             where_conditions.append(TrsStatsLocationRaw.worker == worker)
         if include_last_n_minutes:
-            minutes = datetime.now().replace(
+            minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
             where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
         stmt = stmt.where(and_(*where_conditions))
@@ -92,16 +93,16 @@ class TrsStatsLocationRawHelper:
         # TODO
         stmt = select(func.unix_timestamp(
             func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocationRaw.period)), '%y-%m-%d %k:00:00')),
-                      TrsStatsLocationRaw.worker,
-                      func.count(TrsStatsLocationRaw.period),
-                      TrsStatsLocationRaw.type,
-                      TrsStatsLocationRaw.success) \
+            TrsStatsLocationRaw.worker,
+            func.count(TrsStatsLocationRaw.period),
+            TrsStatsLocationRaw.type,
+            TrsStatsLocationRaw.success) \
             .select_from(TrsStatsLocationRaw)
         where_conditions = [TrsStatsLocationRaw.type.in_([0, 1])]
         if worker:
             where_conditions.append(TrsStatsLocationRaw.worker == worker)
         if include_last_n_minutes:
-            minutes = datetime.now().replace(
+            minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
             where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
         stmt = stmt.where(and_(*where_conditions))
@@ -211,7 +212,7 @@ class TrsStatsLocationRawHelper:
         if worker:
             where_conditions.append(TrsStatsLocationRaw.worker == worker)
         if include_last_n_minutes:
-            minutes = datetime.now().replace(
+            minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
             where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
         stmt = stmt.where(and_(*where_conditions))

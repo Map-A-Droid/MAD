@@ -21,8 +21,8 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        self.identifier: Optional[str] = self.request.query.get("id")
-        if self.identifier:
+        self._identifier: Optional[str] = self.request.query.get("id")
+        if self._identifier:
             return await self._render_single_element()
         else:
             return await self._render_overview()
@@ -32,18 +32,18 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         auth: Optional[SettingsAuth] = None
-        if self.identifier == "new":
+        if self._identifier == "new":
             pass
         else:
             auth: SettingsAuth = await SettingsAuthHelper.get(self._session, self._get_instance_id(),
-                                                              int(self.identifier))
+                                                              int(self._identifier))
             if not auth:
                 raise web.HTTPFound(self._url_for("settings_auth"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
-            'identifier': self.identifier,
+            'identifier': self._identifier,
             'base_uri': self._url_for('api_auth'),
             'redirect': self._url_for('settings_auth'),
             'subtab': 'auth',
@@ -51,7 +51,7 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
             'section': auth,
             'settings_vars': settings_vars,
             'method': 'POST' if not auth else 'PATCH',
-            'uri': self._url_for('api_auth') if not auth else '%s/%s' % (self._url_for('api_auth'), self.identifier),
+            'uri': self._url_for('api_auth') if not auth else '%s/%s' % (self._url_for('api_auth'), self._identifier),
         }
         return template_data
 

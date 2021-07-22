@@ -107,10 +107,10 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                 db_entry = await self._create_instance(identifier)
             elif not db_entry and methodology in DataHandlingMethodology.UPDATE:
                 return await self._json_response("DB entry with ID {} could not be found.".format(str(identifier)),
-                                           status=404)
+                                                 status=404)
             elif not db_entry:
                 return await self._json_response("DB entry with ID {} could not be created.".format(str(identifier)),
-                                           status=405)
+                                                 status=405)
             type_of_obj = type(db_entry)
             vars_of_type = vars(type_of_obj)
 
@@ -132,7 +132,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
             if missing:
                 self._commit_trigger = False
                 return await self._json_response({"missing": missing},
-                                           status=405)
+                                                 status=405)
 
             for key, value in api_request_data.items():
                 if key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
@@ -148,7 +148,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                       and getattr(db_entry, key, None) is None and value is None):
                     self._commit_trigger = False
                     return await self._json_response({"missing": [key]},
-                                               status=405)
+                                                     status=405)
                 # TODO: Support "legacy" translations of fields? e.g. origin -> name
                 if isinstance(value, str) and value.lower() in ["none", "undefined"]:
                     value = None

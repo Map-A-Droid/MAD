@@ -1,5 +1,4 @@
 from ._patch_base import PatchBase
-from sqlalchemy.sql import text
 
 
 class Patch(PatchBase):

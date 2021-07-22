@@ -71,7 +71,8 @@ class DownloadPluginEndpoint(AbstractPluginEndpoint):
 
         return plugin_file
 
-    def __zip(self, folder, plugin_file_temp):
+    @staticmethod
+    def __zip(folder, plugin_file_temp):
         with zipfile.ZipFile(plugin_file_temp, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             rootlen = len(folder) + 1
             for base, _, files in os.walk(folder):

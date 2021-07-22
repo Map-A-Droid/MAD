@@ -21,11 +21,10 @@ class TrsS2CellHelper:
                                      old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
                                      timestamp: Optional[int] = None) -> List[TrsS2Cell]:
         stmt = select(TrsS2Cell)
-        where_conditions = []
-        where_conditions.append(and_(TrsS2Cell.center_latitude >= sw_corner.lat,
-                                     TrsS2Cell.center_longitude >= sw_corner.lng,
-                                     TrsS2Cell.center_latitude <= ne_corner.lat,
-                                     TrsS2Cell.center_longitude <= ne_corner.lng))
+        where_conditions = [and_(TrsS2Cell.center_latitude >= sw_corner.lat,
+                                 TrsS2Cell.center_longitude >= sw_corner.lng,
+                                 TrsS2Cell.center_latitude <= ne_corner.lat,
+                                 TrsS2Cell.center_longitude <= ne_corner.lng)]
         if (old_ne_corner and old_sw_corner
                 and old_ne_corner.lat and old_ne_corner.lng and old_sw_corner.lat and old_sw_corner.lng):
             where_conditions.append(and_(TrsS2Cell.center_latitude >= old_sw_corner.lat,

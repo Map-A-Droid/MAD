@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy import and_, case, func
@@ -7,6 +6,7 @@ from sqlalchemy.future import select
 
 from mapadroid.db.model import Gym, GymDetail, Raid
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import TeamColours
 
@@ -54,7 +54,7 @@ class GymHelper:
                                          Gym.latitude <= old_ne_corner.lat,
                                          Gym.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(Gym.last_scanned >= datetime.fromtimestamp(timestamp))
+            where_conditions.append(Gym.last_scanned >= DatetimeWrapper.fromtimestamp(timestamp))
 
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
@@ -91,7 +91,7 @@ class GymHelper:
     async def get_changed_since(session: AsyncSession, timestamp: int) -> List[Tuple[Gym, GymDetail]]:
         stmt = select(Gym, GymDetail) \
             .join(GymDetail, GymDetail.gym_id == Gym.gym_id, isouter=False) \
-            .where(Gym.last_modified >= datetime.fromtimestamp(timestamp))
+            .where(Gym.last_modified >= DatetimeWrapper.fromtimestamp(timestamp))
         # TODO: Consider last_scanned above
         result = await session.execute(stmt)
         return result.all()

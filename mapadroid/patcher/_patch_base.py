@@ -2,10 +2,11 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import text
+
 from mapadroid.db import DbSchemaUpdater
 from mapadroid.db.DbWrapper import DbWrapper
-from sqlalchemy.sql import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class PatchBase(object, ABC):

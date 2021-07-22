@@ -1,10 +1,10 @@
-from datetime import datetime
 from typing import List, Optional, Tuple, Dict
 
 from mapadroid.db.helper.TrsStatsDetectHelper import TrsStatsDetectHelper
 from mapadroid.db.helper.TrsStatsLocationHelper import TrsStatsLocationHelper
 from mapadroid.db.helper.TrsStatsLocationRawHelper import TrsStatsLocationRawHelper
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 
@@ -53,7 +53,7 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
             for timestamp, worker_location_raw_data in data_entry.items():
                 for transport_type_readable, count_of_fix_ts, avg_data_ts, walker in worker_location_raw_data:
                     # dtime is displayed in frontend, not parsing fromtimestamp
-                    dtime = datetime.fromtimestamp(timestamp).strftime(self._datetimeformat)
+                    dtime = DatetimeWrapper.fromtimestamp(timestamp).strftime(self._datetimeformat)
                     locations_avg.append(
                         {'dtime': dtime, 'ok_locations': count_of_fix_ts, 'avg_datareceive': avg_data_ts,
                          'transporttype': transport_type_readable, 'type': walker})
@@ -133,8 +133,8 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
                 {'lat': location.lat, 'lng': location.lng, 'distance': distance, 'type': location_type_str,
                  'data': success_str,
                  # fix_ts and data_ts is displayed in frontend, not parsing fromtimestamp
-                 'fix_ts': datetime.fromtimestamp(timestamp_fix).strftime(self._datetimeformat),
-                 'data_ts': datetime.fromtimestamp(timestamp_data_or_fix).strftime(self._datetimeformat),
+                 'fix_ts': DatetimeWrapper.fromtimestamp(timestamp_fix).strftime(self._datetimeformat),
+                 'data_ts': DatetimeWrapper.fromtimestamp(timestamp_data_or_fix).strftime(self._datetimeformat),
                  'transporttype': transport_type_readable})
 
         workerstats = {'avg': locations_avg, 'receiving': usage, 'locations': locations,

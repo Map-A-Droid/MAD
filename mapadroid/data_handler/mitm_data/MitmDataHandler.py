@@ -1,11 +1,12 @@
 import time
 from typing import Dict, Any, Optional, Union
 
+from loguru import logger
+
 from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.collections import Location
-from loguru import logger
 
 
 class MitmDataHandler:
@@ -54,7 +55,7 @@ class MitmDataHandler:
         return player_data.get_full_latest_data()
 
     def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
-                            timestamp_received_receiver: float = None, location: Location = None) -> None:
+                      timestamp_received_receiver: float = None, location: Location = None) -> None:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         if timestamp_received_raw is None:
             timestamp_received_raw = int(time.time())

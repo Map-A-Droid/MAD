@@ -13,6 +13,7 @@ from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mad_apk.apk_enums import APKPackage, APKType, APKArch
 from mapadroid.mad_apk.custom_types import MADPackages
 from mapadroid.mad_apk.utils import lookup_arch_enum, supported_pogo_version, is_newer_version, file_generator
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
@@ -128,7 +129,7 @@ class DeviceUpdater(object):
                                                algovalue=self._globaljoblog[globalid].get('algovalue',
                                                                                           0)) + waittime
 
-                processtime = datetime.timestamp(datetime.now() + timedelta(minutes=algo))
+                processtime = datetime.timestamp(DatetimeWrapper.now() + timedelta(minutes=algo))
 
                 await self.__write_status_log(str(job_id), field='processingdate', value=processtime)
                 await self.__add_job(globalid, origin, file_, job_id=job_id, job_type=jobtype, counter=0,
@@ -211,7 +212,7 @@ class DeviceUpdater(object):
                                  "(ID: {})", jobtype, origin, file_, job_id)
                     # just schedule job - not process the first time
                     processtime = datetime.timestamp(
-                        datetime.now() + timedelta(
+                        DatetimeWrapper.now() + timedelta(
                             minutes=self._globaljoblog[globalid].get('algo', 0) + waittime))
                     await self.__write_status_log(str(job_id), field='processingdate', value=processtime)
 
@@ -231,7 +232,7 @@ class DeviceUpdater(object):
                                  origin, file_, job_id)
 
                     self._log[str(job_id)]['processingdate'] = datetime.timestamp(
-                        datetime.now() + timedelta(minutes=waittime))
+                        DatetimeWrapper.now() + timedelta(minutes=waittime))
 
                     self._globaljoblog[globalid]['lastjobid'] = job_id
                     self._globaljoblog[globalid]['laststatus'] = 'success'
@@ -256,7 +257,7 @@ class DeviceUpdater(object):
 
                     continue
 
-                if processtime is not None and datetime.fromtimestamp(processtime) > datetime.now():
+                if processtime is not None and DatetimeWrapper.fromtimestamp(processtime) > DatetimeWrapper.now():
                     await asyncio.sleep(1)
                     logger.debug('Job {} on device {} - File/Job: {} - queued of processtime in future (ID: {})',
                                  str(jobtype), str(origin), str(file_), str(job_id))
@@ -355,7 +356,7 @@ class DeviceUpdater(object):
                         logger.error("Job for {} (File/Job: {} - Type {}) failed 3 times in row - requeued it (ID: {})",
                                      origin, file_, jobtype, job_id)
                         processtime = datetime.timestamp(
-                            datetime.now() + timedelta(minutes=self._args.job_restart_notconnect))
+                            DatetimeWrapper.now() + timedelta(minutes=self._args.job_restart_notconnect))
                         await self.__write_status_log(str(job_id), field='processingdate', value=processtime)
 
                         self._globaljoblog[globalid]['lastjobid'] = job_id
@@ -594,7 +595,7 @@ class DeviceUpdater(object):
             embed.add_embed_field(name='Retuning', value=returning)
             embed.add_embed_field(name='Status', value=JobReturn(status).name)
             embed.add_embed_field(name='Next run',
-                                  value=str(datetime.fromtimestamp(
+                                  value=str(DatetimeWrapper.fromtimestamp(
                                       processtime) if processtime is not None else "-"))
             _webhook.add_embed(embed)
             _webhook.execute()
@@ -646,10 +647,10 @@ class DeviceUpdater(object):
         # calc diff in minutes to get exact starttime
 
         algotime = algovalue.split(':')
-        tm = datetime.now().replace(
+        tm = DatetimeWrapper.now().replace(
             hour=int(algotime[0]), minute=int(algotime[1]), second=0, microsecond=0)
 
-        return (tm - datetime.now()).seconds / 60
+        return (tm - DatetimeWrapper.now()).seconds / 60
 
     def set_returning(self, origin, fieldname, value):
         if origin not in self._returning:

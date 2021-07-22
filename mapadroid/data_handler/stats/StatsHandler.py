@@ -4,18 +4,20 @@ from asyncio import Task
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from mapadroid.data_handler.stats.PlayerStats import PlayerStats
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
 from mapadroid.data_handler.stats.holder.stats_detect_seen.StatsDetectSeenTypeHolder import StatsDetectSeenTypeHolder
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.TrsStatsDetectWildMonRawHelper import TrsStatsDetectWildMonRawHelper
 from mapadroid.db.helper.TrsStatsDetectHelper import TrsStatsDetectHelper
+from mapadroid.db.helper.TrsStatsDetectWildMonRawHelper import TrsStatsDetectWildMonRawHelper
 from mapadroid.db.helper.TrsStatsLocationHelper import TrsStatsLocationHelper
 from mapadroid.db.helper.TrsStatsLocationRawHelper import TrsStatsLocationRawHelper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import TransportType, PositionType, MonSeenTypes
-from sqlalchemy.ext.asyncio import AsyncSession
-from loguru import logger
 
 
 class StatsHandler:
@@ -119,7 +121,7 @@ class StatsHandler:
         delete_before_timestamp: int = int(time.time()) - 604800
         # TODO: Cleanup seen stuff...
         await TrsStatsDetectHelper.cleanup(session, delete_before_timestamp)
-        await TrsStatsDetectWildMonRawHelper.cleanup(session, datetime.fromtimestamp(delete_before_timestamp),
+        await TrsStatsDetectWildMonRawHelper.cleanup(session, DatetimeWrapper.fromtimestamp(delete_before_timestamp),
                                                      raw_delete_shiny_days=self.__application_args.raw_delete_shiny)
         await TrsStatsLocationHelper.cleanup(session, delete_before_timestamp)
         await TrsStatsLocationRawHelper.cleanup(session, delete_before_timestamp)

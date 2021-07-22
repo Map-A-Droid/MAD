@@ -1,9 +1,9 @@
 from typing import List
 
-from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
+from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
 from mapadroid.db.model import TrsStatsLocationRaw
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType

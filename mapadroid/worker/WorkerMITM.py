@@ -1,19 +1,19 @@
 import asyncio
 import math
 import time
-from datetime import datetime
 from typing import Optional, Tuple
 
 from loguru import logger
 
+from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
-from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import InternalStopWorkerException, TransportType
@@ -157,7 +157,7 @@ class WorkerMITM(MITMBase):
             self._encounter_ids = {**encounter_ids, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.
-            max_age_ = datetime.now().timestamp() - 60
+            max_age_ = DatetimeWrapper.now().timestamp() - 60
             # max_age = time.time() - 60
             remove = []
             for key, value in self._encounter_ids.items():
@@ -191,7 +191,7 @@ class WorkerMITM(MITMBase):
         mode = await self._mapping_manager.routemanager_get_mode(self._routemanager_id)
         timestamp_of_proto: int = latest_proto_entry.timestamp_of_data_retrieval
         logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
-                     datetime.fromtimestamp(timestamp_of_proto), datetime.fromtimestamp(timestamp),
+                     DatetimeWrapper.fromtimestamp(timestamp_of_proto), DatetimeWrapper.fromtimestamp(timestamp),
                      proto_to_wait_for)
         if timestamp_of_proto < timestamp:
             logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,

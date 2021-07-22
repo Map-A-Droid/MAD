@@ -1,7 +1,8 @@
 import datetime
+
+from loguru import logger
 from sqlalchemy import DateTime
 from sqlalchemy.types import TypeDecorator
-from loguru import logger
 
 
 class TZDateTime(TypeDecorator):
@@ -19,7 +20,7 @@ class TZDateTime(TypeDecorator):
         if value is not None:
             if not value.tzinfo:
                 logger.debug2("Missing tzinfo, assuming naive datetime - converting to utc")
-                #raise TypeError("tzinfo is required")
+                # raise TypeError("tzinfo is required")
             value = value.astimezone(datetime.timezone.utc).replace(
                 tzinfo=None
             )

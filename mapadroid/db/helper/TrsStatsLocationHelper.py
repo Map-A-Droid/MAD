@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Dict, Optional, Tuple
 
 from sqlalchemy import and_, func, delete
@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsStatsLocation
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 
 
 class TrsStatsLocationHelper:
@@ -27,15 +28,15 @@ class TrsStatsLocationHelper:
         """
         stmt = select(func.unix_timestamp(
             func.DATE_FORMAT(func.from_unixtime(func.min(TrsStatsLocation.timestamp_scan)), '%y-%m-%d %k:00:00')),
-                      TrsStatsLocation.worker,
-                      func.sum(TrsStatsLocation.location_ok),
-                      func.sum(TrsStatsLocation.location_nok)) \
+            TrsStatsLocation.worker,
+            func.sum(TrsStatsLocation.location_ok),
+            func.sum(TrsStatsLocation.location_nok)) \
             .select_from(TrsStatsLocation)
         where_conditions = []
         if worker:
             where_conditions.append(TrsStatsLocation.worker == worker)
         if include_last_n_minutes:
-            minutes = datetime.now().replace(
+            minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
             where_conditions.append(TrsStatsLocation.timestamp_scan >= int(minutes.now().timestamp()))
         if where_conditions:

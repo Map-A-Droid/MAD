@@ -23,8 +23,8 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        self.identifier: Optional[str] = self.request.query.get("id")
-        if self.identifier:
+        self._identifier: Optional[str] = self.request.query.get("id")
+        if self._identifier:
             return await self._render_single_element()
         else:
             return await self._render_overview()
@@ -34,12 +34,11 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         device: Optional[SettingsDevice] = None
-        if self.identifier == "new":
-            pass
+        if self._identifier == "new":
             ptc_accounts_assigned = []
         else:
             device: SettingsDevice = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),
-                                                                    int(self.identifier))
+                                                                    int(self._identifier))
             if not device:
                 raise web.HTTPFound(self._url_for("settings_devices"))
             ptc_accounts_assigned = await SettingsPogoauthHelper \
@@ -52,7 +51,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
             ptc_accounts_assigned_or_not_assigned[assigned.account_id] = assigned
 
         template_data: Dict = {
-            'identifier': self.identifier,
+            'identifier': self._identifier,
             'base_uri': self._url_for('api_device'),
             'redirect': self._url_for('settings_devices'),
             'subtab': 'device',
@@ -61,7 +60,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
             'settings_vars': settings_vars,
             'method': 'POST' if not device else 'PATCH',
             'uri': self._url_for('api_device') if not device else '%s/%s' % (
-            self._url_for('api_device'), self.identifier),
+                self._url_for('api_device'), self._identifier),
             # TODO: Above is pretty generic in theory...
             'ggl_accounts': await SettingsPogoauthHelper.get_avail_accounts(self._session, self._get_instance_id(),
                                                                             LoginType.GOOGLE),

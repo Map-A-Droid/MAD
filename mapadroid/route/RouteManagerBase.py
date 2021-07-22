@@ -6,11 +6,7 @@ import math
 import time
 from abc import ABC, abstractmethod
 from asyncio import Task
-from copy import copy
-from datetime import datetime
-from enum import IntEnum
 from operator import itemgetter
-from threading import Thread
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
@@ -22,6 +18,7 @@ from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import PositionType
@@ -252,11 +249,12 @@ class RouteManagerBase(ABC):
                 async with session.begin() as transaction:
                     try:
                         new_route = await RoutecalcUtil.get_json_route(session, self._routecalc.routecalc_id, coords,
-                                                                   max_radius, max_coords_within_radius, in_memory,
-                                                                   num_processes=num_procs,
-                                                                   algorithm=calctype, use_s2=self.useS2,
-                                                                   s2_level=self.S2level,
-                                                                   route_name=self.name, delete_old_route=delete_old_route)
+                                                                       max_radius, max_coords_within_radius, in_memory,
+                                                                       num_processes=num_procs,
+                                                                       algorithm=calctype, use_s2=self.useS2,
+                                                                       s2_level=self.S2level,
+                                                                       route_name=self.name,
+                                                                       delete_old_route=delete_old_route)
                         await transaction.commit()
                     except Exception as e:
                         logger.exception(e)
@@ -314,7 +312,7 @@ class RouteManagerBase(ABC):
             async with self.db_wrapper as session, session:
                 await session.merge(self._routecalc)
                 self._routecalc.routefile = str(calc_coords).replace("\'", "\"")
-                self._routecalc.last_updated = datetime.now()
+                self._routecalc.last_updated = DatetimeWrapper.now()
                 # TODO: First update the resource or simply set using helper which fetches the object first?
                 await session.flush([self._routecalc])
                 await session.commit()
@@ -380,7 +378,7 @@ class RouteManagerBase(ABC):
         return hours, minutes, seconds
 
     def _get_round_finished_string(self):
-        round_finish_time = datetime.now()
+        round_finish_time = DatetimeWrapper.now()
         round_completed_in = ("%d hours, %d minutes, %d seconds" % (self.dhms_from_seconds(self.date_diff_in_seconds(
             round_finish_time,
             self._round_started_time))))
@@ -570,7 +568,7 @@ class RouteManagerBase(ABC):
                     logger.debug2("Got location of prioQ: {}", val)
 
                     next_timestamp, next_coord = val
-                next_readable_time = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                next_readable_time = DatetimeWrapper.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
                 if next_timestamp < time.time():
                     raise IndexError("Next event at {} has not taken place yet", next_readable_time)
                 if self._mode == WorkerType.MON_MITM:
@@ -583,7 +581,7 @@ class RouteManagerBase(ABC):
                         # TODO: Move task_done elsewhere?
                         logger.debug("Popping prio Q")
                         next_timestamp, next_coord = heapq.heappop(self._prio_queue)
-                        next_readable_time = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                        next_readable_time = DatetimeWrapper.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
                         if next_timestamp < delete_before:
                             logger.warning(
                                 "Prio event surpassed the maximum backlog time and will be skipped. Make "
@@ -614,12 +612,12 @@ class RouteManagerBase(ABC):
             if self._round_started_time is not None:
                 logger.info("All subroutes reached the first spot again. It took {}",
                             self._get_round_finished_string())
-            self._round_started_time = datetime.now()
+            self._round_started_time = DatetimeWrapper.now()
             if len(self._route) == 0:
                 return None
             logger.info("Round started at {}", self._round_started_time)
         elif self._round_started_time is None:
-            self._round_started_time = datetime.now()
+            self._round_started_time = DatetimeWrapper.now()
 
         if len(routepool_entry.queue) == 0:
             # worker done with his subroute

@@ -12,6 +12,7 @@ from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsSpawn, TrsEvent
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -130,15 +131,16 @@ class TrsSpawnHelper:
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as pool:
             next_up = await loop.run_in_executor(
-                pool, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result, geofence_helper=geofence_helper))
+                pool, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result,
+                                        geofence_helper=geofence_helper))
 
         return next_up
 
     @staticmethod
-    def __process_next_to_encounter(result, geofence_helper = None) -> List[Tuple[int, Location]]:
+    def __process_next_to_encounter(result, geofence_helper=None) -> List[Tuple[int, Location]]:
         next_up: List[Tuple[int, Location]] = []
         current_time = time.time()
-        current_time_of_day = datetime.now().replace(microsecond=0)
+        current_time_of_day = DatetimeWrapper.now().replace(microsecond=0)
         timedelta_to_be_added = timedelta(hours=1)
         for spawn in result.scalars():
             if not geofence_helper.is_coord_inside_include_geofence([spawn.latitude, spawn.longitude]):
@@ -188,7 +190,7 @@ class TrsSpawnHelper:
                                          TrsSpawn.latitude <= old_ne_corner.lat,
                                          TrsSpawn.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(TrsSpawn.last_scanned >= datetime.fromtimestamp(timestamp))
+            where_conditions.append(TrsSpawn.last_scanned >= DatetimeWrapper.fromtimestamp(timestamp))
 
         if fence:
             polygon = "POLYGON(({}))".format(fence)
@@ -197,11 +199,11 @@ class TrsSpawnHelper:
         if event_id:
             where_conditions.append(TrsSpawn.eventid == event_id)
         if today_only:
-            where_conditions.append(or_(datetime.now().today() <= TrsSpawn.last_scanned,
-                                        datetime.now().today() <= TrsSpawn.last_non_scanned))
+            where_conditions.append(or_(DatetimeWrapper.now().today() <= TrsSpawn.last_scanned,
+                                        DatetimeWrapper.now().today() <= TrsSpawn.last_non_scanned))
         elif older_than_x_days:
             # elif as it makes no sense to check for older than X days AND today
-            older_than_date: datetime = datetime.now().today() - timedelta(days=older_than_x_days)
+            older_than_date: datetime = DatetimeWrapper.now().today() - timedelta(days=older_than_x_days)
             where_conditions.append(or_(older_than_date <= TrsSpawn.last_scanned,
                                         older_than_date <= TrsSpawn.last_non_scanned))
         stmt = stmt.where(and_(*where_conditions))

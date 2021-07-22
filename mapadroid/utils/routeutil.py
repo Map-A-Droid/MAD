@@ -2,6 +2,7 @@ import datetime
 import re
 
 from mapadroid.db.model import SettingsWalkerarea
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)
@@ -22,7 +23,7 @@ def check_walker_value_type(value):
 
 def check_time_till_end(exittime):
     timer = exittime.split(':')
-    tm_now = datetime.datetime.now()
+    tm_now = DatetimeWrapper.now()
     tm_til = tm_now.replace(hour=int(timer[0]), minute=int(timer[1]), second=0, microsecond=0)
     return tm_now < tm_til
 
@@ -31,7 +32,7 @@ def check_time_period(period):
     timer = period.split('-')
     sts1 = timer[0].replace(' ', '').split(':')
     sts2 = timer[1].replace(' ', '').split(':')
-    tm_now = datetime.datetime.now().replace(second=0, microsecond=0)
+    tm_now = DatetimeWrapper.now().replace(second=0, microsecond=0)
     tm_from = tm_now.replace(hour=int(sts1[0]), minute=int(sts1[1]))
     tm_til = tm_now.replace(hour=int(sts2[0]), minute=int(sts2[1]))
 

@@ -13,6 +13,7 @@ from apksearch import package_search_async
 from apksearch.entities import PackageBase, PackageVariant
 from apksearch.search import HEADERS
 from apkutils.apkfile import BadZipFile, LargeZipFile
+from loguru import logger
 
 from mapadroid.utils import global_variables
 from mapadroid.utils.functions import get_version_codes
@@ -24,8 +25,6 @@ from ..db.DbWrapper import DbWrapper
 from ..db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from ..db.model import MadApkAutosearch
 from ..utils.RestHelper import RestHelper
-from loguru import logger
-
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 APK_HEADERS = {

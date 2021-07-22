@@ -1,7 +1,7 @@
 import asyncio
 import concurrent.futures
 import json
-from datetime import timezone, datetime
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 

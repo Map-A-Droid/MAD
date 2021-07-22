@@ -20,8 +20,8 @@ class SettingsGeofenceEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        self.identifier: Optional[str] = self.request.query.get("id")
-        if self.identifier:
+        self._identifier: Optional[str] = self.request.query.get("id")
+        if self._identifier:
             return await self._render_single_element()
         else:
             return await self._render_overview()
@@ -31,18 +31,18 @@ class SettingsGeofenceEndpoint(AbstractMadminRootEndpoint):
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         geofence: Optional[SettingsGeofence] = None
-        if self.identifier == "new":
+        if self._identifier == "new":
             pass
         else:
             geofence: SettingsGeofence = await SettingsGeofenceHelper.get(self._session, self._get_instance_id(),
-                                                                          int(self.identifier))
+                                                                          int(self._identifier))
             if not geofence:
                 raise web.HTTPFound(self._url_for("settings_geofence"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
-            'identifier': self.identifier,
+            'identifier': self._identifier,
             'base_uri': self._url_for('api_geofence'),
             'redirect': self._url_for('settings_geofence'),
             'subtab': 'geofence',
@@ -51,7 +51,7 @@ class SettingsGeofenceEndpoint(AbstractMadminRootEndpoint):
             'settings_vars': settings_vars,
             'method': 'POST' if not geofence else 'PATCH',
             'uri': self._url_for('api_geofence') if not geofence else '%s/%s' % (
-            self._url_for('api_geofence'), self.identifier),
+                self._url_for('api_geofence'), self._identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data

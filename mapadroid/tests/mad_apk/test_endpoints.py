@@ -56,7 +56,7 @@ class EndpointTests(APKTestBase):
         self.assertTrue(APKArch.arm64_v8a.name in data)
         response = self.api.get('/api/mad_apk/{}/{}'.format(APKType.pogo.name, APKArch.armeabi_v7a))
         self.assertTrue(response.status_code == 200)
-        required_keys = set(['version', 'file_id', 'filename', 'mimetype', 'size', 'arch_disp', 'usage_disp'])
+        required_keys = {'version', 'file_id', 'filename', 'mimetype', 'size', 'arch_disp', 'usage_disp'}
         self.assertTrue(response.status_code == 200)
         self.assertEqual(required_keys, response.json().keys())
 

@@ -5,11 +5,11 @@ from typing import Optional, Any
 
 from loguru import logger
 
+from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
-from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException, WebsocketWorkerConnectionClosedException,
     WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException)

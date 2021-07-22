@@ -1,5 +1,4 @@
 import time
-from datetime import datetime
 from typing import List, Optional, Tuple
 
 from sqlalchemy import and_, select
@@ -7,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.model import Gym, Raid, GymDetail
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 
 
@@ -20,7 +20,7 @@ class RaidHelper:
     @staticmethod
     async def get_next_hatches(session: AsyncSession,
                                geofence_helper: GeofenceHelper = None) -> List[Tuple[int, Location]]:
-        db_time_to_check = datetime.fromtimestamp(time.time())
+        db_time_to_check = DatetimeWrapper.now()
         stmt = select(Raid.start, Gym.latitude, Gym.longitude) \
             .select_from(Raid).join(Gym, Gym.gym_id == Raid.gym_id) \
             .where(and_(Raid.end > db_time_to_check, Raid.pokemon_id != None))
@@ -46,7 +46,7 @@ class RaidHelper:
             .select_from(Raid) \
             .join(GymDetail, GymDetail.gym_id == Raid.gym_id) \
             .join(Gym, Gym.gym_id == Raid.gym_id) \
-            .where(Raid.last_scanned > datetime.fromtimestamp(_timestamp))
+            .where(Raid.last_scanned > DatetimeWrapper.fromtimestamp(_timestamp))
         result = await session.execute(stmt)
         changed_data: List[Tuple[Raid, GymDetail, Gym]] = []
         raw = result.all()

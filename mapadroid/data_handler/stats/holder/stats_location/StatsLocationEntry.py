@@ -17,4 +17,3 @@ class StatsLocationEntry(TrsStatsLocation):
             self.location_ok += 1
         else:
             self.location_nok += 1
-

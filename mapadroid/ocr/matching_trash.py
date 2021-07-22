@@ -41,7 +41,7 @@ def trash_image_matching(origin, screen_img, full_screen):
     if trash.mean() == 255 or trash.mean() == 0:
         return clicklist
 
-    if width < 1080 and width > 720:
+    if 1080 > width > 720:
         sc_from = 0.5
         sc_till = 1
     elif width == 1080:

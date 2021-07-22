@@ -20,8 +20,8 @@ class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        self.identifier: Optional[str] = self.request.query.get("id")
-        if self.identifier:
+        self._identifier: Optional[str] = self.request.query.get("id")
+        if self._identifier:
             return await self._render_single_element()
         else:
             return await self._render_overview()
@@ -31,17 +31,17 @@ class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         device_pool: Optional[SettingsDevicepool] = None
-        if self.identifier == "new":
+        if self._identifier == "new":
             pass
         else:
-            device_pool: SettingsDevicepool = await SettingsDevicepoolHelper.get(self._session, int(self.identifier))
+            device_pool: SettingsDevicepool = await SettingsDevicepoolHelper.get(self._session, int(self._identifier))
             if not device_pool:
                 raise web.HTTPFound(self._url_for("settings_pools"))
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
 
         template_data: Dict = {
-            'identifier': self.identifier,
+            'identifier': self._identifier,
             'base_uri': self._url_for('api_devicepool'),
             'redirect': self._url_for('settings_pools'),
             'subtab': 'devicepool',
@@ -49,7 +49,7 @@ class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
             'settings_vars': settings_vars,
             'method': 'POST' if not device_pool else 'PATCH',
             'uri': self._url_for('api_devicepool') if not device_pool else '%s/%s' % (
-            self._url_for('api_devicepool'), self.identifier),
+                self._url_for('api_devicepool'), self._identifier),
             # TODO: Above is pretty generic in theory...
         }
         return template_data

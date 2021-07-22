@@ -33,7 +33,7 @@ class AutoconfigLogsHelper:
         Returns: List of tuples consisting of unix_timestamp (log_time), level and message
 
         """
-        all_of_instance: List[AutoconfigLog] = await AutoconfigLogHelper.get_all_of_instance(session, instance_id,
+        all_of_instance: List[AutoconfigLog] = await AutoconfigLogsHelper.get_all_of_instance(session, instance_id,
                                                                                              session_id)
         transformed_list: List[Tuple[int, int, str]] = []
         for log in all_of_instance:

@@ -1,4 +1,3 @@
-from datetime import timezone
 from typing import List, Optional, Dict, Tuple
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper

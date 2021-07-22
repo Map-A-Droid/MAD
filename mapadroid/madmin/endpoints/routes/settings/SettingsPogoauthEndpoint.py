@@ -6,7 +6,7 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
-from mapadroid.db.model import SettingsMonivlist, SettingsDevice, SettingsPogoauth
+from mapadroid.db.model import SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 
@@ -36,8 +36,8 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
             pass
         else:
             pogoauth: SettingsPogoauth = await SettingsPogoauthHelper.get(self._session,
-                                                                           self._get_instance_id(),
-                                                                           int(self._identifier))
+                                                                          self._get_instance_id(),
+                                                                          int(self._identifier))
             if not pogoauth:
                 raise web.HTTPFound(self._url_for("settings_pogoauth"))
 
@@ -65,7 +65,7 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
             'settings_vars': settings_vars,
             'method': 'POST' if not pogoauth else 'PATCH',
             'uri': self._url_for('api_pogoauth') if not pogoauth else '%s/%s' % (
-            self._url_for('api_pogoauth'), self._identifier),
+                self._url_for('api_pogoauth'), self._identifier),
             # TODO: Above is pretty generic in theory...
             'devices': devices,
             'devs_google': devs_google,

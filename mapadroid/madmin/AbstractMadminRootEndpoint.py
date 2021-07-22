@@ -124,7 +124,8 @@ class AbstractMadminRootEndpoint(web.View, ABC):
     def _get_mon_name_cache(self) -> Dict[int, str]:
         return self.request.app["mon_name_cache"]
 
-    def _convert_to_json_string(self, content) -> str:
+    @staticmethod
+    def _convert_to_json_string(content) -> str:
         try:
             return json.dumps(content, cls=MADEncoder)
         except Exception as err:
@@ -138,8 +139,8 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         return self.request.app['device_updater']
 
     async def _json_response(self, data: Any = sentinel, *, text: Optional[str] = None, body: Optional[bytes] = None,
-                       status: int = 200, reason: Optional[str] = None, headers: Optional[LooseHeaders] = None,
-                       content_type: str = "application/json") -> web.Response:
+                             status: int = 200, reason: Optional[str] = None, headers: Optional[LooseHeaders] = None,
+                             content_type: str = "application/json") -> web.Response:
         if data is not sentinel:
             if text or body:
                 raise ValueError("only one of data, text, or body should be specified")
@@ -160,7 +161,8 @@ class AbstractMadminRootEndpoint(web.View, ABC):
             content_type=content_type,
         )
 
-    def __json_dumps_proxy(self, data):
+    @staticmethod
+    def __json_dumps_proxy(data):
         return json.dumps(data, indent=None, cls=MADEncoder)
 
     def _url_for(self, path_name: str, query: Optional[Dict] = None, dynamic_path: Optional[Dict] = None):

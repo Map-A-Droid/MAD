@@ -9,6 +9,7 @@ from loguru import logger
 from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes
 
 
@@ -54,7 +55,7 @@ class SerializedMitmDataProcessor:
     async def process_data(self, received_timestamp: int, data, origin):
         data_type = data.get("type", None)
         logger.debug("Processing received data")
-        processed_timestamp: datetime = datetime.fromtimestamp(received_timestamp)
+        processed_timestamp: datetime = DatetimeWrapper.fromtimestamp(received_timestamp)
 
         if data_type and not data.get("raw", False):
             logger.debug4("Received data: {}", data)
@@ -66,7 +67,7 @@ class SerializedMitmDataProcessor:
                 if received_timestamp < minimum_timestamp:
                     logger.debug(
                         "Data received at {} is older than configured threshold of {}s ({}). Ignoring data.",
-                        processed_timestamp, threshold_seconds, datetime.fromtimestamp(minimum_timestamp))
+                        processed_timestamp, threshold_seconds, DatetimeWrapper.fromtimestamp(minimum_timestamp))
                     return
 
             # We can use the current session easily...
@@ -113,7 +114,7 @@ class SerializedMitmDataProcessor:
 
             async with self.__db_wrapper as session, session:
                 lure_encounter: Optional[Tuple[int, datetime]] = await self.__db_submit \
-                    .mon_lure_iv(session, received_timestamp, data["payload"],)
+                    .mon_lure_iv(session, received_timestamp, data["payload"], )
 
                 if self.__application_args.game_stats:
                     await self.__db_submit.update_seen_type_stats(session, lure_encounter=[lure_encounter])
@@ -128,8 +129,8 @@ class SerializedMitmDataProcessor:
             logger.debug("Processing encounter received at {}", received_date)
             async with self.__db_wrapper as session, session:
                 encounter: Optional[Tuple[int, bool]] = await self.__db_submit.mon_iv(session,
-                                                                                          received_timestamp,
-                                                                                          data["payload"])
+                                                                                      received_timestamp,
+                                                                                      data["payload"])
 
                 if self.__application_args.game_stats and encounter:
                     encounter_id, is_shiny = encounter

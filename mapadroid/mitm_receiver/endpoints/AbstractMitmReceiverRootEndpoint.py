@@ -11,6 +11,7 @@ from aiohttp.typedefs import LooseHeaders, StrOrURL
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
@@ -19,7 +20,6 @@ from mapadroid.mad_apk.apk_enums import APKArch, APKType, APKPackage
 from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
-from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.updater import DeviceUpdater
@@ -141,7 +141,8 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     def _get_storage_obj(self) -> AbstractAPKStorage:
         return self.request.app['storage_obj']
 
-    def _convert_to_json_string(self, content) -> str:
+    @staticmethod
+    def _convert_to_json_string(content) -> str:
         try:
             return json.dumps(content, cls=MADEncoder)
         except Exception as err:
@@ -154,7 +155,8 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     def _get_device_updater(self) -> DeviceUpdater:
         return self.request.app['device_updater']
 
-    def _json_response(self, data: Any = sentinel, *, text: Optional[str] = None, body: Optional[bytes] = None,
+    @staticmethod
+    def _json_response(data: Any = sentinel, *, text: Optional[str] = None, body: Optional[bytes] = None,
                        status: int = 200, reason: Optional[str] = None, headers: Optional[LooseHeaders] = None,
                        content_type: str = "application/json") -> web.Response:
         if data is not sentinel:

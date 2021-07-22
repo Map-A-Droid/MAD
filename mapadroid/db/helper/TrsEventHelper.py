@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsEvent, TrsSpawn
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 
 
 class TrsEventHelper:
@@ -14,11 +15,11 @@ class TrsEventHelper:
     async def get_current_event(session: AsyncSession, include_default: bool = False) -> Optional[TrsEvent]:
         if include_default:
             # TODO: order by event_start desc?
-            stmt = select(TrsEvent).where(and_(TrsEvent.event_start < datetime.now(),
-                                               TrsEvent.event_end > datetime.now()))
+            stmt = select(TrsEvent).where(and_(TrsEvent.event_start < DatetimeWrapper.now(),
+                                               TrsEvent.event_end > DatetimeWrapper.now()))
         else:
-            stmt = select(TrsEvent).where(and_(TrsEvent.event_start < datetime.now(),
-                                               TrsEvent.event_end > datetime.now(),
+            stmt = select(TrsEvent).where(and_(TrsEvent.event_start < DatetimeWrapper.now(),
+                                               TrsEvent.event_end > DatetimeWrapper.now(),
                                                TrsEvent.event_name != "DEFAULT"))
         result = await session.execute(stmt)
         return result.scalars().first()
@@ -95,7 +96,7 @@ class TrsEventHelper:
         if event_id == 1:
             return False
         stmt = select(TrsEvent).where(and_(TrsEvent.id == event_id,
-                                           between(datetime.now(), TrsEvent.event_start, TrsEvent.event_end)))
+                                           between(DatetimeWrapper.now(), TrsEvent.event_start, TrsEvent.event_end)))
 
         result = await session.execute(stmt)
         return result.scalars().first() is not None

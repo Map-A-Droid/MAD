@@ -1,10 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional, Dict, Tuple
 
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.model import Gym, GymDetail, Raid
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_bound_params
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 
 
@@ -28,10 +29,11 @@ class GetGymcoordsEndpoint(AbstractMadminRootEndpoint):
                                                   old_sw_corner=Location(o_sw_lat, o_sw_lng),
                                                   timestamp=timestamp)
 
+        now: datetime = DatetimeWrapper.now()
         for gym_id, (gym, gym_detail, raid) in data.items():
             raid_data = None
             # TODO: Validate time of spawn/end/start
-            if raid and raid.end > datetime.now(tz=timezone.utc):
+            if raid and raid.end > now:
                 raid_data = {
                     "spawn": int(raid.spawn.timestamp()),
                     "start": int(raid.start.timestamp()),

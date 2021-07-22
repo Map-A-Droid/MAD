@@ -11,11 +11,10 @@ except Exception:
 def create_data_model(less_coordinates):
     """Stores the data for the problem."""
 
-    data = {}
+    data = {'locations': []}
 
     # ortools requires x,y data to be integers
     # we will scale lat,lng to large numbers so that rounding won't adversely affect the path calculation
-    data['locations'] = []
     for coord in less_coordinates:
         data['locations'].append((int(float(coord[0]) * 1e9), int(float(coord[1]) * 1e9)))
 

@@ -1,8 +1,9 @@
 import asyncio
 import concurrent
 import random
-from datetime import timezone
 from typing import Optional, Dict, List
+
+from loguru import logger
 
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import Pokemon
@@ -11,7 +12,6 @@ from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_name_sync
 from mapadroid.utils.madGlobals import MonSeenTypes
-from loguru import logger
 
 
 class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
@@ -49,7 +49,8 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
             mons_serialized.append(serialized_entry)
         return mons_serialized
 
-    def __serialize_single_mon(self, mon, mon_name_cache):
+    @staticmethod
+    def __serialize_single_mon(mon, mon_name_cache):
         serialized_entry: Dict = {x: y for x, y in vars(mon).items() if not x.startswith("_")}
         serialized_entry["disappear_time"] = int(mon.disappear_time.timestamp())
         if mon.last_modified:

@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 
 from mapadroid.db.model import Pokemon, TrsSpawn, Pokestop, TrsStatsDetectWildMonRaw
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import MonSeenTypes
@@ -35,9 +36,9 @@ class PokemonHelper:
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
         # TODO: Likely having some DB foo...
         stmt = select(Pokemon).where(and_(Pokemon.cp != None,
-                                          Pokemon.disappear_time > datetime.datetime.now() - datetime.timedelta(
+                                          Pokemon.disappear_time > DatetimeWrapper.now() - datetime.timedelta(
                                               hours=1),
-                                          Pokemon.last_modified > datetime.datetime.fromtimestamp(latest),
+                                          Pokemon.last_modified > DatetimeWrapper.fromtimestamp(latest),
                                           Pokemon.latitude >= min_lat,
                                           Pokemon.longitude >= min_lon,
                                           Pokemon.latitude <= max_lat,
@@ -57,7 +58,7 @@ class PokemonHelper:
     async def get_pokemon_spawn_counts(session: AsyncSession, hours: int = None) -> Dict:
         stmt = select(Pokemon.pokemon_id, func.COUNT(Pokemon.pokemon_id)).select_from(Pokemon)
         if hours:
-            stmt = stmt.where(Pokemon.disappear_time > datetime.datetime.now() - datetime.timedelta(hours=hours))
+            stmt = stmt.where(Pokemon.disappear_time > DatetimeWrapper.now() - datetime.timedelta(hours=hours))
         # TODO: Adjust as group_by may not work - tho we have a count above. TEST IT
         stmt = stmt.group_by(Pokemon.pokemon_id)
         result = await session.execute(stmt)
@@ -80,10 +81,10 @@ class PokemonHelper:
                                           Pokemon.individual_stamina == None,
                                           Pokemon.encounter_id != 0,
                                           Pokemon.seen_type != MonSeenTypes.NEARBY_CELL.value,
-                                          Pokemon.disappear_time.between(datetime.datetime.now()
+                                          Pokemon.disappear_time.between(DatetimeWrapper.now()
                                                                          + datetime.timedelta(
                                               seconds=min_time_left_seconds),
-                                                                         datetime.datetime.now()
+                                                                         DatetimeWrapper.now()
                                                                          + datetime.timedelta(minutes=60)))
                                      .order_by(Pokemon.disappear_time))
         result = await session.execute(stmt)
@@ -119,8 +120,7 @@ class PokemonHelper:
                                     old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
                                     timestamp: Optional[int] = None) -> List[Pokemon]:
         stmt = select(Pokemon)
-        where_conditions = []
-        where_conditions.append(Pokemon.disappear_time > datetime.datetime.now())
+        where_conditions = [Pokemon.disappear_time > DatetimeWrapper.now()]
         if (ne_corner and sw_corner
                 and ne_corner.lat and ne_corner.lng and sw_corner.lat and sw_corner.lng):
             where_conditions.append(and_(Pokemon.latitude >= sw_corner.lat,
@@ -134,7 +134,7 @@ class PokemonHelper:
                                          Pokemon.latitude <= old_ne_corner.lat,
                                          Pokemon.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(Pokemon.last_modified >= datetime.datetime.fromtimestamp(timestamp))
+            where_conditions.append(Pokemon.last_modified >= DatetimeWrapper.fromtimestamp(timestamp))
 
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
@@ -159,9 +159,9 @@ class PokemonHelper:
             .join(TrsStatsDetectWildMonRaw, Pokemon.encounter_id == TrsStatsDetectWildMonRaw.encounter_id)
         where_conditions = [TrsStatsDetectWildMonRaw.is_shiny == 1]
         if timestamp_after:
-            where_conditions.append(Pokemon.last_modified > datetime.datetime.fromtimestamp(timestamp_after))
+            where_conditions.append(Pokemon.last_modified > DatetimeWrapper.fromtimestamp(timestamp_after))
         if timestamp_before:
-            where_conditions.append(Pokemon.last_modified < datetime.datetime.fromtimestamp(timestamp_before))
+            where_conditions.append(Pokemon.last_modified < DatetimeWrapper.fromtimestamp(timestamp_before))
         stmt = stmt.where(and_(*where_conditions))
         # SQLAlchemy does not handle group by very well it appears so we will do it in python...
         result = await session.execute(stmt)
@@ -195,9 +195,9 @@ class PokemonHelper:
         where_conditions = [Pokemon.individual_attack != None,
                             Pokemon.pokemon_id.in_(mon_ids)]
         if timestamp_after:
-            where_conditions.append(Pokemon.last_modified > datetime.datetime.fromtimestamp(timestamp_after))
+            where_conditions.append(Pokemon.last_modified > DatetimeWrapper.fromtimestamp(timestamp_after))
         if timestamp_before:
-            where_conditions.append(Pokemon.last_modified < datetime.datetime.fromtimestamp(timestamp_before))
+            where_conditions.append(Pokemon.last_modified < DatetimeWrapper.fromtimestamp(timestamp_before))
         # Group_by works in this case as we use COUNT
         stmt = stmt.where(and_(*where_conditions)) \
             .group_by(Pokemon.pokemon_id, Pokemon.form)
@@ -229,7 +229,7 @@ class PokemonHelper:
             iv) \
             .select_from(Pokemon)
         if include_last_n_minutes:
-            minutes = datetime.datetime.now().replace(
+            minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - datetime.timedelta(minutes=include_last_n_minutes)
             stmt = stmt.where(Pokemon.last_modified >= minutes)
         stmt = stmt.group_by(iv,
@@ -279,7 +279,7 @@ class PokemonHelper:
                       Pokemon.longitude)
         where_conditions = [Pokemon.cp != None]
         if last_n_minutes:
-            time_to_check_after = datetime.datetime.now() - datetime.timedelta(minutes=last_n_minutes)
+            time_to_check_after = DatetimeWrapper.now() - datetime.timedelta(minutes=last_n_minutes)
             where_conditions.append(Pokemon.last_modified > time_to_check_after)
         stmt = stmt.where(and_(*where_conditions)) \
             .group_by(Pokemon.latitude, Pokemon.longitude)
@@ -305,7 +305,7 @@ class PokemonHelper:
         else:
             stmt = select(Pokemon, TrsSpawn, None) \
                 .join(TrsSpawn, TrsSpawn.spawnpoint == Pokemon.spawnpoint_id, isouter=True)
-        stmt = stmt.where(and_(Pokemon.last_modified > datetime.datetime.fromtimestamp(_timestamp),
+        stmt = stmt.where(and_(Pokemon.last_modified > DatetimeWrapper.fromtimestamp(_timestamp),
                                Pokemon.seen_type.in_(raw_types)))
 
         result = await session.execute(stmt)

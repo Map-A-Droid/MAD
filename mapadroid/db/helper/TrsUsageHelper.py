@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Optional, List
 
 from sqlalchemy import and_
@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsUsage
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -53,7 +54,7 @@ class TrsUsageHelper:
         stmt = select(TrsUsage)
         where_conditions = []
         if last_n_minutes:
-            time_to_check_after = datetime.now() - timedelta(minutes=last_n_minutes)
+            time_to_check_after = DatetimeWrapper.now() - timedelta(minutes=last_n_minutes)
             where_conditions.append(TrsUsage.timestamp > time_to_check_after.timestamp())
         if instance_name:
             where_conditions.append(TrsUsage.instance == instance_name)

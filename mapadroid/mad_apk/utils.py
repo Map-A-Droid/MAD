@@ -1,23 +1,20 @@
 import io
-import json
 import zipfile
 from distutils.version import LooseVersion
 from typing import Tuple, Union, Optional, List, AsyncGenerator
 
 import apkutils
-from aiocache import cached
 from aiofile import async_open
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, VERSIONCODES_URL
+from mapadroid.utils.global_variables import CHUNK_MAX_SIZE
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APKArch, APKPackage, APKType
 from .custom_types import MADapks, MADPackage, MADPackages
 from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
 from ..db.helper.MadApkHelper import MadApkHelper
-from ..utils.RestHelper import RestHelper, RestApiResult
 from ..utils.functions import get_version_codes
 
 logger = get_logger(LoggerEnums.package_mgr)
@@ -53,6 +50,7 @@ async def file_generator(db, storage_obj, package: APKType, architecture: APKArc
     """ Create a generator for retrieving the stored package
 
     Args:
+        db:
         storage_obj (AbstractAPKStorage): Storage interface for saving
         package (APKType): Package to save
         architecture (APKArch): Architecture of the package to save
@@ -275,6 +273,7 @@ async def stream_package(session: AsyncSession, storage_obj,
     """ Stream the package to the user
 
     Args:
+        session:
         storage_obj (AbstractAPKStorage): Storage interface for grabbing the package
         package (APKType): Package to lookup
         architecture (APKArch): Architecture of the package to lookup

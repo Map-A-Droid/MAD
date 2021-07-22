@@ -24,7 +24,11 @@ rgc_conf = {
 }
 
 
-def create_valid_configs(test_obj, api_creator, auth: bool = True, pd_conf: dict = pd_conf, rgc_conf: dict = rgc_conf):
+def create_valid_configs(test_obj, api_creator, auth: bool = True, pd_conf=None, rgc_conf=None):
+    if rgc_conf is None:
+        rgc_conf = rgc_conf
+    if pd_conf is None:
+        pd_conf = pd_conf
     conf_pd = copy.deepcopy(pd_conf)
     conf_rgc = copy.deepcopy(rgc_conf)
     if auth:

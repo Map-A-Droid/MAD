@@ -8,7 +8,6 @@ from mapadroid.db.model import TrsSpawn, TrsEvent
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
-from loguru import logger
 
 
 class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
