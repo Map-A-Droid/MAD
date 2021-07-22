@@ -178,7 +178,8 @@ $('dialog-confirm').dialog();
 
   $('.date').each(function() {
     var screendate = $(this).text();
-    $(this).text(moment(screendate).fromNow());
+    var date = new Date(screendate * 1000);
+    $(this).text(moment(date).fromNow());
   })
 
   $(".action_screenshot").bind("click", function(event) {
@@ -190,8 +191,10 @@ $('dialog-confirm').dialog();
         type: "GET",
         url: url,
         success: function(data){
+            var date = new Date(data * 1000);
+
             $('#date' + origin + ' span.date').attr('data-original-title', data).tooltip('hide');
-            $('#date' + origin + ' span.date').text(moment(data).fromNow());
+            $('#date' + origin + ' span.date').text(moment(date).fromNow());
             $('img#' + origin).attr('src', 'screenshot/screenshot_' + origin + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
             $('div#' + origin).unblock();
         }

@@ -50,8 +50,9 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         logger.info("Done taking screenshot")
         # not using fromtimestamp as this timestamp is shown in the UI
         # (tho the UI should render a timestamp itself...)
-        return DatetimeWrapper.fromtimestamp(
-            creation_date(filename)).strftime(self._datetimeformat)
+        #return DatetimeWrapper.fromtimestamp(
+        #    creation_date(filename)).strftime(self._datetimeformat)
+        return str(creation_date(filename))
 
     async def _generate_screenshot(self, mapping_entry: DeviceMappingsEntry):
         temp_comm = self._get_ws_server().get_origin_communicator(mapping_entry.device_settings.name)

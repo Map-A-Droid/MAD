@@ -18,8 +18,8 @@ with open(os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates/phone.tpl'),
     phone_template = file.read().replace('\n', '')
 
 
-def creation_date(path_to_file):
-    return os.path.getmtime(path_to_file)
+def creation_date(path_to_file) -> int:
+    return int(os.path.getmtime(path_to_file))
 
 
 def generate_path(path):
@@ -60,8 +60,9 @@ def process_png_to_jpg(image):
 
 def generate_phones(phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=False):
     if not dummy:
-        creationdate = DatetimeWrapper.fromtimestamp(
-            creation_date(filename)).strftime(datetimeformat)
+        creationdate = str(creation_date(filename))
+        #date = DatetimeWrapper.fromtimestamp(last_modification_timestamp)
+        #creationdate = date.strftime(datetimeformat)
     else:
         creationdate = 'No Screen available'
 
