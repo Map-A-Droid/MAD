@@ -7,6 +7,7 @@ from difflib import SequenceMatcher
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 
+import sqlalchemy
 from loguru import logger
 from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -552,6 +553,7 @@ class WorkerQuests(MITMBase):
                         await PokestopHelper.delete(session, Location(latitude, longitude))
                         logger.warning("Tried to open a stop but found a gym instead!")
                         self._spinnable_data_failcount = 0
+                        await session.commit()
                         return PositionStopType.GYM
 
                     visited: bool = fort.get("visited", False)
@@ -559,6 +561,7 @@ class WorkerQuests(MITMBase):
                         logger.info("Level mode: Stop already visited - skipping it")
                         await TrsVisitedHelper.mark_visited(session, self.origin, Location(latitude, longitude))
                         self._spinnable_data_failcount = 0
+                        await session.commit()
                         return PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE
 
                     enabled: bool = fort.get("enabled", True)
@@ -913,7 +916,13 @@ class WorkerQuests(MITMBase):
                     # now update the stop
                     logger.warning("Updating fort {} with previous location {}, {} now placed at {}, {}",
                                    fort_id, stop.latitude, stop.longitude, latitude, longitude)
-                    await PokestopHelper.update_location(session, fort_id, Location(latitude, longitude))
+                    async with session.begin_nested() as nested_session:
+                        await PokestopHelper.update_location(session, fort_id, Location(latitude, longitude))
+                        try:
+                            nested_session.commit()
+                        except sqlalchemy.exc.InternalError as e:
+                            logger.warning("Failed updating location of stop")
+                            logger.exception(e)
 
         timedelta_to_consider_deletion = timedelta(days=3)
         for fort_id, stop in stops.items():
@@ -936,7 +945,13 @@ class WorkerQuests(MITMBase):
                     "Deleting stop {} at {} since it could not be found in the GMO but was present in DB and within "
                     "100m of worker ({}m) and was last updated more than 3 days ago ()",
                     fort_id, str(stop_location), distance_to_location, stop.last_updated)
-                await PokestopHelper.delete(session, stop_location)
+                async with session.begin_nested() as nested_session:
+                    await PokestopHelper.delete(session, stop_location)
+                    try:
+                        nested_session.commit()
+                    except sqlalchemy.exc.InternalError as e:
+                        logger.warning("Failed deleting stop")
+                        logger.exception(e)
                 await self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_id,
                                                                                   stop_location.lat,
                                                                                   stop_location.lng)
