@@ -10,6 +10,7 @@ from mapadroid.data_handler.stats.holder.stats_location_raw.StatsLocationRawHold
 from mapadroid.data_handler.stats.holder.wild_mon_stats.WildMonStatsHolder import WildMonStatsHolder
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType
+from loguru import logger
 
 
 class PlayerStats(AbstractStatsHolder):
@@ -36,7 +37,13 @@ class PlayerStats(AbstractStatsHolder):
         self.__init_holders()
 
         for holder in holders_to_submit:
-            await holder.submit(session)
+            async with session.begin_nested() as nested:
+                await holder.submit(session)
+                try:
+                    await nested.commit()
+                except Exception as e:
+                    await nested.rollback()
+                    logger.warning("Failed submitting stats: {}", e)
 
     def stats_collect_wild_mon(self, encounter_id: int, time_scanned: datetime):
         if self._wild_mon_stats_holder:

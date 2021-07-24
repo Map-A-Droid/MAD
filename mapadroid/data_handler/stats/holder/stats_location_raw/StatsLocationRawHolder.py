@@ -21,7 +21,8 @@ class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
                 session.add_all(self._entries)
                 await nested.commit()
             except Exception as e:
-                logger.info("Failed submitting raw location stats.")
+                logger.info("Failed submitting raw location stats: {}", e)
+                await nested.rollback()
 
     def add_location(self, location: Location, success: bool, fix_timestamp: int,
                      position_type: PositionType, data_timestamp: int, walker: str,

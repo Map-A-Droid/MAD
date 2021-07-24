@@ -25,6 +25,7 @@ class WildMonStatsHolder(AbstractStatsHolder, AbstractWorkerHolder):
                     await nested.commit()
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed submitting wild mon stats. {}", e)
+                    await nested.rollback()
 
     def add(self, encounter_id: int, scanned: datetime, is_shiny: bool = False) -> None:
         if encounter_id not in self._wild_mons_seen:
