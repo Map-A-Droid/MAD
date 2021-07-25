@@ -585,6 +585,11 @@ class WorkerQuests(MITMBase):
                            "- likely not standing exactly on top ...", str(self.current_location))
             await self._check_if_stop_was_nearby_and_update_location(session, gmo_cells)
             await self._spinnable_data_failure()
+            try:
+                await session.commit()
+            except Exception as e:
+                logger.exception(e)
+                await session.rollback()
             return PositionStopType.NO_FORT
 
     async def _try_to_open_pokestop(self, timestamp: float) -> LatestReceivedType:
@@ -916,13 +921,14 @@ class WorkerQuests(MITMBase):
                     # now update the stop
                     logger.warning("Updating fort {} with previous location {}, {} now placed at {}, {}",
                                    fort_id, stop.latitude, stop.longitude, latitude, longitude)
-                    async with session.begin_nested() as nested_session:
-                        await PokestopHelper.update_location(session, fort_id, Location(latitude, longitude))
+                    async with self._db_wrapper as fresh_session, fresh_session:
+                        await PokestopHelper.update_location(fresh_session, fort_id, Location(latitude, longitude))
                         try:
-                            nested_session.commit()
+                            await fresh_session.commit()
                         except sqlalchemy.exc.InternalError as e:
                             logger.warning("Failed updating location of stop")
                             logger.exception(e)
+                            await fresh_session.rollback()
 
         timedelta_to_consider_deletion = timedelta(days=3)
         for fort_id, stop in stops.items():
