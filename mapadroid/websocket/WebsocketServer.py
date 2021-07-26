@@ -206,7 +206,8 @@ class WebsocketServer(object):
             finally:
                 origin_logger.info("Awaiting unregister")
                 async with self.__current_users_mutex:
-                    del self.__current_users[origin]
+                    if origin in self.__current_users:
+                        del self.__current_users[origin]
         finally:
             async with self.__users_connecting_mutex:
                 if origin in self.__users_connecting:
