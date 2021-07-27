@@ -14,11 +14,19 @@ class DeleteSpawnsEndpoint(AbstractStatisticsRootEndpoint):
     # TODO: DELETE-method?
     async def get(self):
         area_id: Optional[int] = self._request.query.get("id")
+        if area_id:
+            area_id = int(area_id)
         event_id: Optional[int] = self._request.query.get("eventid")
+        if event_id:
+            event_id = int(event_id)
         older_than_x_days: Optional[int] = self._request.query.get("olderthanxdays")
+        if older_than_x_days:
+            older_than_x_days = int(older_than_x_days)
         index: Optional[int] = self._request.query.get("index")
         if not index:
             index = 0
+        else:
+            index = int(index)
 
         if await TrsEventHelper.is_event_active(self._session, event_id) and older_than_x_days is None:
             return await self._json_response({'status': 'event'})

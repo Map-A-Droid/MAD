@@ -76,4 +76,4 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
         spawns_and_events: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
             .download_spawns(self._session, fence=fence, event_id=event_id, today_only=today_only,
                              older_than_x_days=older_than_x_days)
-        return [spawn_event[0] for spawn_id, spawn_event in spawns_and_events]
+        return [spawn_event[0] for spawn_id, spawn_event in spawns_and_events.items()]

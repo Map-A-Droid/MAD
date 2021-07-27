@@ -38,9 +38,9 @@
                     "targets": [5],
                     "render": function (data, type, row) {
                         var conv = "";
-                        var del = `<button type="button" class="delete btn btn-danger btn-sm"><a href="delete_spawn?id=${row.id}&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}" class="confirm" data-toggle="tooltip" title="Delete spawnpoint"><i class='fa fa-trash'></i></a></button>`;
+                        var del = `<button type="button" class="delete btn btn-danger btn-sm"><a href="delete_spawn?id=${row.id}&area_id={{area_id}}&event_id={{event_id}}&event={{event}}&mode={{mode}}" class="confirm" data-toggle="tooltip" title="Delete spawnpoint"><i class='fa fa-trash'></i></a></button>`;
                         {% if event != 'DEFAULT' %}
-                        conv = `<button type="button" class="delete btn btn-info btn-sm"><a href="convert_spawn?id=${row.id}&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}" class="confirm" data-toggle="tooltip" title="Convert event spawnpoint to non-event spawnpoint"><i class='fa fa-exchange-alt'></i></a></button>`;
+                        conv = `<button type="button" class="delete btn btn-info btn-sm"><a href="convert_spawn?id=${row.id}&area_id={{area_id}}&event_id={{event_id}}&event={{event}}&mode={{mode}}" class="confirm" data-toggle="tooltip" title="Convert event spawnpoint to non-event spawnpoint"><i class='fa fa-exchange-alt'></i></a></button>`;
                         {% endif %}
                         var map = `<button type="button" class="delete btn btn-success btn-sm" data-toggle="tooltip" title="Show on MADmin map"><a href="map?lat=${row.lat}&lng=${row.lon}" target="_new"><i class="fa fa-map-marker"></i></a></button>`;
                         return `<span style="white-space: nowrap">${del} ${conv} ${map}</span>`
@@ -151,8 +151,8 @@
 
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
 {% if mode == 'OLD' %}
-    <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}&index={{index}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints</div>
+    <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{area_id}}&eventid={{event_id}}&olderthanxdays={{older_than_x_days}}&index={{index}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints</div>
 {% elif mode == 'ACTIVE' %}
-    <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True&index={{index}}'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints</div>
+    <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{area_id}}&eventid={{event_id}}&todayonly=True&index={{index}}'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints</div>
 {% endif %}
 {% endblock %}
