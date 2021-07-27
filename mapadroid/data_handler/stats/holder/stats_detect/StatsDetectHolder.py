@@ -16,8 +16,9 @@ class StatsDetectHolder(AbstractStatsHolder, AbstractWorkerHolder):
 
     async def submit(self, session: AsyncSession) -> None:
         self._entry.timestamp_scan = time.time()
-        session.add(self._entry)
-        await session.commit()
+        async with session.begin_nested() as nested:
+            session.add(self._entry)
+            await nested.commit()
 
     def add_mon(self, time_scanned: datetime) -> None:
         self._entry.update(time_scanned, new_mons=1)
