@@ -934,8 +934,11 @@ class RouteManagerBase(ABC):
     def get_current_route(self) -> Tuple[list, Dict[str, RoutePoolEntry]]:
         return self._route, self._routepool
 
-    def get_current_prioroute(self) -> List[Location]:
-        return self._prio_queue
+    def get_current_prioroute(self) -> List[RoutePriorityQueueEntry]:
+        if self._prio_queue:
+            return self._prio_queue.get_copy_of_prioq()
+        else:
+            return []
 
     def get_level_mode(self):
         return self._level

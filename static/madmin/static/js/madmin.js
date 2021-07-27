@@ -1240,8 +1240,8 @@ new Vue({
         </div>`;
         },
         build_prioq_popup(marker) {
-            const time = moment(marker.options.ctimestamp * 1000);
-            return `Due: ${time.format("YYYY-MM-DD HH:mm:ss")} (${marker.options.ctimestamp})`;
+            const date = new Date(marker.options.ctimestamp * 1000);
+            return `Due: ${date.toLocaleString()} (${marker.options.ctimestamp})`;
         },
         build_prioq_route_popup(route) {
 

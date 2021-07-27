@@ -166,7 +166,7 @@ class TrsSpawnHelper:
                 continue
             spawn_duration_minutes = 60 if spawn.spawndef == 15 else 30
 
-            timestamp = time.mktime(temp_date.timetuple()) - spawn_duration_minutes * 60
+            timestamp = temp_date.timestamp() - spawn_duration_minutes * 60
             # check if we calculated a time in the past, if so, add an hour to it...
             timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
             next_up.append((int(timestamp), Location(float(spawn.latitude), float(spawn.longitude))))

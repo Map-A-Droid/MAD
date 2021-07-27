@@ -33,6 +33,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.route.RouteManagerIV import RouteManagerIV
+from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import RoutePriorityQueueEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -488,7 +489,7 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_current_route() if routemanager is not None else None
 
-    async def routemanager_get_current_prioroute(self, routemanager_id: int) -> Optional[List[Location]]:
+    async def routemanager_get_current_prioroute(self, routemanager_id: int) -> Optional[List[RoutePriorityQueueEntry]]:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_current_prioroute() if routemanager is not None else None
 

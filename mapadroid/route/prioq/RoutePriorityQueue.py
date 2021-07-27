@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import heapq
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -103,3 +104,10 @@ class RoutePriorityQueue:
         merged = self._strategy.filter_queue(merged)
         heapq.heapify(merged)
         return merged
+
+    def get_copy_of_prioq(self) -> List[RoutePriorityQueueEntry]:
+        copied_queue = copy.deepcopy(self.__queue)
+        ordinary_list: List[RoutePriorityQueueEntry] = []
+        while copied_queue:
+            ordinary_list.append(heapq.heappop(copied_queue))
+        return ordinary_list
