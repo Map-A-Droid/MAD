@@ -38,7 +38,7 @@ class PlayerStats(AbstractStatsHolder):
 
         for holder in holders_to_submit:
             async with session.begin_nested() as nested:
-                await holder.submit(session)
+                await holder.submit(nested)
                 try:
                     await nested.commit()
                 except Exception as e:

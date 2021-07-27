@@ -7,6 +7,7 @@ from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.model import SettingsAreaRaidsMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.prioq.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType
@@ -18,16 +19,23 @@ class RouteManagerRaids(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaRaidsMitm, coords, max_radius, max_coords_within_radius,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  joinqueue=None, use_s2: bool = False, s2_level: int = 15, mon_ids_iv: Optional[List[int]] = None):
+        self.remove_from_queue_backlog: Optional[int] = int(
+            area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
+        strategy: RaidSpawnPrioStrategy = RaidSpawnPrioStrategy(clustering_timedelta=int(area.priority_queue_clustering_timedelta),
+                                                                clustering_count_per_circle=max_coords_within_radius,
+                                                                clustering_distance=max_radius,
+                                                                db_wrapper=db_wrapper,
+                                                                max_backlog_duration=self.remove_from_queue_backlog,
+                                                                geofence_helper=geofence_helper)
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   geofence_helper=geofence_helper,
                                   routecalc=routecalc, use_s2=use_s2, s2_level=s2_level,
-                                  joinqueue=joinqueue, mon_ids_iv=mon_ids_iv
-                                  )
+                                  joinqueue=joinqueue, mon_ids_iv=mon_ids_iv,
+                                  initial_prioq_strategy=strategy)
         self._settings: SettingsAreaRaidsMitm = area
-        self.remove_from_queue_backlog: Optional[int] = int(
-            area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
+
         self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
         self.starve_route: bool = True if area.starve_route == 1 else False
         self.init_mode_rounds: int = area.init_mode_rounds

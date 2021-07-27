@@ -100,12 +100,14 @@ class TrsSpawnHelper:
 
     @staticmethod
     async def get_next_spawns(session: AsyncSession, geofence_helper: GeofenceHelper,
-                              additional_event: Optional[int] = None) -> List[Tuple[int, Location]]:
+                              additional_event: Optional[int] = None,
+                              limit_next_n_seconds: Optional[int] = None) -> List[Tuple[int, Location]]:
         """
         Used to be DbWrapper::retrieve_next_spawns
         Fetches the spawnpoints of which the calculated spawn time is upcoming within the next hour and converts it
         to a List of tuples consisting of (timestamp of spawn, Location)
         Args:
+            limit_next_n_seconds:
             session:
             geofence_helper:
             additional_event:
@@ -132,16 +134,19 @@ class TrsSpawnHelper:
         with concurrent.futures.ThreadPoolExecutor() as pool:
             next_up = await loop.run_in_executor(
                 pool, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result,
-                                        geofence_helper=geofence_helper))
+                                        geofence_helper=geofence_helper,
+                                        limit_next_n_seconds=limit_next_n_seconds))
 
         return next_up
 
     @staticmethod
-    def __process_next_to_encounter(result, geofence_helper=None) -> List[Tuple[int, Location]]:
+    def __process_next_to_encounter(result, geofence_helper=None,
+                                    limit_next_n_seconds: Optional[int] = None) -> List[Tuple[int, Location]]:
         next_up: List[Tuple[int, Location]] = []
         current_time = time.time()
         current_time_of_day = DatetimeWrapper.now().replace(microsecond=0)
         timedelta_to_be_added = timedelta(hours=1)
+
         for spawn in result.scalars():
             if not geofence_helper.is_coord_inside_include_geofence([spawn.latitude, spawn.longitude]):
                 continue
@@ -154,7 +159,8 @@ class TrsSpawnHelper:
                 # Add an hour to have the next spawn at the following hour respectively
                 temp_date = temp_date + timedelta_to_be_added
 
-            if temp_date < current_time_of_day:
+            if (temp_date < current_time_of_day or limit_next_n_seconds
+                    and temp_date > current_time_of_day + timedelta(seconds=limit_next_n_seconds)):
                 # spawn has already happened, we should've added it in the past, let's move on
                 # TODO: consider crosschecking against current mons...
                 continue

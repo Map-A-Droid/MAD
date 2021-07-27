@@ -7,6 +7,7 @@ from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import SettingsAreaMonMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.prioq.MonSpawnPrioStrategy import MonSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 
 
@@ -16,19 +17,27 @@ class RouteManagerMon(RouteManagerBase):
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  use_s2: bool = False, s2_level: int = 15,
                  joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        self.remove_from_queue_backlog: Optional[int] = int(
+            area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
+        mon_spawn_strategy: MonSpawnPrioStrategy = MonSpawnPrioStrategy(clustering_timedelta=120,
+                                                                        clustering_count_per_circle=max_coords_within_radius,
+                                                                        clustering_distance=max_radius,
+                                                                        max_backlog_duration=self.remove_from_queue_backlog,
+                                                                        db_wrapper=db_wrapper,
+                                                                        geofence_helper=geofence_helper,
+                                                                        include_event_id=area.include_event_id)
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   geofence_helper=geofence_helper, joinqueue=joinqueue,
                                   use_s2=use_s2, s2_level=s2_level, routecalc=routecalc,
-                                  mon_ids_iv=mon_ids_iv
-                                  )
+                                  mon_ids_iv=mon_ids_iv,
+                                  initial_prioq_strategy=mon_spawn_strategy)
         self._settings: SettingsAreaMonMitm = area
         self.coords_spawns_known: bool = True if area.coords_spawns_known == 1 else False
         self.include_event_id: Optional[int] = area.include_event_id
         self.init: bool = True if area.init == 1 else False
-        self.remove_from_queue_backlog: Optional[int] = int(
-            area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
+
         self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
         self.starve_route: bool = True if area.starve_route == 1 else False
         if area.max_clustering:

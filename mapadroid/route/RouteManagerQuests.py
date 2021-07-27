@@ -22,8 +22,8 @@ class RouteManagerQuests(RouteManagerBase):
                                   max_coords_within_radius=max_coords_within_radius,
                                   geofence_helper=geofence_helper,
                                   routecalc=routecalc, joinqueue=joinqueue, use_s2=False,
-                                  mon_ids_iv=mon_ids_iv
-                                  )
+                                  mon_ids_iv=mon_ids_iv,
+                                  initial_prioq_strategy=None)
         self._settings: SettingsAreaPokestop = area
         self._calctype: str = area.route_calc_algorithm
         self.starve_route = False

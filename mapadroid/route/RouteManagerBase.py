@@ -16,6 +16,9 @@ from loguru import logger
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
+    RoutePriorityQueueEntry
+from mapadroid.route.prioq.RoutePriorityQueue import RoutePriorityQueue
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
@@ -50,6 +53,7 @@ class RouteManagerBase(ABC):
                  max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper,
                  routecalc: SettingsRoutecalc,
+                 initial_prioq_strategy: Optional[AbstractRoutePriorityQueueStrategy],
                  use_s2: bool = False, s2_level: int = 15,
                  joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
         if mon_ids_iv is None:
@@ -114,28 +118,29 @@ class RouteManagerBase(ABC):
         self.init_mode_rounds: int = 1
         self._mon_ids_iv: List[int] = mon_ids_iv
         # initialize priority queue variables
-        self._prio_queue: List = []
-        self._update_prio_queue_thread = None
+        if initial_prioq_strategy:
+            self._prio_queue: Optional[RoutePriorityQueue] = RoutePriorityQueue(initial_prioq_strategy)
+        else:
+            self._prio_queue: Optional[RoutePriorityQueue] = None
         self._check_routepools_thread: Optional[Task] = None
         self._stop_update_thread: asyncio.Event = asyncio.Event()
-
-    @classmethod
-    async def create(cls, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
-                     max_radius: float,
-                     max_coords_within_radius: int,
-                     geofence_helper: GeofenceHelper,
-                     routecalc: SettingsRoutecalc,
-                     use_s2: bool = False, s2_level: int = 15,
-                     joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
-        self = RouteManagerBase
-        if mon_ids_iv is None:
-            mon_ids_iv = []
 
     def get_ids_iv(self) -> List[int]:
         return self._mon_ids_iv
 
     def get_max_radius(self):
         return self._max_radius
+
+    async def set_priority_queue_strategy(self, new_strategy: Optional[AbstractRoutePriorityQueueStrategy]) -> None:
+        if not new_strategy:
+            await self._prio_queue.stop()
+            self._prio_queue = None
+        else:
+            if not self._prio_queue:
+                self._prio_queue = RoutePriorityQueue(new_strategy)
+                await self._prio_queue.start()
+            else:
+                self._prio_queue.strategy = new_strategy
 
     async def _start_check_routepools(self):
         # TODO: Transform to asyncio
@@ -145,17 +150,13 @@ class RouteManagerBase(ABC):
     async def join_threads(self):
         logger.info("Shutdown Route Threads")
         # TODO: Refactor from thread to asyncio task
-        if self._update_prio_queue_thread is not None:
-            while not self._update_prio_queue_thread.done():
-                await asyncio.sleep(1)
-                logger.debug("Shutdown Prio Queue Thread - waiting...")
-                self._update_prio_queue_thread.cancel()
+        if self._prio_queue:
+            await self._prio_queue.stop()
         logger.debug("Shutdown Prio Queue Thread - done...")
         if self._check_routepools_thread is not None:
             while not self._check_routepools_thread.done():
                 self._check_routepools_thread.cancel()
                 await asyncio.sleep(5)
-        self._update_prio_queue_thread: Optional[Task] = None
         self._check_routepools_thread: Optional[Task] = None
         self._stop_update_thread.clear()
         logger.info("Shutdown Route Threads completed")
@@ -205,18 +206,8 @@ class RouteManagerBase(ABC):
             await self.stop_routemanager()
 
     async def _start_priority_queue(self):
-        if (self.delay_after_timestamp_prio is not None or self._mode == WorkerType.IV_MITM) \
-                and not self._mode == WorkerType.STOPS:
-            if self._stop_update_thread.is_set():
-                self._stop_update_thread.clear()
-            self._prio_queue = []
-            if self._mode not in [WorkerType.IV_MITM, WorkerType.STOPS]:
-                self.clustering_helper = ClusteringHelper(self._max_radius,
-                                                          self._max_clustering,
-                                                          self._cluster_priority_queue_criteria())
-            loop = asyncio.get_running_loop()
-            self._update_prio_queue_thread = loop.create_task(self._update_priority_queue_loop())
-            logger.info("Started PrioQ")
+        if self._prio_queue:
+            await self._prio_queue.start()
 
     # list_coords is a numpy array of arrays!
     def _add_coords_numpy(self, list_coords: np.ndarray):
@@ -323,51 +314,6 @@ class RouteManagerBase(ABC):
             else:
                 await self.stop_routemanager()
 
-    async def _update_priority_queue_loop(self):
-        if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:
-            return
-        while not self._stop_update_thread.is_set():
-            # retrieve the latest hatches from DB
-            logger.success("Trying to update prioQ")
-            new_queue = await self._retrieve_latest_priority_queue()
-            await self._merge_priority_queue(new_queue)
-            redocounter = 0
-            while redocounter <= self._priority_queue_update_interval() and not self._stop_update_thread.is_set():
-                redocounter += 1
-                await asyncio.sleep(1)
-                if self._stop_update_thread.is_set():
-                    logger.info("Kill Prio Queue loop while sleeping")
-                    break
-
-    async def _merge_priority_queue(self, new_queue):
-        if new_queue:
-            loop = asyncio.get_running_loop()
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                merged = await loop.run_in_executor(
-                    pool, self.__process_merge, new_queue)
-            self._prio_queue = merged
-            logger.success("Finalized new priority queue with {} entries", len(merged))
-            logger.debug2("Priority queue entries: {}", str(merged))
-
-    def __process_merge(self, new_queue):
-        new_queue = list(new_queue)
-        logger.success("Got {} new events", len(new_queue))
-        # TODO: verify if this procedure is good for other modes, too
-        # TODO: Async Executor as clustering takes time..
-        if self._mode == WorkerType.MON_MITM:
-            new_queue = self._filter_priority_queue_internal(new_queue)
-            logger.debug2("Merging existing Q of {} events with {} clustered new events",
-                          len(self._prio_queue), len(new_queue))
-            # merged: List[Tuple[int, Location]] = list(new_queue + copy(self._prio_queue))
-            merged = new_queue
-            logger.info("Merging resulted in queue with {} entries", len(merged))
-            # TODO: Cluster after checking if new_queue has timestamp and distance within self._prio_queue
-            merged = self._filter_priority_queue_internal(merged, cluster=False)
-        else:
-            merged = self._filter_priority_queue_internal(new_queue)
-        heapq.heapify(merged)
-        return merged
-
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
         return timedelta.days * 24 * 3600 + timedelta.seconds
@@ -388,14 +334,6 @@ class RouteManagerBase(ABC):
         if lat < -90.0 or lat > 90.0 or lon < -180.0 or lon > 180.0:
             return
         self._coords_to_be_ignored.add(Location(lat, lon))
-
-    @abstractmethod
-    async def _retrieve_latest_priority_queue(self) -> List[Tuple[int, Location]]:
-        """
-        Method that's supposed to return a plain list containing (timestamp, Location) of the next events of interest
-        :return:
-        """
-        pass
 
     @abstractmethod
     async def start_routemanager(self):
@@ -445,62 +383,11 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    def _cluster_priority_queue_criteria(self):
-        """
-        If you do not want to have any filtering, simply return 0, 0, otherwise simply
-        return timedelta_seconds, distance
-        :return:
-        """
-
-    @abstractmethod
-    def _priority_queue_update_interval(self):
-        """
-        The time to sleep in between consecutive updates of the priority queue
-        :return:
-        """
-
-    @abstractmethod
     def _delete_coord_after_fetch(self) -> bool:
         """
         Whether coords fetched from get_next_location should be removed from the total route
         :return:
         """
-
-    def _filter_priority_queue_internal(self, latest, cluster=True) -> List[Tuple[int, Location]]:
-        """
-        Filter through the internal priority queue and cluster events within the timedelta and distance returned by
-        _cluster_priority_queue_criteria
-        :return:
-        """
-        if self._mode == WorkerType.IV_MITM:
-            # exclude IV prioQ to also pass encounterIDs since we do not pass additional information through when
-            # clustering
-            return latest
-        if self._mode == WorkerType.MON_MITM and self.remove_from_queue_backlog == 0:
-            logger.warning("You are running in mon_mitm mode with priority queue enabled and "
-                           "remove_from_queue_backlog set to 0. This may result in building up a significant "
-                           "queue "
-                           "backlog and reduced scanning performance. Please review this setting or set it to "
-                           "the "
-                           "default of 300.")
-
-        if self.remove_from_queue_backlog is not None:
-            delete_before = time.time() - self.remove_from_queue_backlog
-        else:
-            delete_before = 0
-        if self._mode == WorkerType.MON_MITM:
-            delete_after = time.time() + 600
-            latest: List[Tuple[int, Location]] = [to_keep for to_keep in latest if
-                                                  not to_keep[0] < delete_before and not to_keep[0] > delete_after]
-        else:
-            latest: List[Tuple[int, Location]] = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
-        # TODO: sort latest by modified flag of event
-        if cluster:
-            merged = self.clustering_helper.get_clustered(latest)
-            # merged = self.clustering_helper.get_clustered(latest)
-            return merged
-        else:
-            return latest
 
     def __set_routepool_entry_location(self, origin: str, pos: Location):
         if self._routepool.get(origin, None) is not None:
@@ -548,8 +435,8 @@ class RouteManagerBase(ABC):
         logger.debug("Trying to fetch a location from routepool")
         # determine whether we move to the next location or the prio queue top's item
         # TODO: Better use a strategy pattern or observer for extendability?
-        if self.delay_after_timestamp_prio and (not routepool_entry.last_position_type == PositionType.PRIOQ
-                                                or self.starve_route):
+        if self._prio_queue and (not routepool_entry.last_position_type == PositionType.PRIOQ
+                                 or self.starve_route):
             logger.debug2("Checking for prioQ entries")
             # Check the PrioQ
             try:
@@ -558,29 +445,34 @@ class RouteManagerBase(ABC):
                     # "blocking" to wait for a coord
                     while not next_timestamp:
                         try:
-                            next_timestamp, next_coord = heapq.heappop(self._prio_queue)
-                        except IndexError:
+                            prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
+                            next_timestamp = prioq_entry.timestamp_due
+                            next_coord = prioq_entry.location
+                        except (IndexError, asyncio.TimeoutError):
                             # No item available yet, sleep
                             await asyncio.sleep(1)
                 else:
                     logger.debug2("Popping prioQ")
-                    val = heapq.heappop(self._prio_queue)
-                    logger.debug2("Got location of prioQ: {}", val)
+                    prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
+                    next_timestamp = prioq_entry.timestamp_due
+                    next_coord = prioq_entry.location
 
-                    next_timestamp, next_coord = val
                 next_readable_time = DatetimeWrapper.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
-                if next_timestamp < time.time():
+                now = time.time()
+                if next_timestamp > now:
                     raise IndexError("Next event at {} has not taken place yet", next_readable_time)
                 if self._mode == WorkerType.MON_MITM:
                     if self.remove_from_queue_backlog not in [None, 0]:
-                        delete_before = time.time() - self.remove_from_queue_backlog
+                        delete_before = now - self.remove_from_queue_backlog
                     else:
                         delete_before = 0
 
                     while next_timestamp < delete_before:
                         # TODO: Move task_done elsewhere?
                         logger.debug("Popping prio Q")
-                        next_timestamp, next_coord = heapq.heappop(self._prio_queue)
+                        prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
+                        next_timestamp = prioq_entry.timestamp_due
+                        next_coord = prioq_entry.location
                         next_readable_time = DatetimeWrapper.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
                         if next_timestamp < delete_before:
                             logger.warning(
@@ -592,14 +484,16 @@ class RouteManagerBase(ABC):
                        or self._other_worker_closer_to_prioq(next_coord, origin)):
                     logger.info("Invalid prio event or scheduled for {} passed to a closer worker.",
                                 next_readable_time)
-                    next_timestamp, next_coord = heapq.heappop(self._prio_queue)
+                    prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
+                    next_timestamp = prioq_entry.timestamp_due
+                    next_coord = prioq_entry.location
 
                 routepool_entry.last_position_type = PositionType.PRIOQ
-                logger.debug2("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
+                logger.debug("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
                               next_coord.lng, next_readable_time)
                 self.__set_routepool_entry_location(origin, next_coord)
                 return next_coord
-            except IndexError:
+            except (IndexError, asyncio.TimeoutError):
                 # Get next coord "normally"
                 logger.debug("No prioQ location available")
                 pass

@@ -5,6 +5,7 @@ from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import SettingsAreaIvMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.prioq.IvOnlyPrioStrategy import IvOnlyPrioStrategy
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -16,12 +17,20 @@ class RouteManagerIV(RouteManagerBase):
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        iv_strategy: IvOnlyPrioStrategy = IvOnlyPrioStrategy(clustering_timedelta=120,
+                                                             clustering_count_per_circle=max_coords_within_radius,
+                                                             clustering_distance=max_radius,
+                                                             max_backlog_duration=area.remove_from_queue_backlog,
+                                                             db_wrapper=db_wrapper,
+                                                             geofence_helper=geofence_helper,
+                                                             min_time_left_seconds=area.min_time_left_seconds,
+                                                             mon_ids_to_scan=mon_ids_iv)
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   geofence_helper=geofence_helper, joinqueue=joinqueue,
-                                  routecalc=routecalc, mon_ids_iv=mon_ids_iv
-                                  )
+                                  routecalc=routecalc, mon_ids_iv=mon_ids_iv,
+                                  initial_prioq_strategy=iv_strategy)
         self._settings: SettingsAreaIvMitm = area
         self.encounter_ids_left: List[int] = []
         self.starve_route: bool = True
@@ -50,13 +59,11 @@ class RouteManagerIV(RouteManagerBase):
                                                                           eligible_mon_ids=self._mon_ids_iv)
         # extract the encounterIDs and set them in the routeManager...
         new_list: Set = set()
-        # TODO: I do not think this will work considering the collection consists of tuples of different values...
-        #  => Filter by encounterID should be done
+        # TODO: Adjust for new prioQ stuff...
         for prio in latest_priorities:
             new_list.add(prio[2])
         self.encounter_ids_left = list(new_list)
         # Clear old encounters in the list...
-        self._prio_queue.clear()
         return latest_priorities
 
     def get_encounter_ids_left(self) -> List[int]:

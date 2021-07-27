@@ -1,3 +1,4 @@
+import datetime
 import time
 from typing import List, Optional, Tuple
 
@@ -19,11 +20,16 @@ class RaidHelper:
 
     @staticmethod
     async def get_next_hatches(session: AsyncSession,
-                               geofence_helper: GeofenceHelper = None) -> List[Tuple[int, Location]]:
+                               geofence_helper: GeofenceHelper = None,
+                               only_next_n_seconds: Optional[int] = None) -> List[Tuple[int, Location]]:
         db_time_to_check = DatetimeWrapper.now()
         stmt = select(Raid.start, Gym.latitude, Gym.longitude) \
-            .select_from(Raid).join(Gym, Gym.gym_id == Raid.gym_id) \
-            .where(and_(Raid.end > db_time_to_check, Raid.pokemon_id != None))
+            .select_from(Raid).join(Gym, Gym.gym_id == Raid.gym_id)
+        where_conditions = [and_(Raid.end > db_time_to_check, Raid.pokemon_id != None)]
+
+        if only_next_n_seconds:
+            where_conditions.append(Raid.start < db_time_to_check + datetime.timedelta(seconds=only_next_n_seconds))
+        stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         next_hatches: List[Tuple[int, Location]] = []
         for (start, latitude, longitude) in result.scalars():
