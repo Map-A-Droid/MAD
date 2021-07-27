@@ -65,7 +65,7 @@
         $("#navgyms").addClass("active");
         $.ajax({
             type: "GET",
-            url: "get_spawn_details?area_id={{areaid}}&event_id={{eventid}}&mode={{mode}}&index={{index}}",
+            url: "get_spawn_details?area_id={{area_id}}&event_id={{event_id}}&mode={{mode}}&index={{index}}",
             success: function (result) {
                 setTimeout($.unblockUI, 100);
                 setGrid('#show-spawnpoints-stats', result);
@@ -149,15 +149,6 @@
     <h2>All Spawnpoints (Event: {{event}})</h2>
 {% endif %}
 
-<p>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    {% for message in messages %}
-      <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-    {% endfor %}
-    {% endif %}
-  {% endwith %}
-</p>
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
 {% if mode == 'OLD' %}
     <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}&index={{index}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints</div>

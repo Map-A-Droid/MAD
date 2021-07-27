@@ -202,16 +202,18 @@ class TrsSpawnHelper:
             polygon = "POLYGON(({}))".format(fence)
             where_conditions.append(func.ST_Contains(func.ST_GeomFromText(polygon),
                                                      func.POINT(TrsSpawn.latitude, TrsSpawn.longitude)))
+
+        last_midnight = DatetimeWrapper.now().replace(hour=0, minute=0, second=0, microsecond=0)
         if event_id:
             where_conditions.append(TrsSpawn.eventid == event_id)
         if today_only:
-            where_conditions.append(or_(DatetimeWrapper.now().today() <= TrsSpawn.last_scanned,
-                                        DatetimeWrapper.now().today() <= TrsSpawn.last_non_scanned))
+            where_conditions.append(and_(last_midnight <= TrsSpawn.last_scanned,
+                                        last_midnight <= TrsSpawn.last_non_scanned))
         elif older_than_x_days:
             # elif as it makes no sense to check for older than X days AND today
-            older_than_date: datetime = DatetimeWrapper.now().today() - timedelta(days=older_than_x_days)
-            where_conditions.append(or_(older_than_date <= TrsSpawn.last_scanned,
-                                        older_than_date <= TrsSpawn.last_non_scanned))
+            older_than_date: datetime = last_midnight - timedelta(days=older_than_x_days)
+            where_conditions.append(and_(older_than_date > TrsSpawn.last_scanned,
+                                         older_than_date > TrsSpawn.last_non_scanned))
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         loop = asyncio.get_running_loop()

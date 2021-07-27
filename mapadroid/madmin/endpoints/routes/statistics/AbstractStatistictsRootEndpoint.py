@@ -60,8 +60,8 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
         for spawn_id, spawn_event in spawns_and_events.items():
             spawn, event = spawn_event
             active_spawns.append({'id': spawn_id, 'lat': spawn.latitude, 'lon': spawn.longitude,
-                                  'lastscan': spawn.last_scanned.timestamp(),
-                                  'lastnonscan': spawn.last_non_scanned.timestamp()})
+                                  'lastscan': spawn.last_scanned.timestamp() if spawn.last_scanned else 0,
+                                  'lastnonscan': spawn.last_non_scanned.timestamp() if spawn.last_non_scanned else 0})
 
         return active_spawns
 

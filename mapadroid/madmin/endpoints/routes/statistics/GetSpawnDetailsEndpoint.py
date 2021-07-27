@@ -11,12 +11,18 @@ class GetSpawnDetailsEndpoint(AbstractStatisticsRootEndpoint):
     # TODO: Auth
     async def get(self):
 
-        area_id: Optional[int] = self._request.query.get("id")
-        event_id: Optional[int] = self._request.query.get("eventid")
+        area_id: Optional[int] = self._request.query.get("area_id")
+        if area_id:
+            area_id = int(area_id)
+        event_id: Optional[int] = self._request.query.get("event_id")
+        if event_id:
+            event_id = int(event_id)
         mode: Optional[str] = self._request.query.get("mode")
         index: Optional[int] = self._request.query.get("index")
         if not index:
             index = 0
+        else:
+            index = int(index)
         older_than_x_days: Optional[int] = None
         today_only = False
 

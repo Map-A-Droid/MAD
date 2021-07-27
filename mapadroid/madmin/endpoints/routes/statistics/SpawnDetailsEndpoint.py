@@ -14,7 +14,11 @@ class SpawnDetailsEndpoint(AbstractStatisticsRootEndpoint):
     @aiohttp_jinja2.template('statistics/spawn_details.html')
     async def get(self):
         area_id: Optional[int] = self._request.query.get("id")
+        if area_id:
+            area_id = int(area_id)
         event_id: Optional[int] = self._request.query.get("eventid")
+        if event_id:
+            event_id = int(event_id)
         # TODO: Check if str
         event: Optional[str] = self._request.query.get("event")
         mode: Optional[str] = self._request.query.get("mode")
@@ -23,6 +27,8 @@ class SpawnDetailsEndpoint(AbstractStatisticsRootEndpoint):
         index: Optional[int] = self._request.query.get("index")
         if not index:
             index = 0
+        else:
+            index = int(index)
 
         return {
             "title": "MAD Statistics",
