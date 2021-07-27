@@ -16,13 +16,14 @@ class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
         self._entries: List[TrsStatsLocationRaw] = []
 
     async def submit(self, session: AsyncSession) -> None:
-        async with session.begin_nested() as nested:
-            try:
-                session.add_all(self._entries)
-                await nested.commit()
-            except Exception as e:
-                logger.info("Failed submitting raw location stats: {}", e)
-                await nested.rollback()
+        for entry in self._entries:
+            async with session.begin_nested() as nested:
+                try:
+                    session.add(entry)
+                    await nested.commit()
+                except Exception as e:
+                    logger.info("Failed submitting raw location stats: {}", e)
+                    await nested.rollback()
 
     def add_location(self, location: Location, success: bool, fix_timestamp: int,
                      position_type: PositionType, data_timestamp: int, walker: str,
