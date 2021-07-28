@@ -41,8 +41,7 @@ def upgrade():
         op.create_table(
             'trs_stats_detect_wild_mon_raw',
             sa.Column("worker", sa.String(128, 'utf8mb4_unicode_ci'), primary_key=True),
-            sa.Column('encounter_id', BIGINT(20, unsigned=True), sa.ForeignKey('pokemon.encounter_id', ondelete='CASCADE',
-                                                                               onupdate='CASCADE'),
+            sa.Column('encounter_id', BIGINT(20, unsigned=True),
                       primary_key=True),
             sa.Column('count', sa.INT(), nullable=False),
             sa.Column('is_shiny', sa.BOOLEAN(), server_default="0", index=True, nullable=False),
