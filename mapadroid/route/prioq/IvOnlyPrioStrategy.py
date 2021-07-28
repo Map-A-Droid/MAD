@@ -12,9 +12,11 @@ from mapadroid.utils.collections import Location
 class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
     def __init__(self, clustering_timedelta: int, clustering_distance: int, clustering_count_per_circle: int,
                  max_backlog_duration: int, db_wrapper: DbWrapper, geofence_helper: GeofenceHelper,
-                 min_time_left_seconds: int, mon_ids_to_scan: Optional[List[int]]):
+                 min_time_left_seconds: int, mon_ids_to_scan: Optional[List[int]],
+                 delay_after_event: int):
         super().__init__(update_interval=600, full_replace_queue=False,
-                         max_backlog_duration=max_backlog_duration)
+                         max_backlog_duration=max_backlog_duration,
+                         delay_after_event=delay_after_event)
         self._clustering_helper = ClusteringHelper(clustering_distance,
                                                    max_count_per_circle=clustering_count_per_circle,
                                                    max_timedelta_seconds=clustering_timedelta)
@@ -50,7 +52,7 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
         del locations_transformed_for_clustering
         new_coords: List[RoutePriorityQueueEntry] = []
         for (timestamp_due, location) in clustered:
-            entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due,
+            entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due + self.get_delay_after_event(),
                                                                      location=location)
             new_coords.append(entry)
         return new_coords

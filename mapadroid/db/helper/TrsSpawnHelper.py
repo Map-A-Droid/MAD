@@ -153,23 +153,24 @@ class TrsSpawnHelper:
             endminsec_split = spawn.calc_endminsec.split(":")
             minutes = int(endminsec_split[0])
             seconds = int(endminsec_split[1])
-            temp_date = current_time_of_day.replace(
+            despawn_time = current_time_of_day.replace(
                 minute=minutes, second=seconds)
             if minutes < current_time_of_day.minute:
                 # Add an hour to have the next spawn at the following hour respectively
-                temp_date = temp_date + timedelta_to_be_added
+                despawn_time = despawn_time + timedelta_to_be_added
 
-            if (temp_date < current_time_of_day or limit_next_n_seconds
-                    and temp_date > current_time_of_day + timedelta(seconds=limit_next_n_seconds)):
-                # spawn has already happened, we should've added it in the past, let's move on
+            spawn_duration_minutes = 60 if spawn.spawndef == 15 else 30
+            spawn_time = despawn_time - timedelta(minutes=spawn_duration_minutes)
+
+            if (spawn_time < current_time_of_day or limit_next_n_seconds
+                    and spawn_time > current_time_of_day + timedelta(seconds=limit_next_n_seconds)):
+                # spawn has already happened, we should've added it in the past or it's too far in the future
                 # TODO: consider crosschecking against current mons...
                 continue
-            spawn_duration_minutes = 60 if spawn.spawndef == 15 else 30
 
-            timestamp = temp_date.timestamp() - spawn_duration_minutes * 60
             # check if we calculated a time in the past, if so, add an hour to it...
-            timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
-            next_up.append((int(timestamp), Location(float(spawn.latitude), float(spawn.longitude))))
+            # timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
+            next_up.append((int(spawn_time.timestamp()), Location(float(spawn.latitude), float(spawn.longitude))))
         return next_up
 
     @staticmethod

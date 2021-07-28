@@ -21,12 +21,14 @@ class RouteManagerRaids(RouteManagerBase):
                  joinqueue=None, use_s2: bool = False, s2_level: int = 15, mon_ids_iv: Optional[List[int]] = None):
         self.remove_from_queue_backlog: Optional[int] = int(
             area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
+        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
         strategy: RaidSpawnPrioStrategy = RaidSpawnPrioStrategy(clustering_timedelta=int(area.priority_queue_clustering_timedelta),
                                                                 clustering_count_per_circle=max_coords_within_radius,
                                                                 clustering_distance=max_radius,
                                                                 db_wrapper=db_wrapper,
                                                                 max_backlog_duration=self.remove_from_queue_backlog,
-                                                                geofence_helper=geofence_helper)
+                                                                geofence_helper=geofence_helper,
+                                                                delay_after_event=self.delay_after_timestamp_prio)
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
@@ -36,7 +38,6 @@ class RouteManagerRaids(RouteManagerBase):
                                   initial_prioq_strategy=strategy)
         self._settings: SettingsAreaRaidsMitm = area
 
-        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
         self.starve_route: bool = True if area.starve_route == 1 else False
         self.init_mode_rounds: int = area.init_mode_rounds
         self.init: bool = True if area.init == 1 else False

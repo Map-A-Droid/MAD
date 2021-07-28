@@ -14,10 +14,15 @@ class RoutePriorityQueueEntry:
 
 class AbstractRoutePriorityQueueStrategy(ABC):
     def __init__(self, update_interval: int,
-                 full_replace_queue: bool, max_backlog_duration: int):
+                 full_replace_queue: bool, max_backlog_duration: int,
+                 delay_after_event: int):
         self._update_interval: int = update_interval
         self._full_replace_queue: bool = full_replace_queue
         self._max_backlog_duration: int = max_backlog_duration
+        self._delay_after_event: int = delay_after_event
+
+    def get_delay_after_event(self) -> int:
+        return self._delay_after_event
 
     def get_update_interval(self) -> int:
         """

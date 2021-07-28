@@ -17,6 +17,10 @@ class RouteManagerIV(RouteManagerBase):
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
+        if self.delay_after_timestamp_prio is None or self.delay_after_timestamp_prio == 0:
+            # just set a value to enable the queue
+            self.delay_after_timestamp_prio = 10
         iv_strategy: IvOnlyPrioStrategy = IvOnlyPrioStrategy(clustering_timedelta=120,
                                                              clustering_count_per_circle=max_coords_within_radius,
                                                              clustering_distance=max_radius,
@@ -24,7 +28,8 @@ class RouteManagerIV(RouteManagerBase):
                                                              db_wrapper=db_wrapper,
                                                              geofence_helper=geofence_helper,
                                                              min_time_left_seconds=area.min_time_left_seconds,
-                                                             mon_ids_to_scan=mon_ids_iv)
+                                                             mon_ids_to_scan=mon_ids_iv,
+                                                             delay_after_event=self.delay_after_timestamp_prio)
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
@@ -35,10 +40,6 @@ class RouteManagerIV(RouteManagerBase):
         self.encounter_ids_left: List[int] = []
         self.starve_route: bool = True
         self.remove_from_queue_backlog: int = area.remove_from_queue_backlog
-        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
-        if self.delay_after_timestamp_prio is None or self.delay_after_timestamp_prio == 0:
-            # just set a value to enable the queue
-            self.delay_after_timestamp_prio = 5
 
     def _priority_queue_update_interval(self):
         return 60
