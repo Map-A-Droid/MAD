@@ -39,12 +39,11 @@ class SerializedMitmDataProcessor:
                         await self.process_data(received_timestamp=item[0], data=item[1],
                                                 origin=item[2])
                         del item
-                    except (sqlalchemy.exc.IntegrityError, MitmReceiverRetry) as e:
+                    except (sqlalchemy.exc.IntegrityError, MitmReceiverRetry, sqlalchemy.exc.InternalError) as e:
                         logger.info("Failed submitting data to DB, rescheduling. {}", e)
                         await self.__queue.put(item)
                     except Exception as e:
                         logger.info("Failed processing data. {}", e)
-                        logger.exception(e)
                     self.__queue.task_done()
                     end_time = self.get_time_ms() - start_time
                     logger.debug("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
@@ -214,51 +213,69 @@ class SerializedMitmDataProcessor:
     async def __process_lure_no_iv(self, data, received_timestamp) -> Tuple[List[int], int]:
         lurenoiv_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
-            lure_wild = await self.__db_submit.mon_lure_noiv(session, received_timestamp, data["payload"])
-            await session.commit()
+            try:
+                lure_wild = await self.__db_submit.mon_lure_noiv(session, received_timestamp, data["payload"])
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting lure no iv: {}", e)
         lure_processing_time = self.get_time_ms() - lurenoiv_start
         return lure_wild, lure_processing_time
 
     async def __process_nearby_mons(self, data, received_timestamp) -> Tuple[List[int], List[int], int]:
         nearby_mons_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
-            cell_encounters, stop_encounters = await self.__db_submit.mons_nearby(session, received_timestamp,
-                                                                                  data["payload"])
-            await session.commit()
+            try:
+                cell_encounters, stop_encounters = await self.__db_submit.mons_nearby(session, received_timestamp,
+                                                                                      data["payload"])
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting nearby mons: {}", e)
         nearby_mons_time = self.get_time_ms() - nearby_mons_time_start
         return cell_encounters, stop_encounters, nearby_mons_time
 
     async def __process_wild_mons(self, data, received_timestamp) -> Tuple[List[int], int]:
         mons_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
-            encounter_ids_in_gmo = await self.__db_submit.mons(session,
-                                                               received_timestamp,
-                                                               data["payload"])
-            await session.commit()
+            try:
+                encounter_ids_in_gmo = await self.__db_submit.mons(session,
+                                                                   received_timestamp,
+                                                                   data["payload"])
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting wild mons: {}", e)
         mons_time = self.get_time_ms() - mons_time_start
         return encounter_ids_in_gmo, mons_time
 
     async def __process_cells(self, data):
         cells_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
-            await self.__db_submit.cells(session, data["payload"])
-            await session.commit()
+            try:
+                await self.__db_submit.cells(session, data["payload"])
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting cells: {}", e)
         cells_time = self.get_time_ms() - cells_time_start
         return cells_time
 
     async def __process_spawnpoints(self, data, received_timestamp: int):
         spawnpoints_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
-            await self.__db_submit.spawnpoints(session, data["payload"], received_timestamp)
-            await session.commit()
+            try:
+                await self.__db_submit.spawnpoints(session, data["payload"], received_timestamp)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting spawnpoints: {}", e)
         spawnpoints_time = self.get_time_ms() - spawnpoints_time_start
         return spawnpoints_time
 
     async def __process_raids(self, data):
         raids_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
-            await self.__db_submit.raids(session, data["payload"])
-            await session.commit()
+            try:
+                await self.__db_submit.raids(session, data["payload"])
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting raids: {}", e)
         raids_time = self.get_time_ms() - raids_time_start
         return raids_time
 
@@ -266,24 +283,33 @@ class SerializedMitmDataProcessor:
         gyms_time_start = self.get_time_ms()
         # TODO: If return value False, rollback transaction?
         async with self.__db_wrapper as session, session:
-            await self.__db_submit.gyms(session, data["payload"])
-            await session.commit()
+            try:
+                await self.__db_submit.gyms(session, data["payload"])
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting gyms: {}", e)
         gyms_time = self.get_time_ms() - gyms_time_start
         return gyms_time
 
     async def __process_stops(self, data):
         stops_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
-            await self.__db_submit.stops(session, data["payload"])
-            await session.commit()
+            try:
+                await self.__db_submit.stops(session, data["payload"])
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting stops: {}", e)
         stops_time = self.get_time_ms() - stops_time_start
         return stops_time
 
     async def __process_weather(self, data, received_timestamp):
         weather_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
-            await self.__db_submit.weather(session, data["payload"], received_timestamp)
-            await session.commit()
+            try:
+                await self.__db_submit.weather(session, data["payload"], received_timestamp)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting weather: {}", e)
         weather_time = self.get_time_ms() - weather_time_start
         return weather_time
 

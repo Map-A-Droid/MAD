@@ -237,6 +237,7 @@ class MappingManager:
                 device_name, key, value = set_settings
                 async with self.__mappings_mutex:
                     await self.__set_devicesetting(device_name, key, value)
+                self.__devicesettings_setter_queue.task_done()
 
     async def __set_devicesetting(self, device_name: str, key: MappingManagerDevicemappingKey, value: Any) -> None:
         devicemapping_entry: Optional[DeviceMappingsEntry] = self._devicemappings.get(device_name, None)

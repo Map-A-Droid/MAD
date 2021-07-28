@@ -61,40 +61,40 @@ class WebsocketConnectedClientEntry:
         new_entry = ReceivedMessageEntry()
         async with self.received_mutex:
             self.received_messages[message_id] = new_entry
-
-        if isinstance(message, bytes):
-            logger.debug("sending binary: {}", message[:10])
-        else:
-            logger.debug("sending command: {}", message.strip())
-        # send message
-        await self.__send_message(message_id, message, byte_command)
-
-        # wait for it to trigger...
-        logger.debug2("Timeout towards: {}", timeout)
-        response = None
         try:
-            event_triggered = await asyncio.wait_for(new_entry.message_received_event.wait(), timeout=timeout)
-            if event_triggered:
-                logger.debug("Received answer in time, popping response")
-                self.fail_counter = 0
-                if isinstance(new_entry.message, str):
-                    logger.debug4("Response: {}", new_entry.message.strip())
-                else:
-                    logger.debug4("Received binary data , starting with {}", new_entry.message[:10])
-                response = new_entry.message
-        except asyncio.TimeoutError:
-            logger.warning("Timeout, increasing timeout-counter")
-            self.fail_counter += 1
-            if self.fail_counter > 5:
-                logger.error("5 consecutive timeouts or origin is no longer connected, cleanup")
-                raise WebsocketWorkerTimeoutException
+            if isinstance(message, bytes):
+                logger.debug("sending binary: {}", message[:10])
+            else:
+                logger.debug("sending command: {}", message.strip())
+            # send message
+            await self.__send_message(message_id, message, byte_command)
+
+            # wait for it to trigger...
+            logger.debug2("Timeout towards: {}", timeout)
+            response = None
+            try:
+                event_triggered = await asyncio.wait_for(new_entry.message_received_event.wait(), timeout=timeout)
+                if event_triggered:
+                    logger.debug("Received answer in time, popping response")
+                    self.fail_counter = 0
+                    if isinstance(new_entry.message, str):
+                        logger.debug4("Response: {}", new_entry.message.strip())
+                    else:
+                        logger.debug4("Received binary data , starting with {}", new_entry.message[:10])
+                    response = new_entry.message
+            except asyncio.TimeoutError:
+                logger.warning("Timeout, increasing timeout-counter")
+                self.fail_counter += 1
+                if self.fail_counter > 5:
+                    logger.error("5 consecutive timeouts or origin is no longer connected, cleanup")
+                    raise WebsocketWorkerTimeoutException
+
+            logger.debug("Done sending command")
+            return response
         finally:
             logger.debug2("Cleaning up received message.")
             async with self.received_mutex:
-                self.received_messages.pop(message_id)
-        logger.debug("Done sending command")
-        logger.info("Received messages size: {}", len(self.received_messages))
-        return response
+                del self.received_messages[message_id]
 
     async def __send_message(self, message_id: int, message: MessageTyping,
                              byte_command: Optional[int] = None) -> None:
