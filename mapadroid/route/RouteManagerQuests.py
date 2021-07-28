@@ -16,12 +16,12 @@ class RouteManagerQuests(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
-                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+                 mon_ids_iv: Optional[List[int]] = None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   geofence_helper=geofence_helper,
-                                  routecalc=routecalc, joinqueue=joinqueue, use_s2=False,
+                                  routecalc=routecalc, use_s2=False,
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaPokestop = area

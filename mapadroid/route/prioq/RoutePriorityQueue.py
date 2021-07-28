@@ -2,8 +2,9 @@ import asyncio
 import copy
 import heapq
 import time
+from asyncio import Task
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
+from typing import List, Optional
 
 from loguru import logger
 
@@ -17,17 +18,21 @@ class RoutePriorityQueue:
         self._update_lock: asyncio.Lock = asyncio.Lock()
         self.__queue: List[RoutePriorityQueueEntry] = []
         self._stop_updates: asyncio.Event = asyncio.Event()
+        self._update_prio_queue_task: Optional[Task] = None
 
     async def start(self):
         await self._start_priority_queue()
 
     async def stop(self):
         self._stop_updates.set()
+        if self._update_prio_queue_task:
+            self._update_prio_queue_task.cancel()
 
     async def _start_priority_queue(self):
         loop = asyncio.get_running_loop()
-        self._update_prio_queue_thread = loop.create_task(self._update_priority_queue_loop())
-        logger.info("Started PrioQ")
+        if not self._update_prio_queue_task:
+            self._update_prio_queue_task = loop.create_task(self._update_priority_queue_loop())
+            logger.info("Started PrioQ")
 
     async def _update_priority_queue_loop(self):
         if self.strategy.get_update_interval() is None or self.strategy.get_update_interval() == 0:

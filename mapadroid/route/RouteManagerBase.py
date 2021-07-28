@@ -19,7 +19,6 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
     RoutePriorityQueueEntry
 from mapadroid.route.prioq.RoutePriorityQueue import RoutePriorityQueue
-from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
@@ -147,28 +146,22 @@ class RouteManagerBase(ABC):
         loop = asyncio.get_running_loop()
         self._check_routepools_thread: Task = loop.create_task(self._check_routepools())
 
-    async def join_threads(self):
+    async def _stop_internal_tasks(self):
         logger.info("Shutdown Route Threads")
-        # TODO: Refactor from thread to asyncio task
         if self._prio_queue:
             await self._prio_queue.stop()
         logger.debug("Shutdown Prio Queue Thread - done...")
         if self._check_routepools_thread is not None:
-            while not self._check_routepools_thread.done():
-                self._check_routepools_thread.cancel()
-                await asyncio.sleep(5)
+            self._check_routepools_thread.cancel()
         self._check_routepools_thread: Optional[Task] = None
         self._stop_update_thread.clear()
         logger.info("Shutdown Route Threads completed")
 
     async def stop_routemanager(self, joinwithqueue=True):
         # call routetype stoppper
-        if self._joinqueue is not None and joinwithqueue:
-            logger.info("Adding route to queue")
-            await self._joinqueue.set_queue(self.name)
-
         self._quit_route()
         self._stop_update_thread.set()
+        await self._stop_internal_tasks()
 
         logger.info("Shutdown of route completed")
 

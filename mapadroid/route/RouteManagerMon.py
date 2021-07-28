@@ -16,7 +16,7 @@ class RouteManagerMon(RouteManagerBase):
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  use_s2: bool = False, s2_level: int = 15,
-                 joinqueue=None, mon_ids_iv: Optional[List[int]] = None):
+                 mon_ids_iv: Optional[List[int]] = None):
         self.remove_from_queue_backlog: Optional[int] = int(
             area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
         self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
@@ -31,7 +31,7 @@ class RouteManagerMon(RouteManagerBase):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
-                                  geofence_helper=geofence_helper, joinqueue=joinqueue,
+                                  geofence_helper=geofence_helper,
                                   use_s2=use_s2, s2_level=s2_level, routecalc=routecalc,
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=mon_spawn_strategy)

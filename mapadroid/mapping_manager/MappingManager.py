@@ -99,37 +99,6 @@ class AreaEntry:
         self.init: bool = False
 
 
-class JoinQueue(object):
-    def __init__(self, stop_trigger, mapping_manager):
-        self._joinqueue = None
-        self.__shutdown_event = stop_trigger
-        self._mapping_mananger = mapping_manager
-
-    async def start(self) -> None:
-        self._joinqueue: asyncio.Queue = asyncio.Queue()
-        loop = asyncio.get_running_loop()
-        loop.create_task(self.__route_join())
-
-    async def __route_join(self):
-        logger.info("Starting Route join Thread - safemode")
-        while not self.__shutdown_event.is_set():
-            try:
-                routejoin = self._joinqueue.get_nowait()
-            except QueueEmpty:
-                await asyncio.sleep(1)
-                continue
-            except (EOFError, KeyboardInterrupt):
-                logger.info("Route join thread noticed shutdown")
-                return
-
-            if routejoin is not None:
-                logger.info("Try to join routethreads for route {}", routejoin)
-                await self._mapping_mananger.routemanager_join(routejoin)
-
-    async def set_queue(self, item):
-        await self._joinqueue.put(item)
-
-
 class MappingManager:
     def __init__(self, db_wrapper: DbWrapper, args, configmode: bool = False):
         self.__jobstatus: Dict = {}
@@ -145,7 +114,6 @@ class MappingManager:
         self.__areamons: Optional[Dict[int, List[int]]] = {}
         self._monlists: Optional[Dict[int, List[int]]] = None
         self.__shutdown_event: Event = Event()
-        self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
 
         # TODO: Move to init or call __init__ differently...
         self.__paused_devices: List[int] = []
@@ -156,7 +124,6 @@ class MappingManager:
     async def setup(self):
         self.__devicesettings_setter_queue: asyncio.Queue = asyncio.Queue()
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
-        await self.join_routes_queue.start()
 
         loop = asyncio.get_running_loop()
         # TODO: Restore...
@@ -397,12 +364,6 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return await routemanager.get_next_location(origin) if routemanager is not None else None
 
-    async def routemanager_join(self, routemanager_id: int):
-        routemanager = self.__fetch_routemanager(routemanager_id)
-        if routemanager is not None:
-            # TODO... asnycio
-            await routemanager.join_threads()
-
     async def get_routemanager_id_where_device_is_registered(self, device_name: str) -> Optional[int]:
         routemanagers = await self.get_all_routemanager_ids()
         for routemanager in routemanagers:
@@ -637,7 +598,6 @@ class MappingManager:
                                                                                                      99999999),
                                                                  geofence_helper=geofence_helper,
                                                                  routecalc=routecalc,
-                                                                 joinqueue=self.join_routes_queue,
                                                                  s2_level=mode_mapping.get(area.mode, {}).get(
                                                                      "s2_cell_level", 30),
                                                                  mon_ids_iv=self.get_monlist(area_id)
@@ -854,7 +814,7 @@ class MappingManager:
             for area_id, routemanager in self._routemanagers.items():
                 logger.info("Stopping all routemanagers and join threads")
                 await routemanager.stop_routemanager(joinwithqueue=False)
-                await routemanager.join_threads()
+                await routemanager._stop_internal_tasks()
 
             logger.info("Restoring old devicesettings")
             for dev, mapping in self._devicemappings.items():
