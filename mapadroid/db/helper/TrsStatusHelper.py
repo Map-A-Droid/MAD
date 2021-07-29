@@ -91,7 +91,7 @@ class TrsStatusHelper:
             status.globalrestartcount = 0
         else:
             status.globalrestartcount += 1
-        status.lastPogoReboot = DatetimeWrapper.now()
+        status.lastPogoRestart = DatetimeWrapper.now()
         status.restartCounter = 0
         session.add(status)
 
