@@ -220,7 +220,7 @@ class MITMBase(WorkerBase, ABC):
         if self._restart_count > restart_thresh:
             self._reboot_count += 1
             if self._reboot_count > reboot_thresh \
-                    and self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
+                    and await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 logger.warning("Too many timeouts - Rebooting device")
                 await self._reboot(mitm_mapper=self._mitm_mapper)
                 raise InternalStopWorkerException
