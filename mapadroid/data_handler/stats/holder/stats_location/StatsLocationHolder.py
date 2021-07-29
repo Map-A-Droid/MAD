@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
 from mapadroid.data_handler.stats.holder.stats_location.StatsLocationEntry import StatsLocationEntry
+from loguru import logger
 
 
 class StatsLocationHolder(AbstractStatsHolder, AbstractWorkerHolder):
@@ -12,9 +13,12 @@ class StatsLocationHolder(AbstractStatsHolder, AbstractWorkerHolder):
 
     async def submit(self, session: AsyncSession) -> None:
         async with session.begin_nested() as nested:
-            session.add(self._entry)
-            await nested.commit()
-            # TODO: Catch IntegrityError/handle update
+            try:
+                session.add(self._entry)
+                await nested.commit()
+            except Exception as e:
+                logger.warning("Failed submitting location data of {}", self._worker)
+        del self._entry
 
     def add_location_ok(self, time_of_scan: int) -> None:
         self._entry.update(time_of_scan, location_ok=True)

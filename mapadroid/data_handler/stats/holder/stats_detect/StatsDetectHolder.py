@@ -19,6 +19,7 @@ class StatsDetectHolder(AbstractStatsHolder, AbstractWorkerHolder):
         async with session.begin_nested() as nested:
             session.add(self._entry)
             await nested.commit()
+        del self._entry
 
     def add_mon(self, time_scanned: datetime) -> None:
         self._entry.update(time_scanned, new_mons=1)

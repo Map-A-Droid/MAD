@@ -34,6 +34,10 @@ class PlayerStats(AbstractStatsHolder):
             holders_to_submit.append(self._wild_mon_stats_holder)
         if self.__application_args.game_stats_raw:
             holders_to_submit.append(self._stats_location_raw_holder)
+        del self._stats_location_holder
+        del self._stats_detect_holder
+        del self._wild_mon_stats_holder
+        del self._stats_location_raw_holder
         self.__init_holders()
 
         for holder in holders_to_submit:
@@ -44,6 +48,7 @@ class PlayerStats(AbstractStatsHolder):
                 except Exception as e:
                     await nested.rollback()
                     logger.warning("Failed submitting stats: {}", e)
+        del holders_to_submit
 
     def stats_collect_wild_mon(self, encounter_id: int, time_scanned: datetime):
         if self._wild_mon_stats_holder:

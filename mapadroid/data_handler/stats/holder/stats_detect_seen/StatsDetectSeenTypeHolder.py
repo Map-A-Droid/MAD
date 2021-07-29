@@ -24,6 +24,7 @@ class StatsDetectSeenTypeHolder(AbstractStatsHolder):
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed submitting seen type stats. {}", e)
                     await nested.rollback()
+        del self._entries
 
     def __ensure_entry_available(self, encounter_id: int) -> StatsDetectSeenTypeEntry:
         if encounter_id not in self._entries:

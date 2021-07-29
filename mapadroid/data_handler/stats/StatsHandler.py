@@ -110,6 +110,8 @@ class StatsHandler:
         if self.__stats_detect_seen_type_holder:
             submittable_stats.append(self.__stats_detect_seen_type_holder)
         submittable_stats.extend(self.__worker_stats.values())
+        del self.__stats_detect_seen_type_holder
+        del self.__worker_stats
         self.__init_stats_holders()
         for submittable in submittable_stats:
             await submittable.submit(session)

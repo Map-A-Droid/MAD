@@ -616,6 +616,8 @@ class RouteManagerBase(ABC):
         if len(self._workers_registered) == 1:
             logger.debug('Route has only one worker - no distance check')
             return False
+        elif origin not in self._routepool:
+            return False
 
         current_worker_pos = self._routepool[origin].current_pos
         distance_worker = get_distance_of_two_points_in_meters(current_worker_pos.lat, current_worker_pos.lng,
