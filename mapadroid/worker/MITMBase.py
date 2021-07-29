@@ -438,8 +438,6 @@ class MITMBase(WorkerBase, ABC):
                 status.device_id = self._dev_id
             status.currentPos = (self.current_location.lat, self.current_location.lng)
             status.lastPos = (self.last_location.lat, self.last_location.lng)
-            # status.currentPos = 'POINT(%s,%s)' % (self.current_location.lat, self.current_location.lng)
-            # status.lastPos = 'POINT(%s,%s)' % (self.last_location.lat, self.last_location.lng)
             status.routePos = routemanager_status[0]
             status.routeMax = routemanager_status[1]
             status.area_id = self._area_id

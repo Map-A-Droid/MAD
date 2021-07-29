@@ -448,8 +448,11 @@ class WorkerBase(AbstractWorker, ABC):
 
     async def update_scanned_location(self, latitude: float, longitude: float, _timestamp: float):
         async with self._db_wrapper as session, session:
-            await ScannedLocationHelper.set_scanned_location(session, latitude, longitude, _timestamp)
-            await session.commit()
+            try:
+                await ScannedLocationHelper.set_scanned_location(session, latitude, longitude, _timestamp)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed saving scanned location of {}: {}", self.origin, e)
 
     async def check_walker(self):
         mode = self._walker.algo_type
@@ -760,7 +763,11 @@ class WorkerBase(AbstractWorker, ABC):
                                                           now_ts)
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
             async with self._db_wrapper as session, session:
-                await TrsStatusHelper.save_last_reboot(session, self._db_wrapper.get_instance_id(), self._dev_id)
+                try:
+                    await TrsStatusHelper.save_last_reboot(session, self._db_wrapper.get_instance_id(), self._dev_id)
+                    await session.commit()
+                except Exception as e:
+                    logger.warning("Failed saving restart-status of {}: {}", self.origin, e)
         self._reboot_count = 0
         self._restart_count = 0
         await self.stop_worker()
@@ -769,7 +776,11 @@ class WorkerBase(AbstractWorker, ABC):
     async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
         successful_stop = await self._stop_pogo()
         async with self._db_wrapper as session, session:
-            await TrsStatusHelper.save_last_restart(session, self._db_wrapper.get_instance_id(), self._dev_id)
+            try:
+                await TrsStatusHelper.save_last_restart(session, self._db_wrapper.get_instance_id(), self._dev_id)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed saving restart-status of {}: {}", self.origin, e)
         self._restart_count = 0
         logger.debug("restartPogo: stop game resulted in {}", str(successful_stop))
         if successful_stop:
