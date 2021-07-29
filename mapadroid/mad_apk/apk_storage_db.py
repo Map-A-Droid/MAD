@@ -43,7 +43,11 @@ class APKStorageDatabase(AbstractAPKStorage):
         """
         async with self.db_wrapper as session, session:
             # TODO: Maybe move session further up the call stack for proper transactions?
-            return await MadApkHelper.delete_file(session, package, architecture)
+            try:
+                result = await MadApkHelper.delete_file(session, package, architecture)
+            except Exception as e:
+                logger.warning("Failed deleting apk in DB: {}", e)
+        return result
 
     async def get_current_version(self, package: APKType, architecture: APKArch) -> Optional[str]:
         "Get the currently installed version of the package / architecture"
@@ -106,8 +110,8 @@ class APKStorageDatabase(AbstractAPKStorage):
                 logger.info('Finished upload of APK')
                 await session.commit()
                 return True
-            except:  # noqa: E722 B001
-                logger.opt(exception=True).critical('Unable to upload APK')
+            except Exception as e:  # noqa: E722 B001
+                logger.warning("Unable to save/upload apk: {}", e)
             return False
 
     async def shutdown(self) -> None:

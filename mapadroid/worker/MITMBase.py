@@ -72,9 +72,12 @@ class MITMBase(WorkerBase, ABC):
 
     async def start_worker(self) -> Task:
         async with self._db_wrapper as session, session:
-            await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
-                                                   self._dev_id, 0)
-            await session.commit()
+            try:
+                await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
+                                                       self._dev_id, 0)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed saving idle status: {}", e)
 
         now_ts: int = int(time.time())
         await self._mitm_mapper.stats_collect_location_data(self._origin, self.current_location, True,
@@ -451,7 +454,10 @@ class MITMBase(WorkerBase, ABC):
                 status.lastProtoDateTime = DatetimeWrapper.now()
                 self._rec_data_time = None
             session.add(status)
-            await session.commit()
+            try:
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed saving status of worker {}: {}", self.origin, e)
 
     async def _worker_specific_setup_stop(self):
         logger.info("Stopping pogodroid")

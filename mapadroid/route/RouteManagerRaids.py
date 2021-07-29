@@ -100,4 +100,8 @@ class RouteManagerRaids(RouteManagerBase):
             self._settings.init = False
             # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
             # TODO: Ensure that even works with SQLAlchemy's functionality in regards to objects and sessions etc...
-            await session.merge(self._settings)
+            try:
+                session.add(self._settings)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed changing init to False: {}", e)

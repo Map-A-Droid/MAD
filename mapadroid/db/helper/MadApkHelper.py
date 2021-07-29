@@ -82,6 +82,8 @@ class MadApkHelper:
             return False
         del_stmt = delete(FilestoreMeta).where(FilestoreMeta.filestore_id == apk.filestore_id)
         await session.execute(del_stmt)
+        await session.commit()
+        return True
 
     @staticmethod
     async def insert_or_update(session: AsyncSession, filestore_id: int,

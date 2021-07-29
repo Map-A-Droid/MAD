@@ -80,17 +80,25 @@ class SerializedMitmDataProcessor:
             elif data_type == 101:
                 logger.debug("Processing proto 101 (FORT_SEARCH)")
                 async with self.__db_wrapper as session, session:
-                    fort_id: Optional[str] = await self.__db_submit.quest(session, data["payload"])
-                    if fort_id:
-                        await self.__mitm_mapper.stats_collect_quest(origin, fort_id, processed_timestamp)
-                    await session.commit()
+                    try:
+                        fort_id: Optional[str] = await self.__db_submit.quest(session, data["payload"])
+                        if fort_id:
+                            await self.__mitm_mapper.stats_collect_quest(origin, fort_id, processed_timestamp)
+                        await session.commit()
+                    except Exception as e:
+                        logger.warning("Failed submitting quests to DB: {}", e)
+
                 end_time = self.get_time_ms() - start_time
                 logger.debug("Done processing proto 101 in {}ms", end_time)
             elif data_type == 104:
                 logger.debug("Processing proto 104 (FORT_DETAILS)")
                 async with self.__db_wrapper as session, session:
-                    await self.__db_submit.stop_details(session, data["payload"])
-                    await session.commit()
+                    try:
+                        await self.__db_submit.stop_details(session, data["payload"])
+                        await session.commit()
+                    except Exception as e:
+                        logger.warning("Failed fort details to DB: {}", e)
+
                 end_time = self.get_time_ms() - start_time
                 logger.debug("Done processing proto 104 in {}ms", end_time)
             elif data_type == 4:
@@ -101,8 +109,12 @@ class SerializedMitmDataProcessor:
             elif data_type == 156:
                 logger.debug("Processing proto 156 (GYM_GET_INFO)")
                 async with self.__db_wrapper as session, session:
-                    await self.__db_submit.gym(session, data["payload"])
-                    await session.commit()
+                    try:
+                        await self.__db_submit.gym(session, data["payload"])
+                        await session.commit()
+                    except Exception as e:
+                        logger.warning("Failed submitting gym info to DB: {}", e)
+
                 end_time = self.get_time_ms() - start_time
                 logger.debug("Done processing proto 156 in {}ms", end_time)
 

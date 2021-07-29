@@ -553,7 +553,10 @@ class WorkerQuests(MITMBase):
                         await PokestopHelper.delete(session, Location(latitude, longitude))
                         logger.warning("Tried to open a stop but found a gym instead!")
                         self._spinnable_data_failcount = 0
-                        await session.commit()
+                        try:
+                            await session.commit()
+                        except Exception as e:
+                            logger.warning("Failed deleting pokestop: {}", e)
                         return PositionStopType.GYM
 
                     visited: bool = fort.get("visited", False)
@@ -561,7 +564,10 @@ class WorkerQuests(MITMBase):
                         logger.info("Level mode: Stop already visited - skipping it")
                         await TrsVisitedHelper.mark_visited(session, self.origin, Location(latitude, longitude))
                         self._spinnable_data_failcount = 0
-                        await session.commit()
+                        try:
+                            await session.commit()
+                        except Exception as e:
+                            logger.warning("Failed mark pokestop visited: {}", e)
                         return PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE
 
                     enabled: bool = fort.get("enabled", True)

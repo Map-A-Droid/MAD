@@ -142,8 +142,12 @@ class APKWizard(object):
         }
 
         async with self._db_wrapper as session, session:
-            await MadApkAutosearchHelper.insert_or_update(session, APKType.pogo, architecture, update_data)
-            await session.commit()
+            try:
+                await MadApkAutosearchHelper.insert_or_update(session, APKType.pogo, architecture, update_data)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed insert/update apk in DB: {}", e)
+
         data: bytearray = bytearray()
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=2400)) as session:
             async with session.get(latest_pogo_info[1].download_url, headers=HEADERS, allow_redirects=True) as resp:
@@ -165,8 +169,11 @@ class APKWizard(object):
         finally:
             update_data["download_status"] = 0
             async with self._db_wrapper as session, session:
-                await MadApkAutosearchHelper.insert_or_update(session, APKType.pogo, architecture, update_data)
-                await session.commit()
+                try:
+                    await MadApkAutosearchHelper.insert_or_update(session, APKType.pogo, architecture, update_data)
+                    await session.commit()
+                except Exception as e:
+                    logger.warning("Failed insert/update apk in DB: {}", e)
 
     async def download_pd(self, architecture: APKArch) -> None:
         """ Download the package com.mad.pogodroid
@@ -206,8 +213,12 @@ class APKWizard(object):
                 'download_status': 1
             }
             async with self._db_wrapper as session, session:
-                await MadApkAutosearchHelper.insert_or_update(session, package, architecture, update_data)
-                await session.commit()
+                try:
+                    await MadApkAutosearchHelper.insert_or_update(session, package, architecture, update_data)
+                    await session.commit()
+                except Exception as e:
+                    logger.warning("Failed insert/update apk in DB: {}", e)
+
             try:
                 retries: int = 0
                 successful: bool = False
@@ -232,8 +243,11 @@ class APKWizard(object):
             finally:
                 update_data['download_status'] = 0
                 async with self._db_wrapper as session, session:
-                    await MadApkAutosearchHelper.insert_or_update(session, package, architecture, update_data)
-                    await session.commit()
+                    try:
+                        await MadApkAutosearchHelper.insert_or_update(session, package, architecture, update_data)
+                        await session.commit()
+                    except Exception as e:
+                        logger.warning("Failed insert/update apk in DB: {}", e)
 
     async def download_rgc(self, architecture: APKArch) -> None:
         """ Download the package de.grennith.rgc.remotegpscontroller
@@ -407,8 +421,11 @@ class APKWizard(object):
         if url:
             data['url'] = url
         async with self._db_wrapper as session, session:
-            await MadApkAutosearchHelper.insert_or_update(session, package, architecture, data)
-            await session.commit()
+            try:
+                await MadApkAutosearchHelper.insert_or_update(session, package, architecture, data)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed insert/update apk in DB: {}", e)
 
 
 class PackageImporter(object):

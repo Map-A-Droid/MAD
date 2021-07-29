@@ -82,7 +82,12 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                                                                          instance_id=self.db_wrapper.get_instance_id(),
                                                                          origin=origin,
                                                                          location=newstartposition)
+                try:
+                    await session.commit()
+                except Exception as e:
+                    logger.warning("Failed storing last walker positions: {}", e)
                 return True
+
 
     async def _recalc_route_workertype(self):
         await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
