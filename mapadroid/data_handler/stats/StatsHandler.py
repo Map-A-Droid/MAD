@@ -83,13 +83,12 @@ class StatsHandler:
 
     def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
                                 time_of_scan: datetime) -> None:
-        if not self.__stats_detect_seen_type_holder:
-            return
-        for encounter_id in encounter_ids:
-            self.__stats_detect_seen_type_holder.add(encounter_id, type_of_detection, time_of_scan)
+        if self.__stats_detect_seen_type_holder:
+            for encounter_id in encounter_ids:
+                self.__stats_detect_seen_type_holder.add(encounter_id, type_of_detection, time_of_scan)
 
     async def __stats_submission_loop(self):
-        repetition_duration: int = self.__application_args.game_stats_save_time
+        repetition_duration: int = self.__application_args.game_stats_save_time if self.__application_args.game_stats_save_time > 15 else 300
         while True:
             await asyncio.sleep(repetition_duration)
             await self.__run_stats_processing()
@@ -109,9 +108,9 @@ class StatsHandler:
         submittable_stats: List[AbstractStatsHolder] = []
         if self.__stats_detect_seen_type_holder:
             submittable_stats.append(self.__stats_detect_seen_type_holder)
+            self.__stats_detect_seen_type_holder = None
         submittable_stats.extend(self.__worker_stats.values())
-        del self.__stats_detect_seen_type_holder
-        del self.__worker_stats
+        self.__worker_stats = None
         self.__init_stats_holders()
         for submittable in submittable_stats:
             await submittable.submit(session)
