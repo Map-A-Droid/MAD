@@ -61,7 +61,6 @@ class RoutePriorityQueue:
         """
         # At most wait 500ms to retrieve a prioQ event location
         coord = await asyncio.wait_for(self.__pop_event_internal(), 1)
-        logger.info(coord)
         return coord
 
     async def __pop_event_internal(self) -> RoutePriorityQueueEntry:
@@ -72,7 +71,7 @@ class RoutePriorityQueue:
                 raise IndexError("No item available that is due at this time")
             else:
                 coord = heapq.heappop(self.__queue)
-                logger.info(coord)
+                logger.info("Got event: {}", coord)
                 return coord
 
     def __merge_queues(self, old_coords: List[RoutePriorityQueueEntry],

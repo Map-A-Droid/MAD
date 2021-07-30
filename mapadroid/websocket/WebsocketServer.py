@@ -131,18 +131,18 @@ class WebsocketServer(object):
             else:
                 self.__users_connecting.add(origin)
         try:
+            device: Optional[SettingsDevice] = None
+            device_paused: bool = self.__enable_configmode
+            if not self.__enable_configmode:
+                async with self.__db_wrapper as session, session:
+                    device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(),
+                                                                      origin)
+                if not await self.__mapping_manager.is_device_active(device.device_id):
+                    logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
+                    device_paused = True
             async with self.__current_users_mutex:
                 logger.debug("Checking if an entry is already present")
                 entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-                device: Optional[SettingsDevice] = None
-                device_paused: bool = self.__enable_configmode
-                if not self.__enable_configmode:
-                    async with self.__db_wrapper as session, session:
-                        device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(),
-                                                                          origin)
-                    if not await self.__mapping_manager.is_device_active(device.device_id):
-                        logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
-                        device_paused = True
 
                 # First check if an entry is present, worker running etc...
                 if entry and entry.websocket_client_connection:
