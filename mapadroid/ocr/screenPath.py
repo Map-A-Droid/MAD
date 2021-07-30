@@ -395,7 +395,7 @@ class WordToScreenMatching(object):
 
     def __handle_login_timeout(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        click_text = 'SIGNOUT,SIGN,ABMELDEN'
+        click_text = 'SIGNOUT,SIGN,ABMELDEN,_DECONNECTER'
         n_boxes = len(global_dict['text'])
         for i in range(n_boxes):
             if any(elem in (global_dict['text'][i]) for elem in click_text.split(",")):
