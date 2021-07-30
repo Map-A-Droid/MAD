@@ -39,8 +39,12 @@ class RoutePriorityQueue:
             return
         while not self._stop_updates.is_set():
             # retrieve the latest hatches from DB
-            logger.success("Trying to update prioQ")
-            await self.__update_queue()
+            logger.info("Trying to update prioQ")
+            try:
+                await self.__update_queue()
+                logger.success("Updated prioQ")
+            except Exception as e:
+                logger.warning("Failed updating prioQ")
             await asyncio.sleep(self.strategy.get_update_interval())
 
     @property
@@ -100,14 +104,20 @@ class RoutePriorityQueue:
                     pool, self.__merge_filter_queue, post_processed_coords)
             self.__queue = merged
 
-    def __merge_filter_queue(self, post_processed_coords: List[RoutePriorityQueueEntry]):
-        if self.strategy.is_full_replace_queue():
-            merged = post_processed_coords
-        else:
-            merged = self.__merge_queues(self.__queue, post_processed_coords)
-        merged = self._strategy.filter_queue(merged)
-        heapq.heapify(merged)
-        return merged
+    def __merge_filter_queue(self,
+                             post_processed_coords: List[RoutePriorityQueueEntry]) -> List[RoutePriorityQueueEntry]:
+        try:
+            if self.strategy.is_full_replace_queue():
+                merged = post_processed_coords
+            else:
+                merged = self.__merge_queues(self.__queue, post_processed_coords)
+            merged = self._strategy.filter_queue(merged)
+            heapq.heapify(merged)
+            return merged
+        except Exception as e:
+            logger.warning("Failed to merge/filter queue")
+            logger.exception(e)
+            return post_processed_coords
 
     def get_copy_of_prioq(self) -> List[RoutePriorityQueueEntry]:
         copied_queue = copy.deepcopy(self.__queue)

@@ -7,6 +7,7 @@ from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import AbstractRou
     RoutePriorityQueueEntry
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
+from loguru import logger
 
 
 class MonSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
@@ -40,14 +41,19 @@ class MonSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
         return queue
 
     def postprocess_coords(self, coords: List[RoutePriorityQueueEntry]) -> List[RoutePriorityQueueEntry]:
-        locations_transformed_for_clustering: List[Tuple[int, Location]] = []
-        for entry in coords:
-            locations_transformed_for_clustering.append((entry.timestamp_due, entry.location))
-        clustered = self._clustering_helper.get_clustered(locations_transformed_for_clustering)
-        del locations_transformed_for_clustering
-        new_coords: List[RoutePriorityQueueEntry] = []
-        for (timestamp_due, location) in clustered:
-            entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due + self.get_delay_after_event(),
-                                                                     location=location)
-            new_coords.append(entry)
-        return new_coords
+        try:
+            locations_transformed_for_clustering: List[Tuple[int, Location]] = []
+            for entry in coords:
+                locations_transformed_for_clustering.append((entry.timestamp_due, entry.location))
+            clustered = self._clustering_helper.get_clustered(locations_transformed_for_clustering)
+            del locations_transformed_for_clustering
+            new_coords: List[RoutePriorityQueueEntry] = []
+            for (timestamp_due, location) in clustered:
+                entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due + self.get_delay_after_event(),
+                                                                         location=location)
+                new_coords.append(entry)
+            return new_coords
+        except Exception as e:
+            logger.warning("Failed to process coords")
+            logger.exception(e)
+            return []
