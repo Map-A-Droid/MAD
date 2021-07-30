@@ -4,6 +4,10 @@ from multiprocessing import Event
 terminate_mad = Event()
 
 
+class WebsocketAbortRegistrationException(Exception):
+    pass
+
+
 class WebsocketWorkerRemovedException(Exception):
     pass
 

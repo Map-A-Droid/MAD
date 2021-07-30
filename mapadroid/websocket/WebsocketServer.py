@@ -17,20 +17,21 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
-                                     get_origin_logger)
+                                     get_logger)
+from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
 from mapadroid.websocket.communicator import Communicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerFactory import WorkerFactory
+from loguru import logger
+
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
 logging.getLogger('websockets.server').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
 logging.getLogger('websockets.protocol').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
-
-logger = get_logger(LoggerEnums.websocket)
 
 
 class WebsocketServer(object):
@@ -77,8 +78,6 @@ class WebsocketServer(object):
         await websockets.serve(self.__connection_handler, self.__args.ws_ip, int(self.__args.ws_port), max_size=2 ** 25,
                                close_timeout=10)
         self.__loop_tid = current_thread()
-        # self.__loop.run_forever()
-        logger.info("Websocket-server stopping...")
 
     async def __close_all_connections_and_signal_stop(self):
         logger.info("Signaling all workers to stop")
@@ -121,100 +120,101 @@ class WebsocketServer(object):
         (origin, success) = await self.__authenticate_connection(websocket_client_connection)
         if not success:
             # failed auth, stop connection
-            await self.__close_websocket_client_connection(origin, websocket_client_connection)
-            # TODO: Ensure the close is even needed here?
             return
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.info("New connection from {}", websocket_client_connection.remote_address)
-        if self.__enable_configmode:
-            origin_logger.warning('Connected in ConfigMode.  No mapping will occur in the current mode')
+        logger.info("New connection from {}", websocket_client_connection.remote_address)
+        # if self.__enable_configmode:
+        #    logger.warning('Connected in ConfigMode.  No mapping will occur in the current mode')
         async with self.__users_connecting_mutex:
             if origin in self.__users_connecting:
-                origin_logger.info("Client is already connecting")
+                logger.info("Client is already connecting")
                 return
             else:
                 self.__users_connecting.add(origin)
         try:
-            continue_register = True
             async with self.__current_users_mutex:
-                origin_logger.debug("Checking if an entry is already present")
-                entry = self.__current_users.get(origin, None)
+                logger.debug("Checking if an entry is already present")
+                entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
                 device: Optional[SettingsDevice] = None
-                use_configmode = self.__enable_configmode
+                device_paused: bool = self.__enable_configmode
                 if not self.__enable_configmode:
                     async with self.__db_wrapper as session, session:
                         device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(),
                                                                           origin)
                     if not await self.__mapping_manager.is_device_active(device.device_id):
-                        origin_logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
-                        use_configmode = True
-                if entry is None or use_configmode:
-                    origin_logger.info("Need to start a new worker thread")
+                        logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
+                        device_paused = True
 
+                # First check if an entry is present, worker running etc...
+                if entry and entry.websocket_client_connection:
+                    await self.__handle_existing_connection(entry, origin)
+                elif not entry:
+                    # Just create a new entry...
                     entry = WebsocketConnectedClientEntry(origin=origin,
                                                           websocket_client_connection=websocket_client_connection,
                                                           worker_instance=None,
                                                           worker_task=None)
-                    if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=use_configmode):
-                        continue_register = False
+                # No connection known or already at a point where we can continue creating worker
+                # -> we can just create a new task
+                if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=device_paused):
+                    raise WebsocketAbortRegistrationException
                 else:
-                    origin_logger.info("There is a worker thread entry present, handling accordingly")
-                    if entry.websocket_client_connection.open:
-                        origin_logger.error("Old connection open while a new one is attempted to be established, "
-                                            "aborting handling of connection")
-                        continue_register = False
-
-                    entry.websocket_client_connection = websocket_client_connection
-                    # TODO: also change the worker's Communicator? idk yet
-                    if entry.worker_task and not entry.worker_task.done() and not entry.worker_instance.is_stopping():
-                        origin_logger.info("Worker thread still alive, continue as usual")
-                        continue_register = False
-                        # TODO: does this need more handling? probably update communicator or whatever?
-                    # TODO: This check will not work with asyncio anymore...
-                    elif entry.worker_task and not entry.worker_task.done():
-                        origin_logger.info("Old task is not done but was supposed to stop?! Trying to start a new one")
-                        # TODO: entry.worker_task.cancel() or somehow call cleanup&cancel?
-                        #  entry.worker_task.cancel()
-                        entry.worker_task.cancel()
-                        if not await self.__add_worker_and_thread_to_entry(entry, origin,
-                                                                           use_configmode=use_configmode):
-                            continue_register = False
-                    else:
-                        origin_logger.info("Old worker task is done, continuing creating a new one given the "
-                                           "new connection")
-                if continue_register:
+                    logger.info("Worker added/started successfully for {}", origin)
                     self.__current_users[origin] = entry
-
-            if not continue_register:
-                await asyncio.sleep(rand.uniform(3, 15))
-                return
-
-            try:
-                if entry.worker_task and not entry.worker_task.done():
-                    # TODO..
-                    pass
-                # TODO: we need to somehow check threads and synchronize connection status with worker status?
-                async with self.__users_connecting_mutex:
-                    if origin in self.__users_connecting:
-                        self.__users_connecting.remove(origin)
-                await self.__client_message_receiver(origin, entry)
-            except CancelledError as e:
-                logger.info("Connection to {} has been cancelled", origin)
-            except Exception as e:
-                origin_logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
-            # also check if thread is already running to not start it again. If it is not alive, we need to create it..
-            finally:
-                origin_logger.info("Awaiting unregister")
-                async with self.__current_users_mutex:
-                    if origin in self.__current_users:
-                        del self.__current_users[origin]
+        except WebsocketAbortRegistrationException as e:
+            await asyncio.sleep(rand.uniform(3, 15))
+            return
+        except Exception as e:
+            logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
         finally:
-            async with self.__users_connecting_mutex:
-                if origin in self.__users_connecting:
-                    self.__users_connecting.remove(origin)
-        origin_logger.info("Done with connection ({})", websocket_client_connection.remote_address)
+            await self.__remove_from_users_connecting(origin)
+
+        try:
+            await self.__client_message_receiver(origin, entry)
+        except CancelledError as e:
+            logger.info("Connection to {} has been cancelled", origin)
+        # also check if thread is already running to not start it again. If it is not alive, we need to create it..
+        finally:
+            logger.info("Awaiting unregister")
+            await entry.worker_instance.stop_worker()
+            await self.__remove_from_current_users(origin)
+
+        logger.info("Done with connection ({})", websocket_client_connection.remote_address)
+
+    async def __remove_from_users_connecting(self, origin):
+        async with self.__users_connecting_mutex:
+            if origin in self.__users_connecting:
+                self.__users_connecting.remove(origin)
+
+    async def __remove_from_current_users(self, origin):
+        async with self.__current_users_mutex:
+            if origin in self.__current_users:
+                del self.__current_users[origin]
+
+    async def __handle_existing_connection(self, entry, origin):
+        # An entry is already present, check the connection
+        while not entry.websocket_client_connection.open and not entry.websocket_client_connection.closed:
+            # Old connection is closing or opening, wait a moment
+            logger.info("Old connection of {} closing/opening, waiting a moment", origin)
+            await asyncio.sleep(1)
+        if entry.websocket_client_connection.open:
+            logger.error("Old connection open while a new one is attempted to be established, "
+                         "aborting handling of connection")
+            raise WebsocketAbortRegistrationException
+        elif entry.websocket_client_connection.closed:
+            # Old connection is closed, i.e. no active connection present...
+            logger.info("Old connection of {} closed, stopping worker/cleaning up to create a new one.",
+                        origin)
+            # TODO: Replace worker strategy/connection seemingly
+            if entry.worker_task:
+                await entry.worker_instance.stop_worker()
+                entry.worker_task.cancel()
+        else:
+            # Old connection neither open or closed - either closing or opening...
+            # Should have been handled by the while loop above...
+            raise WebsocketAbortRegistrationException
 
     async def __add_worker_and_thread_to_entry(self, entry, origin, use_configmode: bool = None) -> bool:
+        logger.info("Trying to create new worker for {}.", origin)
         communicator: AbstractCommunicator = Communicator(
             entry, origin, None, self.__args.websocket_command_timeout)
         use_configmode: bool = use_configmode if use_configmode is not None else self.__enable_configmode
@@ -241,19 +241,18 @@ class WebsocketServer(object):
             logger.warning("Client from {} tried to connect without Origin header",
                            websocket_client_connection.remote_address)
             return None, False
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.info("Client registering")
+        logger.info("Client registering")
         if self.__mapping_manager is None:
-            origin_logger.warning("No configuration has been defined.  Please define in MADmin and click "
+            logger.warning("No configuration has been defined.  Please define in MADmin and click "
                                   "'APPLY SETTINGS'")
             return origin, False
         elif origin not in (await self.__mapping_manager.get_all_devicemappings()).keys():
             async with self.__db_wrapper as session, session:
                 device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(), origin)
             if device:
-                origin_logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
+                logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
             else:
-                origin_logger.warning("Register attempt of unknown origin.  Please create the device in MADmin and "
+                logger.warning("Register attempt of unknown origin.  Please create the device in MADmin and "
                                       " click 'APPLY SETTINGS'")
             return origin, False
 
@@ -264,9 +263,9 @@ class WebsocketServer(object):
                 auth_base64 = str(
                     websocket_client_connection.request_headers.get_all("Authorization")[0])
             except IndexError:
-                origin_logger.warning("Client tried to connect without auth header")
+                logger.warning("Client tried to connect without auth header")
                 return origin, False
-        if valid_auths and auth_base64 and not check_auth(origin_logger, auth_base64, self.__args, valid_auths):
+        if valid_auths and not check_auth(logger, auth_base64, self.__args, valid_auths):
             return origin, False
         return origin, True
 
@@ -274,8 +273,7 @@ class WebsocketServer(object):
         if client_entry is None:
             return
         connection: websockets.WebSocketClientProtocol = client_entry.websocket_client_connection
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.info("Consumer handler starting")
+        logger.info("Consumer handler starting")
         while connection.open:
             message = None
             try:
@@ -284,17 +282,17 @@ class WebsocketServer(object):
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
                 # TODO: cleanup needed here? better suited for the handler
-                origin_logger.warning("Connection was closed, stopping receiver. Exception: {}", cc)
+                logger.warning("Connection was closed, stopping receiver. Exception: {}", cc)
                 entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-                if entry is not None:
+                if entry is not None and connection == entry.websocket_client_connection:
                     await entry.worker_instance.stop_worker()
                 return
 
             if message is not None:
                 await self.__on_message(client_entry, message)
-        origin_logger.warning("Connection closed in __client_message_receiver")
+        logger.warning("Connection closed in __client_message_receiver")
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-        if entry is not None:
+        if entry is not None and connection == entry.websocket_client_connection:
             await entry.worker_instance.stop_worker()
 
     @staticmethod
@@ -315,10 +313,9 @@ class WebsocketServer(object):
     async def __close_websocket_client_connection(origin_of_worker: str,
                                                   websocket_client_connection: websockets.WebSocketClientProtocol) \
             -> None:
-        origin_logger = get_origin_logger(logger, origin=origin_of_worker)
-        origin_logger.info('Closing connections')
+        logger.info('Closing connections')
         await websocket_client_connection.close()
-        origin_logger.info("Connection closed")
+        logger.info("Connection closed")
 
     async def get_connected_origins(self) -> List[str]:
         async with self.__current_users_mutex:
@@ -352,17 +349,16 @@ class WebsocketServer(object):
                                                                 False)
 
     async def __close_and_signal_stop(self, origin: str) -> None:
-        origin_logger = get_origin_logger(logger, origin=origin)
-        origin_logger.info("Signaling to stop")
+        logger.info("Signaling to stop")
         async with self.__current_users_mutex:
             entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
             if entry is not None:
                 await entry.worker_instance.stop_worker()
                 await self.__close_websocket_client_connection(entry.origin,
                                                                entry.websocket_client_connection)
-                origin_logger.info("Done signaling stop")
+                logger.info("Done signaling stop")
             else:
-                origin_logger.warning("Unable to signal to stop, not present")
+                logger.warning("Unable to signal to stop, not present")
 
     async def force_disconnect(self, origin) -> None:
         await self.__close_and_signal_stop(origin)

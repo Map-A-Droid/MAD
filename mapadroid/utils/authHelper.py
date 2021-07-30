@@ -1,11 +1,14 @@
 import base64
 import re
+from typing import Optional, Dict
 
 
-def check_auth(logger, auth_header, args, auths):
+def check_auth(logger, auth_header: str, args, auths: Optional[Dict[str, str]]):
     valid = False
     if auths is None:
         return True
+    elif not auth_header:
+        return False
     try:
         auth_code = re.match(r'^Basic (\S+)$', auth_header)
         decoded = base64.b64decode(auth_code.group(1)).decode('utf-8')
