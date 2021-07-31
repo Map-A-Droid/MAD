@@ -50,9 +50,8 @@ class PokemonHelper:
             if not geofence_helper.is_coord_inside_include_geofence([pokemon.latitude, pokemon.longitude]):
                 continue
             latest = max(latest, pokemon.last_modified.timestamp())
-            # TODO: Why was the original code adding an hour?
-            #   "UNIX_TIMESTAMP(CONVERT_TZ(disappear_time + INTERVAL 1 HOUR, '+00:00', @@global.time_zone)), "
-            encounter_id_infos[pokemon.encounter_id] = pokemon.disappear_time.timestamp()
+            # Add an hour to avoid encountering unknown disappear times again
+            encounter_id_infos[pokemon.encounter_id] = pokemon.disappear_time.timestamp() + 60 * 60
         return latest, encounter_id_infos
 
     @staticmethod
