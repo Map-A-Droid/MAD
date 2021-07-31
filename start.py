@@ -134,7 +134,6 @@ async def get_system_infos(db_wrapper):
             await session.commit()
         await asyncio.sleep(args.statistic_interval)
 
-set_of_known_tuples = set()
 last_snapshot = None
 initial_snapshot = None
 
