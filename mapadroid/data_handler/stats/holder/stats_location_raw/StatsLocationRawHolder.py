@@ -35,9 +35,9 @@ class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
         stat.lat = location.lat
         stat.lng = location.lng
         stat.data_ts = data_timestamp
-        stat.type = position_type.value
+        stat.type = position_type.value if position_type else PositionType.STARTUP
         stat.walker = walker
         stat.success = 1 if success else 0
         stat.period = timestamp_of_record
-        stat.transporttype = transport_type.value
+        stat.transporttype = transport_type.value if transport_type else TransportType.TELEPORT
         self._entries.append(stat)

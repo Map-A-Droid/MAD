@@ -21,6 +21,7 @@ class RoutePriorityQueue:
         self._update_prio_queue_task: Optional[Task] = None
 
     async def start(self):
+        self._stop_updates.clear()
         await self._start_priority_queue()
 
     async def stop(self):

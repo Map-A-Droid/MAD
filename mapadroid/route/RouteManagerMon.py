@@ -45,9 +45,6 @@ class RouteManagerMon(RouteManagerBase):
             self._max_clustering: int = area.max_clustering
         self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
 
-    def _priority_queue_update_interval(self):
-        return 600
-
     async def _get_coords_after_finish_route(self) -> bool:
         self._init_route_queue()
         return True
@@ -75,9 +72,6 @@ class RouteManagerMon(RouteManagerBase):
             coords.append(Location(spawn.latitude, spawn.longitude))
         await self._start_priority_queue()
         return coords
-
-    def _cluster_priority_queue_criteria(self):
-        return self._settings.priority_queue_clustering_timedelta
 
     async def start_routemanager(self):
         async with self._manager_mutex:
