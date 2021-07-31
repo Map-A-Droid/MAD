@@ -538,7 +538,7 @@ class RouteManagerBase(ABC):
 
             if self._mode == WorkerType.STOPS and not self.init:
                 # check for coords not in other workers to get a real open coord list
-                if not self._get_coords_after_finish_route():
+                if not await self._get_coords_after_finish_route():
                     logger.info("No more coords available - dont update routepool")
                     return None
 
