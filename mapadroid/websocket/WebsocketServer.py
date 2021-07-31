@@ -153,13 +153,15 @@ class WebsocketServer(object):
                                                           websocket_client_connection=websocket_client_connection,
                                                           worker_instance=None,
                                                           worker_task=None)
-                # No connection known or already at a point where we can continue creating worker
-                # -> we can just create a new task
-                if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=device_paused):
-                    raise WebsocketAbortRegistrationException
-                else:
-                    logger.info("Worker added/started successfully for {}", origin)
                     self.__current_users[origin] = entry
+
+            # No connection known or already at a point where we can continue creating worker
+            # -> we can just create a new task
+            if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=device_paused):
+                logger.warning("Failed to start worker for {}", origin)
+                raise WebsocketAbortRegistrationException
+            else:
+                logger.info("Worker added/started successfully for {}", origin)
         except WebsocketAbortRegistrationException as e:
             await asyncio.sleep(rand.uniform(3, 15))
             return
