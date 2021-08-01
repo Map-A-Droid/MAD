@@ -344,8 +344,7 @@ class WorkerQuests(MITMBase):
         text_x1, text_x2, _, _ = self._resocalc.get_delete_item_text(self)
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
-        click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)
-        click_duration = int(self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000
+        click_x, click_y = self._resocalc.get_click_item_minus(self)
         delrounds_remaining = int(self.get_devicesettings_value("inventory_clear_rounds", 10))
         first_round = True
         delete_allowed = False
@@ -413,8 +412,7 @@ class WorkerQuests(MITMBase):
                         self._communicator.click(int(trashcancheck[trash].x), int(trashcancheck[trash].y))
                         time.sleep(1 + int(delayadd))
 
-                        self._communicator.touch_and_hold(
-                            click_x1, click_y, click_x2, click_y, click_duration)
+                        self._communicator.click(click_x, click_y)
                         time.sleep(1)
 
                         delx, dely = self._resocalc.get_confirm_delete_item_coords(self)
@@ -593,7 +591,8 @@ class WorkerQuests(MITMBase):
             return type_received
         elif stop_type in (PositionStopType.STOP_CLOSED, PositionStopType.STOP_COOLDOWN,
                            PositionStopType.STOP_DISABLED):
-            self.logger.info("Stop at {}, {} is not spinnable at the moment ({})")
+            self.logger.info("Stop at {}, {} is not spinnable at the moment ({})", self.current_location.lat,
+                             self.current_location.lng, stop_type)
             return type_received
         elif stop_type == PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE:
             self.logger.info("Stop at {}, {} has been spun before and is to be ignored in the next round.")

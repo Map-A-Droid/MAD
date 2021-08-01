@@ -44,13 +44,18 @@ class DbPogoProtoSubmit:
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
             "weight, height, gender, catch_prob_1, catch_prob_2, catch_prob_3, rating_attack, rating_defense, "
-            "weather_boosted_condition, last_modified, costume, form) "
+            "weather_boosted_condition, last_modified, costume, form, seen_type) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-            "%s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time)"
+            "%s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
+            "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=VALUES(pokemon_id), latitude=VALUES(latitude), "
+            "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), form=VALUES(form), "
+            "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL, cell_id=NULL, "
+            "seen_type=IF(seen_type='encounter','encounter',VALUES(seen_type))"
         )
 
         mon_args = []
+        encounters = []
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
@@ -58,6 +63,12 @@ class DbPogoProtoSubmit:
                 lon = wild_mon["longitude"]
                 mon_id = wild_mon["pokemon_data"]["id"]
                 encounter_id = wild_mon["encounter_id"]
+
+                pokemon_display = wild_mon.get("pokemon_data", {}).get("display", {})
+                weather_boosted = pokemon_display.get('weather_boosted_value')
+                gender = pokemon_display.get('gender_value')
+                costume = pokemon_display.get('costume_value')
+                form = pokemon_display.get('form_value')
 
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
@@ -68,7 +79,8 @@ class DbPogoProtoSubmit:
 
                 # get known spawn end time and feed into despawn time calculation
                 getdetspawntime = self._get_detected_endtime(str(spawnid))
-                despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp)
+                despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp,
+                                                          self._args.default_unknown_timeleft)
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
                 if getdetspawntime is None:
@@ -78,30 +90,123 @@ class DbPogoProtoSubmit:
                     origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
                                          despawn_time, spawnid)
 
-                cache_key = "mon{}".format(encounter_id)
+                cache_key = "mon{}-{}".format(encounter_id, mon_id)
                 if cache.exists(cache_key):
                     continue
 
                 mon_args.append(
                     (
                         encounter_id, spawnid, mon_id, lat, lon,
-                        despawn_time,
-                        # TODO: consider .get("XXX", None)  # noqa: E800
-                        None, None, None, None, None, None, None, None, None,
-                        wild_mon["pokemon_data"]["display"]["gender_value"],
-                        None, None, None, None, None,
-                        wild_mon["pokemon_data"]["display"]["weather_boosted_value"],
-                        now, wild_mon["pokemon_data"]["display"]["costume_value"],
-                        wild_mon["pokemon_data"]["display"]["form_value"]
+                        despawn_time, None, None, None, None, None, None,
+                        None, None, None, gender, None, None, None, None,
+                        None, weather_boosted, now, costume, form, "wild"
                     )
                 )
+                encounters.append((encounter_id, now))
 
                 cache_time = int(despawn_time_unix - int(datetime.now().timestamp()))
                 if cache_time > 0:
                     cache.set(cache_key, 1, ex=cache_time)
 
         self._db_exec.executemany(query_mons, mon_args, commit=True)
-        return True
+        return encounters
+
+    def nearby_mons(self, origin: str, timestamp: float, map_proto: dict, mitm_mapper):
+        """
+        Insert nearby mons
+        """
+        cache = get_cache(self._args)
+
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug3("DbPogoProtoSubmit::nearby_mons called with data received")
+        cells = map_proto.get("cells", None)
+        if cells is None:
+            return False
+
+        query_nearby = (
+            "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, cell_id, "
+            "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
+            "latitude, longitude, seen_type)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE pokemon_id=VALUES(pokemon_id), gender=VALUES(gender), "
+            "weather_boosted_condition=VALUES(weather_boosted_condition), last_modified=VALUES(last_modified), "
+            "costume=VALUES(costume), form=VALUES(form)"
+        )
+        stop_query = (
+            "SELECT latitude, longitude "
+            "FROM pokestop "
+            "WHERE pokestop_id=%s"
+        )
+        gym_query = (
+            "SELECT latitude, longitude "
+            "FROM gym "
+            "WHERE gym_id=%s"
+        )
+
+        nearby_args = []
+        stop_encounters = []
+        cell_encounters = []
+        for cell in cells:
+            cellid = cell.get("id")
+            for nearby_mon in cell["nearby_pokemon"]:
+                stopid = nearby_mon["fort_id"]
+
+                mon_id = nearby_mon["id"]
+                encounter_id = nearby_mon["encounter_id"]
+                display = nearby_mon["display"]
+                weather_boosted = display["weather_boosted_value"]
+
+                if encounter_id < 0:
+                    encounter_id = encounter_id + 2 ** 64
+                # Hotfix for a PD issue.
+
+                cache_key = "monnear{}-{}".format(encounter_id, mon_id)
+                encounter_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
+                wild_key = "mon{}-{}".format(encounter_id, mon_id)
+                if cache.exists(cache_key) or cache.exists(encounter_key) or cache.exists(wild_key):
+                    continue
+
+                form = display["form_value"]
+                costume = display["costume_value"]
+                gender = display["gender_value"]
+
+                now = datetime.utcfromtimestamp(time.time())
+                disappear_time = now + timedelta(minutes=self._args.default_nearby_timeleft)
+                disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
+                now = now.strftime("%Y-%m-%d %H:%M:%S")
+
+                if (not stopid and cellid) and (not self._args.disable_nearby_cell):
+                    lat, lon, _ = S2Helper.get_position_from_cell(cellid)
+                    stopid = None
+                    db_cell = cellid
+                    seen_type = "nearby_cell"
+                    cell_encounters.append((encounter_id, now))
+                else:
+                    db_cell = None
+                    seen_type = "nearby_stop"
+                    stop = self._db_exec.execute(stop_query, stopid)
+                    if (not stop) or (not len(stop) > 0) or (not stop[0][0]):
+                        stop = self._db_exec.execute(gym_query, stopid)
+
+                    if stop:
+                        lat, lon = stop[0]
+                    else:
+                        lat, lon = (0, 0)
+
+                    stop_encounters.append((encounter_id, now))
+
+                spawnpoint = 0
+
+                nearby_args.append(
+                    (
+                        encounter_id, spawnpoint, mon_id, stopid, db_cell, disappear_time,
+                        gender, weather_boosted, now, costume, form, lat, lon, seen_type
+                    )
+                )
+                cache.set(cache_key, 1, ex=60 * 60)
+
+        self._db_exec.executemany(query_nearby, nearby_args, commit=True)
+        return cell_encounters, stop_encounters
 
     def mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         """
@@ -120,21 +225,22 @@ class DbPogoProtoSubmit:
         spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
 
         getdetspawntime = self._get_detected_endtime(str(spawnid))
-        despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp)
+        despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp, self._args.default_unknown_timeleft)
         despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
+        mon_id = pokemon_data.get("id")
         encounter_id = wild_pokemon["encounter_id"]
-        shiny = wild_pokemon["pokemon_data"]["display"].get("is_shiny", 0)
         pokemon_display = pokemon_data.get("display", {})
-        weather_boosted = pokemon_display.get('weather_boosted_value', None)
+        shiny = pokemon_display.get("is_shiny", 0)
+        weather_boosted = pokemon_display.get('weather_boosted_value')
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
-        cache_key = "moniv{}{}".format(encounter_id, weather_boosted)
+        cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
         if cache.exists(cache_key):
             return
 
@@ -161,7 +267,6 @@ class DbPogoProtoSubmit:
             move_2 = 133
             form = 0
         else:
-            mon_id = pokemon_data.get("id")
             gender = pokemon_display.get("gender_value", None)
             move_1 = pokemon_data.get("move_1")
             move_2 = pokemon_data.get("move_2")
@@ -171,9 +276,9 @@ class DbPogoProtoSubmit:
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
             "weight, height, gender, catch_prob_1, catch_prob_2, catch_prob_3, rating_attack, rating_defense, "
-            "weather_boosted_condition, last_modified, costume, form) "
+            "weather_boosted_condition, last_modified, costume, form, seen_type) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-            "%s, %s, %s, %s, %s) "
+            "%s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
             "individual_attack=VALUES(individual_attack), individual_defense=VALUES(individual_defense), "
             "individual_stamina=VALUES(individual_stamina), move_1=VALUES(move_1), move_2=VALUES(move_2), "
@@ -181,7 +286,9 @@ class DbPogoProtoSubmit:
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id)"
+            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id), fort_id=NULL, cell_id=NULL, "
+            "latitude=VALUES(latitude), longitude=VALUES(longitude), spawnpoint_id=VALUES(spawnpoint_id), "
+            "seen_type=VALUES(seen_type)"
         )
         insert_values = (
             encounter_id,
@@ -205,7 +312,8 @@ class DbPogoProtoSubmit:
             weather_boosted,
             now,
             pokemon_display.get("costume_value", None),
-            form
+            form,
+            "encounter"
         )
 
         self._db_exec.execute(query, insert_values, commit=True)
@@ -213,7 +321,189 @@ class DbPogoProtoSubmit:
         if cache_time > 0:
             cache.set(cache_key, 1, ex=int(cache_time))
         origin_logger.debug3("Done updating mon in DB")
-        return True
+        return [(encounter_id, now)]
+
+    def mon_lure_iv(self, origin: str, timestamp: float, data: dict):
+        """
+        Update/Insert a lure mon with IVs
+        """
+        cache = get_cache(self._args)
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug3("Updating IV sent for encounter at {}", timestamp)
+
+        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+
+        pokemon_data = data.get("pokemon", {})
+        mon_id = pokemon_data.get("id")
+
+        display = pokemon_data.get("display", {})
+        weather_boosted = display.get('weather_boosted_value')
+        encounter_id = display.get("display_id", 0)
+
+        if encounter_id < 0:
+            encounter_id = encounter_id + 2 ** 64
+
+        cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
+        if cache.exists(cache_key):
+            return
+
+        # ditto detector
+        if is_mon_ditto(origin_logger, pokemon_data):
+            # mon must be a ditto :D
+            mon_id = 132
+            gender = 3
+            move_1 = 242
+            move_2 = 133
+            form = 0
+        else:
+            gender = display.get("gender_value", None)
+            move_1 = pokemon_data.get("move_1")
+            move_2 = pokemon_data.get("move_2")
+            form = display.get("form_value", None)
+
+        query = (
+            "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
+            "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
+            "weight, height, gender, weather_boosted_condition, last_modified, costume, form, seen_type) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), "
+            "individual_attack=VALUES(individual_attack), individual_defense=VALUES(individual_defense), "
+            "individual_stamina=VALUES(individual_stamina), move_1=VALUES(move_1), move_2=VALUES(move_2), "
+            "cp=VALUES(cp), cp_multiplier=VALUES(cp_multiplier), weight=VALUES(weight), height=VALUES(height), "
+            "seen_type=VALUES(seen_type)"
+        )
+        insert_values = (
+            encounter_id,
+            0,
+            mon_id,
+            0, 0, now,
+            pokemon_data.get("individual_attack"),
+            pokemon_data.get("individual_defense"),
+            pokemon_data.get("individual_stamina"),
+            move_1,
+            move_2,
+            pokemon_data.get("cp"),
+            pokemon_data.get("cp_multiplier"),
+            pokemon_data.get("weight"),
+            pokemon_data.get("height"),
+            gender,
+            weather_boosted,
+            now,
+            display.get("costume_value"),
+            form,
+            "lure_encounter"
+        )
+
+        self._db_exec.execute(query, insert_values, commit=True)
+        cache.set(cache_key, 1, ex=60 * 3)
+        origin_logger.debug3("Done updating lure mon with iv in DB")
+        return [(encounter_id, now)]
+
+    def mon_lure_noiv(self, origin: str, map_proto: dict):
+        """
+        Update/Insert Lure mons from a map_proto dict
+        """
+        cache = get_cache(self._args)
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug3("DbPogoProtoSubmit::mon_lure_noiv called with data received")
+        cells = map_proto.get("cells", None)
+        if cells is None:
+            return False
+
+        query_lures = (
+            "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, fort_id, "
+            "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
+            "latitude, longitude, seen_type)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), fort_id=VALUES(fort_id), "
+            "disappear_time=VALUES(disappear_time), latitude=VALUES(latitude), "
+            "longitude=VALUES(longitude)"
+        )
+
+        lure_args = []
+        encounters = []
+        for cell in cells:
+            for fort in cell["forts"]:
+                lure_mon = fort.get("active_pokemon", {})
+                mon_id = lure_mon.get("id", 0)
+                if fort["type"] == 1 and mon_id > 0:
+                    encounter_id = lure_mon["encounter_id"]
+
+                    if encounter_id < 0:
+                        encounter_id = encounter_id + 2 ** 64
+
+                    cache_key = "monlurenoiv{}".format(encounter_id)
+                    if cache.exists(cache_key):
+                        continue
+
+                    lat = fort["latitude"]
+                    lon = fort["longitude"]
+                    stopid = fort["id"]
+                    disappear_time = datetime.utcfromtimestamp(
+                        lure_mon["expiration_timestamp"] / 1000)
+
+                    disappear_time = disappear_time.strftime("%Y-%m-%d %H:%M:%S")
+                    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+                    display = lure_mon["display"]
+                    form = display["form_value"]
+                    costume = display["costume_value"]
+                    gender = display["gender_value"]
+                    weather_boosted = display["weather_boosted_value"]
+
+                    cache.set(cache_key, 1, ex=60 * 3)
+                    lure_args.append(
+                        (
+                            encounter_id, 0, mon_id, stopid, disappear_time, gender,
+                            weather_boosted, now, costume, form, lat, lon, "lure_wild"
+                        )
+                    )
+                    encounters.append((encounter_id, now))
+
+        self._db_exec.executemany(query_lures, lure_args, commit=True)
+        return encounters
+
+    def update_seen_type_stats(self, **kwargs):
+        insert = {}
+        for seen_type in ["encounter", "wild", "nearby_stop",
+                          "nearby_cell", "lure_encounter", "lure_wild"]:
+            encounters = kwargs.get(seen_type)
+
+            if encounters is None:
+                continue
+
+            for encounter_id, seen_time in encounters:
+                if encounter_id not in insert:
+                    insert[encounter_id] = {}
+                insert[encounter_id][seen_type] = seen_time
+
+        base_query = (
+            "INSERT INTO trs_stats_detect_seen_type (encounter_id, encounter, wild, nearby_stop, nearby_cell, "
+            "lure_encounter, lure_wild) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE encounter=IFNULL(encounter, VALUES(encounter)), "
+            "wild=IFNULL(wild, VALUES(wild)), nearby_stop=IFNULL(nearby_stop, VALUES(nearby_stop)), "
+            "nearby_cell=IFNULL(nearby_cell, VALUES(nearby_cell)), "
+            "lure_encounter=IFNULL(lure_encounter, VALUES(lure_encounter)), "
+            "lure_wild=IFNULL(lure_wild, VALUES(lure_wild))"
+        )
+        base_args = []
+
+        for encounter_id, values in insert.items():
+            encounter = values.get("encounter", None)
+            wild = values.get("wild", None)
+            nearby_stop = values.get("nearby_stop", None)
+            nearby_cell = values.get("nearby_cell", None)
+            lure_encounter = values.get("lure_encounter", None)
+            lure_wild = values.get("lure_wild", None)
+
+            base_args.append(
+                (
+                    encounter_id, encounter, wild, nearby_stop,
+                    nearby_cell, lure_encounter, lure_wild
+                )
+            )
+        self._db_exec.executemany(base_query, base_args, commit=True)
 
     def spawnpoints(self, origin: str, map_proto: dict, proto_dt: datetime):
         origin_logger = get_origin_logger(logger, origin=origin)

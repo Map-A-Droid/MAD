@@ -114,6 +114,9 @@ CREATE TABLE `pokemon` (
     `rating_defense` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `weather_boosted_condition` smallint(6) DEFAULT NULL,
     `last_modified` datetime DEFAULT NULL,
+    `fort_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `cell_id` bigint(20) unsigned DEFAULT NULL,
+    `seen_type` enum('wild', 'encounter', 'nearby_stop', 'nearby_cell', 'lure_wild', 'lure_encounter'),
     PRIMARY KEY (`encounter_id`),
     KEY `pokemon_spawnpoint_id` (`spawnpoint_id`),
     KEY `pokemon_pokemon_id` (`pokemon_id`),
@@ -138,7 +141,6 @@ CREATE TABLE `pokestop` (
     `incident_expiration` datetime DEFAULT NULL,
     `incident_grunt_type` smallint(1) DEFAULT NULL,
     `is_ar_scan_eligible` tinyint(1) NOT NULL DEFAULT '0',
-    `encounter_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     PRIMARY KEY (`pokestop_id`),
     KEY `pokestop_last_modified` (`last_modified`),
     KEY `pokestop_lure_expiration` (`lure_expiration`),
@@ -369,7 +371,6 @@ CREATE TABLE `settings_device` (
     `post_pogo_start_delay` float DEFAULT NULL,
     `restart_pogo` int(11) DEFAULT NULL,
     `inventory_clear_rounds` int(11) DEFAULT NULL,
-    `inventory_clear_item_amount_tap_duration` int(11) DEFAULT NULL,
     `mitm_wait_timeout` float DEFAULT NULL,
     `vps_delay` float DEFAULT NULL,
     `reboot` tinyint(1) DEFAULT NULL,
@@ -420,7 +421,6 @@ CREATE TABLE `settings_devicepool` (
     `post_pogo_start_delay` float DEFAULT NULL,
     `restart_pogo` int(11) DEFAULT NULL,
     `inventory_clear_rounds` int(11) DEFAULT NULL,
-    `inventory_clear_item_amount_tap_duration` int(11) DEFAULT NULL,
     `mitm_wait_timeout` float DEFAULT NULL,
     `vps_delay` float DEFAULT NULL,
     `reboot` tinyint(1) DEFAULT NULL,
@@ -630,6 +630,17 @@ CREATE TABLE `trs_stats_detect_raw` (
     KEY `worker` (`worker`),
     KEY `typeworker` (`worker`,`type_id`),
     KEY `shiny` (`is_shiny`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `trs_stats_detect_seen_type` (
+    `encounter_id` bigint(20) unsigned NOT NULL,
+    `encounter` datetime NULL DEFAULT NULL,
+    `wild` datetime NULL DEFAULT NULL,
+    `nearby_stop` datetime NULL DEFAULT NULL,
+    `nearby_cell` datetime NULL DEFAULT NULL,
+    `lure_encounter` datetime NULL DEFAULT NULL,
+    `lure_wild` datetime NULL DEFAULT NULL,
+    PRIMARY KEY (`encounter_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `trs_stats_location` (

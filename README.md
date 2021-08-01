@@ -1,6 +1,5 @@
 # Map'A'Droid
 
-![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 ![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)
 ![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)
 [![Build Status](https://travis-ci.org/Map-A-Droid/MAD.svg?branch=master)](https://travis-ci.org/Map-A-Droid/MAD)
@@ -24,7 +23,7 @@ Map'A'Droid is a scanner for PoGo based on Android devices.
 
 ## Requirements
 
-* A supported version of Python: **3.6**, **3.7**, **3.8**
+* A supported version of Python: **3.7**, **3.8**
 * MySQL database, with RocketMap structure
 * Rooted Android device
 * PogoDroid token, obtainable [maddev.eu](https://maddev.eu/shop/)

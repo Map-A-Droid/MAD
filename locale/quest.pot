@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-11 17:53+0200\n"
+"POT-Creation-Date: 2021-06-17 11:49+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,363 +17,408 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../mapadroid/utils/questGen.py:32 ../mapadroid/utils/questGen.py:92
+#: mapadroid/utils/questGen.py:19 mapadroid/utils/questGen.py:42
 msgid "Item"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:36 ../mapadroid/utils/questGen.py:38
-#: ../mapadroid/utils/questGen.py:93
+#: mapadroid/utils/questGen.py:20 mapadroid/utils/questGen.py:65
+msgid "Candy"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:21 mapadroid/utils/questGen.py:46
+#: mapadroid/utils/questGen.py:48
 msgid "Stardust"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:39 ../mapadroid/utils/questGen.py:94
+#: mapadroid/utils/questGen.py:22 mapadroid/utils/questGen.py:49
 msgid "Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:47 ../mapadroid/utils/questGen.py:95
+#: mapadroid/utils/questGen.py:23 mapadroid/utils/questGen.py:57
 msgid "Energy"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:48
+#: mapadroid/utils/questGen.py:58
 msgid "Mega Energy"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:125
+#: mapadroid/utils/questGen.py:129
+msgid "-type"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:134
 msgid "Nice"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:125
+#: mapadroid/utils/questGen.py:134 mapadroid/utils/questGen.py:136
 msgid "Great"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:126
+#: mapadroid/utils/questGen.py:135
 msgid "Excellent"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:126
+#: mapadroid/utils/questGen.py:135
 msgid "Curveball"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:143
+#: mapadroid/utils/questGen.py:136
+msgid "Good"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:136
+msgid "Ultra"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:136
+msgid "Best"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:151
 #, python-brace-format
 msgid "Catch {0}{different} {type}Pokemon{wb}"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:150 ../mapadroid/utils/questGen.py:154
-#: ../mapadroid/utils/questGen.py:237 ../mapadroid/utils/questGen.py:241
-#: ../mapadroid/utils/questGen.py:349 ../mapadroid/utils/questGen.py:353
-msgid "-type "
+#: mapadroid/utils/questGen.py:161
+msgid "-, "
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:153 ../mapadroid/utils/questGen.py:170
-#: ../mapadroid/utils/questGen.py:240 ../mapadroid/utils/questGen.py:257
-#: ../mapadroid/utils/questGen.py:333 ../mapadroid/utils/questGen.py:352
-msgid "or "
-msgstr ""
-
-#: ../mapadroid/utils/questGen.py:158
-msgid " with weather boost"
-msgstr ""
-
-#: ../mapadroid/utils/questGen.py:160
-msgid " different species of"
-msgstr ""
-
-#: ../mapadroid/utils/questGen.py:173
+#: mapadroid/utils/questGen.py:170
 #, python-brace-format
 msgid "Catch {0} {poke}"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:175
-#, python-brace-format
-msgid "Spin {0} Pokestops or Gyms"
+#: mapadroid/utils/questGen.py:176
+msgid ", "
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:177
+#: mapadroid/utils/questGen.py:180
+msgid " with weather boost"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:183
+msgid " different species of"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:191
+msgid " shadow"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:194
+msgid " purified"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:197
 #, python-brace-format
 msgid "Spin {0} Pokestops you haven't visited before"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:179
+#: mapadroid/utils/questGen.py:199
+#, python-brace-format
+msgid "Spin {0} Pokestops or Gyms"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:201
 #, python-brace-format
 msgid "Hatch {0} Eggs"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:182
+#: mapadroid/utils/questGen.py:204
 #, python-brace-format
 msgid "Win {0} Gym Battles"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:184
+#: mapadroid/utils/questGen.py:206
 #, python-brace-format
 msgid "Use a supereffective Charged Attack in {0} Gym battles"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:186
+#: mapadroid/utils/questGen.py:208
 #, python-brace-format
 msgid "Battle in a Gym {0} times"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:189
+#: mapadroid/utils/questGen.py:211
 #, python-brace-format
 msgid "Win {0} Raids"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:191
+#: mapadroid/utils/questGen.py:213
 msgid "Win a level 3 or higher raid"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:193
+#: mapadroid/utils/questGen.py:215
 msgid "Win a level 2 or higher raid"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:195
+#: mapadroid/utils/questGen.py:217
 msgid "Win a Mega raid"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:197
+#: mapadroid/utils/questGen.py:219
 #, python-brace-format
 msgid "Battle in {0} Raids"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:199
+#: mapadroid/utils/questGen.py:221
 #, python-brace-format
 msgid "Transfer {0} Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:201
+#: mapadroid/utils/questGen.py:223
 #, python-brace-format
 msgid "Favourite {0} Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:203
+#: mapadroid/utils/questGen.py:225
 #, python-brace-format
 msgid "Use {0} {type}Berries to help catch Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:208
+#: mapadroid/utils/questGen.py:230
 msgid " Berry"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:210
+#: mapadroid/utils/questGen.py:232
 #, python-brace-format
 msgid "Power up Pokemon {0} times"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:212
+#: mapadroid/utils/questGen.py:235
 #, python-brace-format
 msgid "{mega}Evolve {0} Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:214
+#: mapadroid/utils/questGen.py:237
 msgid "Mega "
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:218
+#: mapadroid/utils/questGen.py:241
 #, python-brace-format
 msgid "Use an item to {mega}evolve {0} Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:223
+#: mapadroid/utils/questGen.py:246
 #, python-brace-format
 msgid "Use {item} to {mega}evolve {0} Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:226
+#: mapadroid/utils/questGen.py:249
 #, python-brace-format
 msgid "{mega}Evolve {0} {type}Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:260
+#: mapadroid/utils/questGen.py:260 mapadroid/utils/questGen.py:264
+#: mapadroid/utils/questGen.py:372 mapadroid/utils/questGen.py:376
+msgid "-type "
+msgstr ""
+
+#: mapadroid/utils/questGen.py:263 mapadroid/utils/questGen.py:280
+#: mapadroid/utils/questGen.py:356 mapadroid/utils/questGen.py:375
+msgid "or "
+msgstr ""
+
+#: mapadroid/utils/questGen.py:283
 #, python-brace-format
 msgid "{mega}Evolve {0} {poke}"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:266
+#: mapadroid/utils/questGen.py:289
 msgid " in a row"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:268
+#: mapadroid/utils/questGen.py:291
 msgid "Curveball "
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:272
+#: mapadroid/utils/questGen.py:295
 #, python-brace-format
 msgid "Make {0} {type}{curve}Throws{inrow}"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:274
+#: mapadroid/utils/questGen.py:297
 #, python-brace-format
 msgid "Earn {0} Candies walking with your buddy"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:277
+#: mapadroid/utils/questGen.py:300
 msgid "Make a new friend"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:279
+#: mapadroid/utils/questGen.py:302
 #, python-brace-format
 msgid "Make {0} new friends"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:281
+#: mapadroid/utils/questGen.py:304
 #, python-brace-format
 msgid "Trade {0} Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:286
+#: mapadroid/utils/questGen.py:309
 #, python-brace-format
 msgid "Trade Pokemon caught {distance} km apart"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:288
+#: mapadroid/utils/questGen.py:311
 #, python-brace-format
 msgid "Trade {0} Pokemon caught {distance} km apart"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:290
+#: mapadroid/utils/questGen.py:313
 #, python-brace-format
 msgid "Send {0} gifts to friends"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:295
+#: mapadroid/utils/questGen.py:318
 #, python-brace-format
 msgid "Battle a Team Leader {0} times"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:300
+#: mapadroid/utils/questGen.py:323
 #, python-brace-format
 msgid "Win a battle against another Trainer {0} times"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:302
+#: mapadroid/utils/questGen.py:325
 #, python-brace-format
 msgid "Battle another Trainer {0} times"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:313
+#: mapadroid/utils/questGen.py:336
 #, python-brace-format
 msgid "Win in the GO Battle League {0} times"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:315
+#: mapadroid/utils/questGen.py:338
 #, python-brace-format
 msgid "Battle in the GO Battle League {0} times"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:319
+#: mapadroid/utils/questGen.py:342
 #, python-brace-format
 msgid "Take {0} snapshots of your Buddy"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:336
+#: mapadroid/utils/questGen.py:359
 #, python-brace-format
 msgid "Take {0} snapshots of {poke}"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:338
+#: mapadroid/utils/questGen.py:361
 #, python-brace-format
 msgid "Take {0} snapshots of {type} Pokemon"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:358
-msgid "Battle a Team Rocket Grunt"
-msgstr ""
-
-#: ../mapadroid/utils/questGen.py:362
+#: mapadroid/utils/questGen.py:381
 #, python-brace-format
-msgid "Battle {0} times against the Team GO Rocket Leaders"
+msgid "{verb} a Team Rocket Grunt"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:367
+#: mapadroid/utils/questGen.py:384
 msgid "Battle"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:367
+#: mapadroid/utils/questGen.py:389 mapadroid/utils/questGen.py:393
+#, python-brace-format
+msgid "{verb} {0} times against Team GO Rocket Leaders"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:392
 msgid "Defeat"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:374
+#: mapadroid/utils/questGen.py:395
+#, python-brace-format
+msgid "{verb} a Team GO Rocket Leader"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:397
+#, python-brace-format
+msgid "{verb} a Team GO Rocket Leader {0} times"
+msgstr ""
+
+#: mapadroid/utils/questGen.py:409
 msgid " Eggs"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:374
+#: mapadroid/utils/questGen.py:409
 msgid "n Egg"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:375
+#: mapadroid/utils/questGen.py:410
 msgid " Raids"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:375
+#: mapadroid/utils/questGen.py:410
 msgid " Raid"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:376
+#: mapadroid/utils/questGen.py:411
 msgid " Battles"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:376
+#: mapadroid/utils/questGen.py:411
 msgid " Battle"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:377
+#: mapadroid/utils/questGen.py:412
 msgid " candies"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:377
+#: mapadroid/utils/questGen.py:412
 msgid " candy"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:378
+#: mapadroid/utils/questGen.py:413
 msgid " gifts"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:378
+#: mapadroid/utils/questGen.py:413
 msgid " gift"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:379
+#: mapadroid/utils/questGen.py:414
 msgid " Pokestops"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:379
+#: mapadroid/utils/questGen.py:414
 msgid " Pokestop"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:380
+#: mapadroid/utils/questGen.py:415
 #, python-brace-format
 msgid " {0} snapshots"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:380
+#: mapadroid/utils/questGen.py:415
 msgid " a snapshot"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:381
+#: mapadroid/utils/questGen.py:416
 #, python-brace-format
 msgid "Make {0} {type}{curve}Throws"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:381
+#: mapadroid/utils/questGen.py:416
 #, python-brace-format
 msgid "Make a {type}{curve}Throw"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:382
+#: mapadroid/utils/questGen.py:417
 #, python-brace-format
 msgid " {0} times"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:383
+#: mapadroid/utils/questGen.py:418
 #, python-brace-format
 msgid "{0} hearts"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:383
+#: mapadroid/utils/questGen.py:418
 msgid "a heart"
 msgstr ""
 
-#: ../mapadroid/utils/questGen.py:384
+#: mapadroid/utils/questGen.py:419
 msgid "a"
 msgstr ""

@@ -83,7 +83,8 @@ class SerializedMitmDataProcessor(Process):
                 spawnpoints_time = self.get_time_ms() - spawnpoints_time_start
 
                 mons_time_start = self.get_time_ms()
-                self.__db_submit.mons(origin, received_timestamp, data["payload"], self.__mitm_mapper)
+                wild_encounters = self.__db_submit.mons(
+                    origin, received_timestamp, data["payload"], self.__mitm_mapper)
                 mons_time = self.get_time_ms() - mons_time_start
 
                 cells_time_start = self.get_time_ms()
@@ -94,21 +95,72 @@ class SerializedMitmDataProcessor(Process):
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 gmo_loc_time = self.get_time_ms() - gmo_loc_start
 
+                if self.__application_args.scan_lured_mons:
+                    lurenoiv_start = self.get_time_ms()
+                    lure_wild = self.__db_submit.mon_lure_noiv(origin, data["payload"])
+                    lurenoiv_time = self.get_time_ms() - lurenoiv_start
+                else:
+                    lurenoiv_time = 0
+                    lure_wild = []
+
+                if self.__application_args.scan_nearby_mons:
+                    nearby_mons_time_start = self.get_time_ms()
+                    cell_encounters, stop_encounters = self.__db_submit.nearby_mons(
+                        origin, received_timestamp, data["payload"], self.__mitm_mapper)
+                    nearby_mons_time = self.get_time_ms() - nearby_mons_time_start
+                else:
+                    cell_encounters = []
+                    stop_encounters = []
+                    nearby_mons_time = 0
+
+                if self.__application_args.game_stats:
+                    self.__db_submit.update_seen_type_stats(
+                        wild=wild_encounters, lure_wild=lure_wild,
+                        nearby_cell=cell_encounters, nearby_stop=stop_encounters
+                    )
+
                 full_time = self.get_time_ms() - start_time
 
                 origin_logger.debug("Done processing GMO in {}ms (weather={}ms, stops={}ms, gyms={}ms, raids={}ms, " +
-                                    "spawnpoints={}ms, mons={}ms, cells={}ms, gmo_loc={}ms)",
+                                    "spawnpoints={}ms, mons={}ms, nearby_mons={}, lure_noiv={}, cells={}ms, " +
+                                    "gmo_loc={}ms)",
                                     full_time, weather_time, stops_time, gyms_time, raids_time,
-                                    spawnpoints_time, mons_time, cells_time, gmo_loc_time)
+                                    spawnpoints_time, mons_time, nearby_mons_time, lurenoiv_time,
+                                    cells_time, gmo_loc_time)
             elif data_type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
                     origin_logger.debug("Processing encounter received at {}", processed_timestamp)
-                    self.__db_submit.mon_iv(origin, received_timestamp, data["payload"], self.__mitm_mapper)
+                    encounter = self.__db_submit.mon_iv(
+                        origin, received_timestamp, data["payload"], self.__mitm_mapper)
+
+                    if self.__application_args.game_stats:
+                        self.__db_submit.update_seen_type_stats(
+                            encounter=encounter
+                        )
+
                     end_time = self.get_time_ms() - start_time
                     origin_logger.debug("Done processing encounter in {}ms", end_time)
                 else:
                     origin_logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
+
+            elif data_type == 145:
+                # lure mons with iv
+                playerlevel = self.__mitm_mapper.get_playerlevel(origin)
+                if self.__application_args.scan_lured_mons and (playerlevel >= 30):
+                    origin_logger.debug("Processing lure encounter received at {}", processed_timestamp)
+
+                    lure_encounter = self.__db_submit.mon_lure_iv(
+                        origin, received_timestamp, data["payload"])
+
+                    if self.__application_args.game_stats:
+                        self.__db_submit.update_seen_type_stats(
+                            lure_encounter=lure_encounter
+                        )
+
+                    end_time = self.get_time_ms() - start_time
+                    origin_logger.debug("Done processing lure encounter in {}ms", end_time)
+
             elif data_type == 101:
                 origin_logger.debug("Processing proto 101 (FORT_SEARCH)")
                 self.__db_submit.quest(origin, data["payload"], self.__mitm_mapper)

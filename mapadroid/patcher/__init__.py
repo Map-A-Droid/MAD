@@ -48,7 +48,9 @@ MAD_UPDATES = OrderedDict([
     (39, 'extend_trs_quest_pogodroid_190'),
     (40, 'add_is_ar_scan_eligible'),
     (41, 'dynamic_iv_list'),
-    (42, 'add_encounter_all')
+    (42, 'add_encounter_all'),
+    (43, 'remove_tap_duration'),
+    (44, 'more_ways_to_scan_mons')
 ])
 
 

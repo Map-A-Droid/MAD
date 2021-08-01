@@ -44,10 +44,10 @@ class RouteManagerIV(RouteManagerBase):
                                                                   eligible_mon_ids=self.settings.get(
                                                                       "mon_ids_iv_raw", None))
         # extract the encounterIDs and set them in the routeManager...
-        new_list = []
+        new_list = set()
         for prio in latest_priorities:
-            new_list.append(prio[2])
-        self.encounter_ids_left = new_list
+            new_list.add(prio[2])
+        self.encounter_ids_left = list(new_list)
 
         with self._manager_mutex:
             heapq.heapify(latest_priorities)
@@ -66,6 +66,18 @@ class RouteManagerIV(RouteManagerBase):
         pass
 
     def _delete_coord_after_fetch(self) -> bool:
+        return False
+
+    def _should_check_prioq(self, origin: str) -> bool:
+        # Override the base class. We only require the prioq to not be empty.
+        return self._prio_queue
+
+    def _has_normal_route(self) -> bool:
+        # Override the base class. We only use coords from prioq.
+        return False
+
+    def _can_pass_prioq_coords(self) -> bool:
+        # Override the base class. No need to pass prioq coords.
         return False
 
     def _start_routemanager(self):

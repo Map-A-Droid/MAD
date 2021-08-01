@@ -55,6 +55,11 @@
 #ocr_thread_count             # Amount of threads/processes to be used for screenshot-analysis. Default: 2
 #only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
 #config_mode                  # Run in ConfigMode. Default: False
+#scan_nearby_mons             # Enable scanning of nearby mons - Please make sure you know how this works before turning it on!
+#disable_nearby_cell          # Disables nearby_cell scans if scan_nearby_mons is enabled
+#scan_lured_mons              # Enable scanning of lured mons
+#default_nearby_timeleft:     # The default despawn time left in minutes for Nearby Mons. Default: 15
+#default_unknown_timeleft:    # The default despawn time left in minutes for Mons at unknown Spawnpoints. Default: 3
 #status-name:                 # Setup name for this instance - if not set: PID of the process will be used
 #no_event_checker             # Disable event checker task
 
@@ -118,11 +123,10 @@
 #webhook                     # Activate support for webhook
 #webhook_url:                # webhook endpoint (multiple seperated by comma)
                              #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
-                             #  possible types are: pokemon, raid, gym, weather, pokestop, quest
+                             #  possible types are: raid, gym, weather, pokestop, quest
+                             #  different pokemon types: encounter, wild, nearby_stop, nearby_cell, lure_encounter, lure_wild
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
 #webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
-#pokemon_webhook_nonivs      # By default MAD will not send mons without IV checked if they are on ANY Global Mon List. Enable this to have them (sometimes) send twice
-                             # once without IV, once with IV. Make sure your webhook reciever can work with the same encounter send twice [e.g. PokeAlarm needs dev branch]
 #quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
 #webhook_start_time          # Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.
 #webhook_max_payload_size    # Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)

@@ -41,7 +41,7 @@ def init_logging(args):
 
     log_fmt_time_c = "[<cyan>{time:HH:mm:ss.SS}</cyan>]"
     log_fmt_time_fs = "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>]"
-    log_fmt_id = "[<cyan>{extra[name]: >17}</cyan>]"
+    log_fmt_id = "[<cyan>{extra[identifier]: >17}</cyan>]"
     log_fmt_mod_c = "[<cyan>{module: >19.19}:{line: <4}</cyan>]"
     log_fmt_mod_fs = "[<cyan>{module: >19}:{line: <4}</cyan>]"
     log_fmt_level = "[<lvl>{level: >1.1}</lvl>]"
@@ -84,7 +84,7 @@ def init_logging(args):
                 "enqueue": True
             }
         ],
-        "extra": {"name": "Unknown"},
+        "extra": {"identifier": "Unknown"},
     }
 
     if not args.no_file_logs:
@@ -201,15 +201,15 @@ def filter_errors(record):
 
 def filter_origin_updater(record):
     try:
-        record['extra']['name'] = record['extra']['origin']
+        record['extra']['identifier'] = record['extra']['origin']
     except KeyError:
         pass
 
 
 def filter_route_with_origin(record):
     try:
-        routename = record['extra']['name']
-        record['extra']['name'] = record['extra']['origin']
+        routename = record['extra']['identifier']
+        record['extra']['identifier'] = record['extra']['origin']
         record['message'] = '{}: {}'.format(routename, record['message'])
     except KeyError:
         pass
@@ -237,7 +237,7 @@ def get_bind_name(logger_type: LoggerEnums, name: str) -> str:
 
 
 @apply_custom
-def get_logger(logger_type: Union[LoggerEnums, int], name: str = None, filter_func: callable = None) -> logger:
+def get_logger(logger_type: Union[LoggerEnums, int], identifier: str = None, filter_func: callable = None) -> logger:
     """ Creates a new logger with the MAD-required featureset """
     try:
         if isinstance(logger_type, LoggerEnums):
@@ -248,8 +248,8 @@ def get_logger(logger_type: Union[LoggerEnums, int], name: str = None, filter_fu
             log_id = LoggerEnums.unknown
     except ValueError:
         log_id = LoggerEnums.unknown
-    parsed_name = get_bind_name(log_id, name)
-    new_logger = logger.bind(name=parsed_name)
+    parsed_name = get_bind_name(log_id, identifier)
+    new_logger = logger.bind(identifier=parsed_name)
     if filter_func:
         new_logger.patch(filter_func)
     return new_logger
@@ -262,7 +262,7 @@ def get_origin_logger(existing_logger, origin=None) -> logger:
     if not any([origin]):
         return existing_logger
     if origin:
-        return get_logger(LoggerEnums.system, name=origin)
+        return get_logger(LoggerEnums.system, identifier=origin)
 
 
 @apply_custom
@@ -294,7 +294,7 @@ class InterceptHandler(logging.Handler):
         self.log_identifier = get_bind_name(self.log_section, self.log_identifier)
 
     def emit(self, record):
-        with logger.contextualize(name=self.log_identifier):
+        with logger.contextualize(identifier=self.log_identifier):
             logger.opt(depth=6, exception=record.exc_info).log("DEBUG5", record.getMessage())
 
 

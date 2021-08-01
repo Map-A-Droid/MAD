@@ -1,4 +1,5 @@
 import re
+import string
 from typing import List, Optional
 
 from mapadroid.data_manager.modules.pogoauth import PogoAuth
@@ -173,15 +174,6 @@ class Device(Resource):
                     "require": False,
                     "description": "Number of rounds to clear the inventory. (Default: 10)",
                     "expected": int
-                }
-            },
-            "inventory_clear_item_amount_tap_duration": {
-                "settings": {
-                    "type": "text",
-                    "require": False,
-                    "description": "Number of seconds to tap the + button when clearing an inventory item. "
-                                   "(Default: 3)",
-                    "expected": float
                 }
             },
             "mitm_wait_timeout": {
@@ -418,6 +410,10 @@ class Device(Resource):
             if invalid_ptc:
                 msg = 'Invalid PogoAuth specified [%s]' % ','.join([str(x) for x in invalid_ptc])
                 issues['invalid'].append(('ptc_login', msg))
+
+        if 'origin' in self and any(c in self['origin'] for c in string.whitespace):
+            issues['invalid'].append(('origin', 'Origin cannot have whitespaces, please use under_score'))
+
         if any(issues['invalid']):
             return issues
 

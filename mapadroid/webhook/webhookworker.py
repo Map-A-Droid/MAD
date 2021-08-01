@@ -1,6 +1,6 @@
 import json
 import time
-from typing import List, Optional
+from typing import List
 
 import requests
 
@@ -30,11 +30,16 @@ class WebhookWorker:
         self.__rarity = rarity
         self.__last_check = int(time.time())
         self.__webhook_receivers = []
-        self.__webhook_types = []
-        self.__valid_types = ['pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop']
+        self.__webhook_types = set()
+        self.__pokemon_types = set()
+        self.__valid_types = [
+            'pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop'
+        ]
+        self.__valid_mon_types = [
+            'encounter', 'wild', 'nearby_stop', 'nearby_cell', 'lure_wild', 'lure_encounter'
+        ]
 
         self.__build_webhook_receivers()
-        self.__build_ivmon_list(mapping_manager)
         self.__build_excluded_areas(mapping_manager)
 
         if self.__args.webhook_start_time != 0:
@@ -73,7 +78,8 @@ class WebhookWorker:
 
             if sub_types is not None:
                 for payload in payloads:
-                    if payload["type"] in sub_types:
+                    if payload["type"] in sub_types or \
+                       (payload["message"].get("seen_type", "waddup?!") in sub_types):
                         payload_to_send.append(payload)
             else:
                 payload_to_send = payloads
@@ -102,8 +108,8 @@ class WebhookWorker:
                     )
 
                     if response.status_code != 200:
-                        logger.warning("Got status code other than 200 OK from webhook destination: {}",
-                                       response.status_code)
+                        logger.warning("Webhook destination {} returned status code other than 200 OK: {}",
+                                       webhook.get('url'), response.status_code)
                     else:
                         if len(self.__webhook_receivers) > 1:
                             whcount_text = " [wh {}/{}]".format(current_wh_num, len(self.__webhook_receivers))
@@ -184,53 +190,111 @@ class WebhookWorker:
         if a_quest_reward_type == 2:
             a_quest_reward["info"]["item_id"] = quest["item_id"]
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
-        if a_quest_reward_type == 3:
+        elif a_quest_reward_type == 3:
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
-        if a_quest_reward_type == 7:
+        elif a_quest_reward_type == 4:
+            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
-            a_quest_reward["info"]["pokemon_form"] = int(quest["pokemon_form"])
-            a_quest_reward["info"]["pokemon_costume"] = int(quest.get("pokemon_costume", '0'))
+        elif a_quest_reward_type == 7:
+            a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
+            a_quest_reward["info"]["form_id"] = int(quest["pokemon_form"])
+            a_quest_reward["info"]["costume_id"] = int(quest.get("pokemon_costume", '0'))
             a_quest_reward["info"]["shiny"] = 0
-            a_quest_reward["info"]["form"] = int(quest["pokemon_form"])
         elif a_quest_reward_type == 12:
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
             a_quest_reward["info"]["amount"] = int(quest["item_amount"])
 
         for a_quest_condition in quest_conditions:
-            # Quest condition for special type of pokemon.
+            # condition for special type of pokemon (type = 1)
             if "with_pokemon_type" in a_quest_condition:
                 a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_type")
                 a_quest_condition["info"]["pokemon_type_ids"] = a_quest_condition[
                     "info"
                 ].pop("pokemon_type")
-            # Quest condition for raid level(s).
+            # condition for catching specific mon category (type = 2)
+            if "with_pokemon_category" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_category")
+
+            # Condition for mons with weather boost (type = 3) holds no additional info.
+            # Condition for being first catch of the day (type = 4) holds no additional info.
+            # Condition for being first spin of the day (type = 5) holds no additional info.
+            # Condition for raid status (type= 6) holds no addition info, (means we have to win the raid)
+
+            # Quest condition for raid level(s). (type = 7)
             if "with_raid_level" in a_quest_condition:
                 a_quest_condition["info"] = a_quest_condition.pop("with_raid_level")
                 a_quest_condition["info"]["raid_levels"] = a_quest_condition[
                     "info"
                 ].pop("raid_level")
-            # Quest condition for throw type.
+            # Quest condition for throw type. (type = 8 and type = 14)
             if "with_throw_type" in a_quest_condition:
                 a_quest_condition["info"] = a_quest_condition.pop("with_throw_type")
                 a_quest_condition["info"]["throw_type_id"] = a_quest_condition[
                     "info"
                 ].pop("throw_type")
-            # Quest condition for use of special items
+
+            # Quest condition for Winning the gym battle (type = 9) has no additional info
+            # Quest condition for using a super effective charge attack (type = 10) has no additional info
+
+            # Quest condition for use of items (type = 11)
             if "with_item" in a_quest_condition:
                 a_quest_condition["info"] = a_quest_condition.pop("with_item")
                 a_quest_condition["info"]["item_id"] = a_quest_condition["info"].pop(
                     "item"
                 )
-            # Quest condition for catching specific mons.
-            if "with_pokemon_category" in a_quest_condition:
-                a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_category")
+
+            # Quest condition that pokestop has to be new (type = 12) has no additional info
+
+            # Quest condition for quest context (type 13) is only used for flagging story/challenge quests
+
+            # Quest condition for throws in a row (type = 14) is the same as for type 8 handled above
+
+            # Quest condition for curveballs (type = 15) has no additional info
+
+            # Quest condition for badge types (type = 16)
+
+            # Quest condition for player level (type = 17)
+
+            # Quest condition for battle status (type = 18)
+
+            # Quest condition for new friends (type = 19)
+
+            # Quest condition for number of days in a row (type = 20) (so far only used in special research)
+
+            # Quest condition for unique pokemons (type = 21)
+
+            # Quest condition for npc combat (type = 22) has no additional info (that we care of)
+
+            # Quest condition for battling another trainer (type = 23)
+            if "with_pvp_combat" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_pvp_combat']
+
+            # Quest condition for location (type = 24) is unused
+
+            # Quest condition for distance (type = 25)
+            if "with_distance" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_distance']
+                a_quest_condition['info']['distance'] = a_quest_condition['info'].pop('distance_km')
+
+            # Quest condition for pokemon alignment (shadow/purified) (type = 26)
+            if "with_pokemon_alignment" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_pokemon_alignment']
+
+            # Quest condition for grunts, rocket leaders and other friends (type = 27)
+            if "with_invasion_character" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_invasion_character']
+                a_quest_condition['info']['character_category_ids'] = a_quest_condition['info'].pop('category')
+
+            # Quest condition for snapshots with buddy (type = 28)
+            if "with_buddy" in a_quest_condition:
+                a_quest_condition['info'] = a_quest_condition['with_buddy']
 
             quest_condition.append(a_quest_condition)
 
         return {
             "pokestop_id": quest["pokestop_id"],
-            "pokestop_name": quest["name"].replace('"', '\\"').replace("\n", "\\n"),
             "template": quest["quest_template"],
+            "pokestop_name": quest["name"].replace("\n", "\\n"),
             "pokestop_url": quest["url"],
             "conditions": quest_condition,
             "type": quest["quest_type_raw"],
@@ -238,7 +302,7 @@ class WebhookWorker:
             "longitude": quest["longitude"],
             "rewards": quest_rewards,
             "target": quest["quest_target"],
-            "timestamp": quest["timestamp"],
+            "updated": quest["timestamp"],
             "quest_task": quest["quest_task"],
         }
 
@@ -303,6 +367,7 @@ class WebhookWorker:
                 "end": raid["end"],
                 "name": raid["name"],
                 "evolution": raid["evolution"],
+                "spawn": raid["spawn"],
             }
 
             if raid["move_1"] is not None:
@@ -353,20 +418,15 @@ class WebhookWorker:
             if self.__is_in_excluded_area([mon["latitude"], mon["longitude"]]):
                 continue
 
-            if not self.__args.pokemon_webhook_nonivs \
-               and mon["pokemon_id"] in self.__IV_MON \
-               and (mon["individual_attack"] is None):
-                # skipping this mon since IV has not been scanned yet
-                continue
-
             mon_payload = {
-                "encounter_id": mon["encounter_id"],
+                "encounter_id": str(mon["encounter_id"]),
                 "pokemon_id": mon["pokemon_id"],
                 "spawnpoint_id": mon["spawnpoint_id"],
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
                 "disappear_time": mon["disappear_time"],
                 "verified": mon["spawn_verified"],
+                "seen_type": str(mon["seen_type"])
             }
 
             # get rarity
@@ -423,6 +483,23 @@ class WebhookWorker:
                     mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
                 if self.__args.quest_webhook_flavor == "poracle":
                     mon_payload["weather"] = mon["weather_boosted_condition"]
+
+            if mon["seen_type"] in ("nearby_stop", "lure_wild", "lure_encounter"):
+                mon_payload["pokestop_id"] = mon["fort_id"]
+                mon_payload["pokestop_name"] = mon.get("stop_name")
+                mon_payload["pokestop_url"] = mon.get("stop_url")
+
+                if mon["seen_type"] == "nearby_stop":
+                    mon_payload["verified"] = False
+                else:
+                    mon_payload["verified"] = True
+
+            if mon["seen_type"] == "nearby_cell":
+                mon_payload["cell_coords"] = S2Helper.coords_of_cell(
+                    mon["cell_id"]
+                )
+                mon_payload["cell_id"] = mon["cell_id"]
+                mon_payload["verified"] = False
 
             entire_payload = {"type": "pokemon", "message": mon_payload}
             ret.append(entire_payload)
@@ -498,40 +575,38 @@ class WebhookWorker:
         return ret
 
     def __build_webhook_receivers(self):
-        webhooks = self.__args.webhook_url.replace(" ", "").split(",")
+        webhooks = self.__args.webhook_url.split(",")
 
         for webhook in webhooks:
             sub_types = None
             url = webhook.strip()
 
             if url.startswith("["):
-                end_index = webhook.index("]")
-                end_index += 1
-                sub_types = webhook[:end_index]
-                url = url[end_index:]
+                end_pos = url.index("]")
+                raw_sub_types = url[1:end_pos]
+                url = url[end_pos + 1:]
+
+                sub_types = raw_sub_types.split(" ")
+                sub_types = [t.replace(" ", "") for t in sub_types]
+
+                if "pokemon" in sub_types:
+                    sub_types.append("encounter")
 
                 for vtype in self.__valid_types:
-                    if vtype not in self.__webhook_types and vtype in sub_types:
-                        self.__webhook_types.append(vtype)
+                    if vtype in sub_types:
+                        self.__webhook_types.add(vtype)
+                for vmtype in self.__valid_mon_types:
+                    if vmtype in sub_types:
+                        self.__pokemon_types.add(vmtype)
             else:
-                for vtype in self.__valid_types:
-                    if vtype not in self.__webhook_types:
-                        self.__webhook_types.append(vtype)
+                self.__webhook_types = set(self.__valid_types)
+                self.__pokemon_types = set(self.__valid_mon_types)
+                sub_types = self.__valid_mon_types + self.__valid_types
 
             self.__webhook_receivers.append({
-                "url": url,
+                "url": url.replace(" ", ""),
                 "types": sub_types
             })
-
-    def __build_ivmon_list(self, mapping_manager: MappingManager):
-        self.__IV_MON: List[int] = []
-
-        for routemanager_name in mapping_manager.get_all_routemanager_names():
-            ids_iv_list: Optional[List[int]] = mapping_manager.routemanager_get_ids_iv(routemanager_name)
-
-            if ids_iv_list is not None:
-                # TODO check if area/routemanager is actually active before adding the IDs
-                self.__IV_MON = self.__IV_MON + list(set(ids_iv_list) - set(self.__IV_MON))
 
     def __build_excluded_areas(self, mapping_manager: MappingManager):
         self.__excluded_areas: List[GeofenceHelper] = []
@@ -600,9 +675,11 @@ class WebhookWorker:
                 full_payload += pokestops
 
             # mon
-            if 'pokemon' in self.__webhook_types:
+            if len(self.__pokemon_types) > 0:
                 mon = self.__prepare_mon_data(
-                    self._db_reader.get_mon_changed_since(self.__last_check)
+                    self._db_reader.get_mon_changed_since(
+                        self.__last_check, self.__pokemon_types
+                    )
                 )
                 full_payload += mon
         except Exception:

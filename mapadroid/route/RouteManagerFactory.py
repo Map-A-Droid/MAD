@@ -39,7 +39,7 @@ class RouteManagerFactory:
                                             include_event_id=include_event_id
                                             )
         elif mode == WorkerType.IV_MITM.value:
-            route_manager = RouteManagerIV(db_wrapper, dbm, area_id, coords, 0, 99999999,
+            route_manager = RouteManagerIV(db_wrapper, dbm, area_id, coords, max_radius, 99999999,
                                            path_to_include_geofence, path_to_exclude_geofence, routefile,
                                            mode=mode, settings=settings, init=False, name=name,
                                            joinqueue=joinqueue

@@ -133,7 +133,7 @@
   },
   "36": {
     "prototext": "QUEST_BUDDY_LEVEL",
-    "text": ""
+    "text": "Reach {level} Buddy with a Pokémon"
   },
   "37": {
     "prototext": "QUEST_BUDDY_WALK",
@@ -152,7 +152,11 @@
     "text": "Mega Evolve {0} Pokemon"
   },
   "46": {
-    "protoext": "GEOTARGETED_AR_SCAN",
+    "prototext": "GEOTARGETED_AR_SCAN",
     "text": "Scan pokestop"
+  },
+  "57": {
+    "prototext": "QUEST_TAKE_WILD_SNAPSHOT ",
+    "text": "Take {0} snapshots of wild pokemon"
   }
 }

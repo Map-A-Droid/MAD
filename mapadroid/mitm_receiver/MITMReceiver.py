@@ -176,7 +176,7 @@ class MITMReceiver(Process):
         self.__storage_obj = storage_obj
         self._data_queue: JoinableQueue = data_queue
         self.app = Flask("MITMReceiver")
-        self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
+        self.add_endpoint(endpoint='/get_addresses', endpoint_name='get_addresses',
                           handler=self.get_addresses,
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/mad_apk/<string:apk_type>',
@@ -214,7 +214,7 @@ class MITMReceiver(Process):
         if not enable_configmode:
             self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
                               methods_passed=['POST'])
-            self.add_endpoint(endpoint='/get_latest_mitm/', endpoint_name='get_latest_mitm/',
+            self.add_endpoint(endpoint='/get_latest_mitm', endpoint_name='get_latest_mitm',
                               handler=self.get_latest,
                               methods_passed=['GET'])
             self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
@@ -269,7 +269,7 @@ class MITMReceiver(Process):
             origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
-        if proto_type not in (106, 102, 101, 104, 4, 156):
+        if proto_type not in (106, 102, 101, 104, 4, 156, 145):
             # trash protos - ignoring
             return
 
@@ -314,7 +314,8 @@ class MITMReceiver(Process):
 
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
-                    "lvl_mode": level_mode, 'unquest_stops': unquest_stops}
+                    "lvl_mode": level_mode, 'unquest_stops': unquest_stops,
+                    "check_lured": self.__application_args.scan_lured_mons}
         return json.dumps(response)
 
     # TODO - Deprecate this function as it does not return useful addresses
