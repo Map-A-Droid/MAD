@@ -631,7 +631,6 @@ class WordToScreenMatching(object):
             self._applicationArgs.temp_path, screenshot_filename)
 
     def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
-        delay_after = self.get_devicesettings_value("post_screenshot_delay", delay_after)
         self._logger.debug("Taking screenshot...")
         time.sleep(delay_before)
 
