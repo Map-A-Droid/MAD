@@ -145,19 +145,12 @@ class WordToScreenMatching(object):
             self._logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:
-            if not self._take_screenshot(delay_before=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                         delay_after=2):
-                self._logger.error("_check_windows: Failed getting screenshot")
-                return ScreenType.ERROR, global_dict, diff
-
-            screenpath = self.get_screenshot_path()
-
-            result = self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self.origin)
-            if result is None:
-                self._logger.error("Failed analyzing screen")
+            result = self._take_and_analyze_screenshot()
+            if not result:
+                self._logger.error("_check_windows: Failed getting/analyzing screenshot")
                 return ScreenType.ERROR, global_dict, diff
             else:
-                returntype, global_dict, self._width, self._height, diff = result
+                returntype, global_dict, diff = result
             if not global_dict:
                 self._nextscreen = ScreenType.UNDEFINED
                 self._logger.warning('Could not understand any text on screen - starting next round...')
@@ -290,7 +283,7 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.MARKETING:
             self.__handle_marketing_screen(diff, global_dict)
         elif screentype == ScreenType.CONSENT:
-            self.__handle_ggl_consent_screen()
+            screentype = self.__handle_ggl_consent_screen()
         elif screentype == ScreenType.SN:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.UPDATE:
@@ -445,13 +438,25 @@ class WordToScreenMatching(object):
         self.__handle_returning_player_or_wrong_credentials()
 
     def __handle_ggl_consent_screen(self) -> None:
+        if self._width == 0 and self._height == 0:
+            self._logger.warning("_handle_ggl_consent_screen: Screen width and height are zero - "
+                                 "try to get real values from new screenshot ...")
+            # this updates self._width, self._height
+            result = self._take_and_analyze_screenshot()
+            if not result:
+                self._logger.error("_handle_ggl_consent_screen: Failed getting/analyzing screenshot")
+                return ScreenType.ERROR
+
         if self._width != 720 and self._height != 1280:
-            self._logger.warning("The google consent screen can only be handled on 720x1280 screens")
+            self._logger.warning("The google consent screen can only be handled on 720x1280 screens "
+                                 f"(width is {self._width}, height is {self._height})")
             return ScreenType.ERROR
 
+        self._logger.warning("_handle_ggl_consent_screen: Click accept button")
         self._nextscreen = ScreenType.UNDEFINED
         self._communicator.click(520, 1185)
         time.sleep(10)
+        return ScreenType.UNDEFINED
 
     def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
@@ -626,6 +631,7 @@ class WordToScreenMatching(object):
             self._applicationArgs.temp_path, screenshot_filename)
 
     def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
+        delay_after = self.get_devicesettings_value("post_screenshot_delay", delay_after)
         self._logger.debug("Taking screenshot...")
         time.sleep(delay_before)
 
@@ -648,3 +654,19 @@ class WordToScreenMatching(object):
             self._lastScreenshotTaken = time.time()
             time.sleep(delay_after)
             return True
+
+    def _take_and_analyze_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
+        if not self._take_screenshot(delay_after=self.get_devicesettings_value("post_screenshot_delay", delay_after),
+                                     delay_before=delay_before, errorscreen=errorscreen):
+            self._logger.error("_take_and_analyze_screenshot: Failed getting screenshot")
+            return None
+
+        screenpath = self.get_screenshot_path()
+
+        result = self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self.origin)
+        if result is None:
+            self._logger.error("_take_and_analyze_screenshot: Failed analyzing screen")
+            return None
+        else:
+            returntype, global_dict, self._width, self._height, diff = result
+            return returntype, global_dict, diff
