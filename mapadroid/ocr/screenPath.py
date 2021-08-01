@@ -452,7 +452,7 @@ class WordToScreenMatching(object):
                                  f"(width is {self._width}, height is {self._height})")
             return ScreenType.ERROR
 
-        self._logger.warning("_handle_ggl_consent_screen: Click accept button")
+        self._logger.info("_handle_ggl_consent_screen: Click accept button")
         self._nextscreen = ScreenType.UNDEFINED
         self._communicator.click(520, 1185)
         time.sleep(10)
