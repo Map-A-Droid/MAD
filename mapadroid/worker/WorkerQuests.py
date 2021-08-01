@@ -449,6 +449,9 @@ class WorkerQuests(MITMBase):
         scanmode = "quests"
         injected_settings["scanmode"] = scanmode
         ids_iv: List[int] = []
+        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+        if routemanager_settings is not None:
+            ids_iv = self._mapping_manager.get_monlist(self._routemanager_name)
         self._encounter_ids = {}
         self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered", values_dict=self._encounter_ids)
         self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
@@ -490,6 +493,12 @@ class WorkerQuests(MITMBase):
 
     def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
         type_received, data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=ProtoIdentifier.GMO)
+        while type_received == LatestReceivedType.MON:
+            self.logger.info("Received MON looking for spinnable stop - ignore / try again")
+            time.sleep(1)
+            type_received, data_received = self._wait_for_data(timestamp=time.time(),
+                                                               proto_to_wait_for=ProtoIdentifier.GMO)
+
         if type_received != LatestReceivedType.GMO or data_received is None:
             self._spinnable_data_failure()
             return PositionStopType.GMO_NOT_AVAILABLE
@@ -570,12 +579,14 @@ class WorkerQuests(MITMBase):
         while stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
                             PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1
-            self.logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
-            type_received, proto_entry = self._wait_for_data(timestamp=time.time(),
+            self.logger.info("Wait for new data to check the stop again ... ({}, attempt {})", stop_type,
+                             recheck_count + 1)
+            repeat_timestamp = time.time()
+            type_received, proto_entry = self._wait_for_data(timestamp=repeat_timestamp,
                                                              proto_to_wait_for=ProtoIdentifier.GMO,
                                                              timeout=35)
             if type_received != LatestReceivedType.UNDEFINED:
-                stop_type = self._current_position_has_spinnable_stop(timestamp)
+                stop_type = self._current_position_has_spinnable_stop(repeat_timestamp)
 
         if not PositionStopType.type_contains_stop_at_all(stop_type):
             self.logger.info("Location {}, {} considered to be ignored in the next round due to failed "
