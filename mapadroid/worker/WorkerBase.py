@@ -45,7 +45,7 @@ class FortSearchResultTypes(Enum):
 
 
 class WorkerBase(AbstractWorker, ABC):
-    def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
+    def __init__(self, args, dev_id, origin, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_id: int, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows,
                  walker: SettingsWalkerarea = None, event=None):
@@ -57,7 +57,6 @@ class WorkerBase(AbstractWorker, ABC):
         self._event = event
         self._origin: str = origin
         self._applicationArgs = args
-        self._last_known_state = last_known_state
         self._location_count = 0
         self._walker: SettingsWalkerarea = walker
         self._lastScreenshotTaken = 0
@@ -528,9 +527,6 @@ class WorkerBase(AbstractWorker, ABC):
         return True
 
     async def _internal_grab_next_location(self):
-        # TODO: consider adding runWarningThreadEvent.set()
-        self._last_known_state["last_location"] = self.last_location
-
         logger.debug("Requesting next location from routemanager")
         # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
         # the workers up...
@@ -724,7 +720,6 @@ class WorkerBase(AbstractWorker, ABC):
 
         if start_result:
             logger.success("startPogo: Started pogo successfully...")
-            self._last_known_state["lastPogoRestart"] = cur_time
 
         await self._wait_pogo_start_delay()
         return start_result

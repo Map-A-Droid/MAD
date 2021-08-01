@@ -45,6 +45,7 @@ class DbWrapper:
         try:
             async with self as session, session:
                 await self.update_instance_id(session)
+                await session.commit()
         except Exception:
             self.__instance_id = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '

@@ -95,14 +95,14 @@ class RoutePriorityQueue:
     async def __update_queue(self) -> None:
         new_coords: List[RoutePriorityQueueEntry] = await self._strategy.retrieve_new_coords()
         loop = asyncio.get_running_loop()
-        with ThreadPoolExecutor() as pool:
-            post_processed_coords: List[RoutePriorityQueueEntry] = await loop.run_in_executor(
-                pool, self.strategy.postprocess_coords, new_coords)
+        #with ThreadPoolExecutor() as pool:
+        post_processed_coords: List[RoutePriorityQueueEntry] = await loop.run_in_executor(
+            None, self.strategy.postprocess_coords, new_coords)
         logger.success("Got {} new events", len(post_processed_coords))
         async with self._update_lock:
-            with ThreadPoolExecutor() as pool:
-                merged = await loop.run_in_executor(
-                    pool, self.__merge_filter_queue, post_processed_coords)
+            #with ThreadPoolExecutor() as pool:
+            merged = await loop.run_in_executor(
+                None, self.__merge_filter_queue, post_processed_coords)
             self.__queue = merged
 
     def __merge_filter_queue(self,

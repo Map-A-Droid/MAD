@@ -34,7 +34,7 @@ class PokemonHelper:
             # limiting the time frame to the last couple of minutes
             latest = time.time() - 15 * 60
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
-        # TODO: Likely having some DB foo...
+
         stmt = select(Pokemon).where(and_(Pokemon.disappear_time > DatetimeWrapper.now() - datetime.timedelta(
                                               hours=1),
                                           Pokemon.last_modified > DatetimeWrapper.fromtimestamp(latest),
@@ -46,7 +46,7 @@ class PokemonHelper:
                                           ))
         result = await session.execute(stmt)
         encounter_id_infos: Dict[int, int] = {}
-        for pokemon in result.scalars():
+        for pokemon in result.scalars().all():
             if not geofence_helper.is_coord_inside_include_geofence([pokemon.latitude, pokemon.longitude]):
                 continue
             latest = max(latest, pokemon.last_modified.timestamp())
@@ -90,7 +90,7 @@ class PokemonHelper:
         result = await session.execute(stmt)
 
         next_to_encounter = []
-        for pokemon in result.scalars():
+        for pokemon in result.scalars().all():
             if pokemon.pokemon_id not in eligible_mon_ids:
                 continue
             elif pokemon.latitude is None or pokemon.longitude is None:

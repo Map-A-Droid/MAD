@@ -1,5 +1,3 @@
-from multiprocessing.managers import SyncManager  # noqa: F401
-
 from .abstract_apk_storage import AbstractAPKStorage  # noqa: F401
 from .apk_enums import *  # noqa: F401 F403
 from .apk_storage_db import APKStorageDatabase  # noqa: F401

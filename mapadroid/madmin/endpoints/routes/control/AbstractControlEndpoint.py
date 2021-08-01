@@ -82,7 +82,7 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
 
     async def _read_screenshot_size(self, filename):
         loop = asyncio.get_running_loop()
-        with ThreadPoolExecutor() as pool:
-            height, width = await loop.run_in_executor(
-                pool, self._process_read_screenshot_size, filename)
+        #with ThreadPoolExecutor() as pool:
+        height, width = await loop.run_in_executor(
+            None, self._process_read_screenshot_size, filename)
         return height, width

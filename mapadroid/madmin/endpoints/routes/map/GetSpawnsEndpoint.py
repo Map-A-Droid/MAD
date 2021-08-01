@@ -30,9 +30,9 @@ class GetSpawnsEndpoint(AbstractMadminRootEndpoint):
                                                  old_sw_corner=Location(o_sw_lat, o_sw_lng),
                                                  timestamp=timestamp)
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            cluster_spawns = await loop.run_in_executor(
-                pool, self.__serialize_spawns, coords, data)
+        #with concurrent.futures.ThreadPoolExecutor() as pool:
+        cluster_spawns = await loop.run_in_executor(
+            None, self.__serialize_spawns, coords, data)
         return await self._json_response(cluster_spawns)
 
     @staticmethod

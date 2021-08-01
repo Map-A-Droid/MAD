@@ -23,10 +23,10 @@ from mapadroid.worker.WorkerType import WorkerType
 
 
 class WorkerMITM(MITMBase):
-    def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
+    def __init__(self, args, dev_id, origin, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager, area_id: int, routemanager_id: int, mitm_mapper: MitmMapper,
                  db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker: SettingsWalkerarea, event):
-        MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
+        MITMBase.__init__(self, args, dev_id, origin, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_id=routemanager_id,
                           db_wrapper=db_wrapper,

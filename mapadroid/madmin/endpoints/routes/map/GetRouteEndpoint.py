@@ -51,12 +51,12 @@ class GetRouteEndpoint(AbstractControlEndpoint):
             routecalcs: Dict[int, SettingsRoutecalc] = await SettingsRoutecalcHelper \
                 .get_all(self._session, self._get_instance_id())
             loop = asyncio.get_running_loop()
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                await loop.run_in_executor(
-                    pool, self.__serialize_routecalcs, routecalcs, routeinfo_by_id)
-                # self.__serialize_routecalcs(routecalcs, routeinfo_by_id)
-                data = await loop.run_in_executor(
-                    pool, self.__prepare_data, routeinfo_by_id)
+            #with concurrent.futures.ThreadPoolExecutor() as pool:
+            await loop.run_in_executor(
+                None, self.__serialize_routecalcs, routecalcs, routeinfo_by_id)
+            # self.__serialize_routecalcs(routecalcs, routeinfo_by_id)
+            data = await loop.run_in_executor(
+                None, self.__prepare_data, routeinfo_by_id)
         else:
             data = []
         return await self._json_response(data)

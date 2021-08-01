@@ -62,10 +62,10 @@ class RoutecalcUtil:
         if len(coords) > 0 and max_radius and max_coords_within_radius:
             logger.info("Calculating route for {}", route_name)
             loop = asyncio.get_running_loop()
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                new_coords = await loop.run_in_executor(
-                    pool, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
-                    s2_level)
+            #with concurrent.futures.ThreadPoolExecutor() as pool:
+            new_coords = await loop.run_in_executor(
+                None, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
+                s2_level)
             less_coords = np.zeros(shape=(len(new_coords), 2))
             for i in range(len(less_coords)):
                 less_coords[i][0] = new_coords[i][0]

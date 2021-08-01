@@ -1,4 +1,4 @@
-from multiprocessing import Lock
+from threading import Lock
 from typing import Optional, Union
 
 import aioredis as aioredis
@@ -6,9 +6,7 @@ from aioredis import Redis
 
 from mapadroid.cache import NoopCache
 from mapadroid.db.DbAccessor import DbAccessor
-from mapadroid.utils.logging import LoggerEnums, get_logger
-
-logger = get_logger(LoggerEnums.database)
+from loguru import logger
 
 
 class PooledQueryExecutor:

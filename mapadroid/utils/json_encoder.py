@@ -12,8 +12,8 @@ from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
 
 async def mad_json_dumps(data):
     loop = asyncio.get_running_loop()
-    with concurrent.futures.ThreadPoolExecutor() as pool:
-        return await loop.run_in_executor(pool, mad_json_dumps_sync, data)
+    #with concurrent.futures.ThreadPoolExecutor() as pool:
+    return await loop.run_in_executor(None, mad_json_dumps_sync, data)
 
 
 def mad_json_dumps_sync(data):

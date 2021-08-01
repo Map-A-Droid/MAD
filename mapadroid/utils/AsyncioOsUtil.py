@@ -9,7 +9,7 @@ class AsyncioOsUtil:
         if not path:
             return False
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            file_present: bool = await loop.run_in_executor(
-                pool, os.path.isfile, path)
-            return file_present
+        #with concurrent.futures.ThreadPoolExecutor() as pool:
+        file_present: bool = await loop.run_in_executor(
+            None, os.path.isfile, path)
+        return file_present

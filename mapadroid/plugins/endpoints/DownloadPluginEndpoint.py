@@ -54,9 +54,9 @@ class DownloadPluginEndpoint(AbstractPluginEndpoint):
             os.remove(plugin_file_temp)
 
         loop = asyncio.get_running_loop()
-        with ThreadPoolExecutor() as pool:
-            await loop.run_in_executor(
-                pool, self.__zip, (folder, plugin_file_temp))
+        #with ThreadPoolExecutor() as pool:
+        await loop.run_in_executor(
+            None, self.__zip, (folder, plugin_file_temp))
 
         async with async_open(plugin_file_temp, mode='rb') as plugin_zip:
             plugin_contents = await plugin_zip.read()

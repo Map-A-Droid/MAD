@@ -131,11 +131,11 @@ class TrsSpawnHelper:
                                            TrsSpawn.calc_endminsec != None))
         result = await session.execute(stmt)
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            next_up = await loop.run_in_executor(
-                pool, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result,
-                                        geofence_helper=geofence_helper,
-                                        limit_next_n_seconds=limit_next_n_seconds))
+        #with concurrent.futures.ThreadPoolExecutor() as pool:
+        next_up = await loop.run_in_executor(
+            None, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result,
+                                    geofence_helper=geofence_helper,
+                                    limit_next_n_seconds=limit_next_n_seconds))
 
         return next_up
 
@@ -218,17 +218,16 @@ class TrsSpawnHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            spawns = await loop.run_in_executor(
-                pool, TrsSpawnHelper.__transform_result, result)
+        #with concurrent.futures.ThreadPoolExecutor() as pool:
+        spawns = await loop.run_in_executor(
+            None, TrsSpawnHelper.__transform_result, result.all())
 
         return spawns
 
     @staticmethod
     def __transform_result(result):
-        result_full = result.all()
         spawns: Dict[int, Tuple[TrsSpawn, TrsEvent]] = {}
-        for (spawn, event) in result_full:
+        for (spawn, event) in result:
             spawns[spawn.spawnpoint] = (spawn, event)
         return spawns
 

@@ -104,6 +104,7 @@ class SerializedMitmDataProcessor:
             elif data_type == 4:
                 logger.debug("Processing proto 4 (GET_HOLO_INVENTORY)")
                 await self.__mitm_mapper.handle_inventory_data(origin, data["payload"])
+                del data
                 end_time = self.get_time_ms() - start_time
                 logger.debug("Done processing proto 4 in {}ms", end_time)
             elif data_type == 156:

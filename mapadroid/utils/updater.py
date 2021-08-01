@@ -154,7 +154,6 @@ class DeviceUpdater(object):
             elif self._log[job].get('auto', False):
                 await self.__write_status_log(str(job), delete=True)
 
-    @logger.catch()
     async def process_update_queue(self, threadnumber):
         logger.info("Starting device job processor thread No {}", threadnumber)
         await asyncio.sleep(10)

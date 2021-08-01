@@ -1,7 +1,7 @@
 import asyncio
 import copy
 from asyncio import Task, QueueEmpty
-from multiprocessing import Event
+from threading import Event
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -205,6 +205,7 @@ class MappingManager:
                 async with self.__mappings_mutex:
                     await self.__set_devicesetting(device_name, key, value)
                 self.__devicesettings_setter_queue.task_done()
+                del set_settings
 
     async def __set_devicesetting(self, device_name: str, key: MappingManagerDevicemappingKey, value: Any) -> None:
         devicemapping_entry: Optional[DeviceMappingsEntry] = self._devicemappings.get(device_name, None)

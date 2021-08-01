@@ -71,12 +71,12 @@ class WorkerQuests(MITMBase):
     def similar(self, elem_a, elem_b):
         return SequenceMatcher(None, elem_a, elem_b).ratio()
 
-    def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
+    def __init__(self, args, dev_id, origin, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_id: int, db_wrapper: DbWrapper,
                  pogo_window_manager: PogoWindows, walker: SettingsWalkerarea,
                  mitm_mapper: MitmMapper, event):
-        MITMBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
+        MITMBase.__init__(self, args, dev_id, origin, communicator,
                           mapping_manager=mapping_manager, routemanager_id=routemanager_id,
                           area_id=area_id,
                           db_wrapper=db_wrapper,

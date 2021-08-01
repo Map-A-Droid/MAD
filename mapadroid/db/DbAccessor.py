@@ -44,54 +44,6 @@ class DbAccessor:
     def get_engine(self) -> AsyncEngine:
         return self.__db_engine
 
-    async def execute(self, sql, args=(), commit=False, **kwargs):
-        if not self.__db_access_semaphore:
-            await self.setup()
-        has_binary = False
-        disp_args = []
-        if args and type(args) is tuple:
-            for value in args:
-                if isinstance(value, bytes):
-                    disp_args.append(value[:10])
-                    has_binary = True
-                else:
-                    disp_args.append(value)
-        else:
-            disp_args = (args)
-        get_id = kwargs.get('get_id', False)
-        get_dict = kwargs.get('get_dict', False)
-        raise_exc = kwargs.get('raise_exc', False)
-        suppress_log = kwargs.get('suppress_log', False)
-        async with self.__db_access_semaphore:
-            try:
-                async with AsyncSession(self.__db_engine, autocommit=False, autoflush=True) as session:
-                    res = await session.execute(sql, args)
-                    if not has_binary:
-                        logger.debug3(session.statement)
-                    else:
-                        logger.debug3("SQL: {}", sql)
-                        logger.debug3("Args: {}", disp_args)
-                    if commit:
-                        session.commit()
-                        if get_id:
-                            return res.lastrowid
-                        else:
-                            return res.rowcount
-                    else:
-                        result = res.fetchall()
-                        if get_dict:
-                            return self.__convert_to_dict(res.column_descriptions, res)
-                        return result
-            except SQLAlchemyError as err:
-                if not suppress_log:
-                    logger.error("Failed executing query: {} ({}), error: {}", sql, disp_args, err)
-                if raise_exc:
-                    raise err
-                return None
-            except Exception as e:
-                logger.error("Unspecified exception in dbWrapper: {}", str(e))
-                return None
-
     @staticmethod
     def __convert_to_dict(descr, rows):
         desc = [n for n in descr]

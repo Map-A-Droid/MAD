@@ -1,5 +1,5 @@
 from enum import Enum, IntEnum
-from multiprocessing import Event
+from threading import Event
 
 terminate_mad = Event()
 

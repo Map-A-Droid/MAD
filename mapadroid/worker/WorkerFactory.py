@@ -177,12 +177,12 @@ class WorkerFactory:
 
         # we can finally create an instance of the worker, bloody hell...
         # TODO: last_known_state has never been used and got kinda deprecated due to devicesettings...
-        return self.get_worker(origin, walker_routemanager_mode, communicator, dev_id, {},
+        return self.get_worker(origin, walker_routemanager_mode, communicator, dev_id,
                                walker_configuration.walker_settings.area_id,
                                walker_configuration.walker_settings, walker_configuration.area_id)
 
     def get_worker(self, origin: str, worker_type: WorkerType, communicator: AbstractCommunicator,
-                   dev_id: int, last_known_state: dict, area_id: int,
+                   dev_id: int, area_id: int,
                    walker_settings: SettingsWalkerarea, walker_area_id: int) -> Optional[AbstractWorker]:
         origin_logger = get_origin_logger(logger, origin=origin)
         if origin is None or worker_type is None or worker_type == WorkerType.UNDEFINED:
@@ -195,12 +195,12 @@ class WorkerFactory:
         elif worker_type in [WorkerType.IV_MITM, WorkerType.IV_MITM.value,
                              WorkerType.MON_MITM, WorkerType.MON_MITM.value,
                              WorkerType.RAID_MITM, WorkerType.RAID_MITM.value]:
-            return WorkerMITM(self.__args, dev_id, origin, last_known_state, communicator, area_id=area_id,
+            return WorkerMITM(self.__args, dev_id, origin, communicator, area_id=area_id,
                               routemanager_id=walker_area_id, mitm_mapper=self.__mitm_mapper,
                               mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
                               pogo_window_manager=self.__pogo_windows, walker=walker_settings, event=self.__event)
         elif worker_type in [WorkerType.STOPS, WorkerType.STOPS.value]:
-            return WorkerQuests(self.__args, dev_id, origin, last_known_state, communicator, area_id=area_id,
+            return WorkerQuests(self.__args, dev_id, origin, communicator, area_id=area_id,
                                 routemanager_id=walker_area_id, mitm_mapper=self.__mitm_mapper,
                                 mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
                                 pogo_window_manager=self.__pogo_windows, walker=walker_settings, event=self.__event)

@@ -90,9 +90,9 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
 
         try:
             loop = asyncio.get_running_loop()
-            with ThreadPoolExecutor() as pool:
-                await loop.run_in_executor(
-                    pool, self.__unzip, (extractpath, plugin_tmp_zip))
+            #with ThreadPoolExecutor() as pool:
+            await loop.run_in_executor(
+                None, self.__unzip, (extractpath, plugin_tmp_zip))
 
             os.remove(plugin_tmp_zip)
 

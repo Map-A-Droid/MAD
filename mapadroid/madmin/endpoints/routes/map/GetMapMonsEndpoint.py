@@ -35,9 +35,9 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
                                                                              o_sw_lng) if o_sw_lat and o_sw_lng else None,
                                                       timestamp=timestamp)
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            mons_serialized = await loop.run_in_executor(
-                pool, self.__serialize_mons, data)
+        #with concurrent.futures.ThreadPoolExecutor() as pool:
+        mons_serialized = await loop.run_in_executor(
+            None, self.__serialize_mons, data)
 
         return await self._json_response(mons_serialized)
 

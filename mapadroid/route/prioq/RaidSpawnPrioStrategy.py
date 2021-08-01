@@ -15,7 +15,7 @@ class RaidSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
     def __init__(self, clustering_timedelta: int, clustering_distance: int, clustering_count_per_circle: int,
                  max_backlog_duration: int, db_wrapper: DbWrapper, geofence_helper: GeofenceHelper,
                  delay_after_event: int):
-        super().__init__(update_interval=600, full_replace_queue=False,
+        super().__init__(update_interval=600, full_replace_queue=True,
                          max_backlog_duration=max_backlog_duration,
                          delay_after_event=delay_after_event)
         self._clustering_helper = ClusteringHelper(clustering_distance,
