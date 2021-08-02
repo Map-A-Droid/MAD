@@ -40,8 +40,8 @@ class WebsocketConnectedClientEntry:
         async with self.received_mutex:
             message_entry = self.received_messages.get(message_id, None)
             if message_entry is not None:
-                message_entry.message_received_event.set()
                 message_entry.message = message
+                message_entry.message_received_event.set()
                 self.last_message_received_at = time.time()
 
     async def send_and_wait(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
@@ -105,6 +105,7 @@ class WebsocketConnectedClientEntry:
             to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder='big')
             to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
             to_be_sent += message
+            del message
             logger.debug4("To be sent to (message ID: {}): {}", message_id, to_be_sent[:10])
         else:
             logger.error("Tried to send invalid message (bytes without byte command or no byte/str passed)")

@@ -52,7 +52,7 @@ class PokestopHelper:
                                                Pokestop.longitude <= max_lon))
         result = await session.execute(stmt)
         list_of_coords: List[Location] = []
-        for pokestop in result.scalars():
+        for pokestop in result.scalars().all():
             list_of_coords.append(Location(float(pokestop.latitude), float(pokestop.longitude)))
         if geofence_helper:
             return geofence_helper.get_geofenced_coordinates(list_of_coords)
@@ -85,7 +85,7 @@ class PokestopHelper:
                         TrsVisited.origin == None))
         result = await session.execute(stmt)
         unvisited: List[Pokestop] = []
-        for pokestop in result.scalars():
+        for pokestop in result.scalars().all():
             if geofence_helper.is_coord_inside_include_geofence([pokestop.latitude, pokestop.longitude]):
                 unvisited.append(pokestop)
         return unvisited
@@ -126,7 +126,7 @@ class PokestopHelper:
                                       <= max_distance)
         result = await session.execute(stmt)
         stops: Dict[str, Pokestop] = {}
-        for pokestop in result.scalars():
+        for pokestop in result.scalars().all():
             stops[pokestop.pokestop_id] = pokestop
         return stops
 
@@ -175,7 +175,7 @@ class PokestopHelper:
             if limit > 0:
                 stmt = stmt.limit(limit)
             result = await session.execute(stmt)
-            for stop, _distance in result.scalars():
+            for stop, _distance in result.scalars().all():
                 if not geofence_helper.is_coord_inside_include_geofence([stop.latitude, stop.longitude]):
                     continue
                 stops_retrieved.append(stop)

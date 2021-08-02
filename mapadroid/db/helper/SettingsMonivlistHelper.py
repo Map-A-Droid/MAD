@@ -22,7 +22,7 @@ class SettingsMonivlistHelper:
         stmt = select(SettingsMonivlist).where(SettingsMonivlist.instance_id == instance_id)
         result: AsyncResult = await session.execute(stmt)
         mapped: Dict[int, List[int]] = {}
-        for mon_iv_list in result.scalars():
+        for mon_iv_list in result.scalars().all():
             mapped[mon_iv_list.monlist_id] = await SettingsMonivlistHelper.get_list(session, instance_id,
                                                                                     mon_iv_list.monlist_id)
         return mapped
@@ -49,7 +49,7 @@ class SettingsMonivlistHelper:
             .order_by(SettingsMonivlistToMon.mon_order)
         mon_ids = await session.execute(stmt)
         mon_ids_raw: List[int] = []
-        for mon_id_entry in mon_ids.scalars():
+        for mon_id_entry in mon_ids.scalars().all():
             mon_ids_raw.append(mon_id_entry.mon_id)
         return mon_ids_raw
 
@@ -65,7 +65,7 @@ class SettingsMonivlistHelper:
         stmt = select(SettingsMonivlist).where(SettingsMonivlist.instance_id == instance_id)
         result = await session.execute(stmt)
         mapped: Dict[int, SettingsMonivlist] = {}
-        for mon_iv_list in result.scalars():
+        for mon_iv_list in result.scalars().all():
             mapped[mon_iv_list.monlist_id] = mon_iv_list
         return mapped
 

@@ -20,6 +20,6 @@ class SettingsAreaMonMitmHelper:
         stmt = select(SettingsAreaMonMitm).where(SettingsAreaMonMitm.instance_id == instance_id)
         result = await session.execute(stmt)
         retval: Dict[int, SettingsAreaMonMitm] = {}
-        for area in result.scalars():
+        for area in result.scalars().all():
             retval[area.area_id] = area
         return retval

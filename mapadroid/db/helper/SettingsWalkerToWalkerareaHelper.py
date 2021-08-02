@@ -48,7 +48,7 @@ class SettingsWalkerToWalkerareaHelper:
             .order_by(SettingsWalkerToWalkerarea.area_order)
         result = await session.execute(stmt)
         all_of_walker: List[SettingsWalkerToWalkerarea] = []
-        for walker_mapping in result.scalars():
+        for walker_mapping in result.scalars().all():
             all_of_walker.append(walker_mapping)
         return all_of_walker if len(all_of_walker) > 0 else None
 

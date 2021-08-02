@@ -149,6 +149,7 @@ class Communicator(AbstractCommunicator):
             self.logger.debug("Storing screenshot...")
             async with async_open(path, "wb") as fh:
                 await fh.write(encoded)
+            del encoded
             self.logger.debug2("Done storing, returning")
             return True
 

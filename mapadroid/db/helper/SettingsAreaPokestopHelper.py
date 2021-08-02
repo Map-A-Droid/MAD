@@ -20,6 +20,6 @@ class SettingsAreaPokestopHelper:
         stmt = select(SettingsAreaPokestop).where(SettingsAreaPokestop.instance_id == instance_id)
         result = await session.execute(stmt)
         retval: Dict[int, SettingsAreaPokestop] = {}
-        for area in result.scalars():
+        for area in result.scalars().all():
             retval[area.area_id] = area
         return retval

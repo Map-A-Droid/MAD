@@ -57,7 +57,7 @@ class TrsSpawnHelper:
         stmt = select(TrsSpawn).where(where_condition)
         result = await session.execute(stmt)
         list_of_spawns: List[TrsSpawn] = []
-        for spawnpoint in result.scalars():
+        for spawnpoint in result.scalars().all():
             if not geofence_helper.is_coord_inside_include_geofence([spawnpoint.latitude, spawnpoint.longitude]):
                 continue
             list_of_spawns.append(spawnpoint)
@@ -133,7 +133,7 @@ class TrsSpawnHelper:
         loop = asyncio.get_running_loop()
         #with concurrent.futures.ThreadPoolExecutor() as pool:
         next_up = await loop.run_in_executor(
-            None, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result,
+            None, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result.scalars().all(),
                                     geofence_helper=geofence_helper,
                                     limit_next_n_seconds=limit_next_n_seconds))
 
@@ -147,7 +147,7 @@ class TrsSpawnHelper:
         current_time_of_day = DatetimeWrapper.now().replace(microsecond=0)
         timedelta_to_be_added = timedelta(hours=1)
 
-        for spawn in result.scalars():
+        for spawn in result:
             if not geofence_helper.is_coord_inside_include_geofence([spawn.latitude, spawn.longitude]):
                 continue
             endminsec_split = spawn.calc_endminsec.split(":")

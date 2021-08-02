@@ -38,6 +38,6 @@ class SettingsRoutecalcHelper:
         stmt = select(SettingsRoutecalc).where(SettingsRoutecalc.instance_id == instance_id)
         result = await session.execute(stmt)
         routecalcs: Dict[int, SettingsRoutecalc] = {}
-        for routecalc in result.scalars():
+        for routecalc in result.scalars().all():
             routecalcs[routecalc.routecalc_id] = routecalc
         return routecalcs

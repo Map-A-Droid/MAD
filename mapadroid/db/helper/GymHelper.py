@@ -28,7 +28,7 @@ class GymHelper:
         result = await session.execute(stmt)
 
         list_of_coords: List[Location] = []
-        for gym in result.scalars():
+        for gym in result.scalars().all():
             list_of_coords.append(Location(float(gym.latitude), float(gym.longitude)))
         return geofence_helper.get_geofenced_coordinates(list_of_coords)
 

@@ -20,7 +20,7 @@ class SettingsGeofenceHelper:
         mapped: Dict[int, SettingsGeofence] = {}
         stmt = select(SettingsGeofence).where(SettingsGeofence.instance_id == instance_id)
         result = await session.execute(stmt)
-        for fence in result.scalars():
+        for fence in result.scalars().all():
             mapped[fence.geofence_id] = fence
         return mapped
 
