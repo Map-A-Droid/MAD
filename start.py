@@ -218,17 +218,39 @@ def __run_system_stats(py):
             logger.info("Bottom of diff to initial")
             for stat in top_stats_to_initial[-15:]:
                 logger.info(stat)
-            try:
-                import objgraph
-                logger.info("show_most_common_types")
-                objgraph.show_most_common_types(limit=50, shortnames=False)
-                logger.info("show_growth")
-                objgraph.show_growth(limit=50, shortnames=False)
-                logger.info("get_new_ids")
-                objgraph.get_new_ids(limit=50)
-            except Exception as e:
-                pass
         last_snapshot = new_snapshot
+
+    try:
+        import objgraph
+        logger.info("show_most_common_types")
+        objgraph.show_most_common_types(limit=50, shortnames=False)
+        logger.info("show_growth")
+        objgraph.show_growth(limit=50, shortnames=False)
+        logger.info("get_new_ids")
+        objgraph.get_new_ids(limit=50)
+        logger.info("Constructing backrefs graph")
+        # by_type = objgraph.by_type('builtins.list')
+        by_type = objgraph.by_type('collections.deque')
+        # by_type = objgraph.by_type('uvloop.Loop')
+        # by_type = objgraph.by_type("mapadroid.utils.collections.Location")
+        # by_type = objgraph.by_type("TrsSpawn")
+        if len(by_type) > 1:
+            by_type_empty = [type_filtered for type_filtered in by_type if not type_filtered]
+            by_type_filled = [type_filtered for type_filtered in by_type if type_filtered]
+            logger.warning("Filled: {}, empty: {}, total: {}", len(by_type_filled), len(by_type_empty),
+                           len(by_type))
+            obj = by_type[:500]
+            # TODO: Filter for lists of dicts...
+            # filtered = [type_filtered for type_filtered in by_type if len(type_filtered) > 50]
+            del by_type_empty
+            del by_type_filled
+            del by_type
+            #objgraph.show_backrefs(obj, max_depth=30)
+            #objgraph.show_backrefs(obj, max_depth=5)
+        else:
+            logger.warning("Not enough of type to show: {}", len(by_type))
+    except Exception as e:
+        pass
     logger.info("Done with GC")
     return collected, cpu_usage, mem_usage, unixnow
 
