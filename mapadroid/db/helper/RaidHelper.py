@@ -32,7 +32,7 @@ class RaidHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         next_hatches: List[Tuple[int, Location]] = []
-        for (start, latitude, longitude) in result.scalars().all():
+        for (start, latitude, longitude) in result.all():
             if latitude is None or longitude is None:
                 # logger.warning("lat or lng is none")
                 continue
