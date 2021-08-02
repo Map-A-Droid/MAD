@@ -70,7 +70,7 @@ class PogoWindows:
                                                 minRadius=radius_min,
                                                 maxRadius=radius_max)
         # ensure at least some circles were found
-        if circles:
+        if circles is not None:
             # convert the (x, y) coordinates and radius of the circles to integers
             circles_first_col = np.round(circles[0, :]).astype("int")
             del circles
@@ -113,7 +113,7 @@ class PogoWindows:
             screenshot_read = await AsyncioCv2.imread(filename)
             gray = await AsyncioCv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         except cv2.error:
-            if screenshot_read:
+            if screenshot_read is not None:
                 del screenshot_read
             logger.error("Screenshot corrupted")
             return None

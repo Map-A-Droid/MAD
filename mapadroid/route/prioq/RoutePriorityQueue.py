@@ -46,6 +46,7 @@ class RoutePriorityQueue:
                 logger.success("Updated prioQ")
             except Exception as e:
                 logger.warning("Failed updating prioQ")
+                logger.exception(e)
             await asyncio.sleep(self.strategy.get_update_interval())
 
     @property
