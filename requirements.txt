@@ -28,7 +28,7 @@ aiofile
 aiohttp
 aiohttp-jinja2
 aiohttp-session
-aioredis
+aioredis=2.0.0
 aiomysql
 yarl~=1.6.3
 apkmirror-search
@@ -37,3 +37,5 @@ asyncio-rlock
 cachetools
 werkzeug
 alembic
+ujson
+msgpack
