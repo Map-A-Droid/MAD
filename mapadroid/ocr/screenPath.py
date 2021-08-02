@@ -13,7 +13,7 @@ from mapadroid.db.model import SettingsPogoauth
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.collections import Login_GGL, Login_PTC
+from mapadroid.utils.collections import Login_GGL, Login_PTC, ScreenCoordinates
 from mapadroid.utils.madGlobals import ScreenshotType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 
@@ -465,9 +465,13 @@ class WordToScreenMatching(object):
     async def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
         screenshot_path = await self.get_screenshot_path()
-        await self._pogoWindowManager.look_for_button(self.origin, screenshot_path, 2.20, 3.01,
-                                                      self._communicator, upper=True)
-        await asyncio.sleep(2)
+        coordinates: Optional[ScreenCoordinates] = await self._pogoWindowManager.look_for_button(
+                                                                                                 screenshot_path,
+                                                                                                 2.20, 3.01,
+                                                                                                 upper=True)
+        if coordinates:
+            await self._communicator.click(coordinates.x, coordinates.y)
+            await asyncio.sleep(2)
 
     async def __handle_birthday_screen(self) -> None:
         self._nextscreen = ScreenType.RETURNING

@@ -5,7 +5,7 @@ import time
 from abc import abstractmethod, ABC
 from asyncio import Task
 from enum import Enum
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 from loguru import logger
 
@@ -20,7 +20,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.collections import Location
+from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException, ScreenshotType,
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
@@ -792,24 +792,21 @@ class WorkerBase(AbstractWorker, ABC):
             logger.warning("Failed restarting PoGo - reboot device")
             return await self._reboot()
 
-    async def _get_trash_positions(self, full_screen=False):
+    async def _get_trash_positions(self, full_screen=False) -> List[ScreenCoordinates]:
         logger.debug2("_get_trash_positions: Get_trash_position.")
         if not await self._take_screenshot(
                 delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY,
                                                                  1)):
             logger.debug("_get_trash_positions: Failed getting screenshot")
-            return None
+            return []
 
         if os.path.isdir(await self.get_screenshot_path()):
             logger.error("_get_trash_positions: screenshot.png is not a file/corrupted")
-            return None
+            return []
 
         logger.debug2("_get_trash_positions: checking screen")
-        trashes = await self._pogoWindowManager.get_trash_click_positions(self._origin,
-                                                                          await self.get_screenshot_path(),
-                                                                          full_screen=full_screen)
-
-        return trashes
+        return await self._pogoWindowManager.get_trash_click_positions(await self.get_screenshot_path(),
+                                                                       full_screen=full_screen)
 
     async def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
         logger.debug2("Taking screenshot...")
@@ -869,30 +866,31 @@ class WorkerBase(AbstractWorker, ABC):
                                max_attempts)
                 return False
 
-            found = await self._pogoWindowManager.check_close_except_nearby_button(await self.get_screenshot_path(),
-                                                                                   self._origin,
-                                                                                   self._communicator,
-                                                                                   close_raid=True)
+            found: List[ScreenCoordinates] = await self._pogoWindowManager.check_close_except_nearby_button(
+                await self.get_screenshot_path(), self._origin, close_raid=True)
             if found:
                 logger.debug("_check_pogo_main_screen: Found (X) button (except nearby)")
-
-            if not found and await self._pogoWindowManager.look_for_button(self._origin, screenshot_path, 2.20, 3.01,
-                                                                           self._communicator):
-                logger.debug("_check_pogo_main_screen: Found button (small)")
-                found = True
-
-            if not found and await self._pogoWindowManager.look_for_button(self._origin, screenshot_path, 1.05, 2.20,
-                                                                           self._communicator):
-                logger.debug("_check_pogo_main_screen: Found button (big)")
-                await asyncio.sleep(5)
-                found = True
+                await self.communicator.click(found[0].x, found[0].y)
+                await asyncio.sleep(2)
+            else:
+                button_coords: Optional[ScreenCoordinates] = await self._pogoWindowManager\
+                    .look_for_button(screenshot_path, 2.20, 3.01)
+                if button_coords:
+                    logger.debug("_check_pogo_main_screen: Found button (small)")
+                    await self.communicator.click(button_coords.x, button_coords.y)
+                    await asyncio.sleep(2)
+                    return True
+                button_coords = await self._pogoWindowManager.look_for_button(screenshot_path, 1.05, 2.20)
+                if button_coords:
+                    logger.debug("_check_pogo_main_screen: Found button (big)")
+                    await self.communicator.click(button_coords.x, button_coords.y)
+                    await asyncio.sleep(2)
+                    return True
 
             logger.debug("_check_pogo_main_screen: Previous checks found pop ups: {}", found)
-
             await self._take_screenshot(
                 delay_before=await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY,
                                                                  1))
-
             attempts += 1
         logger.debug("_check_pogo_main_screen: done")
         return True
@@ -914,19 +912,21 @@ class WorkerBase(AbstractWorker, ABC):
 
         logger.debug("checkPogoButton: checking for buttons")
         # TODO: need to be non-blocking
-        found = await self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(), 2.20,
-                                                              3.01,
-                                                              self._communicator)
-        if found:
+        found: bool = False
+        coordinates: Optional[ScreenCoordinates] = await self._pogoWindowManager\
+            .look_for_button(await self.get_screenshot_path(), 2.20, 3.01)
+        if coordinates:
+            await self.communicator.click(coordinates.x, coordinates.y)
             await asyncio.sleep(1)
             logger.debug("checkPogoButton: Found button (small)")
-
-        if not found and await self._pogoWindowManager.look_for_button(self._origin, await self.get_screenshot_path(),
-                                                                       1.05, 2.20,
-                                                                       self._communicator):
-            logger.debug("checkPogoButton: Found button (big)")
-            found = True
-
+        else:
+            coordinates: Optional[ScreenCoordinates] = await self._pogoWindowManager\
+                .look_for_button(await self.get_screenshot_path(), 1.05, 2.20)
+            if coordinates:
+                await self.communicator.click(coordinates.x, coordinates.y)
+                await asyncio.sleep(1)
+                logger.debug("checkPogoButton: Found button (big)")
+                found = True
         logger.debug("checkPogoButton: done")
         return found
 
@@ -962,9 +962,9 @@ class WorkerBase(AbstractWorker, ABC):
 
         logger.debug("checkPogoClose: checking for CloseX")
         found = await self._pogoWindowManager.check_close_except_nearby_button(await self.get_screenshot_path(),
-                                                                               self._origin,
-                                                                               self._communicator)
+                                                                               self._origin)
         if found:
+            await self.communicator.click(found[0].x, found[0].y)
             await asyncio.sleep(1)
             logger.debug("checkPogoClose: Found (X) button (except nearby)")
             logger.debug("checkPogoClose: done")

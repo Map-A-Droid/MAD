@@ -24,7 +24,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
-from mapadroid.utils.collections import Location
+from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.gamemechanicutil import calculate_cooldown
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import (
@@ -368,7 +368,6 @@ class WorkerQuests(MITMBase):
 
         while not stop_inventory_clear.is_set() and delrounds_remaining > 0:
 
-            trash = 0
             if not first_round and not delete_allowed:
                 error_counter += 1
                 if error_counter > 3:
@@ -388,19 +387,20 @@ class WorkerQuests(MITMBase):
                 await self._communicator.click(click_x, click_y)
                 await asyncio.sleep(5)
 
-            trashcancheck = await self._get_trash_positions()
+            trashcan_positions: List[ScreenCoordinates] = await self._get_trash_positions()
 
-            if trashcancheck is None:
+            if not trashcan_positions:
                 logger.warning('Could not find any trashcans - abort')
                 return
-            logger.info("Found {} trashcans on screen", len(trashcancheck))
+            logger.info("Found {} trashcans on screen", len(trashcan_positions))
             first_round = False
             delete_allowed = False
             stop_screen_clear.clear()
 
-            while int(trash) <= len(trashcancheck) - 1 and not stop_screen_clear.is_set():
-                check_y_text_starter = int(trashcancheck[trash].y)
-                check_y_text_ending = int(trashcancheck[trash].y) + self._resocalc.get_inventory_text_diff(
+            trash = 0
+            while int(trash) <= len(trashcan_positions) - 1 and not stop_screen_clear.is_set():
+                check_y_text_starter = int(trashcan_positions[trash].y)
+                check_y_text_ending = int(trashcan_positions[trash].y) + self._resocalc.get_inventory_text_diff(
                     self)
 
                 try:
@@ -424,7 +424,8 @@ class WorkerQuests(MITMBase):
                         trash += 1
                     else:
                         logger.info('Going to delete item: {}', item_text)
-                        await self._communicator.click(int(trashcancheck[trash].x), int(trashcancheck[trash].y))
+                        await self._communicator.click(int(trashcan_positions[trash].x),
+                                                       int(trashcan_positions[trash].y))
                         await asyncio.sleep(1 + int(delayadd))
 
                         await self._communicator.click(click_x, click_y)
