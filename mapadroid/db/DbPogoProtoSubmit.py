@@ -112,7 +112,7 @@ class DbPogoProtoSubmit:
                         await nested_transaction.commit()
                         cache_time = int(despawn_time_unix - int(DatetimeWrapper.now().timestamp()))
                         if cache_time > 0:
-                            await cache.set(cache_key, 1, expire=cache_time)
+                            await cache.set(cache_key, 1, ex=cache_time)
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.debug("Failed committing mon {} ({}). Safe to ignore.", encounter_id, str(e))
                         await nested_transaction.rollback()
@@ -198,7 +198,7 @@ class DbPogoProtoSubmit:
                     try:
                         session.add(mon)
                         await nested_transaction.commit()
-                        await cache.set(cache_key, 1, expire=self._args.default_nearby_timeleft * 60)
+                        await cache.set(cache_key, 1, ex=self._args.default_nearby_timeleft * 60)
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.debug("Failed committing nearby mon {} ({}). Safe to ignore.", encounter_id, str(e))
                         await nested_transaction.rollback()
@@ -301,7 +301,7 @@ class DbPogoProtoSubmit:
             await nested_transaction.commit()
             cache_time = int(despawn_time_unix - int(DatetimeWrapper.now().timestamp()))
             if cache_time > 0:
-                await cache.set(cache_key, 1, expire=cache_time)
+                await cache.set(cache_key, 1, ex=cache_time)
             time_done = time.time() - time_start_submit
             logger.success("Done updating mon IV in DB in {} seconds", time_done)
 
@@ -384,7 +384,7 @@ class DbPogoProtoSubmit:
             logger.debug("Submitting IV {}", encounter_id)
             session.add(mon)
             await nested_transaction.commit()
-            await cache.set(cache_key, 1, expire=60 * 3)
+            await cache.set(cache_key, 1, ex=60 * 3)
 
             time_done = time.time() - time_start_submit
             logger.success("Done updating mon lure IV in DB in {} seconds", time_done)
@@ -450,7 +450,7 @@ class DbPogoProtoSubmit:
                             logger.debug("Submitting lured non-IV mon {}", encounter_id)
                             session.add(mon)
                             await nested_transaction.commit()
-                            await cache.set(cache_key, 1, expire=60 * 3)
+                            await cache.set(cache_key, 1, ex=60 * 3)
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.debug("Failed committing lured non-IV mon {} ({}). Safe to ignore.", encounter_id,
                                          str(e))
@@ -613,7 +613,7 @@ class DbPogoProtoSubmit:
                 try:
                     session.add(stop)
                     await nested_transaction.commit()
-                    await cache.set(cache_key, 1, expire=900)
+                    await cache.set(cache_key, 1, ex=900)
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed committing stop details of {} ({})", stop.pokestop_id, str(e))
                     await nested_transaction.rollback()
@@ -744,7 +744,7 @@ class DbPogoProtoSubmit:
                     session.add(gym_detail)
                     async with session.begin_nested() as nested_transaction:
                         try:
-                            await cache.set(cache_key, 1, expire=900)
+                            await cache.set(cache_key, 1, ex=900)
                             await nested_transaction.commit()
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.warning("Failed committing gym data of {} ({})", gymid, str(e))
@@ -869,7 +869,7 @@ class DbPogoProtoSubmit:
                             session.add(raid)
 
                             await nested_transaction.commit()
-                            await cache.set(cache_key, 1, expire=900)
+                            await cache.set(cache_key, 1, ex=900)
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.warning("Failed committing raid for gym {} ({})", gymid, str(e))
                             await nested_transaction.rollback()
@@ -920,7 +920,7 @@ class DbPogoProtoSubmit:
                     await nested_transaction.commit()
                     # Only update s2cell's current_timestamp every 30s at most to avoid too many UPDATE operations
                     # in dense areas being covered by a number of devices
-                    await cache.set(cache_key, 1, expire=30)
+                    await cache.set(cache_key, 1, ex=30)
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.debug("Failed committing cell {} ({})", cell_id, str(e))
                     await nested_transaction.rollback()
@@ -1003,7 +1003,7 @@ class DbPogoProtoSubmit:
             try:
                 session.add(pokestop)
                 await nested_transaction.commit()
-                await cache.set(cache_key, 1, expire=900)
+                await cache.set(cache_key, 1, ex=900)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing stop {} ({})", stop_id, str(e))
                 await nested_transaction.rollback()
@@ -1072,7 +1072,7 @@ class DbPogoProtoSubmit:
                     return
 
                 session.add(weather)
-                await cache.set(cache_key, 1, expire=900)
+                await cache.set(cache_key, 1, ex=900)
                 await nested_transaction.commit()
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing weather of cell {} ({})", cell_id, str(e))
