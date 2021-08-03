@@ -1,8 +1,6 @@
 import asyncio
-import datetime
 import os
 from abc import ABC
-from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 from PIL import Image
@@ -14,7 +12,6 @@ from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoi
 from mapadroid.madmin.functions import generate_device_screenshot_path
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType
@@ -48,10 +45,6 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         else:
             await self._generate_screenshot(devicemapping)
         logger.info("Done taking screenshot")
-        # not using fromtimestamp as this timestamp is shown in the UI
-        # (tho the UI should render a timestamp itself...)
-        #return DatetimeWrapper.fromtimestamp(
-        #    creation_date(filename)).strftime(self._datetimeformat)
         return str(creation_date(filename))
 
     async def _generate_screenshot(self, mapping_entry: DeviceMappingsEntry):
@@ -82,7 +75,6 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
 
     async def _read_screenshot_size(self, filename):
         loop = asyncio.get_running_loop()
-        #with ThreadPoolExecutor() as pool:
         height, width = await loop.run_in_executor(
             None, self._process_read_screenshot_size, filename)
         return height, width

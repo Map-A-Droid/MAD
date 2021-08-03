@@ -61,8 +61,6 @@ def process_png_to_jpg(image):
 def generate_phones(phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=False):
     if not dummy:
         creationdate = str(creation_date(filename))
-        #date = DatetimeWrapper.fromtimestamp(last_modification_timestamp)
-        #creationdate = date.strftime(datetimeformat)
     else:
         creationdate = 'No Screen available'
 

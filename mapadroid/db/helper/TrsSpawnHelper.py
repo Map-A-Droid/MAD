@@ -218,10 +218,10 @@ class TrsSpawnHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         loop = asyncio.get_running_loop()
-        #with concurrent.futures.ThreadPoolExecutor() as pool:
+
         spawns = await loop.run_in_executor(
             None, TrsSpawnHelper.__transform_result, result.all())
-
+        del result
         return spawns
 
     @staticmethod
@@ -229,6 +229,7 @@ class TrsSpawnHelper:
         spawns: Dict[int, Tuple[TrsSpawn, TrsEvent]] = {}
         for (spawn, event) in result:
             spawns[spawn.spawnpoint] = (spawn, event)
+        del result
         return spawns
 
     @staticmethod
