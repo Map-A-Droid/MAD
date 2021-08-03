@@ -146,12 +146,13 @@ class AbstractMadminRootEndpoint(web.View, ABC):
                 raise ValueError("only one of data, text, or body should be specified")
             elif data:
                 loop = asyncio.get_running_loop()
-                #with concurrent.futures.ThreadPoolExecutor() as pool:
+
                 text = await loop.run_in_executor(
                     None, self.__json_dumps_proxy, data)
             else:
                 # Depending on whether a list or dict is returned... just dumps...
                 text = json.dumps(data)
+                del data
         return web.Response(
             text=text,
             body=body,
