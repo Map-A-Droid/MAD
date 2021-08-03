@@ -19,21 +19,24 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('pokemon', sa.Column('fort_id', sa.String(50, 'utf8mb4_unicode_ci'), default=None))
-    op.add_column('pokemon', sa.Column('cell_id', BIGINT(20, unsigned=True), default=None))
-    op.add_column('pokemon', sa.Column('seen_type', sa.Enum("wild", "encounter", "nearby_stop", "nearby_cell",
-                                                            "lure_wild", "lure_encounter"), default=None))
+    try:
+        op.add_column('pokemon', sa.Column('fort_id', sa.String(50, 'utf8mb4_unicode_ci'), default=None))
+        op.add_column('pokemon', sa.Column('cell_id', BIGINT(20, unsigned=True), default=None))
+        op.add_column('pokemon', sa.Column('seen_type', sa.Enum("wild", "encounter", "nearby_stop", "nearby_cell",
+                                                                "lure_wild", "lure_encounter"), default=None))
 
-    op.create_table(
-        'trs_stats_detect_seen_type',
-        sa.Column('encounter_id', BIGINT(20, unsigned=True), primary_key=True),
-        sa.Column('encounter', sa.DateTime(), nullable=True, default=None),
-        sa.Column('wild', sa.DateTime(), nullable=True, default=None),
-        sa.Column('nearby_stop', sa.DateTime(), nullable=True, default=None),
-        sa.Column('nearby_cell', sa.DateTime(), nullable=True, default=None),
-        sa.Column('lure_encounter', sa.DateTime(), nullable=True, default=None),
-        sa.Column('lure_wild', sa.DateTime(), nullable=True, default=None)
-    )
+        op.create_table(
+            'trs_stats_detect_seen_type',
+            sa.Column('encounter_id', BIGINT(20, unsigned=True), primary_key=True),
+            sa.Column('encounter', sa.DateTime(), nullable=True, default=None),
+            sa.Column('wild', sa.DateTime(), nullable=True, default=None),
+            sa.Column('nearby_stop', sa.DateTime(), nullable=True, default=None),
+            sa.Column('nearby_cell', sa.DateTime(), nullable=True, default=None),
+            sa.Column('lure_encounter', sa.DateTime(), nullable=True, default=None),
+            sa.Column('lure_wild', sa.DateTime(), nullable=True, default=None)
+        )
+    except:
+        print("Failed creating/adding columns/tables for nearby scanning. Likely present already...")
 
 
 def downgrade():
