@@ -30,5 +30,7 @@ class GetGeofencesEndpoint(AbstractControlEndpoint):
                         "name": geofence.name,
                         "coordinates": geofenced_area["polygon"]
                     })
-
-        return await self._json_response(export)
+        del geofences
+        resp = await self._json_response(export)
+        del export
+        return resp

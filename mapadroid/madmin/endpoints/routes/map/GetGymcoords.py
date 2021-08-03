@@ -56,5 +56,7 @@ class GetGymcoordsEndpoint(AbstractMadminRootEndpoint):
                 "last_scanned": gym.last_scanned.timestamp(),
                 "raid": raid_data
             })
-
-        return await self._json_response(coords)
+        del data
+        resp = await self._json_response(coords)
+        del coords
+        return resp

@@ -38,4 +38,6 @@ class GetPriorouteEndpoint(AbstractControlEndpoint):
                 "mode": mode,
                 "coordinates": route_serialized
             })
-        return await self._json_response(routeexport)
+        resp = await self._json_response(routeexport)
+        del routeexport
+        return resp

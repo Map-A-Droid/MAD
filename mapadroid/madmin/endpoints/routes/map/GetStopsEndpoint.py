@@ -48,5 +48,9 @@ class GetStopsEndpoint(AbstractMadminRootEndpoint):
                 stop.incident_expiration.timestamp()) if stop.incident_expiration else 0
             stop_serialized["has_quest"] = stop.pokestop_id in stops_with_quests
             prepared_for_serialization.append(stop_serialized)
+        del data
+        del stops_with_quests
 
-        return await self._json_response(prepared_for_serialization)
+        resp = await self._json_response(prepared_for_serialization)
+        del prepared_for_serialization
+        return resp

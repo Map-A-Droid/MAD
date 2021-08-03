@@ -23,5 +23,7 @@ class GetAreasEndpoint(AbstractControlEndpoint):
             for fname, coords in fences.get('include').items():
                 coordinates.append([coords, fences.get('exclude').get(fname, [])])
             geofencexport.append({'name': areas[area_id].settings.name, 'coordinates': coordinates})
-
-        return await self._json_response(geofencexport)
+        del geofences
+        resp = await self._json_response(geofencexport)
+        del geofencexport
+        return resp

@@ -22,5 +22,7 @@ class GetWorkersEndpoint(AbstractControlEndpoint):
                 "lon": device_mapping_entry.last_location.lng
             }
             positions.append(worker)
-
-        return await self._json_response(positions)
+        del devicemappings
+        resp = await self._json_response(positions)
+        del positions
+        return resp

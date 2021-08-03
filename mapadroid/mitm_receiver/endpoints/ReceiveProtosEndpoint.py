@@ -25,7 +25,6 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
     async def post(self):
         data_text = await self.request.text()
         loop = asyncio.get_running_loop()
-        #with ThreadPoolExecutor() as pool:
         data = await loop.run_in_executor(
             None, json.loads, data_text)
         del data_text
