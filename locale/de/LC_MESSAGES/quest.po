@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-04 08:47+0200\n"
-"PO-Revision-Date: 2021-08-04 08:50+0200\n"
+"PO-Revision-Date: 2021-08-04 09:05+0200\n"
 "Last-Translator: Isdor\n"
 "Language-Team: discord\n"
 "Language: de_DE\n"
@@ -66,15 +66,15 @@ msgstr "Curveball"
 
 #: mapadroid/utils/questGen.py:138
 msgid "Good"
-msgstr ""
+msgstr "Gut"
 
 #: mapadroid/utils/questGen.py:138
 msgid "Ultra"
-msgstr ""
+msgstr "Ultra"
 
 #: mapadroid/utils/questGen.py:138
 msgid "Best"
-msgstr ""
+msgstr "Besten"
 
 #: mapadroid/utils/questGen.py:153
 #, python-brace-format
@@ -104,11 +104,11 @@ msgstr " verschiedene"
 
 #: mapadroid/utils/questGen.py:193
 msgid " shadow"
-msgstr ""
+msgstr " shadow"
 
 #: mapadroid/utils/questGen.py:196
 msgid " purified"
-msgstr ""
+msgstr " purified"
 
 #: mapadroid/utils/questGen.py:199
 #, python-brace-format
@@ -143,12 +143,12 @@ msgstr "Kämpfe {0} mal in einer Arena"
 #: mapadroid/utils/questGen.py:217
 #, python-brace-format
 msgid "{verb} {0} {min_level}raids{speedy}"
-msgstr ""
+msgstr "{verb} {0} {min_level}Raid{speedy}"
 
 #: mapadroid/utils/questGen.py:231
 #, python-brace-format
 msgid " in {time} seconds"
-msgstr ""
+msgstr " in {time} Sekunden"
 
 #: mapadroid/utils/questGen.py:234 mapadroid/utils/questGen.py:254
 msgid "Mega "
@@ -156,11 +156,11 @@ msgstr "Mega "
 
 #: mapadroid/utils/questGen.py:236
 msgid "level"
-msgstr ""
+msgstr "Niveau"
 
 #: mapadroid/utils/questGen.py:236
 msgid " or higher "
-msgstr ""
+msgstr "oder höher"
 
 #: mapadroid/utils/questGen.py:238
 #, python-brace-format
