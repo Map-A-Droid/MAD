@@ -5,7 +5,7 @@ from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import SettingsAreaIvMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.route.prioq.IvOnlyPrioStrategy import IvOnlyPrioStrategy
+from mapadroid.route.prioq.strategy.IvOnlyPrioStrategy import IvOnlyPrioStrategy
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 

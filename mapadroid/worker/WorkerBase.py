@@ -134,42 +134,6 @@ class WorkerBase(AbstractWorker, ABC):
         pass
 
     @abstractmethod
-    async def _health_check(self):
-        """
-        Health check before a location is grabbed. Internally, a self._start_pogo call is already executed since
-        that usually includes a topmost check
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    async def _pre_location_update(self):
-        """
-        Override to run stuff like update injections settings in MITM worker
-        Runs before walk/teleport to the location previously grabbed
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    async def _move_to_location(self):
-        """
-        Location has previously been grabbed, the overriden function will be called.
-        You may teleport or walk by your choosing
-        Any post walk/teleport delays/sleeps have to be run in the derived, override method
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    async def _post_move_location_routine(self, timestamp):
-        """
-        Routine called after having moved to a new location. MITM worker e.g. has to wait_for_data
-        :param timestamp:
-        :return:
-        """
-
-    @abstractmethod
     async def _cleanup(self):
         """
         Cleanup any threads you started in derived classes etc
@@ -340,6 +304,7 @@ class WorkerBase(AbstractWorker, ABC):
                     return
 
                 if not await self.check_max_walkers_reached():
+                    # TODO: Set new strategy somehow or have some other task check all workers for changed walkers and update strategy accordingly...
                     logger.warning('Max. Walkers in Area {} - closing connections',
                                    self._mapping_manager.routemanager_get_name(self._routemanager_id))
                     await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
@@ -352,6 +317,7 @@ class WorkerBase(AbstractWorker, ABC):
                         # TODO: consider getting results of health checks and aborting the entire worker?
                         walkercheck = await self.check_walker()
                         if not walkercheck:
+                            # TODO: Set new strategy somehow or have some other task check all workers for changed walkers and update strategy accordingly...
                             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
                             break
                     except (

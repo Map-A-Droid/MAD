@@ -3,12 +3,11 @@ import copy
 import heapq
 import time
 from asyncio import Task
-from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 
 from loguru import logger
 
-from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
     RoutePriorityQueueEntry
 
 

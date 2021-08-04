@@ -7,7 +7,7 @@ from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import SettingsAreaMonMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.route.prioq.MonSpawnPrioStrategy import MonSpawnPrioStrategy
+from mapadroid.route.prioq.strategy.MonSpawnPrioStrategy import MonSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 
 

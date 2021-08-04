@@ -3,11 +3,10 @@ from typing import List, Optional
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
-from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.model import SettingsAreaRaidsMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.route.prioq.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
+from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType

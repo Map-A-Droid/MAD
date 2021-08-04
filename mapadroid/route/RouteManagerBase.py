@@ -1,7 +1,5 @@
 import asyncio
 import collections
-import concurrent.futures
-import heapq
 import math
 import time
 from abc import ABC, abstractmethod
@@ -16,7 +14,7 @@ from loguru import logger
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
     RoutePriorityQueueEntry
 from mapadroid.route.prioq.RoutePriorityQueue import RoutePriorityQueue
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil

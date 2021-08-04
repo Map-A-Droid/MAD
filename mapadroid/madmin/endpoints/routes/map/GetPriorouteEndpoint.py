@@ -3,8 +3,7 @@ from typing import List, Optional
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import get_coord_float
-from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import RoutePriorityQueueEntry
-from mapadroid.utils.collections import Location
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import RoutePriorityQueueEntry
 
 
 class GetPriorouteEndpoint(AbstractControlEndpoint):

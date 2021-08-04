@@ -33,7 +33,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.route.RouteManagerIV import RouteManagerIV
-from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import RoutePriorityQueueEntry
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import RoutePriorityQueueEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger

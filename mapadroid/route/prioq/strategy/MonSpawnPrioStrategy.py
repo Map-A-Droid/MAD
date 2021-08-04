@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.prioq.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
     RoutePriorityQueueEntry
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
