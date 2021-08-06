@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-08-04 08:47+0200\n"
-"PO-Revision-Date: 2021-08-04 08:55+0200\n"
+"PO-Revision-Date: 2021-08-06 16:26+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: mapadroid/utils/questGen.py:19 mapadroid/utils/questGen.py:42
@@ -339,7 +339,7 @@ msgstr "{verb} un Chef d'Équipe {0} fois"
 #: mapadroid/utils/questGen.py:424
 #, python-brace-format
 msgid "Use {0} {type} Charged Attacks"
-msgstr "Utilise une Attaque Chargée {type} dans {0} combats d'Arènes"
+msgstr "Utilise {0} Attaques Chargées {type}"
 
 #: mapadroid/utils/questGen.py:428
 msgid "supereffective"
