@@ -15,8 +15,8 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.CustomTypes import MessageTyping
-from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
-                                     get_origin_logger)
+from mapadroid.utils.logging import (
+    InterceptHandler, LoggerEnums, get_logger, get_origin_logger)
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.communicator import Communicator

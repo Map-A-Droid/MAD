@@ -162,6 +162,7 @@ class WebhookWorker:
                 "timestamp": quest["timestamp"],
                 "quest_reward_type": quest["quest_reward_type"],
                 "quest_reward_type_raw": quest["quest_reward_type_raw"],
+                "quest_reward_raw": quest['quest_reward_raw'].replace("'", '"').lower(),
                 "quest_target": quest["quest_target"],
                 "pokemon_id": int(quest["pokemon_id"]),
                 "pokemon_form": int(quest.get("pokemon_form", '0')),
