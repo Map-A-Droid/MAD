@@ -352,7 +352,7 @@ class DbWrapper:
                 'quest_target': quest_target,
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
                 'task': quest_task, 'quest_reward': quest_reward, 'quest_template': quest_template,
-                'is_ar_scan_eligible': is_ar_scan_eligible
+                'is_ar_scan_eligible': is_ar_scan_eligible, 'quest_title': quest_title
             })
 
         return questinfo
