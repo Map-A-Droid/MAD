@@ -1,6 +1,8 @@
 import gettext
 import json
+import os
 import re
+import requests
 
 from mapadroid.utils.gamemechanicutil import form_mapper
 from mapadroid.utils.language import i8ln, open_json_file
@@ -22,6 +24,45 @@ quest_rewards = {
     7: _("Pokemon"),
     12: _("Energy")
 }
+
+LOCALE_URL = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20APK/{0}.txt"
+REMOTE_LOCALE_URL = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20Remote/{0}.txt"
+logger = get_logger(LoggerEnums.system)
+
+
+def __make_apk_locale(url):
+    try:
+        alang = os.environ['LANGUAGE']
+        if alang == 'fr':
+            alang = 'French'
+        elif alang == 'de':
+            alang = 'German'
+        else:
+            alang = 'English'
+
+        req = requests.get(url.format(alang), timeout=10000)
+        if req.status_code != 200:
+            return None
+
+        raw = req.text
+        keys = re.findall(r"(?<=RESOURCE ID: ).*", raw)
+        values = re.findall(r"(?<=TEXT: ).*", raw)
+        logger.success("Fetched Translations for {} from {}".format(alang, url))
+        return {keys[i].strip("\r"): values[i].strip("\r") for i in range(len(keys))}
+    except  requests.exceptions.Timeout:
+        return None
+
+
+apk_locale = __make_apk_locale(LOCALE_URL)
+remote_locale = __make_apk_locale(REMOTE_LOCALE_URL)
+if apk_locale is None and remote_locale is None:
+    locale_resources = None
+elif apk_locale is not None and remote_locale is None:
+    locale_resources = apk_locale
+elif apk_locale is None and remote_locale is not None:
+    locale_resources = remote_locale
+else:
+    locale_resources = {**apk_locale, **remote_locale}
 
 
 def generate_quest(quest):
@@ -71,7 +112,8 @@ def generate_quest(quest):
 
     if not quest['task']:
         quest_task = questtask(
-            quest['quest_type'], quest['quest_condition'], quest['quest_target'], quest['quest_template'])
+            quest['quest_type'], quest['quest_condition'], quest['quest_target'], quest['quest_template'],
+            quest['quest_title'])
     else:
         quest_task = quest['task']
 
@@ -131,7 +173,13 @@ def get_pokemon_type_str(pt):
     return pokemon_types[str(pt)].title() + _('-type')
 
 
-def questtask(typeid, condition, target, quest_template):
+def questtask(typeid, condition, target, quest_template, quest_title):
+    if quest_title is not None and locale_resources is not None and quest_title in locale_resources:
+        qt = locale_resources[quest_title]
+        if '{0}' in qt:
+            return qt.format(target)
+        return qt
+
     gettext.find('quest', 'locales', all=True)
     throw_types = {"10": _("Nice"), "11": _("Great"),
                    "12": _("Excellent"), "13": _("Curveball")}
