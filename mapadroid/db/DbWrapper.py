@@ -484,31 +484,6 @@ class DbWrapper:
         else:
             return list_of_coords
 
-    def unnamed_stops_and_gyms(self, geofence_helper):
-        logger.debug("DbWrapper::unnamed_stops_and_gyms called")
-
-        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
-
-        query = (
-            "SELECT pokestop.latitude, pokestop.longitude "
-            "FROM pokestop "
-            "WHERE pokestop.latitude >= {} AND pokestop.longitude >= {} "
-            "AND pokestop.latitude <= {} AND pokestop.longitude <= {} "
-            "AND pokestop.name ='unknown'"
-        ).format(minLat, minLon, maxLat, maxLon)
-
-        res = self.execute(query)
-        list_of_coords: List[Location] = []
-
-        for (latitude, longitude) in res:
-            list_of_coords.append(Location(latitude, longitude))
-
-        if geofence_helper is not None:
-            geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
-            return geofenced_coords
-        else:
-            return list_of_coords
-
     def any_stops_unvisited(self, geofence_helper: GeofenceHelper, origin: str):
         logger.debug3("DbWrapper::any_stops_unvisited called")
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
@@ -866,76 +841,6 @@ class DbWrapper:
         else:
             logger.debug3("DbWrapper::get_undetected_spawns converting to numpy")
             return list_of_coords
-
-    def update_fort_crosstable(self):
-        logger.debug3("dbWrapper::update_fort_crosstable - Makes sure we got a connection between forts and cell ids")
-
-        # lets find stops that need s2 cell ids
-        query = (
-            "SELECT pokestop.pokestop_id,pokestop.latitude,pokestop.longitude FROM pokestop "
-            "LEFT JOIN trs_s2cells_fort_crosstable on trs_s2cells_fort_crosstable.guid=pokestop.pokestop_id "
-            "WHERE trs_s2cells_fort_crosstable.guid IS NULL"
-        )
-
-        stops = self.execute(query)
-        for (pokestop_id, latitude, longitude) in stops:
-            cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude, 15)
-            self.execute("INSERT INTO trs_s2cells_fort_crosstable VALUES({},'{}')".format(cell_id, pokestop_id),
-                         commit=True)
-
-        query = (
-            "SELECT gym.gym_id,gym.latitude,gym.longitude FROM gym "
-            "LEFT JOIN trs_s2cells_fort_crosstable on trs_s2cells_fort_crosstable.guid=gym.gym_id "
-            "WHERE trs_s2cells_fort_crosstable.guid IS NULL"
-        )
-
-        gyms = self.execute(query)
-        for (gym_id, latitude, longitude) in gyms:
-            cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude, 15)
-            self.execute("INSERT IGNORE INTO trs_s2cells_fort_crosstable VALUES({},'{}')".format(cell_id, gym_id),
-                         commit=True)
-        return True
-
-    def delete_expired_forts(self):
-        logger.debug3("dbWrapper::delete_expired_forts - delete anything in cells we visited where we didn't get fort")
-
-        query = (
-            "DELETE pokestop "
-            "FROM pokestop "
-            "JOIN trs_s2cells_fort_crosstable on pokestop.pokestop_id=trs_s2cells_fort_crosstable.guid "
-            "JOIN trs_s2cells on trs_s2cells.id=trs_s2cells_fort_crosstable.id "
-            "WHERE date_add(convert_tz(pokestop.last_updated,'+00:00','+02:00'), INTERVAL 3 MINUTE) < "
-            "from_unixtime(trs_s2cells.updated) "
-            "AND from_unixtime(trs_s2cells.updated) > date_sub(NOW(), interval 1 week)"
-        )
-
-        self.execute(query, commit=True)
-
-        query = (
-            "DELETE gymdetails FROM gymdetails "
-            "JOIN gym ON gymdetails.gym_id=gym.gym_id "
-            "JOIN trs_s2cells_fort_crosstable on gym.gym_id=trs_s2cells_fort_crosstable.guid "
-            "JOIN trs_s2cells on trs_s2cells.id=trs_s2cells_fort_crosstable.id "
-            "WHERE date_add(convert_tz(gym.last_scanned,'+00:00','+02:00'), INTERVAL 2 HOUR)<"
-            "from_unixtime(trs_s2cells.updated) "
-            "AND from_unixtime(trs_s2cells.updated) > date_sub(NOW(), interval 1 WEEK)"
-        )
-
-        self.execute(query, commit=True)
-
-        query = (
-            "DELETE gym "
-            "FROM gym "
-            "JOIN trs_s2cells_fort_crosstable on gym.gym_id=trs_s2cells_fort_crosstable.guid "
-            "JOIN trs_s2cells on trs_s2cells.id=trs_s2cells_fort_crosstable.id "
-            "WHERE date_add(convert_tz(gym.last_scanned,'+00:00','+02:00'), INTERVAL 2 HOUR)<"
-            "from_unixtime(trs_s2cells.updated) "
-            "AND from_unixtime(trs_s2cells.updated) > date_sub(NOW(), interval 1 WEEK)"
-        )
-
-        self.execute(query, commit=True)
-        return True
-
 
     def delete_spawnpoints(self, spawnpoint_ids):
         logger.debug3("dbWrapper::delete_spawnpoints")
