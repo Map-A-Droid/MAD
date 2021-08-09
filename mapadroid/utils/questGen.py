@@ -27,10 +27,9 @@ quest_rewards = {
 
 LOCALE_URL = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20APK/{0}.txt"
 REMOTE_LOCALE_URL = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20Remote/{0}.txt"
-logger = get_logger(LoggerEnums.system)
 
 
-def __make_apk_locale(url):
+def __gen_assets_locale(url):
     try:
         alang = os.environ['LANGUAGE']
         if alang == 'fr':
@@ -40,21 +39,20 @@ def __make_apk_locale(url):
         else:
             alang = 'English'
 
-        req = requests.get(url.format(alang), timeout=10000)
+        req = requests.get(url.format(alang), timeout=10)
         if req.status_code != 200:
             return None
 
         raw = req.text
         keys = re.findall(r"(?<=RESOURCE ID: ).*", raw)
         values = re.findall(r"(?<=TEXT: ).*", raw)
-        logger.success("Fetched Translations for {} from {}".format(alang, url))
         return {keys[i].strip("\r"): values[i].strip("\r") for i in range(len(keys))}
     except  requests.exceptions.Timeout:
         return None
 
 
-apk_locale = __make_apk_locale(LOCALE_URL)
-remote_locale = __make_apk_locale(REMOTE_LOCALE_URL)
+apk_locale = __gen_assets_locale(LOCALE_URL)
+remote_locale = __gen_assets_locale(REMOTE_LOCALE_URL)
 if apk_locale is None and remote_locale is None:
     locale_resources = None
 elif apk_locale is not None and remote_locale is None:
