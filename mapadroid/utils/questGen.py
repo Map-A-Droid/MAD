@@ -2,6 +2,7 @@ import gettext
 import json
 import os
 import re
+
 import requests
 
 from mapadroid.utils.gamemechanicutil import form_mapper
