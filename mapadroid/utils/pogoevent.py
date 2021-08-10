@@ -4,9 +4,6 @@ from typing import Optional
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.db.model import TrsEvent
-from mapadroid.utils.logging import LoggerEnums, get_logger
-
-logger = get_logger(LoggerEnums.utils)
 
 
 class PogoEvent:
