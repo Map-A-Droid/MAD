@@ -1,16 +1,14 @@
 import asyncio
-import concurrent
-import datetime
 import json
 import os
 import time
 
+import ujson
 from PIL import Image
 from aiocache import cached
 from aiofile import async_open
 
 import mapadroid
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.global_variables import VERSIONCODES_URL
 
@@ -79,7 +77,7 @@ async def get_version_codes(force_gh=False):
     if not force_gh:
         try:
             async with async_open('configs/version_codes.json', "r") as fh:
-                return json.load(await fh.read())
+                return ujson.loads(await fh.read())
         except (IOError, json.decoder.JSONDecodeError):
             pass
     result: RestApiResult = await RestHelper.send_get(VERSIONCODES_URL)
