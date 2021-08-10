@@ -13,7 +13,6 @@ from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import WrongAreaInWalker
 from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.Worker import Worker
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
@@ -154,8 +153,8 @@ class WorkerFactory:
                                                                     Location(0.0, 0.0))
 
     async def get_strategy_using_settings(self, origin: str, enable_configmode: bool,
-                                        communicator: AbstractCommunicator,
-                                        worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
+                                          communicator: AbstractCommunicator,
+                                          worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
         if enable_configmode:
             return await self.get_strategy(worker_type=WorkerType.CONFIGMODE,
                                            area_id=0,

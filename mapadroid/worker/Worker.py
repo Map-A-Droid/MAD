@@ -109,27 +109,24 @@ class Worker(AbstractWorker):
             self._work_task.cancel()
             self._work_task = None
         await self._scan_strategy.worker_specific_setup_stop()
+        self._worker_state.stop_worker_event.clear()
 
     async def _internal_cleanup(self):
         # set the event just to make sure - in case of exceptions for example
         self._worker_state.stop_worker_event.set()
         try:
-            # TODO: Move up to strategy, we do not want to entirely kill off the worker...
             await self._mapping_manager.unregister_worker_from_routemanager(self._scan_strategy.area_id,
                                                                             self._worker_state.origin)
         except ConnectionResetError as e:
             logger.warning("Failed unregistering from routemanager, routemanager may have stopped running already."
                            "Exception: {}", e)
-        logger.info("Internal cleanup of started")
-        # await self._cleanup()
-        logger.info("Internal cleanup signaling end to websocketserver")
-        await self._communicator.cleanup()
-
+        # TODO: Move up to strategy, we do not want to entirely kill off the worker...
+        #  Rather have some routine checking for a new walker/strategy to be available?
+        await self.communicator.cleanup()
         logger.info("Internal cleanup of finished")
 
     async def _main_work_thread(self):
         try:
-            # TODO: signal websocketserver the removal
             with logger.contextualize(name=self._worker_state.origin):
                 try:
                     await self._scan_strategy.pre_work_loop()

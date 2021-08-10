@@ -27,6 +27,7 @@ class RoutePriorityQueue:
         self._stop_updates.set()
         if self._update_prio_queue_task:
             self._update_prio_queue_task.cancel()
+            self._update_prio_queue_task = None
 
     async def _start_priority_queue(self):
         loop = asyncio.get_running_loop()
@@ -48,13 +49,11 @@ class RoutePriorityQueue:
                 logger.exception(e)
             await asyncio.sleep(self.strategy.get_update_interval())
 
-    @property
-    def strategy(self) -> AbstractRoutePriorityQueueStrategy:
-        return self._strategy
-
-    @strategy.setter
-    def strategy(self, strategy: AbstractRoutePriorityQueueStrategy) -> None:
+    async def set_strategy(self, strategy: AbstractRoutePriorityQueueStrategy) -> None:
+        await self.stop()
         self._strategy = strategy
+        if strategy:
+            await self.start()
 
     async def pop_event(self) -> RoutePriorityQueueEntry:
         """
@@ -95,12 +94,10 @@ class RoutePriorityQueue:
     async def __update_queue(self) -> None:
         new_coords: List[RoutePriorityQueueEntry] = await self._strategy.retrieve_new_coords()
         loop = asyncio.get_running_loop()
-        #with ThreadPoolExecutor() as pool:
         post_processed_coords: List[RoutePriorityQueueEntry] = await loop.run_in_executor(
             None, self.strategy.postprocess_coords, new_coords)
         logger.success("Got {} new events", len(post_processed_coords))
         async with self._update_lock:
-            #with ThreadPoolExecutor() as pool:
             merged = await loop.run_in_executor(
                 None, self.__merge_filter_queue, post_processed_coords)
             self.__queue = merged

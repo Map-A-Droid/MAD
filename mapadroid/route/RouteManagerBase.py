@@ -140,7 +140,6 @@ class RouteManagerBase(ABC):
                 self._prio_queue.strategy = new_strategy
 
     async def _start_check_routepools(self):
-        # TODO: Transform to asyncio
         loop = asyncio.get_running_loop()
         self._check_routepools_thread: Task = loop.create_task(self._check_routepools())
 
@@ -160,6 +159,7 @@ class RouteManagerBase(ABC):
         self._quit_route()
         self._stop_update_thread.set()
         await self._stop_internal_tasks()
+        self._is_started = False
 
         logger.info("Shutdown of route completed")
 
