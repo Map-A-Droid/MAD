@@ -14,7 +14,7 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Login_GGL, Login_PTC, ScreenCoordinates
-from mapadroid.utils.madGlobals import ScreenshotType
+from mapadroid.utils.madGlobals import ScreenshotType, application_args
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 
 
@@ -26,10 +26,9 @@ class LoginType(Enum):
 
 class WordToScreenMatching(object):
     def __init__(self, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
-                 mapping_mananger: MappingManager, args):
+                 mapping_mananger: MappingManager):
         # TODO: Somehow prevent call from elsewhere? Raise exception and only init in WordToScreenMatching.create?
         self.origin = origin
-        self._applicationArgs = args
         self._mapping_manager = mapping_mananger
         self._ratio: float = 0.0
 
@@ -50,10 +49,9 @@ class WordToScreenMatching(object):
 
     @classmethod
     async def create(cls, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
-                     mapping_mananger: MappingManager, args):
+                     mapping_mananger: MappingManager):
         self = WordToScreenMatching(communicator=communicator, pogo_win_manager=pogo_win_manager,
-                                    origin=origin, resocalc=resocalc, mapping_mananger=mapping_mananger,
-                                    args=args)
+                                    origin=origin, resocalc=resocalc, mapping_mananger=mapping_mananger)
         self._accountindex = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_INDEX, 0)
         self._screenshot_y_offset = await self.get_devicesettings_value(
             MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
@@ -629,7 +627,7 @@ class WordToScreenMatching(object):
             logger.info("Creating debugscreen: {}", screenshot_filename)
 
         return os.path.join(
-            self._applicationArgs.temp_path, screenshot_filename)
+            application_args.temp_path, screenshot_filename)
 
     async def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
         logger.debug("Taking screenshot...")

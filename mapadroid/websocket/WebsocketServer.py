@@ -6,6 +6,7 @@ from threading import current_thread
 from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
+from loguru import logger
 
 from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
@@ -16,17 +17,17 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.authHelper import check_auth
-from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
-                                     get_logger)
+from mapadroid.utils.logging import (InterceptHandler, LoggerEnums)
 from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
+from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
 from mapadroid.websocket.communicator import Communicator
-from mapadroid.worker.AbstractWorker import AbstractWorker
+from mapadroid.worker.Worker import Worker
 from mapadroid.worker.WorkerFactory import WorkerFactory
-from loguru import logger
-
+from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
@@ -56,6 +57,7 @@ class WebsocketServer(object):
 
         self.__worker_factory: WorkerFactory = WorkerFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
                                                              self.__db_wrapper, self.__pogo_window_manager, event)
+        self.__pogo_event: PogoEvent = event
 
         # asyncio loop for the entire server
         self.__loop: Optional[asyncio.AbstractEventLoop] = None
@@ -149,10 +151,14 @@ class WebsocketServer(object):
                     await self.__handle_existing_connection(entry, origin)
                 elif not entry:
                     # Just create a new entry...
+                    worker_state: WorkerState = WorkerState(origin=origin,
+                                                            device_id=device.device_id,
+                                                            stop_worker_event=asyncio.Event(),
+                                                            active_event=self.__pogo_event)
                     entry = WebsocketConnectedClientEntry(origin=origin,
                                                           websocket_client_connection=websocket_client_connection,
                                                           worker_instance=None,
-                                                          worker_task=None)
+                                                          worker_state=worker_state)
                     self.__current_users[origin] = entry
 
             # No connection known or already at a point where we can continue creating worker
@@ -207,27 +213,34 @@ class WebsocketServer(object):
             logger.info("Old connection of {} closed, stopping worker/cleaning up to create a new one.",
                         origin)
             # TODO: Replace worker strategy/connection seemingly
-            if entry.worker_task:
+            if entry.worker_instance:
                 await entry.worker_instance.stop_worker()
-                entry.worker_task.cancel()
         else:
             # Old connection neither open or closed - either closing or opening...
             # Should have been handled by the while loop above...
             raise WebsocketAbortRegistrationException
 
-    async def __add_worker_and_thread_to_entry(self, entry, origin, use_configmode: bool = None) -> bool:
+    async def __add_worker_and_thread_to_entry(self, entry: WebsocketConnectedClientEntry,
+                                               origin, use_configmode: bool = None) -> bool:
         logger.info("Trying to create new worker for {}.", origin)
         communicator: AbstractCommunicator = Communicator(
             entry, origin, None, self.__args.websocket_command_timeout)
         use_configmode: bool = use_configmode if use_configmode is not None else self.__enable_configmode
-        worker: Optional[AbstractWorker] = await self.__worker_factory \
-            .get_worker_using_settings(origin, use_configmode, communicator=communicator)
-        if worker is None:
+
+        scan_strategy: Optional[AbstractWorkerStrategy] = await self.__worker_factory \
+            .get_strategy_using_settings(origin, use_configmode, communicator=communicator,
+                                         worker_state=entry.worker_state)
+        if not scan_strategy:
             return False
-        # to break circular dependencies, we need to set the worker ref >.<
-        communicator.worker_instance_ref = worker
-        entry.worker_task = await worker.start_worker()
-        entry.worker_instance = worker
+        if not entry.worker_instance:
+            entry.worker_instance = Worker(communicator=communicator, worker_state=entry.worker_state,
+                                           mapping_manager=self.__mapping_manager,
+                                           db_wrapper=self.__db_wrapper,
+                                           scan_strategy=scan_strategy)
+            await entry.worker_instance.start_worker()
+        else:
+            await entry.worker_instance.set_scan_strategy(scan_strategy)
+        communicator.worker_instance_ref = entry.worker_instance
         return True
 
     async def __authenticate_connection(self, websocket_client_connection: websockets.WebSocketClientProtocol) \
@@ -246,7 +259,7 @@ class WebsocketServer(object):
         logger.info("Client registering")
         if self.__mapping_manager is None:
             logger.warning("No configuration has been defined.  Please define in MADmin and click "
-                                  "'APPLY SETTINGS'")
+                           "'APPLY SETTINGS'")
             return origin, False
         elif origin not in (await self.__mapping_manager.get_all_devicemappings()).keys():
             async with self.__db_wrapper as session, session:
@@ -255,7 +268,7 @@ class WebsocketServer(object):
                 logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
             else:
                 logger.warning("Register attempt of unknown origin.  Please create the device in MADmin and "
-                                      " click 'APPLY SETTINGS'")
+                               " click 'APPLY SETTINGS'")
             return origin, False
 
         valid_auths = await self.__mapping_manager.get_auths()

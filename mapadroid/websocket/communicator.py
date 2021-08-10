@@ -120,6 +120,9 @@ class Communicator(AbstractCommunicator):
     async def get_screensize(self) -> Optional[MessageTyping]:
         return await self.__run_get_gesponse("screen size")
 
+    async def get_y_offset(self) -> Optional[MessageTyping]:
+        return await self.__run_get_gesponse("screen offset")
+
     async def uiautomator(self) -> Optional[MessageTyping]:
         return await self.__run_get_gesponse("more uiautomator")
 

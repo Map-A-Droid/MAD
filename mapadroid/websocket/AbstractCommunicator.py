@@ -89,6 +89,10 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
+    async def get_y_offset(self) -> Optional[MessageTyping]:
+        pass
+
+    @abstractmethod
     async def uiautomator(self) -> Optional[MessageTyping]:
         """
         :return: Output of `uiautomator` shipped with android (or is it busybox?)

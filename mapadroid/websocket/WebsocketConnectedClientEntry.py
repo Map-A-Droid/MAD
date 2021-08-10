@@ -1,7 +1,6 @@
 import asyncio
 import math
 import time
-from asyncio import Task
 from typing import Dict, Optional
 
 import websockets
@@ -12,6 +11,7 @@ from mapadroid.utils.madGlobals import (
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
     WebsocketWorkerTimeoutException)
 from mapadroid.worker.AbstractWorker import AbstractWorker
+from mapadroid.worker.WorkerState import WorkerState
 
 
 class ReceivedMessageEntry:
@@ -22,11 +22,12 @@ class ReceivedMessageEntry:
 
 
 class WebsocketConnectedClientEntry:
-    def __init__(self, origin: str, worker_task: Optional[Task], worker_instance: Optional[AbstractWorker],
-                 websocket_client_connection: Optional[websockets.WebSocketClientProtocol]):
+    def __init__(self, origin: str, worker_instance: Optional[AbstractWorker],
+                 websocket_client_connection: Optional[websockets.WebSocketClientProtocol],
+                 worker_state: WorkerState):
         self.origin: str = origin
-        self.worker_task: Optional[Task] = worker_task
         self.worker_instance: Optional[AbstractWorker] = worker_instance
+        self.worker_state: WorkerState = worker_state
         self.websocket_client_connection: Optional[websockets.WebSocketClientProtocol] = websocket_client_connection
         self.fail_counter: int = 0
         self.received_messages: Dict[int, ReceivedMessageEntry] = {}

@@ -8,7 +8,7 @@ import numpy as np
 import pytesseract
 from PIL import Image
 
-from mapadroid.utils.resolution import Resocalculator
+from mapadroid.utils.resolution import ResolutionCalculator
 
 sys.path.append("..")
 
@@ -21,7 +21,7 @@ class testimage(object):
         self._mode = mode
         print(float(self._screen_y) / float(self._screen_x))
 
-        self._resocalc = Resocalculator
+        self._resocalc = ResolutionCalculator
         print(self._resocalc.get_x_y_ratio(
             self, self._screen_x, self._screen_y, xoffset, yoffset))
 

@@ -7,16 +7,20 @@ from mapadroid.db.model import SettingsDevice, SettingsDevicepool, SettingsWalke
 from mapadroid.mapping_manager.MappingManager import MappingManager, DeviceMappingsEntry
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
+from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import WrongAreaInWalker
 from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
-from mapadroid.worker.WorkerConfigmode import WorkerConfigmode
-from mapadroid.worker.WorkerMITM import WorkerMITM
-from mapadroid.worker.WorkerQuests import WorkerQuests
+from mapadroid.worker.Worker import Worker
+from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
+from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
+from mapadroid.worker.strategy.NopStrategy import NopStrategy
+from mapadroid.worker.strategy.QuestStrategy import QuestStrategy
+from mapadroid.worker.strategy.WorkerMitmStrategy import WorkerMitmStrategy
 
 logger = get_logger(LoggerEnums.worker)
 
@@ -149,20 +153,26 @@ class WorkerFactory:
                                                                     MappingManagerDevicemappingKey.LAST_LOCATION,
                                                                     Location(0.0, 0.0))
 
-    async def get_worker_using_settings(self, origin: str, enable_configmode: bool,
-                                        communicator: AbstractCommunicator) \
-            -> Optional[AbstractWorker]:
-        origin_logger = get_origin_logger(logger, origin=origin)
+    async def get_strategy_using_settings(self, origin: str, enable_configmode: bool,
+                                        communicator: AbstractCommunicator,
+                                        worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
         if enable_configmode:
-            return await self.get_configmode_worker(origin, communicator)
+            return await self.get_strategy(worker_type=WorkerType.CONFIGMODE,
+                                           area_id=0,
+                                           communicator=communicator,
+                                           walker_settings=None,
+                                           worker_state=worker_state)
 
         # not a configmore worker, move on adjusting devicesettings etc
-        # TODO: get worker
         walker_configuration: Optional[WalkerConfiguration] = await self.__prep_settings(origin)
         if walker_configuration is None:
-            origin_logger.warning("Failed to find a walker configuration")
-            return None
-        origin_logger.debug("Setting up worker")
+            logger.warning("Failed to find a walker configuration")
+            return await self.get_strategy(worker_type=WorkerType.CONFIGMODE,
+                                           area_id=0,
+                                           communicator=communicator,
+                                           walker_settings=None,
+                                           worker_state=worker_state)
+        logger.debug("Setting up worker")
         await self.__update_settings_of_origin(origin, walker_configuration)
 
         devicesettings: Optional[Tuple[SettingsDevice, SettingsDevicepool]] = await self.__mapping_manager \
@@ -172,58 +182,64 @@ class WorkerFactory:
             walker_configuration.area_id
         )
         if not dev_id or not walker_configuration.walker_settings or walker_routemanager_mode == WorkerType.UNDEFINED:
-            origin_logger.error("Failed to instantiate worker due to invalid settings found")
-            return None
+            logger.error("Failed to instantiate worker due to invalid settings found")
+            return await self.get_strategy(worker_type=WorkerType.CONFIGMODE,
+                                           area_id=0,
+                                           communicator=communicator,
+                                           walker_settings=None,
+                                           worker_state=worker_state)
 
-        # we can finally create an instance of the worker, bloody hell...
-        # TODO: last_known_state has never been used and got kinda deprecated due to devicesettings...
-        return self.get_worker(origin, walker_routemanager_mode, communicator, dev_id,
-                               walker_configuration.walker_settings.area_id,
-                               walker_configuration.walker_settings, walker_configuration.area_id)
+        return await self.get_strategy(worker_type=walker_routemanager_mode,
+                                       area_id=walker_configuration.area_id,
+                                       communicator=communicator,
+                                       walker_settings=walker_configuration.walker_settings,
+                                       worker_state=worker_state)
 
-    def get_worker(self, origin: str, worker_type: WorkerType, communicator: AbstractCommunicator,
-                   dev_id: int, area_id: int,
-                   walker_settings: SettingsWalkerarea, walker_area_id: int) -> Optional[AbstractWorker]:
-        origin_logger = get_origin_logger(logger, origin=origin)
-        if origin is None or worker_type is None or worker_type == WorkerType.UNDEFINED:
-            return None
-        elif worker_type in [WorkerType.CONFIGMODE, WorkerType.CONFIGMODE.value]:
-            origin_logger.error("WorkerFactory::get_worker called with configmode arg, use get_configmode_worker"
-                                "instead")
-            return None
-        # TODO: validate all values
-        elif worker_type in [WorkerType.IV_MITM, WorkerType.IV_MITM.value,
-                             WorkerType.MON_MITM, WorkerType.MON_MITM.value,
-                             WorkerType.RAID_MITM, WorkerType.RAID_MITM.value]:
-            return WorkerMITM(self.__args, dev_id, origin, communicator, area_id=area_id,
-                              routemanager_id=walker_area_id, mitm_mapper=self.__mitm_mapper,
-                              mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
-                              pogo_window_manager=self.__pogo_windows, walker=walker_settings, event=self.__event)
-        elif worker_type in [WorkerType.STOPS, WorkerType.STOPS.value]:
-            return WorkerQuests(self.__args, dev_id, origin, communicator, area_id=area_id,
-                                routemanager_id=walker_area_id, mitm_mapper=self.__mitm_mapper,
-                                mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
-                                pogo_window_manager=self.__pogo_windows, walker=walker_settings, event=self.__event)
-        elif worker_type in [WorkerType.IDLE, WorkerType.IDLE.value]:
-            return WorkerConfigmode(self.__args, dev_id, origin, communicator, walker=walker_settings,
-                                    mapping_manager=self.__mapping_manager, mitm_mapper=self.__mitm_mapper,
-                                    db_wrapper=self.__db_wrapper, area_id=area_id, routemanager_id=walker_area_id,
-                                    event=self.__event)
+    async def get_strategy(self, worker_type: WorkerType,
+                           area_id: int,
+                           communicator: AbstractCommunicator,
+                           walker_settings: Optional[SettingsWalkerarea],
+                           worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
+        strategy: Optional[AbstractWorkerStrategy] = None
+        word_to_screen_matching: WordToScreenMatching = await WordToScreenMatching.create(communicator=communicator,
+                                                                                          pogo_win_manager=self.__pogo_windows,
+                                                                                          origin=worker_state.origin,
+                                                                                          resocalc=worker_state.resolution_calculator,
+                                                                                          mapping_mananger=self.__mapping_manager)
+        if not worker_type or worker_type in [WorkerType.UNDEFINED, WorkerType.CONFIGMODE, WorkerType.IDLE]:
+            logger.info("Either no valid worker type or idle was passed, creating idle strategy.")
+            strategy = NopStrategy(area_id=area_id,
+                                   communicator=communicator, mapping_manager=self.__mapping_manager,
+                                   db_wrapper=self.__db_wrapper,
+                                   word_to_screen_matching=word_to_screen_matching,
+                                   pogo_windows_handler=self.__pogo_windows,
+                                   walker=walker_settings,
+                                   worker_state=worker_state)
+        elif worker_type in [WorkerType.IV_MITM, WorkerType.MON_MITM, WorkerType.RAID_MITM]:
+            strategy = WorkerMitmStrategy(area_id=area_id,
+                                          communicator=communicator, mapping_manager=self.__mapping_manager,
+                                          db_wrapper=self.__db_wrapper,
+                                          word_to_screen_matching=word_to_screen_matching,
+                                          pogo_windows_handler=self.__pogo_windows,
+                                          walker=walker_settings,
+                                          worker_state=worker_state,
+                                          mitm_mapper=self.__mitm_mapper)
+        elif worker_type in [WorkerType.STOPS]:
+            strategy = QuestStrategy(area_id=area_id,
+                                     communicator=communicator, mapping_manager=self.__mapping_manager,
+                                     db_wrapper=self.__db_wrapper,
+                                     word_to_screen_matching=word_to_screen_matching,
+                                     pogo_windows_handler=self.__pogo_windows,
+                                     walker=walker_settings,
+                                     worker_state=worker_state,
+                                     mitm_mapper=self.__mitm_mapper)
         else:
-            origin_logger.error("WorkerFactor::get_worker failed to create a worker...")
-            return None
+            logger.error("WorkerFactor::get_worker failed to create a worker...")
+        return strategy
 
-    async def get_configmode_worker(self, origin: str, communicator: AbstractCommunicator) -> WorkerConfigmode:
-        client_mapping: Optional[DeviceMappingsEntry] = await self.__mapping_manager.get_devicemappings_of(origin)
-        worker = WorkerConfigmode(args=self.__args,
-                                  dev_id=client_mapping.device_settings.device_id,
-                                  origin=origin,
-                                  communicator=communicator,
-                                  walker=None,
-                                  mapping_manager=self.__mapping_manager,
-                                  mitm_mapper=self.__mitm_mapper,
-                                  db_wrapper=self.__db_wrapper,
-                                  area_id=0,
-                                  routemanager_id=None,
-                                  event=self.__event)
-        return worker
+    def get_worker(self, communicator: AbstractCommunicator, worker_state: WorkerState,
+                   initial_strategy: AbstractWorkerStrategy) -> Worker:
+        return Worker(communicator=communicator, worker_state=worker_state,
+                      mapping_manager=self.__mapping_manager,
+                      db_wrapper=self.__db_wrapper,
+                      scan_strategy=initial_strategy)

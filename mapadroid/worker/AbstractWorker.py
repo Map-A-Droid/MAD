@@ -2,11 +2,13 @@ from abc import ABC, abstractmethod
 
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 
+from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
+
 
 class AbstractWorker(ABC):
-    def __init__(self, origin: str, communicator: AbstractCommunicator):
-        self._origin: str = origin
+    def __init__(self, communicator: AbstractCommunicator, scan_strategy: AbstractWorkerStrategy):
         self._communicator: AbstractCommunicator = communicator
+        self._scan_strategy: AbstractWorkerStrategy = scan_strategy
 
     @abstractmethod
     async def start_worker(self):
@@ -32,10 +34,15 @@ class AbstractWorker(ABC):
     def communicator(self, value: AbstractCommunicator) -> None:
         raise RuntimeError("Replacing communicator is not supported")
 
-    @property
-    def origin(self) -> str:
-        return self._origin
+    async def set_scan_strategy(self, strategy: AbstractWorkerStrategy) -> None:
+        self._scan_strategy = strategy
+        await self._scan_strategy_changed()
 
-    @origin.setter
-    def origin(self, value: str) -> None:
-        raise RuntimeError("Replacing origin is not supported")
+    @abstractmethod
+    async def _scan_strategy_changed(self):
+        """
+        Routine to be run upon a strategy change
+        Returns:
+
+        """
+        pass

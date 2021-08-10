@@ -912,7 +912,7 @@ class RouteManagerBase(ABC):
         routepool_entry: RoutePoolEntry = self._routepool.get(origin)
         return routepool_entry.last_position_type if routepool_entry else None
 
-    def get_geofence_helper(self) -> Optional[GeofenceHelper]:
+    def get_geofence_helper(self) -> GeofenceHelper:
         return self.geofence_helper
 
     def get_init(self) -> bool:
@@ -933,7 +933,7 @@ class RouteManagerBase(ABC):
         else:
             return []
 
-    def get_level_mode(self):
+    def is_level_mode(self) -> bool:
         return self._level
 
     def get_calc_type(self):

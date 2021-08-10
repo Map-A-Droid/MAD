@@ -25,9 +25,9 @@ from mapadroid.mitm_receiver.MitmDataProcessorManager import \
 from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.event import Event
+from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging, InterceptHandler
-from mapadroid.utils.madGlobals import terminate_mad
+from mapadroid.utils.madGlobals import terminate_mad, application_args
 from mapadroid.mapping_manager.MappingManager import MappingManager
 # from mapadroid.utils.pluginBase import PluginCollection
 from mapadroid.plugins.pluginBase import PluginCollection
@@ -93,8 +93,9 @@ def install_task_create_excepthook():
             raise
         except BrokenPipeError:
             pass
-        except Exception as e:
-            logger.opt(exception=True).critical("An unhandled exception occurred!")
+        except Exception as inner_ex:
+            logger.exception(inner_ex)
+            #logger.opt(exception=True).critical("An unhandled exception occurred!")
 
     loop.create_task = create_task
 
@@ -120,19 +121,18 @@ async def get_system_infos(db_wrapper):
     gc.set_threshold(5, 1, 1)
     gc.enable()
     await asyncio.sleep(60)
-    if args.trace:
+    if application_args.trace:
         import tracemalloc
         tracemalloc.start(5)
     while not terminate_mad.is_set():
         logger.debug('Starting internal Cleanup')
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            collected, cpu_usage, mem_usage, unixnow = await loop.run_in_executor(
-                pool, __run_system_stats, process_running)
+        collected, cpu_usage, mem_usage, unixnow = await loop.run_in_executor(
+            None, __run_system_stats, process_running)
         async with db_wrapper as session, session:
-            await TrsUsageHelper.add(session, args.status_name, cpu_usage, mem_usage, collected, unixnow)
+            await TrsUsageHelper.add(session, application_args.status_name, cpu_usage, mem_usage, collected, unixnow)
             await session.commit()
-        await asyncio.sleep(args.statistic_interval)
+        await asyncio.sleep(application_args.statistic_interval)
 
 last_snapshot = None
 initial_snapshot = None
@@ -182,15 +182,15 @@ def __run_system_stats(py):
     mem_usage = py.memory_info()[0] / 2. ** 30
     cpu_usage = py.cpu_percent()
     logger.info('Instance name: "{}" - Memory usage: {:.3f} GB - CPU usage: {}',
-                str(args.status_name), mem_usage, str(cpu_usage))
+                str(application_args.status_name), mem_usage, str(cpu_usage))
     collected = None
-    if args.stat_gc:
+    if application_args.stat_gc:
         collected = gc.collect()
         logger.debug("Garbage collector: collected %d objects." % collected)
     zero = datetime.datetime.utcnow()
     unixnow = calendar.timegm(zero.utctimetuple())
 
-    if args.trace:
+    if application_args.trace:
         import tracemalloc
         new_snapshot = tracemalloc.take_snapshot()
         if last_snapshot:
@@ -230,22 +230,23 @@ def __run_system_stats(py):
         objgraph.get_new_ids(limit=50)
         logger.info("Constructing backrefs graph")
         # by_type = objgraph.by_type('builtins.list')
-        by_type = objgraph.by_type('collections.deque')
+        by_type = objgraph.by_type('StackSummary')
         # by_type = objgraph.by_type('uvloop.Loop')
         # by_type = objgraph.by_type("mapadroid.utils.collections.Location")
         # by_type = objgraph.by_type("TrsSpawn")
         if len(by_type) > 1:
             by_type_empty = [type_filtered for type_filtered in by_type if not type_filtered]
+            # by_type_filled = [type_filtered for type_filtered in by_type if type_filtered and "mapadroid" in type_filtered.filename]
             by_type_filled = [type_filtered for type_filtered in by_type if type_filtered]
             logger.warning("Filled: {}, empty: {}, total: {}", len(by_type_filled), len(by_type_empty),
                            len(by_type))
-            obj = by_type[:500]
+            obj = by_type[-500:]
             # TODO: Filter for lists of dicts...
             # filtered = [type_filtered for type_filtered in by_type if len(type_filtered) > 50]
             del by_type_empty
             del by_type_filled
             del by_type
-            #objgraph.show_backrefs(obj, max_depth=30)
+            # objgraph.show_backrefs(obj, max_depth=10)
             #objgraph.show_backrefs(obj, max_depth=5)
         else:
             logger.warning("Not enough of type to show: {}", len(by_type))
@@ -276,7 +277,7 @@ def check_dependencies():
 
 async def start():
     device_updater: DeviceUpdater = None
-    event: Event = None
+    event: PogoEvent = None
     jobstatus: dict = {}
     # mapping_manager_manager: MappingManagerManager = None
     mapping_manager: Optional[MappingManager] = None
@@ -305,44 +306,44 @@ async def start():
     logging.getLogger('aiohttp.web').setLevel(logging.INFO)
     logging.getLogger('aiohttp.web').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
 
-    if args.config_mode:
+    if application_args.config_mode:
         logger.info('Starting MAD in config mode')
     else:
         logger.info('Starting MAD')
     # check_dependencies()
     # TODO: globally destroy all threads upon sys.exit() for example
     install_task_create_excepthook()
-    create_folder(args.file_path)
-    create_folder(args.upload_path)
-    create_folder(args.temp_path)
-    if args.config_mode and args.only_routes:
+    create_folder(application_args.file_path)
+    create_folder(application_args.upload_path)
+    create_folder(application_args.temp_path)
+    if application_args.config_mode and application_args.only_routes:
         logger.error('Unable to run with config_mode and only_routes.  Only use one option')
         sys.exit(1)
-    if not args.only_scan and not args.only_routes:
+    if not application_args.only_scan and not application_args.only_routes:
         logger.error("No runmode selected. \nAllowed modes:\n"
                      " -os    ---- start scanner/devicecontroller\n"
                      " -or    ---- only calculate routes")
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
-    db_wrapper, db_exec = DbFactory.get_wrapper(args)
+    db_wrapper, db_exec = DbFactory.get_wrapper(application_args)
     await db_exec.setup()
     await db_wrapper.setup()
 
     # TODO: MADPatcher(args, data_manager)
     #  data_manager.clear_on_boot()
     #  data_manager.fix_routecalc_on_boot()
-    event = Event(args, db_wrapper)
+    event = PogoEvent(application_args, db_wrapper)
     await event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
     await asyncio.sleep(.1)
     # TODO: Externalize MappingManager as a service
     mapping_manager: MappingManager = MappingManager(db_wrapper,
-                                                     args,
-                                                     configmode=args.config_mode)
+                                                     application_args,
+                                                     configmode=application_args.config_mode)
     await mapping_manager.setup()
     # TODO: Call init of mapping_manager properly rather than in constructor...
 
-    if args.only_routes:
+    if application_args.only_routes:
         logger.info('Running in route recalculation mode. MAD will exit once complete')
         recalc_in_progress = True
         while recalc_in_progress:
@@ -352,49 +353,49 @@ async def start():
         logger.info("Done calculating routes!")
         # TODO: shutdown managers properly...
         sys.exit(0)
-    storage_elem = await get_storage_obj(args, db_wrapper)
-    if not args.config_mode:
-        pogo_win_manager = PogoWindows(args.temp_path, args.ocr_thread_count)
-        mitm_mapper = MitmMapper(args, mapping_manager, db_wrapper)
+    storage_elem = await get_storage_obj(application_args, db_wrapper)
+    if not application_args.config_mode:
+        pogo_win_manager = PogoWindows(application_args.temp_path, application_args.ocr_thread_count)
+        mitm_mapper = MitmMapper(application_args, mapping_manager, db_wrapper)
         await mitm_mapper.start()
-    logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
+    logger.info('Starting PogoDroid Receiver server on port {}'.format(str(application_args.mitmreceiver_port)))
 
     # TODO: Enable and properly integrate...
-    mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper)
+    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, db_wrapper)
     await mitm_data_processor_manager.launch_processors()
 
-    mitm_receiver = MITMReceiver(mitm_mapper, args, mapping_manager, db_wrapper,
+    mitm_receiver = MITMReceiver(mitm_mapper, application_args, mapping_manager, db_wrapper,
                                  storage_elem,
                                  mitm_data_processor_manager.get_queue(),
-                                 enable_configmode=args.config_mode)
+                                 enable_configmode=application_args.config_mode)
     # TODO: Cancel() task lateron
     mitm_receiver_task = await mitm_receiver.start()
-    logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
-    ws_server = WebsocketServer(args=args,
+    logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
+    ws_server = WebsocketServer(args=application_args,
                                 mitm_mapper=mitm_mapper,
                                 db_wrapper=db_wrapper,
                                 mapping_manager=mapping_manager,
                                 pogo_window_manager=pogo_win_manager,
                                 event=event,
-                                enable_configmode=args.config_mode)
+                                enable_configmode=application_args.config_mode)
     # TODO: module/service?
     await ws_server.start_server()
 
-    device_updater = DeviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
+    device_updater = DeviceUpdater(ws_server, application_args, jobstatus, db_wrapper, storage_elem)
     await device_updater.init_jobs()
-    if not args.config_mode:
-        if args.webhook:
-            rarity = Rarity(args, db_wrapper)
+    if not application_args.config_mode:
+        if application_args.webhook:
+            rarity = Rarity(application_args, db_wrapper)
             await rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(args, db_wrapper, mapping_manager, rarity)
+            webhook_worker = WebhookWorker(application_args, db_wrapper, mapping_manager, rarity)
             webhook_task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
-    madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
+    madmin = MADmin(application_args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
 
     # starting plugin system
     plugin_parts = {
-        'args': args,
+        'args': application_args,
         'db_wrapper': db_wrapper,
         'device_updater': device_updater,
         'event': event,
@@ -414,12 +415,11 @@ async def start():
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added
 
-    if not args.disable_madmin or args.config_mode:
-        logger.info("Starting Madmin on port {}", str(args.madmin_port))
+    if not application_args.disable_madmin or application_args.config_mode:
+        logger.info("Starting Madmin on port {}", str(application_args.madmin_port))
         madmin_app_runner = await madmin.madmin_start()
 
-
-    if args.statistic:
+    if application_args.statistic:
         logger.info("Starting statistics collector")
         loop = asyncio.get_running_loop()
         t_usage = loop.create_task(get_system_infos(db_wrapper))
@@ -427,7 +427,7 @@ async def start():
     exit_code = 0
     device_creator = None
     try:
-        if args.unit_tests:
+        if application_args.unit_tests:
             pass
             # from mapadroid.tests.local_api import LocalAPI
             # api_ready = False
@@ -510,10 +510,10 @@ async def start():
         sys.exit(exit_code)
 
 if __name__ == "__main__":
-    args = parse_args()
-    os.environ['LANGUAGE'] = args.language
+    global application_args
+    os.environ['LANGUAGE'] = application_args.language
     install_language()
-    init_logging(args)
+    init_logging(application_args)
     logger = get_logger(LoggerEnums.system)
 
     loop = asyncio.get_event_loop()

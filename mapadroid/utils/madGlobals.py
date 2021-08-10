@@ -1,7 +1,10 @@
 from enum import Enum, IntEnum
 from threading import Event
 
+from mapadroid.utils.walkerArgs import parse_args
+
 terminate_mad = Event()
+application_args = parse_args()
 
 
 class WebsocketAbortRegistrationException(Exception):
@@ -67,3 +70,15 @@ class PositionType(IntEnum):
 class TransportType(IntEnum):
     TELEPORT = 0
     WALK = 1
+
+
+class FortSearchResultTypes(Enum):
+    UNDEFINED = 0
+    QUEST = 1
+    TIME = 2
+    COOLDOWN = 3
+    INVENTORY = 4
+    LIMIT = 5
+    UNAVAILABLE = 6
+    OUT_OF_RANGE = 7
+    FULL = 8

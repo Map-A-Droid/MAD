@@ -154,6 +154,9 @@ def parse_args():
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
     parser.add_argument('-L', '--language', default='en',
                         help=('Set Language for MadMin / Quests. Default: en'))
+    parser.add_argument('-wfdsd', '--wait_for_data_sleep_duration', default='1.0', type=float,
+                        help=('Time in seconds (floating point) to sleep inbetween checks of data in workers. '
+                              'Default: 1.0'))
 
     # MADmin
     parser.add_argument('-dm', '--disable_madmin', action='store_true', default=False,

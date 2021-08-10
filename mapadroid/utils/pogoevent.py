@@ -9,7 +9,7 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 logger = get_logger(LoggerEnums.utils)
 
 
-class Event:
+class PogoEvent:
     def __init__(self, args, db_wrapper: DbWrapper):
         self.args = args
         self._db_wrapper = db_wrapper
