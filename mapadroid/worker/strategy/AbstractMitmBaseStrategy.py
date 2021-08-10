@@ -363,7 +363,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         logger.success('Received data')
         self._worker_state.reboot_count = 0
         self._worker_state.restart_count = 0
-        self._last_received_data_time = DatetimeWrapper.now()
+        self._worker_state.last_received_data_time = DatetimeWrapper.now()
         # TODO: Fire and forget async?
         now_ts: int = int(time.time())
         await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
