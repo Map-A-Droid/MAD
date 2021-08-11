@@ -6,18 +6,20 @@ from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
+from mapadroid.utils.questGen import QuestGen
 
 logger = get_logger(LoggerEnums.mitm)
 
 
 class SerializedMitmDataProcessor(Process):
     def __init__(self, multi_proc_queue: Queue, application_args, mitm_mapper: MitmMapper,
-                 db_wrapper: DbWrapper, name=None):
+                 db_wrapper: DbWrapper, quest_gen: QuestGen, name=None):
         Process.__init__(self, name=name)
         self.__queue: Queue = multi_proc_queue
         self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
         self.__application_args = application_args
         self.__mitm_mapper: MitmMapper = mitm_mapper
+        self._quest_gen: QuestGen = quest_gen
         self.__name = name
 
     def run(self):
@@ -163,7 +165,7 @@ class SerializedMitmDataProcessor(Process):
 
             elif data_type == 101:
                 origin_logger.debug("Processing proto 101 (FORT_SEARCH)")
-                self.__db_submit.quest(origin, data["payload"], self.__mitm_mapper)
+                self.__db_submit.quest(origin, data["payload"], self.__mitm_mapper, self._quest_gen)
                 end_time = self.get_time_ms() - start_time
                 origin_logger.debug("Done processing proto 101 in {}ms", end_time)
             elif data_type == 104:

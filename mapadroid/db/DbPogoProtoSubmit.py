@@ -10,7 +10,7 @@ from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
-from mapadroid.utils.questGen import questtask
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.database)
@@ -658,7 +658,7 @@ class DbPogoProtoSubmit:
             self._db_exec.execute(query_stops, stop_args, commit=True)
         return True
 
-    def quest(self, origin: str, quest_proto: dict, mitm_mapper):
+    def quest(self, origin: str, quest_proto: dict, mitm_mapper, quest_gen: QuestGen):
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::quest called")
         fort_id = quest_proto.get("fort_id", None)
@@ -700,7 +700,8 @@ class DbPogoProtoSubmit:
         condition = goal.get("condition", None)
 
         json_condition = json.dumps(condition)
-        task = questtask(int(quest_type), json_condition, int(target), str(quest_template), quest_title_resource_id)
+        task = quest_gen.questtask(int(quest_type), json_condition, int(target), str(quest_template),
+                                   quest_title_resource_id)
 
         mitm_mapper.collect_quest_stats(origin, fort_id)
 

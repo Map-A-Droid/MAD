@@ -15,7 +15,7 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_name
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.questGen import generate_quest
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.madmin)
@@ -23,7 +23,8 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class MADminMap:
-    def __init__(self, db: DbWrapper, args, mapping_manager: MappingManager, app, data_manager):
+    def __init__(self, db: DbWrapper, args, mapping_manager: MappingManager, app, data_manager, quest_gen: QuestGen):
+        self._quest_gen = quest_gen
         self._db: DbWrapper = db
         self._args = args
         self._app = app
@@ -298,7 +299,7 @@ class MADminMap:
 
         for stopid in data:
             quest = data[str(stopid)]
-            coords.append(generate_quest(quest))
+            coords.append(self._quest_gen.generate_quest(quest))
 
         return jsonify(coords)
 
