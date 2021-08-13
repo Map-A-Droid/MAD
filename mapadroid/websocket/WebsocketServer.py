@@ -85,7 +85,8 @@ class WebsocketServer(object):
         logger.info("Signaling all workers to stop")
         async with self.__current_users_mutex:
             for worker_entry in self.__current_users.values():
-                await worker_entry.worker_instance.stop_worker()
+                if worker_entry.worker_instance:
+                    await worker_entry.worker_instance.stop_worker()
                 await self.__close_websocket_client_connection(worker_entry.origin,
                                                                worker_entry.websocket_client_connection)
         logger.info("Done signalling all workers to stop")
@@ -183,7 +184,8 @@ class WebsocketServer(object):
         # also check if thread is already running to not start it again. If it is not alive, we need to create it..
         finally:
             logger.info("Awaiting unregister")
-            await entry.worker_instance.stop_worker()
+            if entry.worker_instance:
+                await entry.worker_instance.stop_worker()
             await self.__remove_from_current_users(origin)
 
         logger.info("Done with connection ({})", websocket_client_connection.remote_address)
@@ -299,7 +301,7 @@ class WebsocketServer(object):
                 # TODO: cleanup needed here? better suited for the handler
                 logger.warning("Connection was closed, stopping receiver. Exception: {}", cc)
                 entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-                if entry is not None and connection == entry.websocket_client_connection:
+                if entry and entry.worker_instance and connection == entry.websocket_client_connection:
                     await entry.worker_instance.stop_worker()
                 return
 
@@ -307,7 +309,7 @@ class WebsocketServer(object):
                 await self.__on_message(client_entry, message)
         logger.warning("Connection closed in __client_message_receiver")
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-        if entry is not None and connection == entry.websocket_client_connection:
+        if entry and entry.worker_instance and connection == entry.websocket_client_connection:
             await entry.worker_instance.stop_worker()
 
     @staticmethod
@@ -368,7 +370,8 @@ class WebsocketServer(object):
         async with self.__current_users_mutex:
             entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
             if entry is not None:
-                await entry.worker_instance.stop_worker()
+                if entry.worker_instance:
+                    await entry.worker_instance.stop_worker()
                 await self.__close_websocket_client_connection(entry.origin,
                                                                entry.websocket_client_connection)
                 logger.info("Done signaling stop")
