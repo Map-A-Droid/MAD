@@ -8,22 +8,21 @@ from mapadroid.data_handler.stats.StatsHandler import StatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
+from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes, application_args
 
 
 class MitmMapper(AbstractMitmMapper):
-    def __init__(self, args, mapping_manager: MappingManager, db_wrapper: DbWrapper):
+    def __init__(self, mapping_manager: MappingManager, db_wrapper: DbWrapper):
         self.__mapping_manager: MappingManager = mapping_manager
-        self.__application_args = args
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__init_handlers()
 
     def __init_handlers(self):
-        if self.__application_args.game_stats:
-            self.__stats_handler: Optional[StatsHandler] = StatsHandler(self.__db_wrapper, self.__application_args)
+        if application_args.game_stats:
+            self.__stats_handler: Optional[StatsHandler] = StatsHandler(self.__db_wrapper, application_args)
         else:
             self.__stats_handler: Optional[StatsHandler] = None
-        self.__mitm_data_handler: MitmDataHandler = MitmDataHandler(self.__db_wrapper, self.__application_args)
+        self.__mitm_data_handler: MitmDataHandler = MitmDataHandler(self.__db_wrapper, application_args)
 
     async def start(self):
         if self.__stats_handler:
