@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package mapadroid.shared;
+
+
+enum PositionType {
+  NORMAL = 0;
+  PRIOQ = 1;
+  STARTUP = 2;
+  REBOOT = 3;
+  RESTART = 4;
+}

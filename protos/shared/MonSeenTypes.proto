@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package mapadroid.shared;
+
+
+enum MonSeenTypes {
+  WILD = 0;
+  ENCOUNTER = 1;
+  LURE_ENCOUNTER = 2;
+  LURE_WILD = 3;
+  NEARBY_STOP = 4;
+  NEARBY_CELL = 5;
+}

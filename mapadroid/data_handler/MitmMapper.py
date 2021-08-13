@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import Optional, List, Any, Dict, Union
+from typing import Optional, List, Dict, Union
 
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.data_handler.stats.StatsHandler import StatsHandler
@@ -10,7 +11,7 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
 
 
-class MitmMapper(object):
+class MitmMapper(AbstractMitmMapper):
     def __init__(self, args, mapping_manager: MappingManager, db_wrapper: DbWrapper):
         self.__mapping_manager: MappingManager = mapping_manager
         self.__application_args = args
@@ -44,11 +45,11 @@ class MitmMapper(object):
         if self.__stats_handler:
             self.__stats_handler.stats_collect_mon_iv(worker, encounter_id, time_scanned, is_shiny)
 
-    async def stats_collect_quest(self, worker: str, stop_id: str, time_scanned: datetime) -> None:
+    async def stats_collect_quest(self, worker: str, time_scanned: datetime) -> None:
         if self.__stats_handler:
             self.__stats_handler.stats_collect_quest(worker, time_scanned)
 
-    async def stats_collect_raid(self, worker: str, fort_id: str, time_scanned: datetime) -> None:
+    async def stats_collect_raid(self, worker: str, time_scanned: datetime) -> None:
         if self.__stats_handler:
             self.__stats_handler.stats_collect_raid(worker, time_scanned)
 
@@ -71,7 +72,7 @@ class MitmMapper(object):
     async def get_last_possibly_moved(self, worker: str) -> int:
         return await self.__mitm_data_handler.get_last_possibly_moved(worker)
 
-    async def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
+    async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         self.__mitm_data_handler.update_latest(worker, key, value, timestamp_received_raw,
                                                timestamp_received_receiver, location)
@@ -79,7 +80,7 @@ class MitmMapper(object):
     async def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
         return self.__mitm_data_handler.request_latest(worker, key)
 
-    async def get_full_latest_data(self, worker: str) -> Dict[Union[int, str], LatestMitmDataEntry]:
+    async def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
         return self.__mitm_data_handler.get_full_latest_data(worker)
 
     async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:

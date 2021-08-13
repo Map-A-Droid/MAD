@@ -50,13 +50,13 @@ class TeamColours(Enum):
     WHITE = "White"
 
 
-class MonSeenTypes(Enum):
-    WILD = "wild"
-    ENCOUNTER = "encounter"
-    LURE_ENCOUNTER = "lure_encounter"
-    LURE_WILD = "lure_wild"
-    NEARBY_STOP = "nearby_stop"
-    NEARBY_CELL = "nearby_cell"
+class MonSeenTypes(IntEnum):
+    WILD = 0
+    ENCOUNTER = 1
+    LURE_ENCOUNTER = 2
+    LURE_WILD = 3
+    NEARBY_STOP = 4
+    NEARBY_CELL = 5
 
 
 class PositionType(IntEnum):

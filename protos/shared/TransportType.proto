@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package mapadroid.shared;
+
+
+enum TransportType {
+  TELEPORT = 0;
+  WALK = 1;
+}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package mapadroid.shared;
+
+
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+}

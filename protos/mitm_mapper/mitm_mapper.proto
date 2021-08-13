@@ -1,0 +1,136 @@
+syntax = "proto3";
+import "shared/Location.proto";
+import "shared/Ack.proto";
+import "shared/PositionType.proto";
+import "shared/TransportType.proto";
+import "shared/MonSeenTypes.proto";
+import "google/protobuf/struct.proto";
+
+package mapadroid.mitm_mapper;
+
+service MitmMapper {
+  rpc StatsCollect(Stats) returns (mapadroid.shared.Ack);
+  rpc GetLastPossiblyMoved(Worker) returns (LastMoved);
+  rpc UpdateLatest(LatestMitmDataEntryUpdateRequest) returns (mapadroid.shared.Ack);
+  rpc RequestLatest(LatestMitmDataEntryRequest) returns (LatestMitmDataEntryResponse);
+  rpc RequestFullLatest(Worker) returns (LatestMitmDataFullResponse);
+  rpc HandleInventoryData(InventoryDataRequest) returns (mapadroid.shared.Ack);
+  rpc GetPokestopVisits(Worker) returns (PokestopVisitsResponse);
+  rpc GetLevel(Worker) returns (LevelResponse);
+  rpc GetInjectionStatus(Worker) returns (InjectionStatus);
+  rpc SetInjected(InjectedRequest) returns (mapadroid.shared.Ack);
+  rpc GetLastKnownLocation(Worker) returns (LastKnownLocationResponse);
+}
+
+message LastKnownLocationResponse {
+  optional mapadroid.shared.Location location = 1;
+}
+
+message InjectedRequest {
+  Worker worker = 1;
+  InjectionStatus injected = 2;
+}
+
+message InjectionStatus {
+  bool is_injected = 1;
+}
+
+message LevelResponse {
+  int32 level = 1;
+}
+
+message PokestopVisitsResponse {
+  uint64 stops_visited = 1;
+}
+
+message InventoryDataRequest {
+  Worker worker = 1;
+  google.protobuf.Struct inventory_data = 2;
+}
+
+message LatestMitmDataFullResponse {
+  map<string, LatestMitmDataEntry> latest = 1;
+}
+
+message LatestMitmDataEntryUpdateRequest {
+  Worker worker = 1;
+  string key = 2;
+  LatestMitmDataEntry data = 3;
+}
+
+message LatestMitmDataEntryResponse {
+  optional LatestMitmDataEntry entry = 1;
+}
+
+message LatestMitmDataEntryRequest {
+  Worker worker = 1;
+  string key = 2;
+}
+
+message LatestMitmDataEntry {
+  optional mapadroid.shared.Location location = 1;
+  optional uint64 timestamp_received = 2;
+  optional uint64 timestamp_of_data_retrieval = 3;
+  oneof data {
+    google.protobuf.Struct some_dictionary = 4;
+    google.protobuf.ListValue some_list = 5;
+  }
+}
+
+message Worker {
+  string name = 1;
+}
+
+message LastMoved {
+  uint64 timestamp = 1;
+}
+
+message EncounterIds {
+  // May also yield mon_ids...
+  repeated uint64 ids = 1;
+}
+
+message Stats {
+  optional Worker worker = 1;
+  optional uint64 timestamp = 2;
+  oneof data_to_collect {
+    StatsWildMon wild_mons = 3;
+    StatsMonIv mon_iv = 4;
+    StatsQuest quest = 5;
+    StatsRaid raid = 6;
+    StatsLocationData location_data = 7;
+    StatsSeenType seen_type = 8;
+  }
+}
+
+message StatsWildMon {
+  repeated uint64 encounter_ids = 1;
+}
+
+message StatsMonIv {
+  uint64 encounter_id = 1;
+  bool is_shiny = 2;
+}
+
+message StatsQuest {
+}
+
+message StatsRaid {
+}
+
+message StatsLocationData {
+  mapadroid.shared.Location location = 1;
+  bool success = 2;
+  uint64 fix_timestamp = 3;
+  uint64 data_timestamp = 4;
+  mapadroid.shared.PositionType position_type = 5;
+  string walker = 6;
+  mapadroid.shared.TransportType transport_type = 7;
+}
+
+message StatsSeenType {
+  repeated uint64 encounter_ids = 1;
+  mapadroid.shared.MonSeenTypes type_of_detection = 2;
+}
+
+

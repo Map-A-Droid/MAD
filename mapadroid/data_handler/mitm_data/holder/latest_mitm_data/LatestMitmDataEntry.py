@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, Any, Union
 
 from mapadroid.utils.collections import Location
 
@@ -13,4 +13,4 @@ class LatestMitmDataEntry:
         self.timestamp_of_data_retrieval: Optional[int] = timestamp_of_data_retrieval
         # TODO: Eventually move down using a hierarchy...
         #  And split protos vs latestmitm settings...
-        self.data: Any = data
+        self.data: Union[list, dict] = data
