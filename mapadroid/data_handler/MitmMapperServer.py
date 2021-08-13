@@ -12,8 +12,7 @@ from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import Stats, Worker, L
     InjectedRequest, LastKnownLocationResponse
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
 
-from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperServicer
-from mapadroid.mapping_manager.MappingManager import MappingManager
+from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperServicer, add_MitmMapperServicer_to_server
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
@@ -21,28 +20,23 @@ from loguru import logger
 
 
 class MitmMapperServer(MitmMapperServicer, MitmMapper):
-    def __init__(self, mapping_manager: MappingManager, db_wrapper: DbWrapper):
-        MitmMapper.__init__(self, mapping_manager=mapping_manager,
-                            db_wrapper=db_wrapper)
+    def __init__(self, db_wrapper: DbWrapper):
+        MitmMapper.__init__(self, db_wrapper=db_wrapper)
+        self.__server = None
 
     async def start(self):
         await MitmMapper.start(self)
-        server = grpc.aio.server()
-        helloworld_pb2_grpc.add_GreeterServicer_to_server(self, server)
+        self.__server = grpc.aio.server()
+        add_MitmMapperServicer_to_server(self, self.__server)
         listen_addr = '[::]:50051'
-        server.add_insecure_port(listen_addr)
+        self.__server.add_insecure_port(listen_addr)
         logger.info("Starting server on %s", listen_addr)
-        await server.start()
-        try:
-            await server.wait_for_termination()
-        except KeyboardInterrupt:
-            # Shuts down the server with 0 seconds of grace period. During the
-            # grace period, the server won't accept new connections and allow
-            # existing RPCs to continue within the grace period.
-            await server.stop(0)
+        await self.__server.start()
 
     async def shutdown(self):
         await MitmMapper.shutdown(self)
+        if self.__server:
+            await self.__server.stop(0)
 
     async def StatsCollect(self, request: Stats, context: grpc.aio.ServicerContext) -> Ack:
         # depending on the data_to_collect we need to parse fields..

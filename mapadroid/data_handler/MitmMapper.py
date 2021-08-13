@@ -6,14 +6,12 @@ from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.data_handler.stats.StatsHandler import StatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes, application_args
 
 
 class MitmMapper(AbstractMitmMapper):
-    def __init__(self, mapping_manager: MappingManager, db_wrapper: DbWrapper):
-        self.__mapping_manager: MappingManager = mapping_manager
+    def __init__(self, db_wrapper: DbWrapper):
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__init_handlers()
 

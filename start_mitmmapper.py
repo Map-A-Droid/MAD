@@ -14,8 +14,7 @@ import pkg_resources
 import psutil
 from threading import active_count
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.MitmMapperClientConnector import MitmMapperClientConnector
+from mapadroid.data_handler.MitmMapperServer import MitmMapperServer
 from mapadroid.db.DbFactory import DbFactory
 
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
@@ -132,7 +131,7 @@ async def get_system_infos(db_wrapper):
         collected, cpu_usage, mem_usage, unixnow = await loop.run_in_executor(
             None, __run_system_stats, process_running)
         async with db_wrapper as session, session:
-            await TrsUsageHelper.add(session, application_args.status_name, cpu_usage, mem_usage, collected, unixnow)
+            await TrsUsageHelper.add(session, "mitm_mapper", cpu_usage, mem_usage, collected, unixnow)
             await session.commit()
         await asyncio.sleep(application_args.statistic_interval)
 
@@ -278,21 +277,7 @@ def check_dependencies():
 
 
 async def start():
-    device_updater: DeviceUpdater = None
-    event: PogoEvent = None
-    jobstatus: dict = {}
-    # mapping_manager_manager: MappingManagerManager = None
-    mapping_manager: Optional[MappingManager] = None
-    mitm_receiver_process: MITMReceiver = None
-    mitm_mapper: Optional[AbstractMitmMapper] = None
-    pogo_win_manager: Optional[PogoWindows] = None
-    storage_elem: Optional[AbstractAPKStorage] = None
-    # storage_manager: Optional[StorageSyncManager] = None
-    t_whw: Task = None  # Thread for WebHooks
-    t_ws: Task = None  # Thread - WebSocket Server
-    webhook_worker: Optional[WebhookWorker] = None
-    ws_server: WebsocketServer = None
-
+    t_usage: Optional[Task] = None
     logging.getLogger('asyncio').setLevel(logging.DEBUG)
     logging.getLogger('asyncio').addHandler(InterceptHandler(log_section=LoggerEnums.asyncio))
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
@@ -308,10 +293,6 @@ async def start():
     logging.getLogger('aiohttp.web').setLevel(logging.INFO)
     logging.getLogger('aiohttp.web').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
 
-    if application_args.config_mode:
-        logger.info('Starting MAD in config mode')
-    else:
-        logger.info('Starting MAD')
     # check_dependencies()
     # TODO: globally destroy all threads upon sys.exit() for example
     install_task_create_excepthook()
@@ -331,98 +312,8 @@ async def start():
     await db_exec.setup()
     await db_wrapper.setup()
 
-    # TODO: MADPatcher(args, data_manager)
-    #  data_manager.clear_on_boot()
-    #  data_manager.fix_routecalc_on_boot()
-    event = PogoEvent(application_args, db_wrapper)
-    await event.start_event_checker()
-    # Do not remove this sleep unless you have solved the race condition on boot with the logger
-    await asyncio.sleep(.1)
-    # TODO: Externalize MappingManager as a service
-    mapping_manager: MappingManager = MappingManager(db_wrapper,
-                                                     application_args,
-                                                     configmode=application_args.config_mode)
-    await mapping_manager.setup()
-    # TODO: Call init of mapping_manager properly rather than in constructor...
-
-    if application_args.only_routes:
-        logger.info('Running in route recalculation mode. MAD will exit once complete')
-        recalc_in_progress = True
-        while recalc_in_progress:
-            await asyncio.sleep(5)
-            sql = "SELECT COUNT(*) > 0 FROM `settings_routecalc` WHERE `recalc_status` = 1"
-            # TODO recalc_in_progress = db_wrapper.autofetch_value(sql)
-        logger.info("Done calculating routes!")
-        # TODO: shutdown managers properly...
-        sys.exit(0)
-    storage_elem = await get_storage_obj(application_args, db_wrapper)
-    if not application_args.config_mode:
-        pogo_win_manager = PogoWindows(application_args.temp_path, application_args.ocr_thread_count)
-        mitm_mapper_connector = MitmMapperClientConnector()
-        await mitm_mapper_connector.start()
-        mitm_mapper = await mitm_mapper_connector.get_client()
-        #mitm_mapper = MitmMapper(application_args, mapping_manager, db_wrapper)
-        #await mitm_mapper.start()
-    logger.info('Starting PogoDroid Receiver server on port {}'.format(str(application_args.mitmreceiver_port)))
-
-    # TODO: Enable and properly integrate...
-    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, db_wrapper)
-    await mitm_data_processor_manager.launch_processors()
-
-    mitm_receiver = MITMReceiver(mitm_mapper, application_args, mapping_manager, db_wrapper,
-                                 storage_elem,
-                                 mitm_data_processor_manager.get_queue(),
-                                 enable_configmode=application_args.config_mode)
-    # TODO: Cancel() task lateron
-    mitm_receiver_task = await mitm_receiver.start()
-    logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
-    ws_server = WebsocketServer(args=application_args,
-                                mitm_mapper=mitm_mapper,
-                                db_wrapper=db_wrapper,
-                                mapping_manager=mapping_manager,
-                                pogo_window_manager=pogo_win_manager,
-                                event=event,
-                                enable_configmode=application_args.config_mode)
-    # TODO: module/service?
-    await ws_server.start_server()
-
-    device_updater = DeviceUpdater(ws_server, application_args, jobstatus, db_wrapper, storage_elem)
-    await device_updater.init_jobs()
-    if not application_args.config_mode:
-        if application_args.webhook:
-            rarity = Rarity(application_args, db_wrapper)
-            await rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(application_args, db_wrapper, mapping_manager, rarity)
-            webhook_task = await webhook_worker.start()
-            # TODO: Stop webhook_task properly
-
-    madmin = MADmin(application_args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
-
-    # starting plugin system
-    plugin_parts = {
-        'args': application_args,
-        'db_wrapper': db_wrapper,
-        'device_updater': device_updater,
-        'event': event,
-        'jobstatus': jobstatus,
-        'logger': get_logger(LoggerEnums.plugin),
-        'madmin': madmin,
-        'mapping_manager': mapping_manager,
-        'mitm_mapper': mitm_mapper,
-        'mitm_receiver_process': mitm_receiver_process,
-        'storage_elem': storage_elem,
-        'webhook_worker': webhook_worker,
-        'ws_server': ws_server,
-        'mitm_data_processor_manager': mitm_data_processor_manager
-    }
-
-    mad_plugins = PluginCollection('plugins', plugin_parts)
-    await mad_plugins.finish_init()
-    # MADmin needs to be started after sub-applications (plugins) have been added
-
-    if not application_args.disable_madmin or application_args.config_mode:
-        logger.info("Starting Madmin on port {}", str(application_args.madmin_port))
-        madmin_app_runner = await madmin.madmin_start()
+    mitm_mapper = MitmMapperServer(db_wrapper)
+    await mitm_mapper.start()
 
     if application_args.statistic:
         logger.info("Starting statistics collector")
@@ -430,7 +321,6 @@ async def start():
         t_usage = loop.create_task(get_system_infos(db_wrapper))
     logger.info("MAD is now running.....")
     exit_code = 0
-    device_creator = None
     try:
         if application_args.unit_tests:
             pass
@@ -471,39 +361,13 @@ async def start():
         logger.info("Shutdown signal received")
     finally:
         try:
-            db_wrapper = None
             logger.success("Stop called")
-            if device_creator:
-                device_creator.remove_resources()
             terminate_mad.set()
             # now cleanup all threads...
-            # TODO: check against args or init variables to None...
-            if mitm_receiver_process is not None:
-                logger.info("Trying to stop receiver")
-                await mitm_receiver_process.shutdown()
-                # logger.debug("MITM child threads successfully shutdown. Terminating parent thread")
-                # mitm_receiver_process.()
-                # logger.debug("Trying to join MITMReceiver")
-                # mitm_receiver_process.join()
-                #mitm_receiver_task.cancel()
-                logger.debug("MITMReceiver joined")
-           # if mitm_data_processor_manager is not None:
-         #       await mitm_data_processor_manager.shutdown()
-            if device_updater is not None:
-                device_updater.stop_updater()
-            if t_whw is not None:
-                logger.info("Waiting for webhook-thread to exit")
-                t_whw.cancel()
-            if ws_server is not None:
-                logger.info("Stopping websocket server")
-                await ws_server.stop_server()
-                logger.info("Waiting for websocket-thread to exit")
-                # t_ws.cancel()
-            if mapping_manager is not None:
-                mapping_manager.shutdown()
-            # if storage_manager is not None:
-            #    logger.debug('Stopping storage manager')
-            #    storage_manager.shutdown()
+            if t_usage:
+                t_usage.cancel()
+            if mitm_mapper:
+                await mitm_mapper.shutdown()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
                 # db_exec.shutdown()
@@ -513,6 +377,7 @@ async def start():
         logger.info("Done shutting down")
         logger.debug(str(sys.exc_info()))
         sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     global application_args
