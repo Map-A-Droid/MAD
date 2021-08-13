@@ -36,7 +36,7 @@ class RoutePriorityQueue:
             logger.info("Started PrioQ")
 
     async def _update_priority_queue_loop(self):
-        if self.strategy.get_update_interval() is None or self.strategy.get_update_interval() == 0:
+        if not self._strategy or not self._strategy.get_update_interval() or self._strategy.get_update_interval() == 0:
             return
         while not self._stop_updates.is_set():
             # retrieve the latest hatches from DB
@@ -47,7 +47,7 @@ class RoutePriorityQueue:
             except Exception as e:
                 logger.warning("Failed updating prioQ")
                 logger.exception(e)
-            await asyncio.sleep(self.strategy.get_update_interval())
+            await asyncio.sleep(self._strategy.get_update_interval())
 
     async def set_strategy(self, strategy: AbstractRoutePriorityQueueStrategy) -> None:
         await self.stop()
@@ -95,7 +95,7 @@ class RoutePriorityQueue:
         new_coords: List[RoutePriorityQueueEntry] = await self._strategy.retrieve_new_coords()
         loop = asyncio.get_running_loop()
         post_processed_coords: List[RoutePriorityQueueEntry] = await loop.run_in_executor(
-            None, self.strategy.postprocess_coords, new_coords)
+            None, self._strategy.postprocess_coords, new_coords)
         logger.success("Got {} new events", len(post_processed_coords))
         async with self._update_lock:
             merged = await loop.run_in_executor(
@@ -105,7 +105,7 @@ class RoutePriorityQueue:
     def __merge_filter_queue(self,
                              post_processed_coords: List[RoutePriorityQueueEntry]) -> List[RoutePriorityQueueEntry]:
         try:
-            if self.strategy.is_full_replace_queue():
+            if self._strategy.is_full_replace_queue():
                 merged = post_processed_coords
             else:
                 merged = self.__merge_queues(self.__queue, post_processed_coords)
