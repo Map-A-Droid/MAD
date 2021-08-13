@@ -47,8 +47,8 @@ except Exception as e:
     pass
 
 py_version = sys.version_info
-if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 7):
-    print("MAD requires at least python 3.7! Your version: {}.{}"
+if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 9):
+    print("MAD requires at least python 3.9! Your version: {}.{}"
           .format(py_version.major, py_version.minor))
     sys.exit(1)
 
@@ -69,8 +69,6 @@ def install_task_create_excepthook():
             task: asyncio.Task,
             *,
             logger: logging.Logger,
-            message: str,
-            message_args: Tuple[Any, ...] = (),
     ) -> None:
         try:
             task.result()
@@ -80,7 +78,6 @@ def install_task_create_excepthook():
         # is properly logged. There is no point re-raising the exception in this callback.
         except Exception as e:  # pylint: disable=broad-except
             logger.exception(e)
-            logger.exception(message, *message_args)
 
     def create_task(*args, **kwargs) -> Task:
         try:
