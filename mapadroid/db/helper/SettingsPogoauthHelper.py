@@ -116,7 +116,7 @@ class SettingsPogoauthHelper:
         except (ValueError, TypeError):
             identifier = None
         # Find all unassigned accounts
-        for pogoauth in result.all():
+        for pogoauth in result.scalars().all():
             if pogoauth.device_id is not None or identifier is not None and pogoauth.device_id != identifier:
                 continue
             accounts[pogoauth.account_id] = pogoauth
