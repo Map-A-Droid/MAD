@@ -41,7 +41,7 @@ $(document).ready(function () {
             let dev_id = device[0];
             let dev_name = device[1];
             let option = document.createElement("OPTION");
-            option.value = "{{ url('api_device') }}/"+ dev_id;
+            option.value = dev_id;
             option.text = dev_name;
             if(option.value == default_val) {
                 option.setAttribute('selected', 'selected');
