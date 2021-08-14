@@ -92,7 +92,7 @@ def install_task_create_excepthook():
             pass
         except Exception as inner_ex:
             logger.exception(inner_ex)
-            #logger.opt(exception=True).critical("An unhandled exception occurred!")
+            raise inner_ex
 
     loop.create_task = create_task
 

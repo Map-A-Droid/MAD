@@ -249,7 +249,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         distance, area_settings = await self._get_route_manager_settings_and_distance_to_current_location()
         area_settings: SettingsAreaPokestop = area_settings
         logger.debug("Getting time")
-        if (area_settings.speed == 0 or (area_settings.max_distance and 0 < area_settings.max_distance < distance)
+        if (not area_settings.speed or area_settings.speed == 0 or
+                (area_settings.max_distance and 0 < area_settings.max_distance < distance)
                 or (self._worker_state.last_location.lat == 0.0 and self._worker_state.last_location.lng == 0.0)):
             logger.debug("main: Teleporting...")
             self._worker_state.last_transport_type = TransportType.TELEPORT
