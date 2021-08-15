@@ -74,6 +74,8 @@ def install_task_create_excepthook():
             task.result()
         except asyncio.CancelledError:
             pass  # Task cancellation should not be logged as an error.
+        except IndexError:
+            pass # We regularly throw index error in prioQ...
         # Ad the pylint ignore: we want to handle all exceptions here so that the result of the task
         # is properly logged. There is no point re-raising the exception in this callback.
         except Exception as e:  # pylint: disable=broad-except
