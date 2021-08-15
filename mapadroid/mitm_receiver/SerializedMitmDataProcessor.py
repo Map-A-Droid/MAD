@@ -81,9 +81,9 @@ class SerializedMitmDataProcessor:
                 logger.debug("Processing proto 101 (FORT_SEARCH)")
                 async with self.__db_wrapper as session, session:
                     try:
-                        fort_id: Optional[str] = await self.__db_submit.quest(session, data["payload"])
-                        if fort_id:
-                            await self.__mitm_mapper.stats_collect_quest(origin, fort_id, processed_timestamp)
+                        new_quest: bool = await self.__db_submit.quest(session, data["payload"])
+                        if new_quest:
+                            await self.__mitm_mapper.stats_collect_quest(origin, "", processed_timestamp)
                         await session.commit()
                     except Exception as e:
                         logger.warning("Failed submitting quests to DB: {}", e)

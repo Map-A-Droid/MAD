@@ -9,7 +9,7 @@ from loguru import logger
 from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
-from mapadroid.db.model import SettingsWalkerarea, SettingsArea
+from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -259,22 +259,22 @@ class AbstractWorkerStrategy(ABC):
             # TODO: Make this not block the loop somehow... asyncio waiting for a thread?
             screen_type: ScreenType = await self._word_to_screen_matching.detect_screentype()
             if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
-                self._last_screen_type = screen_type
-                self._login_error_count = 0
+                self._worker_state.last_screen_type = screen_type
+                self._worker_state.login_error_count = 0
                 logger.debug2("Found pogo or questlog to be open")
                 break
 
-            if screen_type != ScreenType.ERROR and self._last_screen_type == screen_type:
-                self._same_screen_count += 1
-                logger.info("Found {} multiple times in a row ({})", screen_type, self._same_screen_count)
-                if self._same_screen_count > 3:
+            if screen_type != ScreenType.ERROR and self._worker_state.last_screen_type == screen_type:
+                self._worker_state.same_screen_count += 1
+                logger.info("Found {} multiple times in a row ({})", screen_type, self._worker_state.same_screen_count)
+                if self._worker_state.same_screen_count > 3:
                     logger.warning("Screen is frozen!")
-                    if self._same_screen_count > 4 or not await self._restart_pogo():
+                    if self._worker_state.same_screen_count > 4 or not await self._restart_pogo():
                         logger.warning("Restarting PoGo failed - reboot device")
                         await self._reboot()
                     break
-            elif self._last_screen_type != screen_type:
-                self._same_screen_count = 0
+            elif self._worker_state.last_screen_type != screen_type:
+                self._worker_state.ame_screen_count = 0
 
             # now handle all screens that may not have been handled by detect_screentype since that only clicks around
             # so any clearing data whatsoever happens here (for now)
@@ -326,11 +326,11 @@ class AbstractWorkerStrategy(ABC):
                 if await self.get_devicesettings_value(MappingManagerDevicemappingKey.CLEAR_GAME_DATA, False):
                     logger.info('Clearing game data')
                     await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
-                self._login_error_count = 0
+                self._worker_state.login_error_count = 0
                 await self._reboot()
                 break
 
-            self._last_screen_type = screen_type
+            self._worker_state.last_screen_type = screen_type
         logger.info('Checking pogo screen is finished')
         if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
             return True
