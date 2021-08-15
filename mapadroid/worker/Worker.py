@@ -303,7 +303,8 @@ class Worker(AbstractWorker):
             return check_walker_value_type(period)
         elif mode == "coords":
             exittime = self._scan_strategy.walker.algo_value
-            if len(exittime) > 0:
+            logger.debug("Routemode coords, exittime {}", exittime)
+            if exittime:
                 return check_walker_value_type(exittime)
             return True
         elif mode == "idle":
