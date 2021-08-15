@@ -572,7 +572,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                                       + self._worker_state.resolution_calculator.get_inventory_text_diff()
 
                 try:
-                    item_text = await self._pogo_windows_handler.get_inventory_text(self.get_screenshot_path(),
+                    item_text = await self._pogo_windows_handler.get_inventory_text(await self.get_screenshot_path(),
                                                                                  self._worker_state.origin, text_x1, text_x2,
                                                                                  check_y_text_ending,
                                                                                  check_y_text_starter)
