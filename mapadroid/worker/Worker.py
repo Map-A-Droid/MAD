@@ -174,9 +174,10 @@ class Worker(AbstractWorker):
                         break
 
                     try:
-                        settings = await self._scan_strategy.grab_next_location()
-                        if settings is None:
-                            continue
+                        await self._scan_strategy.grab_next_location()
+                        if self._worker_state.current_location is None:
+                            # TODO: Check walkers...
+                            break
                     except (
                             InternalStopWorkerException, WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
@@ -255,6 +256,7 @@ class Worker(AbstractWorker):
 
     async def check_walker(self):
         if not self._scan_strategy.walker:
+            logger.warning("No walker set")
             return True
         mode = self._scan_strategy.walker.algo_type
         walkereventid = self._scan_strategy.walker.eventid

@@ -10,7 +10,6 @@ from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsWalkerarea, SettingsArea
-from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -108,7 +107,7 @@ class AbstractWorkerStrategy(ABC):
         Returns:
         """
 
-    async def grab_next_location(self) -> SettingsArea:
+    async def grab_next_location(self) -> None:
         logger.debug("Requesting next location from routemanager")
         # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
         # the workers up...
@@ -122,7 +121,6 @@ class AbstractWorkerStrategy(ABC):
         self._worker_state.current_location = await self._mapping_manager.routemanager_get_next_location(
             self._area_id,
             self._worker_state.origin)
-        return await self._mapping_manager.routemanager_get_settings(self._area_id)
 
     async def _check_for_mad_job(self):
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.JOB_ACTIVE, False):
