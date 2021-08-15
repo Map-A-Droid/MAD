@@ -8,10 +8,9 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType
 
-logger = get_logger(LoggerEnums.routemanager)
+from loguru import logger
 
 
 class RouteManagerRaids(RouteManagerBase):
