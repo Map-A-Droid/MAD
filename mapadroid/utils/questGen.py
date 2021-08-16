@@ -375,6 +375,7 @@ class QuestGen:
         elif typeid == 24:
             text = _('Send {0} gifts to friends')
         elif typeid == 27:
+            arr['verb'] = 'Battle'
             for con in condition_dict:
                 if con.get('type', 0) == 22:
                     # PVP against team leader.
@@ -383,10 +384,12 @@ class QuestGen:
                     gotta_win = con.get('with_pvp_combat', {}).get('requires_win') is True
 
                     if gotta_win:
+                        arr['verb'] = 'Win'
                         text = _('Win a battle against another Trainer {0} times')
                     else:
                         text = _('Battle another Trainer {0} times')
 
+                    # TODO this seems unused deprecated or just wrong
                     in_go_battle_league = any(
                         x in con.get('with_pvp_combat', {}).get('combat_league_template_id', []) for x in
                         ["COMBAT_LEAGUE_VS_SEEKER_GREAT", "COMBAT_LEAGUE_VS_SEEKER_ULTRA",
@@ -399,13 +402,18 @@ class QuestGen:
                         text = _('Win in the GO Battle League {0} times')
                     elif in_go_battle_league and not vs_player:
                         text = _('Battle in the GO Battle League {0} times')
+                elif con.get('type') == 41:
+                    combat_type = con.get("with_combat_type", {}).get("combat_type", [])
+                    if 6 in combat_type:
+                        text = _('{verb} in the GO Battle League {0} times')
+                    elif 3 in combat_type:
+                        text = _('{verb} against a friend {0} times')
         elif typeid == 28:
             # Take snapshots quest
             if re.search(r'"type": 28', condition) is not None:
                 text = _("Take {0} snapshots of your Buddy")
             elif re.search(r'"type": 2', condition) is not None:
                 arr['poke'] = ""
-
                 match_object = re.search(
                     r'"pokemon_ids": \[([0-9, ]+)\]', condition)
                 if match_object is not None:
@@ -421,7 +429,8 @@ class QuestGen:
                             cur += 1
                     text = _("Take {0} snapshots of {poke}")
             elif re.search(r'"type": 1', condition) is not None:
-                text = _("Take {0} snapshots of {type} Pokemon")
+                # [{"type": 1, "with_pokemon_type": {"pokemon_type": [6]}}]
+                text = _("Take {0} snapshots of wild {type} Pokemon")
                 arr['wb'] = ""
                 arr['type'] = ""
                 arr['poke'] = ""
@@ -439,11 +448,10 @@ class QuestGen:
                                 _('-type ') if last == cur else '-, ')
                             cur += 1
         elif typeid == 29:
-            # QUEST_BATTLE_TEAM_ROCKET Team Go rucket grunt batles.
+            # Team Go rucket grunt batles.
             if int(target) == int(1):
                 text = _('{verb} a Team Rocket Grunt')
 
-            # TODO there's protos for battling team leaders and such as well,which are not supported (yet)
             arr['verb'] = _('Battle')
             for con in condition_dict:
                 if con.get('type', 0) == 27:
