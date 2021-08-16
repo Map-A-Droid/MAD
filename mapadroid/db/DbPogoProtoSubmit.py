@@ -628,7 +628,7 @@ class DbPogoProtoSubmit:
             return False
         protoquest = quest_proto["challenge_quest"]["quest"]
         rewards = protoquest.get("quest_rewards", None)
-        if rewards is None or not rewards:
+        if not rewards:
             return False
         reward = rewards[0]
         item = reward['item']
