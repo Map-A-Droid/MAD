@@ -38,22 +38,24 @@ class QuestGen:
             12: _("Energy")
         }
 
-        locale_url = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20APK/{0}.txt"
-        remote_locale_url = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20Remote/" \
-                            "{0}.txt"
+        if not args.no_quest_titles:
+            locale_url = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20APK/{0}.txt"
+            remote_locale_url = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20Remote/" \
+                                "{0}.txt"
 
-        asset_language = QUEST_LANGUAGES.get(args.language, 'English')
-        apk_locale = self.__gen_assets_locale(locale_url.format(asset_language))
-        remote_locale = self.__gen_assets_locale(remote_locale_url.format(asset_language))
-        if apk_locale is None and remote_locale is None:
-            self.locale_resources = None
-            return
+            asset_language = QUEST_LANGUAGES.get(args.language, 'English')
+            apk_locale = self.__gen_assets_locale(locale_url.format(asset_language))
+            remote_locale = self.__gen_assets_locale(remote_locale_url.format(asset_language))
+            if apk_locale is None and remote_locale is None:
+                self.locale_resources = None
+                return
 
-        if apk_locale is None:
-            self.apk_locale = {}
-        if remote_locale is None:
-            self.remote_locale = {}
-        self.locale_resources = {**apk_locale, **remote_locale}
+            if apk_locale is None:
+                self.apk_locale = {}
+            if remote_locale is None:
+                self.remote_locale = {}
+            self.locale_resources = {**apk_locale, **remote_locale}
+        else: self.locale_resources = None
 
     @staticmethod
     def __gen_assets_locale(url):
@@ -270,7 +272,7 @@ class QuestGen:
                     # do a certain level raid
                     raid_levels = con.get('with_raid_level', {}).get('raid_level', [])
                 elif con_type == 44:
-                    # have to do it quick - TODO fetch seconds to do it in instead of assuming 60
+                    # have to do it quick
                     how_fast = con.get('with_elapsed_time', {}).get('elapsed_time', 60000)
                     if how_fast > 1000:
                         how_fast = how_fast / 1000
