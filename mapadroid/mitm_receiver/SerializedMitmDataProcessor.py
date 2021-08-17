@@ -43,6 +43,7 @@ class SerializedMitmDataProcessor:
                         logger.info("Failed submitting data to DB, rescheduling. {}", e)
                         await self.__queue.put(item)
                     except Exception as e:
+                        logger.exception(e)
                         logger.info("Failed processing data. {}", e)
                     self.__queue.task_done()
                     end_time = self.get_time_ms() - start_time
@@ -83,7 +84,7 @@ class SerializedMitmDataProcessor:
                     try:
                         new_quest: bool = await self.__db_submit.quest(session, data["payload"])
                         if new_quest:
-                            await self.__mitm_mapper.stats_collect_quest(origin, "", processed_timestamp)
+                            await self.__mitm_mapper.stats_collect_quest(origin, processed_timestamp)
                         await session.commit()
                     except Exception as e:
                         logger.warning("Failed submitting quests to DB: {}", e)
@@ -210,9 +211,9 @@ class SerializedMitmDataProcessor:
                                           nearby_fort_mons: List[int],
                                           lure_mons: List[int]):
         await self.__mitm_mapper.stats_collect_wild_mon(worker, wild_mon_encounter_ids_in_gmo, time_received_raw)
-        await self.__mitm_mapper.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.NEARBY_CELL, time_received_raw)
-        await self.__mitm_mapper.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.NEARBY_STOP, time_received_raw)
-        await self.__mitm_mapper.stats_collect_seen_type(lure_mons, MonSeenTypes.LURE_WILD, time_received_raw)
+        await self.__mitm_mapper.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.nearby_cell, time_received_raw)
+        await self.__mitm_mapper.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.nearby_stop, time_received_raw)
+        await self.__mitm_mapper.stats_collect_seen_type(lure_mons, MonSeenTypes.lure_wild, time_received_raw)
 
     async def __process_gmo_mon_stats(self, cell_encounters, lure_wild, stop_encounters, wild_encounter_ids_processed):
         async with self.__db_wrapper as session, session:

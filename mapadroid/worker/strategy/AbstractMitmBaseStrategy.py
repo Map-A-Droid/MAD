@@ -50,7 +50,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         self._encounter_ids = {}
 
     @abstractmethod
-    async def _check_for_data_content(self, latest: Dict[Union[int, str], LatestMitmDataEntry],
+    async def _check_for_data_content(self, latest: Dict[str, LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
                                       timestamp: int) \
             -> Tuple[ReceivedType, Optional[object]]:
@@ -121,6 +121,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
     async def _wait_for_data(self, timestamp: float = None,
                              proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \
             -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
+        key = str(proto_to_wait_for.value)
         if timestamp is None:
             timestamp = time.time()
         # Cut off decimal places of timestamp as PD also does that...
@@ -148,7 +149,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 logger.info("Nothing received from worker since MAD started")
                 await asyncio.sleep(application_args.wait_for_data_sleep_duration)
                 continue
-            latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(proto_to_wait_for.value, None)
+            latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(key, None)
             if not latest_proto_entry:
                 logger.info("No data linked to the requested proto since MAD started.")
                 await asyncio.sleep(application_args.wait_for_data_sleep_duration)

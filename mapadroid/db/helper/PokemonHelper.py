@@ -80,7 +80,7 @@ class PokemonHelper:
                                           Pokemon.individual_defense == None,
                                           Pokemon.individual_stamina == None,
                                           Pokemon.encounter_id != 0,
-                                          Pokemon.seen_type != MonSeenTypes.NEARBY_CELL.value,
+                                          Pokemon.seen_type != MonSeenTypes.nearby_cell.value,
                                           Pokemon.disappear_time.between(DatetimeWrapper.now()
                                                                          + datetime.timedelta(
                                               seconds=min_time_left_seconds),
@@ -294,10 +294,10 @@ class PokemonHelper:
                                 mon_types: Optional[Set[MonSeenTypes]] = None) -> List[Tuple[Pokemon, TrsSpawn,
                                                                                              Optional[Pokestop]]]:
         if not mon_types:
-            mon_types = {MonSeenTypes.ENCOUNTER, MonSeenTypes.LURE_ENCOUNTER}
+            mon_types = {MonSeenTypes.encounter, MonSeenTypes.lure_encounter}
 
         raw_types: List[str] = [x.value for x in mon_types]
-        if {MonSeenTypes.NEARBY_STOP, MonSeenTypes.LURE_WILD, MonSeenTypes.LURE_ENCOUNTER} & mon_types:
+        if {MonSeenTypes.nearby_stop, MonSeenTypes.lure_wild, MonSeenTypes.lure_encounter} & mon_types:
             # Lured/Nearby stops are to be included in the result set...
             stmt = select(Pokemon, TrsSpawn, Pokestop) \
                 .join(TrsSpawn, TrsSpawn.spawnpoint == Pokemon.spawnpoint_id, isouter=True)

@@ -159,7 +159,7 @@ class DbWebhookReader:
 
         ret = []
         for (mon, spawn, stop) in mons_with_changes:
-            if mon.latitude == 0 and mon.seen_type == MonSeenTypes.LURE_ENCOUNTER.value:
+            if mon.latitude == 0 and mon.seen_type == MonSeenTypes.lure_encounter.value:
                 continue
             ret.append({
                 "encounter_id": mon.encounter_id,

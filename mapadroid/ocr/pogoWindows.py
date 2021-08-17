@@ -395,13 +395,13 @@ class PogoWindows:
         return await loop.run_in_executor(self.__process_executor_pool, get_screen_text,
                                           screenpath, identifier)
 
-    async def most_frequent_colour(self, screenshot, identifier) -> Optional[List[int]]:
+    async def most_frequent_colour(self, screenshot, identifier, y_offset: int = 0) -> Optional[List[int]]:
         if screenshot is None:
             logger.error("get_screen_text: image does not exist")
             return None
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(self.__process_executor_pool, most_frequent_colour_internal,
-                                          screenshot, identifier)
+                                          screenshot, identifier, y_offset)
 
     async def screendetection_get_type_by_screen_analysis(self, image,
                                                           identifier) -> Optional[Tuple[ScreenType,

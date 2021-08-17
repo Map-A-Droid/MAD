@@ -100,7 +100,7 @@ class DbPogoProtoSubmit:
                         mon.latitude = lat
                         mon.longitude = lon
                     mon.pokemon_id = mon_id
-                    mon.seen_type = MonSeenTypes.WILD.value
+                    mon.seen_type = MonSeenTypes.wild.name
                     mon.disappear_time = despawn_time
                     mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
                     mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
@@ -159,12 +159,12 @@ class DbPogoProtoSubmit:
                     lat, lon, _ = S2Helper.get_position_from_cell(cell_id)
                     stop_id = None
                     db_cell = cell_id
-                    seen_type: MonSeenTypes = MonSeenTypes.NEARBY_CELL
+                    seen_type: MonSeenTypes = MonSeenTypes.nearby_cell
                     # TODO: Move above cache check...
                     cell_encounters.append(encounter_id)
                 else:
                     db_cell = None
-                    seen_type: MonSeenTypes = MonSeenTypes.NEARBY_STOP
+                    seen_type: MonSeenTypes = MonSeenTypes.nearby_stop
                     fort: Optional[Union[Pokestop, Gym]] = await PokestopHelper.get(session, stop_id)
                     if not fort:
                         fort: Optional[Gym] = await GymHelper.get(session, stop_id)
@@ -187,7 +187,7 @@ class DbPogoProtoSubmit:
                         mon.longitude = lon
                     mon.cell_id = db_cell
                     mon.fort_id = stop_id
-                    mon.seen_type = seen_type.value
+                    mon.seen_type = seen_type.name
                     mon.pokemon_id = mon_id
                     mon.disappear_time = disappear_time
                     mon.gender = gender
@@ -276,7 +276,7 @@ class DbPogoProtoSubmit:
             mon.latitude = latitude
             mon.longitude = longitude
             mon.cell_id = None
-            mon.seen_type = MonSeenTypes.ENCOUNTER.value
+            mon.seen_type = MonSeenTypes.encounter.name
             mon.disappear_time = despawn_time
             mon.individual_attack = pokemon_data.get("individual_attack")
             mon.individual_defense = pokemon_data.get("individual_defense")
@@ -364,7 +364,7 @@ class DbPogoProtoSubmit:
             mon.costume = display.get("costume_value", None)
             mon.form = form
             mon.gender = gender
-            mon.seen_type = MonSeenTypes.LURE_ENCOUNTER.value
+            mon.seen_type = MonSeenTypes.lure_encounter.name
             mon.individual_attack = pokemon_data.get("individual_attack")
             mon.individual_defense = pokemon_data.get("individual_defense")
             mon.individual_stamina = pokemon_data.get("individual_stamina")
@@ -435,7 +435,7 @@ class DbPogoProtoSubmit:
                             mon: Pokemon = Pokemon()
                             mon.encounter_id = encounter_id
                             mon.spawnpoint_id = 0
-                            mon.seen_type = MonSeenTypes.LURE_WILD.value
+                            mon.seen_type = MonSeenTypes.lure_wild.name
                             mon.pokemon_id = mon_id
                             mon.gender = gender
                             mon.weather_boosted_condition = weather_boosted
@@ -459,9 +459,9 @@ class DbPogoProtoSubmit:
 
     async def update_seen_type_stats(self, session: AsyncSession, **kwargs):
         insert: Dict[int, Dict[MonSeenTypes, datetime]] = {}
-        for seen_type in [MonSeenTypes.ENCOUNTER, MonSeenTypes.WILD, MonSeenTypes.NEARBY_STOP,
-                          MonSeenTypes.NEARBY_CELL, MonSeenTypes.LURE_ENCOUNTER, MonSeenTypes.LURE_WILD]:
-            encounters = kwargs.get(seen_type.value, None)
+        for seen_type in [MonSeenTypes.encounter, MonSeenTypes.wild, MonSeenTypes.nearby_stop,
+                          MonSeenTypes.nearby_cell, MonSeenTypes.lure_encounter, MonSeenTypes.lure_wild]:
+            encounters = kwargs.get(seen_type.name, None)
             if encounters is None:
                 continue
 
@@ -471,12 +471,12 @@ class DbPogoProtoSubmit:
                 insert[encounter_id][seen_type] = seen_time
 
         for encounter_id, values in insert.items():
-            encounter: Optional[datetime] = values.get(MonSeenTypes.ENCOUNTER, None)
-            wild: Optional[datetime] = values.get(MonSeenTypes.WILD, None)
-            nearby_stop: Optional[datetime] = values.get(MonSeenTypes.NEARBY_STOP, None)
-            nearby_cell: Optional[datetime] = values.get(MonSeenTypes.NEARBY_CELL, None)
-            lure_encounter: Optional[datetime] = values.get(MonSeenTypes.LURE_ENCOUNTER, None)
-            lure_wild: Optional[datetime] = values.get(MonSeenTypes.LURE_WILD, None)
+            encounter: Optional[datetime] = values.get(MonSeenTypes.encounter, None)
+            wild: Optional[datetime] = values.get(MonSeenTypes.wild, None)
+            nearby_stop: Optional[datetime] = values.get(MonSeenTypes.nearby_stop, None)
+            nearby_cell: Optional[datetime] = values.get(MonSeenTypes.nearby_cell, None)
+            lure_encounter: Optional[datetime] = values.get(MonSeenTypes.lure_encounter, None)
+            lure_wild: Optional[datetime] = values.get(MonSeenTypes.lure_wild, None)
             async with session.begin_nested() as nested_transaction:
                 stat_seen_type: Optional[TrsStatsDetectSeenType] = await TrsStatsDetectSeenTypeHelper.get(session,
                                                                                                           encounter_id)

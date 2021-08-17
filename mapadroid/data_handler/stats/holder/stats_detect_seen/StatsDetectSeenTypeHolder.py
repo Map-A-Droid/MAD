@@ -33,15 +33,15 @@ class StatsDetectSeenTypeHolder(AbstractStatsHolder):
 
     def add(self, encounter_id: int, type_of_detection: MonSeenTypes, time_of_scan: datetime) -> None:
         entry: StatsDetectSeenTypeEntry = self.__ensure_entry_available(encounter_id)
-        if type_of_detection == MonSeenTypes.ENCOUNTER:
+        if type_of_detection == MonSeenTypes.encounter:
             entry.update(encounter=time_of_scan)
-        elif type_of_detection == MonSeenTypes.WILD:
+        elif type_of_detection == MonSeenTypes.wild:
             entry.update(wild=time_of_scan)
-        elif type_of_detection == MonSeenTypes.NEARBY_STOP:
+        elif type_of_detection == MonSeenTypes.nearby_stop:
             entry.update(nearby_stop=time_of_scan)
-        elif type_of_detection == MonSeenTypes.NEARBY_CELL:
+        elif type_of_detection == MonSeenTypes.nearby_cell:
             entry.update(nearby_cell=time_of_scan)
-        elif type_of_detection == MonSeenTypes.LURE_ENCOUNTER:
+        elif type_of_detection == MonSeenTypes.lure_encounter:
             entry.update(lure_encounter=time_of_scan)
-        elif type_of_detection == MonSeenTypes.LURE_WILD:
+        elif type_of_detection == MonSeenTypes.lure_wild:
             entry.update(lure_wild=time_of_scan)

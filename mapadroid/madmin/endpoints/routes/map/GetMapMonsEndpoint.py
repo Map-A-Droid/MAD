@@ -58,7 +58,7 @@ class GetMapMonsEndpoint(AbstractMadminRootEndpoint):
             serialized_entry["last_modified"] = int(mon.last_modified.timestamp())
         else:
             serialized_entry["last_modified"] = 0
-        if mon.seen_type in (MonSeenTypes.NEARBY_STOP.value, MonSeenTypes.NEARBY_CELL.value):
+        if mon.seen_type in (MonSeenTypes.nearby_stop.value, MonSeenTypes.nearby_cell.value):
             serialized_entry["latitude"] = float(serialized_entry["latitude"]) + random.uniform(-0.0003, 0.0003)
             serialized_entry["longitude"] = float(serialized_entry["longitude"]) + random.uniform(-0.0005, 0.0005)
         try:

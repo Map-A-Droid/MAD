@@ -17,6 +17,7 @@ from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
 from loguru import logger
+from google.protobuf import json_format
 
 
 class MitmMapperServer(MitmMapperServicer, MitmMapper):
@@ -26,7 +27,8 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
 
     async def start(self):
         await MitmMapper.start(self)
-        self.__server = grpc.aio.server()
+        options = [('grpc.max_message_length', 100 * 1024 * 1024)]
+        self.__server = grpc.aio.server(options=options)
         add_MitmMapperServicer_to_server(self, self.__server)
         listen_addr = '[::]:50051'
         self.__server.add_insecure_port(listen_addr)
@@ -93,6 +95,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             value = request.data.some_dictionary
         else:
             value = request.data.some_list
+        value = json_format.MessageToDict(value)
         await self.update_latest(
             worker=request.worker.name, key=request.key,
             timestamp_received_raw=request.data.timestamp_received,
@@ -109,7 +112,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             request.worker.name, request.key)
         response: LatestMitmDataEntryResponse = LatestMitmDataEntryResponse()
         if not latest:
-            return
+            return response
         response.entry.CopyFrom(self.__transform_latest_mitm_data_entry(latest))
         return response
 
@@ -123,9 +126,9 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         if latest.timestamp_received:
             entry.timestamp_received = latest.timestamp_received
         if isinstance(latest.data, list):
-            entry.some_list = latest.data
+            entry.some_list.extend(latest.data)
         else:
-            entry.some_dictionary = latest.data
+            entry.some_dictionary.update(latest.data)
         return entry
 
     async def RequestFullLatest(self, request: Worker,
@@ -133,13 +136,18 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         response: LatestMitmDataFullResponse = LatestMitmDataFullResponse()
         data: Dict[str, LatestMitmDataEntry] = await self.get_full_latest_data(worker=request.name)
         for key, entry in data.items():
-            response.latest[key] = self.__transform_latest_mitm_data_entry(entry)
+            try:
+                proto_entry: mitm_mapper_pb2.LatestMitmDataEntry = self.__transform_latest_mitm_data_entry(entry)
+                response.latest[key].CopyFrom(proto_entry)
+            except Exception as e:
+                logger.exception(e)
         return response
 
     async def HandleInventoryData(self, request: InventoryDataRequest,
                                   context: grpc.aio.ServicerContext) -> Ack:
+        inventory_data = json_format.MessageToDict(request.inventory_data)
         await self.handle_inventory_data(worker=request.worker.name,
-                                         inventory_proto=request.inventory_data)
+                                         inventory_proto=inventory_data)
         return Ack()
 
     async def GetPokestopVisits(self, request: Worker,
@@ -160,12 +168,12 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
     async def SetInjected(self, request: InjectedRequest,
                           context: grpc.aio.ServicerContext) -> Ack:
         await self.set_injection_status(worker=request.worker.name,
-                                        status=request.injected)
+                                        status=request.injected.is_injected)
         return Ack()
 
     async def GetLastKnownLocation(self, request: Worker,
                                    context: grpc.aio.ServicerContext) -> LastKnownLocationResponse:
-        location: Optional[Location] = await self.get_last_known_location(request.worker.name)
+        location: Optional[Location] = await self.get_last_known_location(request.name)
         response: LastKnownLocationResponse = LastKnownLocationResponse()
         if not location:
             return response

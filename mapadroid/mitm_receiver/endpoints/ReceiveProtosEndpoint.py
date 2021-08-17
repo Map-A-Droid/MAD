@@ -23,11 +23,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
     # TODO: Auth
     async def post(self):
-        data_text = await self.request.text()
-        loop = asyncio.get_running_loop()
-        data = await loop.run_in_executor(
-            None, json.loads, data_text)
-        del data_text
+        data = await self.request.json()
         origin = self.request.headers.get("origin")
         logger.debug2("Receiving proto")
 

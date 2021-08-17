@@ -58,13 +58,13 @@ class StatsHandler:
         for encounter_id in encounter_ids:
             player_stats.stats_collect_wild_mon(encounter_id, time_scanned)
             if self.__stats_detect_seen_type_holder:
-                self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.WILD, time_scanned)
+                self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.wild, time_scanned)
 
     def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime, is_shiny: bool) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
         player_stats.stats_collect_mon_iv(encounter_id, time_scanned, is_shiny)
         if self.__stats_detect_seen_type_holder:
-            self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.ENCOUNTER, time_scanned)
+            self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.encounter, time_scanned)
 
     def stats_collect_quest(self, worker: str, time_scanned: datetime) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)

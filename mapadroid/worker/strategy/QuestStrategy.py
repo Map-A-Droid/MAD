@@ -99,7 +99,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         # TODO: Move to worker_state?
         self._delay_add: int = 0
 
-    async def _check_for_data_content(self, latest: Dict[Union[int, str], LatestMitmDataEntry],
+    async def _check_for_data_content(self, latest: Dict[str, LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
                                       timestamp: int) -> Tuple[ReceivedType, Optional[object]]:
         type_of_data_found: ReceivedType = ReceivedType.UNDEFINED
@@ -115,7 +115,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                 and latest[ProtoIdentifier.ENCOUNTER.value].timestamp_of_data_retrieval >= timestamp:
             type_of_data_found = ReceivedType.MON
             return type_of_data_found, data_found
-        elif proto_to_wait_for.value not in latest:
+        elif str(proto_to_wait_for.value) not in latest:
             logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found
 
@@ -137,7 +137,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                          proto_to_wait_for)
             timestamp = replacement
         # proto has previously been received, let's check the timestamp...
-        latest_proto_entry = latest.get(proto_to_wait_for.value, None)
+        latest_proto_entry = latest.get(str(proto_to_wait_for.value), None)
         if not latest_proto_entry:
             logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found

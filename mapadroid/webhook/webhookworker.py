@@ -36,8 +36,8 @@ class WebhookWorker:
             'pokemon', 'raid', 'weather', 'quest', 'gym', 'pokestop'
         }
         self.__valid_mon_types: Set[MonSeenTypes] = {
-            MonSeenTypes.ENCOUNTER, MonSeenTypes.WILD, MonSeenTypes.NEARBY_STOP, MonSeenTypes.NEARBY_CELL,
-            MonSeenTypes.LURE_WILD, MonSeenTypes.LURE_ENCOUNTER
+            MonSeenTypes.encounter, MonSeenTypes.wild, MonSeenTypes.nearby_stop, MonSeenTypes.nearby_cell,
+            MonSeenTypes.lure_wild, MonSeenTypes.lure_encounter
         }
 
     def __payload_type_count(self, payload):
@@ -474,18 +474,18 @@ class WebhookWorker:
                 if self.__args.quest_webhook_flavor == "poracle":
                     mon_payload["weather"] = mon["weather_boosted_condition"]
 
-            if mon["seen_type"] in (MonSeenTypes.NEARBY_STOP.value, MonSeenTypes.LURE_WILD.value,
-                                    MonSeenTypes.LURE_ENCOUNTER.value):
+            if mon["seen_type"] in (MonSeenTypes.nearby_stop.value, MonSeenTypes.lure_wild.value,
+                                    MonSeenTypes.lure_encounter.value):
                 mon_payload["pokestop_id"] = mon["fort_id"]
                 mon_payload["pokestop_name"] = mon.get("stop_name")
                 mon_payload["pokestop_url"] = mon.get("stop_url")
 
-                if mon["seen_type"] == MonSeenTypes.NEARBY_STOP.value:
+                if mon["seen_type"] == MonSeenTypes.nearby_stop.value:
                     mon_payload["verified"] = False
                 else:
                     mon_payload["verified"] = True
 
-            if mon["seen_type"] == MonSeenTypes.NEARBY_CELL.value:
+            if mon["seen_type"] == MonSeenTypes.nearby_cell.value:
                 mon_payload["cell_coords"] = S2Helper.coords_of_cell(
                     mon["cell_id"]
                 )

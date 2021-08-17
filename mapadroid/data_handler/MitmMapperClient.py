@@ -10,21 +10,22 @@ from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import Stats, LastMoved
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperStub
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import MonSeenTypes, PositionType, TransportType
+from google.protobuf import json_format
 
 
 class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
     async def stats_collect_wild_mon(self, worker: str, encounter_ids: List[int], time_scanned: datetime) -> None:
         request: Stats = Stats()
         request.worker.name = worker
-        request.timestamp = time_scanned.timestamp()
-        request.wild_mons.encounter_ids = encounter_ids
+        request.timestamp = int(time_scanned.timestamp())
+        request.wild_mons.encounter_ids.extend(encounter_ids)
         await self.StatsCollect(request)
 
     async def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime,
                                    is_shiny: bool) -> None:
         request: Stats = Stats()
         request.worker.name = worker
-        request.timestamp = time_scanned.timestamp()
+        request.timestamp = int(time_scanned.timestamp())
         request.mon_iv.encounter_id = encounter_id
         request.mon_iv.is_shiny = is_shiny
         await self.StatsCollect(request)
@@ -32,13 +33,13 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
     async def stats_collect_quest(self, worker: str, time_scanned: datetime) -> None:
         request: Stats = Stats()
         request.worker.name = worker
-        request.timestamp = time_scanned.timestamp()
+        request.timestamp = int(time_scanned.timestamp())
         await self.StatsCollect(request)
 
     async def stats_collect_raid(self, worker: str, time_scanned: datetime) -> None:
         request: Stats = Stats()
         request.worker.name = worker
-        request.timestamp = time_scanned.timestamp()
+        request.timestamp = int(time_scanned.timestamp())
         await self.StatsCollect(request)
 
     async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
@@ -62,8 +63,8 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
     async def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
                                       time_of_scan: datetime) -> None:
         request: Stats = Stats()
-        request.timestamp = time_of_scan.timestamp()
-        request.seen_type.encounter_ids = encounter_ids
+        request.timestamp = int(time_of_scan.timestamp())
+        request.seen_type.encounter_ids.extend(encounter_ids)
         # TODO: Probably gotta set it some other way...
         request.seen_type.type_of_detection = type_of_detection.value
         await self.StatsCollect(request)
@@ -81,9 +82,9 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             request.data.location.latitude = location.lat
             request.data.location.longitude = location.lng
         if timestamp_received_raw:
-            request.data.timestamp_received = timestamp_received_raw
+            request.data.timestamp_received = int(timestamp_received_raw)
         if timestamp_received_receiver:
-            request.data.timestamp_of_data_retrieval = timestamp_received_receiver
+            request.data.timestamp_of_data_retrieval = int(timestamp_received_receiver)
         if isinstance(value, list):
             request.data.some_list.extend(value)
         elif isinstance(value, dict):
@@ -104,8 +105,12 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         if entry.location:
             location: Location = Location(entry.location.latitude, entry.location.longitude)
 
-        data = entry.some_dictionary if entry.HasField(
-            "some_dictionary") else entry.some_list
+        if entry.HasField(
+                "some_dictionary"):
+            data = entry.some_dictionary
+        else:
+            data = entry.some_list
+        data = json_format.MessageToDict(data)
         entry: LatestMitmDataEntry = LatestMitmDataEntry(location=location,
                                                          timestamp_received=entry.timestamp_received,
                                                          timestamp_of_data_retrieval=entry.timestamp_of_data_retrieval,
@@ -119,13 +124,13 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         # Iterate over map keys
         full_latest: Dict[str, LatestMitmDataEntry] = {}
         for key in response.latest:
-            full_latest[key] = self.__transform_proto_data_entry(response.latest.mapfield[key])
+            full_latest[key] = self.__transform_proto_data_entry(response.latest[key])
         return full_latest
 
     async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:
         request: InventoryDataRequest = InventoryDataRequest()
         request.worker.name = worker
-        request.inventory_data = inventory_proto
+        request.inventory_data.update(inventory_proto)
         await self.HandleInventoryData(request)
 
     async def get_poke_stop_visits(self, worker: str) -> int:
@@ -150,7 +155,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request: InjectedRequest = InjectedRequest()
         request.worker.name = worker
         request.injected.is_injected = status
-        await self.GetInjectionStatus(request)
+        await self.SetInjected(request)
 
     async def get_last_known_location(self, worker: str) -> Optional[Location]:
         request: Worker = Worker()

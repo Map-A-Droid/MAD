@@ -276,7 +276,8 @@ class WordToScreenMatching(object):
         await self._communicator.click(click_x, click_y)
 
     async def __handle_screentype(self, screentype: ScreenType,
-                                  global_dict: Optional[dict] = None, diff: int = -1) -> ScreenType:
+                                  global_dict: Optional[dict] = None, diff: int = -1,
+                                  y_offset: int = 0) -> ScreenType:
         if screentype == ScreenType.UNDEFINED:
             logger.warning("Undefined screentype, abandon ship...")
         elif screentype == ScreenType.BIRTHDATE:
@@ -323,7 +324,7 @@ class WordToScreenMatching(object):
             logger.error('Account permabanned!')
             screentype = ScreenType.ERROR
         elif screentype == ScreenType.POGO:
-            screentype = await self.__check_pogo_screen_ban_or_loading(screentype)
+            screentype = await self.__check_pogo_screen_ban_or_loading(screentype, y_offset=y_offset)
         elif screentype == ScreenType.QUEST:
             logger.warning("Already on quest screen")
             # TODO: consider closing quest window?
@@ -342,9 +343,10 @@ class WordToScreenMatching(object):
 
         return screentype
 
-    async def __check_pogo_screen_ban_or_loading(self, screentype) -> ScreenType:
+    async def __check_pogo_screen_ban_or_loading(self, screentype, y_offset: int = 0) -> ScreenType:
         backgroundcolor = await self._pogoWindowManager.most_frequent_colour(await self.get_screenshot_path(),
-                                                                             self.origin)
+                                                                             self.origin,
+                                                                             y_offset=y_offset)
         if backgroundcolor is not None and (
                 backgroundcolor[0] == 0 and
                 backgroundcolor[1] == 0 and
@@ -487,7 +489,7 @@ class WordToScreenMatching(object):
         await self._communicator.click(click_x, click_y)
         await asyncio.sleep(1)
 
-    async def detect_screentype(self) -> ScreenType:
+    async def detect_screentype(self, y_offset: int = 0) -> ScreenType:
         topmostapp = await self._communicator.topmost_app()
         if not topmostapp:
             logger.warning("Failed getting the topmost app!")
@@ -495,7 +497,8 @@ class WordToScreenMatching(object):
 
         screentype, global_dict, diff = await self.__evaluate_topmost_app(topmost_app=topmostapp)
         logger.info("Processing Screen: {}", str(ScreenType(screentype)))
-        return await self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
+        return await self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff,
+                                              y_offset=y_offset)
 
     async def check_quest(self, screenpath: str) -> ScreenType:
         if screenpath is None or len(screenpath) == 0:

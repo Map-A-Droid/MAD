@@ -132,11 +132,17 @@ def check_pogo_mainscreen(filename, identifier) -> bool:
         return False
 
 
-def most_frequent_colour_internal(image, identifier) -> Optional[List[int]]:
+def most_frequent_colour_internal(image, identifier, y_offset: int = 0) -> Optional[List[int]]:
     with logger.contextualize(origin=identifier):
         logger.debug("most_frequent_colour_internal: Reading screen text")
         try:
             with Image.open(image) as img:
+                w, h = img.size
+                left = 0
+                top = int(h * 0.05)
+                right = w
+                bottom = h - y_offset
+                img = img.crop((left, top, right, bottom))
                 w, h = img.size
                 pixels = img.getcolors(w * h)
                 most_frequent_pixel = pixels[0]

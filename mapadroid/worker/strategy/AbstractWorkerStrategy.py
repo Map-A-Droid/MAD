@@ -257,7 +257,8 @@ class AbstractWorkerStrategy(ABC):
         screen_type: ScreenType = ScreenType.UNDEFINED
         while not self._worker_state.stop_worker_event.is_set():
             # TODO: Make this not block the loop somehow... asyncio waiting for a thread?
-            screen_type: ScreenType = await self._word_to_screen_matching.detect_screentype()
+            screen_type: ScreenType = await self._word_to_screen_matching.detect_screentype(
+                y_offset=self._worker_state.resolution_calculator.y_offset)
             if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
                 self._worker_state.last_screen_type = screen_type
                 self._worker_state.login_error_count = 0

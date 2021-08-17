@@ -72,7 +72,7 @@ class PlayerData(AbstractWorkerHolder):
                       location: Optional[Location] = None) -> None:
         self._latest_data_holder.update(key, value, timestamp_received, timestamp_of_data_retrieval, location)
         # TODO: Keys "should" be str...
-        if key == 106:
+        if key == "106":
             self.__parse_gmo_for_location(value, timestamp_received, location)
 
     # Async since we may move it to DB for persistence, same for above methods like level and

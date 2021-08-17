@@ -10,7 +10,8 @@ class MitmMapperClientConnector:
         self._channel: Optional[grpc.Channel] = None
 
     async def start(self):
-        self._channel = grpc.aio.insecure_channel('localhost:50051')
+        options = [('grpc.max_message_length', 100 * 1024 * 1024)]
+        self._channel = grpc.aio.insecure_channel('localhost:50051', options=options)
 
     async def get_client(self) -> MitmMapperClient:
         if not self._channel:

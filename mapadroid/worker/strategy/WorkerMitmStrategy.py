@@ -17,12 +17,12 @@ from loguru import logger
 
 
 class WorkerMitmStrategy(AbstractMitmBaseStrategy):
-    async def _check_for_data_content(self, latest: Dict[Union[int, str], LatestMitmDataEntry],
+    async def _check_for_data_content(self, latest: Dict[str, LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
                                       timestamp: int) -> Tuple[ReceivedType, Optional[object]]:
         type_of_data_found: ReceivedType = ReceivedType.UNDEFINED
         data_found: Optional[object] = None
-        latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(proto_to_wait_for.value, None)
+        latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(str(proto_to_wait_for.value), None)
         if not latest_proto_entry:
             logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found
