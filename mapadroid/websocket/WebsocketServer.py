@@ -8,7 +8,6 @@ from threading import Event, Thread, current_thread
 from typing import Coroutine, Dict, List, Optional, Set
 
 import websockets
-
 from mapadroid.data_manager import DataManager
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -16,14 +15,20 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.logging import (
-    InterceptHandler, LoggerEnums, get_logger, get_origin_logger)
+    InterceptHandler,
+    LoggerEnums,
+    get_logger,
+    get_origin_logger,
+)
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.communicator import Communicator
-from mapadroid.websocket.WebsocketConnectedClientEntry import \
-    WebsocketConnectedClientEntry
+from mapadroid.websocket.WebsocketConnectedClientEntry import (
+    WebsocketConnectedClientEntry,
+)
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerFactory import WorkerFactory
+
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
