@@ -151,7 +151,9 @@ def parse_args():
                         help=('Set Lng from the center of your scan location.'
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
     parser.add_argument('-L', '--language', default='en',
-                        help=('Set Language for MadMin / Quests. Default: en'))
+                        help='Set Language for MadMin / Quests. Default: en')
+    parser.add_argument('--no_quest_titles', default=False, action='store_true',
+                        help='Do not download quest title resources')
 
     # MADmin
     parser.add_argument('-dm', '--disable_madmin', action='store_true', default=False,

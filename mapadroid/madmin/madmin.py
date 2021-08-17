@@ -18,6 +18,7 @@ from mapadroid.madmin.routes.path import MADminPath
 from mapadroid.madmin.routes.statistics import MADminStatistics
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 logger = get_logger(LoggerEnums.madmin)
@@ -52,7 +53,7 @@ def internal_error(self, exception):
 
 class MADmin(object):
     def __init__(self, args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
-                 device_updater, jobstatus, storage_obj):
+                 device_updater, jobstatus, storage_obj, qg: QuestGen):
         app.add_template_global(name='app_config_mode', f=args.config_mode)
         # Determine if there are duplicate MACs
         sql = "SELECT count(*) > 0\n"\
@@ -82,7 +83,7 @@ class MADmin(object):
         self._plugin_hotlink: list = []
         self.path = MADminPath(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
                                self._data_manager, self._plugin_hotlink)
-        self.map = MADminMap(self._db_wrapper, self._args, self._mapping_manager, self._app, self._data_manager)
+        self.map = MADminMap(self._db_wrapper, self._args, self._mapping_manager, self._app, self._data_manager, qg)
         self.statistics = MADminStatistics(self._db_wrapper, self._args, app, self._mapping_manager, self._data_manager)
         self.control = MADminControl(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
                                      self._app, self._device_updater)

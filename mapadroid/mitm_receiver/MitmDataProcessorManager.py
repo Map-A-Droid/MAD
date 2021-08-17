@@ -7,12 +7,13 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.SerializedMitmDataProcessor import \
     SerializedMitmDataProcessor
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.questGen import QuestGen
 
 logger = get_logger(LoggerEnums.mitm)
 
 
 class MitmDataProcessorManager():
-    def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper):
+    def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper, quest_gen: QuestGen):
         self._worker_threads = []
         self._args = args
         self._mitm_data_queue: JoinableQueue = JoinableQueue()
@@ -24,6 +25,7 @@ class MitmDataProcessorManager():
         self._queue_check_thread = threading.Thread(target=self._queue_size_check, args=())
         self._queue_check_thread.daemon = True
         self._queue_check_thread.start()
+        self._quest_gen = quest_gen
 
     def get_queue(self):
         return self._mitm_data_queue
@@ -54,6 +56,7 @@ class MitmDataProcessorManager():
                 self._args,
                 self._mitm_mapper,
                 self._db_wrapper,
+                self._quest_gen,
                 name="SerialiedMitmDataProcessor-%s" % str(i))
 
             data_processor.start()
