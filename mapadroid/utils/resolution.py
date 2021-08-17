@@ -50,7 +50,7 @@ class ResolutionCalculator:
 
     def __update_ratio(self) -> None:
         if self._screen_size_x > 0 and self._screen_size_y > 0:
-            self._x_y_ratio: float = float(self._screen_size_x) / float(self._screen_size_y)
+            self._x_y_ratio: float = float(self._screen_size_y) / float(self._screen_size_x)
 
     def get_coords_quest_menu(self):
         click_x = self._screen_size_x / 1.07

@@ -396,6 +396,7 @@ class RouteManagerBase(ABC):
 
         if self._start_calc:
             logger.info("Another process already calculate the new route")
+            # TODO: Wait for calculation to end
             return None
 
         if origin not in self._workers_registered:

@@ -7,9 +7,7 @@ from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LoggerEnums, get_logger
-
-logger = get_logger(LoggerEnums.routemanager)
+from loguru import logger
 
 
 class RouteManagerQuests(RouteManagerBase):
