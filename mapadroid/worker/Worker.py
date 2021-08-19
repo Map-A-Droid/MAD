@@ -44,7 +44,9 @@ class Worker(AbstractWorker):
         self._work_task: Optional[Task] = None
 
     async def _scan_strategy_changed(self):
-        await self.stop_worker()
+        if self._work_task:
+            self._work_task.cancel()
+            self._work_task = None
         await self.start_worker()
 
     async def set_devicesettings_value(self, key: MappingManagerDevicemappingKey, value: Optional[Any]):
@@ -95,12 +97,12 @@ class Worker(AbstractWorker):
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_MODE,
                                             await self._mapping_manager.routemanager_get_mode(
                                                 self._scan_strategy.area_id))
-        # TODO: Ensure only task of a worker is running at any time
+        # TODO: Ensure only one task of a worker is running at any time
         await self._scan_strategy.worker_specific_setup_start()
         self._work_task = loop.create_task(self._main_work_thread())
 
     async def stop_worker(self):
-        if self._worker_state.stop_worker_event.set():
+        if self._worker_state.stop_worker_event.is_set():
             logger.info('Worker already stopped - waiting for it')
         else:
             self._worker_state.stop_worker_event.set()
@@ -150,9 +152,15 @@ class Worker(AbstractWorker):
                         # TODO: consider getting results of health checks and aborting the entire worker?
                         walkercheck = await self.check_walker()
                         if not walkercheck:
-                            # TODO: Set new strategy somehow or have some other task check all workers for changed walkers and update strategy accordingly...
+                            # TODO: Properly populate configmode flag
                             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-                            break
+                            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__worker_factory \
+                                .get_strategy_using_settings(self._worker_state.origin,
+                                                             False, communicator=self.communicator,
+                                                             worker_state=self._worker_state)
+                            loop = asyncio.get_running_loop()
+                            loop.create_task(self.set_scan_strategy(scan_strategy))
+                            return
                     except (
                             InternalStopWorkerException, WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
