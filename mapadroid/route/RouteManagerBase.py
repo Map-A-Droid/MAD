@@ -147,16 +147,28 @@ class RouteManagerBase(ABC):
     def join_threads(self):
         self.logger.info("Shutdown Route Threads")
         if self._update_prio_queue_thread is not None:
-            while self._update_prio_queue_thread.isAlive():
+
+            if hasattr(self._update_prio_queue_thread, 'isAlive'):
+                is_alive_func = self._update_prio_queue_thread.isAlive
+            else:
+                is_alive_func = self._update_prio_queue_thread.is_alive
+            while is_alive_func():
                 time.sleep(1)
                 self.logger.debug("Shutdown Prio Queue Thread - waiting...")
                 self._update_prio_queue_thread.join(5)
+
         self.logger.debug("Shutdown Prio Queue Thread - done...")
         if self._check_routepools_thread is not None:
-            while self._check_routepools_thread.isAlive():
-                time.sleep(1)
-                self.logger.debug("Shutdown Routepool Thread - waiting...")
-                self._check_routepools_thread.join(5)
+            if hasattr(self._check_routepools_thread, 'isAlive'):
+                while self._check_routepools_thread.isAlive():
+                    time.sleep(1)
+                    self.logger.debug("Shutdown Routepool Thread - waiting...")
+                    self._check_routepools_thread.join(5)
+            else:
+                while self._check_routepools_thread.is_alive():
+                    time.sleep(1)
+                    self.logger.debug("Shutdown Routepool Thread - waiting...")
+                    self._check_routepools_thread.join(5)
 
         self._update_prio_queue_thread = None
         self._check_routepools_thread = None
