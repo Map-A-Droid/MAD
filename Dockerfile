@@ -16,7 +16,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && apt-get update \
 build-essential \
 libglib2.0-0 \
 default-libmysqlclient-dev \
-libgl1 python-opencv \
+libgl1 python3-opencv \
 libsm6 \
 libxext6 \
 libxrender-dev \
