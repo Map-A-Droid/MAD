@@ -16,7 +16,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && apt-get update \
 build-essential \
 libglib2.0-0 \
 default-libmysqlclient-dev \
-libgl1 python-opencv \
+libgl1 python3-opencv \
 libsm6 \
 libxext6 \
 libxrender-dev \
@@ -34,12 +34,8 @@ wget \
 && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
 && rm -rf /var/lib/apt/lists/*
 
-RUN printf "deb http://ftp.de.debian.org/debian stretch main" >> /etc/apt/sources.list \
-&& apt-get update && apt-get install libicu57
-
-# tesseract from stretch-backport
-RUN printf "deb http://httpredir.debian.org/debian stretch-backports main non-free\ndeb-src http://httpredir.debian.org/debian stretch-backports main non-free" >> /etc/apt/sources.list.d/backports.list \
-&& apt-get update && apt-get -y --allow-unauthenticated -t stretch-backports install tesseract-ocr libtesseract-dev
+# tesseract
+RUN apt-get update && apt-get -y install tesseract-ocr libtesseract-dev
 
 # Copy everything to the working directory (Python files, templates, config) in one go.
 COPY . /usr/src/app/
