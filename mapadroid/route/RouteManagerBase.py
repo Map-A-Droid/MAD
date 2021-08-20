@@ -541,7 +541,7 @@ class RouteManagerBase(ABC):
                     logger.info("No more coords available - dont update routepool")
                     return None
 
-            if not self._worker_changed_update_routepools():
+            if not await self._worker_changed_update_routepools():
                 logger.info("Failed updating routepools ...")
                 return None
 
