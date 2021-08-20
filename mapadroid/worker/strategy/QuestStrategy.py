@@ -517,7 +517,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                      'Raid', 'Teil',
                      'Élément', 'mystérieux', 'Mysterious', 'Component', 'Mysteriöses', 'Remote', 'Fern',
                      'Fern-Raid-Pass', 'Pass', 'Passe', 'distance', 'Remote Raid', 'Remote Pass',
-                     'Remote Raid Pass', 'Battle Pass', 'Premium Battle Pass', 'Premium Battle', 'Sticker')
+                     'Remote Raid Pass', 'Battle Pass', 'Premium Battle Pass', 'Premium Battle', 'Sticker',
+                     'Premium-Kampf')
         x, y = self._worker_state.resolution_calculator.get_close_main_button_coords()
         await self._communicator.click(int(x), int(y))
         await asyncio.sleep(1 + int(delayadd))
@@ -552,7 +553,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                                 raise InternalStopWorkerException
                     continue
                 logger.info('Found no item to delete. Scrolling down ({} times)', error_counter)
-                await self._communicator.click(click_x, click_y)
+                await self._communicator.touch_and_hold(int(200), int(600), int(200), int(100))
                 await asyncio.sleep(5)
 
             trashcan_positions: List[ScreenCoordinates] = await self._get_trash_positions()

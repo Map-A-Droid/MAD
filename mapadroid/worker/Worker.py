@@ -47,6 +47,7 @@ class Worker(AbstractWorker):
         self._work_task: Optional[Task] = None
 
     async def _scan_strategy_changed(self):
+        await self._scan_strategy.worker_specific_setup_stop()
         if self._work_task:
             self._work_task.cancel()
             self._work_task = None
