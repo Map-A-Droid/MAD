@@ -385,7 +385,7 @@ class AbstractWorkerStrategy(ABC):
             if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 start_result = await self._communicator.reboot()
             else:
-                start_result = True
+                start_result = await self.stop_pogo() and await self.start_pogo()
         except WebsocketWorkerRemovedException:
             logger.error("Could not reboot due to client already disconnected")
             start_result = False
@@ -405,8 +405,8 @@ class AbstractWorkerStrategy(ABC):
                     await session.commit()
                 except Exception as e:
                     logger.warning("Failed saving restart-status of {}: {}", self._worker_state.origin, e)
-        self._reboot_count = 0
-        self._restart_count = 0
+        self._worker_state.reboot_count = 0
+        self._worker_state.restart_count = 0
         # TODO: Reconsider...
         #  await self.stop_worker()
         return start_result
@@ -420,7 +420,7 @@ class AbstractWorkerStrategy(ABC):
                 await session.commit()
             except Exception as e:
                 logger.warning("Failed saving restart-status of {}: {}", self._worker_state.origin, e)
-        self._restart_count = 0
+        self._worker_state.restart_count = 0
         logger.debug("restartPogo: stop game resulted in {}", str(successful_stop))
         if successful_stop:
             if clear_cache:
