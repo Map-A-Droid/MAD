@@ -409,7 +409,7 @@ class RouteManagerBase(ABC):
             self._routepool[origin] = routepool_entry
             if origin in self._worker_start_position:
                 routepool_entry.current_pos = self._worker_start_position[origin]
-            if not self._worker_changed_update_routepools():
+            if not await self._worker_changed_update_routepools():
                 logger.info("Failed updating routepools after adding a worker to it")
                 return None
         elif routepool_entry.prio_coords and self._mode != WorkerType.IV_MITM:
@@ -664,7 +664,7 @@ class RouteManagerBase(ABC):
         if sleep_duration > 0 and origin in self._routepool:
             self._routepool[origin].worker_sleeping = sleep_duration
 
-    def _worker_changed_update_routepools(self):
+    async def _worker_changed_update_routepools(self):
         less_coords: bool = False
         workers: int = 0
         if not self._is_started:
