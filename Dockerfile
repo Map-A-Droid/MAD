@@ -22,9 +22,6 @@ libxext6 \
 libxrender-dev \
 tk \
 wget \
-&& wget https://github.com/tesseract-ocr/tessdata/raw/master/eng.traineddata \
-&& mkdir /usr/local/share/tessdata/ \
-&& mv -v eng.traineddata /usr/local/share/tessdata/ \
 # python reqs
 && python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
 # cleanup
