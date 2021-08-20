@@ -14,7 +14,7 @@ class GetAddressesEndpoint(AbstractMitmReceiverRootEndpoint):
 
     async def _iter(self):
         # TODO: VisitorPattern for extra auth checks...
-        with logger.contextualize(ip=self._get_request_address(), name="endpoint"):
+        with logger.contextualize(identifier=self._get_request_address(), name="get_addresses-endpoint"):
             await self._check_origin_header()
             return await super()._iter()
 

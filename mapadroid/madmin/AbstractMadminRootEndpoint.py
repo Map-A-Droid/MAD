@@ -38,7 +38,7 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         db_wrapper: DbWrapper = self._get_db_wrapper()
         async with db_wrapper as session, session:
             self._session = session
-            with logger.contextualize(ip=self._get_request_address(), name="endpoint"):
+            with logger.contextualize(identifier=self._get_request_address(), name="madmin-endpoint"):
                 response = await self.__generate_response(session)
             return response
 

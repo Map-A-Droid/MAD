@@ -27,7 +27,7 @@ class SerializedMitmDataProcessor:
     async def run(self):
         logger.info("Starting serialized MITM data processor")
         # TODO: use event to stop... Remove try/catch...
-        with logger.contextualize(name=self.__name):
+        with logger.contextualize(identifier=self.__name, name="mitm-processor"):
             while True:
                 try:
                     item = await self.__queue.get()

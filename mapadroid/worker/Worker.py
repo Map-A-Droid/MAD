@@ -134,7 +134,7 @@ class Worker(AbstractWorker):
 
     async def _main_work_thread(self):
         try:
-            with logger.contextualize(name=self._worker_state.origin):
+            with logger.contextualize(identifier=self._worker_state.origin, name="worker"):
                 try:
                     await self._scan_strategy.pre_work_loop()
                 except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,

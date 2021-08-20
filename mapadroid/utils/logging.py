@@ -48,14 +48,14 @@ def init_logging(args):
     log_fmt_time_c = "[<cyan>{time:HH:mm:ss.SS}</cyan>]"
     log_fmt_time_fs = "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>]"
     log_fmt_id = "[<cyan>{extra[name]: >17}</cyan>]"
-    log_fmt_ip = "[<cyan>{extra[ip]: >17}</cyan>]"
+    log_fmt_identifier = "[<cyan>{extra[identifier]: >17}</cyan>]"
     log_fmt_mod_c = "[<cyan>{module: >19.19}:{line: <4}</cyan>]"
     log_fmt_mod_fs = "[<cyan>{module: >19}:{line: <4}</cyan>]"
     log_fmt_level = "[<lvl>{level: >1.1}</lvl>]"
     log_fmt_msg = "<level>{message}</level>"
 
-    log_format_c = [log_fmt_time_c, log_fmt_id, log_fmt_ip, log_fmt_mod_c, log_fmt_level, log_fmt_msg]
-    log_format_fs = [log_fmt_time_fs, log_fmt_id, log_fmt_ip, log_fmt_mod_fs, log_fmt_level, log_fmt_msg]
+    log_format_c = [log_fmt_time_c, log_fmt_id, log_fmt_identifier, log_fmt_mod_c, log_fmt_level, log_fmt_msg]
+    log_format_fs = [log_fmt_time_fs, log_fmt_id, log_fmt_identifier, log_fmt_mod_fs, log_fmt_level, log_fmt_msg]
     # Alter the logging capabilities based off the MAD launch settings
     if not args.no_file_logs:
         log_format_c[log_format_c.index(log_fmt_time_c)] = log_fmt_time_fs
@@ -92,7 +92,7 @@ def init_logging(args):
                 "enqueue": True
             }
         ],
-        "extra": {"name": "Unknown", "ip": ""},
+        "extra": {"name": "Unknown", "identifier": ""},
     }
 
     file_logs = [{

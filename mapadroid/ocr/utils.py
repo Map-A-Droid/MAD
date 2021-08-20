@@ -36,7 +36,7 @@ screen_texts: dict = {1: ['Geburtdatum', 'birth.', 'naissance.', 'date'],
 
 def screendetection_get_type_internal(image,
                                       identifier) -> Optional[Tuple[ScreenType, Optional[dict], int, int, int]]:
-    with logger.contextualize(origin=identifier):
+    with logger.contextualize(identifier=identifier):
         returntype: ScreenType = ScreenType.UNDEFINED
         globaldict: Optional[dict] = {}
         diff: int = 1
@@ -92,7 +92,7 @@ def screendetection_get_type_internal(image,
 
 
 def check_pogo_mainscreen(filename, identifier) -> bool:
-    with logger.contextualize(origin=identifier):
+    with logger.contextualize(identifier=identifier):
         logger.debug("__internal_check_pogo_mainscreen: Checking close except nearby with: file {}", filename)
         mainscreen = 0
         try:
@@ -133,7 +133,7 @@ def check_pogo_mainscreen(filename, identifier) -> bool:
 
 
 def most_frequent_colour_internal(image, identifier) -> Optional[List[int]]:
-    with logger.contextualize(origin=identifier):
+    with logger.contextualize(identifier=identifier):
         logger.debug("most_frequent_colour_internal: Reading screen text")
         try:
             with Image.open(image) as img:
@@ -154,7 +154,7 @@ def most_frequent_colour_internal(image, identifier) -> Optional[List[int]]:
 
 
 def get_screen_text(screenpath: str, identifier) -> Optional[dict]:
-    with logger.contextualize(origin=identifier):
+    with logger.contextualize(identifier=identifier):
         returning_dict: Optional[dict] = {}
         logger.debug("get_screen_text: Reading screen text")
 
@@ -179,7 +179,7 @@ def get_screen_text(screenpath: str, identifier) -> Optional[dict]:
 
 
 def get_inventory_text(temp_dir_path: str, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
-    with logger.contextualize(origin=identifier):
+    with logger.contextualize(identifier=identifier):
         screenshot_read = cv2.imread(filename)
         temp_path_item = temp_dir_path + "/" + str(identifier) + "_inventory.png"
         height = x1 - x2

@@ -272,7 +272,8 @@ class MappingManager:
         elif key == MappingManagerDevicemappingKey.VPS_DELAY:
             return devicemapping_entry.pool_settings.vps_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.vps_delay else devicemapping_entry.device_settings.vps_delay
         elif key == MappingManagerDevicemappingKey.REBOOT:
-            return devicemapping_entry.pool_settings.reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot else devicemapping_entry.device_settings.reboot
+            reboot_int: int = devicemapping_entry.pool_settings.reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot else devicemapping_entry.device_settings.reboot
+            return True if reboot_int != 0 else False
         elif key == MappingManagerDevicemappingKey.REBOOT_THRESH:
             return devicemapping_entry.pool_settings.reboot_thresh if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot_thresh else devicemapping_entry.device_settings.reboot_thresh
         elif key == MappingManagerDevicemappingKey.RESTART_THRESH:
@@ -762,6 +763,8 @@ class MappingManager:
                     )
                     areamons[area_id] = mon_list
                     continue
+            except Exception as e:
+                logger.exception(e)
             if all_mons:
                 logger.debug("Area {} is configured for all mons", area.settings.name)
                 for mon_id in await get_mon_ids():
