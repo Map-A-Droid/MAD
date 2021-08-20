@@ -25,9 +25,9 @@ from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
 from mapadroid.websocket.communicator import Communicator
 from mapadroid.worker.Worker import Worker
-from mapadroid.worker.WorkerFactory import WorkerFactory
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
+from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
@@ -55,7 +55,7 @@ class WebsocketServer(object):
         self.__users_connecting: Set[str] = set()
         self.__users_connecting_mutex: Optional[asyncio.Lock] = None
 
-        self.__worker_factory: WorkerFactory = WorkerFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
+        self.__strategy_factory: StrategyFactory = StrategyFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
                                                              self.__db_wrapper, self.__pogo_window_manager, event)
         self.__pogo_event: PogoEvent = event
 
@@ -229,7 +229,7 @@ class WebsocketServer(object):
             entry, origin, None, self.__args.websocket_command_timeout)
         use_configmode: bool = use_configmode if use_configmode is not None else self.__enable_configmode
 
-        scan_strategy: Optional[AbstractWorkerStrategy] = await self.__worker_factory \
+        scan_strategy: Optional[AbstractWorkerStrategy] = await self.__strategy_factory \
             .get_strategy_using_settings(origin, use_configmode, communicator=communicator,
                                          worker_state=entry.worker_state)
         if not scan_strategy:
@@ -238,7 +238,8 @@ class WebsocketServer(object):
             entry.worker_instance = Worker(communicator=communicator, worker_state=entry.worker_state,
                                            mapping_manager=self.__mapping_manager,
                                            db_wrapper=self.__db_wrapper,
-                                           scan_strategy=scan_strategy)
+                                           scan_strategy=scan_strategy,
+                                           strategy_factory=self.__strategy_factory)
             await entry.worker_instance.start_worker()
         else:
             await entry.worker_instance.set_scan_strategy(scan_strategy)

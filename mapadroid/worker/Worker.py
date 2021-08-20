@@ -15,7 +15,7 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException,
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException)
+    WebsocketWorkerTimeoutException, application_args)
 from mapadroid.utils.resolution import ResolutionCalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
@@ -23,6 +23,7 @@ from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
+from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
 
 
 class Worker(AbstractWorker):
@@ -30,11 +31,13 @@ class Worker(AbstractWorker):
                  worker_state: WorkerState,
                  mapping_manager: MappingManager,
                  db_wrapper: DbWrapper,
-                 scan_strategy: AbstractWorkerStrategy):
+                 scan_strategy: AbstractWorkerStrategy,
+                 strategy_factory: StrategyFactory):
         AbstractWorker.__init__(self, communicator=communicator, scan_strategy=scan_strategy)
         self._mapping_manager: MappingManager = mapping_manager
         self._db_wrapper: DbWrapper = db_wrapper
         self._worker_state: WorkerState = worker_state
+        self._strategy_factory = strategy_factory
 
         self._resocalc = ResolutionCalculator()
 
@@ -81,6 +84,7 @@ class Worker(AbstractWorker):
         if self._work_task:
             logger.warning("Task has not been removed before.")
             return
+        self.workerstart = math.floor(time.time())
         loop = asyncio.get_running_loop()
         if not self._work_mutex:
             self._work_mutex: asyncio.Lock = asyncio.Lock()
@@ -154,9 +158,13 @@ class Worker(AbstractWorker):
                         if not walkercheck:
                             # TODO: Properly populate configmode flag
                             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-                            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__worker_factory \
+                            device_paused: bool = not await self._mapping_manager.is_device_active(
+                                self._worker_state.device_id)
+                            configmode: bool = application_args.config_mode
+                            scan_strategy: Optional[AbstractWorkerStrategy] = await self._strategy_factory \
                                 .get_strategy_using_settings(self._worker_state.origin,
-                                                             False, communicator=self.communicator,
+                                                             enable_configmode=device_paused or configmode,
+                                                             communicator=self.communicator,
                                                              worker_state=self._worker_state)
                             loop = asyncio.get_running_loop()
                             loop.create_task(self.set_scan_strategy(scan_strategy))
@@ -253,6 +261,7 @@ class Worker(AbstractWorker):
                 await self._internal_cleanup()
         except Exception as e:
             logger.exception(e)
+            await self._internal_cleanup()
 
     async def update_scanned_location(self, latitude: float, longitude: float, _timestamp: float):
         async with self._db_wrapper as session, session:
@@ -277,11 +286,8 @@ class Worker(AbstractWorker):
             if not countdown:
                 logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
-            if self.workerstart is None:
-                self.workerstart = math.floor(time.time())
-            else:
-                if math.floor(time.time()) >= int(self.workerstart) + int(countdown):
-                    return False
+            if self.workerstart is None or math.floor(time.time()) >= int(self.workerstart) + int(countdown):
+                return False
             return True
         elif mode == "timer":
             logger.debug("Checking walker mode 'timer'")
