@@ -64,7 +64,7 @@ class Worker(AbstractWorker):
             logger.warning("Failed fetching devicemappings with description: {}. Stopping worker", e)
             self._worker_state.stop_worker_event.set()
             return None
-        return value if value else default_value
+        return value if value is not None else default_value
 
     async def check_max_walkers_reached(self):
         if not self._scan_strategy.walker:

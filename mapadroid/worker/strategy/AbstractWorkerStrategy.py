@@ -225,7 +225,7 @@ class AbstractWorkerStrategy(ABC):
         except (EOFError, FileNotFoundError) as e:
             logger.warning("Failed fetching devicemappings with description: {}. Stopping worker", e)
             raise InternalStopWorkerException
-        return value if value else default_value
+        return value if value is not None else default_value
 
     async def _wait_pogo_start_delay(self):
         delay_count: int = 0
