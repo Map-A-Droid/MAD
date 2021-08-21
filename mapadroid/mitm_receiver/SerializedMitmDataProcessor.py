@@ -36,8 +36,9 @@ class SerializedMitmDataProcessor:
                         break
                     start_time = self.get_time_ms()
                     try:
-                        await self.process_data(received_timestamp=item[0], data=item[1],
-                                                origin=item[2])
+                        with logger.contextualize(identifier=item[2], name="mitm-processor"):
+                            await self.process_data(received_timestamp=item[0], data=item[1],
+                                                    origin=item[2])
                         del item
                     except (sqlalchemy.exc.IntegrityError, MitmReceiverRetry, sqlalchemy.exc.InternalError) as e:
                         logger.info("Failed submitting data to DB, rescheduling. {}", e)

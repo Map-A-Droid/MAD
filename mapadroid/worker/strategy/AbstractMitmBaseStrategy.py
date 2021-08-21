@@ -310,6 +310,11 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             logger.warning("Too many timeouts - Restarting game")
             await self._restart_pogo(True, self._mitm_mapper)
 
+    async def stop_pogo(self):
+        stopped: bool = await super().stop_pogo()
+        if stopped:
+            await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
+
     async def worker_stats(self):
         logger.debug('===============================')
         logger.debug('Worker Stats')

@@ -29,21 +29,22 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             None, json.loads, data_text)
         del data_text
         origin = self.request.headers.get("origin")
-        logger.debug2("Receiving proto")
+        with logger.contextualize(identifier=origin, name="receive_protos-endpoint"):
+            logger.debug2("Receiving proto")
 
-        logger.debug4("Proto data received {}", data)
-        if isinstance(data, list):
-            # list of protos... we hope so at least....
-            logger.debug2("Receiving list of protos")
-            for proto in data:
-                await self.__handle_proto_data_dict(origin, proto)
-        elif isinstance(data, dict):
-            logger.debug2("Receiving single proto")
-            # single proto, parse it...
-            await self.__handle_proto_data_dict(origin, data)
+            logger.debug4("Proto data received {}", data)
+            if isinstance(data, list):
+                # list of protos... we hope so at least....
+                logger.debug2("Receiving list of protos")
+                for proto in data:
+                    await self.__handle_proto_data_dict(origin, proto)
+            elif isinstance(data, dict):
+                logger.debug2("Receiving single proto")
+                # single proto, parse it...
+                await self.__handle_proto_data_dict(origin, data)
 
-        # del data
-        return web.Response(status=200)
+            # del data
+            return web.Response(status=200)
 
     async def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
         proto_type = data.get("type", None)
@@ -59,7 +60,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             return
         elif proto_type == 106:
             await self._get_mitm_mapper().set_injection_status(origin, True)
-            
+
         timestamp: int = data.get("timestamp", int(time.time()))
         if self._get_mad_args().mitm_ignore_pre_boot is True and timestamp < self._get_mitmreceiver_startup_time():
             return
