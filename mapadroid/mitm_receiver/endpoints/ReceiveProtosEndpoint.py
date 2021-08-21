@@ -42,7 +42,6 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             # single proto, parse it...
             await self.__handle_proto_data_dict(origin, data)
 
-        await self._get_mitm_mapper().set_injection_status(origin, True)
         # del data
         return web.Response(status=200)
 
@@ -58,6 +57,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         elif proto_type == 106 and not data["payload"].get("cells", []):
             logger.debug("Ignoring apparently empty GMO")
             return
+        elif proto_type == 106:
+            await self._get_mitm_mapper().set_injection_status(origin, True)
+            
         timestamp: int = data.get("timestamp", int(time.time()))
         if self._get_mad_args().mitm_ignore_pre_boot is True and timestamp < self._get_mitmreceiver_startup_time():
             return

@@ -106,12 +106,12 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         logger.info("Worker starting actual work")
         try:
             await self.turn_screen_on_and_start_pogo()
-            await self._update_screen_size()
             # register worker  in routemanager
             logger.info("Try to register in Routemanager {}",
                         await self._mapping_manager.routemanager_get_name(self._area_id))
             await self._mapping_manager.register_worker_to_routemanager(self._area_id,
                                                                         self._worker_state.origin)
+            await self._update_screen_size()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker")
             # no cleanup required here? TODO: signal websocket server somehow
