@@ -1,5 +1,6 @@
 pytest
 pytest-dotenv
+pytest-mock
 flake8
 flake8-variables-names
 flake8-logging-format

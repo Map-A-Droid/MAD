@@ -73,6 +73,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     def __init__(self, application_args: NamedTuple):
         logger.debug('Initializing FileSystem storage')
+        super(APKStorageFilesystem, self).__init__(application_args.maddev_api_token)
         self.file_lock: RLock = RLock()
         self.config_apk_dir: str = application_args.temp_path + '/' + APKStorageFilesystem.config_apks
         self.config_filepath: str = '{}/config.json'.format(self.config_apk_dir)

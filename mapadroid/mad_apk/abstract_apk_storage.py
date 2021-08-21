@@ -2,11 +2,23 @@ from abc import ABC, abstractmethod
 from io import BytesIO
 from typing import NoReturn, Optional
 
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
 from .apk_enums import APKArch, APKType
 from .custom_types import MADPackages
 
+logger = get_logger(LoggerEnums.storage)
 
-class AbstractAPKStorage(ABC):
+
+class AbstractAPKStorage(ABC, object):
+    api_token: str = None
+
+    def __init__(self, token):
+        self.api_token = token
+
+    def token(self):
+        return self.api_token
+
     @abstractmethod
     def delete_file(self, package: APKType, architecture: APKArch) -> bool:
         """ Remove the package and update the configuration

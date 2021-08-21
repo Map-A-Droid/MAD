@@ -24,8 +24,9 @@ class APKStorageDatabase(AbstractAPKStorage):
         dbc: Database wrapper
         file_lock (RLock): RLock to allow updates to be thread-safe
     """
-    def __init__(self, dbc):
+    def __init__(self, dbc, token):
         logger.debug('Initializing Database storage')
+        super(APKStorageDatabase, self).__init__(token)
         self.file_lock: RLock = RLock()
         self.dbc = dbc
 
