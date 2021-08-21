@@ -5,14 +5,14 @@ ImageHash~=4.0
 bitstring~=3.1
 dataclasses>=0.6
 geopy~=1.20
-gevent==1.4.0
+gevent~=20.9
 gpxdata~=1.2
 imutils~=0.5
 loguru~=0.4.0
 matplotlib~=3.1
 mysql-connector~=2.2
 mysqlclient~=1.4
-opencv-python>=4.1,<4.3
+opencv-python~=4.4
 psutil~=5.6
 pytesseract~=0.3
 requests~=2.22
@@ -20,6 +20,6 @@ s2sphere~=0.2
 websockets>=7
 numpy~=1.18.0
 apkutils==0.8.3
-greenlet<0.4.17
+greenlet~=1.1
 apkmirror-search
 cachetools
