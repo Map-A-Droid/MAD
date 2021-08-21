@@ -17,7 +17,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
     async def _iter(self):
         # TODO: VisitorPattern for extra auth checks...
-        with logger.contextualize(identifier=self._get_request_address(), name="receive_protos-endpoint"):
+        with logger.contextualize(identifier=self._get_request_address(), name="receive_protos"):
             await self._check_origin_header()
             return await super()._iter()
 
@@ -29,7 +29,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             None, json.loads, data_text)
         del data_text
         origin = self.request.headers.get("origin")
-        with logger.contextualize(identifier=origin, name="receive_protos-endpoint"):
+        with logger.contextualize(identifier=origin, name="receive_protos"):
             logger.debug2("Receiving proto")
 
             logger.debug4("Proto data received {}", data)

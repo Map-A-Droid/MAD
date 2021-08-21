@@ -38,7 +38,6 @@ from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import AbstractMitmBaseStrategy
 
-
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
 S2_GMO_CELL_LEVEL = 15
 RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN = 35
@@ -98,6 +97,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         self._last_time_quest_received: int = TIMESTAMP_NEVER
         # TODO: Move to worker_state?
         self._delay_add: int = 0
+        self._stop_process_time = TIMESTAMP_NEVER
 
     async def _check_for_data_content(self, latest: Dict[Union[int, str], LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
@@ -183,7 +183,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             type_of_data_found = ReceivedType.GYM if fort_type == 0 else ReceivedType.STOP
         elif proto_to_wait_for == ProtoIdentifier.GMO \
                 and self._directly_surrounding_gmo_cells_containing_stops_around_current_position(
-            latest_proto.get("cells")):
+                        latest_proto.get("cells")):
             data_found = latest_proto
             type_of_data_found = ReceivedType.GMO
         elif proto_to_wait_for == ProtoIdentifier.INVENTORY and 'inventory_delta' in latest_proto and \
@@ -292,7 +292,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             logger.info("Timediff between now and last action time: {}", int(timediff))
             delay_used = delay_used - timediff
         elif await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME,
-                                                 None) is None and not await self._mapping_manager.routemanager_is_levelmode(self._area_id):
+                                                 None) is None and not await self._mapping_manager.routemanager_is_levelmode(
+            self._area_id):
             logger.info('Starting first time - we wait because of some default pogo delays ...')
             delay_used = 20
         else:
@@ -302,7 +303,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True) and \
                 await self._word_to_screen_matching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
                 and await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION,
-                                                        False) and not await self._mapping_manager.routemanager_is_levelmode(self._area_id):
+                                                        False) and not await self._mapping_manager.routemanager_is_levelmode(
+            self._area_id):
             # Waiting time to long and more then one account - switch! (not level mode!!)
             logger.info('Could use more then 1 account - switch & no cooldown')
             await self.switch_account()
@@ -342,7 +344,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                 await asyncio.sleep(1)
 
         self._worker_state.current_sleep_time = 0
-        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION, 
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION,
                                             self._worker_state.current_location)
         self._worker_state.last_location = self._worker_state.current_location
         return cur_time, True
@@ -491,7 +493,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                         logger.info("Clearing box")
                         await self.clear_box(vps_delay)
                         self.clear_thread_task = ClearThreadTasks.IDLE
-                    elif self.clear_thread_task == ClearThreadTasks.QUEST and not await self._mapping_manager.routemanager_is_levelmode(self._area_id):
+                    elif self.clear_thread_task == ClearThreadTasks.QUEST and not await self._mapping_manager.routemanager_is_levelmode(
+                            self._area_id):
                         logger.info("Clearing quest")
                         await self._clear_quests(vps_delay)
                         self.clear_thread_task = ClearThreadTasks.IDLE
@@ -574,9 +577,10 @@ class QuestStrategy(AbstractMitmBaseStrategy):
 
                 try:
                     item_text = await self._pogo_windows_handler.get_inventory_text(await self.get_screenshot_path(),
-                                                                                 self._worker_state.origin, text_x1, text_x2,
-                                                                                 check_y_text_ending,
-                                                                                 check_y_text_starter)
+                                                                                    self._worker_state.origin, text_x1,
+                                                                                    text_x2,
+                                                                                    check_y_text_ending,
+                                                                                    check_y_text_starter)
                     if item_text is None:
                         logger.warning("Did not get any text in inventory")
                         # TODO: could this be running forever?
@@ -771,7 +775,9 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and (data_received == FortSearchResultTypes.QUEST
                            or data_received == FortSearchResultTypes.COOLDOWN
-                           or (data_received == FortSearchResultTypes.FULL and await self._mapping_manager.routemanager_is_levelmode(self._area_id)))):
+                           or (
+                                   data_received == FortSearchResultTypes.FULL and await self._mapping_manager.routemanager_is_levelmode(
+                               self._area_id)))):
                     if await self._mapping_manager.routemanager_is_levelmode(self._area_id):
                         logger.info("Saving visitation info...")
                         self._last_time_quest_received = math.floor(time.time())
@@ -852,8 +858,9 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                         if not self._enhanced_mode:
                             self.clear_thread_task = ClearThreadTasks.QUEST
                         break
-                    elif to > 2 and await self._mapping_manager.routemanager_is_levelmode(self._area_id) and await self._mitm_mapper.get_poke_stop_visits(
-                            self._worker_state.origin) > 6800:
+                    elif to > 2 and await self._mapping_manager.routemanager_is_levelmode(
+                            self._area_id) and await self._mitm_mapper.get_poke_stop_visits(
+                        self._worker_state.origin) > 6800:
                         logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
 
@@ -895,7 +902,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                     if latitude == 0.0 or longitude == 0.0:
                         continue
                     elif (abs(self._worker_state.current_location.lat - latitude) <= DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP
-                          and abs(self._worker_state.current_location.lng - longitude) <= DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP):
+                          and abs(
+                                self._worker_state.current_location.lng - longitude) <= DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP):
                         # We are basically on top of a stop
                         logger.info("Found stop/gym at current location!")
                     else:
@@ -919,7 +927,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                         return PositionStopType.GYM
 
                     visited: bool = fort.get("visited", False)
-                    if await self._mapping_manager.routemanager_is_levelmode(self._area_id) and self._ignore_spinned_stops and visited:
+                    if await self._mapping_manager.routemanager_is_levelmode(
+                            self._area_id) and self._ignore_spinned_stops and visited:
                         logger.info("Level mode: Stop already visited - skipping it")
                         await TrsVisitedHelper.mark_visited(session, self._worker_state.origin,
                                                             Location(latitude, longitude))
@@ -1015,12 +1024,12 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                 cells_with_forts.append(cell)
 
         if not cells_with_forts:
-            logger.debug2("GMO cells around current position ({}) do not contain stops ", 
+            logger.debug2("GMO cells around current position ({}) do not contain stops ",
                           self._worker_state.current_location)
         return cells_with_forts
 
     async def _check_if_stop_was_nearby_and_update_location(self, session: AsyncSession, gmo_cells):
-        logger.info("Checking stops around current location ({}) for deleted stops.", 
+        logger.info("Checking stops around current location ({}) for deleted stops.",
                     self._worker_state.current_location)
 
         stops: Dict[str, Pokestop] = await PokestopHelper.get_nearby(session, self._worker_state.current_location)

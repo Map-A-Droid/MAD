@@ -379,8 +379,6 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                                                             now_ts)
 
     async def start_pogo(self) -> bool:
-        if await self._communicator.is_pogo_topmost():
-            return True
         await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
         started_pogo: bool = await super().start_pogo()
         if not await self._wait_for_injection() or self._worker_state.stop_worker_event.is_set():
@@ -395,6 +393,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         if reboot:
             injection_thresh_reboot = int(
                 await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
+        # TODO: Else check PogoDroid was started...
         window_check_frequency = 3
         while not await self._mitm_mapper.get_injection_status(self._worker_state.origin):
             await self._check_for_mad_job()

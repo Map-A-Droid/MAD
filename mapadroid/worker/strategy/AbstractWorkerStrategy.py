@@ -197,6 +197,7 @@ class AbstractWorkerStrategy(ABC):
             await asyncio.sleep(
                 await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 7))
 
+        await self._grant_permissions_to_pogo()
         cur_time = time.time()
         start_result = False
         attempts = 0
@@ -565,3 +566,12 @@ class AbstractWorkerStrategy(ABC):
                      self._worker_state.resolution_calculator.screen_size_y,
                      x_offset, y_offset)
         # self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, x_offset, y_offset)
+
+    async def _grant_permissions_to_pogo(self) -> None:
+        command: str = "su -c 'magiskhide --add com.nianticlabs.pokemongo " \
+                       "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_FINE_LOCATION " \
+                       "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_COARSE_LOCATION " \
+                       "&&  pm grant com.nianticlabs.pokemongo android.permission.CAMERA " \
+                       "&& pm grant com.nianticlabs.pokemongo android.permission.GET_ACCOUNTS'"
+        await self._communicator.passthrough(command)
+
