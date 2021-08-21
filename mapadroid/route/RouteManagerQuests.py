@@ -86,7 +86,7 @@ class RouteManagerQuests(RouteManagerBase):
             coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
             if len(coords) > 0:
                 logger.info("Getting new coords - recalculating route")
-                self._recalc_stop_route(coords)
+                await self._recalc_stop_route(coords)
                 self._start_calc = False
             else:
                 logger.info("Dont getting new stops - leaving now.")
@@ -176,12 +176,12 @@ class RouteManagerQuests(RouteManagerBase):
                         and len(stops) / len(self._route) <= 0.3:
                     # Calculating new route because 70 percent of stops are processed
                     logger.info('There are less stops without quest than routepositions - recalc')
-                    self._recalc_stop_route(stops)
+                    await self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
                     logger.warning("Something wrong with area: it contains a lot of new stops - "
                                    "better recalc the route!")
                     logger.info("Recalc new route for area")
-                    self._recalc_stop_route(stops)
+                    await self._recalc_stop_route(stops)
                 else:
                     self._init_route_queue()
 
@@ -189,11 +189,11 @@ class RouteManagerQuests(RouteManagerBase):
                 return True
         return True
 
-    def _recalc_stop_route(self, stops):
+    async def _recalc_stop_route(self, stops):
         self._clear_coords()
         self.add_coords_list(stops)
         self._overwrite_calculation = True
-        self._recalc_route_workertype()
+        await self._recalc_route_workertype()
         self._init_route_queue()
 
     def _delete_coord_after_fetch(self) -> bool:
