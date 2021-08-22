@@ -4,6 +4,7 @@ import math
 import time
 from abc import ABC, abstractmethod
 from asyncio import Task
+from asyncio_rlock import RLock
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -88,7 +89,7 @@ class RouteManagerBase(ABC):
         self._roundcount: int = 0
         self._joinqueue = joinqueue
         self._worker_start_position: Dict[str] = {}
-        self._manager_mutex: asyncio.Lock = asyncio.Lock()
+        self._manager_mutex: RLock = RLock()
         # we want to store the workers using the routemanager
         self._workers_registered: Set[str] = set()
         self._round_started_time = None
