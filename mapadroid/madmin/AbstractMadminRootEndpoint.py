@@ -17,6 +17,7 @@ from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.json_encoder import MADEncoder
+from mapadroid.utils.madGlobals import WebsocketWorkerTimeoutException
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -53,6 +54,9 @@ class AbstractMadminRootEndpoint(web.View, ABC):
                 logger.info("Done committing")
             else:
                 await session.rollback()
+        except WebsocketWorkerTimeoutException as e:
+            logger.warning("Worker was removed, unable to process request. {}", e)
+            raise web.HTTPInternalServerError
         except web.HTTPFound as e:
             raise e
         except Exception as e:
