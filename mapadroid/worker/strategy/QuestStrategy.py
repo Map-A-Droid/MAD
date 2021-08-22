@@ -691,7 +691,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
             type_received, proto_entry = await self._wait_for_data(timestamp=time.time(),
                                                                    proto_to_wait_for=ProtoIdentifier.GMO,
-                                                                   timeout=35)
+                                                                   timeout=20)
             if type_received != ReceivedType.UNDEFINED:
                 stop_type = await self._current_position_has_spinnable_stop(timestamp)
 
@@ -726,7 +726,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                 timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_DETAILS, timeout=15)
             if type_received == ReceivedType.GYM:
                 logger.info('Clicked GYM')
-                await asyncio.sleep(10)
+                await asyncio.sleep(5)
                 x, y = self._worker_state.resolution_calculator.get_close_main_button_coords()
                 await self._communicator.click(int(x), int(y))
                 await asyncio.sleep(3)

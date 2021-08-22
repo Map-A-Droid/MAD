@@ -184,13 +184,19 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 last_time_received = latest_proto_entry.timestamp_of_data_retrieval
                 break
 
-        if type_of_data_returned != ReceivedType.UNDEFINED:
-            await self._reset_restart_count_and_collect_stats(timestamp,
-                                                              last_time_received,
-                                                              position_type)
+        if proto_to_wait_for == ProtoIdentifier.GMO:
+            if type_of_data_returned != ReceivedType.UNDEFINED:
+                await self._reset_restart_count_and_collect_stats(timestamp,
+                                                                  last_time_received,
+                                                                  position_type)
+            else:
+                await self._handle_proto_timeout(timestamp, position_type)
+
+        if type_of_data_returned == ReceivedType.UNDEFINED:
+            logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
+                        proto_to_wait_for, type_of_data_returned)
         else:
-            await self._handle_proto_timeout(timestamp, position_type, proto_to_wait_for,
-                                             type_of_data_returned)
+            logger.success("Got data of type {}", type_of_data_returned)
 
         loop = asyncio.get_running_loop()
         loop.create_task(self.worker_stats())
@@ -277,10 +283,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         return distance, routemanager_settings
 
     async def _handle_proto_timeout(self, fix_ts: int,
-                                    position_type: PositionType, proto_to_wait_for: ProtoIdentifier,
-                                    type_of_data_returned):
-        logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
-                    proto_to_wait_for, type_of_data_returned)
+                                    position_type: PositionType):
         now_ts: int = int(time.time())
         await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
                                                             self._worker_state.current_location, False,
