@@ -61,6 +61,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         pass
 
     async def pre_work_loop(self) -> None:
+        await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
         start_position = await self.get_devicesettings_value(MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER, None)
         calc_type = await self._mapping_manager.routemanager_get_calc_type(self._area_id)
         geofence_helper_of_area = await self._mapping_manager.routemanager_get_geofence_helper(self._area_id)
@@ -379,9 +380,9 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                                                             now_ts)
 
     async def start_pogo(self) -> bool:
-        await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
         started_pogo: bool = await super().start_pogo()
         if not await self._wait_for_injection() or self._worker_state.stop_worker_event.is_set():
+            await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
             raise InternalStopWorkerException
         else:
             return started_pogo
