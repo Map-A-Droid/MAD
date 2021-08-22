@@ -389,16 +389,13 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
     async def _wait_for_injection(self):
         not_injected_count = 0
-        reboot = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True)
-        injection_thresh_reboot = 'Unlimited'
-        if reboot:
-            injection_thresh_reboot = int(
-                await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
-        # TODO: Else check PogoDroid was started...
+        injection_thresh_reboot = int(
+            await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
+        # TODO: Else check MitmApp was started...
         window_check_frequency = 3
         while not await self._mitm_mapper.get_injection_status(self._worker_state.origin):
             await self._check_for_mad_job()
-            if reboot and not_injected_count >= injection_thresh_reboot:
+            if not_injected_count >= injection_thresh_reboot:
                 logger.warning("Not injected in time - reboot")
                 await self._reboot(self._mitm_mapper)
                 return False
@@ -432,3 +429,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             if value_of_key and isinstance(value_of_key, list):
                 amount_of_key += len(value_of_key)
         return amount_of_key > 0
+
+    async def _additional_health_check(self) -> None:
+        # Ensure PogoDroid was started...
+        await self._communicator.passthrough("su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")

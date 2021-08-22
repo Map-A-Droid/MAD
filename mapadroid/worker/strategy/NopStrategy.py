@@ -7,6 +7,9 @@ from loguru import logger
 
 
 class NopStrategy(AbstractWorkerStrategy):
+    async def _additional_health_check(self) -> None:
+        pass
+
     async def pre_work_loop(self):
         logger.warning("Worker started in configmode! This is special, configuration only mode - do not expect"
                        " scans or avatar moving. After you are done with initial configuration remove -cm flag")

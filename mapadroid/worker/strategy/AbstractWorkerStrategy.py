@@ -386,6 +386,7 @@ class AbstractWorkerStrategy(ABC):
             if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 start_result = await self._communicator.reboot()
             else:
+                await self._additional_health_check()
                 start_result = await self.stop_pogo() and await self.start_pogo()
         except WebsocketWorkerRemovedException:
             logger.error("Could not reboot due to client already disconnected")
@@ -579,4 +580,14 @@ class AbstractWorkerStrategy(ABC):
                        "&&  pm grant com.nianticlabs.pokemongo android.permission.CAMERA " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.GET_ACCOUNTS'"
         await self._communicator.passthrough(command)
+
+    @abstractmethod
+    async def _additional_health_check(self) -> None:
+        """
+        In case additional apps should be started for example, this routine can be adjusted by implementations.
+        E.g. ensure Mitm app is running
+        Returns:
+
+        """
+        pass
 
