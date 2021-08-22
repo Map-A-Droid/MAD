@@ -133,6 +133,7 @@ class WebsocketServer(object):
                 return
             else:
                 self.__users_connecting.add(origin)
+        entry: Optional[WebsocketConnectedClientEntry] = None
         try:
             device: Optional[SettingsDevice] = None
             device_paused: bool = self.__enable_configmode
@@ -145,7 +146,7 @@ class WebsocketServer(object):
                     device_paused = True
             async with self.__current_users_mutex:
                 logger.debug("Checking if an entry is already present")
-                entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
+                entry = self.__current_users.get(origin, None)
 
                 # First check if an entry is present, worker running etc...
                 if entry and entry.websocket_client_connection:
@@ -174,19 +175,21 @@ class WebsocketServer(object):
             return
         except Exception as e:
             logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
+            return
         finally:
             await self.__remove_from_users_connecting(origin)
 
-        try:
-            await self.__client_message_receiver(origin, entry)
-        except CancelledError as e:
-            logger.info("Connection to {} has been cancelled", origin)
-        # also check if thread is already running to not start it again. If it is not alive, we need to create it..
-        finally:
-            logger.info("Awaiting unregister")
-            if entry.worker_instance:
-                await entry.worker_instance.stop_worker()
-            await self.__remove_from_current_users(origin)
+        if entry:
+            try:
+                await self.__client_message_receiver(origin, entry)
+            except CancelledError as e:
+                logger.info("Connection to {} has been cancelled", origin)
+            # also check if thread is already running to not start it again. If it is not alive, we need to create it..
+            finally:
+                logger.info("Awaiting unregister")
+                if entry.worker_instance:
+                    await entry.worker_instance.stop_worker()
+                await self.__remove_from_current_users(origin)
 
         logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 

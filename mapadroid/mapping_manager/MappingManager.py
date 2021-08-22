@@ -260,7 +260,8 @@ class MappingManager:
         elif key == MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE:
             return devicemapping_entry.pool_settings.walk_after_teleport_distance if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.walk_after_teleport_distance else devicemapping_entry.device_settings.walk_after_teleport_distance
         elif key == MappingManagerDevicemappingKey.COOLDOWN_SLEEP:
-            return devicemapping_entry.pool_settings.cool_down_sleep if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.cool_down_sleep else devicemapping_entry.device_settings.cool_down_sleep
+            cool_down_sleep: int = devicemapping_entry.pool_settings.cool_down_sleep if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.cool_down_sleep else devicemapping_entry.device_settings.cool_down_sleep
+            return True if cool_down_sleep != 0 else False
         elif key == MappingManagerDevicemappingKey.POST_POGO_START_DELAY:
             return devicemapping_entry.pool_settings.post_pogo_start_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.post_pogo_start_delay else devicemapping_entry.device_settings.post_pogo_start_delay
         elif key == MappingManagerDevicemappingKey.RESTART_POGO:
@@ -291,11 +292,14 @@ class MappingManager:
         elif key == MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT:
             return devicemapping_entry.pool_settings.injection_thresh_reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.injection_thresh_reboot else devicemapping_entry.device_settings.injection_thresh_reboot
         elif key == MappingManagerDevicemappingKey.SCREENDETECTION:
-            return devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
+            screen_detection: int = devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
+            return True if screen_detection != 0 else False
         elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST_SAFE_ITEMS:
             return devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items else devicemapping_entry.device_settings.enhanced_mode_quest_safe_items
         elif key == MappingManagerDevicemappingKey.CLEAR_GAME_DATA:
-            return devicemapping_entry.device_settings.clear_game_data
+            return True if devicemapping_entry.device_settings.clear_game_data != 0 else False
+        elif key == MappingManagerDevicemappingKey.SOFTBAR_ENABLED:
+            return True if devicemapping_entry.device_settings.softbar_enabled != 0 else False
         # Extra keys to e.g. retrieve PTC accounts
         elif key == MappingManagerDevicemappingKey.PTC_LOGIN:
             return devicemapping_entry.ptc_logins

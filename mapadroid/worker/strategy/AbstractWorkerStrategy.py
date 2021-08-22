@@ -548,14 +548,19 @@ class AbstractWorkerStrategy(ABC):
         if self._worker_state.stop_worker_event.is_set():
             raise WebsocketWorkerRemovedException
         screen = await self._communicator.get_screensize()
-        y_offset = await self._communicator.get_y_offset()
-        if not screen or not y_offset:
+        if not screen:
             raise WebsocketWorkerRemovedException
 
         screen = screen.strip().split(' ')
         x_offset = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET, 0)
         y_offset_settings = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
-        y_offset = y_offset_settings if y_offset_settings != 0 else y_offset
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SOFTBAR_ENABLED, False):
+            y_offset = await self._communicator.get_y_offset()
+            if not y_offset:
+                raise WebsocketWorkerRemovedException
+        else:
+            y_offset = 0
+        y_offset += y_offset_settings
         self._worker_state.resolution_calculator.screen_size_x = int(screen[0])
         self._worker_state.resolution_calculator.screen_size_y = int(screen[1])
         self._worker_state.resolution_calculator.x_offset = int(x_offset)

@@ -228,9 +228,20 @@ class Device(Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Adjust the y-axis click offset on devices with softbars and/or black upper bars. "
+                    "description": "Adjust the y-axis click offset on devices. "
+                                   "If softbar_enabled is True, the values will be added up. "
                                    "(+ down - up / Default: 0)",
                     "expected": int
+                }
+            },
+            "softbar_enabled": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [True, False],
+                    "description": "If a softbar button is visible on screenshots, set to true. "
+                                   "The offset will be read automatically (Default: False)",
+                    "expected": bool
                 }
             },
             "screenshot_type": {
