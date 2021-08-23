@@ -17,6 +17,7 @@ repos:
       - id: flake8
         language_version: python3
         additional_dependencies: [flake8-bugbear, flake8-logging-format, flake8-variables-names, pep8-naming, flake8-eradicate]
+        args: [ --builtins=_ ]
   - repo: https://github.com/pre-commit/mirrors-isort
     rev: v5.9.3
     hooks:
