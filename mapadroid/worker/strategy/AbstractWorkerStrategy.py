@@ -256,6 +256,7 @@ class AbstractWorkerStrategy(ABC):
     async def _ensure_pogo_topmost(self):
         logger.info('Checking pogo screen...')
         screen_type: ScreenType = ScreenType.UNDEFINED
+        await self.start_pogo()
         while not self._worker_state.stop_worker_event.is_set():
             # TODO: Make this not block the loop somehow... asyncio waiting for a thread?
             screen_type: ScreenType = await self._word_to_screen_matching.detect_screentype()
@@ -591,3 +592,14 @@ class AbstractWorkerStrategy(ABC):
         """
         pass
 
+    async def check_location_is_valid(self) -> bool:
+        """
+        Check if the location is to be scanned
+        Returns:
+
+        """
+        if self._worker_state.current_location is None:
+            # there are no more coords - so worker is finished successfully
+            await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+            return False
+        return True

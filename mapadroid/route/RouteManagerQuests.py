@@ -32,7 +32,6 @@ class RouteManagerQuests(RouteManagerBase):
         self._tempinit: bool = False
 
     async def generate_stop_list(self):
-        await asyncio.sleep(5)
         async with self.db_wrapper as session, session:
             stops = await PokestopHelper.get_without_quests(session, self.geofence_helper)
         locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for stop_id, stop in

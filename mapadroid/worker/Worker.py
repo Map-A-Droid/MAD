@@ -129,7 +129,8 @@ class Worker(AbstractWorker):
                            "Exception: {}", e)
         # TODO: Move up to strategy, we do not want to entirely kill off the worker...
         #  Rather have some routine checking for a new walker/strategy to be available?
-        await self.communicator.cleanup()
+        # await self.communicator.cleanup()
+        await self.__update_strategy()
         logger.info("Internal cleanup of finished")
 
     async def _main_work_thread(self):
@@ -157,18 +158,7 @@ class Worker(AbstractWorker):
                         # TODO: consider getting results of health checks and aborting the entire worker?
                         walkercheck = await self.check_walker()
                         if not walkercheck:
-                            # TODO: Properly populate configmode flag
-                            await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-                            device_paused: bool = not await self._mapping_manager.is_device_active(
-                                self._worker_state.device_id)
-                            configmode: bool = application_args.config_mode
-                            scan_strategy: Optional[AbstractWorkerStrategy] = await self._strategy_factory \
-                                .get_strategy_using_settings(self._worker_state.origin,
-                                                             enable_configmode=device_paused or configmode,
-                                                             communicator=self.communicator,
-                                                             worker_state=self._worker_state)
-                            loop = asyncio.get_running_loop()
-                            loop.create_task(self.set_scan_strategy(scan_strategy))
+                            await self.__update_strategy()
                             return
                     except (
                             InternalStopWorkerException, WebsocketWorkerRemovedException,
@@ -192,9 +182,6 @@ class Worker(AbstractWorker):
 
                     try:
                         await self._scan_strategy.grab_next_location()
-                        if self._worker_state.current_location is None:
-                            # TODO: Check walkers...
-                            break
                     except (
                             InternalStopWorkerException, WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
@@ -205,8 +192,9 @@ class Worker(AbstractWorker):
 
                     try:
                         logger.debug('Checking if new location is valid')
-                        if not await self._check_location_is_valid():
-                            break
+                        if not await self._scan_strategy.check_location_is_valid():
+                            await self.__update_strategy()
+                            await asyncio.sleep(10)
                     except (
                             InternalStopWorkerException, WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
@@ -264,6 +252,19 @@ class Worker(AbstractWorker):
             logger.exception(e)
             await self._internal_cleanup()
 
+    async def __update_strategy(self):
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+        device_paused: bool = not await self._mapping_manager.is_device_active(
+            self._worker_state.device_id)
+        configmode: bool = application_args.config_mode
+        scan_strategy: Optional[AbstractWorkerStrategy] = await self._strategy_factory \
+            .get_strategy_using_settings(self._worker_state.origin,
+                                         enable_configmode=device_paused or configmode,
+                                         communicator=self.communicator,
+                                         worker_state=self._worker_state)
+        loop = asyncio.get_running_loop()
+        loop.create_task(self.set_scan_strategy(scan_strategy))
+
     async def update_scanned_location(self, latitude: float, longitude: float, _timestamp: float):
         async with self._db_wrapper as session, session:
             try:
@@ -319,7 +320,7 @@ class Worker(AbstractWorker):
         elif mode == "coords":
             exittime = self._scan_strategy.walker.algo_value
             logger.debug("Routemode coords, exittime {}", exittime)
-            if exittime:
+            if exittime: # TODO: Check if routemanager still has coords (e.g. questmode should make this one stop?)
                 return check_walker_value_type(exittime)
             return True
         elif mode == "idle":
@@ -349,7 +350,7 @@ class Worker(AbstractWorker):
             return False
 
     def set_geofix_sleeptime(self, sleeptime: int) -> bool:
-        self._geofix_sleeptime = sleeptime
+        self._worker_state.current_sleep_duration = sleeptime
         return True
 
     async def _check_location_is_valid(self) -> bool:
