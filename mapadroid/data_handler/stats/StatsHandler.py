@@ -18,6 +18,7 @@ from mapadroid.db.helper.TrsStatsLocationRawHelper import TrsStatsLocationRawHel
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import TransportType, PositionType, MonSeenTypes
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class StatsHandler:
@@ -75,11 +76,11 @@ class StatsHandler:
         player_stats.stats_collect_raid(time_scanned)
 
     def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
-                                    position_type: PositionType, data_timestamp: int, walker: str,
+                                    position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                     transport_type: TransportType, timestamp_of_record: int) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
         player_stats.stats_collect_location_data(location, success, fix_timestamp, position_type, data_timestamp,
-                                                 walker, transport_type, timestamp_of_record)
+                                                 worker_type, transport_type, timestamp_of_record)
 
     def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
                                 time_of_scan: datetime) -> None:

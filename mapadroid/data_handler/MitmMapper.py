@@ -8,6 +8,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class MitmMapper(object):
@@ -53,11 +54,11 @@ class MitmMapper(object):
             self.__stats_handler.stats_collect_raid(worker, time_scanned)
 
     async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
-                                          position_type: PositionType, data_timestamp: int, walker: str,
+                                          position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                           transport_type: TransportType, timestamp_of_record: int) -> None:
         if self.__stats_handler:
             self.__stats_handler.stats_collect_location_data(worker, location, success, fix_timestamp, position_type,
-                                                             data_timestamp, walker,
+                                                             data_timestamp, worker_type,
                                                              transport_type, timestamp_of_record)
 
     async def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,

@@ -9,6 +9,8 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType
 from loguru import logger
 
+from mapadroid.worker.WorkerType import WorkerType
+
 
 class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
     def __init__(self, worker: str):
@@ -27,7 +29,7 @@ class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
         del self._entries
 
     def add_location(self, location: Location, success: bool, fix_timestamp: int,
-                     position_type: PositionType, data_timestamp: int, walker: str,
+                     position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                      transport_type: TransportType, timestamp_of_record: int) -> None:
         stat = TrsStatsLocationRaw()
         stat.worker = self._worker
@@ -36,7 +38,7 @@ class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
         stat.lng = location.lng
         stat.data_ts = data_timestamp
         stat.type = position_type.value if position_type else PositionType.STARTUP.value
-        stat.walker = walker
+        stat.walker = worker_type.value
         stat.success = 1 if success else 0
         stat.period = timestamp_of_record
         stat.transporttype = transport_type.value if transport_type else TransportType.TELEPORT.value

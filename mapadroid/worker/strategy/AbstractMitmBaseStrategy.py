@@ -26,6 +26,7 @@ from mapadroid.utils.madGlobals import InternalStopWorkerException, application_
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
 
 
@@ -285,12 +286,16 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
     async def _handle_proto_timeout(self, fix_ts: int,
                                     position_type: PositionType):
         now_ts: int = int(time.time())
+        name: Optional[str] = self.walker.name
+        if not name:
+            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+            name = routemanager_settings.name
         await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
                                                             self._worker_state.current_location, False,
                                                             fix_ts,
                                                             position_type,
                                                             TIMESTAMP_NEVER,
-                                                            self._walker.name, self._worker_state.last_transport_type,
+                                                            name, self._worker_state.last_transport_type,
                                                             now_ts)
 
         self._worker_state.restart_count += 1
@@ -375,11 +380,14 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         self._worker_state.last_received_data_time = DatetimeWrapper.now()
         # TODO: Fire and forget async?
         now_ts: int = int(time.time())
+        routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+        worker_type: WorkerType = WorkerType(routemanager_settings.mode)
+
         await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
                                                             self._worker_state.current_location, True,
                                                             fix_ts,
                                                             position_type, timestamp_received_raw,
-                                                            self._walker.name, self._worker_state.last_transport_type,
+                                                            worker_type, self._worker_state.last_transport_type,
                                                             now_ts)
 
     async def start_pogo(self) -> bool:
