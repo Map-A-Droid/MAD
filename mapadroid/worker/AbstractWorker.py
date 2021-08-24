@@ -35,6 +35,7 @@ class AbstractWorker(ABC):
         raise RuntimeError("Replacing communicator is not supported")
 
     async def set_scan_strategy(self, strategy: AbstractWorkerStrategy) -> None:
+        await self._scan_strategy.worker_specific_setup_stop()
         self._scan_strategy = strategy
         await self._scan_strategy_changed()
 

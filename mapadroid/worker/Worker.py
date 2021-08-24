@@ -48,7 +48,8 @@ class Worker(AbstractWorker):
         self._scan_task: Optional[Task] = None
 
     async def _scan_strategy_changed(self):
-        await self._scan_strategy.worker_specific_setup_stop()
+        self._worker_state.stop_worker_event.set()
+
         async with self._work_mutex:
             if self._scan_task:
                 self._scan_task.cancel()
@@ -150,14 +151,17 @@ class Worker(AbstractWorker):
                     await self._start_of_new_strategy()
                     self._scan_task = loop.create_task(self._run_scan())
                 # TODO: Try/except CancelledError?
-                await self._scan_task
-                async with self._work_mutex:
-                    self._scan_task = None
-                await self._scan_strategy.worker_specific_setup_stop()
-                await self._cleanup_current()
-                await asyncio.sleep(5)
+                try:
+                    await self._scan_task
+                    async with self._work_mutex:
+                        self._scan_task = None
+                    await asyncio.sleep(5)
+                    await self.__update_strategy()
+                except CancelledError as e:
+                    logger.info("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
+                    # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
+                    #  be handled accordingly
                 self._worker_state.stop_worker_event.clear()
-                await self.__update_strategy()
         except CancelledError as e:
             await self._internal_cleanup()
 
@@ -269,9 +273,10 @@ class Worker(AbstractWorker):
                             logger.warning("Worker failed running post_move_location_routine, stopping worker")
                             break
                         logger.info("Worker finished iteration, continuing work")
-
+                await self._cleanup_current()
         except Exception as e:
             logger.exception(e)
+            raise e
 
     async def __update_strategy(self):
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
