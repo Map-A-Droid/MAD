@@ -256,8 +256,16 @@ class AbstractWorkerStrategy(ABC):
 
     async def _ensure_pogo_topmost(self):
         logger.info('Checking pogo screen...')
-        screen_type: ScreenType = ScreenType.UNDEFINED
         await self.start_pogo()
+        screen_type: ScreenType = await self._handle_screen()
+        logger.info('Checking pogo screen is finished')
+        if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
+            return True
+        else:
+            return False
+
+    async def _handle_screen(self):
+        screen_type: ScreenType = ScreenType.UNDEFINED
         while not self._worker_state.stop_worker_event.is_set():
             # TODO: Make this not block the loop somehow... asyncio waiting for a thread?
             screen_type: ScreenType = await self._word_to_screen_matching.detect_screentype()
@@ -334,11 +342,7 @@ class AbstractWorkerStrategy(ABC):
                 break
 
             self._worker_state.last_screen_type = screen_type
-        logger.info('Checking pogo screen is finished')
-        if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
-            return True
-        else:
-            return False
+        return screen_type
 
     async def _restart_pogo_safe(self):
         logger.info("WorkerBase::_restart_pogo_safe restarting pogo the long way")

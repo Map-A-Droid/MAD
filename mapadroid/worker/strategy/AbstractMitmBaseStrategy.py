@@ -15,6 +15,7 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
+from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
@@ -414,7 +415,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                     and not self._worker_state.stop_worker_event.is_set():
                 logger.info("Retry check_windows while waiting for injection at count {}",
                             not_injected_count)
-                await self._ensure_pogo_topmost()
+                await self._handle_screen()
             not_injected_count += 1
             wait_time = 0
             while wait_time < 20:
