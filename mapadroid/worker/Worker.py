@@ -173,6 +173,7 @@ class Worker(AbstractWorker):
                 except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                         WebsocketWorkerConnectionClosedException) as e:
                     logger.error("Failed initializing worker, connection terminated exceptionally. {}", e)
+                    logger.exception(e)
                     return
 
                 if not await self.check_max_walkers_reached():
