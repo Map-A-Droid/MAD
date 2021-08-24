@@ -46,10 +46,10 @@ class Worker(AbstractWorker):
         self._work_mutex: Optional[asyncio.Lock] = None
         self._worker_task: Optional[Task] = None
         self._scan_task: Optional[Task] = None
+        self._work_mutex: asyncio.Lock = asyncio.Lock()
 
     async def _scan_strategy_changed(self):
         self._worker_state.stop_worker_event.set()
-
         async with self._work_mutex:
             if self._scan_task:
                 self._scan_task.cancel()
@@ -84,8 +84,6 @@ class Worker(AbstractWorker):
         Returns:
 
         """
-        if not self._work_mutex:
-            self._work_mutex: asyncio.Lock = asyncio.Lock()
         async with self._work_mutex:
             if self._worker_task:
                 logger.warning("Task has not been removed before.")
@@ -122,11 +120,11 @@ class Worker(AbstractWorker):
         async with self._work_mutex:
             if self._scan_task:
                 self._scan_task.cancel()
+                self._scan_task = None
             if self._worker_task:
                 self._worker_task.cancel()
                 self._worker_task = None
         await self._scan_strategy.worker_specific_setup_stop()
-        self._worker_state.stop_worker_event.clear()
         await self._internal_cleanup()
 
     async def _cleanup_current(self):
@@ -147,6 +145,7 @@ class Worker(AbstractWorker):
         try:
             loop = asyncio.get_running_loop()
             while True:
+                self._worker_state.stop_worker_event.clear()
                 logger.info("Starting scan strategy...")
                 async with self._work_mutex:
                     await self._start_of_new_strategy()
@@ -162,7 +161,6 @@ class Worker(AbstractWorker):
                     logger.warning("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
                     # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
                     #  be handled accordingly
-                self._worker_state.stop_worker_event.clear()
         except CancelledError as e:
             await self._internal_cleanup()
 

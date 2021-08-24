@@ -217,7 +217,6 @@ class WebsocketServer(object):
             # Old connection is closed, i.e. no active connection present...
             logger.info("Old connection of {} closed, stopping worker/cleaning up to create a new one.",
                         origin)
-            # TODO: Replace worker strategy/connection seemingly
             if entry.worker_instance:
                 await entry.worker_instance.stop_worker()
         else:
@@ -243,8 +242,10 @@ class WebsocketServer(object):
                                            db_wrapper=self.__db_wrapper,
                                            scan_strategy=scan_strategy,
                                            strategy_factory=self.__strategy_factory)
-            await entry.worker_instance.start_worker()
+            if not await entry.worker_instance.start_worker():
+                return False
         else:
+            entry.worker_instance.communicator = communicator
             await entry.worker_instance.set_scan_strategy(scan_strategy)
         communicator.worker_instance_ref = entry.worker_instance
         return True
