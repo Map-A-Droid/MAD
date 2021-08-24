@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 from mapadroid.utils.collections import Location
 
@@ -18,7 +18,7 @@ class AbstractRoutePriorityQueueStrategy(ABC):
                  delay_after_event: int):
         self._update_interval: int = update_interval
         self._full_replace_queue: bool = full_replace_queue
-        self._max_backlog_duration: int = max_backlog_duration
+        self._max_backlog_duration: Optional[int] = max_backlog_duration
         self._delay_after_event: int = delay_after_event
 
     def get_delay_after_event(self) -> int:
@@ -42,7 +42,7 @@ class AbstractRoutePriorityQueueStrategy(ABC):
         return self._full_replace_queue
 
     def get_max_backlog_duration(self) -> int:
-        return self._max_backlog_duration
+        return self._max_backlog_duration if self._max_backlog_duration else 300
 
     @abstractmethod
     async def retrieve_new_coords(self) -> List[RoutePriorityQueueEntry]:
