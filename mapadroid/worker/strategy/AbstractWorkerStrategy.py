@@ -417,8 +417,6 @@ class AbstractWorkerStrategy(ABC):
                     logger.warning("Failed saving restart-status of {}: {}", self._worker_state.origin, e)
         self._worker_state.reboot_count = 0
         self._worker_state.restart_count = 0
-        # TODO: Reconsider...
-        #  await self.stop_worker()
         return start_result
 
     async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):

@@ -161,7 +161,7 @@ class Worker(AbstractWorker):
                     logger.warning("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
                     # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
                     #  be handled accordingly
-        except CancelledError as e:
+        except (CancelledError, InternalStopWorkerException) as e:
             await self._internal_cleanup()
 
     async def _run_scan(self):
@@ -169,7 +169,7 @@ class Worker(AbstractWorker):
             with logger.contextualize(identifier=self._worker_state.origin, name="worker"):
                 try:
                     await self._scan_strategy.pre_work_loop()
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                         WebsocketWorkerConnectionClosedException) as e:
                     logger.error("Failed initializing worker, connection terminated exceptionally. {}", e)
                     logger.exception(e)
@@ -189,7 +189,7 @@ class Worker(AbstractWorker):
                         if not walkercheck:
                             break
                     except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
                             WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker killed by walker settings")
@@ -200,7 +200,7 @@ class Worker(AbstractWorker):
                             if not await self._scan_strategy.health_check():
                                 break
                     except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
                             WebsocketWorkerConnectionClosedException):
                         logger.error(
@@ -211,7 +211,7 @@ class Worker(AbstractWorker):
                     try:
                         await self._scan_strategy.grab_next_location()
                     except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
                             WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker of does not support mode that's to be run, connection terminated "
@@ -223,7 +223,7 @@ class Worker(AbstractWorker):
                         if not await self._scan_strategy.check_location_is_valid():
                             break
                     except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
                             WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker received invalid coords!")
@@ -232,7 +232,7 @@ class Worker(AbstractWorker):
                     try:
                         await self._scan_strategy.pre_location_update()
                     except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
                             WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker of stopping because of stop signal in pre_location_update, connection "
@@ -247,7 +247,7 @@ class Worker(AbstractWorker):
                                       self._worker_state.current_location.lat, self._worker_state.current_location.lng)
                         time_snapshot, process_location = await self._scan_strategy.move_to_location()
                     except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
+                            WebsocketWorkerRemovedException,
                             WebsocketWorkerTimeoutException,
                             WebsocketWorkerConnectionClosedException):
                         logger.warning("Worker failed moving to new location, stopping worker, connection terminated "
@@ -267,7 +267,7 @@ class Worker(AbstractWorker):
                         try:
                             await self._scan_strategy.post_move_location_routine(time_snapshot)
                         except (
-                                InternalStopWorkerException, WebsocketWorkerRemovedException,
+                                WebsocketWorkerRemovedException,
                                 WebsocketWorkerTimeoutException,
                                 WebsocketWorkerConnectionClosedException):
                             logger.warning("Worker failed running post_move_location_routine, stopping worker")
