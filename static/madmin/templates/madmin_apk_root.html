@@ -242,6 +242,11 @@
         <div class="alert alert-primary">
             This section allows you to easily manage the required APKs for running MAD.
         </div>
+        {% if not has_token %}
+        <div class="alert alert-warning">
+            The MADdev API token is not configured in config.ini. Please configure this to use the wizard.
+        </div>
+        {% endif %}
     </div>
 </div>
 {% with messages = get_flashed_messages() %}
