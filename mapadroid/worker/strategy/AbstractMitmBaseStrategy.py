@@ -118,7 +118,6 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             logger.error("Timeout during init of worker")
             # no cleanup required here? TODO: signal websocket server somehow
             self._worker_state.stop_worker_event.set()
-            return
 
     async def _wait_for_data(self, timestamp: float = None,
                              proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \
@@ -286,16 +285,15 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
     async def _handle_proto_timeout(self, fix_ts: int,
                                     position_type: PositionType):
         now_ts: int = int(time.time())
-        name: Optional[str] = self.walker.name
-        if not name:
-            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
-            name = routemanager_settings.name
+        routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+        worker_type: WorkerType = WorkerType(routemanager_settings.mode)
+
         await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
                                                             self._worker_state.current_location, False,
                                                             fix_ts,
                                                             position_type,
                                                             TIMESTAMP_NEVER,
-                                                            name, self._worker_state.last_transport_type,
+                                                            worker_type, self._worker_state.last_transport_type,
                                                             now_ts)
 
         self._worker_state.restart_count += 1

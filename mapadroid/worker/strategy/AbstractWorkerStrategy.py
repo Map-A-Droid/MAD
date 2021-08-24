@@ -22,6 +22,7 @@ from mapadroid.utils.madGlobals import InternalStopWorkerException, application_
     WebsocketWorkerRemovedException, TransportType, ScreenshotType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class AbstractWorkerStrategy(ABC):
@@ -395,10 +396,12 @@ class AbstractWorkerStrategy(ABC):
         await asyncio.sleep(5)
         if mitm_mapper and self._walker:
             now_ts: int = int(time.time())
+            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+            worker_type: WorkerType = WorkerType(routemanager_settings.mode)
             await mitm_mapper.stats_collect_location_data(self._worker_state.origin,
                                                           self._worker_state.current_location, True,
                                                           now_ts, PositionType.REBOOT, 0,
-                                                          self._walker.name, TransportType.TELEPORT,
+                                                          worker_type, TransportType.TELEPORT,
                                                           now_ts)
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
             async with self._db_wrapper as session, session:
@@ -431,9 +434,11 @@ class AbstractWorkerStrategy(ABC):
             await asyncio.sleep(1)
             if mitm_mapper and self._walker:
                 now_ts: int = int(time.time())
+                routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+                worker_type: WorkerType = WorkerType(routemanager_settings.mode)
                 await mitm_mapper.stats_collect_location_data(self._worker_state.origin,
                                                               self._worker_state.current_location, True, now_ts,
-                                                              PositionType.RESTART, 0, self._walker.name,
+                                                              PositionType.RESTART, 0, worker_type,
                                                               self._worker_state.last_transport_type, now_ts)
             return await self.start_pogo()
         else:
