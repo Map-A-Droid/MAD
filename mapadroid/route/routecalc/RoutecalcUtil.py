@@ -85,9 +85,8 @@ class RoutecalcUtil:
             from mapadroid.route.routecalc.calculate_route_all import \
                 route_calc_all
             loop = asyncio.get_running_loop()
-            with concurrent.futures.ProcessPoolExecutor() as pool:
-                sol_best = await loop.run_in_executor(
-                    pool, route_calc_all, less_coords, route_name, num_processes, algorithm)
+            sol_best = await loop.run_in_executor(
+                None, route_calc_all, less_coords, route_name, num_processes, algorithm)
 
             end = timer()
 
