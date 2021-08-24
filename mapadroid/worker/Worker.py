@@ -162,7 +162,11 @@ class Worker(AbstractWorker):
                     # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
                     #  be handled accordingly
         except (CancelledError, InternalStopWorkerException) as e:
+            logger.info("Worker is stopping")
+        finally:
             await self._internal_cleanup()
+            self._worker_task = None
+            self._scan_task = None
 
     async def _run_scan(self):
         try:
