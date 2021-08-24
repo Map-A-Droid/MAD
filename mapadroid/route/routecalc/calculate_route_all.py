@@ -46,6 +46,7 @@ def format_solution(manager, routing, solution):
     while not routing.IsEnd(index):
         route_through_nodes.append(manager.IndexToNode(index))
         index = solution.Value(routing.NextVar(index))
+    logger.debug("Done formatting solution.")
     return route_through_nodes
 
 
