@@ -147,6 +147,7 @@ class Worker(AbstractWorker):
         try:
             loop = asyncio.get_running_loop()
             while True:
+                logger.info("Starting scan strategy...")
                 async with self._work_mutex:
                     await self._start_of_new_strategy()
                     self._scan_task = loop.create_task(self._run_scan())
@@ -158,7 +159,7 @@ class Worker(AbstractWorker):
                     await asyncio.sleep(5)
                     await self.__update_strategy()
                 except CancelledError as e:
-                    logger.info("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
+                    logger.warning("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
                     # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
                     #  be handled accordingly
                 self._worker_state.stop_worker_event.clear()
