@@ -144,10 +144,11 @@ class Worker(AbstractWorker):
     async def _run(self) -> None:
         # TODO: when to break?
         try:
+            loop = asyncio.get_running_loop()
             while True:
                 async with self._work_mutex:
                     await self._start_of_new_strategy()
-                    self._scan_task = self._run_scan()
+                    self._scan_task = loop.create_task(self._run_scan())
                 # TODO: Try/except CancelledError?
                 await self._scan_task
                 async with self._work_mutex:
