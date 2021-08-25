@@ -557,6 +557,7 @@ class WordToScreenMatching(object):
         try:
             parser = ET.XMLParser(encoding="utf-8")
             xmlroot = ET.fromstring(xml, parser=parser)
+            logger.debug(xml)
             for item in xmlroot.iter('node'):
                 if (mail and mail.lower() in str(item.attrib['text']).lower()
                         or not mail and (item.attrib["resource-id"] == "com.google.android.gms:id/account_name"
@@ -572,6 +573,7 @@ class WordToScreenMatching(object):
                     return True
         except Exception as e:
             logger.error('Something wrong while parsing xml: {}', e)
+            logger.exception(e)
             return False
 
         await asyncio.sleep(2)
