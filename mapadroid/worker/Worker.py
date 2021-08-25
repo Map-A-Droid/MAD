@@ -161,126 +161,69 @@ class Worker(AbstractWorker):
                     logger.warning("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
                     # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
                     #  be handled accordingly
-        except (CancelledError, InternalStopWorkerException) as e:
+        except (CancelledError, InternalStopWorkerException,
+                WebsocketWorkerRemovedException,
+                WebsocketWorkerConnectionClosedException,
+                WebsocketWorkerTimeoutException) as e:
+            # TODO: in case of WebsocketWorkerConnectionClosedException, wait for new connection rather than stopping
             logger.info("Worker is stopping")
+        except Exception as e:
+            logger.exception(e)
         finally:
             await self._internal_cleanup()
             self._worker_task = None
             self._scan_task = None
 
     async def _run_scan(self):
-        try:
-            with logger.contextualize(identifier=self._worker_state.origin, name="worker"):
-                try:
-                    await self._scan_strategy.pre_work_loop()
-                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException) as e:
-                    logger.error("Failed initializing worker, connection terminated exceptionally. {}", e)
-                    logger.exception(e)
-                    return
+        with logger.contextualize(identifier=self._worker_state.origin, name="worker"):
+            await self._scan_strategy.pre_work_loop()
 
-                if not await self.check_max_walkers_reached():
-                    logger.warning('Max. Walkers in Area {} - closing connections',
-                                   self._mapping_manager.routemanager_get_name(
-                                       self._scan_strategy.area_id))
-                    await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-                    return
+            if not await self.check_max_walkers_reached():
+                logger.warning('Max. Walkers in Area {}.',
+                               self._mapping_manager.routemanager_get_name(
+                                   self._scan_strategy.area_id))
+                await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+                return
 
-                while not self._worker_state.stop_worker_event.is_set():
-                    try:
-                        # TODO: consider getting results of health checks and aborting the entire worker?
-                        walkercheck = await self.check_walker()
-                        if not walkercheck:
-                            break
-                    except (
-                            WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker killed by walker settings")
+            while not self._worker_state.stop_worker_event.is_set():
+                # TODO: consider getting results of health checks and aborting the entire worker?
+                walkercheck = await self.check_walker()
+                if not walkercheck:
+                    break
+
+                async with self._work_mutex:
+                    if not await self._scan_strategy.health_check():
                         break
 
-                    try:
-                        async with self._work_mutex:
-                            if not await self._scan_strategy.health_check():
-                                break
-                    except (
-                            WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.error(
-                            "Websocket connection to {} lost while running healthchecks, connection terminated "
-                            "exceptionally", self._worker_state.origin)
-                        break
+                await self._scan_strategy.grab_next_location()
 
-                    try:
-                        await self._scan_strategy.grab_next_location()
-                    except (
-                            WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker of does not support mode that's to be run, connection terminated "
-                                       "exceptionally")
-                        break
+                logger.debug('Checking if new location is valid')
+                if not await self._scan_strategy.check_location_is_valid():
+                    break
 
-                    try:
-                        logger.debug('Checking if new location is valid')
-                        if not await self._scan_strategy.check_location_is_valid():
-                            break
-                    except (
-                            WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker received invalid coords!")
-                        break
+                await self._scan_strategy.pre_location_update()
 
-                    try:
-                        await self._scan_strategy.pre_location_update()
-                    except (
-                            WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker of stopping because of stop signal in pre_location_update, connection "
-                                       "terminated exceptionally")
-                        break
+                last_location: Location = await self.get_devicesettings_value(
+                    MappingManagerDevicemappingKey.LAST_LOCATION, Location(0.0, 0.0))
+                logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
+                              last_location.lat, last_location.lng,
+                              self._worker_state.current_location.lat, self._worker_state.current_location.lng)
+                time_snapshot, process_location = await self._scan_strategy.move_to_location()
 
-                    try:
-                        last_location: Location = await self.get_devicesettings_value(
-                            MappingManagerDevicemappingKey.LAST_LOCATION, Location(0.0, 0.0))
-                        logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
-                                      last_location.lat, last_location.lng,
-                                      self._worker_state.current_location.lat, self._worker_state.current_location.lng)
-                        time_snapshot, process_location = await self._scan_strategy.move_to_location()
-                    except (
-                            WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker failed moving to new location, stopping worker, connection terminated "
-                                       "exceptionally")
-                        break
+                if process_location:
+                    self._worker_state.location_count += 1
+                    logger.debug("Setting new 'scannedlocation' in Database")
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(
+                        self.update_scanned_location(self._worker_state.current_location.lat,
+                                                     self._worker_state.current_location.lng,
+                                                     time_snapshot))
 
-                    if process_location:
-                        self._worker_state.location_count += 1
-                        logger.debug("Setting new 'scannedlocation' in Database")
-                        loop = asyncio.get_running_loop()
-                        loop.create_task(
-                            self.update_scanned_location(self._worker_state.current_location.lat,
-                                                         self._worker_state.current_location.lng,
-                                                         time_snapshot))
+                    # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
+                    await self._scan_strategy.post_move_location_routine(time_snapshot)
 
-                        # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
-                        try:
-                            await self._scan_strategy.post_move_location_routine(time_snapshot)
-                        except (
-                                WebsocketWorkerRemovedException,
-                                WebsocketWorkerTimeoutException,
-                                WebsocketWorkerConnectionClosedException):
-                            logger.warning("Worker failed running post_move_location_routine, stopping worker")
-                            break
-                        logger.info("Worker finished iteration, continuing work")
-                await self._cleanup_current()
-        except Exception as e:
-            logger.exception(e)
-            raise e
+                    logger.info("Worker finished iteration, continuing work")
+            await self._cleanup_current()
 
     async def __update_strategy(self):
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)

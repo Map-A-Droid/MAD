@@ -79,7 +79,8 @@ def install_task_create_excepthook():
         # Ad the pylint ignore: we want to handle all exceptions here so that the result of the task
         # is properly logged. There is no point re-raising the exception in this callback.
         except Exception as e:  # pylint: disable=broad-except
-            logger.exception(e)
+            logger.debug2("Potential uncaught exception.", exc_info=True)
+
 
     def create_task(*args, **kwargs) -> Task:
         try:
@@ -93,7 +94,7 @@ def install_task_create_excepthook():
         except BrokenPipeError:
             pass
         except Exception as inner_ex:
-            logger.exception(inner_ex)
+            logger.debug(inner_ex)
             raise inner_ex
 
     loop.create_task = create_task
