@@ -225,17 +225,28 @@ class Worker(AbstractWorker):
                     logger.info("Worker finished iteration, continuing work")
             await self._cleanup_current()
 
-    async def __update_strategy(self):
+    async def __get_current_strategy_to_use(self) -> Optional[AbstractWorkerStrategy]:
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
         device_paused: bool = not await self._mapping_manager.is_device_active(
             self._worker_state.device_id)
         configmode: bool = application_args.config_mode
+        paused_or_config: bool = device_paused or configmode
         scan_strategy: Optional[AbstractWorkerStrategy] = await self._strategy_factory \
             .get_strategy_using_settings(self._worker_state.origin,
-                                         enable_configmode=device_paused or configmode,
+                                         enable_configmode=paused_or_config,
                                          communicator=self.communicator,
                                          worker_state=self._worker_state)
-        await self.set_scan_strategy(scan_strategy)
+        return scan_strategy
+
+    async def __update_strategy(self):
+        device_paused: bool = not await self._mapping_manager.is_device_active(
+            self._worker_state.device_id)
+        configmode: bool = application_args.config_mode
+        paused_or_config: bool = device_paused or configmode
+        if not paused_or_config:
+            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use()
+            if scan_strategy:
+                await self.set_scan_strategy(scan_strategy)
 
     async def update_scanned_location(self, latitude: float, longitude: float, _timestamp: float):
         async with self._db_wrapper as session, session:
@@ -248,7 +259,10 @@ class Worker(AbstractWorker):
     async def check_walker(self):
         if not self._scan_strategy.walker:
             logger.warning("No walker set")
-            return True
+            # TODO: Somehow check if some switching should be happening and when...
+            #  Eventually, that should be handled by some other entity
+            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use()
+            return scan_strategy is None
         mode = self._scan_strategy.walker.algo_type
         walkereventid = self._scan_strategy.walker.eventid
         if walkereventid is not None and walkereventid != self._worker_state.active_event.get_current_event_id():

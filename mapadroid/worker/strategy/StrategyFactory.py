@@ -49,10 +49,10 @@ class StrategyFactory:
                                            walker_settings=None,
                                            worker_state=worker_state)
 
-        # not a configmore worker, move on adjusting devicesettings etc
+        # not a configmode worker, move on adjusting devicesettings etc
         walker_configuration: Optional[WalkerConfiguration] = await self.__prep_settings(origin)
         if walker_configuration is None:
-            logger.warning("Failed to find a walker configuration")
+            logger.error("Failed to find a walker configuration")
             return await self.get_strategy(worker_type=WorkerType.CONFIGMODE,
                                            area_id=0,
                                            communicator=communicator,
@@ -72,7 +72,7 @@ class StrategyFactory:
             return await self.get_strategy(worker_type=WorkerType.CONFIGMODE,
                                            area_id=0,
                                            communicator=communicator,
-                                           walker_settings=None,
+                                           walker_settings=walker_configuration.walker_settings,
                                            worker_state=worker_state)
 
         return await self.get_strategy(worker_type=walker_routemanager_mode,
