@@ -6,8 +6,7 @@ from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrat
 
 
 class AbstractWorker(ABC):
-    def __init__(self, communicator: AbstractCommunicator, scan_strategy: AbstractWorkerStrategy):
-        self._communicator: AbstractCommunicator = communicator
+    def __init__(self, scan_strategy: AbstractWorkerStrategy):
         self._scan_strategy: AbstractWorkerStrategy = scan_strategy
 
     @abstractmethod
@@ -26,13 +25,8 @@ class AbstractWorker(ABC):
     def set_geofix_sleeptime(self, sleeptime: int) -> bool:
         pass
 
-    @property
-    def communicator(self) -> AbstractCommunicator:
-        return self._communicator
-
-    @communicator.setter
-    def communicator(self, value: AbstractCommunicator) -> None:
-        raise RuntimeError("Replacing communicator is not supported")
+    def get_communicator(self) -> AbstractCommunicator:
+        return self._scan_strategy.get_communicator()
 
     async def set_scan_strategy(self, strategy: AbstractWorkerStrategy) -> None:
         await self._scan_strategy.worker_specific_setup_stop()

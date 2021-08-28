@@ -41,6 +41,9 @@ class AbstractWorkerStrategy(ABC):
         self._walker: SettingsWalkerarea = walker
         self._worker_state: WorkerState = worker_state
 
+    def get_communicator(self) -> AbstractCommunicator:
+        return self._communicator
+
     @property
     def walker(self) -> SettingsWalkerarea:
         return self._walker

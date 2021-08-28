@@ -18,7 +18,6 @@ from mapadroid.utils.madGlobals import (
     WebsocketWorkerTimeoutException, application_args)
 from mapadroid.utils.resolution import ResolutionCalculator
 from mapadroid.utils.routeutil import check_walker_value_type
-from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
@@ -27,13 +26,13 @@ from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
 
 
 class Worker(AbstractWorker):
-    def __init__(self, communicator: AbstractCommunicator,
+    def __init__(self,
                  worker_state: WorkerState,
                  mapping_manager: MappingManager,
                  db_wrapper: DbWrapper,
                  scan_strategy: AbstractWorkerStrategy,
                  strategy_factory: StrategyFactory):
-        AbstractWorker.__init__(self, communicator=communicator, scan_strategy=scan_strategy)
+        AbstractWorker.__init__(self, scan_strategy=scan_strategy)
         self._mapping_manager: MappingManager = mapping_manager
         self._db_wrapper: DbWrapper = db_wrapper
         self._worker_state: WorkerState = worker_state
@@ -138,7 +137,8 @@ class Worker(AbstractWorker):
                            "Exception: {}", e)
 
     async def _internal_cleanup(self):
-        await self.communicator.cleanup()
+        if self._scan_strategy:
+            await self._scan_strategy.get_communicator().cleanup()
 
     async def _run(self) -> None:
         # TODO: when to break?
@@ -234,7 +234,7 @@ class Worker(AbstractWorker):
         scan_strategy: Optional[AbstractWorkerStrategy] = await self._strategy_factory \
             .get_strategy_using_settings(self._worker_state.origin,
                                          enable_configmode=paused_or_config,
-                                         communicator=self.communicator,
+                                         communicator=self._scan_strategy.get_communicator(),
                                          worker_state=self._worker_state)
         return scan_strategy
 

@@ -189,7 +189,8 @@ class WebsocketServer(object):
                 logger.info("Awaiting unregister")
                 if entry.worker_instance:
                     await entry.worker_instance.stop_worker()
-                await self.__remove_from_current_users(origin)
+                # TODO: Only remove after some time to keep a worker state
+                # await self.__remove_from_current_users(origin)
 
         logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 
@@ -235,19 +236,21 @@ class WebsocketServer(object):
             .get_strategy_using_settings(origin, use_configmode, communicator=communicator,
                                          worker_state=entry.worker_state)
         if not scan_strategy:
+            logger.warning("No strategy could be determined")
             return False
         if not entry.worker_instance:
-            entry.worker_instance = Worker(communicator=communicator, worker_state=entry.worker_state,
+            logger.info("Creating new worker")
+            entry.worker_instance = Worker(worker_state=entry.worker_state,
                                            mapping_manager=self.__mapping_manager,
                                            db_wrapper=self.__db_wrapper,
                                            scan_strategy=scan_strategy,
                                            strategy_factory=self.__strategy_factory)
-            if not await entry.worker_instance.start_worker():
-                return False
         else:
-            entry.worker_instance.communicator = communicator
+            logger.info("Updating strategy")
             await entry.worker_instance.set_scan_strategy(scan_strategy)
         communicator.worker_instance_ref = entry.worker_instance
+        if not await entry.worker_instance.start_worker():
+            return False
         return True
 
     async def __authenticate_connection(self, websocket_client_connection: websockets.WebSocketClientProtocol) \
@@ -353,7 +356,7 @@ class WebsocketServer(object):
     def get_origin_communicator(self, origin: str) -> Optional[AbstractCommunicator]:
         # TODO: this should probably lock?
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-        return (entry.worker_instance.communicator
+        return (entry.worker_instance.get_communicator()
                 if entry is not None and entry.worker_instance is not None
                 else None)
 
