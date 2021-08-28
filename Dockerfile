@@ -14,32 +14,20 @@ COPY requirements.txt /usr/src/app/
 RUN export DEBIAN_FRONTEND=noninteractive && apt-get update \
 && apt-get install -y --no-install-recommends \
 build-essential \
-libglib2.0-0 \
 default-libmysqlclient-dev \
-libgl1 python3-opencv \
+# OpenCV & dependencies
+python3-opencv \
 libsm6 \
-libxext6 \
-libxrender-dev \
-tk \
-wget \
-&& wget https://github.com/tesseract-ocr/tessdata/raw/master/eng.traineddata \
-&& mkdir /usr/local/share/tessdata/ \
-&& mv -v eng.traineddata /usr/local/share/tessdata/ \
 # python reqs
 && python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
 # cleanup
-&& apt-get remove -y wget \
 && apt-get remove -y build-essential \
 && apt-get remove -y python2.7 && rm -rf /usr/lib/python2.7 \
 && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
 && rm -rf /var/lib/apt/lists/*
 
-RUN printf "deb http://ftp.de.debian.org/debian stretch main" >> /etc/apt/sources.list \
-&& apt-get update && apt-get install libicu57
-
-# tesseract from stretch-backport
-RUN printf "deb http://httpredir.debian.org/debian stretch-backports main non-free\ndeb-src http://httpredir.debian.org/debian stretch-backports main non-free" >> /etc/apt/sources.list.d/backports.list \
-&& apt-get update && apt-get -y --allow-unauthenticated -t stretch-backports install tesseract-ocr libtesseract-dev
+# tesseract
+RUN apt-get update && apt-get -y install tesseract-ocr
 
 # Copy everything to the working directory (Python files, templates, config) in one go.
 COPY . /usr/src/app/

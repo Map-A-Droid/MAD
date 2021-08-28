@@ -3,12 +3,10 @@ import json
 import os
 import time
 
-import requests
 from cachetools.func import ttl_cache
 from PIL import Image
 
 import mapadroid
-from mapadroid.utils.global_variables import VERSIONCODES_URL
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.system)
@@ -65,22 +63,10 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
 
 
 @ttl_cache
-def get_version_codes(force_gh=False):
-    if not force_gh:
-        try:
-            with open('configs/version_codes.json') as fh:
-                return json.load(fh)
-        except (IOError, json.decoder.JSONDecodeError):
-            pass
+def get_version_codes():
     try:
-        raw_resp = requests.get(VERSIONCODES_URL)
-        raw_resp.raise_for_status()
-    except Exception:
-        logger.error("Unable to query GitHub")
+        with open('configs/version_codes.json') as fh:
+            return json.load(fh)
+    except (IOError, json.decoder.JSONDecodeError):
+        logger.exception("Unable to parse the JSON when getting version codes")
         return {}
-    else:
-        try:
-            return raw_resp.json()
-        except json.decoder.JSONDecodeError:
-            logger.exception("Unable to parse the JSON when getting version codes")
-            return {}

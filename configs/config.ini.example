@@ -157,8 +157,9 @@
 ######################
 #token_dispenser:           # Path to token dispenser config (MAD-provided)
 #token_dispenser_user:      # Path to token dispenser config (User-provided)
-#gmail_user:                # Email address if not using a token dispenser
-#gmail_passwd:              # Google Mail Password for interacting with the Google Play Store.  Must be an app password or 2fa will be triggered (this should be enabled on your account anyways')
+#gmail_user:                # (Deprecated) Email address if not using a token dispenser
+#gmail_passwd:              # (Deprecated) Google Mail Password for interacting with the Google Play Store.  Must be an app password or 2fa will be triggered (this should be enabled on your account anyways')
+#maddev_api_token           # Token used by the wizard to query supported versions
 
 
 # Auto-Config
