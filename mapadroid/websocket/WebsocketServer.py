@@ -18,7 +18,7 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.logging import (InterceptHandler, LoggerEnums)
-from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
+from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException, WebsocketWorkerConnectionClosedException
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
@@ -151,6 +151,7 @@ class WebsocketServer(object):
                 # First check if an entry is present, worker running etc...
                 if entry and entry.websocket_client_connection:
                     await self.__handle_existing_connection(entry, origin)
+                    entry.websocket_client_connection = websocket_client_connection
                 elif not entry:
                     # Just create a new entry...
                     worker_state: WorkerState = WorkerState(origin=origin,
@@ -216,10 +217,8 @@ class WebsocketServer(object):
             raise WebsocketAbortRegistrationException
         elif entry.websocket_client_connection.closed:
             # Old connection is closed, i.e. no active connection present...
-            logger.info("Old connection of {} closed, stopping worker/cleaning up to create a new one.",
+            logger.info("Old connection of {} closed.",
                         origin)
-            if entry.worker_instance:
-                await entry.worker_instance.stop_worker()
         else:
             # Old connection neither open or closed - either closing or opening...
             # Should have been handled by the while loop above...

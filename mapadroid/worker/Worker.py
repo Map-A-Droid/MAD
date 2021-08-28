@@ -162,15 +162,16 @@ class Worker(AbstractWorker):
                     # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
                     #  be handled accordingly
         except (CancelledError, InternalStopWorkerException,
-                WebsocketWorkerRemovedException,
-                WebsocketWorkerConnectionClosedException,
                 WebsocketWorkerTimeoutException) as e:
             # TODO: in case of WebsocketWorkerConnectionClosedException, wait for new connection rather than stopping
             logger.info("Worker is stopping")
+            await self._internal_cleanup()
+        except (WebsocketWorkerRemovedException,
+                WebsocketWorkerConnectionClosedException) as e:
+            logger.info("Connection to device closed")
         except Exception as e:
             logger.exception(e)
         finally:
-            await self._internal_cleanup()
             self._worker_task = None
             self._scan_task = None
 
