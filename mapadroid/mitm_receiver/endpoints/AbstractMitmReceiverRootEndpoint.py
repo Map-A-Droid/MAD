@@ -241,6 +241,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         while queue.qsize() > 200:
             self._get_data_queue().get_nowait()
             queue.task_done()
+            logger.warning("Dropped task")
         await self._get_data_queue().put(data)
 
     def _check_mitm_status_auth(self):
