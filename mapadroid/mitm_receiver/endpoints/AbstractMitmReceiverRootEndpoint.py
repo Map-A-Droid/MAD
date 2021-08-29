@@ -236,6 +236,11 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         return web.Response(text="", status=200)
 
     async def _add_to_queue(self, data):
+        queue = self._get_data_queue()
+        # TODO: Arg setting threshold
+        while queue.qsize() > 200:
+            self._get_data_queue().get_nowait()
+            queue.task_done()
         await self._get_data_queue().put(data)
 
     def _check_mitm_status_auth(self):
