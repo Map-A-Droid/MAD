@@ -177,13 +177,13 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             await self.raise_stop_worker_if_applicable()
             if type_of_data_returned == ReceivedType.UNDEFINED:
                 # We don't want to sleep if we have received something that may be useful to us...
-                await asyncio.sleep(application_args.wait_for_data_sleep_duration)
                 # In case last_time_received was set, we reset it after the first
                 # iteration to not run into trouble (endless loop)
                 last_time_received = TIMESTAMP_NEVER
             else:
                 last_time_received = latest_proto_entry.timestamp_of_data_retrieval
                 break
+            await asyncio.sleep(application_args.wait_for_data_sleep_duration)
 
         if proto_to_wait_for == ProtoIdentifier.GMO:
             if type_of_data_returned != ReceivedType.UNDEFINED:

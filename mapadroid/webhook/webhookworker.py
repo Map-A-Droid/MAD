@@ -129,8 +129,8 @@ class WebhookWorker:
                 continue
 
             try:
-                quest = await generate_quest(stop, quest)
-                quest_payload = self.__construct_quest_payload(quest)
+                transformed_quest = await generate_quest(stop, quest)
+                quest_payload = self.__construct_quest_payload(transformed_quest)
 
                 entire_payload = {"type": "quest", "message": quest_payload}
                 ret.append(entire_payload)
@@ -139,62 +139,63 @@ class WebhookWorker:
 
         return ret
 
-    def __construct_quest_payload(self, quest):
+    def __construct_quest_payload(self, transformed_quest: Dict) -> Dict:
         if self.__args.quest_webhook_flavor == "default":
             return {
-                "pokestop_id": quest["pokestop_id"],
-                "latitude": quest["latitude"],
-                "longitude": quest["longitude"],
-                "quest_type": quest["quest_type"],
-                "quest_type_raw": quest["quest_type_raw"],
-                "item_type": quest["item_type"],
-                "name": quest["name"].replace('"', '\\"').replace("\n", "\\n"),
-                "url": quest["url"],
-                "timestamp": quest["timestamp"],
-                "quest_reward_type": quest["quest_reward_type"],
-                "quest_reward_type_raw": quest["quest_reward_type_raw"],
-                "quest_target": quest["quest_target"],
-                "pokemon_id": int(quest["pokemon_id"]),
-                "pokemon_form": int(quest.get("pokemon_form", '0')),
-                "pokemon_costume": int(quest.get("pokemon_costume", '0')),
-                "item_amount": quest["item_amount"],
-                "item_id": quest["item_id"],
-                "quest_task": quest["quest_task"],
-                "quest_condition": quest["quest_condition"].replace("'", '"').lower(),
-                "quest_template": quest["quest_template"],
-                "is_ar_scan_eligible": quest["is_ar_scan_eligible"],
+                "pokestop_id": transformed_quest["pokestop_id"],
+                "latitude": transformed_quest["latitude"],
+                "longitude": transformed_quest["longitude"],
+                "quest_type": transformed_quest["quest_type"],
+                "quest_type_raw": transformed_quest["quest_type_raw"],
+                "item_type": transformed_quest["item_type"],
+                "name": transformed_quest["name"].replace('"', '\\"').replace("\n", "\\n"),
+                "url": transformed_quest["url"],
+                "timestamp": transformed_quest["timestamp"],
+                "quest_reward_type": transformed_quest["quest_reward_type"],
+                "quest_reward_type_raw": transformed_quest["quest_reward_type_raw"],
+                "quest_reward_raw": transformed_quest['quest_reward_raw'].replace("'", '"').lower(),
+                "quest_target": transformed_quest["quest_target"],
+                "pokemon_id": int(transformed_quest["pokemon_id"]),
+                "pokemon_form": int(transformed_quest.get("pokemon_form", '0')),
+                "pokemon_costume": int(transformed_quest.get("pokemon_costume", '0')),
+                "item_amount": transformed_quest["item_amount"],
+                "item_id": transformed_quest["item_id"],
+                "quest_task": transformed_quest["quest_task"],
+                "quest_condition": transformed_quest["quest_condition"].replace("'", '"').lower(),
+                "quest_template": transformed_quest["quest_template"],
+                "is_ar_scan_eligible": transformed_quest["is_ar_scan_eligible"],
             }
 
         # Other known type is Poracle/RDM compatible.
 
         # For some reason we aren't saving JSON in our databse, so we gotta replace ' with ".
         # Pray that we never save strings that contain ' inside them.
-        quest_conditions = json.loads(quest["quest_condition"].replace("'", '"'))
+        quest_conditions = json.loads(transformed_quest["quest_condition"].replace("'", '"'))
         quest_condition = []
         quest_rewards = []
-        a_quest_reward_type = quest["quest_reward_type_raw"]
+        a_quest_reward_type = transformed_quest["quest_reward_type_raw"]
         a_quest_reward = {}
         quest_rewards.append(a_quest_reward)
         a_quest_reward["info"] = {}
         a_quest_reward["type"] = a_quest_reward_type
 
         if a_quest_reward_type == 2:
-            a_quest_reward["info"]["item_id"] = quest["item_id"]
-            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
+            a_quest_reward["info"]["item_id"] = transformed_quest["item_id"]
+            a_quest_reward["info"]["amount"] = int(transformed_quest["item_amount"])
         elif a_quest_reward_type == 3:
-            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
+            a_quest_reward["info"]["amount"] = int(transformed_quest["item_amount"])
         elif a_quest_reward_type == 4:
-            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
-            a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
+            a_quest_reward["info"]["amount"] = int(transformed_quest["item_amount"])
+            a_quest_reward["info"]["pokemon_id"] = int(transformed_quest["pokemon_id"])
         elif a_quest_reward_type == 7:
-            a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
-            a_quest_reward["info"]["form_id"] = int(quest["pokemon_form"])
-            a_quest_reward["info"]["costume_id"] = int(quest.get("pokemon_costume", '0'))
+            a_quest_reward["info"]["pokemon_id"] = int(transformed_quest["pokemon_id"])
+            a_quest_reward["info"]["form_id"] = int(transformed_quest["pokemon_form"])
+            a_quest_reward["info"]["costume_id"] = int(transformed_quest.get("pokemon_costume", '0'))
             a_quest_reward["info"]["shiny"] = 0
-            a_quest_reward["info"]["form"] = int(quest["pokemon_form"])
+            a_quest_reward["info"]["form"] = int(transformed_quest["pokemon_form"])
         elif a_quest_reward_type == 12:
-            a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
-            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
+            a_quest_reward["info"]["pokemon_id"] = int(transformed_quest["pokemon_id"])
+            a_quest_reward["info"]["amount"] = int(transformed_quest["item_amount"])
 
         for a_quest_condition in quest_conditions:
             # condition for special type of pokemon (type = 1)
@@ -283,18 +284,18 @@ class WebhookWorker:
             quest_condition.append(a_quest_condition)
 
         return {
-            "pokestop_id": quest["pokestop_id"],
-            "template": quest["quest_template"],
-            "pokestop_name": quest["name"].replace("\n", "\\n"),
-            "pokestop_url": quest["url"],
+            "pokestop_id": transformed_quest["pokestop_id"],
+            "template": transformed_quest["quest_template"],
+            "pokestop_name": transformed_quest["name"].replace("\n", "\\n"),
+            "pokestop_url": transformed_quest["url"],
             "conditions": quest_condition,
-            "type": quest["quest_type_raw"],
-            "latitude": quest["latitude"],
-            "longitude": quest["longitude"],
+            "type": transformed_quest["quest_type_raw"],
+            "latitude": transformed_quest["latitude"],
+            "longitude": transformed_quest["longitude"],
             "rewards": quest_rewards,
-            "target": quest["quest_target"],
-            "updated": quest["timestamp"],
-            "quest_task": quest["quest_task"],
+            "target": transformed_quest["quest_target"],
+            "updated": transformed_quest["timestamp"],
+            "quest_task": transformed_quest["quest_task"],
         }
 
     def __prepare_weather_data(self, weather_data):

@@ -8,10 +8,8 @@ from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
 from mapadroid.db.model import Raid, Gym, GymDetail, Weather, TrsQuest, Pokestop, Pokemon, TrsSpawn
-from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import MonSeenTypes
-
-logger = get_logger(LoggerEnums.database)
+from loguru import logger
 
 
 class DbWebhookReader:
@@ -76,28 +74,11 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    async def get_quests_changed_since(session: AsyncSession, _timestamp: int):
+    async def get_quests_changed_since(session: AsyncSession, _timestamp: int) -> Dict[int, Tuple[Pokestop, TrsQuest]]:
         logger.debug2("DbWebhookReader::get_quests_changed_since called")
         quests_with_changes: Dict[int, Tuple[Pokestop, TrsQuest]] = await PokestopHelper.get_with_quests(session,
                                                                                                          timestamp=_timestamp)
-        questinfo = {}
-        for stop, quest in quests_with_changes.values():
-            mon = "%03d" % quest.quest_pokemon_id
-            form_id = "%02d" % quest.quest_pokemon_form_id
-            costume_id = "%02d" % quest.quest_pokemon_costume_id
-            questinfo[stop.pokestop_id] = ({
-                'pokestop_id': stop.pokestop_id, 'latitude': stop.latitude, 'longitude': stop.longitude,
-                'quest_type': quest.quest_type, 'quest_stardust': quest.quest_stardust,
-                'quest_pokemon_id': mon, 'quest_pokemon_form_id': form_id,
-                'quest_pokemon_costume_id': costume_id,
-                'quest_reward_type': quest.quest_reward_type, 'quest_item_id': quest.quest_item_id,
-                'quest_item_amount': quest.quest_item_amount, 'name': stop.name, 'image': stop.image,
-                'quest_target': quest.quest_target,
-                'quest_condition': quest.quest_condition, 'quest_timestamp': quest.quest_timestamp,
-                'task': quest.quest_task, 'quest_reward': quest.quest_reward, 'quest_template': quest.quest_template,
-                'is_ar_scan_eligible': stop.is_ar_scan_eligible
-            })
-        return questinfo
+        return quests_with_changes
 
     @staticmethod
     async def get_gyms_changed_since(session: AsyncSession, _timestamp: int):
