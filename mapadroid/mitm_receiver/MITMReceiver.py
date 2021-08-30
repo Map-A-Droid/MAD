@@ -12,9 +12,7 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.mitm_receiver.endpoints import register_mitm_receiver_root_endpoints
 from mapadroid.mitm_receiver.endpoints.autoconfig import register_autoconfig_endpoints
 from mapadroid.mitm_receiver.endpoints.mad_apk import register_mad_apk_endpoints
-from mapadroid.utils.logging import (LoggerEnums, get_logger)
-
-logger = get_logger(LoggerEnums.mitm)
+from loguru import logger
 
 
 class MITMReceiver:

@@ -238,6 +238,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     async def _add_to_queue(self, data):
         queue = self._get_data_queue()
         # TODO: Arg setting threshold
+        logger.debug2("Queue size: {}", queue.qsize())
         while queue.qsize() > 200:
             self._get_data_queue().get_nowait()
             queue.task_done()
