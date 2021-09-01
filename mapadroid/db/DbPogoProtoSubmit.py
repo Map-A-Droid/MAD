@@ -2,6 +2,7 @@ import json
 import math
 import time
 from datetime import datetime, timedelta
+from typing import Tuple, Dict
 
 from bitstring import BitArray
 
@@ -48,11 +49,16 @@ class DbPogoProtoSubmit:
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
             "%s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
-            "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=VALUES(pokemon_id), latitude=VALUES(latitude), "
-            "longitude=VALUES(longitude), gender=VALUES(gender), costume=VALUES(costume), form=VALUES(form), "
+            "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=IF(pokemon_id=132, 132, VALUES(pokemon_id)), "
+            "gender=IF(pokemon_id=132, 3, VALUES(gender)), costume=IF(pokemon_id=132, 0, VALUES(costume)), "
+            "form=IF(pokemon_id=132, 0, VALUES(form)), "
+            # Pray  Ditto never getting costumes and forms...
+            "latitude=VALUES(latitude), longitude=VALUES(longitude), "
             "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL, cell_id=NULL, "
             "seen_type=IF(seen_type='encounter','encounter',VALUES(seen_type))"
         )
+        # TODO handle weather boost condition changes for redoing IV+ditto (set ivs to null again)
+        # Further we should probably reset IVs if pokemon_id changes as well
 
         mon_args = []
         encounters = []
@@ -128,9 +134,10 @@ class DbPogoProtoSubmit:
             "disappear_time, gender, weather_boosted_condition, last_modified, costume, form, "
             "latitude, longitude, seen_type)"
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE pokemon_id=VALUES(pokemon_id), gender=VALUES(gender), "
-            "weather_boosted_condition=VALUES(weather_boosted_condition), last_modified=VALUES(last_modified), "
-            "costume=VALUES(costume), form=VALUES(form)"
+            "ON DUPLICATE KEY UPDATE pokemon_id=IF(pokemon_id=132, 132, VALUES(pokemon_id)), "
+            "gender=IF(pokemon_id=132, 3, VALUES(gender)), costume=IF(pokemon_id=132, 0, VALUES(costume)), "
+            "form=IF(pokemon_id=132, 0, VALUES(form)), "
+            "weather_boosted_condition=VALUES(weather_boosted_condition), last_modified=VALUES(last_modified)"
         )
         stop_query = (
             "SELECT latitude, longitude "
@@ -208,6 +215,29 @@ class DbPogoProtoSubmit:
         self._db_exec.executemany(query_nearby, nearby_args, commit=True)
         return cell_encounters, stop_encounters
 
+    @staticmethod
+    def do_ditto_detect(origin_logger, pokemon_data: Dict) -> Tuple[int, int, int, int, int]:
+        """
+        Handle the ditto detection before saving mon
+        :param origin_logger: log helper
+        :param pokemon_data: encounter data
+        :return: a tuple with 5 values: (mon_id, gender, move_1, move_2, form
+        """
+
+        pokemon_display = pokemon_data.get("display", {})
+        mon_id = pokemon_data.get("id")
+        # ditto detector
+        if is_mon_ditto(origin_logger, pokemon_data):
+            # mon must be a ditto :D
+            # we return ditto with hardcoded moves
+            return 132, 3, 242, 133, 0
+        else:
+            return (mon_id,
+                    pokemon_display.get("gender_value", None),
+                    pokemon_data.get("move_1"),
+                    pokemon_data.get("move_2"),
+                    pokemon_display.get("form_value", None))
+
     def mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         """
         Update/Insert a mon with IVs
@@ -259,18 +289,7 @@ class DbPogoProtoSubmit:
             capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
 
         # ditto detector
-        if is_mon_ditto(origin_logger, pokemon_data):
-            # mon must be a ditto :D
-            mon_id = 132
-            gender = 3
-            move_1 = 242
-            move_2 = 133
-            form = 0
-        else:
-            gender = pokemon_display.get("gender_value", None)
-            move_1 = pokemon_data.get("move_1")
-            move_2 = pokemon_data.get("move_2")
-            form = pokemon_display.get("form_value", None)
+        (mon_id, gender, move_1, move_2, form) = self.do_ditto_detect(origin_logger, pokemon_data)
 
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
@@ -348,18 +367,7 @@ class DbPogoProtoSubmit:
             return
 
         # ditto detector
-        if is_mon_ditto(origin_logger, pokemon_data):
-            # mon must be a ditto :D
-            mon_id = 132
-            gender = 3
-            move_1 = 242
-            move_2 = 133
-            form = 0
-        else:
-            gender = display.get("gender_value", None)
-            move_1 = pokemon_data.get("move_1")
-            move_2 = pokemon_data.get("move_2")
-            form = display.get("form_value", None)
+        (mon_id, gender, move_1, move_2, form) = self.do_ditto_detect(origin_logger, pokemon_data)
 
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
