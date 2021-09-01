@@ -12,7 +12,10 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
 
 
 class DeviceEndpoint(AbstractResourceEndpoint):
-    async def _delete_connected(self, db_entry):
+    async def _delete_connected_post(self, db_entry):
+        pass
+
+    async def _delete_connected_prior(self, db_entry):
         assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
             .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
         for assigned in assigned_to_device:

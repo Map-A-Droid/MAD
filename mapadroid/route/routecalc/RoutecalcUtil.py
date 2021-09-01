@@ -154,7 +154,7 @@ class RoutecalcUtil:
     @staticmethod
     def read_saved_json_route(routecalc_entry: SettingsRoutecalc):
         result = []
-        if routecalc_entry.routefile is not None:
+        if routecalc_entry.routefile and routecalc_entry.routefile.strip():
             for line in routecalc_entry.routefile.split("\","):
                 line = line.replace("\"", "").replace("]", "").replace("[", "").strip()
                 if not line:

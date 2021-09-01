@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict, Optional, Set, List
 
+import pymysql as pymysql
 from aiohttp import web
 from loguru import logger
 from sqlalchemy import Column
@@ -44,8 +45,16 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         db_entry: Optional[Base] = await self._fetch_from_db(identifier)
         if not db_entry:
             return await self._json_response(self.request.method, status=404)
-        await self._delete_connected(db_entry)
+        try:
+            # TODO: 2 different methods...
+            await self._delete_connected_prior(db_entry)
+        except pymysql.err.IntegrityError as e:
+            logger.debug("Failed deleting connected prio to deleting the main item. {}", e)
         await self._delete(db_entry)
+        try:
+            await self._delete_connected_post(db_entry)
+        except pymysql.err.IntegrityError as e:
+            logger.debug("Failed deleting connected after deleting the main item. {}", e)
         headers = {
             'X-Status': 'Successfully deleted the object'
         }
@@ -317,5 +326,9 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         return False
 
     @abstractmethod
-    async def _delete_connected(self, db_entry):
+    async def _delete_connected_prior(self, db_entry):
+        pass
+
+    @abstractmethod
+    async def _delete_connected_post(self, db_entry):
         pass

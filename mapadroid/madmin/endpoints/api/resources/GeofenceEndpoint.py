@@ -8,7 +8,10 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 
 class GeofenceEndpoint(AbstractResourceEndpoint):
-    async def _delete_connected(self, db_entry):
+    async def _delete_connected_prior(self, db_entry):
+        pass
+
+    async def _delete_connected_post(self, db_entry):
         pass
 
     async def _handle_additional_keys(self, db_entry: SettingsGeofence, key: str, value) -> bool:
