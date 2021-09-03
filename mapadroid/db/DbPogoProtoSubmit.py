@@ -99,8 +99,10 @@ class DbPogoProtoSubmit:
                         mon.spawnpoint_id = spawnid
                         mon.latitude = lat
                         mon.longitude = lon
+                    if mon.seen_type not in [MonSeenTypes.ENCOUNTER.value, MonSeenTypes.LURE_ENCOUNTER.value]:
+                        # TODO: Any other types not to overwrite?
+                        mon.seen_type = MonSeenTypes.WILD.value
                     mon.pokemon_id = mon_id
-                    mon.seen_type = MonSeenTypes.WILD.value
                     mon.disappear_time = despawn_time
                     mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
                     mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
@@ -189,7 +191,9 @@ class DbPogoProtoSubmit:
                         mon.longitude = lon
                     mon.cell_id = db_cell
                     mon.fort_id = stop_id
-                    mon.seen_type = seen_type.value
+                    if mon.seen_type not in [MonSeenTypes.ENCOUNTER, MonSeenTypes.WILD,
+                                             MonSeenTypes.LURE_ENCOUNTER]:
+                        mon.seen_type = seen_type.value
                     mon.pokemon_id = mon_id
                     mon.disappear_time = disappear_time
                     mon.gender = gender
