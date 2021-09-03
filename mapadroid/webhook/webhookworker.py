@@ -420,8 +420,6 @@ class WebhookWorker:
                 "verified": mon["spawn_verified"],
                 "seen_type": str(mon["seen_type"])
             }
-            logger.debug2("Webhook sending mon ID {} with encounter ID {}", mon["pokemon_id"],
-                          mon["encounter_id"])
 
             # get rarity
             pokemon_rarity = self.__rarity.rarity_by_id(pokemonid=mon["pokemon_id"])
@@ -447,7 +445,11 @@ class WebhookWorker:
 
             if mon["individual_stamina"] is not None:
                 mon_payload["individual_stamina"] = mon["individual_stamina"]
-
+            logger.debug2("Webhook sending mon ID {} with encounter ID {}. Stats: {}/{}/{}", mon["pokemon_id"],
+                          mon["encounter_id"],
+                          mon.get("individual_attack"),
+                          mon.get("individual_defense"),
+                          mon.get("individual_stamina"))
             if mon["move_1"] is not None:
                 mon_payload["move_1"] = mon["move_1"]
 
