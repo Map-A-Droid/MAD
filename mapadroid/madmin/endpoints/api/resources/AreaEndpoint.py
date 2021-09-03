@@ -17,7 +17,10 @@ from mapadroid.worker.WorkerType import WorkerType
 
 
 class AreaEndpoint(AbstractResourceEndpoint):
-    async def _delete_connected(self, db_entry: SettingsArea):
+    async def _delete_connected_prior(self, db_entry):
+        pass
+
+    async def _delete_connected_post(self, db_entry: SettingsArea):
         # Delete routecalc entry for a clean DB...
         if hasattr(db_entry, "routecalc"):
             routecalc = await SettingsRoutecalcHelper.get(self._session, db_entry.routecalc)

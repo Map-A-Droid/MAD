@@ -2,14 +2,18 @@ import asyncio
 import time
 
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
+from mapadroid.utils.collections import Location
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
 from loguru import logger
 
 
 class NopStrategy(AbstractWorkerStrategy):
+    async def _additional_health_check(self) -> None:
+        pass
+
     async def pre_work_loop(self):
-        logger.warning("Worker started in configmode! This is special, configuration only mode - do not expect"
-                       " scans or avatar moving. After you are done with initial configuration remove -cm flag")
+        logger.warning("Worker started in nop-mode! Do not expect"
+                       " scans or avatar moving. If you have started MAD in configmode, this is normal behaviour. After you are done with initial configuration remove -cm flag")
         await self._mapping_manager.register_worker_to_routemanager(self._area_id,
                                                                     self._worker_state.origin)
         logger.debug("Setting device to idle for routemanager")
@@ -35,3 +39,12 @@ class NopStrategy(AbstractWorkerStrategy):
 
     async def worker_specific_setup_stop(self):
         pass
+
+    async def check_location_is_valid(self) -> bool:
+        return True
+
+    async def grab_next_location(self) -> None:
+        await super().grab_next_location()
+        if not self._worker_state.current_location:
+            self._worker_state.current_location = Location(0.0, 0.0)
+

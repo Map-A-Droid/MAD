@@ -5,9 +5,10 @@ from typing import Optional, Mapping, Dict, Union
 import aiohttp
 from aiohttp import ClientConnectionError, ClientError
 from aiohttp.typedefs import LooseHeaders
-from loguru import logger
-
 from mapadroid.utils.json_encoder import MADEncoder
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+logger = get_logger(LoggerEnums.utils)
 
 
 class RestApiResult:

@@ -305,7 +305,7 @@ class PokemonHelper:
         else:
             stmt = select(Pokemon, TrsSpawn, None) \
                 .join(TrsSpawn, TrsSpawn.spawnpoint == Pokemon.spawnpoint_id, isouter=True)
-        stmt = stmt.where(and_(Pokemon.last_modified > DatetimeWrapper.fromtimestamp(_timestamp),
+        stmt = stmt.where(and_(Pokemon.last_modified >= DatetimeWrapper.fromtimestamp(_timestamp),
                                Pokemon.seen_type.in_(raw_types)))
 
         result = await session.execute(stmt)

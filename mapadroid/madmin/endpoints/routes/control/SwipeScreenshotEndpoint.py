@@ -37,8 +37,9 @@ class SwipeScreenshotEndpoint(AbstractControlEndpoint):
         real_click_y = int(height / float(click_y))
         real_click_xe = int(width / float(click_xe))
         real_click_ye = int(height / float(click_ye))
-        if useadb and self._adb_connect.make_screenswipe(devicemapping.device_settings.adbname, origin,
-                                                         real_click_x, real_click_y, real_click_xe, real_click_ye):
+        if useadb and await self._adb_connect.make_screenswipe(devicemapping.device_settings.adbname, origin,
+                                                               real_click_x, real_click_y, real_click_xe,
+                                                               real_click_ye):
             # origin_logger.info('MADmin: ADB screenswipe successfully')
             pass
         else:

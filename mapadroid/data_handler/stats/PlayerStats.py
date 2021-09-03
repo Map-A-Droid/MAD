@@ -12,6 +12,8 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType
 from loguru import logger
 
+from mapadroid.worker.WorkerType import WorkerType
+
 
 class PlayerStats(AbstractStatsHolder):
     def __init__(self, origin: str, application_args):
@@ -67,11 +69,12 @@ class PlayerStats(AbstractStatsHolder):
         self._stats_detect_holder.add_raid(time_scanned)
 
     def stats_collect_location_data(self, location: Location, success: bool, fix_timestamp: int,
-                                    position_type: PositionType, data_timestamp: int, walker: str,
+                                    position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                     transport_type: TransportType, timestamp_of_record: int):
         if self._stats_location_raw_holder:
             self._stats_location_raw_holder.add_location(location, success, fix_timestamp, position_type,
-                                                         data_timestamp, walker, transport_type, timestamp_of_record)
+                                                         data_timestamp, worker_type, transport_type,
+                                                         timestamp_of_record)
         if success:
             self._stats_location_holder.add_location_ok(timestamp_of_record)
         else:

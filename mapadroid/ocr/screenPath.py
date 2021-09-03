@@ -547,6 +547,7 @@ class WordToScreenMatching(object):
                     return True
         except Exception as e:
             logger.error('Something wrong while parsing xml: {}', e)
+            logger.exception(e)
             return False
 
         await asyncio.sleep(2)
@@ -575,6 +576,7 @@ class WordToScreenMatching(object):
                     return True
         except Exception as e:
             logger.error('Something wrong while parsing xml: {}', e)
+            logger.exception(e)
             return False
 
         await asyncio.sleep(2)
@@ -591,10 +593,7 @@ class WordToScreenMatching(object):
         except (EOFError, FileNotFoundError) as e:
             logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
             return None
-        if value is None:
-            return default_value
-        else:
-            return value
+        return value if value is not None else default_value
 
     def censor_account(self, emailaddress, is_ptc=False):
         # PTC account

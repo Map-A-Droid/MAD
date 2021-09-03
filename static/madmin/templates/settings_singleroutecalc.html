@@ -44,7 +44,7 @@ function get_routefile_definition() {
       <label for="routefile_raw">routefile</label>
         {% set last_bracket_removed = "".join(element.routefile.rsplit(']', 1)) %}
         {% set locations_to_display = last_bracket_removed.replace("[", "", 1).split("\",") %}
-      <textarea data-callback='get_routefile_definition' rows=20 class="form-control" id="routefile_raw" name="routefile_raw" value="{{ element.routefile }}" data-default="{{ element.routefile }}">{% for line in locations_to_display %}{% set line = line.replace("\"", "").strip() %}{% if line == locations_to_display[-1] %}{{ line.replace("]", "").strip() }}{% else %}{{ line.strip() + "\n" }}{% endif %}{% endfor %}</textarea>
+      <textarea data-callback='get_routefile_definition' rows=20 class="form-control" id="routefile_raw" name="routefile_raw" value="{{ element.routefile if element.routefile else '' }}" data-default="{{ element.routefile if element.routefile else '' }}">{% for line in locations_to_display %}{% if line and line.strip() %}{% set line = line.replace("\"", "").strip() %}{% if line == locations_to_display[-1] %}{{ line.replace("]", "").strip() }}{% else %}{{ line.strip() + "\n" }}{% endif %}{% endif %}{% endfor %}</textarea>
       <small class="form-text text-muted">Route stops</small>
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>

@@ -84,6 +84,7 @@ async def generate_quest(stop: Pokestop, quest: TrsQuest):
         'quest_type_raw': quest.quest_type,
         'quest_reward_type': quest_reward_type,
         'quest_reward_type_raw': quest.quest_reward_type,
+        'quest_reward_raw': quest.quest_reward,
         'quest_task': quest_task,
         'quest_target': quest.quest_target,
         'quest_condition': quest.quest_condition,

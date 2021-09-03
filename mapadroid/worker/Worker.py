@@ -1,7 +1,7 @@
 import asyncio
 import math
 import time
-from asyncio import Task
+from asyncio import Task, CancelledError
 from typing import Optional, Any
 
 from loguru import logger
@@ -15,37 +15,44 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException,
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException)
+    WebsocketWorkerTimeoutException, application_args)
 from mapadroid.utils.resolution import ResolutionCalculator
 from mapadroid.utils.routeutil import check_walker_value_type
-from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
+from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
 
 
 class Worker(AbstractWorker):
-    def __init__(self, communicator: AbstractCommunicator,
+    def __init__(self,
                  worker_state: WorkerState,
                  mapping_manager: MappingManager,
                  db_wrapper: DbWrapper,
-                 scan_strategy: AbstractWorkerStrategy):
-        AbstractWorker.__init__(self, communicator=communicator, scan_strategy=scan_strategy)
+                 scan_strategy: AbstractWorkerStrategy,
+                 strategy_factory: StrategyFactory):
+        AbstractWorker.__init__(self, scan_strategy=scan_strategy)
         self._mapping_manager: MappingManager = mapping_manager
         self._db_wrapper: DbWrapper = db_wrapper
         self._worker_state: WorkerState = worker_state
+        self._strategy_factory = strategy_factory
 
         self._resocalc = ResolutionCalculator()
 
         self.workerstart = None
         # Async relevant variables that are initiated in start_worker
         self._work_mutex: Optional[asyncio.Lock] = None
-        self._work_task: Optional[Task] = None
+        self._worker_task: Optional[Task] = None
+        self._scan_task: Optional[Task] = None
+        self._work_mutex: asyncio.Lock = asyncio.Lock()
 
     async def _scan_strategy_changed(self):
-        await self.stop_worker()
-        await self.start_worker()
+        self._worker_state.stop_worker_event.set()
+        async with self._work_mutex:
+            if self._scan_task:
+                self._scan_task.cancel()
+                self._scan_task = None
 
     async def set_devicesettings_value(self, key: MappingManagerDevicemappingKey, value: Optional[Any]):
         await self._mapping_manager.set_devicesetting_value_of(self._worker_state.origin, key, value)
@@ -58,7 +65,7 @@ class Worker(AbstractWorker):
             logger.warning("Failed fetching devicemappings with description: {}. Stopping worker", e)
             self._worker_state.stop_worker_event.set()
             return None
-        return value if value else default_value
+        return value if value is not None else default_value
 
     async def check_max_walkers_reached(self):
         if not self._scan_strategy.walker:
@@ -70,22 +77,27 @@ class Worker(AbstractWorker):
             return False
         return True
 
-    async def start_worker(self) -> None:
+    async def start_worker(self) -> Optional[Task]:
         """
         Starts the worker in the same loop that is calling this method. Returns the task being executed.
         Returns:
 
         """
-        if self._work_task:
-            logger.warning("Task has not been removed before.")
-            return
-        loop = asyncio.get_running_loop()
-        if not self._work_mutex:
-            self._work_mutex: asyncio.Lock = asyncio.Lock()
-        # self._init: bool = await self._mapping_manager.routemanager_get_init(self._routemanager_id)
+        async with self._work_mutex:
+            if self._worker_task:
+                logger.warning("Task has not been removed before.")
+                return None
+            else:
+
+                loop = asyncio.get_running_loop()
+                self._worker_task = loop.create_task(self._run())
+                return self._worker_task
+
+    async def _start_of_new_strategy(self) -> None:
+        self.workerstart = math.floor(time.time())
+
         self._worker_state.last_location = await self.get_devicesettings_value(
             MappingManagerDevicemappingKey.LAST_LOCATION, None)
-
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_MODE) in (WorkerType.RAID_MITM.value,
                                                                                              WorkerType.MON_MITM.value,
                                                                                              WorkerType.IV_MITM.value):
@@ -95,23 +107,26 @@ class Worker(AbstractWorker):
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_MODE,
                                             await self._mapping_manager.routemanager_get_mode(
                                                 self._scan_strategy.area_id))
-        # TODO: Ensure only task of a worker is running at any time
         await self._scan_strategy.worker_specific_setup_start()
-        self._work_task = loop.create_task(self._main_work_thread())
 
     async def stop_worker(self):
-        if self._worker_state.stop_worker_event.set():
+        if self._worker_state.stop_worker_event.is_set():
             logger.info('Worker already stopped - waiting for it')
+            return
         else:
             self._worker_state.stop_worker_event.set()
             logger.info("Worker stop called")
-        if self._work_task:
-            self._work_task.cancel()
-            self._work_task = None
+        async with self._work_mutex:
+            if self._scan_task:
+                self._scan_task.cancel()
+                self._scan_task = None
+            if self._worker_task:
+                self._worker_task.cancel()
+                self._worker_task = None
         await self._scan_strategy.worker_specific_setup_stop()
-        self._worker_state.stop_worker_event.clear()
+        await self._internal_cleanup()
 
-    async def _internal_cleanup(self):
+    async def _cleanup_current(self):
         # set the event just to make sure - in case of exceptions for example
         self._worker_state.stop_worker_event.set()
         try:
@@ -120,131 +135,119 @@ class Worker(AbstractWorker):
         except ConnectionResetError as e:
             logger.warning("Failed unregistering from routemanager, routemanager may have stopped running already."
                            "Exception: {}", e)
-        # TODO: Move up to strategy, we do not want to entirely kill off the worker...
-        #  Rather have some routine checking for a new walker/strategy to be available?
-        await self.communicator.cleanup()
-        logger.info("Internal cleanup of finished")
 
-    async def _main_work_thread(self):
+    async def _internal_cleanup(self):
+        if self._scan_strategy:
+            await self._scan_strategy.get_communicator().cleanup()
+
+    async def _run(self) -> None:
+        # TODO: when to break?
         try:
-            with logger.contextualize(name=self._worker_state.origin):
+            loop = asyncio.get_running_loop()
+            while True:
+                self._worker_state.stop_worker_event.clear()
+                logger.info("Starting scan strategy...")
+                async with self._work_mutex:
+                    await self._start_of_new_strategy()
+                    self._scan_task = loop.create_task(self._run_scan())
+                # TODO: Try/except CancelledError?
                 try:
-                    await self._scan_strategy.pre_work_loop()
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                        WebsocketWorkerConnectionClosedException) as e:
-                    logger.error("Failed initializing worker, connection terminated exceptionally")
-                    await self._internal_cleanup()
-                    return
-
-                if not await self.check_max_walkers_reached():
-                    # TODO: Set new strategy somehow or have some other task check all workers for changed walkers and update strategy accordingly...
-                    logger.warning('Max. Walkers in Area {} - closing connections',
-                                   self._mapping_manager.routemanager_get_name(
-                                       self._scan_strategy.area_id))
-                    await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-                    await self._internal_cleanup()
-                    return
-
-                while not self._worker_state.stop_worker_event.is_set():
-                    try:
-                        # TODO: consider getting results of health checks and aborting the entire worker?
-                        walkercheck = await self.check_walker()
-                        if not walkercheck:
-                            # TODO: Set new strategy somehow or have some other task check all workers for changed walkers and update strategy accordingly...
-                            await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
-                            break
-                    except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker killed by walker settings")
-                        break
-
-                    try:
-                        # TODO: consider getting results of health checks and aborting the entire worker?
-                        async with self._work_mutex:
-                            await self._scan_strategy.health_check()
-                    except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.error(
-                            "Websocket connection to {} lost while running healthchecks, connection terminated "
-                            "exceptionally", self._worker_state.origin)
-                        break
-
-                    try:
-                        await self._scan_strategy.grab_next_location()
-                        if self._worker_state.current_location is None:
-                            # TODO: Check walkers...
-                            break
-                    except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker of does not support mode that's to be run, connection terminated "
-                                       "exceptionally")
-                        break
-
-                    try:
-                        logger.debug('Checking if new location is valid')
-                        if not await self._check_location_is_valid():
-                            break
-                    except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker received invalid coords!")
-                        break
-
-                    try:
-                        await self._scan_strategy.pre_location_update()
-                    except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker of stopping because of stop signal in pre_location_update, connection "
-                                       "terminated exceptionally")
-                        break
-
-                    try:
-                        last_location: Location = await self.get_devicesettings_value(
-                            MappingManagerDevicemappingKey.LAST_LOCATION, Location(0.0, 0.0))
-                        logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
-                                      last_location.lat, last_location.lng,
-                                      self._worker_state.current_location.lat, self._worker_state.current_location.lng)
-                        time_snapshot, process_location = await self._scan_strategy.move_to_location()
-                    except (
-                            InternalStopWorkerException, WebsocketWorkerRemovedException,
-                            WebsocketWorkerTimeoutException,
-                            WebsocketWorkerConnectionClosedException):
-                        logger.warning("Worker failed moving to new location, stopping worker, connection terminated "
-                                       "exceptionally")
-                        break
-
-                    if process_location:
-                        self._worker_state.location_count += 1
-                        logger.debug("Setting new 'scannedlocation' in Database")
-                        loop = asyncio.get_running_loop()
-                        loop.create_task(
-                            self.update_scanned_location(self._worker_state.current_location.lat,
-                                                         self._worker_state.current_location.lng,
-                                                         time_snapshot))
-
-                        # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
-                        try:
-                            await self._scan_strategy.post_move_location_routine(time_snapshot)
-                        except (
-                                InternalStopWorkerException, WebsocketWorkerRemovedException,
-                                WebsocketWorkerTimeoutException,
-                                WebsocketWorkerConnectionClosedException):
-                            logger.warning("Worker failed running post_move_location_routine, stopping worker")
-                            break
-                        logger.info("Worker finished iteration, continuing work")
-
-                await self._internal_cleanup()
+                    await self._scan_task
+                    async with self._work_mutex:
+                        self._scan_task = None
+                    await asyncio.sleep(5)
+                    await self.__update_strategy()
+                except CancelledError as e:
+                    logger.warning("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
+                    # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
+                    #  be handled accordingly
+        except (CancelledError, InternalStopWorkerException,
+                WebsocketWorkerTimeoutException) as e:
+            # TODO: in case of WebsocketWorkerConnectionClosedException, wait for new connection rather than stopping
+            logger.info("Worker is stopping")
+            await self._internal_cleanup()
+        except (WebsocketWorkerRemovedException,
+                WebsocketWorkerConnectionClosedException) as e:
+            logger.info("Connection to device closed")
         except Exception as e:
             logger.exception(e)
+        finally:
+            self._worker_task = None
+            self._scan_task = None
+
+    async def _run_scan(self):
+        with logger.contextualize(identifier=self._worker_state.origin, name="worker"):
+            await self._scan_strategy.pre_work_loop()
+
+            if not await self.check_max_walkers_reached():
+                logger.warning('Max. Walkers in Area {}.',
+                               self._mapping_manager.routemanager_get_name(
+                                   self._scan_strategy.area_id))
+                await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+                return
+
+            while not self._worker_state.stop_worker_event.is_set():
+                # TODO: consider getting results of health checks and aborting the entire worker?
+                walkercheck = await self.check_walker()
+                if not walkercheck:
+                    break
+
+                async with self._work_mutex:
+                    if not await self._scan_strategy.health_check():
+                        break
+
+                await self._scan_strategy.grab_next_location()
+
+                logger.debug('Checking if new location is valid')
+                if not await self._scan_strategy.check_location_is_valid():
+                    break
+
+                await self._scan_strategy.pre_location_update()
+
+                last_location: Location = await self.get_devicesettings_value(
+                    MappingManagerDevicemappingKey.LAST_LOCATION, Location(0.0, 0.0))
+                logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
+                              last_location.lat, last_location.lng,
+                              self._worker_state.current_location.lat, self._worker_state.current_location.lng)
+                time_snapshot, process_location = await self._scan_strategy.move_to_location()
+
+                if process_location:
+                    self._worker_state.location_count += 1
+                    logger.debug("Setting new 'scannedlocation' in Database")
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(
+                        self.update_scanned_location(self._worker_state.current_location.lat,
+                                                     self._worker_state.current_location.lng,
+                                                     time_snapshot))
+
+                    # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
+                    await self._scan_strategy.post_move_location_routine(time_snapshot)
+
+                    logger.info("Worker finished iteration, continuing work")
+            await self._cleanup_current()
+
+    async def __get_current_strategy_to_use(self) -> Optional[AbstractWorkerStrategy]:
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+        device_paused: bool = not await self._mapping_manager.is_device_active(
+            self._worker_state.device_id)
+        configmode: bool = application_args.config_mode
+        paused_or_config: bool = device_paused or configmode
+        scan_strategy: Optional[AbstractWorkerStrategy] = await self._strategy_factory \
+            .get_strategy_using_settings(self._worker_state.origin,
+                                         enable_configmode=paused_or_config,
+                                         communicator=self._scan_strategy.get_communicator(),
+                                         worker_state=self._worker_state)
+        return scan_strategy
+
+    async def __update_strategy(self):
+        device_paused: bool = not await self._mapping_manager.is_device_active(
+            self._worker_state.device_id)
+        configmode: bool = application_args.config_mode
+        paused_or_config: bool = device_paused or configmode
+        if not paused_or_config:
+            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use()
+            if scan_strategy:
+                await self.set_scan_strategy(scan_strategy)
 
     async def update_scanned_location(self, latitude: float, longitude: float, _timestamp: float):
         async with self._db_wrapper as session, session:
@@ -257,7 +260,10 @@ class Worker(AbstractWorker):
     async def check_walker(self):
         if not self._scan_strategy.walker:
             logger.warning("No walker set")
-            return True
+            # TODO: Somehow check if some switching should be happening and when...
+            #  Eventually, that should be handled by some other entity
+            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use()
+            return scan_strategy is None
         mode = self._scan_strategy.walker.algo_type
         walkereventid = self._scan_strategy.walker.eventid
         if walkereventid is not None and walkereventid != self._worker_state.active_event.get_current_event_id():
@@ -269,11 +275,8 @@ class Worker(AbstractWorker):
             if not countdown:
                 logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
-            if self.workerstart is None:
-                self.workerstart = math.floor(time.time())
-            else:
-                if math.floor(time.time()) >= int(self.workerstart) + int(countdown):
-                    return False
+            if self.workerstart is None or math.floor(time.time()) >= int(self.workerstart) + int(countdown):
+                return False
             return True
         elif mode == "timer":
             logger.debug("Checking walker mode 'timer'")
@@ -304,7 +307,7 @@ class Worker(AbstractWorker):
         elif mode == "coords":
             exittime = self._scan_strategy.walker.algo_value
             logger.debug("Routemode coords, exittime {}", exittime)
-            if exittime:
+            if exittime: # TODO: Check if routemanager still has coords (e.g. questmode should make this one stop?)
                 return check_walker_value_type(exittime)
             return True
         elif mode == "idle":
@@ -334,7 +337,7 @@ class Worker(AbstractWorker):
             return False
 
     def set_geofix_sleeptime(self, sleeptime: int) -> bool:
-        self._geofix_sleeptime = sleeptime
+        self._worker_state.current_sleep_duration = sleeptime
         return True
 
     async def _check_location_is_valid(self) -> bool:

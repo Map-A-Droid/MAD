@@ -27,7 +27,7 @@ class SerializedMitmDataProcessor:
     async def run(self):
         logger.info("Starting serialized MITM data processor")
         # TODO: use event to stop... Remove try/catch...
-        with logger.contextualize(name=self.__name):
+        with logger.contextualize(identifier=self.__name, name="mitm-processor"):
             while True:
                 try:
                     item = await self.__queue.get()
@@ -36,8 +36,9 @@ class SerializedMitmDataProcessor:
                         break
                     start_time = self.get_time_ms()
                     try:
-                        await self.process_data(received_timestamp=item[0], data=item[1],
-                                                origin=item[2])
+                        with logger.contextualize(identifier=item[2], name="mitm-processor"):
+                            await self.process_data(received_timestamp=item[0], data=item[1],
+                                                    origin=item[2])
                         del item
                     except (sqlalchemy.exc.IntegrityError, MitmReceiverRetry, sqlalchemy.exc.InternalError) as e:
                         logger.info("Failed submitting data to DB, rescheduling. {}", e)
@@ -144,11 +145,11 @@ class SerializedMitmDataProcessor:
                 encounter: Optional[Tuple[int, bool]] = await self.__db_submit.mon_iv(session,
                                                                                       received_timestamp,
                                                                                       data["payload"])
+                await session.commit()
 
                 if self.__application_args.game_stats and encounter:
                     encounter_id, is_shiny = encounter
                     await self.__mitm_mapper.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny)
-                await session.commit()
             end_time = self.get_time_ms() - start_time
             logger.debug("Done processing encounter in {}ms", end_time)
         else:
@@ -265,7 +266,6 @@ class SerializedMitmDataProcessor:
         async with self.__db_wrapper as session, session:
             try:
                 await self.__db_submit.cells(session, data["payload"])
-                await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting cells: {}", e)
         cells_time = self.get_time_ms() - cells_time_start

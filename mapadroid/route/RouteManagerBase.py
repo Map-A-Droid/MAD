@@ -3,7 +3,8 @@ import collections
 import math
 import time
 from abc import ABC, abstractmethod
-from asyncio import Task
+from asyncio import Task, CancelledError
+from asyncio_rlock import RLock
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -88,7 +89,7 @@ class RouteManagerBase(ABC):
         self._roundcount: int = 0
         self._joinqueue = joinqueue
         self._worker_start_position: Dict[str] = {}
-        self._manager_mutex: asyncio.Lock = asyncio.Lock()
+        self._manager_mutex: RLock = RLock()
         # we want to store the workers using the routemanager
         self._workers_registered: Set[str] = set()
         self._round_started_time = None
@@ -386,6 +387,10 @@ class RouteManagerBase(ABC):
             self._routepool[origin].last_access = time.time()
             self._routepool[origin].worker_sleeping = 0
 
+    async def _wait_for_calc_end(self):
+        while self._start_calc:
+            await asyncio.sleep(1)
+
     async def get_next_location(self, origin: str) -> Optional[Location]:
         logger.debug4("get_next_location called")
         if not self._is_started:
@@ -396,9 +401,11 @@ class RouteManagerBase(ABC):
 
         if self._start_calc:
             logger.info("Another process already calculate the new route")
-            # TODO: Wait for calculation to end
-            return None
-
+            try:
+                await asyncio.wait_for(self._wait_for_calc_end(), 180)
+            except CancelledError:
+                logger.info("Current recalc took too long, returning None location")
+                return None
         if origin not in self._workers_registered:
             self.register_worker(origin)
 
@@ -409,7 +416,7 @@ class RouteManagerBase(ABC):
             self._routepool[origin] = routepool_entry
             if origin in self._worker_start_position:
                 routepool_entry.current_pos = self._worker_start_position[origin]
-            if not self._worker_changed_update_routepools():
+            if not await self._worker_changed_update_routepools():
                 logger.info("Failed updating routepools after adding a worker to it")
                 return None
         elif routepool_entry.prio_coords and self._mode != WorkerType.IV_MITM:
@@ -426,7 +433,6 @@ class RouteManagerBase(ABC):
         # if that is not the case, simply increase the index in route and return the location on route
         logger.debug("Trying to fetch a location from routepool")
         # determine whether we move to the next location or the prio queue top's item
-        # TODO: Better use a strategy pattern or observer for extendability?
         if self._prio_queue and (not routepool_entry.last_position_type == PositionType.PRIOQ
                                  or self.starve_route):
             logger.debug2("Checking for prioQ entries")
@@ -517,19 +523,27 @@ class RouteManagerBase(ABC):
                            self._get_round_finished_string())
             if self._start_calc:
                 logger.info("Another process already calculate the new route")
-                return None
-            self._start_calc = True
-            self._clear_coords()
-            coords = await self._get_coords_post_init()
-            logger.debug("Setting {} coords to as new points ", len(coords))
-            self.add_coords_list(coords)
-            logger.debug("Route being calculated")
-            await self._recalc_route_workertype()
-            self.init = False
-            await self._change_init_mapping()
-            self._start_calc = False
-            logger.debug("Initroute is finished - restart worker")
-            return None
+                try:
+                    await asyncio.wait_for(self._wait_for_calc_end(), 180)
+                except CancelledError:
+                    logger.info("Current recalc took too long, returning None location")
+                    return None
+            else:
+                async with self._manager_mutex:
+                    self._start_calc = True
+                    self._clear_coords()
+                    coords = await self._get_coords_post_init()
+                    logger.debug("Setting {} coords to as new points ", len(coords))
+                    self.add_coords_list(coords)
+                    logger.debug("Route being calculated")
+                    await self._recalc_route_workertype()
+                    self.init = False
+                    await self._change_init_mapping()
+                    self._start_calc = False
+                    logger.debug("Initroute is finished.")
+                    if not await self._worker_changed_update_routepools():
+                        logger.info("Failed updating routepools ...")
+                        return None
 
         elif len(self._current_route_round_coords) >= 0 and len(routepool_entry.queue) == 0:
             # only quest could hit this else!
@@ -541,7 +555,7 @@ class RouteManagerBase(ABC):
                     logger.info("No more coords available - dont update routepool")
                     return None
 
-            if not self._worker_changed_update_routepools():
+            if not await self._worker_changed_update_routepools():
                 logger.info("Failed updating routepools ...")
                 return None
 
@@ -664,7 +678,7 @@ class RouteManagerBase(ABC):
         if sleep_duration > 0 and origin in self._routepool:
             self._routepool[origin].worker_sleeping = sleep_duration
 
-    def _worker_changed_update_routepools(self):
+    async def _worker_changed_update_routepools(self):
         less_coords: bool = False
         workers: int = 0
         if not self._is_started:

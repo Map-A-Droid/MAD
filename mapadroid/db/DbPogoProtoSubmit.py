@@ -100,7 +100,10 @@ class DbPogoProtoSubmit:
                         mon.latitude = lat
                         mon.longitude = lon
                     mon.pokemon_id = mon_id
-                    mon.seen_type = MonSeenTypes.wild.name
+                    if mon.seen_type not in [MonSeenTypes.encounter.name, MonSeenTypes.lure_encounter.name]:
+                        # TODO: Any other types not to overwrite?
+                        mon.seen_type = MonSeenTypes.wild.name
+                    mon.pokemon_id = mon_id
                     mon.disappear_time = despawn_time
                     mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
                     mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
@@ -116,6 +119,8 @@ class DbPogoProtoSubmit:
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.debug("Failed committing mon {} ({}). Safe to ignore.", encounter_id, str(e))
                         await nested_transaction.rollback()
+                        continue
+                await session.commit()
         return encounter_ids_in_gmo
 
     async def mons_nearby(self, session: AsyncSession, timestamp: float,
@@ -185,11 +190,11 @@ class DbPogoProtoSubmit:
                         mon.spawnpoint_id = spawnpoint
                         mon.latitude = lat
                         mon.longitude = lon
-                    mon.cell_id = db_cell
-                    mon.fort_id = stop_id
-                    mon.seen_type = seen_type.name
+                        mon.cell_id = db_cell
+                        mon.fort_id = stop_id
+                        mon.seen_type = seen_type.name
+                        mon.disappear_time = disappear_time
                     mon.pokemon_id = mon_id
-                    mon.disappear_time = disappear_time
                     mon.gender = gender
                     mon.weather_boosted_condition = weather_boosted
                     mon.costume = costume
@@ -296,7 +301,7 @@ class DbPogoProtoSubmit:
             mon.costume = pokemon_display.get("costume_value", None)
             mon.form = form
             mon.last_modified = now
-            logger.debug("Submitting IV {}", encounter_id)
+            logger.debug("Submitting IV {} scanned at {}", encounter_id, timestamp)
             session.add(mon)
             await nested_transaction.commit()
             cache_time = int(despawn_time_unix - int(DatetimeWrapper.now().timestamp()))
@@ -904,26 +909,24 @@ class DbPogoProtoSubmit:
             if await cache.exists(cache_key):
                 continue
 
-            lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
-
             s2cell: Optional[TrsS2Cell] = await TrsS2CellHelper.get(session, cell_id)
             if not s2cell:
                 s2cell: TrsS2Cell = TrsS2Cell()
                 s2cell.id = cell_id
                 s2cell.level = 15
+                lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
                 s2cell.center_latitude = lat
                 s2cell.center_longitude = lng
             s2cell.updated = int(cell["current_timestamp"] / 1000)
-            async with session.begin_nested() as nested_transaction:
-                try:
-                    session.add(s2cell)
-                    await nested_transaction.commit()
-                    # Only update s2cell's current_timestamp every 30s at most to avoid too many UPDATE operations
-                    # in dense areas being covered by a number of devices
-                    await cache.set(cache_key, 1, ex=30)
-                except sqlalchemy.exc.IntegrityError as e:
-                    logger.debug("Failed committing cell {} ({})", cell_id, str(e))
-                    await nested_transaction.rollback()
+            try:
+                session.add(s2cell)
+                await session.commit()
+                # Only update s2cell's current_timestamp every 30s at most to avoid too many UPDATE operations
+                # in dense areas being covered by a number of devices
+                await cache.set(cache_key, 1, ex=60)
+            except sqlalchemy.exc.IntegrityError as e:
+                logger.debug("Failed committing cell {} ({})", cell_id, str(e))
+                await session.rollback()
 
     async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache,
                                     stop_data: Dict) -> Optional[Pokestop]:
@@ -999,14 +1002,13 @@ class DbPogoProtoSubmit:
         pokestop.incident_expiration = incident_expiration
         pokestop.incident_grunt_type = incident_grunt_type
         pokestop.is_ar_scan_eligible = is_ar_scan_eligible
-        async with session.begin_nested() as nested_transaction:
-            try:
-                session.add(pokestop)
-                await nested_transaction.commit()
-                await cache.set(cache_key, 1, ex=900)
-            except sqlalchemy.exc.IntegrityError as e:
-                logger.warning("Failed committing stop {} ({})", stop_id, str(e))
-                await nested_transaction.rollback()
+        try:
+            session.add(pokestop)
+            await session.commit()
+            await cache.set(cache_key, 1, ex=900)
+        except sqlalchemy.exc.IntegrityError as e:
+            logger.warning("Failed committing stop {} ({})", stop_id, str(e))
+            await session.rollback()
 
     async def _extract_args_single_stop_details(self, session: AsyncSession, stop_data) -> Optional[Pokestop]:
         if stop_data.get("type", 999) != 1:

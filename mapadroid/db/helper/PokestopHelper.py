@@ -156,6 +156,7 @@ class PokestopHelper:
         select()
         iteration: int = 0
         while (limit > 0 and len(stops_retrieved) < limit) and iteration < 10:
+            iteration += 1
             stops_retrieved.clear()
             where_condition = and_(Pokestop.latitude >= min_lat, Pokestop.longitude >= min_lon,
                                    Pokestop.latitude <= max_lat, Pokestop.longitude <= max_lon,
@@ -175,7 +176,7 @@ class PokestopHelper:
             if limit > 0:
                 stmt = stmt.limit(limit)
             result = await session.execute(stmt)
-            for stop, _distance in result.scalars().all():
+            for stop, _distance in result.all():
                 if not geofence_helper.is_coord_inside_include_geofence([stop.latitude, stop.longitude]):
                     continue
                 stops_retrieved.append(stop)

@@ -15,6 +15,7 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
+from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
@@ -26,6 +27,7 @@ from mapadroid.utils.madGlobals import InternalStopWorkerException, application_
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
 
 
@@ -61,6 +63,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         pass
 
     async def pre_work_loop(self) -> None:
+        await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
         start_position = await self.get_devicesettings_value(MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER, None)
         calc_type = await self._mapping_manager.routemanager_get_calc_type(self._area_id)
         geofence_helper_of_area = await self._mapping_manager.routemanager_get_geofence_helper(self._area_id)
@@ -106,17 +109,16 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         logger.info("Worker starting actual work")
         try:
             await self.turn_screen_on_and_start_pogo()
-            await self._update_screen_size()
             # register worker  in routemanager
             logger.info("Try to register in Routemanager {}",
                         await self._mapping_manager.routemanager_get_name(self._area_id))
             await self._mapping_manager.register_worker_to_routemanager(self._area_id,
                                                                         self._worker_state.origin)
+            await self._update_screen_size()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker")
             # no cleanup required here? TODO: signal websocket server somehow
             self._worker_state.stop_worker_event.set()
-            return
 
     async def _wait_for_data(self, timestamp: float = None,
                              proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \
@@ -176,21 +178,27 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             await self.raise_stop_worker_if_applicable()
             if type_of_data_returned == ReceivedType.UNDEFINED:
                 # We don't want to sleep if we have received something that may be useful to us...
-                await asyncio.sleep(application_args.wait_for_data_sleep_duration)
                 # In case last_time_received was set, we reset it after the first
                 # iteration to not run into trouble (endless loop)
                 last_time_received = TIMESTAMP_NEVER
             else:
                 last_time_received = latest_proto_entry.timestamp_of_data_retrieval
                 break
+            await asyncio.sleep(application_args.wait_for_data_sleep_duration)
 
-        if type_of_data_returned != ReceivedType.UNDEFINED:
-            await self._reset_restart_count_and_collect_stats(timestamp,
-                                                              last_time_received,
-                                                              position_type)
+        if proto_to_wait_for == ProtoIdentifier.GMO:
+            if type_of_data_returned != ReceivedType.UNDEFINED:
+                await self._reset_restart_count_and_collect_stats(timestamp,
+                                                                  last_time_received,
+                                                                  position_type)
+            else:
+                await self._handle_proto_timeout(timestamp, position_type)
+
+        if type_of_data_returned == ReceivedType.UNDEFINED:
+            logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
+                        proto_to_wait_for, type_of_data_returned)
         else:
-            await self._handle_proto_timeout(timestamp, position_type, proto_to_wait_for,
-                                             type_of_data_returned)
+            logger.success("Got data of type {}", type_of_data_returned)
 
         loop = asyncio.get_running_loop()
         loop.create_task(self.worker_stats())
@@ -277,17 +285,17 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         return distance, routemanager_settings
 
     async def _handle_proto_timeout(self, fix_ts: int,
-                                    position_type: PositionType, proto_to_wait_for: ProtoIdentifier,
-                                    type_of_data_returned):
-        logger.info("Timeout waiting for useful data. Type requested was {}, received {}",
-                    proto_to_wait_for, type_of_data_returned)
+                                    position_type: PositionType):
         now_ts: int = int(time.time())
+        routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+        worker_type: WorkerType = WorkerType(routemanager_settings.mode)
+
         await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
                                                             self._worker_state.current_location, False,
                                                             fix_ts,
                                                             position_type,
                                                             TIMESTAMP_NEVER,
-                                                            self._walker.name, self._worker_state.last_transport_type,
+                                                            worker_type, self._worker_state.last_transport_type,
                                                             now_ts)
 
         self._worker_state.restart_count += 1
@@ -310,6 +318,11 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             self._worker_state.restart_count = 0
             logger.warning("Too many timeouts - Restarting game")
             await self._restart_pogo(True, self._mitm_mapper)
+
+    async def stop_pogo(self):
+        stopped: bool = await super().stop_pogo()
+        if stopped:
+            await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
 
     async def worker_stats(self):
         logger.debug('===============================')
@@ -367,34 +380,33 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         self._worker_state.last_received_data_time = DatetimeWrapper.now()
         # TODO: Fire and forget async?
         now_ts: int = int(time.time())
+        routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+        worker_type: WorkerType = WorkerType(routemanager_settings.mode)
+
         await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
                                                             self._worker_state.current_location, True,
                                                             fix_ts,
                                                             position_type, timestamp_received_raw,
-                                                            self._walker.name, self._worker_state.last_transport_type,
+                                                            worker_type, self._worker_state.last_transport_type,
                                                             now_ts)
 
     async def start_pogo(self) -> bool:
-        if await self._communicator.is_pogo_topmost():
-            return True
-        await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
         started_pogo: bool = await super().start_pogo()
         if not await self._wait_for_injection() or self._worker_state.stop_worker_event.is_set():
+            await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
             raise InternalStopWorkerException
         else:
             return started_pogo
 
     async def _wait_for_injection(self):
         not_injected_count = 0
-        reboot = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True)
-        injection_thresh_reboot = 'Unlimited'
-        if reboot:
-            injection_thresh_reboot = int(
-                await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
+        injection_thresh_reboot = int(
+            await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
+        # TODO: Else check MitmApp was started...
         window_check_frequency = 3
         while not await self._mitm_mapper.get_injection_status(self._worker_state.origin):
             await self._check_for_mad_job()
-            if reboot and not_injected_count >= injection_thresh_reboot:
+            if not_injected_count >= injection_thresh_reboot:
                 logger.warning("Not injected in time - reboot")
                 await self._reboot(self._mitm_mapper)
                 return False
@@ -404,7 +416,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                     and not self._worker_state.stop_worker_event.is_set():
                 logger.info("Retry check_windows while waiting for injection at count {}",
                             not_injected_count)
-                await self._ensure_pogo_topmost()
+                await self._handle_screen()
             not_injected_count += 1
             wait_time = 0
             while wait_time < 20:
@@ -428,3 +440,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             if value_of_key and isinstance(value_of_key, list):
                 amount_of_key += len(value_of_key)
         return amount_of_key > 0
+
+    async def _additional_health_check(self) -> None:
+        # Ensure PogoDroid was started...
+        await self._communicator.passthrough("su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")

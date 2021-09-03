@@ -117,18 +117,12 @@ class MappingManager:
 
         # TODO: Move to init or call __init__ differently...
         self.__paused_devices: List[int] = []
-        self.__devicesettings_setter_queue = None
         self.__mappings_mutex = None
-        self.__devicesettings_setter_consumer_task: Optional[Task] = None
 
     async def setup(self):
-        self.__devicesettings_setter_queue: asyncio.Queue = asyncio.Queue()
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
 
         loop = asyncio.get_running_loop()
-        # TODO: Restore...
-        self.__devicesettings_setter_consumer_task = loop.create_task(self.__devicesettings_setter_consumer())
-
         await self.update(full_lock=True)
 
     def shutdown(self):
@@ -183,26 +177,6 @@ class MappingManager:
             values = "1301, 1401,1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
         return list(map(int, values.split(",")))
 
-    # TODO: Move all devicesettings/mappings functionality/handling to dedicated class
-    async def __devicesettings_setter_consumer(self):
-        logger.info("Starting Devicesettings consumer Thread")
-        while not self.__shutdown_event.is_set():
-            try:
-                set_settings = self.__devicesettings_setter_queue.get_nowait()
-            except QueueEmpty:
-                await asyncio.sleep(0.2)
-                continue
-            except (EOFError, KeyboardInterrupt):
-                logger.info("Devicesettings setter thread noticed shutdown")
-                return
-
-            if set_settings is not None:
-                device_name, key, value = set_settings
-                async with self.__mappings_mutex:
-                    await self.__set_devicesetting(device_name, key, value)
-                self.__devicesettings_setter_queue.task_done()
-                del set_settings
-
     async def __set_devicesetting(self, device_name: str, key: MappingManagerDevicemappingKey, value: Any) -> None:
         devicemapping_entry: Optional[DeviceMappingsEntry] = self._devicemappings.get(device_name, None)
         if not devicemapping_entry:
@@ -229,8 +203,11 @@ class MappingManager:
             devicemapping_entry.account_rotation_started = value
         elif key == MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME:
             devicemapping_entry.last_questclear_time = value
+        elif key == MappingManagerDevicemappingKey.WALKER_AREA_INDEX:
+            devicemapping_entry.walker_area_index = value
         else:
             # TODO: Maybe also set DB stuff? async with self.__db_wrapper as session, session:
+            logger.warning("Unhandled key: {}", key)
             pass
 
     async def get_devicesetting_value_of_device(self, device_name: str, key: MappingManagerDevicemappingKey):
@@ -283,7 +260,8 @@ class MappingManager:
         elif key == MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE:
             return devicemapping_entry.pool_settings.walk_after_teleport_distance if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.walk_after_teleport_distance else devicemapping_entry.device_settings.walk_after_teleport_distance
         elif key == MappingManagerDevicemappingKey.COOLDOWN_SLEEP:
-            return devicemapping_entry.pool_settings.cool_down_sleep if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.cool_down_sleep else devicemapping_entry.device_settings.cool_down_sleep
+            cool_down_sleep: int = devicemapping_entry.pool_settings.cool_down_sleep if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.cool_down_sleep else devicemapping_entry.device_settings.cool_down_sleep
+            return True if cool_down_sleep != 0 else False
         elif key == MappingManagerDevicemappingKey.POST_POGO_START_DELAY:
             return devicemapping_entry.pool_settings.post_pogo_start_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.post_pogo_start_delay else devicemapping_entry.device_settings.post_pogo_start_delay
         elif key == MappingManagerDevicemappingKey.RESTART_POGO:
@@ -295,7 +273,8 @@ class MappingManager:
         elif key == MappingManagerDevicemappingKey.VPS_DELAY:
             return devicemapping_entry.pool_settings.vps_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.vps_delay else devicemapping_entry.device_settings.vps_delay
         elif key == MappingManagerDevicemappingKey.REBOOT:
-            return devicemapping_entry.pool_settings.reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot else devicemapping_entry.device_settings.reboot
+            reboot_int: int = devicemapping_entry.pool_settings.reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot else devicemapping_entry.device_settings.reboot
+            return True if reboot_int != 0 else False
         elif key == MappingManagerDevicemappingKey.REBOOT_THRESH:
             return devicemapping_entry.pool_settings.reboot_thresh if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot_thresh else devicemapping_entry.device_settings.reboot_thresh
         elif key == MappingManagerDevicemappingKey.RESTART_THRESH:
@@ -313,11 +292,14 @@ class MappingManager:
         elif key == MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT:
             return devicemapping_entry.pool_settings.injection_thresh_reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.injection_thresh_reboot else devicemapping_entry.device_settings.injection_thresh_reboot
         elif key == MappingManagerDevicemappingKey.SCREENDETECTION:
-            return devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
+            screen_detection: int = devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
+            return True if screen_detection != 0 else False
         elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST_SAFE_ITEMS:
             return devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items else devicemapping_entry.device_settings.enhanced_mode_quest_safe_items
         elif key == MappingManagerDevicemappingKey.CLEAR_GAME_DATA:
-            return devicemapping_entry.device_settings.clear_game_data
+            return True if devicemapping_entry.device_settings.clear_game_data != 0 else False
+        elif key == MappingManagerDevicemappingKey.SOFTBAR_ENABLED:
+            return True if devicemapping_entry.device_settings.softbar_enabled != 0 else False
         # Extra keys to e.g. retrieve PTC accounts
         elif key == MappingManagerDevicemappingKey.PTC_LOGIN:
             return devicemapping_entry.ptc_logins
@@ -333,7 +315,8 @@ class MappingManager:
 
     async def set_devicesetting_value_of(self, device_name: str, key: MappingManagerDevicemappingKey, value):
         if self._devicemappings.get(device_name, None) is not None:
-            await self.__devicesettings_setter_queue.put((device_name, key, value))
+            async with self.__mappings_mutex:
+                await self.__set_devicesetting(device_name, key, value)
 
     async def get_all_devicemappings(self) -> Optional[Dict[str, DeviceMappingsEntry]]:
         return self._devicemappings
@@ -784,6 +767,8 @@ class MappingManager:
                     )
                     areamons[area_id] = mon_list
                     continue
+            except Exception as e:
+                logger.exception(e)
             if all_mons:
                 logger.debug("Area {} is configured for all mons", area.settings.name)
                 for mon_id in await get_mon_ids():

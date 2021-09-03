@@ -8,13 +8,19 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 
 class RoutecalcEndpoint(AbstractResourceEndpoint):
-    async def _delete_connected(self, db_entry):
+    async def _delete_connected_prior(self, db_entry):
+        pass
+
+    async def _delete_connected_post(self, db_entry):
         pass
 
     async def _handle_additional_keys(self, db_entry: SettingsRoutecalc, key: str, value) -> bool:
         if key == "routefile_raw" or key == "routefile":
-            to_be_written = str(value).replace("\'", "\"")
-            db_entry.routefile = to_be_written
+            if not value:
+                db_entry.routefile = "[]"
+            else:
+                to_be_written = str(value).replace("\'", "\"")
+                db_entry.routefile = to_be_written
             return True
         return False
 

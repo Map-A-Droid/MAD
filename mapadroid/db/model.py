@@ -729,6 +729,7 @@ class SettingsDevice(Base):
     enhanced_mode_quest_safe_items = Column(String(500, 'utf8mb4_unicode_ci'))
     mac_address = Column(String(17, 'utf8mb4_unicode_ci'))
     interface_type = Column(ENUM('lan', 'wlan'), server_default=text("'lan'"))
+    softbar_enabled = Column(TINYINT(1), server_default=text("'0'"))
 
     instance = relationship('MadminInstance')
     pool = relationship('SettingsDevicepool')

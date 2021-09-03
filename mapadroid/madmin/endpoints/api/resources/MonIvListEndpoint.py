@@ -8,6 +8,9 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
 
 
 class MonIvListEndpoint(AbstractResourceEndpoint):
+    async def _delete_connected_post(self, db_entry):
+        pass
+
     def _attributes_to_ignore(self) -> Set[str]:
         return {"monlist_id", "guid"}
 
@@ -43,5 +46,5 @@ class MonIvListEndpoint(AbstractResourceEndpoint):
             return True
         return False
 
-    async def _delete_connected(self, db_entry: SettingsMonivlist):
+    async def _delete_connected_prior(self, db_entry: SettingsMonivlist):
         await SettingsMonivlistHelper.delete_mapped_ids(self._session, db_entry.monlist_id)

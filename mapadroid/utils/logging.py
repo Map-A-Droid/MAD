@@ -1,37 +1,37 @@
 import logging
 import os
 import sys
-from enum import IntEnum
+from enum import Enum
 from functools import wraps
-from typing import Union
+from typing import Optional
 
 from loguru import logger
 
 
-class LoggerEnums(IntEnum):
-    unknown: int = 0
-    system: int = 1
-    database: int = 2
-    madmin: int = 3
-    patcher: int = 5
-    websocket: int = 6
-    webhook: int = 7
-    ocr: int = 8
-    routemanager: int = 9
-    mitm: int = 10
-    worker: int = 11
-    utils: int = 12
-    storage: int = 13
-    package_mgr: int = 14
-    plugin: int = 15
-    asyncio: int = 16
-    aiohttp_access: int = 17
-    aiohttp_client: int = 18
-    aiohttp_internal: int = 19
-    aiohttp_server: int = 20
-    aiohttp_web: int = 21
-    aioredis: int = 22
-    endpoint: int = 23
+class LoggerEnums(Enum):
+    unknown = "unknown"
+    system = "system"
+    database = "database"
+    madmin = "madmin"
+    patcher = "patcher"
+    websocket = "websocket"
+    webhook = "webhook"
+    ocr = "ocr"
+    routemanager = "routemanager"
+    mitm_receiver = "mitm-receiver"
+    worker = "worker"
+    utils = "utils"
+    storage = "storage"
+    package_mgr = "package_manager"
+    plugin = "plugin"
+    asyncio = "asyncio"
+    aiohttp_access = "aiohttp_access"
+    aiohttp_client = "aiohttp_client"
+    aiohttp_internal = "aiohttp_internal"
+    aiohttp_server = "aiohttp_server"
+    aiohttp_web = "aiohttp_web"
+    aioredis = "aioredis"
+    endpoint = "endpoint"
 
 
 # ==================================
@@ -48,14 +48,14 @@ def init_logging(args):
     log_fmt_time_c = "[<cyan>{time:HH:mm:ss.SS}</cyan>]"
     log_fmt_time_fs = "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>]"
     log_fmt_id = "[<cyan>{extra[name]: >17}</cyan>]"
-    log_fmt_ip = "[<cyan>{extra[ip]: >17}</cyan>]"
+    log_fmt_identifier = "[<cyan>{extra[identifier]: >17}</cyan>]"
     log_fmt_mod_c = "[<cyan>{module: >19.19}:{line: <4}</cyan>]"
     log_fmt_mod_fs = "[<cyan>{module: >19}:{line: <4}</cyan>]"
     log_fmt_level = "[<lvl>{level: >1.1}</lvl>]"
     log_fmt_msg = "<level>{message}</level>"
 
-    log_format_c = [log_fmt_time_c, log_fmt_id, log_fmt_ip, log_fmt_mod_c, log_fmt_level, log_fmt_msg]
-    log_format_fs = [log_fmt_time_fs, log_fmt_id, log_fmt_ip, log_fmt_mod_fs, log_fmt_level, log_fmt_msg]
+    log_format_c = [log_fmt_time_c, log_fmt_id, log_fmt_identifier, log_fmt_mod_c, log_fmt_level, log_fmt_msg]
+    log_format_fs = [log_fmt_time_fs, log_fmt_id, log_fmt_identifier, log_fmt_mod_fs, log_fmt_level, log_fmt_msg]
     # Alter the logging capabilities based off the MAD launch settings
     if not args.no_file_logs:
         log_format_c[log_format_c.index(log_fmt_time_c)] = log_fmt_time_fs
@@ -92,7 +92,7 @@ def init_logging(args):
                 "enqueue": True
             }
         ],
-        "extra": {"name": "Unknown", "ip": ""},
+        "extra": {"name": "Unknown", "identifier": ""},
     }
 
     file_logs = [{
@@ -103,8 +103,10 @@ def init_logging(args):
         "diagnose": log_file_trace,
         "enqueue": True,
         "encoding": "UTF-8",
-        "filter": lambda record: True if record["extra"]["name"] in ("system", "Unknown", "asyncio",
-                                                                     "endpoint") else False
+        "filter": lambda record: True if record["extra"]["name"] in (LoggerEnums.system.value,
+                                                                     LoggerEnums.unknown.value,
+                                                                     LoggerEnums.asyncio.value,
+                                                                     LoggerEnums.endpoint.value) else False
     },
         {
             "sink": os.path.join(args.log_path, "app" + "_database.log"),
@@ -114,7 +116,7 @@ def init_logging(args):
             "diagnose": log_file_trace,
             "enqueue": True,
             "encoding": "UTF-8",
-            "filter": lambda record: True if record["extra"]["name"] == "database" else False
+            "filter": lambda record: True if record["extra"]["name"] == LoggerEnums.database.value else False
         },
         {
             "sink": os.path.join(args.log_path, "app" + "_aiohttp.log"),
@@ -124,8 +126,11 @@ def init_logging(args):
             "diagnose": log_file_trace,
             "enqueue": True,
             "encoding": "UTF-8",
-            "filter": lambda record: True if record["extra"]["name"] not in ("system", "Unknown", "asyncio",
-                                                                             "database", "endpoint") else False
+            "filter": lambda record: True if record["extra"]["name"] not in (LoggerEnums.system.value,
+                                                                             LoggerEnums.unknown.value,
+                                                                             LoggerEnums.asyncio.value,
+                                                                             LoggerEnums.database.value,
+                                                                             LoggerEnums.endpoint.value) else False
         }
     ]
     log_file_retention = str(args.log_file_retention) + " days"
@@ -236,7 +241,7 @@ def init_custom(log_out: logger):
 
 
 def filter_errors(record):
-    return record["level"] != "ERROR" and record["extra"]["name"] not in ("database")
+    return record["level"] != "ERROR" and record["extra"]["name"] not in (LoggerEnums.database.value)
 
 
 # ==================================
@@ -244,45 +249,24 @@ def filter_errors(record):
 # ==================================
 
 
-def get_bind_name(logger_type: LoggerEnums, name: str) -> str:
+def get_bind_name(logger_type: LoggerEnums, name: Optional[str] = None) -> str:
     """ Translates the logger_type into the identifier for the log message.  Specifying name forces the identifier
         to that value
     """
     if name:
         return name
-    elif logger_type == LoggerEnums.aiohttp_access:
-        name = 'aiohttp_access'
-    elif logger_type == LoggerEnums.database:
-        name = 'database'
-    elif logger_type == LoggerEnums.system:
-        name = 'system'
-    elif logger_type == LoggerEnums.aioredis:
-        name = "aioredis"
-    elif logger_type == LoggerEnums.asyncio:
-        name = "asyncio"
-    elif logger_type == LoggerEnums.aiohttp_client:
-        name = "aiohttp_client"
-    elif logger_type == LoggerEnums.aiohttp_web:
-        name = "aiohttp_web"
-    elif logger_type == LoggerEnums.aiohttp_server:
-        name = "aiohttp_server"
-    elif logger_type == LoggerEnums.aiohttp_internal:
-        name = "aiohttp_internal"
     else:
-        name = 'Unknown'
-    return name
+        return logger_type.value
 
 
 # ==================================
 # ========= Custom Loggers =========
 # ==================================
 @apply_custom
-def get_logger(logger_type: Union[LoggerEnums, int], name: str = None, filter_func: callable = None) -> logger:
+def get_logger(logger_type: LoggerEnums, name: Optional[str] = None, filter_func: Optional[callable] = None) -> logger:
     try:
         if isinstance(logger_type, LoggerEnums):
             log_id = logger_type
-        elif logger_type.isdigit():
-            log_id = LoggerEnums(logger_type)
         else:
             log_id = LoggerEnums.unknown
     except ValueError:
@@ -306,9 +290,9 @@ class InterceptHandler(logging.Handler):
             self.log_identifier = kwargs['log_identifier']
             del kwargs['log_identifier']
         except KeyError:
-            self.log_identifier = LoggerEnums.unknown
+            self.log_identifier = LoggerEnums.unknown.value
         super().__init__(*args, **kwargs)
-        self.log_identifier = get_bind_name(self.log_section, self.log_identifier)
+        self.log_identifier = get_bind_name(self.log_section, None)
 
     def emit(self, record):
         frame, depth = logging.currentframe(), 2

@@ -6,7 +6,6 @@ from threading import current_thread
 from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
-from loguru import logger
 
 from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
@@ -17,7 +16,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.authHelper import check_auth
-from mapadroid.utils.logging import (InterceptHandler, LoggerEnums)
+from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger)
 from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
@@ -25,14 +24,15 @@ from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
 from mapadroid.websocket.communicator import Communicator
 from mapadroid.worker.Worker import Worker
-from mapadroid.worker.WorkerFactory import WorkerFactory
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
+from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
 logging.getLogger('websockets.server').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
 logging.getLogger('websockets.protocol').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
+logger = get_logger(LoggerEnums.websocket)
 
 
 class WebsocketServer(object):
@@ -55,7 +55,7 @@ class WebsocketServer(object):
         self.__users_connecting: Set[str] = set()
         self.__users_connecting_mutex: Optional[asyncio.Lock] = None
 
-        self.__worker_factory: WorkerFactory = WorkerFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
+        self.__strategy_factory: StrategyFactory = StrategyFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
                                                              self.__db_wrapper, self.__pogo_window_manager, event)
         self.__pogo_event: PogoEvent = event
 
@@ -133,6 +133,7 @@ class WebsocketServer(object):
                 return
             else:
                 self.__users_connecting.add(origin)
+        entry: Optional[WebsocketConnectedClientEntry] = None
         try:
             device: Optional[SettingsDevice] = None
             device_paused: bool = self.__enable_configmode
@@ -145,11 +146,12 @@ class WebsocketServer(object):
                     device_paused = True
             async with self.__current_users_mutex:
                 logger.debug("Checking if an entry is already present")
-                entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
+                entry = self.__current_users.get(origin, None)
 
                 # First check if an entry is present, worker running etc...
                 if entry and entry.websocket_client_connection:
                     await self.__handle_existing_connection(entry, origin)
+                    entry.websocket_client_connection = websocket_client_connection
                 elif not entry:
                     # Just create a new entry...
                     worker_state: WorkerState = WorkerState(origin=origin,
@@ -174,19 +176,22 @@ class WebsocketServer(object):
             return
         except Exception as e:
             logger.opt(exception=True).error("Other unhandled exception during registration: {}", e)
+            return
         finally:
             await self.__remove_from_users_connecting(origin)
 
-        try:
-            await self.__client_message_receiver(origin, entry)
-        except CancelledError as e:
-            logger.info("Connection to {} has been cancelled", origin)
-        # also check if thread is already running to not start it again. If it is not alive, we need to create it..
-        finally:
-            logger.info("Awaiting unregister")
-            if entry.worker_instance:
-                await entry.worker_instance.stop_worker()
-            await self.__remove_from_current_users(origin)
+        if entry:
+            try:
+                await self.__client_message_receiver(origin, entry)
+            except CancelledError as e:
+                logger.info("Connection to {} has been cancelled", origin)
+            # also check if thread is already running to not start it again. If it is not alive, we need to create it..
+            finally:
+                logger.info("Awaiting unregister")
+                if entry.worker_instance:
+                    await entry.worker_instance.stop_worker()
+                # TODO: Only remove after some time to keep a worker state
+                # await self.__remove_from_current_users(origin)
 
         logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 
@@ -212,11 +217,8 @@ class WebsocketServer(object):
             raise WebsocketAbortRegistrationException
         elif entry.websocket_client_connection.closed:
             # Old connection is closed, i.e. no active connection present...
-            logger.info("Old connection of {} closed, stopping worker/cleaning up to create a new one.",
+            logger.info("Old connection of {} closed.",
                         origin)
-            # TODO: Replace worker strategy/connection seemingly
-            if entry.worker_instance:
-                await entry.worker_instance.stop_worker()
         else:
             # Old connection neither open or closed - either closing or opening...
             # Should have been handled by the while loop above...
@@ -229,20 +231,25 @@ class WebsocketServer(object):
             entry, origin, None, self.__args.websocket_command_timeout)
         use_configmode: bool = use_configmode if use_configmode is not None else self.__enable_configmode
 
-        scan_strategy: Optional[AbstractWorkerStrategy] = await self.__worker_factory \
+        scan_strategy: Optional[AbstractWorkerStrategy] = await self.__strategy_factory \
             .get_strategy_using_settings(origin, use_configmode, communicator=communicator,
                                          worker_state=entry.worker_state)
         if not scan_strategy:
+            logger.warning("No strategy could be determined")
             return False
         if not entry.worker_instance:
-            entry.worker_instance = Worker(communicator=communicator, worker_state=entry.worker_state,
+            logger.info("Creating new worker")
+            entry.worker_instance = Worker(worker_state=entry.worker_state,
                                            mapping_manager=self.__mapping_manager,
                                            db_wrapper=self.__db_wrapper,
-                                           scan_strategy=scan_strategy)
-            await entry.worker_instance.start_worker()
+                                           scan_strategy=scan_strategy,
+                                           strategy_factory=self.__strategy_factory)
         else:
+            logger.info("Updating strategy")
             await entry.worker_instance.set_scan_strategy(scan_strategy)
         communicator.worker_instance_ref = entry.worker_instance
+        if not await entry.worker_instance.start_worker():
+            return False
         return True
 
     async def __authenticate_connection(self, websocket_client_connection: websockets.WebSocketClientProtocol) \
@@ -348,7 +355,7 @@ class WebsocketServer(object):
     def get_origin_communicator(self, origin: str) -> Optional[AbstractCommunicator]:
         # TODO: this should probably lock?
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-        return (entry.worker_instance.communicator
+        return (entry.worker_instance.get_communicator()
                 if entry is not None and entry.worker_instance is not None
                 else None)
 
