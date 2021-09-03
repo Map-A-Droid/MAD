@@ -139,7 +139,6 @@ class DbWebhookReader:
         mons_with_changes: List[Tuple[Pokemon, TrsSpawn, Pokestop]] = await PokemonHelper.get_changed_since(session,
                                                                                                             _timestamp,
                                                                                                             mon_types)
-
         ret = []
         for (mon, spawn, stop) in mons_with_changes:
             if mon.latitude == 0 and mon.seen_type == MonSeenTypes.LURE_ENCOUNTER.value:

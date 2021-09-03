@@ -408,6 +408,12 @@ class WebhookWorker:
 
         for mon in mon_data:
             if self.__is_in_excluded_area([mon["latitude"], mon["longitude"]]):
+                logger.debug2("Webhook ignoring (excluded area) mon ID {} with encounter ID {}. Stats: {}/{}/{}",
+                              mon["pokemon_id"],
+                              mon["encounter_id"],
+                              mon.get("individual_attack"),
+                              mon.get("individual_defense"),
+                              mon.get("individual_stamina"))
                 continue
 
             mon_payload = {
@@ -700,7 +706,8 @@ class WebhookWorker:
             self.__last_check = int(self.__args.webhook_start_time)
 
         while not terminate_mad.is_set():
-            preparing_timestamp = int(time.time())
+            # Always check modifications of intervals before N - 1 given processing of queues may take some time...
+            preparing_timestamp = int(time.time()) - 2 * self.__worker_interval_sec
 
             # fetch data and create payload
             full_payload = await self.__create_payload()
