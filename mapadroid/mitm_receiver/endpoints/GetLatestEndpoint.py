@@ -27,9 +27,11 @@ class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
         # Workaround for PD...
         injected_settings_dict = {"values": injected_settings}
 
-        ids_iv: Optional[LatestMitmDataEntry] = await self._get_mitm_mapper().request_latest(origin, "ids_iv")
-        if ids_iv is not None:
-            ids_iv = ids_iv.data
+        ids_iv_entry: Optional[LatestMitmDataEntry] = await self._get_mitm_mapper().request_latest(origin, "ids_iv")
+        ids_iv = []
+        if ids_iv_entry is not None:
+            for id_iv in ids_iv_entry.data:
+                ids_iv.append(int(id_iv))
 
         safe_items = await self._get_mapping_manager().get_safe_items(origin)
         level_mode = await self._get_mapping_manager().routemanager_of_origin_is_levelmode(origin)

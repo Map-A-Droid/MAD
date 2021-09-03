@@ -19,6 +19,8 @@ from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
 from google.protobuf import json_format
 
+from mapadroid.worker.WorkerType import WorkerType
+
 logger = get_logger(LoggerEnums.mitm_mapper)
 
 
@@ -75,7 +77,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
                 data_timestamp=request.location_data.data_timestamp,
                 # TODO: Probably gotta read value of protobuf enum...
                 position_type=PositionType(request.location_data.position_type),
-                walker=request.location_data.walker,
+                worker_type=WorkerType(request.location_data.walker),
                 transport_type=TransportType(request.location_data.transport_type),
                 timestamp_of_record=request.timestamp)
         elif request.HasField("seen_type"):

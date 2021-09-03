@@ -12,6 +12,8 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import MonSeenTypes, PositionType, TransportType
 from google.protobuf import json_format
 
+from mapadroid.worker.WorkerType import WorkerType
+
 
 class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
     async def stats_collect_wild_mon(self, worker: str, encounter_ids: List[int], time_scanned: datetime) -> None:
@@ -43,7 +45,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         await self.StatsCollect(request)
 
     async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
-                                          position_type: PositionType, data_timestamp: int, walker: str,
+                                          position_type: PositionType, data_timestamp: int, walker: WorkerType,
                                           transport_type: TransportType, timestamp_of_record: int) -> None:
         request: Stats = Stats()
         request.worker.name = worker
@@ -53,7 +55,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request.location_data.success = success
         request.location_data.fix_timestamp = fix_timestamp
         request.location_data.data_timestamp = data_timestamp
-        request.location_data.walker = walker
+        request.location_data.walker = walker.value
         # TODO: Probably gotta set it some other way...
         request.location_data.position_type = position_type.value
         request.location_data.transport_type = transport_type.value

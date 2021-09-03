@@ -51,7 +51,7 @@ class PokemonHelper:
                 continue
             latest = max(latest, pokemon.last_modified.timestamp())
             # Add an hour to avoid encountering unknown disappear times again
-            encounter_id_infos[pokemon.encounter_id] = pokemon.disappear_time.timestamp() + 60 * 60
+            encounter_id_infos[pokemon.encounter_id] = int(pokemon.disappear_time.timestamp() + 60 * 60)
         return latest, encounter_id_infos
 
     @staticmethod

@@ -1,7 +1,7 @@
 import asyncio
 import math
 import time
-from typing import Dict, Union, Tuple, Optional
+from typing import Dict, Union, Tuple, Optional, List
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
@@ -175,13 +175,15 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                     self._latest_encounter_update)
             if encounter_ids:
                 logger.debug("Found {} new encounter_ids", len(encounter_ids))
-            self._encounter_ids = {**encounter_ids, **self._encounter_ids}
+            # str keys since protobuf requires string keys for json...
+            encounter_ids_prepared: Dict[str, int] = { str(encounter_id): timestamp for encounter_id, timestamp in encounter_ids.items() }
+            self._encounter_ids: Dict[str, int] = {**encounter_ids_prepared, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.
             max_age_ = DatetimeWrapper.now().timestamp()
-            remove = []
+            remove: List[str] = []
             for key, value in self._encounter_ids.items():
-                if value < max_age_:
+                if int(value) < max_age_:
                     remove.append(key)
 
             for key in remove:
