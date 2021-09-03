@@ -420,6 +420,8 @@ class WebhookWorker:
                 "verified": mon["spawn_verified"],
                 "seen_type": str(mon["seen_type"])
             }
+            logger.debug2("Webhook sending mon ID {} with encounter ID {}", mon["pokemon_id"],
+                          mon["encounter_id"])
 
             # get rarity
             pokemon_rarity = self.__rarity.rarity_by_id(pokemonid=mon["pokemon_id"])
