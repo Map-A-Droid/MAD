@@ -706,8 +706,8 @@ class WebhookWorker:
             self.__last_check = int(self.__args.webhook_start_time)
 
         while not terminate_mad.is_set():
-            # Always check modifications of intervals N - 3 to NOW given processing of queues may take some time...
-            preparing_timestamp = int(time.time()) - self.__worker_interval_sec
+            # Always check modifications of intervals N - 6 to NOW given processing of queues may take some time...
+            preparing_timestamp = int(time.time()) - 6 * self.__worker_interval_sec
 
             # fetch data and create payload
             full_payload = await self.__create_payload()
