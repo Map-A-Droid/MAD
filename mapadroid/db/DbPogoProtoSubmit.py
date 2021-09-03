@@ -220,14 +220,14 @@ class DbPogoProtoSubmit:
             return
 
         origin_logger.debug3("Updating IV sent for encounter at {}", timestamp)
-        
+
         encounter_id = wild_pokemon["encounter_id"]
         pokemon_data = wild_pokemon.get("pokemon_data")
         pokemon_display = pokemon_data.get("display", {})
         mon_id = pokemon_data.get("id")
         weather_boosted = pokemon_display.get("weather_boosted_value")
         spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
-        
+
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
@@ -244,7 +244,7 @@ class DbPogoProtoSubmit:
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
         shiny = pokemon_display.get("is_shiny", 0)
-        
+
         mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if getdetspawntime is None:
