@@ -58,20 +58,25 @@ class DbPogoProtoSubmit:
         encounters = []
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
+
+                mon_id = wild_mon["pokemon_data"]["id"]
+                encounter_id = wild_mon["encounter_id"]
+                if encounter_id < 0:
+                    encounter_id = encounter_id + 2 ** 64
+
+                cache_key = "mon{}-{}".format(encounter_id, mon_id)
+                if cache.exists(cache_key):
+                    continue
+
                 spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
                 lat = wild_mon["latitude"]
                 lon = wild_mon["longitude"]
-                mon_id = wild_mon["pokemon_data"]["id"]
-                encounter_id = wild_mon["encounter_id"]
 
                 pokemon_display = wild_mon.get("pokemon_data", {}).get("display", {})
                 weather_boosted = pokemon_display.get('weather_boosted_value')
                 gender = pokemon_display.get('gender_value')
                 costume = pokemon_display.get('costume_value')
                 form = pokemon_display.get('form_value')
-
-                if encounter_id < 0:
-                    encounter_id = encounter_id + 2 ** 64
 
                 mitm_mapper.collect_mon_stats(origin, str(encounter_id))
 
@@ -89,10 +94,6 @@ class DbPogoProtoSubmit:
                 else:
                     origin_logger.debug3("adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", mon_id, lat, lon,
                                          despawn_time, spawnid)
-
-                cache_key = "mon{}-{}".format(encounter_id, mon_id)
-                if cache.exists(cache_key):
-                    continue
 
                 mon_args.append(
                     (
@@ -219,24 +220,14 @@ class DbPogoProtoSubmit:
             return
 
         origin_logger.debug3("Updating IV sent for encounter at {}", timestamp)
-
-        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
-
-        spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
-
-        getdetspawntime = self._get_detected_endtime(str(spawnid))
-        despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp, self._args.default_unknown_timeleft)
-        despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
-
-        latitude = wild_pokemon.get("latitude")
-        longitude = wild_pokemon.get("longitude")
-        pokemon_data = wild_pokemon.get("pokemon_data")
-        mon_id = pokemon_data.get("id")
+        
         encounter_id = wild_pokemon["encounter_id"]
+        pokemon_data = wild_pokemon.get("pokemon_data")
         pokemon_display = pokemon_data.get("display", {})
-        shiny = pokemon_display.get("is_shiny", 0)
-        weather_boosted = pokemon_display.get('weather_boosted_value')
-
+        mon_id = pokemon_data.get("id")
+        weather_boosted = pokemon_display.get("weather_boosted_value")
+        spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
+        
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
@@ -244,6 +235,16 @@ class DbPogoProtoSubmit:
         if cache.exists(cache_key):
             return
 
+        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+
+        getdetspawntime = self._get_detected_endtime(str(spawnid))
+        despawn_time_unix = gen_despawn_timestamp(getdetspawntime, timestamp, self._args.default_unknown_timeleft)
+        despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime("%Y-%m-%d %H:%M:%S")
+
+        latitude = wild_pokemon.get("latitude")
+        longitude = wild_pokemon.get("longitude")
+        shiny = pokemon_display.get("is_shiny", 0)
+        
         mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if getdetspawntime is None:
