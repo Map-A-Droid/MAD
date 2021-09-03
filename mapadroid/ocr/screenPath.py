@@ -52,7 +52,7 @@ class WordToScreenMatching(object):
         if self._logintype == LoginType.ptc:
             temp_accounts = self.get_device_value('ptc_login', [])
             if not temp_accounts:
-                self._logger.warning('No PTC Accounts are set - hope we are login and never logout!')
+                self._logger.warning('No PTC Accounts are set - hope we are logged in and never logout!')
                 self._accountcount = 0
                 return
             for username, password in temp_accounts:
