@@ -1,11 +1,12 @@
 from typing import Dict, Any, Optional, List, Union
 
-from loguru import logger
-
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataHolder import LatestMitmDataHolder
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class PlayerData(AbstractWorkerHolder):

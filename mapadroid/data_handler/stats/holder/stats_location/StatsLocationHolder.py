@@ -3,7 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
 from mapadroid.data_handler.stats.holder.stats_location.StatsLocationEntry import StatsLocationEntry
-from loguru import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class StatsLocationHolder(AbstractStatsHolder, AbstractWorkerHolder):

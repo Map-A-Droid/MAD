@@ -32,6 +32,7 @@ class LoggerEnums(Enum):
     aiohttp_web = "aiohttp_web"
     aioredis = "aioredis"
     endpoint = "endpoint"
+    mitm_mapper = "mitm_mapper"
 
 
 # ==================================

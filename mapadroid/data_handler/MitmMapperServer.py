@@ -15,9 +15,11 @@ from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperServicer, add_MitmMapperServicer_to_server
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
-from loguru import logger
 from google.protobuf import json_format
+
+logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class MitmMapperServer(MitmMapperServicer, MitmMapper):

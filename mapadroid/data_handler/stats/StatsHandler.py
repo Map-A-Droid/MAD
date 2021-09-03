@@ -4,7 +4,6 @@ from asyncio import Task
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_handler.stats.PlayerStats import PlayerStats
@@ -17,8 +16,11 @@ from mapadroid.db.helper.TrsStatsLocationHelper import TrsStatsLocationHelper
 from mapadroid.db.helper.TrsStatsLocationRawHelper import TrsStatsLocationRawHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import TransportType, PositionType, MonSeenTypes
 from mapadroid.worker.WorkerType import WorkerType
+
+logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class StatsHandler:

@@ -9,10 +9,11 @@ from mapadroid.data_handler.stats.holder.stats_location.StatsLocationHolder impo
 from mapadroid.data_handler.stats.holder.stats_location_raw.StatsLocationRawHolder import StatsLocationRawHolder
 from mapadroid.data_handler.stats.holder.wild_mon_stats.WildMonStatsHolder import WildMonStatsHolder
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import PositionType, TransportType
-from loguru import logger
-
 from mapadroid.worker.WorkerType import WorkerType
+
+logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class PlayerStats(AbstractStatsHolder):

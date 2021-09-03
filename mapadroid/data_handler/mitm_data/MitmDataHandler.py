@@ -1,12 +1,13 @@
 import time
 from typing import Dict, Any, Optional, Union
 
-from loguru import logger
-
 from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class MitmDataHandler:

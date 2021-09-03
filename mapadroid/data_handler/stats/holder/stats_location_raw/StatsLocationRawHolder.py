@@ -7,10 +7,10 @@ from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStat
 from mapadroid.db.model import TrsStatsLocationRaw
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType
-from loguru import logger
-
 from mapadroid.worker.WorkerType import WorkerType
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
+logger = get_logger(LoggerEnums.mitm_mapper)
 
 class StatsLocationRawHolder(AbstractStatsHolder, AbstractWorkerHolder):
     def __init__(self, worker: str):

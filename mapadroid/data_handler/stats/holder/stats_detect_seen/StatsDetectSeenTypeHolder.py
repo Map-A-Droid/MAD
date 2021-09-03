@@ -2,13 +2,15 @@ from datetime import datetime
 from typing import Dict
 
 import sqlalchemy
-from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
 from mapadroid.data_handler.stats.holder.stats_detect_seen.StatsDetectSeenTypeEntry import StatsDetectSeenTypeEntry
 from mapadroid.db.helper.TrsStatsDetectSeenTypeHelper import TrsStatsDetectSeenTypeHelper
+from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import MonSeenTypes
+
+logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class StatsDetectSeenTypeHolder(AbstractStatsHolder):
