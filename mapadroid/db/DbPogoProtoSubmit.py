@@ -300,7 +300,7 @@ class DbPogoProtoSubmit:
             mon.costume = pokemon_display.get("costume_value", None)
             mon.form = form
             mon.last_modified = now
-            logger.debug("Submitting IV {}", encounter_id)
+            logger.debug("Submitting IV {} scanned at {}", encounter_id, timestamp)
             session.add(mon)
             await nested_transaction.commit()
             cache_time = int(despawn_time_unix - int(DatetimeWrapper.now().timestamp()))
