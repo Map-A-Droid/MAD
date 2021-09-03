@@ -189,13 +189,11 @@ class DbPogoProtoSubmit:
                         mon.spawnpoint_id = spawnpoint
                         mon.latitude = lat
                         mon.longitude = lon
-                    mon.cell_id = db_cell
-                    mon.fort_id = stop_id
-                    if mon.seen_type not in [MonSeenTypes.ENCOUNTER, MonSeenTypes.WILD,
-                                             MonSeenTypes.LURE_ENCOUNTER]:
+                        mon.disappear_time = disappear_time
                         mon.seen_type = seen_type.value
+                        mon.cell_id = db_cell
+                        mon.fort_id = stop_id
                     mon.pokemon_id = mon_id
-                    mon.disappear_time = disappear_time
                     mon.gender = gender
                     mon.weather_boosted_condition = weather_boosted
                     mon.costume = costume
