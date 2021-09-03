@@ -6,7 +6,6 @@ from threading import current_thread
 from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
-from loguru import logger
 
 from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
@@ -17,8 +16,8 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.authHelper import check_auth
-from mapadroid.utils.logging import (InterceptHandler, LoggerEnums)
-from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException, WebsocketWorkerConnectionClosedException
+from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger)
+from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
@@ -33,6 +32,7 @@ logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
 logging.getLogger('websockets.server').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
 logging.getLogger('websockets.protocol').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
+logger = get_logger(LoggerEnums.websocket)
 
 
 class WebsocketServer(object):

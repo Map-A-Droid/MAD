@@ -317,7 +317,7 @@ def get_origin_logger(existing_logger, origin=None) -> logger:
     if not any([origin]):
         return existing_logger
     if origin:
-        return get_logger(LoggerEnums.system, identifier=origin)
+        return get_logger(LoggerEnums.system, name=origin)
 
 
 @apply_custom

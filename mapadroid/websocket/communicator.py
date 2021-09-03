@@ -6,7 +6,7 @@ from aiofile import async_open
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (
     ScreenshotType, WebsocketWorkerConnectionClosedException,
     WebsocketWorkerTimeoutException)
@@ -25,18 +25,17 @@ class Communicator(AbstractCommunicator):
                  command_timeout: float):
         # Throws ValueError if unable to connect!
         # catch in code using this class
-        self.logger = get_origin_logger(get_logger(LoggerEnums.websocket), origin=worker_id)
         self.worker_instance_ref: Optional[AbstractWorker] = worker_instance_ref
         self.websocket_client_entry = websocket_client_entry
         self.__command_timeout: float = command_timeout
         self.__send_mutex = asyncio.Lock()
 
     async def cleanup(self) -> None:
-        self.logger.info("Communicator calling exit to cleanup worker in websocket")
+        logger.info("Communicator calling exit to cleanup worker in websocket")
         try:
             await self.terminate_connection()
         except (WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException):
-            self.logger.info("Communicator-cleanup resulted in timeout or connection has already been closed")
+            logger.info("Communicator-cleanup resulted in timeout or connection has already been closed")
 
     async def __run_and_ok(self, command, timeout) -> bool:
         return await self.__run_and_ok_bytes(command, timeout)
@@ -70,7 +69,7 @@ class Communicator(AbstractCommunicator):
 
     async def stop_app(self, package_name: str) -> bool:
         if not await self.__run_and_ok("more stop {}\r\n".format(package_name), self.__command_timeout):
-            self.logger.error("Failed stopping {}, please check if SU has been granted", package_name)
+            logger.error("Failed stopping {}, please check if SU has been granted", package_name)
             return False
         else:
             return True
@@ -102,7 +101,7 @@ class Communicator(AbstractCommunicator):
         return await self.__run_and_ok("more screen on\r\n", self.__command_timeout)
 
     async def click(self, click_x: int, click_y: int) -> bool:
-        self.logger.debug('Click {} / {}', click_x, click_y)
+        logger.debug('Click {} / {}', click_x, click_y)
         return await self.__run_and_ok(
             "screen click {} {}\r\n".format(str(int(round(click_x))), str(int(round(click_y)))),
             self.__command_timeout)
@@ -129,7 +128,7 @@ class Communicator(AbstractCommunicator):
     async def get_screenshot(self, path: str, quality: int = 70,
                              screenshot_type: ScreenshotType = ScreenshotType.JPEG) -> bool:
         if quality < 10 or quality > 100:
-            self.logger.error("Invalid quality value passed for screenshots")
+            logger.error("Invalid quality value passed for screenshots")
             return False
 
         screenshot_type_str: str = "jpeg"
@@ -140,20 +139,20 @@ class Communicator(AbstractCommunicator):
         if encoded is None:
             return False
         elif isinstance(encoded, str):
-            self.logger.debug2("Screenshot response not binary")
+            logger.debug2("Screenshot response not binary")
             if "KO: " in encoded:
-                self.logger.error("get_screenshot: Could not retrieve screenshot. Make sure your RGC is updated.")
+                logger.error("get_screenshot: Could not retrieve screenshot. Make sure your RGC is updated.")
                 return False
             elif "OK:" not in encoded:
-                self.logger.error("get_screenshot: response not OK")
+                logger.error("get_screenshot: response not OK")
                 return False
             return False
         else:
-            self.logger.debug("Storing screenshot...")
+            logger.debug("Storing screenshot...")
             async with async_open(path, "wb") as fh:
                 await fh.write(encoded)
             del encoded
-            self.logger.debug2("Done storing, returning")
+            logger.debug2("Done storing, returning")
             return True
 
     async def back_button(self) -> bool:
@@ -190,7 +189,7 @@ class Communicator(AbstractCommunicator):
         try:
             return await self.__run_and_ok("exit\r\n", timeout=5)
         except WebsocketWorkerConnectionClosedException:
-            self.logger.info("Cannot gracefully terminate connection, it's already been closed")
+            logger.info("Cannot gracefully terminate connection, it's already been closed")
             return True
 
     # coords need to be float values
@@ -219,17 +218,17 @@ class Communicator(AbstractCommunicator):
         if encoded is None:
             return False
         elif isinstance(encoded, str):
-            self.logger.debug("Logcat response not binary (expected a ZIP)")
+            logger.debug("Logcat response not binary (expected a ZIP)")
             if "KO: " in encoded:
-                self.logger.error(
+                logger.error(
                     "get_compressed_logcat: Could not retrieve logcat. Make sure your RGC is updated.")
             elif "OK:" not in encoded:
-                self.logger.error("get_compressed_logcat: response not OK")
+                logger.error("get_compressed_logcat: response not OK")
             return False
         else:
-            self.logger.debug("Storing logcat...")
+            logger.debug("Storing logcat...")
 
             async with async_open(path, "wb") as fh:
                 await fh.write(encoded)
-            self.logger.debug("Done storing logcat, returning")
+            logger.debug("Done storing logcat, returning")
             return True
