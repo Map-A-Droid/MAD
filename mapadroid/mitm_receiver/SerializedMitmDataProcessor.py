@@ -144,11 +144,11 @@ class SerializedMitmDataProcessor:
                 encounter: Optional[Tuple[int, bool]] = await self.__db_submit.mon_iv(session,
                                                                                       received_timestamp,
                                                                                       data["payload"])
+                await session.commit()
 
                 if self.__application_args.game_stats and encounter:
                     encounter_id, is_shiny = encounter
                     await self.__mitm_mapper.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny)
-                await session.commit()
             end_time = self.get_time_ms() - start_time
             logger.debug("Done processing encounter in {}ms", end_time)
         else:

@@ -908,12 +908,12 @@ class DbPogoProtoSubmit:
             if await cache.exists(cache_key):
                 continue
 
-            lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
             s2cell: Optional[TrsS2Cell] = await TrsS2CellHelper.get(session, cell_id)
             if not s2cell:
                 s2cell: TrsS2Cell = TrsS2Cell()
                 s2cell.id = cell_id
                 s2cell.level = 15
+                lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
                 s2cell.center_latitude = lat
                 s2cell.center_longitude = lng
             s2cell.updated = int(cell["current_timestamp"] / 1000)
