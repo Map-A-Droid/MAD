@@ -1,6 +1,6 @@
 import math
+from loguru import logger
 
-from mapadroid.utils.logging import get_origin_logger, logger
 
 try:
     from ortools.constraint_solver import pywrapcp, routing_enums_pb2
@@ -51,7 +51,6 @@ def format_solution(manager, routing, solution):
 
 
 def route_calc_ortools(less_coordinates, route_name):
-    route_logger = get_origin_logger(logger, origin=route_name)
     data = create_data_model(less_coordinates)
 
     # Create the routing index manager.
@@ -80,28 +79,27 @@ def route_calc_ortools(less_coordinates, route_name):
     search_parameters.first_solution_strategy = (routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
 
     # Solve the problem.
-    route_logger.debug("OR-Tools routecalc starting for route: {}", route_name)
+    logger.debug("OR-Tools routecalc starting for route: {}", route_name)
     solution = routing.SolveWithParameters(search_parameters)
-    route_logger.debug("OR-Tools routecalc finished for route: {}", route_name)
+    logger.debug("OR-Tools routecalc finished for route: {}", route_name)
 
     return format_solution(manager, routing, solution)
 
 
 def route_calc_all(less_coordinates, route_name, num_processes, algorithm):
-    route_logger = get_origin_logger(logger, origin=route_name)
     # check to see if we can use OR-Tools to perform our routecalc
     import platform
     if platform.architecture()[0] == "64bit" and algorithm == 'route':  # OR-Tools is only available for 64bit python
-        route_logger.debug("64-bit python detected, checking if we can use OR-Tools")
+        logger.debug("64-bit python detected, checking if we can use OR-Tools")
         try:
             pywrapcp
             routing_enums_pb2
         except Exception:
-            route_logger.debug("OR-Tools not available, using MAD routecalc")
+            logger.debug("OR-Tools not available, using MAD routecalc")
         else:
-            route_logger.debug("Using OR-Tools for routecalc")
+            logger.debug("Using OR-Tools for routecalc")
             return route_calc_ortools(less_coordinates, route_name)
 
-    route_logger.debug("Using MAD quick routecalc")
+    logger.debug("Using MAD quick routecalc")
     from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
     return route_calc_impl(less_coordinates, route_name, num_processes)

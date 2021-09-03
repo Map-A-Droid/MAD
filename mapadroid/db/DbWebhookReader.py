@@ -8,8 +8,10 @@ from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
 from mapadroid.db.model import Raid, Gym, GymDetail, Weather, TrsQuest, Pokestop, Pokemon, TrsSpawn
+from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import MonSeenTypes
-from loguru import logger
+
+logger = get_logger(LoggerEnums.webhook)
 
 
 class DbWebhookReader:

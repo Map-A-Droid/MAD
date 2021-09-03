@@ -4,8 +4,6 @@ import time
 from asyncio import Task
 from typing import List, Dict, Tuple, Set
 
-from loguru import logger
-
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import TrsQuest, Pokestop
@@ -14,9 +12,12 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.json_encoder import mad_json_dumps
+from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
+
+logger = get_logger(LoggerEnums.webhook)
 
 
 class WebhookWorker:

@@ -333,7 +333,7 @@ class AbstractWorkerStrategy(ABC):
                 await self._reboot()
                 break
 
-            if self._worker_state.login_error_count > 1:
+            if self._worker_state.login_error_count > 2:
                 logger.warning('Could not login again - (clearing game data + restarting device')
                 await self.stop_pogo()
                 await self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
