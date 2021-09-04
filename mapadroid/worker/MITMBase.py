@@ -20,7 +20,7 @@ from mapadroid.worker.WorkerBase import FortSearchResultTypes, WorkerBase
 WALK_AFTER_TELEPORT_SPEED = 11
 FALLBACK_MITM_WAIT_TIMEOUT = 45
 TIMESTAMP_NEVER = 0
-WAIT_FOR_DATA_NEXT_ROUND_SLEEP = 0.5
+WAIT_FOR_DATA_NEXT_ROUND_SLEEP = 1
 # Distance in meters that are to be allowed to consider a GMO as within a valid range
 # Some modes calculate with extremely strict distances (0.0001m for example), thus not allowing
 # direct use of routemanager radius as a distance (which would allow long distances for raid scans as well)
