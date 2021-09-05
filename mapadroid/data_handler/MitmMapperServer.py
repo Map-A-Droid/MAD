@@ -31,7 +31,9 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
 
     async def start(self):
         await MitmMapper.start(self)
-        options = [('grpc.max_message_length', 100 * 1024 * 1024)]
+        max_message_length = 100 * 1024 * 1024
+        options = [('grpc.max_message_length', max_message_length),
+                   ('grpc.max_receive_message_length', max_message_length)]
         self.__server = grpc.aio.server(options=options)
         add_MitmMapperServicer_to_server(self, self.__server)
         listen_addr = '[::]:50051'
