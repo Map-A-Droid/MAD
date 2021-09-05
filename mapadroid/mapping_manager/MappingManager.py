@@ -321,6 +321,9 @@ class MappingManager:
     async def get_all_devicemappings(self) -> Optional[Dict[str, DeviceMappingsEntry]]:
         return self._devicemappings
 
+    async def get_all_loaded_origins(self) -> Set[str]:
+        return set(self._devicemappings.keys()) if self._devicemappings else set()
+
     async def get_areas(self) -> Optional[Dict[int, AreaEntry]]:
         return self._areas
 

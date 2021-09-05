@@ -15,4 +15,5 @@ for proto in $FILES; do
     echo $proto;
     echo "Running in $PROTO_DIR"
     python3 -m grpc_tools.protoc -I="." -I="./mitm_mapper" -I="./shared"  --python_out="$OUTPUT_DIR" --grpc_python_out="$GRPC_OUT_DIR" "$proto";
+    python3 -m grpc_tools.protoc -I="." -I="./mapping_manager" -I="./shared"  --python_out="$OUTPUT_DIR" --grpc_python_out="$GRPC_OUT_DIR" "$proto";
 done

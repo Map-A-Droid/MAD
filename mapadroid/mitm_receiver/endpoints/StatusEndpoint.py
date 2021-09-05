@@ -12,7 +12,7 @@ class StatusEndpoint(AbstractMitmReceiverRootEndpoint):
 
         origin_return: dict = {}
         data_return: dict = {}
-        for origin in (await self._get_mapping_manager().get_all_devicemappings()).keys():
+        for origin in (await self._get_mapping_manager().get_all_loaded_origins()):
             origin_return[origin] = {}
             origin_return[origin]['injection_status'] = await self._get_mitm_mapper().get_injection_status(origin)
             origin_return[origin]['latest_data'] = await self._get_mitm_mapper().request_latest(origin,

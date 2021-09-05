@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package mapadroid.mapping_manager;
+
+service MappingManager {
+  rpc GetAllowedAuthenticationCredentials(GetAllowedAuthenticationCredentialsRequest) returns (GetAllowedAuthenticationCredentialsResponse);
+  rpc GetAllLoadedOrigins(GetAllLoadedOriginsRequest) returns (GetAllLoadedOriginsResponse);
+  rpc GetSafeItemsNotToDelete(GetSafeItemsNotToDeleteRequest) returns (GetSafeItemsNotToDeleteResponse);
+  rpc IsRoutemanagerOfOriginLevelmode(IsRoutemanagerOfOriginLevelmodeRequest) returns (IsRoutemanagerOfOriginLevelmodeResponse);
+}
+
+message Worker {
+  string name = 1;
+}
+
+message IsRoutemanagerOfOriginLevelmodeRequest {
+  Worker worker = 1;
+}
+
+message IsRoutemanagerOfOriginLevelmodeResponse {
+  bool is_levelmode = 1;
+}
+
+
+message GetSafeItemsNotToDeleteRequest {
+  Worker worker = 1;
+}
+
+message GetSafeItemsNotToDeleteResponse {
+  repeated int32 item_ids = 1;
+}
+
+
+message GetAllowedAuthenticationCredentialsRequest {
+}
+
+message GetAllowedAuthenticationCredentialsResponse {
+  // Map where username is the key, password is the value
+  map<string, string> allowed_credentials = 1;
+}
+
+message GetAllLoadedOriginsRequest {
+}
+
+message GetAllLoadedOriginsResponse {
+  // simply a list of origins with configurations loaded
+  repeated string loaded_origins = 1;
+}

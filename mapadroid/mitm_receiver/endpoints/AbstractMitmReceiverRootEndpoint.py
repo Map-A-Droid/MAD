@@ -11,7 +11,7 @@ from aiohttp.typedefs import LooseHeaders, StrOrURL
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
@@ -129,7 +129,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     def _get_mapping_manager(self) -> MappingManager:
         return self.request.app['mapping_manager']
 
-    def _get_mitm_mapper(self) -> MitmMapper:
+    def _get_mitm_mapper(self) -> AbstractMitmMapper:
         return self.request.app['mitm_mapper']
 
     def _get_mitmreceiver_startup_time(self) -> int:
@@ -263,7 +263,8 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
         """
         auth = self._request.headers.get('Authorization')
-        if not check_auth(logger, auth, self._get_mad_args(), await (self._get_mapping_manager().get_auths())):
+        auths_allowed: Optional[Dict[str, str]] = await self._get_mapping_manager().get_auths()
+        if not check_auth(logger, auth, self._get_mad_args(), auths_allowed):
             logger.warning("Unauthorized attempt to connect from {}", self._get_request_address())
             raise web.HTTPUnauthorized
 
@@ -277,7 +278,6 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         if origin is None:
             logger.warning("Missing Origin header in request")
             raise web.HTTPUnauthorized
-        elif (await self._get_mapping_manager().get_all_devicemappings()).keys() is not None and \
-                origin not in (await self._get_mapping_manager().get_all_devicemappings()).keys():
+        elif origin not in (await self._get_mapping_manager().get_all_loaded_origins()):
             logger.warning("MITMReceiver request without Origin or disallowed Origin")
             raise web.HTTPUnauthorized
