@@ -201,7 +201,7 @@ class RouteManagerBase(ABC):
 
     def unregister_worker(self, worker_name):
         route_logger = routelogger_set_origin(self.logger, origin=worker_name)
-        with self._workers_registered_mutex and self._manager_mutex:
+        with self._manager_mutex, self._workers_registered_mutex:
             if worker_name in self._workers_registered:
                 route_logger.info("unregistering from routemanager")
                 self._workers_registered.remove(worker_name)
@@ -853,7 +853,7 @@ class RouteManagerBase(ABC):
         if self.mode in ("iv_mitm", "idle"):
             self.logger.info('Not updating routepools in iv_mitm mode')
             return True
-        with self._manager_mutex and self._workers_registered_mutex:
+        with self._manager_mutex, self._workers_registered_mutex:
             self.logger.debug("Updating all routepools")
             workers = len(self._routepool)
             if len(self._workers_registered) == 0 or workers == 0:

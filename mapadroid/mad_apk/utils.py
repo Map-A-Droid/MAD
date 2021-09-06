@@ -1,16 +1,18 @@
 import io
 import zipfile
 from distutils.version import LooseVersion
-from typing import Generator, Tuple, Union
+from typing import Dict, Generator, List, Tuple, Union
 
 import apkutils
+import cachetools.func
 import requests
 from apksearch.search import HEADERS
 from apkutils.apkfile import BadZipFile, LargeZipFile
 from flask import Response, stream_with_context
 
 from mapadroid.utils.functions import get_version_codes
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE
+from mapadroid.utils.global_variables import (BACKEND_SUPPORTED_VERSIONS,
+                                              CHUNK_MAX_SIZE)
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 from .abstract_apk_storage import AbstractAPKStorage
@@ -227,7 +229,8 @@ def lookup_arch_enum(name: str) -> APKArch:
     raise ValueError('No defined lookup for %s' % (name,))
 
 
-def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
+def lookup_package_info(storage_obj: AbstractAPKStorage,
+                        package: APKType,
                         architecture: APKArch = None) -> Tuple[Union[MADPackage, MADPackages], int]:
     """ Retrieve the information about the package.  If no architecture is specified, it will return MAD_PACKAGES
         containing all relevant architectures
@@ -253,7 +256,11 @@ def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
         try:
             status_code: int = 200
             fileinfo = package_info[architecture]
-            if package == APKType.pogo and not supported_pogo_version(architecture, fileinfo.version):
+            if package == APKType.pogo and not supported_pogo_version(
+                    architecture,
+                    fileinfo.version,
+                    storage_obj.token()
+            ):
                 status_code = 410
             return (fileinfo, status_code)
         except KeyError:
@@ -303,25 +310,90 @@ def stream_package(db, storage_obj, package: APKType, architecture: APKArch) -> 
     )
 
 
-def supported_pogo_version(architecture: APKArch, version: str) -> bool:
+def supported_pogo_version(architecture: APKArch, version: str, token: str) -> bool:
     """ Determine if the com.nianticlabs.pokemongo package is supported by MAD
 
     Args:
         architecture (APKArch): Architecture of the package to lookup
+        token (str): Token used for querying the MADdev backend
         version (str): Version of the pogo package
     """
-    valid: bool = False
     if architecture == APKArch.armeabi_v7a:
         bits = '32'
     else:
         bits = '64'
-    composite_key = '%s_%s' % (version, bits,)
-    valid = composite_key in get_version_codes(force_gh=False)
-    if not valid:
-        valid = composite_key in get_version_codes(force_gh=True)
-    if not valid:
-        logger.debug("PoGo [{}] is not supported", composite_key)
-    return valid
+    # Use the MADdev endpoint for supported
+    supported_versions = get_backend_versions(token)
+    if version in supported_versions[bits]:
+        return True
+    # If the version is not supported, check the local
+    # file for supported versions
+    supported_versions = get_local_versions()
+    try:
+        return version in supported_versions[bits]
+    except KeyError:
+        return False
+
+
+def get_local_versions():
+    """Lookup the supported versions through the version_codes file
+
+    :return: Supported versions
+    :rtype: dict
+    """
+    supported = {
+        "32": [],
+        "64": [],
+    }
+    local_supported = get_version_codes()
+    for composite_ver in local_supported.keys():
+        version, arch = composite_ver.split("_", 1)
+        supported[arch].append(version)
+    if any(supported["32"]) or any(supported["64"]):
+        return supported
+    return {}
+
+
+@cachetools.func.ttl_cache(maxsize=1, ttl=10 * 60)
+def get_backend_versions(token: str) -> Dict[str, List[str]]:
+    """Lookup the supported backend versions
+
+    :param str token: Token used for querying the MADdev backend
+
+    :return: Currently supported versions from the backend
+    :rtype: list
+    """
+    if not token:
+        msg = (
+            "The API token has not been set in the config. Please update "
+            "the configuration to include 'maddev_api_token' to "
+            "utilize the wizard."
+        )
+        logger.error(msg)
+        raise ValueError(msg)
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Accept": "application/json",
+    }
+    res = requests.get(BACKEND_SUPPORTED_VERSIONS, headers=headers)
+    if res.status_code == 200:
+        try:
+            data = res.json()
+        except ValueError as err:
+            raise ValueError("MADdev did not return proper json") from err
+        if "error" in data:
+            raise ValueError("An error was returned, {}".format(data["error"]))
+        else:
+            return data
+    elif res.status_code == 403:
+        raise ConnectionError("Invalid API token. Verify the correct token is in-use")
+    else:
+        msg = (
+            "Invalid response recieved from MADdev\n"
+            "Status Code: {}\n"
+            "Body: {}"
+        ).format(res.status_code, res.content)
+        raise ConnectionError(msg)
 
 
 def perform_http_download(url: str, retries: int = 3) -> requests.Response:
