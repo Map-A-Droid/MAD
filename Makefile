@@ -47,7 +47,7 @@ ifdef OS
     pip := $(shell Get-Command pip | Select-Object -ExpandProperty Source)
     precommit := $(shell Get-Command pre-commit | Select-Object -ExpandProperty Source)
     docker := $(shell Get-Command docker | Select-Object -ExpandProperty Source)
-    docker_compose := $(shell Get-Command docker-compose -f ${COMPOSE_FILE_DEV} | Select-Object -ExpandProperty Source)
+    docker_compose := $(shell (Get-Command docker-compose | Select-Object -ExpandProperty Source) -f ${COMPOSE_FILE_DEV})
     UID ?= 1000
     GID ?= 1000
 else

@@ -27,7 +27,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                                     )
 
     def _worker_changed_update_routepools(self):
-        with self._manager_mutex and self._workers_registered_mutex:
+        with self._manager_mutex, self._workers_registered_mutex:
             self.logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
             if len(self._workers_registered) == 0:
                 self.logger.info("No registered workers, aborting __worker_changed_update_routepools...")
