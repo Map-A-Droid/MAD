@@ -175,13 +175,19 @@ class DbWebhookReader:
         if mon_types is None:
             mon_types = {"encounter", "lure_encounter"}
         query = (
-            "SELECT encounter_id, spawnpoint_id, pokemon_id, pokemon.latitude, pokemon.longitude, "
+            "SELECT pokemon.encounter_id, spawnpoint_id, pokemon_id, pokemon.latitude, pokemon.longitude, "
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
-            "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
+            "move_1, move_2, cp, cp_multiplier, weight, height, pokemon.gender, pokemon.form, pokemon.costume, "
             "weather_boosted_condition, pokemon.last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
-            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, seen_type, {}"
+            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, seen_type, "
+            "IF(pokemon_display.pokemon IS NULL,pokemon_id, pokemon_display.pokemon) as display_pokemon, "
+            "pokemon_display.form as display_form, "
+            "pokemon_display.costume as display_costume, "
+            "pokemon_display.gender as display_gender, "
+            "{}"
             "FROM pokemon "
-            "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint {}"
+            "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint {} "
+            "LEFT JOIN pokemon_display ON pokemon.encounter_id=pokemon_display.encounter_id "
             "WHERE pokemon.last_modified >= %s "
         )
         query_mon_types = ["'" + t + "'" for t in mon_types]
@@ -211,7 +217,8 @@ class DbWebhookReader:
              individual_defense, individual_stamina, move_1, move_2,
              cp, cp_multiplier, weight, height, gender, form, costume,
              weather_boosted_condition, last_modified, catch_prob_1, catch_prob_2, catch_prob_3,
-             verified, seen_type, fort_id, stop_name, stop_url, cell_id) in res:
+             verified, seen_type, display_pokemon, display_form, display_costume, display_gender,
+             fort_id, stop_name, stop_url, cell_id) in res:
 
             if latitude == 0 and seen_type == "lure_encounter":
                 continue
@@ -245,6 +252,10 @@ class DbWebhookReader:
                 "stop_name": stop_name,
                 "stop_url": stop_url,
                 "cell_id": cell_id,
-                "seen_type": seen_type
+                "seen_type": seen_type,
+                "display_pokemon": display_pokemon,
+                "display_form": display_form,
+                "display_costume": display_costume,
+                "display_gender": display_gender
             })
         return ret

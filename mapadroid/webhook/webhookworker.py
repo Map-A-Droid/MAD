@@ -423,6 +423,7 @@ class WebhookWorker:
             mon_payload = {
                 "encounter_id": str(mon["encounter_id"]),
                 "pokemon_id": mon["pokemon_id"],
+                "display_pokemon_id": mon['display_pokemon'],
                 "spawnpoint_id": mon["spawnpoint_id"],
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
@@ -441,8 +442,14 @@ class WebhookWorker:
             if mon["form"] is not None and mon["form"] > 0:
                 mon_payload["form"] = mon["form"]
 
+            if mon["display_form"] is not None and mon["display_form"] > 0:
+                mon_payload["display_form"] = mon["display_form"]
+
             if mon["costume"] is not None:
                 mon_payload["costume"] = mon["costume"]
+
+            if mon["display_costume"] is not None and mon["display_costume"] > 0:
+                mon_payload["display_costume"] = mon["display_costume"]
 
             if mon["cp"] is not None:
                 mon_payload["cp"] = mon["cp"]
@@ -470,6 +477,9 @@ class WebhookWorker:
 
             if mon["gender"] is not None:
                 mon_payload["gender"] = mon["gender"]
+
+            if mon["display_gender"] is not None:
+                mon_payload["display_gender"] = mon["display_gender"]
 
             if pokemon_rarity is not None:
                 mon_payload["rarity"] = pokemon_rarity
