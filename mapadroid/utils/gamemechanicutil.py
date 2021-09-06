@@ -264,7 +264,6 @@ def is_mon_ditto(logger, pokemon_data: Dict) -> Tuple[int, int, int, int, int]:
     # ditto detector
     logger.debug3('Determining if mon is a ditto')
     logger.debug4(pokemon_data)
-    potential_dittos = [92, 96, 223, 216, 316, 322, 434, 557, 590]
     weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
     valid_atk = pokemon_data.get("individual_attack") < 4
     valid_def = pokemon_data.get("individual_defense") < 4

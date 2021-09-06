@@ -2,7 +2,6 @@ import json
 import math
 import time
 from datetime import datetime, timedelta
-from typing import Tuple, Dict
 
 from bitstring import BitArray
 
@@ -214,7 +213,6 @@ class DbPogoProtoSubmit:
 
         self._db_exec.executemany(query_nearby, nearby_args, commit=True)
         return cell_encounters, stop_encounters
-
 
     def mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         """
