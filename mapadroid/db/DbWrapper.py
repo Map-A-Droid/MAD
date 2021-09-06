@@ -302,7 +302,8 @@ class DbWrapper:
             "trs_quest.quest_pokemon_costume_id, trs_quest.quest_reward_type, "
             "trs_quest.quest_item_id, trs_quest.quest_item_amount, pokestop.name, pokestop.image, "
             "trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
-            "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template, pokestop.is_ar_scan_eligible "
+            "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template, pokestop.is_ar_scan_eligible, "
+            "trs_quest.quest_title "
             "FROM pokestop INNER JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
         )
@@ -337,7 +338,7 @@ class DbWrapper:
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id,
              quest_pokemon_form_id, quest_pokemon_costume_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
-             quest_timestamp, quest_task, quest_reward, quest_template, is_ar_scan_eligible) in res:
+             quest_timestamp, quest_task, quest_reward, quest_template, is_ar_scan_eligible, quest_title) in res:
             mon = "%03d" % quest_pokemon_id
             form_id = "%02d" % quest_pokemon_form_id
             costume_id = "%02d" % quest_pokemon_costume_id
@@ -351,7 +352,7 @@ class DbWrapper:
                 'quest_target': quest_target,
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
                 'task': quest_task, 'quest_reward': quest_reward, 'quest_template': quest_template,
-                'is_ar_scan_eligible': is_ar_scan_eligible
+                'is_ar_scan_eligible': is_ar_scan_eligible, 'quest_title': quest_title
             })
 
         return questinfo

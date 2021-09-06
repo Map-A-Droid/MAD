@@ -1,3 +1,5 @@
+import json
+
 import mock
 import pytest
 import responses
@@ -5,36 +7,84 @@ from apksearch.entities import PackageBase, PackageVariant, PackageVersion
 
 from mapadroid.mad_apk import utils, wizard
 from mapadroid.mad_apk.apk_enums import APKArch
-from mapadroid.utils.global_variables import VERSIONCODES_URL
+from mapadroid.utils.global_variables import BACKEND_SUPPORTED_VERSIONS
 
-mock_versions = """{"0.123.0_32": 1, "0.123.1_32": 3, "0.123.1_64": 4}"""
-mock_json_resp = {"0.123.0_32": 1, "0.123.1_32": 3, "0.123.1_64": 4}
+mock_versions = {
+    "32": [
+        "0.123.0",
+        "0.123.1",
+    ],
+    "64": [
+        "0.123.1",
+    ]
+}
+mock_versions_limited = {
+    "32": [
+        "0.123.0",
+    ],
+    "64": []
+}
+mock_versions_json = json.dumps(mock_versions)
 
 
 @pytest.mark.parametrize(
-    "file_resp,gh_resp,arch,version,supported", [
-        (mock_versions, "{}", APKArch.armeabi_v7a, "0.123.0", True),
-        (mock_versions, "{}", APKArch.arm64_v8a, "0.123.0", False),
-        (mock_versions, "{}", APKArch.armeabi_v7a, "0.123.1", True),
-        (mock_versions, "{}", APKArch.arm64_v8a, "0.123.1", True),
-        ("{}", mock_versions, APKArch.armeabi_v7a, "0.123.0", True),
-        ("{}", mock_versions, APKArch.arm64_v8a, "0.123.0", False),
-        ("{}", mock_versions, APKArch.armeabi_v7a, "0.123.1", True),
-        ("{}", mock_versions, APKArch.arm64_v8a, "0.123.1", True),
+    "response_body,response_code,token,expected,err", [
+        (None, 500, None, None, ValueError),
+        (None, 403, "CoolToken", None, ConnectionError),
+        (None, 500, "CoolToken", None, ConnectionError),
+        (mock_versions_json[0:-2], 200, "CoolToken", None, ValueError),
+        (mock_versions_json, 200, "CoolToken", mock_versions, None),
     ])
 @responses.activate
-def test_supported_pogo_version(file_resp, gh_resp, arch, version, supported):
+def test_get_backend_versions(response_body, response_code, token, expected, err):
+    responses.add(
+        responses.GET,
+        url=BACKEND_SUPPORTED_VERSIONS,
+        body=response_body,
+        status=response_code
+    )
+    if not err:
+        assert utils.get_backend_versions(token) == expected
+    else:
+        with pytest.raises(err):
+            utils.get_backend_versions(token)
+
+
+mock_versions = {
+    "32": [
+        "0.123.0",
+        "0.123.1",
+    ],
+    "64": [
+        "0.123.1",
+    ]
+}
+file_resp_limited = {"0.123.0_32": 1}
+file_resp_full = {"0.123.0_32": 1, "0.123.1_32": 2, "0.123.1_64": 3}
+
+
+@pytest.mark.parametrize(
+    "file_resp,expected", [
+        (json.dumps(file_resp_limited), mock_versions_limited),
+        (json.dumps(file_resp_full), mock_versions),
+    ]
+)
+def test_get_local_versions(file_resp, expected):
     with mock.patch("mapadroid.utils.functions.open", new_callable=mock.mock_open, read_data=file_resp):
-        responses.add(
-            responses.GET,
-            url=VERSIONCODES_URL,
-            body=gh_resp
-        )
-        assert utils.supported_pogo_version(arch, version) == supported
-        if gh_resp == "{}" and supported:
-            assert len(responses.calls) == 0
-        else:
-            assert len(responses.calls) == 1
+        assert utils.get_local_versions() == expected
+
+
+@pytest.mark.parametrize(
+    "supported_versions,arch,version,is_supported", [
+        (mock_versions, APKArch.armeabi_v7a, "0.123.0", True),
+        (mock_versions, APKArch.arm64_v8a, "0.123.0", False),
+        (mock_versions, APKArch.armeabi_v7a, "0.123.1", True),
+        (mock_versions, APKArch.arm64_v8a, "0.123.1", True),
+    ])
+@responses.activate
+def test_supported_pogo_version(supported_versions, arch, version, is_supported, mocker):
+    mocker.patch("mapadroid.mad_apk.utils.get_backend_versions", return_value=supported_versions)
+    assert utils.supported_pogo_version(arch, version, "SomeToken") == is_supported
 
 
 var_a = PackageVariant("APK", "nodpi", 1)
@@ -56,19 +106,17 @@ pkg_version = PackageBase("Pokemon GO", "ffff", versions={
         }
     )
 })
-supported_a = """{"0.123.0_32": 1}"""
-supported_b = """{"0.123.0_32": 1, "0.123.1_32": 3, "0.123.1_64": 4}"""
 
 
-@pytest.mark.parametrize("avail_versions,arch,exp_ver,package,file_resp", [
-    (pkg_version, APKArch.armeabi_v7a, "0.123.0", var_a, supported_a),
-    (pkg_version, APKArch.arm64_v8a, None, None, supported_a),
-    (pkg_version, APKArch.armeabi_v7a, "0.123.1", var_b, supported_b),
-    (pkg_version, APKArch.arm64_v8a, "0.123.1", var_c, supported_b)
+@pytest.mark.parametrize("avail_versions,supported_ver,arch,exp_ver,package", [
+    (pkg_version, mock_versions_limited, APKArch.armeabi_v7a, "0.123.0", var_a),
+    (pkg_version, mock_versions_limited, APKArch.arm64_v8a, None, None),
+    (pkg_version, mock_versions, APKArch.armeabi_v7a, "0.123.1", var_b),
+    (pkg_version, mock_versions, APKArch.arm64_v8a, "0.123.1", var_c)
 ])
-def test_get_latest_supported(avail_versions, arch, exp_ver, package, file_resp):
-    with mock.patch("mapadroid.utils.functions.open", new_callable=mock.mock_open, read_data=file_resp):
-        assert wizard.APKWizard.get_latest_supported(arch, avail_versions) == (exp_ver, package)
+def test_get_latest_supported(avail_versions, supported_ver, arch, exp_ver, package, mocker):
+    mocker.patch("mapadroid.mad_apk.utils.get_backend_versions", return_value=supported_ver)
+    assert wizard.APKWizard.get_latest_supported(arch, avail_versions, "Token") == (exp_ver, package)
 
 
 @pytest.mark.parametrize("gls_v,sto_v,lvc_v,arch,msg", [

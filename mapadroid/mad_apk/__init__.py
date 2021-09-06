@@ -21,7 +21,7 @@ def get_storage_obj(application_args, dbc):
         StorageSyncManager.register('APKStorageDatabase', APKStorageDatabase)
         manager = StorageSyncManager()
         manager.start()
-        storage_obj = manager.APKStorageDatabase(dbc)
+        storage_obj = manager.APKStorageDatabase(dbc, application_args.maddev_api_token)
     else:
         StorageSyncManager.register('APKStorageFilesystem', APKStorageFilesystem)
         manager = StorageSyncManager()

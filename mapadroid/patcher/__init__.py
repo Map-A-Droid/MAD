@@ -51,7 +51,8 @@ MAD_UPDATES = OrderedDict([
     (42, 'add_encounter_all'),
     (43, 'remove_tap_duration'),
     (44, 'more_ways_to_scan_mons'),
-    (45, 'pokestop_encounters')
+    (45, 'quest_titles'),
+    (46, 'pokestop_encounters')
 ])
 
 

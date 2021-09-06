@@ -10,7 +10,7 @@ from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
 from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
-from mapadroid.utils.questGen import questtask
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.database)
@@ -658,7 +658,7 @@ class DbPogoProtoSubmit:
             self._db_exec.execute(query_stops, stop_args, commit=True)
         return True
 
-    def quest(self, origin: str, quest_proto: dict, mitm_mapper):
+    def quest(self, origin: str, quest_proto: dict, mitm_mapper, quest_gen: QuestGen):
         origin_logger = get_origin_logger(logger, origin=origin)
         origin_logger.debug3("DbPogoProtoSubmit::quest called")
         fort_id = quest_proto.get("fort_id", None)
@@ -667,6 +667,8 @@ class DbPogoProtoSubmit:
         if "challenge_quest" not in quest_proto:
             return False
         protoquest = quest_proto["challenge_quest"]["quest"]
+        protoquest_display = quest_proto["challenge_quest"]["quest_display"]
+
         rewards = protoquest.get("quest_rewards", None)
         if rewards is None or not rewards:
             return False
@@ -677,6 +679,7 @@ class DbPogoProtoSubmit:
 
         quest_type = protoquest.get("quest_type", None)
         quest_template = protoquest.get("template_id", None)
+        quest_title_resource_id = protoquest_display.get("title", None)
 
         reward_type = reward.get("type", None)
         item_item = item.get("item", None)
@@ -697,7 +700,8 @@ class DbPogoProtoSubmit:
         condition = goal.get("condition", None)
 
         json_condition = json.dumps(condition)
-        task = questtask(int(quest_type), json_condition, int(target), str(quest_template))
+        task = quest_gen.questtask(int(quest_type), json_condition, int(target), str(quest_template),
+                                   quest_title_resource_id)
 
         mitm_mapper.collect_quest_stats(origin, fort_id)
 
@@ -705,7 +709,8 @@ class DbPogoProtoSubmit:
             "INSERT INTO trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "
             "quest_pokemon_form_id, quest_pokemon_costume_id, "
             "quest_reward_type, quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, "
-            "quest_task, quest_template) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "quest_task, quest_template, quest_title)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
             "quest_stardust=VALUES(quest_stardust), quest_pokemon_id=VALUES(quest_pokemon_id), "
             "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
@@ -713,12 +718,13 @@ class DbPogoProtoSubmit:
             "quest_condition=VALUES(quest_condition), quest_reward=VALUES(quest_reward), "
             "quest_task=VALUES(quest_task), quest_template=VALUES(quest_template), "
             "quest_pokemon_form_id=VALUES(quest_pokemon_form_id), "
-            "quest_pokemon_costume_id=VALUES(quest_pokemon_costume_id)"
+            "quest_pokemon_costume_id=VALUES(quest_pokemon_costume_id), "
+            "quest_title=VALUES(quest_title)"
         )
         insert_values = (
             fort_id, quest_type, time.time(), stardust, pokemon_id, form_id, costume_id, reward_type,
             item_item, item_amount, target,
-            json_condition, json.dumps(rewards), task, quest_template
+            json_condition, json.dumps(rewards), task, quest_template, quest_title_resource_id
         )
         origin_logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
         self._db_exec.execute(query_quests, insert_values, commit=True)

@@ -87,7 +87,7 @@ class APIMadAPK(APKHandler):
         else:
             try:
                 call = self.api_req.data['call']
-                wizard = APKWizard(self.dbc, self.storage_obj)
+                wizard = APKWizard(self.dbc, self.storage_obj, self._args.maddev_api_token)
                 if call == 'import':
                     thread_args = (apk_type, apk_arch)
                     upload_thread = Thread(name='PackageWizard', target=wizard.apk_download, args=thread_args)

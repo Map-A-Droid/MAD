@@ -87,6 +87,10 @@
     "protoname": "ITEM_TROY_DISK_MAGNETIC",
     "name": "Magnet-Lockmodul"
   },
+  "505": {
+    "protoname": "ITEM_TROY_DISK_RAINY",
+    "name": "Regen-Lockmodul"
+  },
   "602": {
     "protoname": "ITEM_X_ATTACK",
     "name": "X-Angriff"
@@ -138,6 +142,10 @@
   "801": {
     "protoname": "ITEM_SPECIAL_CAMERA",
     "name": "Kamera"
+  },
+  "802": {
+    "protoname": "ITEM_STICKER_INVENTORY",
+    "name": "Sticker"
   },
   "901": {
     "protoname": "ITEM_INCUBATOR_BASIC_UNLIMITED",
@@ -207,6 +215,10 @@
     "protoname": "ITEM_RARE_CANDY",
     "name": "Sonderbonbon"
   },
+  "1302": {
+    "protoname": "ITEM_XL_RARE_CANDY",
+    "name": "Sonderbonbon XL"
+  },
   "1401": {
     "protoname": "ITEM_FREE_RAID_TICKET",
     "name": "Raid-Pass"
@@ -231,6 +243,10 @@
     "protoname": "ITEM_TEAM_CHANGE",
     "name": "Team-Medaillon"
   },
+  "1407": {
+    "protoname": "ITEM_ROUTE_MAKER",
+    "name": "ITEM_ROUTE_MAKER"
+  },
   "1408": {
     "protoname": "ITEM_REMOTE_RAID_TICKET",
     "name": "Fern-Raid-Pass"
@@ -254,5 +270,9 @@
   "1601": {
     "protoname": "ITEM_EVENT_TICKET_PINK",
     "name": "Ticket"
+  },
+  "1602": {
+    "protoname": "ITEM_EVENT_TICKET_GRAY",
+    "name": "ITEM_EVENT_TICKET_GRAY"
   }
 }

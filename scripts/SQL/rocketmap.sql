@@ -559,6 +559,7 @@ CREATE TABLE `trs_quest` (
     `quest_task` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `quest_pokemon_form_id` smallint(6) NOT NULL DEFAULT '0',
     `quest_pokemon_costume_id` smallint(6) NOT NULL DEFAULT '0',
+    `quest_title` varchar(100) COLLATE utf8mb4_unicode_ci  DEFAULT NULL,
     PRIMARY KEY (`GUID`),
     KEY `quest_type` (`quest_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

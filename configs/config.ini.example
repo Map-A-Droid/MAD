@@ -37,7 +37,7 @@
 # Walk Settings
 ######################
 #enable_worker_specific_extra_start_stop_handling # Option to enable/disable extra handling for the start/stop routine of workers. Default: False
-#maximum_valid_distance       # The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 50m
+#maximum_valid_distance:      # The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 50m
 
 
 # Job Processor
@@ -52,7 +52,7 @@
 # Runtypes
 ######################
 #only_scan                    # Use this instance only for scanning. Default: True
-#ocr_thread_count             # Amount of threads/processes to be used for screenshot-analysis. Default: 2
+#ocr_thread_count:            # Amount of threads/processes to be used for screenshot-analysis. Default: 2
 #only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
 #config_mode                  # Run in ConfigMode. Default: False
 #scan_nearby_mons             # Enable scanning of nearby mons - Please make sure you know how this works before turning it on!
@@ -78,12 +78,12 @@
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #language:                   # Language for several things like quests or mon names in the IV list (default:en - others: de, fr )
-
+#no_quest_titles             # Do not fetch quest title resources from pokeminers. Will instead use internal parsing
 
 # MADmin
 ######################
 #disable_madmin              # Disable Madmin on the instance
-#madmin_base_path            # Base path for madmin
+#madmin_base_path:           # Base path for madmin
 #madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
 #madmin_port:                # Highly recommended to change. MADmin web port (Default: 5000)
 #madmin_user:                # MADmin username for login
@@ -107,7 +107,7 @@
 ######################
 #game_stats                  # Generate worker stats
 #game_stats_raw              # Generate worker raw stats (only with --game_stats)')
-#game_stats_save_time        # Number of seconds until worker information is saved to database (Default: 300)
+#game_stats_save_time:       # Number of seconds until worker information is saved to database (Default: 300)
 #raw_delete_shiny:           # Delete shiny mon in raw stats older then x days (0 =  Disable (Default))
 
 
@@ -126,10 +126,10 @@
                              #  possible types are: raid, gym, weather, pokestop, quest
                              #  different pokemon types: encounter, wild, nearby_stop, nearby_cell, lure_encounter, lure_wild
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
-#webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
+#webhook_excluded_areas:     # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
 #quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
-#webhook_start_time          # Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.
-#webhook_max_payload_size    # Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)
+#webhook_start_time:         # Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.
+#webhook_max_payload_size:   # Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)
 
 
 # Dynamic Rarity
@@ -148,8 +148,8 @@
                              #  at 12:00' or a maximum file size like '100 MB' or '0.5 GB'. Set to '0' to disable completely. (Default: 50 MB)
 #log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs.
                              # Custom log levels like DEBUG[1-5] can be used too
-#log_file_level              # File logging level. See description for --log_level.
-#log_file_retention          # mount of days to keep file logs. Set to 0 to keep them forever (Default: 10)
+#log_file_level:             # File logging level. See description for --log_level.
+#log_file_retention:         # Amount of days to keep file logs. Set to 0 to keep them forever (Default: 10)
 #no_log_colors               # Disable colored logs.
 
 
@@ -157,8 +157,9 @@
 ######################
 #token_dispenser:           # Path to token dispenser config (MAD-provided)
 #token_dispenser_user:      # Path to token dispenser config (User-provided)
-#gmail_user:                # Email address if not using a token dispenser
-#gmail_passwd:              # Google Mail Password for interacting with the Google Play Store.  Must be an app password or 2fa will be triggered (this should be enabled on your account anyways')
+#gmail_user:                # (Deprecated) Email address if not using a token dispenser
+#gmail_passwd:              # (Deprecated) Google Mail Password for interacting with the Google Play Store.  Must be an app password or 2fa will be triggered (this should be enabled on your account anyways')
+#maddev_api_token:          # Token used by the wizard to query supported versions
 
 
 # Auto-Config
@@ -169,6 +170,6 @@
 # Redis caching
 ######################
 #enable_cache          # Enable cache (backed by Redis) to prevent re-inserting data over and over again
-#cache_host            # Redis cache host (Default: localhost)
-#cache_port            # Redis cache port (Default: 6379)
-#cache_database        # Redis database. Use different numbers (0-15) if you are running multiple instances.
+#cache_host:           # Redis cache host (Default: localhost)
+#cache_port:           # Redis cache port (Default: 6379)
+#cache_database:       # Redis database. Use different numbers (0-15) if you are running multiple instances.
