@@ -51,7 +51,6 @@ class DbPogoProtoSubmit:
             "spawnpoint_id=VALUES(spawnpoint_id), pokemon_id=IF(pokemon_id=132, 132, VALUES(pokemon_id)), "
             "gender=IF(pokemon_id=132, 3, VALUES(gender)), costume=IF(pokemon_id=132, 0, VALUES(costume)), "
             "form=IF(pokemon_id=132, 0, VALUES(form)), "
-            # Pray  Ditto never getting costumes and forms...
             "latitude=VALUES(latitude), longitude=VALUES(longitude), "
             "weather_boosted_condition=VALUES(weather_boosted_condition), fort_id=NULL, cell_id=NULL, "
             "seen_type=IF(seen_type='encounter','encounter',VALUES(seen_type))"
@@ -312,6 +311,7 @@ class DbPogoProtoSubmit:
         )
 
         self._db_exec.execute(query, insert_values, commit=True)
+        self.maybe_save_ditto(pokemon_display, encounter_id, mon_id, pokemon_data)
         cache_time = int(despawn_time_unix - datetime.now().timestamp())
         if cache_time > 0:
             cache.set(cache_key, 1, ex=int(cache_time))
@@ -380,6 +380,13 @@ class DbPogoProtoSubmit:
 
         self._db_exec.execute(query, insert_values, commit=True)
 
+        self.maybe_save_ditto(display, encounter_id, mon_id, pokemon_data)
+
+        cache.set(cache_key, 1, ex=60 * 3)
+        origin_logger.debug3("Done updating lure mon with iv in DB")
+        return [(encounter_id, now)]
+
+    def maybe_save_ditto(self, display, encounter_id, mon_id, pokemon_data):
         if mon_id == 132:
             # Save ditto disguise
             self._db_exec.execute("INSERT IGNORE INTO pokemon_display(encounter_id,pokemon,form,costume,gender) "
@@ -390,10 +397,6 @@ class DbPogoProtoSubmit:
                                    display.get("costume_value"),
                                    display.get("gender_value", None)),
                                   commit=True)
-
-        cache.set(cache_key, 1, ex=60 * 3)
-        origin_logger.debug3("Done updating lure mon with iv in DB")
-        return [(encounter_id, now)]
 
     def mon_lure_noiv(self, origin: str, map_proto: dict):
         """
