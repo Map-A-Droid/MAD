@@ -215,28 +215,6 @@ class DbPogoProtoSubmit:
         self._db_exec.executemany(query_nearby, nearby_args, commit=True)
         return cell_encounters, stop_encounters
 
-    @staticmethod
-    def do_ditto_detect(origin_logger, pokemon_data: Dict) -> Tuple[int, int, int, int, int]:
-        """
-        Handle the ditto detection before saving mon
-        :param origin_logger: log helper
-        :param pokemon_data: encounter data
-        :return: a tuple with 5 values: (mon_id, gender, move_1, move_2, form
-        """
-
-        pokemon_display = pokemon_data.get("display", {})
-        mon_id = pokemon_data.get("id")
-        # ditto detector
-        if is_mon_ditto(origin_logger, pokemon_data):
-            # mon must be a ditto :D
-            # we return ditto with hardcoded moves
-            return 132, 3, 242, 133, 0
-        else:
-            return (mon_id,
-                    pokemon_display.get("gender_value", None),
-                    pokemon_data.get("move_1"),
-                    pokemon_data.get("move_2"),
-                    pokemon_display.get("form_value", None))
 
     def mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         """
@@ -289,7 +267,7 @@ class DbPogoProtoSubmit:
             capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
 
         # ditto detector
-        (mon_id, gender, move_1, move_2, form) = self.do_ditto_detect(origin_logger, pokemon_data)
+        (mon_id, gender, move_1, move_2, form) = is_mon_ditto(origin_logger, pokemon_data)
 
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
@@ -367,7 +345,7 @@ class DbPogoProtoSubmit:
             return
 
         # ditto detector
-        (mon_id, gender, move_1, move_2, form) = self.do_ditto_detect(origin_logger, pokemon_data)
+        (mon_id, gender, move_1, move_2, form) = is_mon_ditto(origin_logger, pokemon_data)
 
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
@@ -403,6 +381,18 @@ class DbPogoProtoSubmit:
         )
 
         self._db_exec.execute(query, insert_values, commit=True)
+
+        if mon_id == 132:
+            # Save ditto disguise
+            self._db_exec.execute("INSERT IGNORE INTO pokemon_display(encounter_id,pokemon,form,costume,gender) "
+                                  "VALUES(%s,%s,%s,%s,%s)",
+                                  (encounter_id,
+                                   pokemon_data.get('id'),
+                                   display.get("form_value", None),
+                                   display.get("costume_value"),
+                                   display.get("gender_value", None)),
+                                  commit=True)
+
         cache.set(cache_key, 1, ex=60 * 3)
         origin_logger.debug3("Done updating lure mon with iv in DB")
         return [(encounter_id, now)]

@@ -172,6 +172,15 @@ class DbSchemaUpdater:
                      "PRIMARY KEY (`id`), "
                      "KEY worker (`worker`)"
                      )
+        },
+        # Pokemon Display (ditto disguises)
+        {
+            "table": "pokemon_display",
+            "spec": ("`encounter_id` bigint(20) unsigned NOT NULL, "
+                     "`pokemon` smallint(6) NOT NULL, `gender` smallint(6) DEFAULT NULL,"
+                     "`form` smallint(6) DEFAULT NULL, "
+                     "`costume` smallint(6) DEFAULT NULL, "
+                     "PRIMARY KEY(`encounter_id`)")
         }
     ]
 
