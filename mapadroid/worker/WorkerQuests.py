@@ -493,12 +493,6 @@ class WorkerQuests(MITMBase):
 
     def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
         type_received, data_received = self._wait_for_data(timestamp=timestamp, proto_to_wait_for=ProtoIdentifier.GMO)
-        while type_received == LatestReceivedType.MON:
-            self.logger.info("Received MON looking for spinnable stop - ignore / try again")
-            time.sleep(1)
-            type_received, data_received = self._wait_for_data(timestamp=time.time(),
-                                                               proto_to_wait_for=ProtoIdentifier.GMO)
-
         if type_received != LatestReceivedType.GMO or data_received is None:
             self._spinnable_data_failure()
             return PositionStopType.GMO_NOT_AVAILABLE
@@ -766,10 +760,6 @@ class WorkerQuests(MITMBase):
         if ProtoIdentifier.GYM_INFO.value in latest \
                 and latest[ProtoIdentifier.GYM_INFO.value].get('timestamp', 0) >= timestamp:
             type_of_data_found = LatestReceivedType.GYM
-            return type_of_data_found, data_found
-        elif ProtoIdentifier.ENCOUNTER.value in latest \
-                and latest[ProtoIdentifier.ENCOUNTER.value].get('timestamp', 0) >= timestamp:
-            type_of_data_found = LatestReceivedType.MON
             return type_of_data_found, data_found
         elif proto_to_wait_for.value not in latest:
             self.logger.debug("No data linked to the requested proto since MAD started.")
