@@ -46,6 +46,9 @@ var ItemData = [{
    id: 504,
    text: 'Magnetic Lure Module (#504)',
 }, {
+   id: 505,
+   text: "Rainy Lure Module",
+}, {
    id: 701,
    text: 'Razz Berry (#701)',
 }, {
@@ -89,7 +92,7 @@ var ItemData = [{
    text: 'Dragon Scale (#1104)',
 }, {
    id: 1105,
-   text: 'Up-Grade (#1105)',
+   text: 'Upgrade (#1105)',
 }, {
    id: 1106,
    text: 'Sinnoh Stone (#1106)',
@@ -112,6 +115,9 @@ var ItemData = [{
    id: 1301,
    text: 'Rare Candy (#1301)',
 }, {
+   id: 1302,
+   text: 'Rare Candy XL (#1302)',
+}, {
    id: 1401,
    text: 'Raid Pass (#1401)',
 }, {
@@ -124,17 +130,20 @@ var ItemData = [{
    id: 1404,
    text: 'Star piece (#1404)',
 }, {
+   id: 1406,
+   text: 'Team Medallion (#1406)',
+}, {
    id: 1408,
    text: 'Remote Raid Pass (#1408)',
 }, {
    id: 1501,
-   text: 'Map Fragment (#1501)',
+   text: 'Mysterious Component (#1501)',
 }, {
    id: 1502,
-   text: 'Leader Map Radar (#1502)',
+   text: 'Rocket Radar (#1502)',
 }, {
    id: 1503,
-   text: 'Super Leader Map Radar (#1503)',
+   text: 'Super Rocket Radar (#1503)',
 }, {
    id: 1600,
    text: 'Global Ticket (#1600)',

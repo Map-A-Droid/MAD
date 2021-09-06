@@ -151,7 +151,9 @@ def parse_args():
                         help=('Set Lng from the center of your scan location.'
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
     parser.add_argument('-L', '--language', default='en',
-                        help=('Set Language for MadMin / Quests. Default: en'))
+                        help='Set Language for MadMin / Quests. Default: en')
+    parser.add_argument('--no_quest_titles', default=False, action='store_true',
+                        help='Do not download quest title resources')
 
     # MADmin
     parser.add_argument('-dm', '--disable_madmin', action='store_true', default=False,
@@ -276,6 +278,8 @@ def parse_args():
     parser.add_argument('-gp', '--gmail_passwd', default='',
                         help='Google Mail Password for interacting with the Google Play Store.  Must be an app'
                         ' password or 2fa will be triggered (this should be enabled on your account anyways')
+    parser.add_argument('-mat', '--maddev_api_token', default=None,
+                        help='MADdev API token used for querying supported versions')
 
     # Auto-Configuration
     parser.add_argument('-acna', '--autoconfig_no_auth', action='store_true', default=False,

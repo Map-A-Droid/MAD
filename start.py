@@ -1,21 +1,8 @@
-import os
-import sys
-
-from mapadroid.utils.walkerArgs import parse_args
-
-py_version = sys.version_info
-if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
-    print("MAD requires at least python 3.6! Your version: {}.{}"
-          .format(py_version.major, py_version.minor))
-    sys.exit(1)
-
-args = parse_args()
-os.environ['LANGUAGE'] = args.language
-
 import calendar
 import datetime
 import gc
 import os
+import sys
 import time
 import unittest
 from multiprocessing import Process
@@ -42,10 +29,21 @@ from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.MappingManager import (MappingManager,
                                             MappingManagerManager)
 from mapadroid.utils.pluginBase import PluginCollection
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
+from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.websocket.WebsocketServer import WebsocketServer
+
+py_version = sys.version_info
+if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
+    print("MAD requires at least python 3.6! Your version: {}.{}"
+          .format(py_version.major, py_version.minor))
+    sys.exit(1)
+
+args = parse_args()
+os.environ['LANGUAGE'] = args.language
 
 
 # Patch to make exceptions in threads cause an exception.
@@ -159,7 +157,7 @@ if __name__ == "__main__":
     init_logging(args)
     logger = get_logger(LoggerEnums.system)
 
-    data_manager: DataManager = None
+    data_manager: Optional[DataManager] = None
     device_updater: DeviceUpdater = None
     event: Event = None
     jobstatus: dict = {}
@@ -175,6 +173,7 @@ if __name__ == "__main__":
     t_ws: Thread = None  # Thread - WebSocket Server
     webhook_worker: Optional[WebhookWorker] = None
     ws_server: WebsocketServer = None
+
     if args.config_mode:
         logger.info('Starting MAD in config mode')
     else:
@@ -214,6 +213,7 @@ if __name__ == "__main__":
                                                                              args,
                                                                              data_manager,
                                                                              configmode=args.config_mode)
+    quest_gen: QuestGen = QuestGen(args)
     if args.only_routes:
         logger.info('Running in route recalculation mode. MAD will exit once complete')
         recalc_in_progress = True
@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
     logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
 
-    mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper)
+    mitm_data_processor_manager = MitmDataProcessorManager(args, mitm_mapper, db_wrapper, quest_gen)
     mitm_data_processor_manager.launch_processors()
 
     mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
@@ -261,7 +261,8 @@ if __name__ == "__main__":
         if args.webhook:
             rarity = Rarity(args, db_wrapper)
             rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
+            webhook_worker = WebhookWorker(args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader,
+                                           quest_gen)
             t_whw = Thread(name="system",
                            target=webhook_worker.run_worker)
             t_whw.daemon = True
@@ -273,7 +274,8 @@ if __name__ == "__main__":
             t_usage.daemon = True
             t_usage.start()
 
-    madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, data_manager, device_updater, jobstatus, storage_elem)
+    madmin = MADmin(args, db_wrapper, ws_server, mapping_manager, data_manager, device_updater, jobstatus, storage_elem,
+                    quest_gen)
 
     # starting plugin system
     plugin_parts = {

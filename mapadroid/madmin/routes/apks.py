@@ -71,4 +71,8 @@ class APKManager(object):
 
     @auth_required
     def mad_apks(self):
-        return render_template('madmin_apk_root.html', apks=get_apk_status(self.storage_obj))
+        return render_template(
+            'madmin_apk_root.html',
+            apks=get_apk_status(self.storage_obj),
+            has_token=self._args.maddev_api_token not in [None, ""]
+        )

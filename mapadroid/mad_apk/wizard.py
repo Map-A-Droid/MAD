@@ -54,8 +54,9 @@ class APKWizard(object):
     """
     storage: AbstractAPKStorage
 
-    def __init__(self, dbc, storage: AbstractAPKStorage):
+    def __init__(self, dbc, storage: AbstractAPKStorage, api_token: str):
         self.storage: AbstractAPKStorage = storage
+        self.api_token = api_token
         self.dbc = dbc
 
     def apk_all_actions(self) -> NoReturn:
@@ -266,7 +267,7 @@ class APKWizard(object):
         """
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
         available_versions = get_available_versions()
-        latest_supported = APKWizard.get_latest_supported(architecture, available_versions)
+        latest_supported = APKWizard.get_latest_supported(architecture, available_versions, self.api_token)
         current_version_str = self.storage.get_current_version(APKType.pogo, architecture)
         if current_version_str:
             current_version_code = self.lookup_version_code(current_version_str, architecture)
@@ -311,7 +312,8 @@ class APKWizard(object):
 
     @staticmethod
     def get_latest_supported(architecture: APKArch,
-                             available_versions: Dict[str, PackageBase]
+                             available_versions: Dict[str, PackageBase],
+                             token: str
                              ) -> Tuple[str, PackageVariant]:
         latest_supported: Dict[APKArch, Tuple[Optional[str], Optional[PackageVariant]]] = {
             APKArch.armeabi_v7a: (None, None),
@@ -323,7 +325,7 @@ class APKWizard(object):
                 for package in packages:
                     if package.apk_type != "APK":
                         continue
-                    if not supported_pogo_version(architecture, ver):
+                    if not supported_pogo_version(architecture, ver, token):
                         logger.debug("Version {} [{}] is not supported", ver, named_arch)
                         continue
                     logger.debug("Version {} [{}] is supported", ver, named_arch)
@@ -349,7 +351,7 @@ class APKWizard(object):
     def lookup_version_code(self, version_code: str, arch: APKArch) -> Optional[int]:
         named_arch = '32' if arch == APKArch.armeabi_v7a else '64'
         latest_version = f"{version_code}_{named_arch}"
-        data = get_version_codes(force_gh=True)
+        data = get_version_codes()
         if data:
             try:
                 return data[latest_version]
