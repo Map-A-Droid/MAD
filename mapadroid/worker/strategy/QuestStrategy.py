@@ -6,14 +6,14 @@ from asyncio import Task
 from datetime import timedelta
 from difflib import SequenceMatcher
 from enum import Enum
-from typing import Dict, Union, Tuple, Optional, List
+from typing import Dict, Tuple, Optional, List
 
 import sqlalchemy
 from loguru import logger
 from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
@@ -76,7 +76,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                  pogo_windows_handler: PogoWindows,
                  walker: SettingsWalkerarea,
                  worker_state: WorkerState,
-                 mitm_mapper: MitmMapper):
+                 mitm_mapper: AbstractMitmMapper):
         super().__init__(area_id=area_id,
                          communicator=communicator, mapping_manager=mapping_manager,
                          db_wrapper=db_wrapper,

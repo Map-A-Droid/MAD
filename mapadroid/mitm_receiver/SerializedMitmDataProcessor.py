@@ -6,7 +6,7 @@ from typing import List, Tuple, Optional
 import sqlalchemy
 from loguru import logger
 
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
@@ -14,14 +14,14 @@ from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes
 
 
 class SerializedMitmDataProcessor:
-    def __init__(self, data_queue: asyncio.Queue, application_args, mitm_mapper: MitmMapper,
+    def __init__(self, data_queue: asyncio.Queue, application_args, mitm_mapper: AbstractMitmMapper,
                  db_wrapper: DbWrapper, name=None):
         self.__queue: asyncio.Queue = data_queue
         self.__db_wrapper: DbWrapper = db_wrapper
         # TODO: Init DbPogoProtoSubmit per processing passing session to constructor
         self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
         self.__application_args = application_args
-        self.__mitm_mapper: MitmMapper = mitm_mapper
+        self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
         self.__name = name
 
     async def run(self):

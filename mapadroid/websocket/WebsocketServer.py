@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
 
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
@@ -36,13 +36,13 @@ logger = get_logger(LoggerEnums.websocket)
 
 
 class WebsocketServer(object):
-    def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper, mapping_manager: MappingManager,
+    def __init__(self, args, mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper, mapping_manager: MappingManager,
                  pogo_window_manager: PogoWindows, event, enable_configmode: bool = False):
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__mapping_manager: MappingManager = mapping_manager
         self.__pogo_window_manager: PogoWindows = pogo_window_manager
-        self.__mitm_mapper: MitmMapper = mitm_mapper
+        self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
         self.__enable_configmode: bool = enable_configmode
 
         # Event to signal that the server is to be stopped. Used to not accept new connections for example

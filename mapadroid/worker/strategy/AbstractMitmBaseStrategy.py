@@ -6,7 +6,7 @@ from typing import Tuple, Optional, Union, Dict
 
 from loguru import logger
 
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
@@ -15,7 +15,6 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
-from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
@@ -38,7 +37,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                  pogo_windows_handler: PogoWindows,
                  walker: SettingsWalkerarea,
                  worker_state: WorkerState,
-                 mitm_mapper: MitmMapper):
+                 mitm_mapper: AbstractMitmMapper):
         super().__init__(area_id=area_id,
                          communicator=communicator, mapping_manager=mapping_manager,
                          db_wrapper=db_wrapper,
@@ -46,7 +45,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                          pogo_windows_handler=pogo_windows_handler,
                          walker=walker,
                          worker_state=worker_state)
-        self._mitm_mapper: MitmMapper = mitm_mapper
+        self._mitm_mapper: AbstractMitmMapper = mitm_mapper
         # TODO: Consider placement
         self._latest_encounter_update = 0
         self._encounter_ids = {}

@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Union, Any
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class AbstractMitmMapper(ABC):
@@ -30,7 +31,7 @@ class AbstractMitmMapper(ABC):
 
     @abstractmethod
     async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
-                                          position_type: PositionType, data_timestamp: int, walker: str,
+                                          position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                           transport_type: TransportType, timestamp_of_record: int) -> None:
         pass
 

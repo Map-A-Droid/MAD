@@ -3,6 +3,7 @@ from typing import Optional, Tuple, NamedTuple
 
 from loguru import logger
 
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsDevicepool, SettingsDevice, SettingsWalkerarea
@@ -30,11 +31,11 @@ class WalkerConfiguration(NamedTuple):
 
 
 class StrategyFactory:
-    def __init__(self, args, mapping_manager: MappingManager, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
+    def __init__(self, args, mapping_manager: MappingManager, mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper,
                  pogo_windows: PogoWindows, event):
         self.__args = args
         self.__mapping_manager: MappingManager = mapping_manager
-        self.__mitm_mapper: MitmMapper = mitm_mapper
+        self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__pogo_windows: PogoWindows = pogo_windows
         self.__event = event

@@ -1,46 +1,30 @@
 import asyncio
 import calendar
-import concurrent
 import datetime
+import functools
 import gc
 import linecache
 import logging
 import os
 import sys
 from asyncio import Task, CancelledError
+from threading import active_count
 from typing import Optional, Tuple, Any
-import functools
+
 import pkg_resources
 import psutil
-from threading import active_count
 
 from mapadroid.data_handler.MitmMapperServer import MitmMapperServer
 from mapadroid.db.DbFactory import DbFactory
-
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
-from mapadroid.mad_apk import get_storage_obj
-from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
-from mapadroid.madmin.madmin import MADmin
-from mapadroid.mitm_receiver.MitmDataProcessorManager import \
-    MitmDataProcessorManager
-from mapadroid.data_handler.MitmMapper import MitmMapper
-from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
-from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging, InterceptHandler
 from mapadroid.utils.madGlobals import terminate_mad, application_args
-from mapadroid.mapping_manager.MappingManager import MappingManager
 # from mapadroid.utils.pluginBase import PluginCollection
-from mapadroid.plugins.pluginBase import PluginCollection
 from mapadroid.utils.questGen import install_language
-from mapadroid.utils.rarity import Rarity
-from mapadroid.utils.updater import DeviceUpdater
-from mapadroid.utils.walkerArgs import parse_args
-from mapadroid.webhook.webhookworker import WebhookWorker
-from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 try:
     import uvloop
+
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     uvloop.install()
 except Exception as e:
@@ -96,7 +80,7 @@ def install_task_create_excepthook():
             pass
         except Exception as inner_ex:
             logger.exception(inner_ex)
-            #logger.opt(exception=True).critical("An unhandled exception occurred!")
+            # logger.opt(exception=True).critical("An unhandled exception occurred!")
 
     loop.create_task = create_task
 
@@ -135,6 +119,7 @@ async def get_system_infos(db_wrapper):
             await session.commit()
         await asyncio.sleep(application_args.statistic_interval)
 
+
 last_snapshot = None
 initial_snapshot = None
 
@@ -151,7 +136,7 @@ def display_top(snapshot, key_type='traceback', limit=30):
     for index, stat in enumerate(top_stats[:limit], 1):
         frame = stat.traceback[0]
         logger.info("#%s: %s:%s: %.1f KiB"
-              % (index, frame.filename, frame.lineno, stat.size / 1024))
+                    % (index, frame.filename, frame.lineno, stat.size / 1024))
         line = linecache.getline(frame.filename, frame.lineno).strip()
         if line:
             logger.info('    %s' % line)
@@ -248,7 +233,7 @@ def __run_system_stats(py):
             del by_type_filled
             del by_type
             # objgraph.show_backrefs(obj, max_depth=10)
-            #objgraph.show_backrefs(obj, max_depth=5)
+            # objgraph.show_backrefs(obj, max_depth=5)
         else:
             logger.warning("Not enough of type to show: {}", len(by_type))
     except Exception as e:
@@ -387,14 +372,14 @@ if __name__ == "__main__":
     logger = get_logger(LoggerEnums.system)
 
     loop = asyncio.get_event_loop()
-    #signal.signal(signal.SIGINT, signal_handler)
-    #signal.signal(signal.SIGTERM, signal_handler)
+    # signal.signal(signal.SIGINT, signal_handler)
+    # signal.signal(signal.SIGTERM, signal_handler)
 
     loop_being_run = loop
     try:
         # loop.run_until_complete(start())
         asyncio.run(start(), debug=True)
     except (KeyboardInterrupt, Exception) as e:
-        #shutdown(loop_being_run)
+        # shutdown(loop_being_run)
         logger.info(f"Shutting down. {e}")
         logger.exception(e)

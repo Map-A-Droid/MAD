@@ -1,6 +1,6 @@
 import asyncio
 import copy
-from asyncio import Task, QueueEmpty
+from asyncio import Task
 from threading import Event
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -29,6 +29,7 @@ from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsWalker, SettingsWalkerarea,
                                 SettingsWalkerToWalkerarea, TrsSpawn)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
@@ -99,7 +100,7 @@ class AreaEntry:
         self.init: bool = False
 
 
-class MappingManager:
+class MappingManager(AbstractMappingManager):
     def __init__(self, db_wrapper: DbWrapper, args, configmode: bool = False):
         self.__jobstatus: Dict = {}
         self.__db_wrapper: DbWrapper = db_wrapper
@@ -168,6 +169,8 @@ class MappingManager:
     async def get_safe_items(self, origin) -> List[int]:
         devicesettings: Optional[
             Tuple[SettingsDevice, SettingsDevicepool]] = await self.get_devicesettings_of(origin)
+        if not devicesettings:
+            return []
         values: str = ""
         if devicesettings[1] and devicesettings[1].enhanced_mode_quest_safe_items:
             values = devicesettings[1].enhanced_mode_quest_safe_items
@@ -841,6 +844,11 @@ class MappingManager:
     def get_jobstatus(self) -> Dict:
         return self.__jobstatus
 
-    async def routemanager_of_origin_is_levelmode(self, origin) -> bool:
-        device_routemananger: int = await self.get_routemanager_id_where_device_is_registered(origin)
+    async def routemanager_of_origin_is_levelmode(self, origin: str) -> bool:
+        if not origin:
+            # just avoid undefined behaviour....
+            return False
+        device_routemananger: Optional[int] = await self.get_routemanager_id_where_device_is_registered(origin)
+        if not device_routemananger:
+            return False
         return await self.routemanager_is_levelmode(device_routemananger)

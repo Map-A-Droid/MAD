@@ -1,0 +1,40 @@
+from typing import Optional, Dict, List, Set
+
+from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import GetAllLoadedOriginsResponse, \
+    GetAllLoadedOriginsRequest, GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse, \
+    GetAllowedAuthenticationCredentialsRequest, GetAllowedAuthenticationCredentialsResponse, \
+    IsRoutemanagerOfOriginLevelmodeRequest, IsRoutemanagerOfOriginLevelmodeResponse
+from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import MappingManagerStub
+from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
+
+
+class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
+    async def get_all_loaded_origins(self) -> Set[str]:
+        request: GetAllLoadedOriginsRequest = GetAllLoadedOriginsRequest()
+        response: GetAllLoadedOriginsResponse = await self.GetAllLoadedOrigins(request)
+        loaded_origins: Set[str] = set()
+        loaded_origins.update(response.loaded_origins)
+        return loaded_origins
+
+    async def get_safe_items(self, origin: str) -> List[int]:
+        request = GetSafeItemsNotToDeleteRequest()
+        request.worker.name = origin
+        response: GetSafeItemsNotToDeleteResponse = await self.GetSafeItemsNotToDelete(request)
+        item_ids: List[int] = []
+        item_ids.extend(response.item_ids)
+        return item_ids
+
+    async def get_auths(self) -> Optional[Dict[str, str]]:
+        request = GetAllowedAuthenticationCredentialsRequest()
+        response: GetAllowedAuthenticationCredentialsResponse = await self.GetAllowedAuthenticationCredentials(request)
+
+        auths: Dict[str, str] = {}
+        for username in response.allowed_credentials:
+            auths[username] = response.allowed_credentials[username]
+        return auths if auths else None
+
+    async def routemanager_of_origin_is_levelmode(self, origin: str) -> bool:
+        request = IsRoutemanagerOfOriginLevelmodeRequest()
+        request.worker.name = origin
+        response: IsRoutemanagerOfOriginLevelmodeResponse = await self.IsRoutemanagerOfOriginLevelmode(request)
+        return response.is_levelmode

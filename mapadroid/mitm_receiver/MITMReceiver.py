@@ -5,7 +5,7 @@ from typing import Optional
 from aiohttp import web
 from aiohttp.web_runner import TCPSite, UnixSite
 
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mapping_manager import MappingManager
@@ -16,12 +16,12 @@ from loguru import logger
 
 
 class MITMReceiver:
-    def __init__(self, mitm_mapper: MitmMapper, args_passed, mapping_manager: MappingManager,
+    def __init__(self, mitm_mapper: AbstractMitmMapper, args_passed, mapping_manager: MappingManager,
                  db_wrapper: DbWrapper, storage_obj: AbstractAPKStorage, data_queue: asyncio.Queue,
                  name=None, enable_configmode: Optional[bool] = False):
         self.__application_args = args_passed
         self.__mapping_manager: MappingManager = mapping_manager
-        self.__mitm_mapper: MitmMapper = mitm_mapper
+        self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
         self._db_wrapper: DbWrapper = db_wrapper
         self._data_queue: asyncio.Queue = data_queue
         self._storage_obj: AbstractAPKStorage = storage_obj

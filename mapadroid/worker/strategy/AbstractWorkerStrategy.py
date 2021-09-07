@@ -6,7 +6,7 @@ from typing import Optional, Any, List, Tuple
 
 from loguru import logger
 
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsWalkerarea
@@ -391,7 +391,7 @@ class AbstractWorkerStrategy(ABC):
             pogo_topmost = await self._communicator.is_pogo_topmost()
         return stop_result
 
-    async def _reboot(self, mitm_mapper: Optional[MitmMapper] = None):
+    async def _reboot(self, mitm_mapper: Optional[AbstractMitmMapper] = None):
         try:
             if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 start_result = await self._communicator.reboot()
@@ -423,7 +423,7 @@ class AbstractWorkerStrategy(ABC):
         self._worker_state.restart_count = 0
         return start_result
 
-    async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
+    async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[AbstractMitmMapper] = None):
         successful_stop = await self.stop_pogo()
         async with self._db_wrapper as session, session:
             try:

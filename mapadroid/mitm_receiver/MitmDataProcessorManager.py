@@ -2,7 +2,7 @@ import asyncio
 from asyncio import Task
 from typing import List
 
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.SerializedMitmDataProcessor import \
     SerializedMitmDataProcessor
@@ -10,11 +10,11 @@ from loguru import logger
 
 
 class MitmDataProcessorManager():
-    def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper):
+    def __init__(self, args, mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper):
         self._worker_threads: List[Task] = []
         self._args = args
         self._mitm_data_queue: asyncio.Queue = asyncio.Queue()
-        self._mitm_mapper: MitmMapper = mitm_mapper
+        self._mitm_mapper: AbstractMitmMapper = mitm_mapper
         self._db_wrapper: DbWrapper = db_wrapper
 
     def get_queue(self) -> asyncio.Queue:
