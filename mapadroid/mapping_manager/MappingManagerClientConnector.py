@@ -13,7 +13,7 @@ class MappingManagerClientConnector:
         max_message_length = 100 * 1024 * 1024
         options = [('grpc.max_message_length', max_message_length),
                    ('grpc.max_receive_message_length', max_message_length)]
-        self._channel = grpc.aio.insecure_channel('localhost:50051', options=options)
+        self._channel = grpc.aio.insecure_channel('localhost:50052', options=options)
 
     async def get_client(self) -> MappingManagerClient:
         if not self._channel:

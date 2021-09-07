@@ -6,19 +6,41 @@ from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import GetAllow
     GetAllowedAuthenticationCredentialsResponse, GetAllLoadedOriginsRequest, GetAllLoadedOriginsResponse, \
     GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse, IsRoutemanagerOfOriginLevelmodeRequest, \
     IsRoutemanagerOfOriginLevelmodeResponse
-from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import MappingManagerServicer
+from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import MappingManagerServicer, \
+    add_MappingManagerServicer_to_server
 from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+logger = get_logger(LoggerEnums.mapping_manager)
 
 
 class MappingManagerServer(MappingManagerServicer):
     def __init__(self, mapping_manager_impl: AbstractMappingManager):
         self.__mapping_manager_impl: AbstractMappingManager = mapping_manager_impl
+        self.__server = None
+
+    async def start(self):
+        max_message_length = 100 * 1024 * 1024
+        options = [('grpc.max_message_length', max_message_length),
+                   ('grpc.max_receive_message_length', max_message_length)]
+        self.__server = grpc.aio.server(options=options)
+        add_MappingManagerServicer_to_server(self, self.__server)
+        listen_addr = '[::]:50052'
+        self.__server.add_insecure_port(listen_addr)
+        logger.info("Starting server on %s", listen_addr)
+        await self.__server.start()
+
+    async def shutdown(self):
+        if self.__server:
+            await self.__server.stop(0)
 
     async def GetAllowedAuthenticationCredentials(self, request: GetAllowedAuthenticationCredentialsRequest,
                                                   context: grpc.aio.ServicerContext) -> GetAllowedAuthenticationCredentialsResponse:
         response: GetAllowedAuthenticationCredentialsResponse = GetAllowedAuthenticationCredentialsResponse()
         auths_allowed: Optional[Dict[str, str]] = await self.__mapping_manager_impl.get_auths()
-        response.allowed_credentials.CopyFrom(auths_allowed)
+        if auths_allowed:
+            for username, password in auths_allowed.items():
+                response.allowed_credentials[username] = password
         return response
 
     async def GetAllLoadedOrigins(self, request: GetAllLoadedOriginsRequest,
