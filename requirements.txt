@@ -39,3 +39,4 @@ werkzeug
 alembic
 ujson
 msgpack
+grpcio

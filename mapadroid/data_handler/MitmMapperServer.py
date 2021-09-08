@@ -1,25 +1,28 @@
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import grpc
+from google.protobuf import json_format
 from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.data_handler.MitmMapper import MitmMapper
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
-from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import Stats, Worker, LastMoved, \
-    LatestMitmDataEntryUpdateRequest, LatestMitmDataEntryRequest, LatestMitmDataEntryResponse, \
-    LatestMitmDataFullResponse, InventoryDataRequest, PokestopVisitsResponse, LevelResponse, InjectionStatus, \
-    InjectedRequest, LastKnownLocationResponse
+from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import (
+    InjectedRequest, InjectionStatus, InventoryDataRequest,
+    LastKnownLocationResponse, LastMoved, LatestMitmDataEntryRequest,
+    LatestMitmDataEntryResponse, LatestMitmDataEntryUpdateRequest,
+    LatestMitmDataFullResponse, LevelResponse, PokestopVisitsResponse, Stats,
+    Worker)
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
-
-from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperServicer, add_MitmMapperServicer_to_server
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import (
+    MitmMapperServicer, add_MitmMapperServicer_to_server)
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes, application_args
-from google.protobuf import json_format
-
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import (MonSeenTypes, PositionType,
+                                        TransportType, application_args)
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.mitm_mapper)
@@ -40,7 +43,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
                             ('grpc.grpc.default_compression_level', CompressionLevel.medium)])
         self.__server = grpc.aio.server(options=options)
         add_MitmMapperServicer_to_server(self, self.__server)
-        address = f'{application_args.mappingmanager_ip}:{application_args.mappingmanager_port}'
+        address = f'{application_args.mitmmapper_ip}:{application_args.mitmmapper_port}'
 
         if application_args.mitmmapper_tls_cert_file and application_args.mitmmapper_tls_private_key_file:
             await self.__secure_port(address)
