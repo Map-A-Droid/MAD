@@ -1,6 +1,7 @@
 from typing import Optional, Dict
 
 import grpc
+from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
 from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
@@ -16,7 +17,7 @@ from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperServ
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
+from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes, application_args
 from google.protobuf import json_format
 
 from mapadroid.worker.WorkerType import WorkerType
@@ -34,12 +35,33 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         max_message_length = 100 * 1024 * 1024
         options = [('grpc.max_message_length', max_message_length),
                    ('grpc.max_receive_message_length', max_message_length)]
+        if application_args.mitmmapper_compression:
+            options.extend([('grpc.default_compression_algorithm', CompressionAlgorithm.gzip),
+                            ('grpc.grpc.default_compression_level', CompressionLevel.medium)])
         self.__server = grpc.aio.server(options=options)
         add_MitmMapperServicer_to_server(self, self.__server)
-        listen_addr = '[::]:50051'
-        self.__server.add_insecure_port(listen_addr)
-        logger.info("Starting server on %s", listen_addr)
+        address = f'{application_args.mappingmanager_ip}:{application_args.mappingmanager_port}'
+
+        if application_args.mitmmapper_tls_cert_file and application_args.mitmmapper_tls_private_key_file:
+            await self.__secure_port(address)
+        else:
+            await self.__insecure_port(address)
+            logger.warning("Insecure MitmMapper gRPC API server")
+
+        logger.info("Starting server on %s", address)
         await self.__server.start()
+
+    async def __secure_port(self, address):
+        with open(application_args.mitmmapper_tls_private_key_file, 'r') as keyfile, open(application_args.mitmmapper_tls_cert_file, 'r') as certfile:
+            private_key = keyfile.read()
+            certificate_chain = certfile.read()
+        credentials = grpc.ssl_server_credentials(
+            [(private_key, certificate_chain)]
+        )
+        self.__server.add_secure_port(address, credentials)
+
+    async def __insecure_port(self, address):
+        self.__server.add_insecure_port(address)
 
     async def shutdown(self):
         await MitmMapper.shutdown(self)

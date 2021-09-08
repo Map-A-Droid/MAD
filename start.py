@@ -366,11 +366,11 @@ async def start():
         mitm_mapper = await mitm_mapper_connector.get_client()
         #mitm_mapper = MitmMapper(application_args, mapping_manager, db_wrapper)
         #await mitm_mapper.start()
-    logger.info('Starting PogoDroid Receiver server on port {}'.format(str(application_args.mitmreceiver_port)))
+    # logger.info('Starting PogoDroid Receiver server on port {}'.format(str(application_args.mitmreceiver_port)))
 
     # TODO: Enable and properly integrate...
-    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, db_wrapper)
-    await mitm_data_processor_manager.launch_processors()
+    #mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, db_wrapper)
+    #await mitm_data_processor_manager.launch_processors()
 
     #mitm_receiver = MITMReceiver(mitm_mapper, application_args, mapping_manager, db_wrapper,
     #                             storage_elem,
@@ -416,7 +416,7 @@ async def start():
         'storage_elem': storage_elem,
         'webhook_worker': webhook_worker,
         'ws_server': ws_server,
-        'mitm_data_processor_manager': mitm_data_processor_manager
+        #'mitm_data_processor_manager': mitm_data_processor_manager
     }
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
