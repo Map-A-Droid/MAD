@@ -253,7 +253,7 @@ class DbWebhookReader:
                 "stop_url": stop_url,
                 "cell_id": cell_id,
                 "seen_type": seen_type,
-                "display_pokemon": display_pokemon,
+                "display_pokemon_id": display_pokemon,
                 "display_form": display_form,
                 "display_costume": display_costume,
                 "display_gender": display_gender
