@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 from typing import List, Optional, Dict, Union
+from aiocache import cached
 
 from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
@@ -79,7 +80,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
     async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         request: mitm_mapper_pb2.LatestMitmDataEntryUpdateRequest = mitm_mapper_pb2.LatestMitmDataEntryUpdateRequest()
-        # TODO: Threaded transformation
+        # TODO: Threaded transformation?
         request.worker.name = worker
         request.key = str(key)
         if location:
@@ -147,12 +148,14 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request.inventory_data.update(inventory_proto)
         await self.HandleInventoryData(request)
 
+    @cached(ttl=30)
     async def get_poke_stop_visits(self, worker: str) -> int:
         request: Worker = Worker()
         request.name = worker
         response: PokestopVisitsResponse = await self.GetPokestopVisits(request)
         return response.stops_visited
 
+    @cached(ttl=60)
     async def get_level(self, worker: str) -> int:
         request: Worker = Worker()
         request.name = worker

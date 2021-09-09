@@ -3,6 +3,7 @@ import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 
+import ujson
 from aiohttp import web
 from loguru import logger
 
@@ -23,7 +24,11 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
     # TODO: Auth
     async def post(self):
-        data = await self.request.json()
+        raw_text = await self.request.text()
+        loop = asyncio.get_running_loop()
+        data = await loop.run_in_executor(
+            None, ujson.loads, raw_text)
+        del raw_text
         origin = self.request.headers.get("origin")
         with logger.contextualize(identifier=origin, name="receive_protos"):
             logger.debug2("Receiving proto")

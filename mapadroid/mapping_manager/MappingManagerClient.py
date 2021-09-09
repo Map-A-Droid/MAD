@@ -1,4 +1,5 @@
 from typing import Optional, Dict, List, Set
+from aiocache import cached
 
 from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import GetAllLoadedOriginsResponse, \
     GetAllLoadedOriginsRequest, GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse, \
@@ -9,6 +10,7 @@ from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingMana
 
 
 class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
+    @cached(ttl=360)
     async def get_all_loaded_origins(self) -> Set[str]:
         request: GetAllLoadedOriginsRequest = GetAllLoadedOriginsRequest()
         response: GetAllLoadedOriginsResponse = await self.GetAllLoadedOrigins(request)
@@ -16,6 +18,7 @@ class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
         loaded_origins.update(response.loaded_origins)
         return loaded_origins
 
+    @cached(ttl=360)
     async def get_safe_items(self, origin: str) -> List[int]:
         request = GetSafeItemsNotToDeleteRequest()
         request.worker.name = origin
@@ -24,6 +27,7 @@ class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
         item_ids.extend(response.item_ids)
         return item_ids
 
+    @cached(ttl=360)
     async def get_auths(self) -> Optional[Dict[str, str]]:
         request = GetAllowedAuthenticationCredentialsRequest()
         response: GetAllowedAuthenticationCredentialsResponse = await self.GetAllowedAuthenticationCredentials(request)
@@ -33,6 +37,7 @@ class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
             auths[username] = response.allowed_credentials[username]
         return auths if auths else None
 
+    @cached(ttl=60)
     async def routemanager_of_origin_is_levelmode(self, origin: str) -> bool:
         request = IsRoutemanagerOfOriginLevelmodeRequest()
         request.worker.name = origin
