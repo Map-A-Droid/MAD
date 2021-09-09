@@ -132,7 +132,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         response: LatestMitmDataFullResponse = await self.RequestFullLatest(request)
         loop = asyncio.get_running_loop()
         full_latest: Dict[str, LatestMitmDataEntry] = await loop.run_in_executor(
-            None, self.__generate_full_response, response)
+            None, self.__full_transformation, response)
         return full_latest
 
     def __full_transformation(self, response: LatestMitmDataFullResponse) -> Dict[str, LatestMitmDataEntry]:
