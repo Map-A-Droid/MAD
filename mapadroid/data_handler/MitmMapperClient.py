@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from typing import List, Optional, Dict, Union
 
@@ -78,6 +79,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
     async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         request: mitm_mapper_pb2.LatestMitmDataEntryUpdateRequest = mitm_mapper_pb2.LatestMitmDataEntryUpdateRequest()
+        # TODO: Threaded transformation
         request.worker.name = worker
         request.key = str(key)
         if location:
@@ -100,7 +102,12 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request.worker.name = worker
         request.key = str(key)
         response: LatestMitmDataEntryResponse = await self.RequestLatest(request)
-        return self.__transform_proto_data_entry(response.entry) if response.entry else None
+        if not response.entry:
+            return None
+        loop = asyncio.get_running_loop()
+        latest: LatestMitmDataEntry = await loop.run_in_executor(
+            None, self.__transform_proto_data_entry, response.entry)
+        return latest
 
     def __transform_proto_data_entry(self, entry: mitm_mapper_pb2.LatestMitmDataEntry) -> LatestMitmDataEntry:
         location: Optional[Location] = None
@@ -123,7 +130,12 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request = Worker()
         request.name = worker
         response: LatestMitmDataFullResponse = await self.RequestFullLatest(request)
-        # Iterate over map keys
+        loop = asyncio.get_running_loop()
+        full_latest: Dict[str, LatestMitmDataEntry] = await loop.run_in_executor(
+            None, self.__generate_full_response, response)
+        return full_latest
+
+    def __full_transformation(self, response: LatestMitmDataFullResponse) -> Dict[str, LatestMitmDataEntry]:
         full_latest: Dict[str, LatestMitmDataEntry] = {}
         for key in response.latest:
             full_latest[key] = self.__transform_proto_data_entry(response.latest[key])

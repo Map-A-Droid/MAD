@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, Optional
 
 import grpc
@@ -126,6 +127,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             value = request.data.some_dictionary
         else:
             value = request.data.some_list
+        # TODO: Threaded
         value = json_format.MessageToDict(value)
         await self.update_latest(
             worker=request.worker.name, key=request.key,
@@ -141,35 +143,46 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
                             context: grpc.aio.ServicerContext) -> LatestMitmDataEntryResponse:
         latest: Optional[LatestMitmDataEntry] = await self.request_latest(
             request.worker.name, request.key)
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(
+            None, self.__transform_single_response, latest)
+        return result
+
+    def __transform_single_response(self, latest):
         response: LatestMitmDataEntryResponse = LatestMitmDataEntryResponse()
         if not latest:
             return response
-        response.entry.CopyFrom(self.__transform_latest_mitm_data_entry(latest))
+        self.__transform_latest_mitm_data_entry(response.entry, latest)
         return response
 
-    def __transform_latest_mitm_data_entry(self, latest) -> mitm_mapper_pb2.LatestMitmDataEntry:
-        entry: mitm_mapper_pb2.LatestMitmDataEntry = mitm_mapper_pb2.LatestMitmDataEntry()
+    def __transform_latest_mitm_data_entry(self, entry_message: mitm_mapper_pb2.LatestMitmDataEntry,
+                                           latest) -> mitm_mapper_pb2.LatestMitmDataEntry:
         if latest.location:
-            entry.location.latitude = latest.location.lat
-            entry.location.longitude = latest.location.lng
+            entry_message.location.latitude = latest.location.lat
+            entry_message.location.longitude = latest.location.lng
         if latest.timestamp_of_data_retrieval:
-            entry.timestamp_of_data_retrieval = latest.timestamp_of_data_retrieval
+            entry_message.timestamp_of_data_retrieval = latest.timestamp_of_data_retrieval
         if latest.timestamp_received:
-            entry.timestamp_received = latest.timestamp_received
+            entry_message.timestamp_received = latest.timestamp_received
         if isinstance(latest.data, list):
-            entry.some_list.extend(latest.data)
+            entry_message.some_list.extend(latest.data)
         else:
-            entry.some_dictionary.update(latest.data)
-        return entry
+            entry_message.some_dictionary.update(latest.data)
+        return entry_message
 
     async def RequestFullLatest(self, request: Worker,
                                 context: grpc.aio.ServicerContext) -> LatestMitmDataFullResponse:
-        response: LatestMitmDataFullResponse = LatestMitmDataFullResponse()
         data: Dict[str, LatestMitmDataEntry] = await self.get_full_latest_data(worker=request.name)
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(
+            None, self.__generate_full_response, data)
+        return result
+
+    def __generate_full_response(self, data: Dict[str, LatestMitmDataEntry]) -> LatestMitmDataFullResponse:
+        response: LatestMitmDataFullResponse = LatestMitmDataFullResponse()
         for key, entry in data.items():
             try:
-                proto_entry: mitm_mapper_pb2.LatestMitmDataEntry = self.__transform_latest_mitm_data_entry(entry)
-                response.latest[key].CopyFrom(proto_entry)
+                self.__transform_latest_mitm_data_entry(response.latest[key], entry)
             except Exception as e:
                 logger.exception(e)
         return response
