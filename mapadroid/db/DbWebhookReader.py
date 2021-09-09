@@ -180,7 +180,7 @@ class DbWebhookReader:
             "move_1, move_2, cp, cp_multiplier, weight, height, pokemon.gender, pokemon.form, pokemon.costume, "
             "weather_boosted_condition, pokemon.last_modified, catch_prob_1, catch_prob_2, catch_prob_3, "
             "(trs_spawn.calc_endminsec IS NOT NULL) AS verified, seen_type, "
-            "IF(pokemon_display.pokemon IS NULL,pokemon_id, pokemon_display.pokemon) as display_pokemon, "
+            "pokemon_display.pokemon as display_pokemon, "
             "pokemon_display.form as display_form, "
             "pokemon_display.costume as display_costume, "
             "pokemon_display.gender as display_gender, "
