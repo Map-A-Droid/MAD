@@ -24,11 +24,11 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
     # TODO: Auth
     async def post(self):
-        raw_text = await self.request.text()
+        raw_data = await self.request.read()
         loop = asyncio.get_running_loop()
         data = await loop.run_in_executor(
-            None, ujson.loads, raw_text)
-        del raw_text
+            None, self.__process_data_to_json, raw_data)
+        del raw_data
         origin = self.request.headers.get("origin")
         with logger.contextualize(identifier=origin, name="receive_protos"):
             logger.debug2("Receiving proto")
@@ -46,6 +46,12 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
             # del data
             return web.Response(status=200)
+
+    def __process_data_to_json(self, raw_data):
+        raw_text = raw_data.decode('utf8')
+        data = ujson.loads(raw_text)
+        del raw_text
+        return data
 
     async def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
         proto_type = data.get("type", None)

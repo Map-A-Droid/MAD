@@ -908,6 +908,7 @@ class DbPogoProtoSubmit:
             cache_key = "s2cell{}".format(cell_id)
             if await cache.exists(cache_key):
                 continue
+            await cache.set(cache_key, 1, ex=60)
 
             s2cell: Optional[TrsS2Cell] = await TrsS2CellHelper.get(session, cell_id)
             if not s2cell:
@@ -923,10 +924,10 @@ class DbPogoProtoSubmit:
                 await session.commit()
                 # Only update s2cell's current_timestamp every 30s at most to avoid too many UPDATE operations
                 # in dense areas being covered by a number of devices
-                await cache.set(cache_key, 1, ex=60)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.debug("Failed committing cell {} ({})", cell_id, str(e))
                 await session.rollback()
+                await cache.set(cache_key, 1, ex=1)
 
     async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache,
                                     stop_data: Dict) -> Optional[Pokestop]:

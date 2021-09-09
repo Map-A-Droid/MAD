@@ -105,6 +105,7 @@ class SerializedMitmDataProcessor:
                 logger.debug("Done processing proto 104 in {}ms", end_time)
             elif data_type == 4:
                 logger.debug("Processing proto 4 (GET_HOLO_INVENTORY)")
+                # TODO: Explicitly extract values in processor and add appropriate methods to MitmMapper
                 await self.__mitm_mapper.handle_inventory_data(origin, data["payload"])
                 del data
                 end_time = self.get_time_ms() - start_time
@@ -147,9 +148,10 @@ class SerializedMitmDataProcessor:
                                                                                       data["payload"])
                 await session.commit()
 
-                if self.__application_args.game_stats and encounter:
-                    encounter_id, is_shiny = encounter
-                    await self.__mitm_mapper.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny)
+            if self.__application_args.game_stats and encounter:
+                encounter_id, is_shiny = encounter
+                loop = asyncio.get_running_loop()
+                loop.create_task(self.__mitm_mapper.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny))
             end_time = self.get_time_ms() - start_time
             logger.debug("Done processing encounter in {}ms", end_time)
         else:
@@ -200,11 +202,11 @@ class SerializedMitmDataProcessor:
                      full_time, weather_time, stops_time, gyms_time, raids_time,
                      spawnpoints_time, wild_mon_processing_time, nearby_mons_time, lure_processing_time,
                      cells_time, gmo_loc_time)
-        await self.__fire_stats_gmo_submission(origin, received_date,
-                                               wild_encounter_ids_in_gmo,
-                                               nearby_cell_encounter_ids,
-                                               nearby_stop_encounter_ids,
-                                               lure_encounter_ids)
+        loop.create_task(self.__fire_stats_gmo_submission(origin, received_date,
+                                                          wild_encounter_ids_in_gmo,
+                                                          nearby_cell_encounter_ids,
+                                                          nearby_stop_encounter_ids,
+                                                          lure_encounter_ids))
 
     async def __fire_stats_gmo_submission(self, worker: str, time_received_raw: datetime,
                                           wild_mon_encounter_ids_in_gmo: List[int],
