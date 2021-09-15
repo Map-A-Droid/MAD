@@ -175,7 +175,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         data: Dict[str, LatestMitmDataEntry] = await self.get_full_latest_data(worker=request.name)
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
-            None, self.__generate_full_response, data)
+            None, self.__generate_full_response, data.copy())
         return result
 
     def __generate_full_response(self, data: Dict[str, LatestMitmDataEntry]) -> LatestMitmDataFullResponse:
