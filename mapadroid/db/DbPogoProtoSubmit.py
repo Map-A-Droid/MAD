@@ -911,12 +911,13 @@ class DbPogoProtoSubmit:
             await cache.set(cache_key, 1, ex=60)
             logger.debug("Updating s2cell {}", cell_id)
             conn = await self._db_exec.get_db_accessor().get_core_connection()
-            async with conn:
-                try:
-                    await TrsS2CellHelper.insert_update_cell(conn, cell)
-                except sqlalchemy.exc.IntegrityError as e:
-                    logger.debug("Failed committing cell {} ({})", cell_id, str(e))
-                    await cache.set(cache_key, 1, ex=1)
+            try:
+                await TrsS2CellHelper.insert_update_cell(conn, cell)
+            except sqlalchemy.exc.IntegrityError as e:
+                logger.debug("Failed committing cell {} ({})", cell_id, str(e))
+                await cache.set(cache_key, 1, ex=1)
+            finally:
+                await conn.close()
 
     async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache,
                                     stop_data: Dict) -> Optional[Pokestop]:
