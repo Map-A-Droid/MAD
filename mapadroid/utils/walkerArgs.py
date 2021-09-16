@@ -93,7 +93,7 @@ def parse_args():
                         help='Enable compression of data of the MappingManager gRPC communication. Default: False')
 
     # MitmMapper gRPC
-        parser.add_argument('-mitmmip', '--mitmmapper_ip', required=False, default="[::]", type=str,
+    parser.add_argument('-mitmmip', '--mitmmapper_ip', required=False, default="[::]", type=str,
                         help='IP to listen on for the MitmMapper gRPC API (separate MAD component. Default: [::]')
     parser.add_argument('-mitmmport', '--mitmmapper_port', required=False, default=50051, type=int,
                         help='Port to listen on for the MitmMapper gRPC API (separate MAD component). Default: 50051')
