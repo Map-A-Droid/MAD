@@ -19,9 +19,18 @@ from mapadroid.worker.WorkerType import WorkerType
 
 
 class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
+    def __init__(self, channel):
+        super().__init__(channel)
+        self._level_cache: Dict[str, int] = {}
+        self._pokestop_visits_cache: Dict[str, int] = {}
+
     # Cache the update parameters to not spam it...
     @cached(ttl=300)
     async def set_level(self, worker: str, level: int) -> None:
+        if self._level_cache.get(worker, 0) == level:
+            return
+        else:
+            self._level_cache[worker] = level
         request: SetLevelRequest = SetLevelRequest()
         request.worker.name = worker
         request.level = level
@@ -29,6 +38,10 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
 
     @cached(ttl=60)
     async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
+        if self._pokestop_visits_cache.get(worker, 0) == pokestop_visits:
+            return
+        else:
+            self._pokestop_visits_cache[worker] = pokestop_visits
         request: SetPokestopVisitsRequest = SetPokestopVisitsRequest()
         request.worker.name = worker
         request.pokestop_visits = pokestop_visits
