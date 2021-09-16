@@ -135,7 +135,8 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request = LatestMitmDataEntryRequest()
         request.worker.name = worker
         request.key = str(key)
-        request.timestamp_earliest = timestamp_earliest
+        if timestamp_earliest:
+            request.timestamp_earliest = timestamp_earliest
         response: LatestMitmDataEntryResponse = await self.RequestLatest(request)
         if not response.entry:
             return None

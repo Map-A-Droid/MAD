@@ -142,8 +142,11 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
 
     async def RequestLatest(self, request: LatestMitmDataEntryRequest,
                             context: grpc.aio.ServicerContext) -> LatestMitmDataEntryResponse:
+        timestamp_earliest: Optional[int] = None
+        if request.HasField("timestamp_earliest"):
+            timestamp_earliest = request.timestamp_earliest
         latest: Optional[LatestMitmDataEntry] = await self.request_latest(
-            request.worker.name, request.key, request.timestamp_earliest)
+            request.worker.name, request.key, timestamp_earliest)
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None, self.__transform_single_response, latest)
