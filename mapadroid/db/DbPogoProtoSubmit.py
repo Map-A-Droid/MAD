@@ -909,14 +909,14 @@ class DbPogoProtoSubmit:
                 logger.debug("s2cell already updated {}", cell_id)
                 continue
             await cache.set(cache_key, 1, ex=60)
-
-            try:
-                await TrsS2CellHelper.insert_update_cell(session, cell)
-                await session.commit()
-            except sqlalchemy.exc.IntegrityError as e:
-                logger.debug("Failed committing cell {} ({})", cell_id, str(e))
-                await session.rollback()
-                await cache.set(cache_key, 1, ex=1)
+            async with session.begin_nested() as nested_transaction:
+                try:
+                    await TrsS2CellHelper.insert_update_cell(nested_transaction, cell)
+                    await nested_transaction.commit()
+                except sqlalchemy.exc.IntegrityError as e:
+                    logger.debug("Failed committing cell {} ({})", cell_id, str(e))
+                    await nested_transaction.rollback()
+                    await cache.set(cache_key, 1, ex=1)
 
     async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache,
                                     stop_data: Dict) -> Optional[Pokestop]:

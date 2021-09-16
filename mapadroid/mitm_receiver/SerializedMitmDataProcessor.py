@@ -267,8 +267,10 @@ class SerializedMitmDataProcessor:
         async with self.__db_wrapper as session, session:
             try:
                 await self.__db_submit.cells(session, data["payload"])
+                await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting cells: {}", e)
+                await session.rollback()
         cells_time = self.get_time_ms() - cells_time_start
         return cells_time
 
