@@ -1,9 +1,9 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from sqlalchemy import and_
+from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.dialects.mysql import insert
 
 from mapadroid.db.model import TrsS2Cell
 from mapadroid.utils.collections import Location
@@ -31,7 +31,7 @@ class TrsS2CellHelper:
             updated=int(cell["current_timestamp"] / 1000)
         )
         on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
-            updated=insert_stmt.inserted.data
+            updated=insert_stmt.inserted.updated
         )
         await session.execute(on_duplicate_key_stmt)
 
