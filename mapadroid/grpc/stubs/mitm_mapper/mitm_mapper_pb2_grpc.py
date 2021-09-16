@@ -2,8 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from mitm_mapper import mitm_mapper_pb2 as mitm__mapper_dot_mitm__mapper__pb2
-from shared import Ack_pb2 as shared_dot_Ack__pb2
+from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2 as mitm__mapper_dot_mitm__mapper__pb2
+from mapadroid.grpc.compiled.shared import Ack_pb2 as shared_dot_Ack__pb2
 
 
 class MitmMapperStub(object):

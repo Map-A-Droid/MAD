@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from mapping_manager import mapping_manager_pb2 as mapping__manager_dot_mapping__manager__pb2
+from mapadroid.grpc.compiled.mapping_manager import mapping_manager_pb2 as mapping__manager_dot_mapping__manager__pb2
 
 
 class MappingManagerStub(object):
