@@ -22,7 +22,8 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                                       timestamp: int) -> Tuple[ReceivedType, Optional[object]]:
         type_of_data_found: ReceivedType = ReceivedType.UNDEFINED
         data_found: Optional[object] = None
-
+        if not latest:
+            return type_of_data_found, data_found
         # proto has previously been received, let's check the timestamp...
         mode = await self._mapping_manager.routemanager_get_mode(self._area_id)
         timestamp_of_proto: int = latest.timestamp_of_data_retrieval
