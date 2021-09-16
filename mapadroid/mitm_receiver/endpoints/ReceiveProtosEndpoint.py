@@ -58,6 +58,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         if proto_type is None or proto_type == 0:
             logger.warning("Could not read method ID. Stopping processing of proto")
             return
+        timestamp: int = data.get("timestamp", int(time.time()))
+        if self._get_mad_args().mitm_ignore_pre_boot is True and timestamp < self._get_mitmreceiver_startup_time():
+            return
 
         if proto_type not in (106, 102, 101, 104, 4, 156, 145):
             # trash protos - ignoring
@@ -67,10 +70,6 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             return
         elif proto_type == 106:
             await self._get_mitm_mapper().set_injection_status(origin, True)
-
-        timestamp: int = data.get("timestamp", int(time.time()))
-        if self._get_mad_args().mitm_ignore_pre_boot is True and timestamp < self._get_mitmreceiver_startup_time():
-            return
 
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or

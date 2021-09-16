@@ -1,11 +1,13 @@
 import asyncio
 import time
 from datetime import datetime
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 
 import sqlalchemy
 from loguru import logger
+from redis import Redis
 
+from mapadroid.cache import NoopCache
 from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
@@ -105,7 +107,6 @@ class SerializedMitmDataProcessor:
                 logger.debug("Done processing proto 104 in {}ms", end_time)
             elif data_type == 4:
                 logger.debug("Processing proto 4 (GET_HOLO_INVENTORY)")
-                # TODO: Explicitly extract values in processor and add appropriate methods to MitmMapper
                 await self._handle_inventory_data(origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
                 logger.debug("Done processing proto 4 in {}ms", end_time)
@@ -330,9 +331,13 @@ class SerializedMitmDataProcessor:
     def get_time_ms():
         return int(time.time() * 1000)
 
-    async def _handle_inventory_data(self, origin, data: dict) -> None:
+    async def _handle_inventory_data(self, origin: str, data: dict) -> None:
         if 'inventory_delta' not in data:
             logger.debug2('gen_player_stats cannot generate new stats')
+            return
+        cache: Union[Redis, NoopCache] = await self.__db_wrapper.get_cache()
+        cache_key: str = f"inv_data_{origin}_processed"
+        if await cache.exists(cache_key):
             return
         stats = data['inventory_delta'].get("inventory_items", None)
         if len(stats) > 0:
@@ -344,4 +349,5 @@ class SerializedMitmDataProcessor:
                     await self.__mitm_mapper.set_level(origin, int(player_level))
                     await self.__mitm_mapper.set_pokestop_visits(origin,
                                                                  int(player_stats['poke_stop_visits']))
+                    await cache.set(cache_key, int(time.time()), ex=60)
                     return
