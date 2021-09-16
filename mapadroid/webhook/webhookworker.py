@@ -486,18 +486,18 @@ class WebhookWorker:
                 if self.__args.quest_webhook_flavor == "poracle":
                     mon_payload["weather"] = mon["weather_boosted_condition"]
 
-            if mon["seen_type"] in (MonSeenTypes.nearby_stop.value, MonSeenTypes.lure_wild.value,
-                                    MonSeenTypes.lure_encounter.value):
+            if mon["seen_type"] in (MonSeenTypes.nearby_stop.name, MonSeenTypes.lure_wild.name,
+                                    MonSeenTypes.lure_encounter.name):
                 mon_payload["pokestop_id"] = mon["fort_id"]
                 mon_payload["pokestop_name"] = mon.get("stop_name")
                 mon_payload["pokestop_url"] = mon.get("stop_url")
 
-                if mon["seen_type"] == MonSeenTypes.nearby_stop.value:
+                if mon["seen_type"] == MonSeenTypes.nearby_stop.name:
                     mon_payload["verified"] = False
                 else:
                     mon_payload["verified"] = True
 
-            if mon["seen_type"] == MonSeenTypes.nearby_cell.value:
+            if mon["seen_type"] == MonSeenTypes.nearby_cell.name:
                 mon_payload["cell_coords"] = S2Helper.coords_of_cell(
                     mon["cell_id"]
                 )
@@ -598,11 +598,11 @@ class WebhookWorker:
                     if vtype in sub_types:
                         self.__webhook_types.add(vtype)
                     for vmtype in self.__valid_mon_types:
-                        if vmtype.value in sub_types:
+                        if vmtype.name in sub_types:
                             self.__pokemon_types.add(vmtype)
             else:
                 for valid_mon_type in self.__valid_mon_types:
-                    self.__webhook_types.add(valid_mon_type.value)
+                    self.__webhook_types.add(valid_mon_type.name)
                 for valid_type in self.__valid_types:
                     self.__webhook_types.add(valid_type)
 
