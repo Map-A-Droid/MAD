@@ -81,9 +81,6 @@ class MitmMapper(AbstractMitmMapper):
     async def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
         return self.__mitm_data_handler.get_full_latest_data(worker)
 
-    async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:
-        await self.__mitm_data_handler.handle_inventory_data(worker, inventory_proto)
-
     async def get_poke_stop_visits(self, worker: str) -> int:
         return await self.__mitm_data_handler.get_poke_stop_visits(worker)
 
@@ -98,3 +95,10 @@ class MitmMapper(AbstractMitmMapper):
 
     async def get_last_known_location(self, worker: str) -> Optional[Location]:
         return self.__mitm_data_handler.get_last_known_location(worker)
+
+    async def set_level(self, worker: str, level: int) -> None:
+        await self.__mitm_data_handler.set_level(worker, level)
+
+    async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
+        await self.__mitm_data_handler.set_pokestop_visits(worker, pokestop_visits)
+

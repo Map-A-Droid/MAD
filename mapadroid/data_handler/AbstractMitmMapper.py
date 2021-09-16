@@ -61,10 +61,6 @@ class AbstractMitmMapper(ABC):
         pass
 
     @abstractmethod
-    async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:
-        pass
-
-    @abstractmethod
     async def get_poke_stop_visits(self, worker: str) -> int:
         pass
 
@@ -82,4 +78,12 @@ class AbstractMitmMapper(ABC):
 
     @abstractmethod
     async def get_last_known_location(self, worker: str) -> Optional[Location]:
+        pass
+
+    @abstractmethod
+    async def set_level(self, worker: str, level: int) -> None:
+        pass
+
+    @abstractmethod
+    async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
         pass

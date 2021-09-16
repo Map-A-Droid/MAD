@@ -14,12 +14,23 @@ service MitmMapper {
   rpc UpdateLatest(LatestMitmDataEntryUpdateRequest) returns (mapadroid.shared.Ack);
   rpc RequestLatest(LatestMitmDataEntryRequest) returns (LatestMitmDataEntryResponse);
   rpc RequestFullLatest(Worker) returns (LatestMitmDataFullResponse);
-  rpc HandleInventoryData(InventoryDataRequest) returns (mapadroid.shared.Ack);
+  rpc SetLevel(SetLevelRequest) returns (mapadroid.shared.Ack);
+  rpc SetPokestopVisits(SetPokestopVisitsRequest) returns (mapadroid.shared.Ack);
   rpc GetPokestopVisits(Worker) returns (PokestopVisitsResponse);
   rpc GetLevel(Worker) returns (LevelResponse);
   rpc GetInjectionStatus(Worker) returns (InjectionStatus);
   rpc SetInjected(InjectedRequest) returns (mapadroid.shared.Ack);
   rpc GetLastKnownLocation(Worker) returns (LastKnownLocationResponse);
+}
+
+message SetPokestopVisitsRequest {
+  Worker worker = 1;
+  int32 pokestop_visits = 2;
+}
+
+message SetLevelRequest {
+  Worker worker = 1;
+  int32 level = 2;
 }
 
 message LastKnownLocationResponse {
@@ -41,11 +52,6 @@ message LevelResponse {
 
 message PokestopVisitsResponse {
   uint64 stops_visited = 1;
-}
-
-message InventoryDataRequest {
-  Worker worker = 1;
-  google.protobuf.Struct inventory_data = 2;
 }
 
 message LatestMitmDataFullResponse {

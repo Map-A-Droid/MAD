@@ -41,9 +41,13 @@ class MitmDataHandler:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         return await player_data.get_poke_stop_visits()
 
-    async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:
+    async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
         player_data: PlayerData = self.__ensure_worker_data(worker)
-        await player_data.handle_inventory_data(inventory_proto)
+        await player_data.set_pokestop_visits(pokestop_visits)
+
+    async def set_level(self, worker: str, level: int) -> None:
+        player_data: PlayerData = self.__ensure_worker_data(worker)
+        await player_data.set_level(level)
 
     def request_latest(self, worker: str, key: Union[int, str]) -> Optional[LatestMitmDataEntry]:
         player_data: PlayerData = self.__ensure_worker_data(worker)

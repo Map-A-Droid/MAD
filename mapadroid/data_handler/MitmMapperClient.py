@@ -7,8 +7,9 @@ from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
 from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import Stats, LastMoved, LatestMitmDataEntryResponse, \
-    LatestMitmDataEntryRequest, LatestMitmDataFullResponse, Worker, InventoryDataRequest, PokestopVisitsResponse, \
-    LevelResponse, InjectionStatus, InjectedRequest, LastKnownLocationResponse
+    LatestMitmDataEntryRequest, LatestMitmDataFullResponse, Worker, PokestopVisitsResponse, \
+    LevelResponse, InjectionStatus, InjectedRequest, LastKnownLocationResponse, SetLevelRequest, \
+    SetPokestopVisitsRequest
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperStub
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import MonSeenTypes, PositionType, TransportType
@@ -18,6 +19,21 @@ from mapadroid.worker.WorkerType import WorkerType
 
 
 class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
+    # Cache the update parameters to not spam it...
+    @cached(ttl=300)
+    async def set_level(self, worker: str, level: int) -> None:
+        request: SetLevelRequest = SetLevelRequest()
+        request.worker.name = worker
+        request.level = level
+        await self.SetLevel(request)
+
+    @cached(ttl=60)
+    async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
+        request: SetPokestopVisitsRequest = SetPokestopVisitsRequest()
+        request.worker.name = worker
+        request.pokestop_visits = pokestop_visits
+        await self.SetPokestopVisits(request)
+
     async def stats_collect_wild_mon(self, worker: str, encounter_ids: List[int], time_scanned: datetime) -> None:
         request: Stats = Stats()
         request.worker.name = worker
@@ -141,12 +157,6 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         for key in response.latest:
             full_latest[key] = self.__transform_proto_data_entry(response.latest[key])
         return full_latest
-
-    async def handle_inventory_data(self, worker: str, inventory_proto: dict) -> None:
-        request: InventoryDataRequest = InventoryDataRequest()
-        request.worker.name = worker
-        request.inventory_data.update(inventory_proto)
-        await self.HandleInventoryData(request)
 
     @cached(ttl=30)
     async def get_poke_stop_visits(self, worker: str) -> int:

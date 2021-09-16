@@ -96,3 +96,9 @@ class PlayerData(AbstractWorkerHolder):
 
     def get_last_known_location(self) -> Optional[Location]:
         return self.__last_known_location
+
+    async def set_pokestop_visits(self, pokestop_visits: int) -> None:
+        self._poke_stop_visits = pokestop_visits
+
+    async def set_level(self, level: int) -> None:
+        self._level = level

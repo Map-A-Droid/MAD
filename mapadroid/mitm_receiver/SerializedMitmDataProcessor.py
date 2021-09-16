@@ -106,7 +106,7 @@ class SerializedMitmDataProcessor:
             elif data_type == 4:
                 logger.debug("Processing proto 4 (GET_HOLO_INVENTORY)")
                 # TODO: Explicitly extract values in processor and add appropriate methods to MitmMapper
-                await self.__mitm_mapper.handle_inventory_data(origin, data["payload"])
+                await self._handle_inventory_data(origin, data["payload"])
                 del data
                 end_time = self.get_time_ms() - start_time
                 logger.debug("Done processing proto 4 in {}ms", end_time)
@@ -332,3 +332,19 @@ class SerializedMitmDataProcessor:
     @staticmethod
     def get_time_ms():
         return int(time.time() * 1000)
+
+    async def _handle_inventory_data(self, origin, data: dict) -> None:
+        if 'inventory_delta' not in data:
+            logger.debug2('gen_player_stats cannot generate new stats')
+            return
+        stats = data['inventory_delta'].get("inventory_items", None)
+        if len(stats) > 0:
+            for data_inventory in stats:
+                player_stats = data_inventory['inventory_item_data']['player_stats']
+                player_level = player_stats['level']
+                if int(player_level) > 0:
+                    logger.debug2('{{gen_player_stats}} saving new playerstats')
+                    await self.__mitm_mapper.set_level(origin, int(player_level))
+                    await self.__mitm_mapper.set_pokestop_visits(origin,
+                                                                 int(player_stats['poke_stop_visits']))
+                    return

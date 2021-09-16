@@ -11,11 +11,11 @@ from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
 from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import (
-    InjectedRequest, InjectionStatus, InventoryDataRequest,
+    InjectedRequest, InjectionStatus,
     LastKnownLocationResponse, LastMoved, LatestMitmDataEntryRequest,
     LatestMitmDataEntryResponse, LatestMitmDataEntryUpdateRequest,
     LatestMitmDataFullResponse, LevelResponse, PokestopVisitsResponse, Stats,
-    Worker)
+    Worker, SetLevelRequest, SetPokestopVisitsRequest)
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import (
     MitmMapperServicer, add_MitmMapperServicer_to_server)
@@ -187,13 +187,6 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
                 logger.exception(e)
         return response
 
-    async def HandleInventoryData(self, request: InventoryDataRequest,
-                                  context: grpc.aio.ServicerContext) -> Ack:
-        inventory_data = json_format.MessageToDict(request.inventory_data)
-        await self.handle_inventory_data(worker=request.worker.name,
-                                         inventory_proto=inventory_data)
-        return Ack()
-
     async def GetPokestopVisits(self, request: Worker,
                                 context: grpc.aio.ServicerContext) -> PokestopVisitsResponse:
         stops_visited: int = await self.get_poke_stop_visits(request.name)
@@ -223,4 +216,16 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             return response
         response.location.latitude = location.lat
         response.location.longitude = location.lng
+        return response
+
+    async def SetLevel(self, request: SetLevelRequest, context: grpc.aio.ServicerContext) -> Ack:
+        await self.set_level(worker=request.worker.name,
+                             level=request.level)
+        response: Ack = Ack()
+        return response
+
+    async def SetPokestopVisits(self, request: SetPokestopVisitsRequest, context: grpc.aio.ServicerContext) -> Ack:
+        await self.set_pokestop_visits(worker=request.worker.name,
+                                       pokestop_visits=request.pokestop_visits)
+        response: Ack = Ack()
         return response

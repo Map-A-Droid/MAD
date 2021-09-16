@@ -2,8 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2 as mitm__mapper_dot_mitm__mapper__pb2
-from mapadroid.grpc.compiled.shared import Ack_pb2 as shared_dot_Ack__pb2
+from mitm_mapper import mitm_mapper_pb2 as mitm__mapper_dot_mitm__mapper__pb2
+from shared import Ack_pb2 as shared_dot_Ack__pb2
 
 
 class MitmMapperStub(object):
@@ -40,9 +40,14 @@ class MitmMapperStub(object):
                 request_serializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
                 response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataFullResponse.FromString,
                 )
-        self.HandleInventoryData = channel.unary_unary(
-                '/mapadroid.mitm_mapper.MitmMapper/HandleInventoryData',
-                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.InventoryDataRequest.SerializeToString,
+        self.SetLevel = channel.unary_unary(
+                '/mapadroid.mitm_mapper.MitmMapper/SetLevel',
+                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.SetLevelRequest.SerializeToString,
+                response_deserializer=shared_dot_Ack__pb2.Ack.FromString,
+                )
+        self.SetPokestopVisits = channel.unary_unary(
+                '/mapadroid.mitm_mapper.MitmMapper/SetPokestopVisits',
+                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.SetPokestopVisitsRequest.SerializeToString,
                 response_deserializer=shared_dot_Ack__pb2.Ack.FromString,
                 )
         self.GetPokestopVisits = channel.unary_unary(
@@ -105,7 +110,13 @@ class MitmMapperServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def HandleInventoryData(self, request, context):
+    def SetLevel(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SetPokestopVisits(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -169,9 +180,14 @@ def add_MitmMapperServicer_to_server(servicer, server):
                     request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.FromString,
                     response_serializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataFullResponse.SerializeToString,
             ),
-            'HandleInventoryData': grpc.unary_unary_rpc_method_handler(
-                    servicer.HandleInventoryData,
-                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.InventoryDataRequest.FromString,
+            'SetLevel': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetLevel,
+                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.SetLevelRequest.FromString,
+                    response_serializer=shared_dot_Ack__pb2.Ack.SerializeToString,
+            ),
+            'SetPokestopVisits': grpc.unary_unary_rpc_method_handler(
+                    servicer.SetPokestopVisits,
+                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.SetPokestopVisitsRequest.FromString,
                     response_serializer=shared_dot_Ack__pb2.Ack.SerializeToString,
             ),
             'GetPokestopVisits': grpc.unary_unary_rpc_method_handler(
@@ -295,7 +311,7 @@ class MitmMapper(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def HandleInventoryData(request,
+    def SetLevel(request,
             target,
             options=(),
             channel_credentials=None,
@@ -305,8 +321,25 @@ class MitmMapper(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/HandleInventoryData',
-            mitm__mapper_dot_mitm__mapper__pb2.InventoryDataRequest.SerializeToString,
+        return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/SetLevel',
+            mitm__mapper_dot_mitm__mapper__pb2.SetLevelRequest.SerializeToString,
+            shared_dot_Ack__pb2.Ack.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SetPokestopVisits(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/SetPokestopVisits',
+            mitm__mapper_dot_mitm__mapper__pb2.SetPokestopVisitsRequest.SerializeToString,
             shared_dot_Ack__pb2.Ack.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
