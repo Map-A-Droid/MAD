@@ -170,7 +170,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             entry_message.timestamp_received = latest.timestamp_received
         if isinstance(latest.data, list):
             entry_message.some_list.extend(latest.data)
-        else:
+        elif isinstance(latest.data, dict):
             entry_message.some_dictionary.update(latest.data)
         return entry_message
 

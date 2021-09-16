@@ -153,13 +153,20 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         if entry.HasField(
                 "some_dictionary"):
             data = entry.some_dictionary
-        else:
+        elif entry.HasField(
+                "some_list"):
             data = entry.some_list
-        data = json_format.MessageToDict(data)
+        else:
+            data = None
+        loop = asyncio.get_running_loop()
+        if data:
+            formatted = await loop.run_in_executor(None, json_format.MessageToDict, data)
+        else:
+            formatted = None
         entry: LatestMitmDataEntry = LatestMitmDataEntry(location=location,
                                                          timestamp_received=entry.timestamp_received,
                                                          timestamp_of_data_retrieval=entry.timestamp_of_data_retrieval,
-                                                         data=data)
+                                                         data=formatted)
         return entry
 
     async def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
