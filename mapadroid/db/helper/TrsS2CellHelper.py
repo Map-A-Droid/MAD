@@ -1,8 +1,9 @@
 from typing import Optional, List
 
-from sqlalchemy import and_, insert
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.dialects.mysql import insert
 
 from mapadroid.db.model import TrsS2Cell
 from mapadroid.utils.collections import Location
