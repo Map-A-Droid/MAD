@@ -910,7 +910,8 @@ class DbPogoProtoSubmit:
                 continue
             await cache.set(cache_key, 1, ex=60)
             logger.debug("Updating s2cell {}", cell_id)
-            async with self._db_exec.get_db_accessor().get_core_connection() as conn:
+            conn = await self._db_exec.get_db_accessor().get_core_connection()
+            async with conn:
                 try:
                     await TrsS2CellHelper.insert_update_cell(conn, cell)
                 except sqlalchemy.exc.IntegrityError as e:
