@@ -129,7 +129,7 @@ class SerializedMitmDataProcessor:
 
             async with self.__db_wrapper as session, session:
                 lure_encounter: Optional[Tuple[int, datetime]] = await self.__db_submit \
-                    .mon_lure_iv(session, received_timestamp, data["payload"], )
+                    .mon_lure_iv(session, received_timestamp, data["payload"])
 
                 if self.__application_args.game_stats:
                     await self.__db_submit.update_seen_type_stats(session, lure_encounter=[lure_encounter])

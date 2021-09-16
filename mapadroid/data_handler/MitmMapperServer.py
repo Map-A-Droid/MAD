@@ -128,14 +128,15 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         else:
             value = request.data.some_list
         # TODO: Threaded
-        value = json_format.MessageToDict(value)
+        loop = asyncio.get_running_loop()
+        json_formatted = await loop.run_in_executor(None, json_format.MessageToDict, value)
         await self.update_latest(
             worker=request.worker.name, key=request.key,
             timestamp_received_raw=request.data.timestamp_received,
             timestamp_received_receiver=request.data.timestamp_of_data_retrieval,
             location=Location(request.data.location.latitude,
                               request.data.location.longitude),
-            value=value
+            value=json_formatted
         )
         return Ack()
 
