@@ -49,10 +49,11 @@ class MitmDataHandler:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         await player_data.set_level(level)
 
-    def request_latest(self, worker: str, key: Union[int, str]) -> Optional[LatestMitmDataEntry]:
+    def request_latest(self, worker: str, key: Union[int, str],
+                       timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         logger.debug2("Request latest called")
-        return player_data.get_specific_latest_data(key)
+        return player_data.get_specific_latest_data(key, timestamp_earliest)
 
     def get_full_latest_data(self, worker: str) -> Dict[Union[int, str], LatestMitmDataEntry]:
         player_data: PlayerData = self.__ensure_worker_data(worker)

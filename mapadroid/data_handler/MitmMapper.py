@@ -75,8 +75,9 @@ class MitmMapper(AbstractMitmMapper):
         self.__mitm_data_handler.update_latest(worker, key, value, timestamp_received_raw,
                                                timestamp_received_receiver, location)
 
-    async def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
-        return self.__mitm_data_handler.request_latest(worker, key)
+    async def request_latest(self, worker: str, key: str,
+                             timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
+        return self.__mitm_data_handler.request_latest(worker, key, timestamp_earliest)
 
     async def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
         return self.__mitm_data_handler.get_full_latest_data(worker)

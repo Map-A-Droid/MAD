@@ -51,7 +51,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         self._encounter_ids = {}
 
     @abstractmethod
-    async def _check_for_data_content(self, latest: Dict[str, LatestMitmDataEntry],
+    async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
                                       timestamp: int) \
             -> Tuple[ReceivedType, Optional[object]]:
@@ -143,18 +143,8 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                      proto_to_wait_for, DatetimeWrapper.fromtimestamp(timestamp), timeout)
         while not self._worker_state.stop_worker_event.is_set() and int(timestamp + timeout) >= int(time.time()) \
                 and last_time_received < timestamp:
-            latest: Dict[Union[int, str], LatestMitmDataEntry] = await self \
-                ._mitm_mapper.get_full_latest_data(self._worker_state.origin)
-
-            if latest is None:
-                logger.info("Nothing received from worker since MAD started")
-                await asyncio.sleep(application_args.wait_for_data_sleep_duration)
-                continue
-            latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(key, None)
-            if not latest_proto_entry:
-                logger.info("No data linked to the requested proto since MAD started.")
-                await asyncio.sleep(application_args.wait_for_data_sleep_duration)
-                continue
+            latest: Optional[LatestMitmDataEntry] = await self._mitm_mapper.request_latest(self._worker_state.origin,
+                                                                                           key, timestamp)
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
             latest_location: Optional[Location] = await self._mitm_mapper.get_last_known_location(
@@ -181,7 +171,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 # iteration to not run into trouble (endless loop)
                 last_time_received = TIMESTAMP_NEVER
             else:
-                last_time_received = latest_proto_entry.timestamp_of_data_retrieval
+                last_time_received = latest.timestamp_of_data_retrieval
                 break
             await asyncio.sleep(application_args.wait_for_data_sleep_duration)
 

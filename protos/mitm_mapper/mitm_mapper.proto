@@ -71,6 +71,7 @@ message LatestMitmDataEntryResponse {
 message LatestMitmDataEntryRequest {
   Worker worker = 1;
   string key = 2;
+  optional uint64 timestamp_earliest = 3;
 }
 
 message LatestMitmDataEntry {

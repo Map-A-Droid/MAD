@@ -99,26 +99,30 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         self._delay_add: int = 0
         self._stop_process_time = TIMESTAMP_NEVER
 
-    async def _check_for_data_content(self, latest: Dict[str, LatestMitmDataEntry],
+    async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
                                       timestamp: int) -> Tuple[ReceivedType, Optional[object]]:
         type_of_data_found: ReceivedType = ReceivedType.UNDEFINED
         data_found: Optional[object] = None
         # Check if we have clicked a gym or mon...
-        if ProtoIdentifier.GYM_INFO.value in latest \
-                and latest[ProtoIdentifier.GYM_INFO.value].timestamp_of_data_retrieval \
-                and latest[ProtoIdentifier.GYM_INFO.value].timestamp_of_data_retrieval >= timestamp:
+        gym_latest: Optional[LatestMitmDataEntry] = await self._mitm_mapper.request_latest(self._worker_state.origin,
+                                                                                           key=str(
+                                                                                               ProtoIdentifier.GYM_INFO.value),
+                                                                                           timestamp_earliest=timestamp)
+        if gym_latest \
+                and gym_latest.timestamp_of_data_retrieval \
+                and gym_latest.timestamp_of_data_retrieval >= timestamp:
             type_of_data_found = ReceivedType.GYM
             return type_of_data_found, data_found
-        elif ProtoIdentifier.ENCOUNTER.value in latest \
-                and latest[ProtoIdentifier.ENCOUNTER.value].timestamp_of_data_retrieval \
-                and latest[ProtoIdentifier.ENCOUNTER.value].timestamp_of_data_retrieval >= timestamp:
+        encounter_latest: Optional[LatestMitmDataEntry] = await self._mitm_mapper.request_latest(
+            self._worker_state.origin,
+            key=str(ProtoIdentifier.ENCOUNTER.value),
+            timestamp_earliest=timestamp)
+        if encounter_latest \
+                and encounter_latest.timestamp_of_data_retrieval \
+                and encounter_latest.timestamp_of_data_retrieval >= timestamp:
             type_of_data_found = ReceivedType.MON
             return type_of_data_found, data_found
-        elif str(proto_to_wait_for.value) not in latest:
-            logger.debug("No data linked to the requested proto since MAD started.")
-            return type_of_data_found, data_found
-
         # when waiting for stop or spin data, it is enough to make sure
         # our data is newer than the latest of last quest received, last
         # successful bag clear or last successful quest clear. This eliminates
@@ -137,11 +141,10 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                          proto_to_wait_for)
             timestamp = replacement
         # proto has previously been received, let's check the timestamp...
-        latest_proto_entry = latest.get(str(proto_to_wait_for.value), None)
-        if not latest_proto_entry:
+        if not latest:
             logger.debug("No data linked to the requested proto since MAD started.")
             return type_of_data_found, data_found
-        timestamp_of_proto = latest_proto_entry.timestamp_of_data_retrieval
+        timestamp_of_proto = latest.timestamp_of_data_retrieval
         if not timestamp_of_proto or timestamp_of_proto < timestamp:
             logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
                          timestamp_of_proto, timestamp)
@@ -150,7 +153,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             return type_of_data_found, data_found
 
         # TODO: consider reseting timestamp here since we clearly received SOMETHING
-        latest_proto = latest_proto_entry.data
+        latest_proto = latest.data
         logger.debug4("Latest data received: {}", latest_proto)
         if latest_proto is None:
             return type_of_data_found, data_found
@@ -183,7 +186,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             type_of_data_found = ReceivedType.GYM if fort_type == 0 else ReceivedType.STOP
         elif proto_to_wait_for == ProtoIdentifier.GMO \
                 and self._directly_surrounding_gmo_cells_containing_stops_around_current_position(
-                        latest_proto.get("cells")):
+            latest_proto.get("cells")):
             data_found = latest_proto
             type_of_data_found = ReceivedType.GMO
         elif proto_to_wait_for == ProtoIdentifier.INVENTORY and 'inventory_delta' in latest_proto and \

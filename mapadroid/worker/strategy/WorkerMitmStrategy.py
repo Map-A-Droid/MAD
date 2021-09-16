@@ -1,7 +1,7 @@
 import asyncio
 import math
 import time
-from typing import Dict, Union, Tuple, Optional, List
+from typing import Dict, Tuple, Optional, List
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
@@ -17,19 +17,15 @@ from loguru import logger
 
 
 class WorkerMitmStrategy(AbstractMitmBaseStrategy):
-    async def _check_for_data_content(self, latest: Dict[str, LatestMitmDataEntry],
+    async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
                                       timestamp: int) -> Tuple[ReceivedType, Optional[object]]:
         type_of_data_found: ReceivedType = ReceivedType.UNDEFINED
         data_found: Optional[object] = None
-        latest_proto_entry: Optional[LatestMitmDataEntry] = latest.get(str(proto_to_wait_for.value), None)
-        if not latest_proto_entry:
-            logger.debug("No data linked to the requested proto since MAD started.")
-            return type_of_data_found, data_found
 
         # proto has previously been received, let's check the timestamp...
         mode = await self._mapping_manager.routemanager_get_mode(self._area_id)
-        timestamp_of_proto: int = latest_proto_entry.timestamp_of_data_retrieval
+        timestamp_of_proto: int = latest.timestamp_of_data_retrieval
         logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
                      DatetimeWrapper.fromtimestamp(timestamp_of_proto), DatetimeWrapper.fromtimestamp(timestamp),
                      proto_to_wait_for)
@@ -40,7 +36,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
             # TODO: latter indicates too high speeds for example
             return type_of_data_found, data_found
 
-        latest_proto_data: dict = latest_proto_entry.data
+        latest_proto_data: dict = latest.data
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
         key_to_check: str = "wild_pokemon" if mode in [WorkerType.MON_MITM.value, WorkerType.IV_MITM.value] else "forts"

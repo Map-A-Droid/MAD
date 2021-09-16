@@ -62,8 +62,14 @@ class PlayerData(AbstractWorkerHolder):
                     await self.__set_poke_stop_visits(int(player_stats['poke_stop_visits']))
                     return
 
-    def get_specific_latest_data(self, key: Union[int, str]) -> LatestMitmDataEntry:
-        return self._latest_data_holder.get_latest(key)
+    def get_specific_latest_data(self, key: Union[int, str],
+                                 timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
+        latest_entry: Optional[LatestMitmDataEntry] = self._latest_data_holder.get_latest(key)
+        if not latest_entry or (timestamp_earliest and latest_entry.timestamp_of_data_retrieval
+                                and timestamp_earliest > latest_entry.timestamp_of_data_retrieval):
+            return None
+        else:
+            return latest_entry
 
     def get_full_latest_data(self) -> Dict[Union[int, str], LatestMitmDataEntry]:
         return self._latest_data_holder.get_all()

@@ -130,10 +130,12 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             raise ValueError("Cannot handle data")
         await self.UpdateLatest(request)
 
-    async def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
+    async def request_latest(self, worker: str, key: str,
+                             timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
         request = LatestMitmDataEntryRequest()
         request.worker.name = worker
         request.key = str(key)
+        request.timestamp_earliest = timestamp_earliest
         response: LatestMitmDataEntryResponse = await self.RequestLatest(request)
         if not response.entry:
             return None

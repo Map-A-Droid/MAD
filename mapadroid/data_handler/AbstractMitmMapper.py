@@ -53,7 +53,8 @@ class AbstractMitmMapper(ABC):
         pass
 
     @abstractmethod
-    async def request_latest(self, worker: str, key: str) -> Optional[LatestMitmDataEntry]:
+    async def request_latest(self, worker: str, key: str,
+                             timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
         pass
 
     @abstractmethod
