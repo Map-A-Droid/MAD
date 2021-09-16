@@ -16,6 +16,7 @@ from mapadroid.utils.madGlobals import MonSeenTypes, PositionType, TransportType
 from google.protobuf import json_format
 
 from mapadroid.worker.WorkerType import WorkerType
+from loguru import logger
 
 
 class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
@@ -31,6 +32,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             return
         else:
             self._level_cache[worker] = level
+        logger.debug("Submitting level {}", level)
         request: SetLevelRequest = SetLevelRequest()
         request.worker.name = worker
         request.level = level
@@ -42,6 +44,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             return
         else:
             self._pokestop_visits_cache[worker] = pokestop_visits
+        logger.debug("Submitting stops visited {}", pokestop_visits)
         request: SetPokestopVisitsRequest = SetPokestopVisitsRequest()
         request.worker.name = worker
         request.pokestop_visits = pokestop_visits
