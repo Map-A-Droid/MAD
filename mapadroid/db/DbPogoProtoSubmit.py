@@ -917,6 +917,9 @@ class DbPogoProtoSubmit:
                 lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
                 s2cell.center_latitude = lat
                 s2cell.center_longitude = lng
+                logger.debug("New s2cell")
+            else:
+                logger.debug("Updating s2cell")
             s2cell.updated = int(cell["current_timestamp"] / 1000)
             try:
                 session.add(s2cell)
