@@ -265,6 +265,7 @@ class SerializedMitmDataProcessor:
     async def __process_cells(self, data):
         cells_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
+            self.__db_wrapper.en
             try:
                 await self.__db_submit.cells(session, data["payload"])
                 await session.commit()

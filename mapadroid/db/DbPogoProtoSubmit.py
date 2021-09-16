@@ -909,13 +909,12 @@ class DbPogoProtoSubmit:
                 logger.debug("s2cell already updated {}", cell_id)
                 continue
             await cache.set(cache_key, 1, ex=60)
-            async with session.begin_nested() as nested_transaction:
+            logger.debug("Updating s2cell {}", cell_id)
+            async with self._db_exec.get_db_accessor().get_core_connection() as conn:
                 try:
-                    await TrsS2CellHelper.insert_update_cell(session, cell)
-                    await nested_transaction.commit()
+                    await TrsS2CellHelper.insert_update_cell(conn, cell)
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.debug("Failed committing cell {} ({})", cell_id, str(e))
-                    await nested_transaction.rollback()
                     await cache.set(cache_key, 1, ex=1)
 
     async def _handle_pokestop_data(self, session: AsyncSession, cache: NoopCache,

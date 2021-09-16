@@ -35,6 +35,9 @@ class DbAccessor:
                 self.__connection_data, echo=False, pool_size=self.__pool_size
             )
 
+    async def get_core_connection(self):
+        return await self.__db_engine.connect()
+
     async def tear_down(self):
         async with self.__setup_lock:
             if self.__db_engine is None:
