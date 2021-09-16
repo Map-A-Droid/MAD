@@ -1,11 +1,12 @@
 from typing import Optional, List
 
-from sqlalchemy import and_
+from sqlalchemy import and_, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsS2Cell
 from mapadroid.utils.collections import Location
+from mapadroid.utils.s2Helper import S2Helper
 
 
 class TrsS2CellHelper:
@@ -14,6 +15,25 @@ class TrsS2CellHelper:
         stmt = select(TrsS2Cell).where(TrsS2Cell.id == cell_id)
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def insert_update_cell(session: AsyncSession, cell: dict) -> None:
+        cell_id = cell["id"]
+        if cell_id < 0:
+            cell_id = cell_id + 2 ** 64
+        lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
+        insert_stmt = insert(TrsS2Cell).values(
+            id=cell_id,
+            level=15,
+            center_latitude=lat,
+            center_longitude=lng,
+            updated=int(cell["current_timestamp"] / 1000)
+        )
+        on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
+            updated=int(cell["current_timestamp"] / 1000)
+        )
+        await session.execute(on_duplicate_key_stmt)
+        await session.commit()
 
     @staticmethod
     async def get_cells_in_rectangle(session: AsyncSession,

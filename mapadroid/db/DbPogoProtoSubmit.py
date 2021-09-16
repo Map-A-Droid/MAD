@@ -909,20 +909,8 @@ class DbPogoProtoSubmit:
                 continue
             await cache.set(cache_key, 1, ex=60)
 
-            s2cell: Optional[TrsS2Cell] = await TrsS2CellHelper.get(session, cell_id)
-            if not s2cell:
-                s2cell: TrsS2Cell = TrsS2Cell()
-                s2cell.id = cell_id
-                s2cell.level = 15
-                lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
-                s2cell.center_latitude = lat
-                s2cell.center_longitude = lng
-                logger.debug("New s2cell")
-            else:
-                logger.debug("Updating s2cell")
-            s2cell.updated = int(cell["current_timestamp"] / 1000)
             try:
-                session.add(s2cell)
+                await TrsS2CellHelper.insert_update_cell(session, cell)
                 await session.commit()
                 # Only update s2cell's current_timestamp every 30s at most to avoid too many UPDATE operations
                 # in dense areas being covered by a number of devices
