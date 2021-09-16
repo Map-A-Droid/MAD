@@ -146,8 +146,6 @@ class SerializedMitmDataProcessor:
                 encounter: Optional[Tuple[int, bool]] = await self.__db_submit.mon_iv(session,
                                                                                       received_timestamp,
                                                                                       data["payload"])
-                await session.commit()
-
             if self.__application_args.game_stats and encounter:
                 encounter_id, is_shiny = encounter
                 loop = asyncio.get_running_loop()
