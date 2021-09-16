@@ -31,7 +31,7 @@ class TrsS2CellHelper:
             updated=int(cell["current_timestamp"] / 1000)
         )
         on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
-            updated=insert_stmt.updated.data
+            updated=insert_stmt.inserted.data
         )
         await session.execute(on_duplicate_key_stmt)
 
