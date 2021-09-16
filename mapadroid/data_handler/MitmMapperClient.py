@@ -138,7 +138,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         if timestamp_earliest:
             request.timestamp_earliest = timestamp_earliest
         response: LatestMitmDataEntryResponse = await self.RequestLatest(request)
-        if not response.entry:
+        if not response.HasField("entry"):
             return None
         loop = asyncio.get_running_loop()
         latest: LatestMitmDataEntry = await loop.run_in_executor(

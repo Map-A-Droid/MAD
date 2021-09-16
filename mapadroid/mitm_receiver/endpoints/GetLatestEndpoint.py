@@ -23,13 +23,13 @@ class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
         origin = self.request.headers.get("Origin")
         injected_settings_entry: Optional[LatestMitmDataEntry] = await self._get_mitm_mapper().request_latest(
             origin, "injected_settings")
-        injected_settings = injected_settings_entry.data if injected_settings_entry else None
+        injected_settings = injected_settings_entry.data if injected_settings_entry and injected_settings_entry.data else None
         # Workaround for PD...
         injected_settings_dict = {"values": injected_settings}
 
         ids_iv_entry: Optional[LatestMitmDataEntry] = await self._get_mitm_mapper().request_latest(origin, "ids_iv")
         ids_iv = []
-        if ids_iv_entry is not None:
+        if ids_iv_entry and ids_iv_entry.data:
             for id_iv in ids_iv_entry.data:
                 ids_iv.append(int(id_iv))
 
