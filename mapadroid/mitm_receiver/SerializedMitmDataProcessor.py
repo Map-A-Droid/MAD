@@ -258,6 +258,7 @@ class SerializedMitmDataProcessor:
                 await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting wild mons: {}", e)
+                encounter_ids_in_gmo = []
         mons_time = self.get_time_ms() - mons_time_start
         return encounter_ids_in_gmo, mons_time
 
@@ -310,7 +311,6 @@ class SerializedMitmDataProcessor:
         async with self.__db_wrapper as session, session:
             try:
                 await self.__db_submit.stops(session, data["payload"])
-                await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting stops: {}", e)
         stops_time = self.get_time_ms() - stops_time_start
