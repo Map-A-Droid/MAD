@@ -296,7 +296,7 @@ class PokemonHelper:
         if not mon_types:
             mon_types = {MonSeenTypes.encounter, MonSeenTypes.lure_encounter}
 
-        raw_types: List[str] = [x.value for x in mon_types]
+        raw_types: List[str] = [x.name for x in mon_types]
         if {MonSeenTypes.nearby_stop, MonSeenTypes.lure_wild, MonSeenTypes.lure_encounter} & mon_types:
             # Lured/Nearby stops are to be included in the result set...
             stmt = select(Pokemon, TrsSpawn, Pokestop) \
