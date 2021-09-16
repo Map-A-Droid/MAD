@@ -911,7 +911,7 @@ class DbPogoProtoSubmit:
             await cache.set(cache_key, 1, ex=60)
             async with session.begin_nested() as nested_transaction:
                 try:
-                    await TrsS2CellHelper.insert_update_cell(nested_transaction, cell)
+                    await TrsS2CellHelper.insert_update_cell(session, cell)
                     await nested_transaction.commit()
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.debug("Failed committing cell {} ({})", cell_id, str(e))
