@@ -158,9 +158,8 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             data = entry.some_list
         else:
             data = None
-        loop = asyncio.get_running_loop()
         if data:
-            formatted = await loop.run_in_executor(None, json_format.MessageToDict, data)
+            formatted = json_format.MessageToDict(data)
         else:
             formatted = None
         entry: LatestMitmDataEntry = LatestMitmDataEntry(location=location,
