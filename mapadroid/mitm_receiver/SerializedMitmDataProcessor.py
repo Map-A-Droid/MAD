@@ -5,7 +5,7 @@ from typing import List, Tuple, Optional, Union
 
 import sqlalchemy
 from loguru import logger
-from redis import Redis
+from aioredis import Redis
 
 from mapadroid.cache import NoopCache
 from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper

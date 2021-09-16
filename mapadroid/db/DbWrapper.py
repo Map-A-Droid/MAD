@@ -2,7 +2,7 @@ import re
 import time
 from typing import Dict, Optional, Union
 
-from redis import Redis
+from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.cache import NoopCache
