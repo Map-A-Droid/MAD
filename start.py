@@ -1,48 +1,46 @@
 import asyncio
 import calendar
-import concurrent
 import datetime
+import functools
 import gc
 import linecache
 import logging
 import os
 import sys
-from asyncio import Task, CancelledError
-from typing import Optional, Tuple, Any
-import functools
+from asyncio import CancelledError, Task
+from threading import active_count
+from typing import Optional
+
 import pkg_resources
 import psutil
-from threading import active_count
 
 from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.MitmMapperClientConnector import MitmMapperClientConnector
+from mapadroid.data_handler.MitmMapperClientConnector import \
+    MitmMapperClientConnector
 from mapadroid.db.DbFactory import DbFactory
-
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
 from mapadroid.mad_apk import get_storage_obj
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin.madmin import MADmin
+from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerServer import MappingManagerServer
-from mapadroid.mitm_receiver.MitmDataProcessorManager import \
-    MitmDataProcessorManager
-from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.pogoevent import PogoEvent
-from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging, InterceptHandler
-from mapadroid.utils.madGlobals import terminate_mad, application_args
-from mapadroid.mapping_manager.MappingManager import MappingManager
 # from mapadroid.utils.pluginBase import PluginCollection
 from mapadroid.plugins.pluginBase import PluginCollection
+from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
+                                     init_logging)
+from mapadroid.utils.madGlobals import application_args, terminate_mad
+from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.questGen import install_language
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
-from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 try:
     import uvloop
+
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     uvloop.install()
 except Exception as e:
@@ -78,12 +76,11 @@ def install_task_create_excepthook():
         except asyncio.CancelledError:
             pass  # Task cancellation should not be logged as an error.
         except IndexError:
-            pass # We regularly throw index error in prioQ...
+            pass  # We regularly throw index error in prioQ...
         # Ad the pylint ignore: we want to handle all exceptions here so that the result of the task
         # is properly logged. There is no point re-raising the exception in this callback.
         except Exception as e:  # pylint: disable=broad-except
             logger.debug2("Potential uncaught exception.", exc_info=True)
-
 
     def create_task(*args, **kwargs) -> Task:
         try:
@@ -137,6 +134,7 @@ async def get_system_infos(db_wrapper):
             await session.commit()
         await asyncio.sleep(application_args.statistic_interval)
 
+
 last_snapshot = None
 initial_snapshot = None
 
@@ -153,7 +151,7 @@ def display_top(snapshot, key_type='traceback', limit=30):
     for index, stat in enumerate(top_stats[:limit], 1):
         frame = stat.traceback[0]
         logger.info("#%s: %s:%s: %.1f KiB"
-              % (index, frame.filename, frame.lineno, stat.size / 1024))
+                    % (index, frame.filename, frame.lineno, stat.size / 1024))
         line = linecache.getline(frame.filename, frame.lineno).strip()
         if line:
             logger.info('    %s' % line)
@@ -250,7 +248,7 @@ def __run_system_stats(py):
             del by_type_filled
             del by_type
             # objgraph.show_backrefs(obj, max_depth=10)
-            #objgraph.show_backrefs(obj, max_depth=5)
+            # objgraph.show_backrefs(obj, max_depth=5)
         else:
             logger.warning("Not enough of type to show: {}", len(by_type))
     except Exception as e:
@@ -364,20 +362,20 @@ async def start():
         mitm_mapper_connector = MitmMapperClientConnector()
         await mitm_mapper_connector.start()
         mitm_mapper = await mitm_mapper_connector.get_client()
-        #mitm_mapper = MitmMapper(application_args, mapping_manager, db_wrapper)
-        #await mitm_mapper.start()
+        # mitm_mapper = MitmMapper(application_args, mapping_manager, db_wrapper)
+        # await mitm_mapper.start()
     # logger.info('Starting PogoDroid Receiver server on port {}'.format(str(application_args.mitmreceiver_port)))
 
     # TODO: Enable and properly integrate...
-    #mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, db_wrapper)
-    #await mitm_data_processor_manager.launch_processors()
+    # mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, db_wrapper)
+    # await mitm_data_processor_manager.launch_processors()
 
-    #mitm_receiver = MITMReceiver(mitm_mapper, application_args, mapping_manager, db_wrapper,
+    # mitm_receiver = MITMReceiver(mitm_mapper, application_args, mapping_manager, db_wrapper,
     #                             storage_elem,
-     ##                            mitm_data_processor_manager.get_queue(),
-      #                           enable_configmode=application_args.config_mode)
+    ##                            mitm_data_processor_manager.get_queue(),
+    #                           enable_configmode=application_args.config_mode)
     # TODO: Cancel() task lateron
-    #mitm_receiver_task = await mitm_receiver.start()
+    # mitm_receiver_task = await mitm_receiver.start()
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
     ws_server = WebsocketServer(args=application_args,
                                 mitm_mapper=mitm_mapper,
@@ -416,7 +414,7 @@ async def start():
         'storage_elem': storage_elem,
         'webhook_worker': webhook_worker,
         'ws_server': ws_server,
-        #'mitm_data_processor_manager': mitm_data_processor_manager
+        # 'mitm_data_processor_manager': mitm_data_processor_manager
     }
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
@@ -488,10 +486,10 @@ async def start():
                 # mitm_receiver_process.()
                 # logger.debug("Trying to join MITMReceiver")
                 # mitm_receiver_process.join()
-                #mitm_receiver_task.cancel()
+                # mitm_receiver_task.cancel()
                 logger.debug("MITMReceiver joined")
-           # if mitm_data_processor_manager is not None:
-         #       await mitm_data_processor_manager.shutdown()
+            # if mitm_data_processor_manager is not None:
+            #       await mitm_data_processor_manager.shutdown()
             if device_updater is not None:
                 device_updater.stop_updater()
             if t_whw is not None:
@@ -517,6 +515,7 @@ async def start():
         logger.debug(str(sys.exc_info()))
         sys.exit(exit_code)
 
+
 if __name__ == "__main__":
     global application_args
     os.environ['LANGUAGE'] = application_args.language
@@ -525,14 +524,14 @@ if __name__ == "__main__":
     logger = get_logger(LoggerEnums.system)
 
     loop = asyncio.get_event_loop()
-    #signal.signal(signal.SIGINT, signal_handler)
-    #signal.signal(signal.SIGTERM, signal_handler)
+    # signal.signal(signal.SIGINT, signal_handler)
+    # signal.signal(signal.SIGTERM, signal_handler)
 
     loop_being_run = loop
     try:
         # loop.run_until_complete(start())
         asyncio.run(start(), debug=True)
     except (KeyboardInterrupt, Exception) as e:
-        #shutdown(loop_being_run)
+        # shutdown(loop_being_run)
         logger.info(f"Shutting down. {e}")
         logger.exception(e)

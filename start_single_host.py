@@ -1,35 +1,38 @@
 import asyncio
 import calendar
 import datetime
+import functools
 import gc
 import linecache
 import logging
 import os
 import sys
-from asyncio import Task, CancelledError
+from asyncio import CancelledError, Task
+from threading import active_count
 from typing import Optional
-import functools
+
 import pkg_resources
 import psutil
-from threading import active_count
 
 from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.MitmMapperServer import MitmMapperServer
 from mapadroid.db.DbFactory import DbFactory
-
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
 from mapadroid.mad_apk import get_storage_obj
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin.madmin import MADmin
+from mapadroid.mapping_manager.MappingManager import MappingManager
+from mapadroid.mapping_manager.MappingManagerServer import MappingManagerServer
 from mapadroid.mitm_receiver.MitmDataProcessorManager import \
     MitmDataProcessorManager
-from mapadroid.data_handler.MitmMapper import MitmMapper
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.pogoevent import PogoEvent
-from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging, InterceptHandler
-from mapadroid.utils.madGlobals import terminate_mad, application_args
-from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.plugins.pluginBase import PluginCollection
+from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
+                                     init_logging)
+from mapadroid.utils.madGlobals import application_args, terminate_mad
+from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.questGen import install_language
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
@@ -340,9 +343,9 @@ async def start():
                                                      application_args,
                                                      configmode=application_args.config_mode)
     await mapping_manager.setup()
-    # TODO: Optionally still start MappingManagerServer in order to attach more mitmreceivers?
-    # mapping_manager_grpc_server = MappingManagerServer(mapping_manager)
-    # await mapping_manager_grpc_server.start()
+    # Start MappingManagerServer in order to attach more mitmreceivers (minor scalability)
+    mapping_manager_grpc_server = MappingManagerServer(mapping_manager)
+    await mapping_manager_grpc_server.start()
 
     if application_args.only_routes:
         logger.info('Running in route recalculation mode. MAD will exit once complete')
@@ -357,11 +360,9 @@ async def start():
     storage_elem = await get_storage_obj(application_args, db_wrapper)
     if not application_args.config_mode:
         pogo_win_manager = PogoWindows(application_args.temp_path, application_args.ocr_thread_count)
-        # TODO: Optionally start MitmMapperServer for scalability?
-        # mitm_mapper_connector = MitmMapperClientConnector()
-        # await mitm_mapper_connector.start()
-        # mitm_mapper = await mitm_mapper_connector.get_client()
-        mitm_mapper: AbstractMitmMapper = MitmMapper(db_wrapper)
+        # Start MitmMapperServer for minor scalability of mitmreceivers...
+        mitm_mapper: AbstractMitmMapper = MitmMapperServer(db_wrapper)
+        # mitm_mapper: AbstractMitmMapper = MitmMapper(db_wrapper)
         await mitm_mapper.start()
     # logger.info('Starting PogoDroid Receiver server on port {}'.format(str(application_args.mitmreceiver_port)))
 

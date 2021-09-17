@@ -7,9 +7,9 @@ import linecache
 import logging
 import os
 import sys
-from asyncio import Task, CancelledError
+from asyncio import CancelledError, Task
 from threading import active_count
-from typing import Optional, Tuple, Any
+from typing import Any, Optional, Tuple
 
 import pkg_resources
 import psutil
@@ -17,9 +17,9 @@ import psutil
 from mapadroid.data_handler.MitmMapperServer import MitmMapperServer
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
-from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging, InterceptHandler
-from mapadroid.utils.madGlobals import terminate_mad, application_args
-# from mapadroid.utils.pluginBase import PluginCollection
+from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
+                                     init_logging)
+from mapadroid.utils.madGlobals import application_args, terminate_mad
 from mapadroid.utils.questGen import install_language
 
 try:
