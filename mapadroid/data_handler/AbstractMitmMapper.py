@@ -12,6 +12,12 @@ class AbstractMitmMapper(ABC):
     # ##
     # Stats related methods
     # ##
+    async def start(self) -> None:
+        pass
+
+    async def shutdown(self) -> None:
+        pass
+
     @abstractmethod
     async def stats_collect_wild_mon(self, worker: str, encounter_ids: List[int], time_scanned: datetime) -> None:
         pass
