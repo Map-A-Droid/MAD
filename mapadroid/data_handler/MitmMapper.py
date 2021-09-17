@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from typing import Optional, List, Dict, Union
 
@@ -36,7 +37,9 @@ class MitmMapper(AbstractMitmMapper):
     # ##
     async def stats_collect_wild_mon(self, worker: str, encounter_ids: List[int], time_scanned: datetime) -> None:
         if self.__stats_handler:
-            self.__stats_handler.stats_collect_wild_mon(worker, encounter_ids, time_scanned)
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, self.__stats_handler.stats_collect_wild_mon,
+                                 worker, encounter_ids, time_scanned)
 
     async def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime,
                                    is_shiny: bool) -> None:
@@ -62,7 +65,9 @@ class MitmMapper(AbstractMitmMapper):
     async def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
                                       time_of_scan: datetime) -> None:
         if self.__stats_handler:
-            self.__stats_handler.stats_collect_seen_type(encounter_ids, type_of_detection, time_of_scan)
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, self.__stats_handler.stats_collect_seen_type,
+                                 encounter_ids, type_of_detection, time_of_scan)
 
     # ##
     # Data related methods
@@ -72,8 +77,9 @@ class MitmMapper(AbstractMitmMapper):
 
     async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
-        self.__mitm_data_handler.update_latest(worker, key, value, timestamp_received_raw,
-                                               timestamp_received_receiver, location)
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, self.__mitm_data_handler.update_latest, worker, key, value, timestamp_received_raw,
+                             timestamp_received_receiver, location)
 
     async def request_latest(self, worker: str, key: str,
                              timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
