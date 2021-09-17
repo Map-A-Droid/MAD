@@ -2,32 +2,39 @@ import asyncio
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Tuple, Optional, Union, Dict
+from typing import Dict, Optional, Tuple, Union
 
 from loguru import logger
 
 from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
-from mapadroid.db.model import SettingsArea, TrsStatus, SettingsWalkerarea
+from mapadroid.db.model import SettingsArea, SettingsWalkerarea, TrsStatus
 from mapadroid.mapping_manager.MappingManager import MappingManager
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.madConstants import TIMESTAMP_NEVER, FALLBACK_MITM_WAIT_TIMEOUT, \
-    MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO, SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
-from mapadroid.utils.madGlobals import InternalStopWorkerException, application_args, TransportType, PositionType, \
-    WebsocketWorkerRemovedException, FortSearchResultTypes
+from mapadroid.utils.madConstants import (
+    FALLBACK_MITM_WAIT_TIMEOUT, MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO,
+    SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER, TIMESTAMP_NEVER)
+from mapadroid.utils.madGlobals import (FortSearchResultTypes,
+                                        InternalStopWorkerException,
+                                        PositionType, TransportType,
+                                        WebsocketWorkerRemovedException,
+                                        application_args)
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
+from mapadroid.worker.strategy.AbstractWorkerStrategy import \
+    AbstractWorkerStrategy
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
 
 
 class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
@@ -158,9 +165,11 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             elif proto_to_wait_for == ProtoIdentifier.GMO:
                 check_data = await self._is_location_within_allowed_range(latest_location)
 
-            latest: Optional[LatestMitmDataEntry] = await self._mitm_mapper.request_latest(self._worker_state.origin,
-                                                                                           key, timestamp)
+            latest: Optional[LatestMitmDataEntry] = None
             if check_data:
+                latest = await self._mitm_mapper.request_latest(
+                    self._worker_state.origin,
+                    key, timestamp)
                 type_of_data_returned, data = await self._check_for_data_content(
                     latest, proto_to_wait_for, timestamp)
 
@@ -170,7 +179,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 # In case last_time_received was set, we reset it after the first
                 # iteration to not run into trouble (endless loop)
                 last_time_received = TIMESTAMP_NEVER
-            else:
+            elif latest:
                 last_time_received = latest.timestamp_of_data_retrieval
                 break
             await asyncio.sleep(application_args.wait_for_data_sleep_duration)
