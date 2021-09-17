@@ -75,7 +75,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             location_of_data: Location = Location(0.0, 0.0)
         time_received: int = int(time.time())
         await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
-                                                    timestamp_received_receiver=time_received, key=proto_type,
+                                                    timestamp_received_receiver=time_received, key=str(proto_type),
                                                     value=data["payload"],
                                                     location=location_of_data)
         logger.debug2("Placing data received to data_queue")

@@ -411,7 +411,7 @@ async def start():
         'storage_elem': storage_elem,
         'webhook_worker': webhook_worker,
         'ws_server': ws_server,
-        # 'mitm_data_processor_manager': mitm_data_processor_manager
+        'mitm_data_processor_manager': mitm_data_processor_manager
     }
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
