@@ -40,3 +40,4 @@ alembic
 ujson
 msgpack
 grpcio
+protobuf

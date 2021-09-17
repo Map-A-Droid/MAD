@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional, List, Union
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataHolder import LatestMitmDataHolder
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -47,21 +48,6 @@ class PlayerData(AbstractWorkerHolder):
     async def get_poke_stop_visits(self) -> int:
         return self._poke_stop_visits
 
-    async def handle_inventory_data(self, data: dict) -> None:
-        if 'inventory_delta' not in data:
-            logger.debug2('gen_player_stats cannot generate new stats')
-            return
-        stats = data['inventory_delta'].get("inventory_items", None)
-        if len(stats) > 0:
-            for data_inventory in stats:
-                player_stats = data_inventory['inventory_item_data']['player_stats']
-                player_level = player_stats['level']
-                if int(player_level) > 0:
-                    logger.debug2('{{gen_player_stats}} saving new playerstats')
-                    await self.__set_level(int(player_level))
-                    await self.__set_poke_stop_visits(int(player_stats['poke_stop_visits']))
-                    return
-
     def get_specific_latest_data(self, key: Union[int, str],
                                  timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
         latest_entry: Optional[LatestMitmDataEntry] = self._latest_data_holder.get_latest(key)
@@ -78,9 +64,9 @@ class PlayerData(AbstractWorkerHolder):
                       timestamp_of_data_retrieval: Optional[int] = None,
                       location: Optional[Location] = None) -> None:
         self._latest_data_holder.update(key, value, timestamp_received, timestamp_of_data_retrieval, location)
-        # TODO: Keys "should" be str...
-        if key == "106":
+        if key == str(ProtoIdentifier.GMO.value):
             self.__parse_gmo_for_location(value, timestamp_received, location)
+            self._injected = True
 
     # Async since we may move it to DB for persistence, same for above methods like level and
     # pokestops visited (today/week/total/whatever)

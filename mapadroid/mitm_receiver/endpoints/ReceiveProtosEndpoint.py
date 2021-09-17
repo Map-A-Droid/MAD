@@ -68,8 +68,6 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         elif proto_type == 106 and not data["payload"].get("cells", []):
             logger.debug("Ignoring apparently empty GMO")
             return
-        elif proto_type == 106:
-            await self._get_mitm_mapper().set_injection_status(origin, True)
 
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
