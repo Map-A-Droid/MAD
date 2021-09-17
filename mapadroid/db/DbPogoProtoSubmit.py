@@ -906,7 +906,6 @@ class DbPogoProtoSubmit:
                 cell_id = cell_id + 2 ** 64
             cache_key = "s2cell{}".format(cell_id)
             if await cache.exists(cache_key):
-                logger.debug("s2cell already updated {}", cell_id)
                 continue
             await cache.set(cache_key, 1, ex=60)
             logger.debug("Updating s2cell {}", cell_id)

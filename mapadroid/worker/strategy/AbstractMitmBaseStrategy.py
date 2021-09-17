@@ -143,8 +143,6 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                      proto_to_wait_for, DatetimeWrapper.fromtimestamp(timestamp), timeout)
         while not self._worker_state.stop_worker_event.is_set() and int(timestamp + timeout) >= int(time.time()) \
                 and last_time_received < timestamp:
-            latest: Optional[LatestMitmDataEntry] = await self._mitm_mapper.request_latest(self._worker_state.origin,
-                                                                                           key, timestamp)
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
             latest_location: Optional[Location] = await self._mitm_mapper.get_last_known_location(
@@ -160,6 +158,8 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             elif proto_to_wait_for == ProtoIdentifier.GMO:
                 check_data = await self._is_location_within_allowed_range(latest_location)
 
+            latest: Optional[LatestMitmDataEntry] = await self._mitm_mapper.request_latest(self._worker_state.origin,
+                                                                                           key, timestamp)
             if check_data:
                 type_of_data_returned, data = await self._check_for_data_content(
                     latest, proto_to_wait_for, timestamp)
