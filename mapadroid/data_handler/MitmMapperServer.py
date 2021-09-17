@@ -73,6 +73,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             await self.__server.stop(0)
 
     async def StatsCollect(self, request: Stats, context: grpc.aio.ServicerContext) -> Ack:
+        logger.debug("StatsCollect called")
         # depending on the data_to_collect we need to parse fields..
         if request.HasField("wild_mons"):
             await self.stats_collect_wild_mon(
@@ -116,6 +117,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         return Ack()
 
     async def GetLastPossiblyMoved(self, request: Worker, context: grpc.aio.ServicerContext) -> LastMoved:
+        logger.debug("GetLastPossiblyMoved called")
         response: LastMoved = LastMoved()
         response.timestamp = await self.get_last_possibly_moved(request.name)
         return response
@@ -127,7 +129,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             value = request.data.some_dictionary
         else:
             value = request.data.some_list
-        # TODO: Threaded
+        logger.debug("UpdateLatest called")
         loop = asyncio.get_running_loop()
         json_formatted = await loop.run_in_executor(None, json_format.MessageToDict, value)
         await self.update_latest(
@@ -142,9 +144,11 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
 
     async def RequestLatest(self, request: LatestMitmDataEntryRequest,
                             context: grpc.aio.ServicerContext) -> LatestMitmDataEntryResponse:
+        logger.debug("RequestLatest called")
         timestamp_earliest: Optional[int] = None
         if request.HasField("timestamp_earliest"):
             timestamp_earliest = request.timestamp_earliest
+        logger.debug("Checking for proto after {}", timestamp_earliest)
         latest: Optional[LatestMitmDataEntry] = await self.request_latest(
             request.worker.name, request.key, timestamp_earliest)
         loop = asyncio.get_running_loop()
@@ -171,11 +175,13 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         if isinstance(latest.data, list):
             entry_message.some_list.extend(latest.data)
         elif isinstance(latest.data, dict):
+            logger.debug("Placing dict data")
             entry_message.some_dictionary.update(latest.data)
         return entry_message
 
     async def RequestFullLatest(self, request: Worker,
                                 context: grpc.aio.ServicerContext) -> LatestMitmDataFullResponse:
+        logger.debug("RequestFullLatest called")
         data: Dict[str, LatestMitmDataEntry] = await self.get_full_latest_data(worker=request.name)
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
@@ -193,27 +199,32 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
 
     async def GetPokestopVisits(self, request: Worker,
                                 context: grpc.aio.ServicerContext) -> PokestopVisitsResponse:
+        logger.debug("GetPokestopVisits called")
         stops_visited: int = await self.get_poke_stop_visits(request.name)
         return PokestopVisitsResponse(stops_visited=stops_visited)
 
     async def GetLevel(self, request: Worker,
                        context: grpc.aio.ServicerContext) -> LevelResponse:
+        logger.debug("GetLevel called")
         level: int = await self.get_level(request.name)
         return LevelResponse(level=level)
 
     async def GetInjectionStatus(self, request: Worker,
                                  context: grpc.aio.ServicerContext) -> InjectionStatus:
+        logger.debug("GetInjectionStatus called")
         is_injected: bool = await self.get_injection_status(worker=request.name)
         return InjectionStatus(is_injected=is_injected)
 
     async def SetInjected(self, request: InjectedRequest,
                           context: grpc.aio.ServicerContext) -> Ack:
+        logger.debug("SetInjected called")
         await self.set_injection_status(worker=request.worker.name,
                                         status=request.injected.is_injected)
         return Ack()
 
     async def GetLastKnownLocation(self, request: Worker,
                                    context: grpc.aio.ServicerContext) -> LastKnownLocationResponse:
+        logger.debug("GetLastKnownLocation called")
         location: Optional[Location] = await self.get_last_known_location(request.name)
         response: LastKnownLocationResponse = LastKnownLocationResponse()
         if not location:
@@ -223,12 +234,14 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         return response
 
     async def SetLevel(self, request: SetLevelRequest, context: grpc.aio.ServicerContext) -> Ack:
+        logger.debug("SetLevel called")
         await self.set_level(worker=request.worker.name,
                              level=request.level)
         response: Ack = Ack()
         return response
 
     async def SetPokestopVisits(self, request: SetPokestopVisitsRequest, context: grpc.aio.ServicerContext) -> Ack:
+        logger.debug("SetPokestopVisits called")
         await self.set_pokestop_visits(worker=request.worker.name,
                                        pokestop_visits=request.pokestop_visits)
         response: Ack = Ack()
