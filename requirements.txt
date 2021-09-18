@@ -16,7 +16,7 @@ pytesseract~=0.3
 requests~=2.22
 s2sphere~=0.2
 websockets>=7
-numpy~=1.18.0
+numpy>=1.18.0
 apkutils>=0.8.3
 greenlet
 Pillow~=8.1.0
