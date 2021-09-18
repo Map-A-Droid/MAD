@@ -34,7 +34,7 @@ apkmirror-search
 aiocache~=0.11.1
 asyncio-rlock
 cachetools~=4.2.2
-werkzeug~=1.0.1
+werkzeug>=2.0.0
 alembic~=1.7.1
 ujson>=4.0.0
 msgpack
