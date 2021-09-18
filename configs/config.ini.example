@@ -17,6 +17,19 @@
 #dbname:                    # Name of MySQL Database
 #db_poolsize:               # Size of MySQL pool (open connections to DB). Default: 2.
 
+# MappingManager gRPC
+#mappingmanager_ip:         # IP of MappingManager gRPC server to connect to OR - if serving - to listen on. Default: all interfaces
+#mappingmanager_port:       # Port to listen on for the MappingManager gRPC API (main MAD component) or connect to. Default: 50052
+#mappingmanager_tls_private_key_file:   # In case a secure connection is desired, the server needs to know a private key.
+#mappingmanager_tls_cert_file:          # In case a secure connection is desired, clients and server need to have the cert file available.
+#mappingmanager_compression             # Enable compression of data of the MappingManager gRPC communication. Default: False
+
+# MitmMapper gRPC
+#mitmmapper_ip:             # IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component. Default: [::]
+#mitmmapper_port:           # Port to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 50051
+#mitmmapper_tls_private_key_file:       # In case a secure connection is desired, the server needs to know a private key.
+#mitmmapper_tls_cert_file:              # In case a secure connection is desired, clients and server need to have the cert file available.
+#mitmmapper_compression                 # Enable compression of data of the MitmMapper gRPC communication. Default: False
 
 # Websocket Settings (RGC receiver)
 ######################
@@ -168,7 +181,8 @@
 
 # Redis caching
 ######################
-#enable_cache          # Enable cache (backed by Redis) to prevent re-inserting data over and over again
-#cache_host            # Redis cache host (Default: localhost)
-#cache_port            # Redis cache port (Default: 6379)
-#cache_database        # Redis database. Use different numbers (0-15) if you are running multiple instances.
+#enable_cache           # Enable cache (backed by Redis) to prevent re-inserting data over and over again
+#cache_host             # Redis cache host (Default: localhost)
+#cache_port             # Redis cache port (Default: 6379)
+#cache_database         # Redis database. Use different numbers (0-15) if you are running multiple instances.
+#cache_password:        # Redis password

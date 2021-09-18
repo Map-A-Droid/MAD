@@ -82,9 +82,9 @@ def parse_args():
 
     # MappingManager gRPC
     parser.add_argument('-mmgrip', '--mappingmanager_ip', required=False, default="[::]", type=str,
-                        help='IP to listen on for the MappingManager gRPC API (main MAD component. Default: [::]')
+                        help='IP to listen on for the MappingManager gRPC API or connect to (main MAD component. Default: [::]')
     parser.add_argument('-mmgrport', '--mappingmanager_port', required=False, default=50052, type=int,
-                        help='Port to listen on for the MappingManager gRPC API (main MAD component). Default: 50052')
+                        help='Port to listen on for the MappingManager gRPC API or connect to (main MAD component). Default: 50052')
     parser.add_argument('-mmgrtlspriv', '--mappingmanager_tls_private_key_file', required=False, default=None, type=str,
                         help='Path to file of private key file (MappingManager). Default: None')
     parser.add_argument('-mmgrtlscert', '--mappingmanager_tls_cert_file', required=False, default=None, type=str,
@@ -94,9 +94,9 @@ def parse_args():
 
     # MitmMapper gRPC
     parser.add_argument('-mitmmip', '--mitmmapper_ip', required=False, default="[::]", type=str,
-                        help='IP to listen on for the MitmMapper gRPC API (separate MAD component. Default: [::]')
+                        help='IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component. Default: [::]')
     parser.add_argument('-mitmmport', '--mitmmapper_port', required=False, default=50051, type=int,
-                        help='Port to listen on for the MitmMapper gRPC API (separate MAD component). Default: 50051')
+                        help='Port to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 50051')
     parser.add_argument('-mitmtlspriv', '--mitmmapper_tls_private_key_file', required=False, default=None, type=str,
                         help='Path to file of private key file. Default: None')
     parser.add_argument('-mitmtlscert', '--mitmmapper_tls_cert_file', required=False, default=None, type=str,
