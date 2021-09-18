@@ -4,15 +4,18 @@ from typing import Optional
 
 from aiohttp import web
 from aiohttp.web_runner import TCPSite, UnixSite
+from loguru import logger
 
 from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mapping_manager import MappingManager
-from mapadroid.mitm_receiver.endpoints import register_mitm_receiver_root_endpoints
-from mapadroid.mitm_receiver.endpoints.autoconfig import register_autoconfig_endpoints
-from mapadroid.mitm_receiver.endpoints.mad_apk import register_mad_apk_endpoints
-from loguru import logger
+from mapadroid.mitm_receiver.endpoints import \
+    register_mitm_receiver_root_endpoints
+from mapadroid.mitm_receiver.endpoints.autoconfig import \
+    register_autoconfig_endpoints
+from mapadroid.mitm_receiver.endpoints.mad_apk import \
+    register_mad_apk_endpoints
 
 
 class MITMReceiver:
@@ -61,8 +64,10 @@ class MITMReceiver:
             site: UnixSite = web.UnixSite(runner, self.__application_args.mitm_unix_socket)
             logger.info("MITMReceiver starting at {}", self.__application_args.mitm_unix_socket)
         else:
-            site: TCPSite = web.TCPSite(runner, "0.0.0.0", self.__application_args.mitmreceiver_port)
-            logger.info('MITMReceiver starting at http://0.0.0.0:' + str(self.__application_args.mitmreceiver_port))
+            site: TCPSite = web.TCPSite(runner, self.__application_args.mitmreceiver_ip, self.__application_args.mitmreceiver_port)
+            logger.info(f'MITMReceiver starting at '
+                        f'http://{self.__application_args.mitmreceiver_ip}:'
+                        f'{self.__application_args.mitmreceiver_port}')
         await site.start()
         # TODO: Return runner and call     await runner.cleanup()
         logger.info('Finished madmin')
