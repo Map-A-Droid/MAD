@@ -45,7 +45,7 @@
 #mitmreceiver_data_workers: # Amount of workers to work off the data that queues up. Default: 2
 #mitm_ignore_pre_boot       # Ignore MITM data having a timestamp pre MAD's startup time
 #mitm_status_password:      # Header Authorization password for MITM /status/ page
-
+#mitm_unix_socket:          # Path to unix socket file to use if TCP is not to be used for MITMReceiver. Disabled TCP (ip/port) listening.
 
 # Walk Settings
 ######################
