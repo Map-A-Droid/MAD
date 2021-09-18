@@ -31,7 +31,6 @@ from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.websocket.WebsocketServer import WebsocketServer
-from start_core import install_task_create_excepthook
 
 try:
     import uvloop
