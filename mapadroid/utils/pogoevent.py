@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import Task
 from typing import Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
@@ -26,10 +27,11 @@ class PogoEvent:
                 self._db_wrapper.set_event_id(self._event_id)
             await asyncio.sleep(60)
 
-    async def start_event_checker(self):
+    async def start_event_checker(self) -> Optional[Task]:
         if not self.args.no_event_checker:
             loop = asyncio.get_running_loop()
-            loop.create_task(self.event_checker())
+            return loop.create_task(self.event_checker())
 
     def get_current_event_id(self):
         return self._event_id
+

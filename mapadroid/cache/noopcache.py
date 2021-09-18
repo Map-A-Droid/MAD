@@ -10,3 +10,6 @@ class NoopCache:
 
     async def exists(self, key):
         return False
+
+    async def close(self):
+        pass

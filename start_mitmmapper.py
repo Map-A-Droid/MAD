@@ -17,6 +17,8 @@ import psutil
 from mapadroid.data_handler.MitmMapperServer import MitmMapperServer
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
+from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
+from mapadroid.utils.SystemStatsUtil import get_system_infos
 from mapadroid.utils.logging import (InterceptHandler, LoggerEnums, get_logger,
                                      init_logging)
 from mapadroid.utils.madGlobals import application_args, terminate_mad
@@ -38,252 +40,10 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 9):
     sys.exit(1)
 
 
-# Patch to make exceptions in threads cause an exception.
-def install_task_create_excepthook():
-    """
-    Workaround for sys.excepthook thread bug
-    (https://sourceforge.net/tracker/?func=detail&atid=105470&aid=1230540&group_id=5470).
-    Call once from __main__ before creating any threads.
-    If using psyco, call psycho.cannotcompile(threading.Thread.run)
-    since this replaces a new-style class method.
-    """
-    loop = asyncio.get_running_loop()
-    create_task_old = loop.create_task
-
-    def _handle_task_result(
-            task: asyncio.Task,
-            *,
-            logger: logging.Logger,
-            message: str,
-            message_args: Tuple[Any, ...] = (),
-    ) -> None:
-        try:
-            task.result()
-        except asyncio.CancelledError:
-            pass  # Task cancellation should not be logged as an error.
-        # Ad the pylint ignore: we want to handle all exceptions here so that the result of the task
-        # is properly logged. There is no point re-raising the exception in this callback.
-        except Exception as e:  # pylint: disable=broad-except
-            logger.exception(e)
-            logger.exception(message, *message_args)
-
-    def create_task(*args, **kwargs) -> Task:
-        try:
-            task: Task = create_task_old(*args, **kwargs)
-            task.add_done_callback(
-                functools.partial(_handle_task_result, logger=logger)
-            )
-            return task
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except BrokenPipeError:
-            pass
-        except Exception as inner_ex:
-            logger.exception(inner_ex)
-            # logger.opt(exception=True).critical("An unhandled exception occurred!")
-
-    loop.create_task = create_task
-
-
-def find_referring_graphs(obj):
-    ignore_elems = [locals(), globals(), gc.garbage]
-
-    referrers = (r for r in gc.get_referrers(obj) if r not in ignore_elems)
-    for ref in referrers:
-        print(type(ref))
-        if isinstance(ref, Graph):  # noqa: F821
-            # A graph node
-            yield ref
-        elif isinstance(ref, dict):
-            # An instance or other namespace dictionary
-            for parent in find_referring_graphs(ref):
-                yield parent
-
-
-async def get_system_infos(db_wrapper):
-    pid = os.getpid()
-    process_running = psutil.Process(pid)
-    gc.set_threshold(5, 1, 1)
-    gc.enable()
-    await asyncio.sleep(60)
-    if application_args.trace:
-        import tracemalloc
-        tracemalloc.start(5)
-    while not terminate_mad.is_set():
-        logger.debug('Starting internal Cleanup')
-        loop = asyncio.get_running_loop()
-        collected, cpu_usage, mem_usage, unixnow = await loop.run_in_executor(
-            None, __run_system_stats, process_running)
-        async with db_wrapper as session, session:
-            await TrsUsageHelper.add(session, "mitm_mapper", cpu_usage, mem_usage, collected, unixnow)
-            await session.commit()
-        await asyncio.sleep(application_args.statistic_interval)
-
-
-last_snapshot = None
-initial_snapshot = None
-
-
-def display_top(snapshot, key_type='traceback', limit=30):
-    import tracemalloc
-    snapshot = snapshot.filter_traces((
-        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-        tracemalloc.Filter(False, "<unknown>"),
-    ))
-    top_stats = snapshot.statistics(key_type)
-
-    logger.info("Top %s lines" % limit)
-    for index, stat in enumerate(top_stats[:limit], 1):
-        frame = stat.traceback[0]
-        logger.info("#%s: %s:%s: %.1f KiB"
-                    % (index, frame.filename, frame.lineno, stat.size / 1024))
-        line = linecache.getline(frame.filename, frame.lineno).strip()
-        if line:
-            logger.info('    %s' % line)
-            logger.info(stat.traceback.format(10))
-
-    other = top_stats[limit:]
-    if other:
-        size = sum(stat.size for stat in other)
-        logger.info("%s other: %.1f KiB" % (len(other), size / 1024))
-    total = sum(stat.size for stat in top_stats)
-    logger.info("Total allocated size: %.1f KiB" % (total / 1024))
-
-
-def __run_system_stats(py):
-    global last_snapshot, initial_snapshot
-    logger.debug('Collecting...')
-    unreachable_objs = gc.collect()
-    logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
-                 str(unreachable_objs), str(gc.garbage), str(active_count()))
-    for obj in gc.garbage:
-        for ref in find_referring_graphs(obj):
-            ref.set_next(None)
-            del ref  # remove local reference so the node can be deleted
-        del obj  # remove local reference so the node can be deleted
-
-    # Clear references held by gc.garbage
-    logger.debug('Clearing gc garbage')
-    del gc.garbage[:]
-    mem_usage = py.memory_info()[0] / 2. ** 30
-    cpu_usage = py.cpu_percent()
-    logger.info('Instance name: "{}" - Memory usage: {:.3f} GB - CPU usage: {}',
-                str(application_args.status_name), mem_usage, str(cpu_usage))
-    collected = None
-    if application_args.stat_gc:
-        collected = gc.collect()
-        logger.debug("Garbage collector: collected %d objects." % collected)
-    zero = datetime.datetime.utcnow()
-    unixnow = calendar.timegm(zero.utctimetuple())
-
-    if application_args.trace:
-        import tracemalloc
-        new_snapshot = tracemalloc.take_snapshot()
-        if last_snapshot:
-
-            try:
-                display_top(new_snapshot)
-            except Exception as e:
-                logger.exception(e)
-            top_stats = new_snapshot.compare_to(last_snapshot, 'traceback')
-            logger.info("Top of diff")
-            for stat in top_stats[:15]:
-                logger.info(stat)
-                logger.info(stat.traceback.format(15))
-            logger.info("Bottom of diff")
-            for stat in top_stats[-15:]:
-                logger.info(stat)
-            if not initial_snapshot:
-                initial_snapshot = new_snapshot
-
-            top_stats_to_initial = new_snapshot.compare_to(initial_snapshot, 'traceback')
-            logger.info("Top of diff to initial")
-            for stat in top_stats_to_initial[:15]:
-                logger.info(stat)
-                logger.info(stat.traceback.format(15))
-            logger.info("Bottom of diff to initial")
-            for stat in top_stats_to_initial[-15:]:
-                logger.info(stat)
-        last_snapshot = new_snapshot
-
-    try:
-        import objgraph
-        logger.info("show_most_common_types")
-        objgraph.show_most_common_types(limit=50, shortnames=False)
-        logger.info("show_growth")
-        objgraph.show_growth(limit=50, shortnames=False)
-        logger.info("get_new_ids")
-        objgraph.get_new_ids(limit=50)
-        logger.info("Constructing backrefs graph")
-        # by_type = objgraph.by_type('builtins.list')
-        by_type = objgraph.by_type('StackSummary')
-        # by_type = objgraph.by_type('uvloop.Loop')
-        # by_type = objgraph.by_type("mapadroid.utils.collections.Location")
-        # by_type = objgraph.by_type("TrsSpawn")
-        if len(by_type) > 1:
-            by_type_empty = [type_filtered for type_filtered in by_type if not type_filtered]
-            # by_type_filled = [type_filtered for type_filtered in by_type if type_filtered and "mapadroid" in type_filtered.filename]
-            by_type_filled = [type_filtered for type_filtered in by_type if type_filtered]
-            logger.warning("Filled: {}, empty: {}, total: {}", len(by_type_filled), len(by_type_empty),
-                           len(by_type))
-            obj = by_type[-500:]
-            # TODO: Filter for lists of dicts...
-            # filtered = [type_filtered for type_filtered in by_type if len(type_filtered) > 50]
-            del by_type_empty
-            del by_type_filled
-            del by_type
-            # objgraph.show_backrefs(obj, max_depth=10)
-            # objgraph.show_backrefs(obj, max_depth=5)
-        else:
-            logger.warning("Not enough of type to show: {}", len(by_type))
-    except Exception as e:
-        pass
-    logger.info("Done with GC")
-    return collected, cpu_usage, mem_usage, unixnow
-
-
-def create_folder(folder):
-    if not os.path.exists(folder):
-        logger.info(str(folder) + ' created')
-        os.makedirs(folder)
-
-
-def check_dependencies():
-    with open("requirements.txt", "r") as f:
-        deps = f.readlines()
-        try:
-            pkg_resources.require(deps)
-        except pkg_resources.VersionConflict as version_error:
-            logger.error("Some dependencies aren't met. Required: {} (Installed: {})", version_error.req,
-                         version_error.dist)
-            logger.error(
-                "Most of the times you can fix it by running: pip3 install -r requirements.txt --upgrade")
-            sys.exit(1)
-
-
 async def start():
     t_usage: Optional[Task] = None
-    logging.getLogger('asyncio').setLevel(logging.DEBUG)
-    logging.getLogger('asyncio').addHandler(InterceptHandler(log_section=LoggerEnums.asyncio))
-    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-    logging.getLogger('sqlalchemy.engine').addHandler(InterceptHandler(log_section=LoggerEnums.database))
-    logging.getLogger('aiohttp.access').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.access').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
-    logging.getLogger('aiohttp.client').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.client').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
-    logging.getLogger('aiohttp.internal').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.internal').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
-    logging.getLogger('aiohttp.server').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.server').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
-    logging.getLogger('aiohttp.web').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.web').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
 
-    # check_dependencies()
-    # TODO: globally destroy all threads upon sys.exit() for example
-    install_task_create_excepthook()
-    create_folder(application_args.file_path)
-    create_folder(application_args.upload_path)
-    create_folder(application_args.temp_path)
+    setup_runtime()
     if application_args.config_mode and application_args.only_routes:
         logger.error('Unable to run with config_mode and only_routes.  Only use one option')
         sys.exit(1)
@@ -369,6 +129,7 @@ if __name__ == "__main__":
     os.environ['LANGUAGE'] = application_args.language
     install_language()
     init_logging(application_args)
+    setup_loggers()
     logger = get_logger(LoggerEnums.system)
 
     loop = asyncio.get_event_loop()
