@@ -2,8 +2,6 @@ import io
 import os
 from unittest import TestCase
 
-from flask import Response
-
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import (APKArch, APKType, MADapks, MADPackage,
                                MADPackages, file_generator, get_apk_status,
@@ -110,5 +108,4 @@ class StorageBase(TestCase):
 
     def test_check_invalid(self):
         gen = file_generator(self.db_wrapper, self.storage_elem, APKType.rgc, APKArch.noarch)
-        self.assertTrue(isinstance(gen, Response))
         self.assertTrue(gen.status_code == 404)

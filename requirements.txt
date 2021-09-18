@@ -42,7 +42,6 @@ grpcio
 protobuf
 
 aioredis~=2.0.0
-Flask~=1.1.4
 Jinja2~=3.0.1
 PyMySQL~=0.9.3
 multidict~=5.1.0
