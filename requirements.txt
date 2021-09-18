@@ -36,7 +36,7 @@ asyncio-rlock
 cachetools~=4.2.2
 werkzeug~=1.0.1
 alembic~=1.7.1
-ujson~=4.1.0
+ujson>=4.1.0
 msgpack
 grpcio
 protobuf
