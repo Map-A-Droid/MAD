@@ -126,6 +126,12 @@ class APKWizard(object):
         Args:
             architecture (APKArch): Architecture of the package to download
         """
+        if not self.api_token:
+            logger.warning(
+                "The MADdev API token (maddev_api_token) has not been configured in config.ini."
+                " Please configure this to use the wizard for downloading PokemonGo."
+            )
+            return None
         latest_pogo_info = self.find_latest_pogo(architecture)
         if latest_pogo_info[0] is None:
             logger.warning('Unable to find latest data for PoGo. Try again later')
