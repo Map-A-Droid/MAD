@@ -37,5 +37,6 @@ class AreaIdle(Area):
                     "uri_source": "api_routecalc"
                 }
             },
-        }
+        },
+        "settings": {}
     }
