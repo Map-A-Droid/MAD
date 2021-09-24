@@ -230,6 +230,7 @@ class DbPogoProtoSubmit:
         pokemon_display = pokemon_data.get("display", {})
         mon_id = pokemon_data.get("id")
         weather_boosted = pokemon_display.get("weather_boosted_value")
+        shiny = pokemon_display.get("is_shiny", 0)
         spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
 
         if encounter_id < 0:
@@ -248,8 +249,7 @@ class DbPogoProtoSubmit:
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
-        shiny = pokemon_display.get("is_shiny", 0)
-
+        
         if getdetspawntime is None:
             origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
                                  longitude, despawn_time)
