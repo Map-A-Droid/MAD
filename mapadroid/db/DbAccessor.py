@@ -2,7 +2,6 @@ import asyncio
 from typing import Optional
 
 from loguru import logger
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     create_async_engine)
 

@@ -55,9 +55,7 @@ async def start():
                      " -or    ---- only calculate routes")
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
-    db_wrapper, db_exec = DbFactory.get_wrapper(application_args)
-    await db_exec.setup()
-    await db_wrapper.setup()
+    db_wrapper, db_exec = await DbFactory.get_wrapper(application_args)
 
     mitm_mapper_connector = MitmMapperClientConnector()
     await mitm_mapper_connector.start()
