@@ -995,8 +995,9 @@ class DbPogoProtoSubmit:
                 cell_id = cell_id + 2 ** 64
 
             lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
+            level = S2Helper.get_cell_level(cell_id)
 
-            cells.append((cell_id, 15, lat, lng, cell["current_timestamp"] / 1000))
+            cells.append((cell_id, level, lat, lng, cell["current_timestamp"] / 1000))
 
         self._db_exec.executemany(query, cells, commit=True)
 
