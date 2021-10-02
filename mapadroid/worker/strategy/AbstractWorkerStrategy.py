@@ -378,7 +378,7 @@ class AbstractWorkerStrategy(ABC):
         logger.info('Switching finished ...')
         return True
 
-    async def stop_pogo(self):
+    async def stop_pogo(self) -> bool:
         attempts = 0
         stop_result = await self._communicator.stop_app("com.nianticlabs.pokemongo")
         pogo_topmost = await self._communicator.is_pogo_topmost()
@@ -424,7 +424,7 @@ class AbstractWorkerStrategy(ABC):
         return start_result
 
     async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[AbstractMitmMapper] = None):
-        successful_stop = await self.stop_pogo()
+        successful_stop: bool = await self.stop_pogo()
         async with self._db_wrapper as session, session:
             try:
                 await TrsStatusHelper.save_last_restart(session, self._db_wrapper.get_instance_id(),
