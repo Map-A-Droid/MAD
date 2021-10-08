@@ -447,14 +447,17 @@ class WordToScreenMatching(object):
                 self._logger.error("_handle_ggl_consent_screen: Failed getting/analyzing screenshot")
                 return ScreenType.ERROR
 
-        if self._width != 720 and self._height != 1280:
-            self._logger.warning("The google consent screen can only be handled on 720x1280 screens "
+        if (self._width != 720 and self._height != 1280) and (self._width != 1080 and self._height != 1920):
+            self._logger.warning("The google consent screen can only be handled on 720x1280 or 1080x1920 screens "
                                  f"(width is {self._width}, height is {self._height})")
             return ScreenType.ERROR
 
         self._logger.info("_handle_ggl_consent_screen: Click accept button")
         self._nextscreen = ScreenType.UNDEFINED
-        self._communicator.click(520, 1185)
+        if self._width == 720 and self._height == 1280:
+            self._communicator.click(520, 1185)
+        if self._width == 1080 and self._height == 1920:
+            self._communicator.click(830, 1395)
         time.sleep(10)
         return ScreenType.UNDEFINED
 
