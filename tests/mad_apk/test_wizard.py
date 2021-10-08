@@ -149,5 +149,6 @@ def test_ensure_cache_for_download(psearch):
 def test_parsing_error(psearch, caplog):
     wizard.get_available_versions.cache_clear()
     psearch.side_effect = mock.Mock(side_effect=IndexError)
-    wizard.get_available_versions()
+    with pytest.raises(wizard.SearchError):
+        wizard.get_available_versions()
     assert "Unable to query APKMirror" in caplog.text
