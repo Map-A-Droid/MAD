@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional, Any, Union, Dict
 
 import ujson
+from orjson import orjson
 
 from mapadroid.utils.collections import Location
 
@@ -20,9 +21,9 @@ class LatestMitmDataEntry:
         self.data: Optional[Union[list, dict]] = data
 
     @staticmethod
-    async def from_json(json_data: str) -> Optional[LatestMitmDataEntry]:
+    async def from_json(json_data: Union[bytes, str]) -> Optional[LatestMitmDataEntry]:
         # TODO: asyncexec
-        loaded: Dict = ujson.loads(json_data)
+        loaded: Dict = orjson.loads(json_data)
         if not loaded:
             return None
         location_raw = loaded.get("location", None)

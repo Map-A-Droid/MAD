@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 import ujson
 from aiohttp import web
 from loguru import logger
+from orjson import orjson
 
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 from mapadroid.utils.collections import Location
@@ -49,7 +50,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
     def __process_data_to_json(self, raw_data):
         raw_text = raw_data.decode('utf8')
-        data = ujson.loads(raw_text)
+        data = orjson.loads(raw_text)
         del raw_text
         return data
 

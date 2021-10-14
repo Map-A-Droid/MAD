@@ -1,7 +1,8 @@
 import collections
-from typing import NamedTuple
+from typing import NamedTuple, Union
 
 import ujson
+from orjson import orjson
 
 
 class Location(NamedTuple):
@@ -9,11 +10,11 @@ class Location(NamedTuple):
     lng: float
 
     def to_json(self) -> str:
-        return ujson.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+        return ujson.dumps(self)
 
     @staticmethod
-    def from_json(json_str: str):
-        raw = ujson.loads(json_str)
+    def from_json(json_str: Union[bytes, str]):
+        raw = orjson.loads(json_str)
         return Location(raw[0], raw[1])
 
 

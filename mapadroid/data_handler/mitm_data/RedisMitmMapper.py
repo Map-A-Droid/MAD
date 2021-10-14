@@ -113,8 +113,8 @@ class RedisMitmMapper(AbstractMitmMapper):
         if not last_known_location_raw:
             return None
         try:
-            last_known_location: Location = Location.from_json(str(last_known_location_raw))
-        except KeyError as e:
+            last_known_location: Location = Location.from_json(last_known_location_raw)
+        except Exception as e:
             return None
         return last_known_location
 
