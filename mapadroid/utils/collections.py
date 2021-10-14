@@ -1,5 +1,4 @@
 import collections
-import json
 from typing import NamedTuple
 
 import ujson
@@ -10,7 +9,7 @@ class Location(NamedTuple):
     lng: float
 
     def to_json(self) -> str:
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+        return ujson.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
 
     @staticmethod
     def from_json(json_str: str):

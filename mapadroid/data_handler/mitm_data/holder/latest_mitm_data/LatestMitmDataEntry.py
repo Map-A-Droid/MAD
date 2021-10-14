@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import json
 from typing import Optional, Any, Union, Dict
 
 import ujson
 
 from mapadroid.utils.collections import Location
-from mapadroid.utils.json_encoder import mad_json_dumps
 
 
 class LatestMitmDataEntry:
@@ -41,4 +39,4 @@ class LatestMitmDataEntry:
         return obj
 
     async def to_json(self) -> str:
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+        return ujson.dumps(self, default=lambda o: o.__dict__)
