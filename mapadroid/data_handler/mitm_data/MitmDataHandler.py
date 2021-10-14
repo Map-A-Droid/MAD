@@ -3,7 +3,6 @@ from typing import Dict, Any, Optional, Union
 
 from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
-from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
@@ -15,14 +14,12 @@ class MitmDataHandler:
     Class storing the last received proto of an origin and other relevant data that has to be available asap
     """
 
-    def __init__(self, db_wrapper: DbWrapper, application_args):
-        self.__application_args = application_args
-        self.__db_wrapper = db_wrapper
+    def __init__(self):
         self.__worker_data: Dict[str, PlayerData] = {}
 
     def __ensure_worker_data(self, worker: str) -> PlayerData:
         if worker not in self.__worker_data:
-            self.__worker_data[worker] = PlayerData(worker, self.__application_args)
+            self.__worker_data[worker] = PlayerData(worker)
         return self.__worker_data[worker]
 
     async def set_injection_status(self, worker: str, status: bool) -> None:

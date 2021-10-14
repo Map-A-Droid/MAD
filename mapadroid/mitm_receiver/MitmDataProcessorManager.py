@@ -2,19 +2,22 @@ import asyncio
 from asyncio import Task
 from typing import List
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.SerializedMitmDataProcessor import \
     SerializedMitmDataProcessor
 from loguru import logger
 
 
-class MitmDataProcessorManager():
-    def __init__(self, args, mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper):
+class MitmDataProcessorManager:
+    def __init__(self, args, mitm_mapper: AbstractMitmMapper, stats_handler: AbstractStatsHandler,
+                 db_wrapper: DbWrapper):
         self._worker_threads: List[Task] = []
         self._args = args
         self._mitm_data_queue: asyncio.Queue = asyncio.Queue()
         self._mitm_mapper: AbstractMitmMapper = mitm_mapper
+        self._stats_handler: AbstractStatsHandler = stats_handler
         self._db_wrapper: DbWrapper = db_wrapper
 
     def get_queue(self) -> asyncio.Queue:
@@ -26,6 +29,7 @@ class MitmDataProcessorManager():
             data_processor: SerializedMitmDataProcessor = SerializedMitmDataProcessor(
                 self._mitm_data_queue,
                 self._args,
+                self._stats_handler,
                 self._mitm_mapper,
                 self._db_wrapper,
                 name="DataProc-%s" % str(i))

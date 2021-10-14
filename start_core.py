@@ -7,9 +7,13 @@ from typing import Optional, Union
 from aioredis import Redis
 
 from mapadroid.cache import NoopCache
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.MitmMapperClientConnector import \
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
+from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
     MitmMapperClientConnector
+from mapadroid.data_handler.mitm_data.MitmMapperType import MitmMapperType
+from mapadroid.data_handler.mitm_data.RedisMitmMapper import RedisMitmMapper
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import get_storage_obj
 from mapadroid.madmin.madmin import MADmin
@@ -47,6 +51,7 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 9):
 
 async def start():
     jobstatus: dict = {}
+    stats_handler: Optional[AbstractStatsHandler] = None
     mitm_mapper: Optional[AbstractMitmMapper] = None
     pogo_win_manager: Optional[PogoWindows] = None
     webhook_task: Optional[Task] = None  # Thread for WebHooks
@@ -98,13 +103,22 @@ async def start():
     storage_elem = await get_storage_obj(application_args, db_wrapper)
     if not application_args.config_mode:
         pogo_win_manager = PogoWindows(application_args.temp_path, application_args.ocr_thread_count)
-        mitm_mapper_connector = MitmMapperClientConnector()
-        await mitm_mapper_connector.start()
-        mitm_mapper = await mitm_mapper_connector.get_client()
+        if application_args.mitmmapper_type == MitmMapperType.grpc:
+            # TODO: Stats handler client
+            mitm_mapper_connector = MitmMapperClientConnector()
+            await mitm_mapper_connector.start()
+            mitm_mapper: MitmMapperClient = await mitm_mapper_connector.get_client()
+        elif application_args.mitmmapper_type == MitmMapperType.redis:
+            mitm_mapper: RedisMitmMapper = RedisMitmMapper(db_wrapper)
+            await mitm_mapper.start()
+        else:
+            logger.fatal("Unsupported MitmMapper type for multi-host/process setup {}", application_args.mitmmapper_type)
+            sys.exit(1)
 
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
     ws_server = WebsocketServer(args=application_args,
                                 mitm_mapper=mitm_mapper,
+                                stats_handler=stats_handler,
                                 db_wrapper=db_wrapper,
                                 mapping_manager=mapping_manager,
                                 pogo_window_manager=pogo_win_manager,

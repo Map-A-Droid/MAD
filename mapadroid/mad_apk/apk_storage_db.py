@@ -4,8 +4,8 @@ from typing import Optional
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
-from .apk_enums import APKArch, APKType
-from .custom_types import MADPackages
+from mapadroid.utils.apk_enums import APKArch, APKType
+from mapadroid.utils.custom_types import MADPackages
 from .utils import generate_filename
 from ..db.DbWrapper import DbWrapper
 from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper

@@ -7,7 +7,8 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
@@ -38,13 +39,15 @@ logger = get_logger(LoggerEnums.websocket)
 
 
 class WebsocketServer(object):
-    def __init__(self, args, mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper, mapping_manager: MappingManager,
+    def __init__(self, args, mitm_mapper: AbstractMitmMapper, stats_handler: AbstractStatsHandler,
+                 db_wrapper: DbWrapper, mapping_manager: MappingManager,
                  pogo_window_manager: PogoWindows, event, enable_configmode: bool = False):
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__mapping_manager: MappingManager = mapping_manager
         self.__pogo_window_manager: PogoWindows = pogo_window_manager
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
+        self.__stats_handler: AbstractStatsHandler = stats_handler
         self.__enable_configmode: bool = enable_configmode
 
         # Event to signal that the server is to be stopped. Used to not accept new connections for example
@@ -57,8 +60,10 @@ class WebsocketServer(object):
         self.__users_connecting: Set[str] = set()
         self.__users_connecting_mutex: Optional[asyncio.Lock] = None
 
-        self.__strategy_factory: StrategyFactory = StrategyFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
-                                                             self.__db_wrapper, self.__pogo_window_manager, event)
+        self.__strategy_factory: StrategyFactory = StrategyFactory(self.__args, self.__mapping_manager,
+                                                                   self.__mitm_mapper, self.__stats_handler,
+                                                                   self.__db_wrapper, self.__pogo_window_manager,
+                                                                   event)
         self.__pogo_event: PogoEvent = event
 
         # asyncio loop for the entire server

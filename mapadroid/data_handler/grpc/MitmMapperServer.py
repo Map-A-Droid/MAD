@@ -7,35 +7,31 @@ from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
-from mapadroid.data_handler.MitmMapper import MitmMapper
-from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.data_handler.mitm_data.MitmMapper import MitmMapper
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
 from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import (
     InjectedRequest, InjectionStatus,
     LastKnownLocationResponse, LastMoved, LatestMitmDataEntryRequest,
     LatestMitmDataEntryResponse, LatestMitmDataEntryUpdateRequest,
-    LatestMitmDataFullResponse, LevelResponse, PokestopVisitsResponse, Stats,
-    Worker, SetLevelRequest, SetPokestopVisitsRequest)
+    LatestMitmDataFullResponse, LevelResponse, PokestopVisitsResponse,
+    SetLevelRequest, SetPokestopVisitsRequest)
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
+from mapadroid.grpc.compiled.shared.Worker_pb2 import Worker
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import (
     MitmMapperServicer, add_MitmMapperServicer_to_server)
 from mapadroid.utils.collections import Location
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import (MonSeenTypes, PositionType,
-                                        TransportType, application_args)
-from mapadroid.worker.WorkerType import WorkerType
+from mapadroid.utils.madGlobals import (application_args)
 
 logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class MitmMapperServer(MitmMapperServicer, MitmMapper):
-    def __init__(self, db_wrapper: DbWrapper):
-        MitmMapper.__init__(self, db_wrapper=db_wrapper)
+    def __init__(self):
+        MitmMapper.__init__(self)
         self.__server = None
 
     async def start(self):
-        await MitmMapper.start(self)
         max_message_length = 100 * 1024 * 1024
         options = [('grpc.max_message_length', max_message_length),
                    ('grpc.max_receive_message_length', max_message_length)]
@@ -68,53 +64,8 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         self.__server.add_insecure_port(address)
 
     async def shutdown(self):
-        await MitmMapper.shutdown(self)
         if self.__server:
             await self.__server.stop(0)
-
-    async def StatsCollect(self, request: Stats, context: grpc.aio.ServicerContext) -> Ack:
-        logger.debug("StatsCollect called")
-        # depending on the data_to_collect we need to parse fields..
-        if request.HasField("wild_mons"):
-            await self.stats_collect_wild_mon(
-                request.worker.name, encounter_ids=request.wild_mons.encounter_ids,
-                time_scanned=DatetimeWrapper.fromtimestamp(request.timestamp))
-        elif request.HasField("mon_iv"):
-            await self.stats_collect_mon_iv(
-                request.worker.name, encounter_id=request.mon_iv.encounter_id,
-                is_shiny=request.mon_iv.is_shiny,
-                time_scanned=DatetimeWrapper.fromtimestamp(request.timestamp))
-        elif request.HasField("quest"):
-            await self.stats_collect_quest(
-                request.worker.name,
-                time_scanned=DatetimeWrapper.fromtimestamp(request.timestamp))
-        elif request.HasField("raid"):
-            await self.stats_collect_raid(
-                request.worker.name,
-                time_scanned=DatetimeWrapper.fromtimestamp(request.timestamp))
-        elif request.HasField("location_data"):
-            if not request.location_data.HasField("location"):
-                # TODO: Ack failure indicator?
-                return Ack()
-            location = Location(request.location_data.location.latitude,
-                                request.location_data.location.longitude)
-            await self.stats_collect_location_data(
-                request.worker.name,
-                location=location,
-                success=request.location_data.success,
-                fix_timestamp=request.location_data.fix_timestamp,
-                data_timestamp=request.location_data.data_timestamp,
-                # TODO: Probably gotta read value of protobuf enum...
-                position_type=PositionType(request.location_data.position_type),
-                worker_type=WorkerType(request.location_data.walker),
-                transport_type=TransportType(request.location_data.transport_type),
-                timestamp_of_record=request.timestamp)
-        elif request.HasField("seen_type"):
-            await self.stats_collect_seen_type(
-                encounter_ids=request.seen_type.encounter_ids,
-                type_of_detection=MonSeenTypes(request.seen_type.type_of_detection),
-                time_of_scan=DatetimeWrapper.fromtimestamp(request.timestamp))
-        return Ack()
 
     async def GetLastPossiblyMoved(self, request: Worker, context: grpc.aio.ServicerContext) -> LastMoved:
         logger.debug("GetLastPossiblyMoved called")

@@ -8,8 +8,14 @@ from aiohttp import web
 from aioredis import Redis
 
 from mapadroid.cache import NoopCache
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.MitmMapperServer import MitmMapperServer
+from mapadroid.data_handler.StandaloneMitmMapperAndStatsHandler import StandaloneMitmMapperAndStatsHandler
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer
+from mapadroid.data_handler.mitm_data.MitmMapper import MitmMapper
+from mapadroid.data_handler.grpc.MitmMapperServer import MitmMapperServer
+from mapadroid.data_handler.mitm_data.MitmMapperType import MitmMapperType
+from mapadroid.data_handler.mitm_data.RedisMitmMapper import RedisMitmMapper
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import get_storage_obj
 from mapadroid.madmin.madmin import MADmin
@@ -20,7 +26,7 @@ from mapadroid.mitm_receiver.MitmDataProcessorManager import \
     MitmDataProcessorManager
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.plugins.pluginBase import PluginCollection
-from mapadroid.utils.EnvironmentUtil import create_folder, setup_loggers, setup_runtime
+from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
 from mapadroid.utils.SystemStatsUtil import get_system_infos
 from mapadroid.utils.logging import (LoggerEnums, get_logger,
                                      init_logging)
@@ -51,6 +57,7 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 9):
 async def start():
     jobstatus: dict = {}
     mitm_mapper: Optional[AbstractMitmMapper] = None
+    stats_handler: Optional[AbstractStatsHandler] = None
     pogo_win_manager: Optional[PogoWindows] = None
     webhook_task: Optional[Task] = None
     webhook_worker: Optional[WebhookWorker] = None
@@ -101,12 +108,22 @@ async def start():
     storage_elem = await get_storage_obj(application_args, db_wrapper)
     if not application_args.config_mode:
         pogo_win_manager = PogoWindows(application_args.temp_path, application_args.ocr_thread_count)
-        # Start MitmMapperServer for minor scalability of mitmreceivers...
-        mitm_mapper: AbstractMitmMapper = MitmMapperServer(db_wrapper)
-        # mitm_mapper: AbstractMitmMapper = MitmMapper(db_wrapper)
-        await mitm_mapper.start()
+        if application_args.mitmmapper_type == MitmMapperType.grpc:
+            mitm_mapper: MitmMapperServer = MitmMapperServer()
+            await mitm_mapper.start()
+        elif application_args.mitmmapper_type == MitmMapperType.redis:
+            mitm_mapper: RedisMitmMapper = RedisMitmMapper(db_wrapper)
+            # TODO... stats_handler needs to be handled using the MitmMapperServer (essentially that one needs to be split off)
+            await mitm_mapper.start()
+        else:
+            logger.info("Standalone stats and mitmmapper mode")
+            mitm_mapper: StandaloneMitmMapperAndStatsHandler = StandaloneMitmMapperAndStatsHandler(db_wrapper)
+            await mitm_mapper.start()
 
-    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, db_wrapper)
+    stats_handler: StatsHandlerServer = StatsHandlerServer(db_wrapper)
+    await stats_handler.start()
+
+    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, stats_handler, db_wrapper)
     await mitm_data_processor_manager.launch_processors()
 
     mitm_receiver = MITMReceiver(mitm_mapper, application_args, mapping_manager, db_wrapper,
@@ -117,6 +134,7 @@ async def start():
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
     ws_server = WebsocketServer(args=application_args,
                                 mitm_mapper=mitm_mapper,
+                                stats_handler=stats_handler,
                                 db_wrapper=db_wrapper,
                                 mapping_manager=mapping_manager,
                                 pogo_window_manager=pogo_win_manager,

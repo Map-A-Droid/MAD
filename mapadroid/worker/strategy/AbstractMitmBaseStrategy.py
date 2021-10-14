@@ -2,11 +2,12 @@ import asyncio
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 from loguru import logger
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
@@ -44,7 +45,8 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                  pogo_windows_handler: PogoWindows,
                  walker: SettingsWalkerarea,
                  worker_state: WorkerState,
-                 mitm_mapper: AbstractMitmMapper):
+                 mitm_mapper: AbstractMitmMapper,
+                 stats_handler: AbstractStatsHandler):
         super().__init__(area_id=area_id,
                          communicator=communicator, mapping_manager=mapping_manager,
                          db_wrapper=db_wrapper,
@@ -53,6 +55,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                          walker=walker,
                          worker_state=worker_state)
         self._mitm_mapper: AbstractMitmMapper = mitm_mapper
+        self._stats_handler: AbstractStatsHandler = stats_handler
         # TODO: Consider placement
         self._latest_encounter_update = 0
         self._encounter_ids = {}
@@ -288,7 +291,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
         worker_type: WorkerType = WorkerType(routemanager_settings.mode)
 
-        await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
+        await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
                                                             self._worker_state.current_location, False,
                                                             fix_ts,
                                                             position_type,
@@ -382,7 +385,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
         worker_type: WorkerType = WorkerType(routemanager_settings.mode)
 
-        await self._mitm_mapper.stats_collect_location_data(self._worker_state.origin,
+        await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
                                                             self._worker_state.current_location, True,
                                                             fix_ts,
                                                             position_type, timestamp_received_raw,

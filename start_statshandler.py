@@ -4,7 +4,7 @@ import sys
 from asyncio import CancelledError, Task
 from typing import Optional
 
-from mapadroid.data_handler.grpc.MitmMapperServer import MitmMapperServer
+from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
 from mapadroid.utils.SystemStatsUtil import get_system_infos
@@ -44,8 +44,8 @@ async def start():
     # Elements that should initialized regardless of the functionality being used
     db_wrapper, db_exec = await DbFactory.get_wrapper(application_args)
 
-    mitm_mapper = MitmMapperServer()
-    await mitm_mapper.start()
+    stats_handler = StatsHandlerServer(db_wrapper)
+    await stats_handler.start()
 
     if application_args.statistic:
         logger.info("Starting statistics collector")
@@ -65,8 +65,8 @@ async def start():
             # now cleanup all threads...
             if t_usage:
                 t_usage.cancel()
-            if mitm_mapper:
-                await mitm_mapper.shutdown()
+            if stats_handler:
+                await stats_handler.shutdown()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
                 # db_exec.shutdown()

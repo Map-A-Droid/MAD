@@ -11,9 +11,8 @@ logger = get_logger(LoggerEnums.mitm_mapper)
 
 
 class PlayerData(AbstractWorkerHolder):
-    def __init__(self, origin: str, application_args):
+    def __init__(self, origin: str):
         super().__init__(origin)
-        self.__application_args = application_args
         self._level: int = 0
         self._poke_stop_visits: int = 0
         self._injected: bool = False

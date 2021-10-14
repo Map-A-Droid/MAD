@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from io import BytesIO
 from typing import Optional
 
-from .apk_enums import APKArch, APKType
-from .custom_types import MADPackages
+from mapadroid.utils.apk_enums import APKArch, APKType
+from mapadroid.utils.custom_types import MADPackages
 
 
 class AbstractAPKStorage(ABC):

@@ -1,13 +1,12 @@
 import asyncio
-import concurrent.futures
 import json
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
 from mapadroid.db.model import Base
-from mapadroid.mad_apk.apk_enums import APKArch, APKType
-from mapadroid.mad_apk.custom_types import MADapks, MADPackage, MADPackages
+from mapadroid.utils.apk_enums import APKArch, APKType
+from mapadroid.utils.custom_types import MADapks, MADPackage, MADPackages
 
 
 async def mad_json_dumps(data):

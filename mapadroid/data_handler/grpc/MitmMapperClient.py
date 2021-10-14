@@ -1,21 +1,19 @@
 import asyncio
-from datetime import datetime
-from typing import List, Optional, Dict, Union
+from typing import Optional, Dict, Union
 from aiocache import cached
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
-from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import Stats, LastMoved, LatestMitmDataEntryResponse, \
-    LatestMitmDataEntryRequest, LatestMitmDataFullResponse, Worker, PokestopVisitsResponse, \
+from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import LastMoved, LatestMitmDataEntryResponse, \
+    LatestMitmDataEntryRequest, LatestMitmDataFullResponse, PokestopVisitsResponse, \
     LevelResponse, InjectionStatus, InjectedRequest, LastKnownLocationResponse, SetLevelRequest, \
     SetPokestopVisitsRequest
+from mapadroid.grpc.compiled.shared.Worker_pb2 import Worker
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperStub
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import MonSeenTypes, PositionType, TransportType
 from google.protobuf import json_format
 
-from mapadroid.worker.WorkerType import WorkerType
 from loguru import logger
 
 
@@ -49,61 +47,6 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request.worker.name = worker
         request.pokestop_visits = pokestop_visits
         await self.SetPokestopVisits(request)
-
-    async def stats_collect_wild_mon(self, worker: str, encounter_ids: List[int], time_scanned: datetime) -> None:
-        request: Stats = Stats()
-        request.worker.name = worker
-        request.timestamp = int(time_scanned.timestamp())
-        request.wild_mons.encounter_ids.extend(encounter_ids)
-        await self.StatsCollect(request)
-
-    async def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime,
-                                   is_shiny: bool) -> None:
-        request: Stats = Stats()
-        request.worker.name = worker
-        request.timestamp = int(time_scanned.timestamp())
-        request.mon_iv.encounter_id = encounter_id
-        request.mon_iv.is_shiny = is_shiny
-        await self.StatsCollect(request)
-
-    async def stats_collect_quest(self, worker: str, time_scanned: datetime) -> None:
-        request: Stats = Stats()
-        request.worker.name = worker
-        request.timestamp = int(time_scanned.timestamp())
-        await self.StatsCollect(request)
-
-    async def stats_collect_raid(self, worker: str, time_scanned: datetime) -> None:
-        request: Stats = Stats()
-        request.worker.name = worker
-        request.timestamp = int(time_scanned.timestamp())
-        await self.StatsCollect(request)
-
-    async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
-                                          position_type: PositionType, data_timestamp: int, walker: WorkerType,
-                                          transport_type: TransportType, timestamp_of_record: int) -> None:
-        request: Stats = Stats()
-        request.worker.name = worker
-        request.timestamp = timestamp_of_record
-        request.location_data.location.latitude = location.lat
-        request.location_data.location.longitude = location.lng
-        request.location_data.success = success
-        request.location_data.fix_timestamp = fix_timestamp
-        request.location_data.data_timestamp = data_timestamp
-        request.location_data.walker = walker.value
-        # TODO: Probably gotta set it some other way...
-        request.location_data.position_type = position_type.value
-        request.location_data.transport_type = transport_type.value
-
-        await self.StatsCollect(request)
-
-    async def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
-                                      time_of_scan: datetime) -> None:
-        request: Stats = Stats()
-        request.timestamp = int(time_of_scan.timestamp())
-        request.seen_type.encounter_ids.extend(encounter_ids)
-        # TODO: Probably gotta set it some other way...
-        request.seen_type.type_of_detection = type_of_detection.value
-        await self.StatsCollect(request)
 
     async def get_last_possibly_moved(self, worker: str) -> int:
         response: LastMoved = await self.GetLastPossiblyMoved(name=worker)

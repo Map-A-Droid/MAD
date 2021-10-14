@@ -8,8 +8,13 @@ from aiohttp import web
 from aioredis import Redis
 
 from mapadroid.cache import NoopCache
-from mapadroid.data_handler.MitmMapperClientConnector import \
+from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
+from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
     MitmMapperClientConnector
+from mapadroid.data_handler.grpc.StatsHandlerClient import StatsHandlerClient
+from mapadroid.data_handler.grpc.StatsHandlerClientConnector import StatsHandlerClientConnector
+from mapadroid.data_handler.mitm_data.MitmMapperType import MitmMapperType
+from mapadroid.data_handler.mitm_data.RedisMitmMapper import RedisMitmMapper
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import get_storage_obj
 from mapadroid.mapping_manager.AbstractMappingManager import \
@@ -57,11 +62,23 @@ async def start():
     # Elements that should initialized regardless of the functionality being used
     db_wrapper, db_exec = await DbFactory.get_wrapper(application_args)
 
-    mitm_mapper_connector = MitmMapperClientConnector()
-    await mitm_mapper_connector.start()
-    mitm_mapper = await mitm_mapper_connector.get_client()
+    if application_args.mitmmapper_type == MitmMapperType.grpc:
+        mitm_mapper_connector = MitmMapperClientConnector()
+        await mitm_mapper_connector.start()
+        mitm_mapper: MitmMapperClient = await mitm_mapper_connector.get_client()
+    elif application_args.mitmmapper_type == MitmMapperType.redis:
+        mitm_mapper: RedisMitmMapper = RedisMitmMapper(db_wrapper)
+        await mitm_mapper.start()
+    else:
+        logger.fatal("Unsupported MitmMapper type for multi-host/process setup {}", application_args.mitmmapper_type)
+        sys.exit(1)
 
-    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, db_wrapper)
+    stats_handler_connector = StatsHandlerClientConnector()
+    await stats_handler_connector.start()
+    stats_handler: StatsHandlerClient = await stats_handler_connector.get_client()
+    await stats_handler.start()
+
+    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, stats_handler, db_wrapper)
     await mitm_data_processor_manager.launch_processors()
 
     mapping_manager_connector = MappingManagerClientConnector()

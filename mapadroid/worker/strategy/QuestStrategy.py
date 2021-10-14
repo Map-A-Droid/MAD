@@ -13,7 +13,8 @@ from loguru import logger
 from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
@@ -76,7 +77,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                  pogo_windows_handler: PogoWindows,
                  walker: SettingsWalkerarea,
                  worker_state: WorkerState,
-                 mitm_mapper: AbstractMitmMapper):
+                 mitm_mapper: AbstractMitmMapper,
+                 stats_handler: AbstractStatsHandler):
         super().__init__(area_id=area_id,
                          communicator=communicator, mapping_manager=mapping_manager,
                          db_wrapper=db_wrapper,
@@ -84,7 +86,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                          pogo_windows_handler=pogo_windows_handler,
                          walker=walker,
                          worker_state=worker_state,
-                         mitm_mapper=mitm_mapper)
+                         mitm_mapper=mitm_mapper,
+                         stats_handler=stats_handler)
         self.clear_inventory_task: Optional[Task] = None
         self.clear_thread_task: ClearThreadTasks = ClearThreadTasks.IDLE
 

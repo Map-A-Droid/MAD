@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import gc
 import os
-from calendar import calendar
+import calendar
 from threading import active_count
 
 import psutil

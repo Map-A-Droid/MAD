@@ -1,6 +1,6 @@
 from aiohttp import web
 
-from mapadroid.mad_apk.apk_enums import APKType
+from mapadroid.utils.apk_enums import APKType
 from mapadroid.mad_apk.utils import lookup_package_info, supported_pogo_version
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 

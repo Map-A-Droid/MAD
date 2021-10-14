@@ -18,7 +18,7 @@ from loguru import logger
 from mapadroid.utils import global_variables
 from mapadroid.utils.functions import get_version_codes
 from .abstract_apk_storage import AbstractAPKStorage
-from .apk_enums import APKArch, APKPackage, APKType
+from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from .utils import (get_apk_info, lookup_arch_enum,
                     lookup_package_info, supported_pogo_version)
 from ..db.DbWrapper import DbWrapper

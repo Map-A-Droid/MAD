@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mapadroid.utils.global_variables import CHUNK_MAX_SIZE
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
-from .apk_enums import APKArch, APKPackage, APKType
-from .custom_types import MADapks, MADPackage, MADPackages
+from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
+from mapadroid.utils.custom_types import MADapks, MADPackage, MADPackages
 from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
 from ..db.helper.MadApkHelper import MadApkHelper
 from ..utils.functions import get_version_codes

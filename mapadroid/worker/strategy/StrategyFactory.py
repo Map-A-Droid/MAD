@@ -3,8 +3,8 @@ from typing import Optional, Tuple, NamedTuple
 
 from loguru import logger
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.MitmMapper import MitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsDevicepool, SettingsDevice, SettingsWalkerarea
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry, MappingManager
@@ -31,11 +31,12 @@ class WalkerConfiguration(NamedTuple):
 
 
 class StrategyFactory:
-    def __init__(self, args, mapping_manager: MappingManager, mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper,
-                 pogo_windows: PogoWindows, event):
+    def __init__(self, args, mapping_manager: MappingManager, mitm_mapper: AbstractMitmMapper,
+                 stats_handler: AbstractStatsHandler, db_wrapper: DbWrapper, pogo_windows: PogoWindows, event):
         self.__args = args
         self.__mapping_manager: MappingManager = mapping_manager
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
+        self.__stats_handler: AbstractStatsHandler = stats_handler
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__pogo_windows: PogoWindows = pogo_windows
         self.__event = event
@@ -110,7 +111,8 @@ class StrategyFactory:
                                           pogo_windows_handler=self.__pogo_windows,
                                           walker=walker_settings,
                                           worker_state=worker_state,
-                                          mitm_mapper=self.__mitm_mapper)
+                                          mitm_mapper=self.__mitm_mapper,
+                                          stats_handler=self.__stats_handler)
         elif worker_type in [WorkerType.STOPS]:
             strategy = QuestStrategy(area_id=area_id,
                                      communicator=communicator, mapping_manager=self.__mapping_manager,
@@ -119,7 +121,8 @@ class StrategyFactory:
                                      pogo_windows_handler=self.__pogo_windows,
                                      walker=walker_settings,
                                      worker_state=worker_state,
-                                     mitm_mapper=self.__mitm_mapper)
+                                     mitm_mapper=self.__mitm_mapper,
+                                     stats_handler=self.__stats_handler)
         else:
             logger.error("WorkerFactor::get_worker failed to create a worker...")
         return strategy

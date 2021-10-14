@@ -8,7 +8,8 @@ from loguru import logger
 from aioredis import Redis
 
 from mapadroid.cache import NoopCache
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
@@ -16,13 +17,14 @@ from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes
 
 
 class SerializedMitmDataProcessor:
-    def __init__(self, data_queue: asyncio.Queue, application_args, mitm_mapper: AbstractMitmMapper,
-                 db_wrapper: DbWrapper, name=None):
+    def __init__(self, data_queue: asyncio.Queue, application_args, stats_handler: AbstractStatsHandler,
+                 mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper, name=None):
         self.__queue: asyncio.Queue = data_queue
         self.__db_wrapper: DbWrapper = db_wrapper
         # TODO: Init DbPogoProtoSubmit per processing passing session to constructor
         self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
         self.__application_args = application_args
+        self.__stats_handler: AbstractStatsHandler = stats_handler
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
         self.__name = name
 
@@ -87,7 +89,7 @@ class SerializedMitmDataProcessor:
                     try:
                         new_quest: bool = await self.__db_submit.quest(session, data["payload"])
                         if new_quest:
-                            await self.__mitm_mapper.stats_collect_quest(origin, processed_timestamp)
+                            await self.__stats_handler.stats_collect_quest(origin, processed_timestamp)
                         await session.commit()
                     except Exception as e:
                         logger.warning("Failed submitting quests to DB: {}", e)
@@ -149,7 +151,7 @@ class SerializedMitmDataProcessor:
             if self.__application_args.game_stats and encounter:
                 encounter_id, is_shiny = encounter
                 loop = asyncio.get_running_loop()
-                loop.create_task(self.__mitm_mapper.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny))
+                loop.create_task(self.__stats_handler.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny))
             end_time = self.get_time_ms() - start_time
             logger.debug("Done processing encounter in {}ms", end_time)
         else:
@@ -211,10 +213,10 @@ class SerializedMitmDataProcessor:
                                           nearby_cell_mons: List[int],
                                           nearby_fort_mons: List[int],
                                           lure_mons: List[int]):
-        await self.__mitm_mapper.stats_collect_wild_mon(worker, wild_mon_encounter_ids_in_gmo, time_received_raw)
-        await self.__mitm_mapper.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.nearby_cell, time_received_raw)
-        await self.__mitm_mapper.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.nearby_stop, time_received_raw)
-        await self.__mitm_mapper.stats_collect_seen_type(lure_mons, MonSeenTypes.lure_wild, time_received_raw)
+        await self.__stats_handler.stats_collect_wild_mon(worker, wild_mon_encounter_ids_in_gmo, time_received_raw)
+        await self.__stats_handler.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.nearby_cell, time_received_raw)
+        await self.__stats_handler.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.nearby_stop, time_received_raw)
+        await self.__stats_handler.stats_collect_seen_type(lure_mons, MonSeenTypes.lure_wild, time_received_raw)
 
     async def __process_gmo_mon_stats(self, cell_encounters, lure_wild, stop_encounters, wild_encounter_ids_processed):
         async with self.__db_wrapper as session, session:

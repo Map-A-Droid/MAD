@@ -84,6 +84,7 @@ def install_task_create_excepthook():
         # is properly logged. There is no point re-raising the exception in this callback.
         except Exception as e:  # pylint: disable=broad-except
             logger.debug2("Potential uncaught exception.", exc_info=True)
+            logger.exception(e)
             raise e
 
     def create_task(*args, **kwargs) -> Task:

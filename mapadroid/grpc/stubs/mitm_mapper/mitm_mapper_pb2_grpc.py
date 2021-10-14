@@ -4,6 +4,7 @@ import grpc
 
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2 as mitm__mapper_dot_mitm__mapper__pb2
 from mapadroid.grpc.compiled.shared import Ack_pb2 as shared_dot_Ack__pb2
+from mapadroid.grpc.compiled.shared import Worker_pb2 as shared_dot_Worker__pb2
 
 
 class MitmMapperStub(object):
@@ -22,7 +23,7 @@ class MitmMapperStub(object):
                 )
         self.GetLastPossiblyMoved = channel.unary_unary(
                 '/mapadroid.mitm_mapper.MitmMapper/GetLastPossiblyMoved',
-                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+                request_serializer=shared_dot_Worker__pb2.Worker.SerializeToString,
                 response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.LastMoved.FromString,
                 )
         self.UpdateLatest = channel.unary_unary(
@@ -37,7 +38,7 @@ class MitmMapperStub(object):
                 )
         self.RequestFullLatest = channel.unary_unary(
                 '/mapadroid.mitm_mapper.MitmMapper/RequestFullLatest',
-                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+                request_serializer=shared_dot_Worker__pb2.Worker.SerializeToString,
                 response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataFullResponse.FromString,
                 )
         self.SetLevel = channel.unary_unary(
@@ -52,17 +53,17 @@ class MitmMapperStub(object):
                 )
         self.GetPokestopVisits = channel.unary_unary(
                 '/mapadroid.mitm_mapper.MitmMapper/GetPokestopVisits',
-                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+                request_serializer=shared_dot_Worker__pb2.Worker.SerializeToString,
                 response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.PokestopVisitsResponse.FromString,
                 )
         self.GetLevel = channel.unary_unary(
                 '/mapadroid.mitm_mapper.MitmMapper/GetLevel',
-                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+                request_serializer=shared_dot_Worker__pb2.Worker.SerializeToString,
                 response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.LevelResponse.FromString,
                 )
         self.GetInjectionStatus = channel.unary_unary(
                 '/mapadroid.mitm_mapper.MitmMapper/GetInjectionStatus',
-                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+                request_serializer=shared_dot_Worker__pb2.Worker.SerializeToString,
                 response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.InjectionStatus.FromString,
                 )
         self.SetInjected = channel.unary_unary(
@@ -72,7 +73,7 @@ class MitmMapperStub(object):
                 )
         self.GetLastKnownLocation = channel.unary_unary(
                 '/mapadroid.mitm_mapper.MitmMapper/GetLastKnownLocation',
-                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+                request_serializer=shared_dot_Worker__pb2.Worker.SerializeToString,
                 response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.LastKnownLocationResponse.FromString,
                 )
 
@@ -162,7 +163,7 @@ def add_MitmMapperServicer_to_server(servicer, server):
             ),
             'GetLastPossiblyMoved': grpc.unary_unary_rpc_method_handler(
                     servicer.GetLastPossiblyMoved,
-                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.FromString,
+                    request_deserializer=shared_dot_Worker__pb2.Worker.FromString,
                     response_serializer=mitm__mapper_dot_mitm__mapper__pb2.LastMoved.SerializeToString,
             ),
             'UpdateLatest': grpc.unary_unary_rpc_method_handler(
@@ -177,7 +178,7 @@ def add_MitmMapperServicer_to_server(servicer, server):
             ),
             'RequestFullLatest': grpc.unary_unary_rpc_method_handler(
                     servicer.RequestFullLatest,
-                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.FromString,
+                    request_deserializer=shared_dot_Worker__pb2.Worker.FromString,
                     response_serializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataFullResponse.SerializeToString,
             ),
             'SetLevel': grpc.unary_unary_rpc_method_handler(
@@ -192,17 +193,17 @@ def add_MitmMapperServicer_to_server(servicer, server):
             ),
             'GetPokestopVisits': grpc.unary_unary_rpc_method_handler(
                     servicer.GetPokestopVisits,
-                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.FromString,
+                    request_deserializer=shared_dot_Worker__pb2.Worker.FromString,
                     response_serializer=mitm__mapper_dot_mitm__mapper__pb2.PokestopVisitsResponse.SerializeToString,
             ),
             'GetLevel': grpc.unary_unary_rpc_method_handler(
                     servicer.GetLevel,
-                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.FromString,
+                    request_deserializer=shared_dot_Worker__pb2.Worker.FromString,
                     response_serializer=mitm__mapper_dot_mitm__mapper__pb2.LevelResponse.SerializeToString,
             ),
             'GetInjectionStatus': grpc.unary_unary_rpc_method_handler(
                     servicer.GetInjectionStatus,
-                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.FromString,
+                    request_deserializer=shared_dot_Worker__pb2.Worker.FromString,
                     response_serializer=mitm__mapper_dot_mitm__mapper__pb2.InjectionStatus.SerializeToString,
             ),
             'SetInjected': grpc.unary_unary_rpc_method_handler(
@@ -212,7 +213,7 @@ def add_MitmMapperServicer_to_server(servicer, server):
             ),
             'GetLastKnownLocation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetLastKnownLocation,
-                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.Worker.FromString,
+                    request_deserializer=shared_dot_Worker__pb2.Worker.FromString,
                     response_serializer=mitm__mapper_dot_mitm__mapper__pb2.LastKnownLocationResponse.SerializeToString,
             ),
     }
@@ -254,7 +255,7 @@ class MitmMapper(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/GetLastPossiblyMoved',
-            mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+            shared_dot_Worker__pb2.Worker.SerializeToString,
             mitm__mapper_dot_mitm__mapper__pb2.LastMoved.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -305,7 +306,7 @@ class MitmMapper(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/RequestFullLatest',
-            mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+            shared_dot_Worker__pb2.Worker.SerializeToString,
             mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataFullResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -356,7 +357,7 @@ class MitmMapper(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/GetPokestopVisits',
-            mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+            shared_dot_Worker__pb2.Worker.SerializeToString,
             mitm__mapper_dot_mitm__mapper__pb2.PokestopVisitsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -373,7 +374,7 @@ class MitmMapper(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/GetLevel',
-            mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+            shared_dot_Worker__pb2.Worker.SerializeToString,
             mitm__mapper_dot_mitm__mapper__pb2.LevelResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -390,7 +391,7 @@ class MitmMapper(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/GetInjectionStatus',
-            mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+            shared_dot_Worker__pb2.Worker.SerializeToString,
             mitm__mapper_dot_mitm__mapper__pb2.InjectionStatus.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -424,7 +425,7 @@ class MitmMapper(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/GetLastKnownLocation',
-            mitm__mapper_dot_mitm__mapper__pb2.Worker.SerializeToString,
+            shared_dot_Worker__pb2.Worker.SerializeToString,
             mitm__mapper_dot_mitm__mapper__pb2.LastKnownLocationResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

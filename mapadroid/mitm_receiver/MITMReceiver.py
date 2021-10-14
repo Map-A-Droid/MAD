@@ -6,7 +6,7 @@ from aiohttp import web
 from aiohttp.web_runner import TCPSite, UnixSite
 from loguru import logger
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mapping_manager import MappingManager

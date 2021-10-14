@@ -1,5 +1,5 @@
 # coding: utf-8
-from sqlalchemy import (TIMESTAMP, Column, Float, ForeignKey, Index,
+from sqlalchemy import (Column, Float, ForeignKey, Index,
                         String, Table, text)
 from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
                                        LONGTEXT, MEDIUMINT, SMALLINT, TINYINT,

@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import MadApk, FilestoreMeta
-from mapadroid.mad_apk.apk_enums import APKType, APKArch
-from mapadroid.mad_apk.custom_types import MADPackage, MADPackages
+from mapadroid.utils.apk_enums import APKType, APKArch
+from mapadroid.utils.custom_types import MADPackage, MADPackages
 
 
 class MadApkHelper:

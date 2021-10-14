@@ -3,7 +3,7 @@ from typing import Optional
 import grpc
 from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
-from mapadroid.data_handler.MitmMapperClient import MitmMapperClient
+from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
 from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import application_args
 

@@ -6,7 +6,7 @@ from typing import Optional, Any, List, Tuple
 
 from loguru import logger
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsWalkerarea

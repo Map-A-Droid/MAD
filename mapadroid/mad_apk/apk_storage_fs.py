@@ -11,8 +11,8 @@ from asyncio_rlock import RLock
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
-from .apk_enums import APKArch, APKType
-from .custom_types import MADapks, MADPackage, MADPackages
+from mapadroid.utils.apk_enums import APKArch, APKType
+from mapadroid.utils.custom_types import MADapks, MADPackage, MADPackages
 from .utils import generate_filename, lookup_apk_enum, lookup_arch_enum
 
 logger = get_logger(LoggerEnums.storage)

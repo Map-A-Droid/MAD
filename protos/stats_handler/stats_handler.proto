@@ -1,0 +1,59 @@
+syntax = "proto3";
+import "shared/Location.proto";
+import "shared/Ack.proto";
+import "shared/PositionType.proto";
+import "shared/TransportType.proto";
+import "shared/MonSeenTypes.proto";
+import "shared/Worker.proto";
+import "google/protobuf/struct.proto";
+
+package mapadroid.stats_handler;
+
+service StatsHandler {
+  rpc StatsCollect(Stats) returns (mapadroid.shared.Ack);
+}
+
+message Stats {
+  optional mapadroid.shared.Worker worker = 1;
+  optional uint64 timestamp = 2;
+  oneof data_to_collect {
+    StatsWildMon wild_mons = 3;
+    StatsMonIv mon_iv = 4;
+    StatsQuest quest = 5;
+    StatsRaid raid = 6;
+    StatsLocationData location_data = 7;
+    StatsSeenType seen_type = 8;
+  }
+}
+
+message StatsWildMon {
+  repeated uint64 encounter_ids = 1;
+}
+
+message StatsMonIv {
+  uint64 encounter_id = 1;
+  bool is_shiny = 2;
+}
+
+message StatsQuest {
+}
+
+message StatsRaid {
+}
+
+message StatsLocationData {
+  mapadroid.shared.Location location = 1;
+  bool success = 2;
+  uint64 fix_timestamp = 3;
+  uint64 data_timestamp = 4;
+  mapadroid.shared.PositionType position_type = 5;
+  string walker = 6;
+  mapadroid.shared.TransportType transport_type = 7;
+}
+
+message StatsSeenType {
+  repeated uint64 encounter_ids = 1;
+  mapadroid.shared.MonSeenTypes type_of_detection = 2;
+}
+
+

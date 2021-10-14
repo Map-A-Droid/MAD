@@ -33,6 +33,7 @@ class LoggerEnums(Enum):
     aioredis = "aioredis"
     endpoint = "endpoint"
     mitm_mapper = "mitm_mapper"
+    stats_handler = "stats_handler"
     mapping_manager = "mapping-manager"
 
 

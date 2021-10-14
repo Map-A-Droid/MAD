@@ -4,32 +4,33 @@ import "shared/Ack.proto";
 import "shared/PositionType.proto";
 import "shared/TransportType.proto";
 import "shared/MonSeenTypes.proto";
+import "shared/Worker.proto";
 import "google/protobuf/struct.proto";
 
 package mapadroid.mitm_mapper;
 
 service MitmMapper {
   rpc StatsCollect(Stats) returns (mapadroid.shared.Ack);
-  rpc GetLastPossiblyMoved(Worker) returns (LastMoved);
+  rpc GetLastPossiblyMoved(mapadroid.shared.Worker) returns (LastMoved);
   rpc UpdateLatest(LatestMitmDataEntryUpdateRequest) returns (mapadroid.shared.Ack);
   rpc RequestLatest(LatestMitmDataEntryRequest) returns (LatestMitmDataEntryResponse);
-  rpc RequestFullLatest(Worker) returns (LatestMitmDataFullResponse);
+  rpc RequestFullLatest(mapadroid.shared.Worker) returns (LatestMitmDataFullResponse);
   rpc SetLevel(SetLevelRequest) returns (mapadroid.shared.Ack);
   rpc SetPokestopVisits(SetPokestopVisitsRequest) returns (mapadroid.shared.Ack);
-  rpc GetPokestopVisits(Worker) returns (PokestopVisitsResponse);
-  rpc GetLevel(Worker) returns (LevelResponse);
-  rpc GetInjectionStatus(Worker) returns (InjectionStatus);
+  rpc GetPokestopVisits(mapadroid.shared.Worker) returns (PokestopVisitsResponse);
+  rpc GetLevel(mapadroid.shared.Worker) returns (LevelResponse);
+  rpc GetInjectionStatus(mapadroid.shared.Worker) returns (InjectionStatus);
   rpc SetInjected(InjectedRequest) returns (mapadroid.shared.Ack);
-  rpc GetLastKnownLocation(Worker) returns (LastKnownLocationResponse);
+  rpc GetLastKnownLocation(mapadroid.shared.Worker) returns (LastKnownLocationResponse);
 }
 
 message SetPokestopVisitsRequest {
-  Worker worker = 1;
+  mapadroid.shared.Worker worker = 1;
   int32 pokestop_visits = 2;
 }
 
 message SetLevelRequest {
-  Worker worker = 1;
+  mapadroid.shared.Worker worker = 1;
   int32 level = 2;
 }
 
@@ -38,7 +39,7 @@ message LastKnownLocationResponse {
 }
 
 message InjectedRequest {
-  Worker worker = 1;
+  mapadroid.shared.Worker worker = 1;
   InjectionStatus injected = 2;
 }
 
@@ -59,7 +60,7 @@ message LatestMitmDataFullResponse {
 }
 
 message LatestMitmDataEntryUpdateRequest {
-  Worker worker = 1;
+  mapadroid.shared.Worker worker = 1;
   string key = 2;
   LatestMitmDataEntry data = 3;
 }
@@ -69,7 +70,7 @@ message LatestMitmDataEntryResponse {
 }
 
 message LatestMitmDataEntryRequest {
-  Worker worker = 1;
+  mapadroid.shared.Worker worker = 1;
   string key = 2;
   optional uint64 timestamp_earliest = 3;
 }
@@ -84,10 +85,6 @@ message LatestMitmDataEntry {
   }
 }
 
-message Worker {
-  string name = 1;
-}
-
 message LastMoved {
   uint64 timestamp = 1;
 }
@@ -98,7 +95,7 @@ message EncounterIds {
 }
 
 message Stats {
-  optional Worker worker = 1;
+  optional mapadroid.shared.Worker worker = 1;
   optional uint64 timestamp = 2;
   oneof data_to_collect {
     StatsWildMon wild_mons = 3;

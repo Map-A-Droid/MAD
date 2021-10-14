@@ -5,6 +5,7 @@ from time import strftime
 import configargparse
 
 import mapadroid
+from mapadroid.data_handler.mitm_data.MitmMapperType import MitmMapperType
 
 
 def memoize(function):
@@ -92,6 +93,8 @@ def parse_args():
     parser.add_argument('-mmgrcomp', '--mappingmanager_compression', default=False, type=bool,
                         help='Enable compression of data of the MappingManager gRPC communication. Default: False')
 
+    parser.add_argument('-mitmtype', '--mitmmapper_type', type=MitmMapperType, choices=list(MitmMapperType),
+                        help='Pick the MitmMapper implementation to be used. gRPC or Redis are intended for bigger setups (multi process/tenant)')
     # MitmMapper gRPC
     parser.add_argument('-mitmmip', '--mitmmapper_ip', required=False, default="[::]", type=str,
                         help='IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component. Default: [::]')
@@ -103,6 +106,18 @@ def parse_args():
                         help='Path to file of certificate chain. Default: None')
     parser.add_argument('-mitmcomp', '--mitmmapper_compression', default=False, type=bool,
                         help='Enable compression of data of the MitmMapper gRPC communication. Default: False')
+
+    # StatsHandler gRPC
+    parser.add_argument('-statship', '--statshandler_ip', required=False, default="[::]", type=str,
+                        help='IP to listen on for the StatsHandler gRPC API or connect to (separate MAD component. Default: [::]')
+    parser.add_argument('-statshport', '--statshandler_port', required=False, default=50053, type=int,
+                        help='Port to listen on for the StatsHandler gRPC API or connect to (separate MAD component). Default: 50053')
+    parser.add_argument('-statshtlspriv', '--statshandler_tls_private_key_file', required=False, default=None, type=str,
+                        help='Path to file of private key file. Default: None')
+    parser.add_argument('-statshtlscert', '--statshandler_tls_cert_file', required=False, default=None, type=str,
+                        help='Path to file of certificate chain. Default: None')
+    parser.add_argument('-statshcomp', '--statshandler_compression', default=False, type=bool,
+                        help='Enable compression of data of the StatsHandler gRPC communication. Default: False')
 
     # Walk Settings
     parser.add_argument('--enable_worker_specific_extra_start_stop_handling', default=False,

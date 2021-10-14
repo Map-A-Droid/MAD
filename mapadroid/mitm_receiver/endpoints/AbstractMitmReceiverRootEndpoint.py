@@ -11,12 +11,12 @@ from aiohttp.typedefs import LooseHeaders, StrOrURL
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_handler.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
-from mapadroid.mad_apk.apk_enums import APKArch, APKType, APKPackage
+from mapadroid.utils.apk_enums import APKArch, APKType, APKPackage
 from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
