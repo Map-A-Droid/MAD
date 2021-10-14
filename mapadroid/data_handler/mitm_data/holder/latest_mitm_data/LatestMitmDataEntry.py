@@ -29,7 +29,13 @@ class LatestMitmDataEntry:
         location_raw = loaded.get("location", None)
         location: Optional[Location] = None
         if location_raw:
-            location = Location(location_raw[0], location_raw[1])
+            if isinstance(location_raw, list):
+                location = Location(location_raw[0], location_raw[1])
+            elif isinstance(location_raw, dict):
+                lat = location_raw.get("lat", 0.0)
+                lng = location_raw.get("lng", 0.0)
+                location = Location(lat, lng)
+
         timestamp_received: Optional[int] = loaded.get("timestamp_received")
         timestamp_of_data_retrieval: Optional[int] = loaded.get("timestamp_of_data_retrieval")
         data: Optional[Union[list, dict]] = loaded.get("data")
@@ -39,5 +45,5 @@ class LatestMitmDataEntry:
                                                        data)
         return obj
 
-    async def to_json(self) -> str:
-        return ujson.dumps(self, default=lambda o: o.__dict__)
+    async def to_json(self) -> bytes:
+        return orjson.dumps(self.__dict__)

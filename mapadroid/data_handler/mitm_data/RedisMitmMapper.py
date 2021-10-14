@@ -56,7 +56,7 @@ class RedisMitmMapper(AbstractMitmMapper):
         else:
             mitm_data_entry: LatestMitmDataEntry = LatestMitmDataEntry(location, timestamp_received_raw,
                                                                        timestamp_received_receiver, value)
-            json_data: str = await mitm_data_entry.to_json()
+            json_data: bytes = await mitm_data_entry.to_json()
             try:
                 await self.__cache.set(RedisMitmMapper.LATEST_DATA_KEY.format(worker, key), json_data)
             except Exception as e:
