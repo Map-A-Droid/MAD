@@ -24,12 +24,20 @@
 #mappingmanager_tls_cert_file:          # In case a secure connection is desired, clients and server need to have the cert file available.
 #mappingmanager_compression             # Enable compression of data of the MappingManager gRPC communication. Default: False
 
-# MitmMapper gRPC
+# mitmtype:                 # Pick the implementation type of mitmmapper to use. Valid types are grpc, redis and standalone
+# MitmMapper gRPC related settings
 #mitmmapper_ip:             # IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component. Default: [::]
 #mitmmapper_port:           # Port to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 50051
 #mitmmapper_tls_private_key_file:       # In case a secure connection is desired, the server needs to know a private key.
 #mitmmapper_tls_cert_file:              # In case a secure connection is desired, clients and server need to have the cert file available.
 #mitmmapper_compression                 # Enable compression of data of the MitmMapper gRPC communication. Default: False
+
+# Stats handler gRPC related settings
+#statshandler_ip:             # IP to listen on for the StatsHandler gRPC API or connect to (separate MAD component. Default: [::]
+#statshandler_port:           # Port to listen on for the StatsHandler gRPC API or connect to (separate MAD component). Default: 50053
+#statshandler_tls_private_key_file:       # In case a secure connection is desired, the server needs to know a private key.
+#statshandler_tls_cert_file:              # In case a secure connection is desired, clients and server need to have the cert file available.
+#statshandler_compression                 # Enable compression of data of the StatsHandler gRPC communication. Default: False
 
 # Websocket Settings (RGC receiver)
 ######################
