@@ -24,7 +24,7 @@
 #mappingmanager_tls_cert_file:          # In case a secure connection is desired, clients and server need to have the cert file available.
 #mappingmanager_compression             # Enable compression of data of the MappingManager gRPC communication. Default: False
 
-# mitmtype:                 # Pick the implementation type of mitmmapper to use. Valid types are grpc, redis and standalone
+# mitmmapper_type:                 # Pick the implementation type of mitmmapper to use. Valid types are grpc, redis and standalone
 # MitmMapper gRPC related settings
 #mitmmapper_ip:             # IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component. Default: [::]
 #mitmmapper_port:           # Port to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 50051
