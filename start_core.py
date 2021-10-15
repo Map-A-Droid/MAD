@@ -7,6 +7,8 @@ from typing import Optional, Union
 from aioredis import Redis
 
 from mapadroid.cache import NoopCache
+from mapadroid.data_handler.grpc.StatsHandlerClient import StatsHandlerClient
+from mapadroid.data_handler.grpc.StatsHandlerClientConnector import StatsHandlerClientConnector
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
@@ -114,6 +116,11 @@ async def start():
         else:
             logger.fatal("Unsupported MitmMapper type for multi-host/process setup {}", application_args.mitmmapper_type)
             sys.exit(1)
+
+    stats_handler_connector = StatsHandlerClientConnector()
+    await stats_handler_connector.start()
+    stats_handler: StatsHandlerClient = await stats_handler_connector.get_client()
+    await stats_handler.start()
 
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
     ws_server = WebsocketServer(args=application_args,
