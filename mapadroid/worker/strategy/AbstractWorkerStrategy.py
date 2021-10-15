@@ -6,7 +6,7 @@ from typing import Optional, Any, List, Tuple
 
 from loguru import logger
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsWalkerarea
@@ -31,7 +31,9 @@ class AbstractWorkerStrategy(ABC):
                  db_wrapper: DbWrapper, word_to_screen_matching: WordToScreenMatching,
                  pogo_windows_handler: PogoWindows,
                  walker: SettingsWalkerarea,
-                 worker_state: WorkerState):
+                 worker_state: WorkerState,
+                 stats_handler: Optional[AbstractStatsHandler] = None):
+        self._stats_handler: Optional[AbstractStatsHandler] = stats_handler
         self._area_id: int = area_id
         self._mapping_manager: MappingManager = mapping_manager
         self._communicator: AbstractCommunicator = communicator
@@ -391,7 +393,7 @@ class AbstractWorkerStrategy(ABC):
             pogo_topmost = await self._communicator.is_pogo_topmost()
         return stop_result
 
-    async def _reboot(self, mitm_mapper: Optional[AbstractMitmMapper] = None):
+    async def _reboot(self):
         try:
             if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 start_result = await self._communicator.reboot()
@@ -402,11 +404,11 @@ class AbstractWorkerStrategy(ABC):
             logger.error("Could not reboot due to client already disconnected")
             start_result = False
         await asyncio.sleep(5)
-        if mitm_mapper and self._walker:
+        if self._stats_handler and self._walker:
             now_ts: int = int(time.time())
             routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
             worker_type: WorkerType = WorkerType(routemanager_settings.mode)
-            await mitm_mapper.stats_collect_location_data(self._worker_state.origin,
+            await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
                                                           self._worker_state.current_location, True,
                                                           now_ts, PositionType.REBOOT, 0,
                                                           worker_type, TransportType.TELEPORT,
@@ -423,7 +425,7 @@ class AbstractWorkerStrategy(ABC):
         self._worker_state.restart_count = 0
         return start_result
 
-    async def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[AbstractMitmMapper] = None):
+    async def _restart_pogo(self, clear_cache=True):
         successful_stop: bool = await self.stop_pogo()
         async with self._db_wrapper as session, session:
             try:
@@ -438,11 +440,11 @@ class AbstractWorkerStrategy(ABC):
             if clear_cache:
                 await self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
             await asyncio.sleep(1)
-            if mitm_mapper and self._walker:
+            if self._stats_handler and self._walker:
                 now_ts: int = int(time.time())
                 routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
                 worker_type: WorkerType = WorkerType(routemanager_settings.mode)
-                await mitm_mapper.stats_collect_location_data(self._worker_state.origin,
+                await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
                                                               self._worker_state.current_location, True, now_ts,
                                                               PositionType.RESTART, 0, worker_type,
                                                               self._worker_state.last_transport_type, now_ts)

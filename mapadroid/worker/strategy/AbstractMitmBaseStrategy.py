@@ -53,9 +53,9 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                          word_to_screen_matching=word_to_screen_matching,
                          pogo_windows_handler=pogo_windows_handler,
                          walker=walker,
-                         worker_state=worker_state)
+                         worker_state=worker_state,
+                         stats_handler=stats_handler)
         self._mitm_mapper: AbstractMitmMapper = mitm_mapper
-        self._stats_handler: AbstractStatsHandler = stats_handler
         # TODO: Consider placement
         self._latest_encounter_update = 0
         self._encounter_ids = {}
