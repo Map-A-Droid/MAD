@@ -312,13 +312,13 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             if self._worker_state.reboot_count > reboot_thresh \
                     and await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 logger.warning("Too many timeouts - Rebooting device")
-                await self._reboot(mitm_mapper=self._mitm_mapper)
+                await self._reboot()
                 raise InternalStopWorkerException
 
             # self._mitm_mapper.
             self._worker_state.restart_count = 0
             logger.warning("Too many timeouts - Restarting game")
-            await self._restart_pogo(True, self._mitm_mapper)
+            await self._restart_pogo(True)
 
     async def stop_pogo(self) -> bool:
         stopped: bool = await super().stop_pogo()
@@ -410,7 +410,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             await self._check_for_mad_job()
             if not_injected_count >= injection_thresh_reboot:
                 logger.warning("Not injected in time - reboot")
-                await self._reboot(self._mitm_mapper)
+                await self._reboot()
                 return False
             logger.info("Didn't receive any data yet. (Retry count: {}/{})", not_injected_count,
                         injection_thresh_reboot)

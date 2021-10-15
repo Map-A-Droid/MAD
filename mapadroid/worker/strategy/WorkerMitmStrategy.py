@@ -59,7 +59,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
 
         reached_main_menu = await self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
-            if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+            if not await self._restart_pogo():
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException
 

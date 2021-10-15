@@ -226,7 +226,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             else:
                 reached_main_menu = await self._check_pogo_main_screen(10, True)
                 if not reached_main_menu:
-                    if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                    if not await self._restart_pogo():
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
 
@@ -235,7 +235,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         else:
             reached_main_menu = await self._check_pogo_main_screen(10, True)
             if not reached_main_menu:
-                if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                if not await self._restart_pogo():
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
 
@@ -376,7 +376,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
 
                 on_main_menu = await self._check_pogo_main_screen(10, False)
                 if not on_main_menu:
-                    await self._restart_pogo(mitm_mapper=self._mitm_mapper)
+                    await self._restart_pogo()
 
                 logger.info('Open Stop')
                 self._stop_process_time = math.floor(time.time())
@@ -557,7 +557,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                                            self._clear_box_failcount)
                         else:
                             logger.error("Unable to delete any items 3 times in a row - restart pogo ...")
-                            if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                            if not await self._restart_pogo():
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
                     continue
@@ -666,7 +666,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             await asyncio.sleep(10)
             reached_main_menu = await self._check_pogo_main_screen(10, True)
             if not reached_main_menu:
-                if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                if not await self._restart_pogo():
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
 
@@ -815,7 +815,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                                 logger.info('Collected 3 quests - clean them')
                                 reached_main_menu = await self._check_pogo_main_screen(10, True)
                                 if not reached_main_menu:
-                                    if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                                    if not await self._restart_pogo():
                                         # TODO: put in loop, count up for a reboot ;)
                                         raise InternalStopWorkerException
                                 self.clear_thread_task = ClearThreadTasks.QUEST
@@ -824,7 +824,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                             logger.info('Getting new quest - clean it')
                             reached_main_menu = await self._check_pogo_main_screen(10, True)
                             if not reached_main_menu:
-                                if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                                if not await self._restart_pogo():
                                     # TODO: put in loop, count up for a reboot ;)
                                     raise InternalStopWorkerException
                             self.clear_thread_task = ClearThreadTasks.QUEST
@@ -836,7 +836,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                     logger.warning('Softban - return to main screen and open again...')
                     on_main_menu = await self._check_pogo_main_screen(10, False)
                     if not on_main_menu:
-                        await self._restart_pogo(mitm_mapper=self._mitm_mapper)
+                        await self._restart_pogo()
                     self._stop_process_time = math.floor(time.time())
                     if await self._try_to_open_pokestop(self._stop_process_time) == ReceivedType.UNDEFINED:
                         return
@@ -847,7 +847,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                         "routine.")
                     reached_main_menu = await self._check_pogo_main_screen(10, True)
                     if not reached_main_menu:
-                        if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                        if not await self._restart_pogo():
                             # TODO: put in loop, count up for a reboot ;)
                             raise InternalStopWorkerException
                     self.clear_thread_task = ClearThreadTasks.QUEST
@@ -994,7 +994,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         if self._spinnable_data_failcount > 9:
             self._spinnable_data_failcount = 0
             logger.warning("Worker failed spinning stop with GMO/data issues 10+ times - restart pogo")
-            if not await self._restart_pogo(mitm_mapper=self._mitm_mapper):
+            if not await self._restart_pogo():
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException
         else:
