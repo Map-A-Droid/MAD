@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class MitmMapperType(Enum):
-    default = 'default'
+    standalone = 'standalone'
     grpc = 'grpc'
     redis = 'redis'
 
