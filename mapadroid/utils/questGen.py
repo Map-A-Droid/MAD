@@ -211,16 +211,31 @@ async def questtask(typeid, condition, target, quest_template):
         else:
             text = _("Battle in a Gym {0} times")
     elif typeid == 8:
-        if re.search(r'"type": 6', condition) is not None:
-            text = _("Win {0} Raids")
-            if re.search(r'"raid_level": \[3, 4, 5(.*)\]', condition) is not None:
-                text = _('Win a level 3 or higher raid')
-            if re.search(r'"raid_level": \[2, 3, 4, 5(.*)\]', condition) is not None:
-                text = _('Win a level 2 or higher raid')
-            if re.search(r'"raid_level": \[6\]', condition) is not None:
-                text = _('Win a Mega raid')
-        else:
-            text = _("Battle in {0} Raids")
+        # type 8 is to do raids
+        raid_levels = []
+        arr['min_level'] = ''
+        arr['speedy'] = ''
+        arr['verb'] = 'Battle in'
+        text = _("{verb} {0} {min_level}raids{speedy}")
+        for con in condition_dict:
+            con_type = con.get('type', 0)
+            if con_type == 6:
+                # Gotta win it
+                arr['verb'] = 'Win'
+            elif con_type == 7:
+                # do a certain level raid
+                raid_levels = con.get('with_raid_level', {}).get('raid_level', [])
+            elif con_type == 44:
+                # have to do it quick - TODO fetch seconds to do it in instead of assuming 60
+                how_fast = con.get('with_elapsed_time', {}).get('elapsed_time', 60000)
+                if how_fast > 1000:
+                    how_fast = how_fast / 1000
+                arr['speedy'] = _(' in {time} seconds')
+                arr['time'] = int(how_fast)
+        if len(raid_levels) == 1 == raid_levels[0] == 6:
+            arr['min_level'] = _('Mega ')
+        elif len(raid_levels) > 0:
+            arr['min_level'] = '{} {} {}'.format(_('level'), min(raid_levels), _(' or higher '))
     elif typeid == 10:
         text = _("Transfer {0} Pokemon")
     elif typeid == 11:
@@ -405,6 +420,14 @@ async def questtask(typeid, condition, target, quest_template):
             if con.get('type', 0) == 28:
                 level = con.get('with_buddy', {}).get('min_buddy_level', 0)
                 arr['level'] = buddy_levels.get(level, level)
+    elif typeid == 53:
+        # type 53 is to do charged attacks (any kind of way gym/pvp/rocket)
+        arr ['type'] = ''
+        text = _('Use {0} {type} Charged Attacks')
+        for con in condition_dict:
+            if con.get('type', 0) == 10:
+                # Super effective
+                arr['type'] = _('supereffective')
 
     quest_templates = await open_json_file('quest_templates')
     if quest_template is not None and quest_template in quest_templates:
@@ -421,6 +444,7 @@ async def questtask(typeid, condition, target, quest_template):
         text = text.replace(_('Make {0} {type}{curve}Throws'), _('Make a {type}{curve}Throw'))
         text = text.replace(_(' {0} times'), '')
         text = text.replace(_('{0} hearts'), _('a heart'))
+        text = text.replace(_('PVP Battle(s)'), _('PVP Battle'))
         arr['0'] = _("a")
 
     for key, val in arr.items():
