@@ -104,3 +104,13 @@ class RouteManagerIV(RouteManagerBase):
 
         """
         pass
+
+    def _remove_deprecated_prio_events(self) -> bool:
+        return False
+
+    def _can_pass_prioq_coords(self) -> bool:
+        # Override the base class. No need to pass prioq coords.
+        return False
+
+    def _may_update_routepool(self):
+        return False

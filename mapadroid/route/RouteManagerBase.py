@@ -40,7 +40,7 @@ class RoutePoolEntry:
     time_added: float
     rounds: int = 0
     current_pos: Location = Location(0.0, 0.0)
-    prio_coords: Optional[Location] = None
+    prio_coord: Optional[Location] = None
     worker_sleeping: float = 0
     last_position_type: PositionType = PositionType.NORMAL
 
@@ -381,6 +381,29 @@ class RouteManagerBase(ABC):
         :return:
         """
 
+    def _should_get_new_coords_after_finishing_route(self) -> bool:
+        """
+        Whether the route should be updated with coords after finishing a route
+        Returns: False by default. Subclasses of RouteManagerBase may overwrite if needed
+        """
+        return False
+
+    def _has_normal_route(self) -> bool:
+        """
+        Whether or not we have a normal route from which to pull the next
+        location. This exists so subclasses can perform their own logic,
+        if necessary. E.g., 'iv_mitm' returns False.
+        """
+        return True
+
+    def _can_pass_prioq_coords(self) -> bool:
+        """
+        Whether or not passing prioq coords to another closer worker is
+        allowed. This exists so subclasses can perform their own logic,
+        if necessary. E.g., 'iv_mitm' returns False.
+        """
+        return True
+
     def __set_routepool_entry_location(self, origin: str, pos: Location):
         if self._routepool.get(origin, None) is not None:
             self._routepool[origin].current_pos = pos
@@ -419,9 +442,9 @@ class RouteManagerBase(ABC):
             if not await self._worker_changed_update_routepools():
                 logger.info("Failed updating routepools after adding a worker to it")
                 return None
-        elif routepool_entry.prio_coords and self._mode != WorkerType.IV_MITM:
-            prioevent = routepool_entry.prio_coords
-            routepool_entry.prio_coords = None
+        elif routepool_entry.prio_coord and self._can_pass_prioq_coords():
+            prioevent = routepool_entry.prio_coord
+            routepool_entry.prio_coord = None
             logger.info('getting a nearby prio event {}', prioevent)
             self.__set_routepool_entry_location(origin, prioevent)
             routepool_entry.last_position_type = PositionType.PRIOQ
@@ -439,7 +462,7 @@ class RouteManagerBase(ABC):
             # Check the PrioQ
             try:
                 next_timestamp, next_coord = None, None
-                if self._mode == WorkerType.IV_MITM:
+                if not self._has_normal_route():
                     # "blocking" to wait for a coord
                     while not next_timestamp:
                         try:
@@ -459,7 +482,7 @@ class RouteManagerBase(ABC):
                 now = time.time()
                 if next_timestamp > now:
                     raise IndexError("Next event at {} has not taken place yet", next_readable_time)
-                if self._mode == WorkerType.MON_MITM:
+                if self._remove_deprecated_prio_events():
                     if self.remove_from_queue_backlog not in [None, 0]:
                         delete_before = now - self.remove_from_queue_backlog
                     else:
@@ -477,14 +500,16 @@ class RouteManagerBase(ABC):
                                 "Prio event surpassed the maximum backlog time and will be skipped. Make "
                                 "sure you run enough workers or reduce the size of the area! (event was "
                                 "scheduled for {})", next_readable_time)
-
-                while (not self._check_coord_and_remove_from_route_if_applicable(next_coord, origin)
-                       or self._other_worker_closer_to_prioq(next_coord, origin)):
-                    logger.info("Invalid prio event or scheduled for {} passed to a closer worker.",
-                                next_readable_time)
-                    prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
-                    next_timestamp = prioq_entry.timestamp_due
-                    next_coord = prioq_entry.location
+                if self._can_pass_prioq_coords():
+                    while (not self._check_coord_and_remove_from_route_if_applicable(next_coord, origin)
+                           or self._other_worker_closer_to_prioq(next_coord, origin)):
+                        logger.info("Invalid prio event or scheduled for {} passed to a closer worker.",
+                                    next_readable_time)
+                        prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
+                        # TODO: Handle timestamp or ignore it given above while loop should have dealt with deprecated
+                        #  stops if applicable
+                        next_timestamp = prioq_entry.timestamp_due
+                        next_coord = prioq_entry.location
 
                 routepool_entry.last_position_type = PositionType.PRIOQ
                 logger.debug("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
@@ -549,7 +574,7 @@ class RouteManagerBase(ABC):
             # only quest could hit this else!
             logger.info("finished subroute, updating all subroutes if necessary")
 
-            if self._mode == WorkerType.STOPS and not self.init:
+            if self._should_get_new_coords_after_finishing_route():
                 # check for coords not in other workers to get a real open coord list
                 if not await self._get_coords_after_finish_route():
                     logger.info("No more coords available - dont update routepool")
@@ -640,7 +665,7 @@ class RouteManagerBase(ABC):
         temp_distance = distance_worker
 
         for worker in self._routepool.keys():
-            if worker == origin or self._routepool[worker].prio_coords \
+            if worker == origin or self._routepool[worker].prio_coord \
                     or self._routepool[origin].last_position_type == PositionType.PRIOQ:
                 continue
             worker_pos = self._routepool[worker].current_pos
@@ -654,7 +679,7 @@ class RouteManagerBase(ABC):
                 closer_worker = worker
 
         if closer_worker is not None:
-            self._routepool[closer_worker].prio_coords = prioqcoord
+            self._routepool[closer_worker].prio_coord = prioqcoord
             logger.debug("Worker {} is closer to PrioQ event {}", closer_worker, prioqcoord)
             return True
 
@@ -683,10 +708,11 @@ class RouteManagerBase(ABC):
         workers: int = 0
         if not self._is_started:
             return True
-        if self._mode not in (WorkerType.IV_MITM, WorkerType.IDLE) and len(self._current_route_round_coords) == 0:
+        # TODO: Idle mode...
+        if not self._may_update_routepool() and len(self._current_route_round_coords) == 0:
             logger.info("No more coords - breakup")
             return False
-        if self._mode in (WorkerType.IV_MITM, WorkerType.IDLE):
+        elif not self._may_update_routepool():
             logger.info('Not updating routepools in iv_mitm mode')
             return True
 
@@ -957,7 +983,7 @@ class RouteManagerBase(ABC):
     def redo_stop(self, worker, lat: float, lon: float):
         logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
         if worker in self._routepool:
-            self._routepool[worker].prio_coords = Location(lat, lon)
+            self._routepool[worker].prio_coord = Location(lat, lon)
             return True
         return False
 
@@ -970,3 +996,18 @@ class RouteManagerBase(ABC):
 
     def get_routecalc_id(self) -> Optional[int]:
         return getattr(self._settings, "routecalc", None)
+
+    def _remove_deprecated_prio_events(self) -> bool:
+        """
+        Whether the Route may remove deprecated coords (e.g. iv_mitm currently does not hold the necessary data for that)
+        Returns:
+        """
+        return True
+
+    def _may_update_routepool(self):
+        """
+        Whether the routepool may be updated upon finishing routes or a breakup should occur (e.g. iv_mitm)
+        Returns: Defaults to True
+
+        """
+        return self._mode != WorkerType.IDLE

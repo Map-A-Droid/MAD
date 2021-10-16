@@ -229,3 +229,6 @@ class RouteManagerQuests(RouteManagerBase):
         # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
         async with self.db_wrapper as session, session:
             await session.merge(self._settings)
+
+    def _should_get_new_coords_after_finishing_route(self) -> bool:
+        return not self.init
