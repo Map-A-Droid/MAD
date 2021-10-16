@@ -31,7 +31,8 @@ screen_texts: dict = {1: ['Geburtdatum', 'birth.', 'naissance.', 'date'],
                       18: ['Termination', 'terminated', 'permanently'],
                       21: ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
                            'found.', 'gefunden.', 'Signal', 'geortet', 'detect', '(12)'],
-                      23: ['CLUB', 'KIDS']}
+                      23: ['CLUB', 'KIDS'],
+                      25: ['SIGNOUT', 'SIGN', 'ABMELDEN']}
 
 
 def screendetection_get_type_internal(image,

@@ -295,6 +295,8 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.WRONG:
             await self.__handle_returning_player_or_wrong_credentials()
             screentype = ScreenType.ERROR
+        elif screentype == ScreenType.LOGINTIMEOUT:
+            await self.__handle_login_timeout(diff, global_dict)
         elif screentype == ScreenType.GAMEDATA:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.GGL:
@@ -405,6 +407,9 @@ class WordToScreenMatching(object):
     async def __handle_retry_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
         click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
+        await self.__click_center_button_text(click_text, diff, global_dict)
+
+    async def __click_center_button_text(self, click_text, diff, global_dict):
         n_boxes = len(global_dict['text'])
         for i in range(n_boxes):
             if any(elem in (global_dict['text'][i]) for elem in click_text.split(",")):
@@ -654,3 +659,8 @@ class WordToScreenMatching(object):
             self._lastScreenshotTaken = time.time()
             await asyncio.sleep(delay_after)
             return True
+
+    async def __handle_login_timeout(self, diff, global_dict) -> None:
+        self._nextscreen = ScreenType.UNDEFINED
+        click_text = 'SIGNOUT,SIGN,ABMELDEN'
+        await self.__click_center_button_text(click_text, diff, global_dict)
