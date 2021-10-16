@@ -1,10 +1,18 @@
 import gettext
 import json
 import re
+from typing import Dict
 
 from mapadroid.db.model import TrsQuest, Pokestop
 from mapadroid.utils.gamemechanicutil import form_mapper
 from mapadroid.utils.language import i8ln, open_json_file
+
+
+QUEST_LANGUAGES: Dict[str, str] = {
+    'de': 'German',
+    'en': 'English',
+    'fr': 'French'
+}
 
 
 def install_language():
@@ -90,7 +98,7 @@ async def generate_quest(stop: Pokestop, quest: TrsQuest):
         'quest_condition': quest.quest_condition,
         'quest_template': quest.quest_template,
         'is_ar_scan_eligible': stop.is_ar_scan_eligible,
-
+        'quest_title': quest.quest_title
     })
     return quest_raw
 

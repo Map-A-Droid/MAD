@@ -113,7 +113,7 @@
   },
   "29": {
     "prototext": "QUEST_BATTLE_TEAM_ROCKET",
-    "text": "Battle {0} Team Rocket Grunts"
+    "text": "{verb} {0} Team GO Rocket members"
   },
   "30": {
     "prototext": "QUEST_PURIFY_POKEMON",
@@ -154,6 +154,10 @@
   "46": {
     "prototext": "GEOTARGETED_AR_SCAN",
     "text": "Scan pokestop"
+  },
+  "56": {
+    "prototext": "QUEST_EARN_FORT_POWER_UP_POINTS ",
+    "text": "Earn {0} points powering up a Pokéstop or Gym"
   },
   "57": {
     "prototext": "QUEST_TAKE_WILD_SNAPSHOT ",

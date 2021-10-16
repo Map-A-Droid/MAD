@@ -294,6 +294,7 @@ class TrsQuest(Base):
     quest_task = Column(String(150, 'utf8mb4_unicode_ci'))
     quest_pokemon_form_id = Column(SMALLINT(6), nullable=False, server_default=text("'0'"))
     quest_pokemon_costume_id = Column(SMALLINT(6), nullable=False, server_default=text("'0'"))
+    quest_title = Column(String(100, 'utf8mb4_unicode_ci'), nullable=True, server_default=None)
 
 
 class TrsS2Cell(Base):

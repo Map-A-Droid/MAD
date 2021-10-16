@@ -634,6 +634,8 @@ class DbPogoProtoSubmit:
         rewards = protoquest.get("quest_rewards", None)
         if not rewards:
             return False
+        protoquest_display = quest_proto["challenge_quest"]["quest_display"]
+        quest_title_resource_id = protoquest_display.get("title", None)
         reward = rewards[0]
         item = reward['item']
         encounter = reward['pokemon_encounter']
@@ -661,8 +663,8 @@ class DbPogoProtoSubmit:
         condition = goal.get("condition", None)
 
         json_condition = json.dumps(condition)
-        task = await questtask(int(quest_type), json_condition, int(target), str(quest_template))
-
+        task = await questtask(int(quest_type), json_condition, int(target), str(quest_template),
+                                   quest_title_resource_id)
         quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id)
         if not quest:
             quest = TrsQuest()
@@ -681,6 +683,7 @@ class DbPogoProtoSubmit:
         quest.quest_reward = json.dumps(rewards)
         quest.quest_task = task
         quest.quest_template = quest_template
+        quest.quest_title = quest_title_resource_id
 
         logger.debug3("DbPogoProtoSubmit::quest submitted quest type {} at stop {}", quest_type, fort_id)
         async with session.begin_nested() as nested_transaction:

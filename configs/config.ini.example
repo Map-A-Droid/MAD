@@ -99,7 +99,7 @@
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #language:                   # Language for several things like quests or mon names in the IV list (default:en - others: de, fr )
-
+#no_quest_titles              # Do not fetch quest title resources from pokeminers. Will instead use internal parsing
 
 # MADmin
 ######################
