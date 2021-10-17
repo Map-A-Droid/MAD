@@ -144,8 +144,6 @@ def parse_args():
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=True,
                         help='Use this instance only for scanning')
-    parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
-                        help='Amount of threads/processes to be used for screenshot-analysis. Default: 2')
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
     parser.add_argument('-cm', '--config_mode', action='store_true', default=False,
