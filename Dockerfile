@@ -15,7 +15,9 @@ RUN export DEBIAN_FRONTEND=noninteractive && apt-get update \
 && apt-get install -y --no-install-recommends \
 build-essential \
 default-libmysqlclient-dev \
+# OpenCV & dependencies
 python3-opencv \
+libsm6 \
 # python reqs
 && python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
 # cleanup
