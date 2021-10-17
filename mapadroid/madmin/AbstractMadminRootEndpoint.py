@@ -18,6 +18,7 @@ from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.madGlobals import WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -127,6 +128,9 @@ class AbstractMadminRootEndpoint(web.View, ABC):
 
     def _get_mon_name_cache(self) -> Dict[int, str]:
         return self.request.app["mon_name_cache"]
+
+    def _get_quest_gen(self) -> QuestGen:
+        return self.request.app["quest_gen"]
 
     @staticmethod
     def _convert_to_json_string(content) -> str:

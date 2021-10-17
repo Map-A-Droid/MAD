@@ -11,7 +11,7 @@ from mapadroid.utils.SystemStatsUtil import get_system_infos
 from mapadroid.utils.logging import (LoggerEnums, get_logger,
                                      init_logging)
 from mapadroid.utils.madGlobals import application_args, terminate_mad
-from mapadroid.utils.questGen import install_language
+
 
 try:
     import uvloop
@@ -81,7 +81,6 @@ async def start():
 if __name__ == "__main__":
     global application_args
     os.environ['LANGUAGE'] = application_args.language
-    install_language()
     init_logging(application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)

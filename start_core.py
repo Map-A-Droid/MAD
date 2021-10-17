@@ -29,7 +29,7 @@ from mapadroid.utils.logging import (LoggerEnums, get_logger,
                                      init_logging)
 from mapadroid.utils.madGlobals import application_args, terminate_mad
 from mapadroid.utils.pogoevent import PogoEvent
-from mapadroid.utils.questGen import install_language
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.webhook.webhookworker import WebhookWorker
@@ -122,6 +122,8 @@ async def start():
     stats_handler: StatsHandlerClient = await stats_handler_connector.get_client()
     await stats_handler.start()
 
+    quest_gen: QuestGen = QuestGen()
+    await quest_gen.setup()
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
     ws_server = WebsocketServer(args=application_args,
                                 mitm_mapper=mitm_mapper,
@@ -140,11 +142,12 @@ async def start():
         if application_args.webhook:
             rarity = Rarity(application_args, db_wrapper)
             await rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(application_args, db_wrapper, mapping_manager, rarity)
+            webhook_worker = WebhookWorker(application_args, db_wrapper, mapping_manager, rarity, quest_gen)
             webhook_task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
-    madmin = MADmin(application_args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
+    madmin = MADmin(application_args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem,
+                    quest_gen)
 
     # starting plugin system
     plugin_parts = {
@@ -222,7 +225,6 @@ async def start():
 if __name__ == "__main__":
     global application_args
     os.environ['LANGUAGE'] = application_args.language
-    install_language()
     init_logging(application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)

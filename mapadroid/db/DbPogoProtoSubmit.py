@@ -24,13 +24,13 @@ from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.helper.TrsStatsDetectSeenTypeHelper import TrsStatsDetectSeenTypeHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
 from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
-                                TrsEvent, TrsQuest, TrsS2Cell, TrsSpawn,
+                                TrsEvent, TrsQuest, TrsSpawn,
                                 Weather, TrsStatsDetectSeenType)
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
 from mapadroid.utils.madGlobals import MonSeenTypes
-from mapadroid.utils.questGen import questtask
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
 
@@ -623,7 +623,7 @@ class DbPogoProtoSubmit:
                     await nested_transaction.rollback()
         return stop is not None
 
-    async def quest(self, session: AsyncSession, quest_proto: dict):
+    async def quest(self, session: AsyncSession, quest_proto: dict, quest_gen: QuestGen):
         logger.debug3("DbPogoProtoSubmit::quest called")
         fort_id = quest_proto.get("fort_id", None)
         if fort_id is None:
@@ -663,8 +663,8 @@ class DbPogoProtoSubmit:
         condition = goal.get("condition", None)
 
         json_condition = json.dumps(condition)
-        task = await questtask(int(quest_type), json_condition, int(target), str(quest_template),
-                                   quest_title_resource_id)
+        task = await quest_gen.questtask(int(quest_type), json_condition, int(target), str(quest_template),
+                                         quest_title_resource_id)
         quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id)
         if not quest:
             quest = TrsQuest()

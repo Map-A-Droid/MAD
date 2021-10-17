@@ -12,7 +12,6 @@ from mapadroid.data_handler.StandaloneMitmMapperAndStatsHandler import Standalon
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer
-from mapadroid.data_handler.mitm_data.MitmMapper import MitmMapper
 from mapadroid.data_handler.grpc.MitmMapperServer import MitmMapperServer
 from mapadroid.data_handler.mitm_data.MitmMapperType import MitmMapperType
 from mapadroid.data_handler.mitm_data.RedisMitmMapper import RedisMitmMapper
@@ -32,7 +31,7 @@ from mapadroid.utils.logging import (LoggerEnums, get_logger,
                                      init_logging)
 from mapadroid.utils.madGlobals import application_args, terminate_mad
 from mapadroid.utils.pogoevent import PogoEvent
-from mapadroid.utils.questGen import install_language
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.webhook.webhookworker import WebhookWorker
@@ -120,13 +119,15 @@ async def start():
             mitm_mapper: StandaloneMitmMapperAndStatsHandler = StandaloneMitmMapperAndStatsHandler(db_wrapper)
             await mitm_mapper.start()
 
+    quest_gen: QuestGen = QuestGen()
+    await quest_gen.setup()
     stats_handler: StatsHandlerServer = StatsHandlerServer(db_wrapper)
     await stats_handler.start()
 
-    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, stats_handler, db_wrapper)
+    mitm_data_processor_manager = MitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen)
     await mitm_data_processor_manager.launch_processors()
 
-    mitm_receiver = MITMReceiver(mitm_mapper, application_args, mapping_manager, db_wrapper,
+    mitm_receiver = MITMReceiver(mitm_mapper, mapping_manager, db_wrapper,
                                  storage_elem,
                                  mitm_data_processor_manager.get_queue(),
                                  enable_configmode=application_args.config_mode)
@@ -149,11 +150,12 @@ async def start():
         if application_args.webhook:
             rarity = Rarity(application_args, db_wrapper)
             await rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(application_args, db_wrapper, mapping_manager, rarity)
+            webhook_worker = WebhookWorker(application_args, db_wrapper, mapping_manager, rarity, quest_gen)
             webhook_task: Task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
-    madmin = MADmin(application_args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem)
+    madmin = MADmin(application_args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem,
+                    quest_gen)
 
     # starting plugin system
     plugin_parts = {
@@ -238,7 +240,6 @@ async def start():
 if __name__ == "__main__":
     global application_args
     os.environ['LANGUAGE'] = application_args.language
-    install_language()
     init_logging(application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)

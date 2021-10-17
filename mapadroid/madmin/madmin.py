@@ -25,6 +25,7 @@ from mapadroid.madmin.endpoints.routes.statistics import register_routes_statist
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.JinjaFilters import base64Filter, mad_json_filter, subapp_url, subapp_static
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -33,9 +34,9 @@ logger = get_logger(LoggerEnums.madmin)
 
 class MADmin(object):
     def __init__(self, args, db_wrapper: DbWrapper, ws_server: WebsocketServer, mapping_manager: MappingManager,
-                 device_updater: DeviceUpdater, jobstatus, storage_obj):
+                 device_updater: DeviceUpdater, jobstatus, storage_obj, quest_gen: QuestGen):
         # Determine if there are duplicate MACs
-
+        self._quest_gen: QuestGen = quest_gen
         self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
         self._app = None
@@ -95,6 +96,7 @@ class MADmin(object):
         self._app["plugin_hotlink"] = self._plugin_hotlink
         self._app["storage_obj"] = self._storage_obj
         self._app['device_updater'] = self._device_updater
+        self._app['quest_gen'] = self._quest_gen
         self._app['mon_name_cache'] = {}
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader([template_folder_path]))
         jinja2_env.filters["base64"] = base64Filter

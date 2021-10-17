@@ -5,7 +5,7 @@ from mapadroid.db.model import Pokestop, TrsQuest
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
 from mapadroid.madmin.functions import get_bound_params, generate_coords_from_geofence
 from mapadroid.utils.collections import Location
-from mapadroid.utils.questGen import generate_quest
+from mapadroid.utils.questGen import QuestGen
 
 
 class GetQuestsEndpoint(AbstractMadminRootEndpoint):
@@ -35,9 +35,9 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
                                                  old_sw_corner=Location(o_sw_lat, o_sw_lng),
                                                  timestamp=timestamp,
                                                  fence=fence)
-
+        quest_gen: QuestGen = self._get_quest_gen()
         for stop_id, (stop, quest) in data.items():
-            quests.append(await generate_quest(stop, quest))
+            quests.append(await quest_gen.generate_quest(stop, quest))
         del data
         resp = await self._json_response(quests)
         del quests

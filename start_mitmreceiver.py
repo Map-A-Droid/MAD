@@ -29,7 +29,8 @@ from mapadroid.utils.SystemStatsUtil import get_system_infos
 from mapadroid.utils.logging import (LoggerEnums, get_logger,
                                      init_logging)
 from mapadroid.utils.madGlobals import application_args, terminate_mad
-from mapadroid.utils.questGen import install_language
+from mapadroid.utils.questGen import QuestGen
+
 
 try:
     import uvloop
@@ -49,7 +50,7 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 9):
 
 async def start():
     t_usage: Optional[Task] = None
-
+    mitm_mapper_connector: Optional[MitmMapperClientConnector] = None
     setup_runtime()
     if application_args.config_mode and application_args.only_routes:
         logger.error('Unable to run with config_mode and only_routes.  Only use one option')
@@ -78,7 +79,9 @@ async def start():
     stats_handler: StatsHandlerClient = await stats_handler_connector.get_client()
     await stats_handler.start()
 
-    mitm_data_processor_manager = MitmDataProcessorManager(application_args, mitm_mapper, stats_handler, db_wrapper)
+    quest_gen: QuestGen = QuestGen()
+    await quest_gen.setup()
+    mitm_data_processor_manager = MitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen)
     await mitm_data_processor_manager.launch_processors()
 
     mapping_manager_connector = MappingManagerClientConnector()
@@ -87,7 +90,7 @@ async def start():
 
     storage_elem = await get_storage_obj(application_args, db_wrapper)
 
-    mitm_receiver = MITMReceiver(mitm_mapper, application_args, mapping_manager, db_wrapper,
+    mitm_receiver = MITMReceiver(mitm_mapper, mapping_manager, db_wrapper,
                                  storage_elem,
                                  mitm_data_processor_manager.get_queue(),
                                  enable_configmode=application_args.config_mode)
@@ -115,7 +118,7 @@ async def start():
             # now cleanup all threads...
             if t_usage:
                 t_usage.cancel()
-            if mitm_mapper:
+            if mitm_mapper_connector:
                 await mitm_mapper_connector.close()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
@@ -132,7 +135,6 @@ async def start():
 if __name__ == "__main__":
     global application_args
     os.environ['LANGUAGE'] = application_args.language
-    install_language()
     init_logging(application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)

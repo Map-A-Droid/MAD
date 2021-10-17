@@ -13,19 +13,20 @@ from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandl
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes
+from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes, application_args
+from mapadroid.utils.questGen import QuestGen
 
 
 class SerializedMitmDataProcessor:
-    def __init__(self, data_queue: asyncio.Queue, application_args, stats_handler: AbstractStatsHandler,
-                 mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper, name=None):
+    def __init__(self, data_queue: asyncio.Queue, stats_handler: AbstractStatsHandler,
+                 mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper, quest_gen: QuestGen, name=None):
         self.__queue: asyncio.Queue = data_queue
         self.__db_wrapper: DbWrapper = db_wrapper
         # TODO: Init DbPogoProtoSubmit per processing passing session to constructor
         self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
-        self.__application_args = application_args
         self.__stats_handler: AbstractStatsHandler = stats_handler
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
+        self.__quest_gen: QuestGen = quest_gen
         self.__name = name
 
     async def run(self):
@@ -64,7 +65,7 @@ class SerializedMitmDataProcessor:
 
         if data_type and not data.get("raw", False):
             logger.debug4("Received data: {}", data)
-            threshold_seconds = self.__application_args.mitm_ignore_proc_time_thresh
+            threshold_seconds = application_args.mitm_ignore_proc_time_thresh
 
             start_time = self.get_time_ms()
             if threshold_seconds > 0:
@@ -87,7 +88,7 @@ class SerializedMitmDataProcessor:
                 logger.debug("Processing proto 101 (FORT_SEARCH)")
                 async with self.__db_wrapper as session, session:
                     try:
-                        new_quest: bool = await self.__db_submit.quest(session, data["payload"])
+                        new_quest: bool = await self.__db_submit.quest(session, data["payload"], self.__quest_gen)
                         if new_quest:
                             await self.__stats_handler.stats_collect_quest(origin, processed_timestamp)
                         await session.commit()
@@ -126,14 +127,14 @@ class SerializedMitmDataProcessor:
 
     async def __process_lured_encounter(self, data, origin, processed_timestamp, received_timestamp, start_time):
         playerlevel = await self.__mitm_mapper.get_level(origin)
-        if self.__application_args.scan_lured_mons and (playerlevel >= 30):
+        if application_args.scan_lured_mons and (playerlevel >= 30):
             logger.debug("Processing lure encounter received at {}", processed_timestamp)
 
             async with self.__db_wrapper as session, session:
                 lure_encounter: Optional[Tuple[int, datetime]] = await self.__db_submit \
                     .mon_lure_iv(session, received_timestamp, data["payload"])
 
-                if self.__application_args.game_stats:
+                if application_args.game_stats:
                     await self.__db_submit.update_seen_type_stats(session, lure_encounter=[lure_encounter])
                 await session.commit()
             end_time = self.get_time_ms() - start_time
@@ -148,7 +149,7 @@ class SerializedMitmDataProcessor:
                 encounter: Optional[Tuple[int, bool]] = await self.__db_submit.mon_iv(session,
                                                                                       received_timestamp,
                                                                                       data["payload"])
-            if self.__application_args.game_stats and encounter:
+            if application_args.game_stats and encounter:
                 encounter_id, is_shiny = encounter
                 loop = asyncio.get_running_loop()
                 loop.create_task(self.__stats_handler.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny))
@@ -172,12 +173,12 @@ class SerializedMitmDataProcessor:
         gmo_loc_time = self.get_time_ms() - gmo_loc_start
         lure_encounter_ids: List[int] = []
         lure_no_iv_task = None
-        if self.__application_args.scan_lured_mons:
+        if application_args.scan_lured_mons:
             lure_no_iv_task = loop.create_task(self.__process_lure_no_iv(data, received_timestamp))
         lure_processing_time = 0
 
         nearby_task = None
-        if self.__application_args.scan_nearby_mons:
+        if application_args.scan_nearby_mons:
             nearby_task = loop.create_task(self.__process_nearby_mons(data, received_timestamp))
         nearby_cell_encounter_ids = []
         nearby_stop_encounter_ids = []

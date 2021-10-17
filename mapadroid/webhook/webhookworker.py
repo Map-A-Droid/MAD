@@ -14,7 +14,7 @@ from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.json_encoder import mad_json_dumps
 from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes
-from mapadroid.utils.questGen import generate_quest
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.webhook)
@@ -23,7 +23,8 @@ logger = get_logger(LoggerEnums.webhook)
 class WebhookWorker:
     __excluded_areas = {}
 
-    def __init__(self, args, db_wrapper: DbWrapper, mapping_manager: MappingManager, rarity):
+    def __init__(self, args, db_wrapper: DbWrapper, mapping_manager: MappingManager, rarity, quest_gen: QuestGen):
+        self.__quest_gen: QuestGen = quest_gen
         self.__worker_interval_sec = 10
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
@@ -130,7 +131,7 @@ class WebhookWorker:
                 continue
 
             try:
-                transformed_quest = await generate_quest(stop, quest)
+                transformed_quest = await self.__quest_gen.generate_quest(stop, quest)
                 quest_payload = self.__construct_quest_payload(transformed_quest)
 
                 entire_payload = {"type": "quest", "message": quest_payload}
