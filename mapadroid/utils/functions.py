@@ -9,8 +9,11 @@ from aiocache import cached
 from aiofile import async_open
 
 import mapadroid
-from mapadroid.utils.RestHelper import RestHelper, RestApiResult
-from mapadroid.utils.global_variables import VERSIONCODES_URL
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+
+logger = get_logger(LoggerEnums.system)
+
 
 with open(os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates/phone.tpl'), 'r') as file:
     phone_template = file.read().replace('\n', '')
@@ -44,7 +47,6 @@ def _process_image_resize(image, savepath, width):
 
 async def pngtojpg(image):
     loop = asyncio.get_running_loop()
-    #with concurrent.futures.ThreadPoolExecutor() as pool:
     await loop.run_in_executor(
         None, process_png_to_jpg, image)
 
@@ -73,15 +75,10 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
 
 
 @cached(ttl=10 * 60)
-async def get_version_codes(force_gh=False):
-    if not force_gh:
-        try:
-            async with async_open('configs/version_codes.json', "r") as fh:
-                return ujson.loads(await fh.read())
-        except (IOError, json.decoder.JSONDecodeError):
-            pass
-    result: RestApiResult = await RestHelper.send_get(VERSIONCODES_URL)
-    if result.status_code == 200:
-        return result.result_body
-    else:
+async def get_version_codes():
+    try:
+        async with async_open('configs/version_codes.json', "r") as fh:
+            return ujson.loads(await fh.read())
+    except (IOError, json.decoder.JSONDecodeError):
+        logger.exception("Unable to parse the JSON when getting local version codes")
         return {}

@@ -513,7 +513,7 @@ class DeviceUpdater(object):
                     return False
                 # Validate it is supported
                 if package == APKType.pogo:
-                    if not supported_pogo_version(architecture, mad_apk.version):
+                    if not await supported_pogo_version(architecture, mad_apk.version, self._storage_obj.token):
                         await self.__write_status_log(str(item), field='status', value='not supported')
                         return True
                 if not is_newer_version(mad_apk.version, package_ver):

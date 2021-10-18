@@ -144,6 +144,8 @@ def parse_args():
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=True,
                         help='Use this instance only for scanning')
+    parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
+                        help='Amount of threads/processes to be used for screenshot-analysis. Default: 2')
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
     parser.add_argument('-cm', '--config_mode', action='store_true', default=False,
@@ -327,6 +329,8 @@ def parse_args():
     parser.add_argument('-gp', '--gmail_passwd', default='',
                         help='Google Mail Password for interacting with the Google Play Store.  Must be an app'
                              ' password or 2fa will be triggered (this should be enabled on your account anyways')
+    parser.add_argument('-mat', '--maddev_api_token', default=None,
+                        help='MADdev API token used for querying supported versions')
 
     # Auto-Configuration
     parser.add_argument('-acna', '--autoconfig_no_auth', action='store_true', default=False,

@@ -315,7 +315,7 @@ class APKWizard(object):
         """
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
         available_versions = await get_available_versions()
-        latest_supported = await APKWizard.get_latest_supported(architecture, available_versions)
+        latest_supported = await APKWizard.get_latest_supported(architecture, available_versions, self.storage.token)
         try:
             current_version_str = await self.storage.get_current_version(APKType.pogo, architecture)
         except FileNotFoundError:
@@ -363,20 +363,24 @@ class APKWizard(object):
 
     @staticmethod
     async def get_latest_supported(architecture: APKArch,
-                                   available_versions: Dict[str, PackageBase]
+                                   available_versions: Dict[str, PackageBase],
+                                   token: Optional[str],
                                    ) -> Tuple[str, PackageVariant]:
         latest_supported: Dict[APKArch, Tuple[Optional[str], Optional[PackageVariant]]] = {
             APKArch.armeabi_v7a: (None, None),
             APKArch.arm64_v8a: (None, None)
         }
         for package_title, package in available_versions.items():
+            if "samsung" in package_title.lower():
+                # avoid Samsung Galaxy Store versions
+                continue
             for version, package_version in package.versions.items():
                 for arch, variants in package_version.arch.items():
                     named_arch = APKArch.armeabi_v7a if arch == 'armeabi-v7a' else APKArch.arm64_v8a
                     for variant in variants:
                         if variant.apk_type != "APK":
                             continue
-                        if not await supported_pogo_version(architecture, version, variant.version_code):
+                        if not await supported_pogo_version(architecture, version, token):
                             logger.debug("Version {} [{}] is not supported", version, named_arch)
                             continue
                         logger.debug("Version {} [{}] is supported", version, named_arch)
@@ -402,7 +406,7 @@ class APKWizard(object):
     async def lookup_version_code(self, version_code: str, arch: APKArch) -> Optional[int]:
         named_arch = '32' if arch == APKArch.armeabi_v7a else '64'
         latest_version = f"{version_code}_{named_arch}"
-        data = await get_version_codes(force_gh=True)
+        data = await get_version_codes()
         return data.get(latest_version, 0)
 
     async def set_last_searched(self, package: APKType, architecture: APKArch, version: str = None,

@@ -10,7 +10,7 @@ from .wizard import (APKWizard, InvalidFile, PackageImporter,  # noqa: F401
 
 async def get_storage_obj(application_args, dbc):
     if application_args.apk_storage_interface == 'db':
-        storage_obj = APKStorageDatabase(dbc)
+        storage_obj = APKStorageDatabase(dbc, application_args.maddev_api_token)
     else:
         storage_obj = APKStorageFilesystem(application_args)
     await storage_obj.setup()

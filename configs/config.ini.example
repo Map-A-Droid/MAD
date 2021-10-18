@@ -73,6 +73,7 @@
 # Runtypes
 ######################
 #only_scan                    # Use this instance only for scanning. Default: True
+#ocr_thread_count:             # Amount of threads/processes to be used for screenshot-analysis. Default: 2
 #only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
 #config_mode                  # Run in ConfigMode. Default: False
 #scan_nearby_mons             # Enable scanning of nearby mons - Please make sure you know how this works before turning it on!

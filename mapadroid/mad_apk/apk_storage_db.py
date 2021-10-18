@@ -27,7 +27,8 @@ class APKStorageDatabase(AbstractAPKStorage):
         db_wrapper: Database wrapper
     """
 
-    def __init__(self, db_wrapper: DbWrapper):
+    def __init__(self, db_wrapper: DbWrapper, token: Optional[str]):
+        super().__init__(token)
         logger.debug('Initializing Database storage')
         self.db_wrapper = db_wrapper
 

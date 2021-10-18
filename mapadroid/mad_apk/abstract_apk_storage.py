@@ -7,6 +7,13 @@ from mapadroid.utils.custom_types import MADPackages
 
 
 class AbstractAPKStorage(ABC):
+    def __init__(self, token: Optional[str]):
+        self._api_token: Optional[str] = token
+
+    @property
+    def token(self):
+        return self._api_token
+
     @abstractmethod
     async def setup(self):
         """
