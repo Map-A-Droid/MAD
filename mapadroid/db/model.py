@@ -152,6 +152,16 @@ class Pokemon(Base):
                             'lure_encounter'), nullable=False)
 
 
+class PokemonDisplay(Base):
+    __tablename__ = 'pokemon_display'
+
+    encounter_id = Column(BIGINT(20), primary_key=True)
+    pokemon = Column(SMALLINT(6), nullable=False, index=True)
+    gender = Column(SMALLINT(6), server_default=None, nullable=True)
+    form = Column(SMALLINT(6), server_default=None, nullable=True)
+    costume = Column(SMALLINT(6), server_default=None, nullable=True)
+
+
 class Pokestop(Base):
     __tablename__ = 'pokestop'
     __table_args__ = (

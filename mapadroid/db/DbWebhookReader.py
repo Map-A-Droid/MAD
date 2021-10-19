@@ -7,7 +7,7 @@ from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
-from mapadroid.db.model import Raid, Gym, GymDetail, Weather, TrsQuest, Pokestop, Pokemon, TrsSpawn
+from mapadroid.db.model import Raid, Gym, GymDetail, Weather, TrsQuest, Pokestop, Pokemon, TrsSpawn, PokemonDisplay
 from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import MonSeenTypes
 
@@ -136,11 +136,13 @@ class DbWebhookReader:
     async def get_mon_changed_since(session: AsyncSession, _timestamp: int,
                                     mon_types: Optional[Set[MonSeenTypes]] = None):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
-        mons_with_changes: List[Tuple[Pokemon, TrsSpawn, Pokestop]] = await PokemonHelper.get_changed_since(session,
-                                                                                                            _timestamp,
-                                                                                                            mon_types)
+        mons_with_changes: List[
+            Tuple[Pokemon, TrsSpawn, Optional[Pokestop], Optional[PokemonDisplay]]] = await PokemonHelper.get_changed_since(
+            session,
+            _timestamp,
+            mon_types)
         ret = []
-        for (mon, spawn, stop) in mons_with_changes:
+        for (mon, spawn, stop, mon_display) in mons_with_changes:
             if mon.latitude == 0 and mon.seen_type == MonSeenTypes.lure_encounter.value:
                 continue
             ret.append({
@@ -172,6 +174,10 @@ class DbWebhookReader:
                 "stop_name": stop.name if stop else None,
                 "stop_url": stop.image if stop else None,
                 "cell_id": mon.cell_id,
-                "seen_type": mon.seen_type
+                "seen_type": mon.seen_type,
+                "display_pokemon": mon_display.pokemon if mon_display else None,
+                "display_form": mon_display.form if mon_display else None,
+                "display_costume": mon_display.costumer if mon_display else None,
+                "display_gender": mon_display.gender if mon_display else None,
             })
         return ret

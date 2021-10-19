@@ -1,5 +1,6 @@
 import time
 from datetime import timedelta
+from typing import Set
 
 from loguru import logger
 
@@ -248,7 +249,7 @@ def form_mapper(mon_id, form_id):
 def is_mon_ditto(pokemon_data):
     logger.debug3('Determining if mon is a ditto')
     logger.debug4(pokemon_data)
-    potential_dittos = [92, 96, 223, 216, 316, 322, 434, 557, 590]
+    potential_dittos: Set[int] = {92, 96, 223, 216, 316, 322, 434, 557, 590}
     weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
     valid_atk = pokemon_data.get("individual_attack") < 4
     valid_def = pokemon_data.get("individual_defense") < 4
@@ -260,8 +261,10 @@ def is_mon_ditto(pokemon_data):
     elif weather_boost is None:
         return False
     elif weather_boost > 0 and valid_boost_attrs:
+        # Weather boosted mon, but the iv is lower than threshold
         return True
     elif weather_boost == 0 and cp_multi > 0.733:
+        # Not weather boosted, but the level is > 30
         return True
     else:
         return False

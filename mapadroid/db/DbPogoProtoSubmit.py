@@ -14,6 +14,7 @@ from mapadroid.cache import NoopCache
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.GymDetailHelper import GymDetailHelper
 from mapadroid.db.helper.GymHelper import GymHelper
+from mapadroid.db.helper.PokemonDisplayHelper import PokemonDisplayHelper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.RaidHelper import RaidHelper
@@ -103,12 +104,23 @@ class DbPogoProtoSubmit:
                     if mon.seen_type not in [MonSeenTypes.encounter.name, MonSeenTypes.lure_encounter.name]:
                         # TODO: Any other types not to overwrite?
                         mon.seen_type = MonSeenTypes.wild.name
-                    mon.pokemon_id = mon_id
+                    if mon_id == 132:
+                        # handle ditto
+                        mon.pokemon_id = 132
+                        mon.gender = 3
+                        mon.costume = 0
+                        mon.form = 0
+                    else:
+                        mon.pokemon_id = mon_id
+                        mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
+                        mon.costume = wild_mon["pokemon_data"]["display"]["costume_value"]
+                        mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
+
+                    # TODO handle weather boost condition changes for redoing IV+ditto (set ivs to null again)
+                    #  Further we should probably reset IVs if pokemon_id changes as well
+
                     mon.disappear_time = despawn_time
-                    mon.gender = wild_mon["pokemon_data"]["display"]["gender_value"]
                     mon.weather_boosted_condition = wild_mon["pokemon_data"]["display"]["weather_boosted_value"]
-                    mon.costume = wild_mon["pokemon_data"]["display"]["costume_value"]
-                    mon.form = wild_mon["pokemon_data"]["display"]["form_value"]
                     mon.last_modified = now
                     try:
                         session.add(mon)
@@ -194,11 +206,19 @@ class DbPogoProtoSubmit:
                         mon.fort_id = stop_id
                         mon.seen_type = seen_type.name
                         mon.disappear_time = disappear_time
-                    mon.pokemon_id = mon_id
-                    mon.gender = gender
+
+                    if mon_id == 132:
+                        # handle ditto
+                        mon.pokemon_id = 132
+                        mon.gender = 3
+                        mon.costume = 0
+                        mon.form = 0
+                    else:
+                        mon.pokemon_id = mon_id
+                        mon.gender = gender
+                        mon.costume = costume
+                        mon.form = form
                     mon.weather_boosted_condition = weather_boosted
-                    mon.costume = costume
-                    mon.form = form
                     mon.last_modified = now
                     try:
                         session.add(mon)
@@ -256,19 +276,8 @@ class DbPogoProtoSubmit:
             capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
 
         # ditto detector
-        if is_mon_ditto(pokemon_data):
-            # mon must be a ditto :D
-            mon_id = 132
-            gender = 3
-            move_1 = 242
-            move_2 = 133
-            form = 0
-        else:
-            mon_id = pokemon_data.get("id")
-            gender = pokemon_display.get("gender_value", None)
-            move_1 = pokemon_data.get("move_1")
-            move_2 = pokemon_data.get("move_2")
-            form = pokemon_display.get("form_value", None)
+        form, gender, mon_id, move_1, move_2 = await self._extract_data_or_set_ditto(mon_id, pokemon_data,
+                                                                                     pokemon_display)
         now = DatetimeWrapper.fromtimestamp(timestamp)
         time_start_submit = time.time()
         mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
@@ -302,6 +311,7 @@ class DbPogoProtoSubmit:
         mon.last_modified = now
         logger.debug("Submitting IV {} scanned at {}", encounter_id, timestamp)
         session.add(mon)
+        await self.maybe_save_ditto(session, pokemon_display, encounter_id, mon_id, pokemon_data)
         await session.commit()
         cache_time = int(despawn_time_unix - int(DatetimeWrapper.now().timestamp()))
         if cache_time > 0:
@@ -310,6 +320,21 @@ class DbPogoProtoSubmit:
         logger.success("Done updating mon IV in DB in {} seconds", time_done)
 
         return encounter_id, is_shiny
+
+    async def _extract_data_or_set_ditto(self, mon_id, pokemon_data, pokemon_display):
+        if is_mon_ditto(pokemon_data):
+            # mon must be a ditto :D
+            mon_id = 132
+            gender = 3
+            move_1 = 242
+            move_2 = 133
+            form = 0
+        else:
+            gender = pokemon_display.get("gender_value", None)
+            move_1 = pokemon_data.get("move_1")
+            move_2 = pokemon_data.get("move_2")
+            form = pokemon_display.get("form_value", None)
+        return form, gender, mon_id, move_1, move_2
 
     async def mon_lure_iv(self, session: AsyncSession, timestamp: float,
                           encounter_proto: dict) -> Optional[Tuple[int, datetime]]:
@@ -333,18 +358,8 @@ class DbPogoProtoSubmit:
             return None
 
         # ditto detector
-        if is_mon_ditto(pokemon_data):
-            # mon must be a ditto :D
-            mon_id = 132
-            gender = 3
-            move_1 = 242
-            move_2 = 133
-            form = 0
-        else:
-            gender = display.get("gender_value", None)
-            move_1 = pokemon_data.get("move_1")
-            move_2 = pokemon_data.get("move_2")
-            form = display.get("form_value", None)
+        form, gender, mon_id, move_1, move_2 = await self._extract_data_or_set_ditto(mon_id, pokemon_data,
+                                                                                     display)
 
         capture_probability = encounter_proto.get("capture_probability", {})
         capture_probability_list = capture_probability.get("capture_probability_list", None)
@@ -387,9 +402,9 @@ class DbPogoProtoSubmit:
 
             logger.debug("Submitting IV {}", encounter_id)
             session.add(mon)
+            await self.maybe_save_ditto(session, display, encounter_id, mon_id, pokemon_data)
             await nested_transaction.commit()
             await cache.set(cache_key, 1, ex=60 * 3)
-
             time_done = time.time() - time_start_submit
             logger.success("Done updating mon lure IV in DB in {} seconds", time_done)
         return encounter_id, now
@@ -1113,3 +1128,12 @@ class DbPogoProtoSubmit:
 
     def get_time_ms(self):
         return int(time.time() * 1000)
+
+    async def maybe_save_ditto(self, session: AsyncSession, display: Dict, encounter_id: int, mon_id: int, pokemon_data: Dict):
+        if mon_id == 132:
+            # Save ditto disguise
+            await PokemonDisplayHelper.insert_ignore(session, encounter_id,
+                                                     pokemon_id=pokemon_data.get('id'),
+                                                     form=display.get("form_value", None),
+                                                     gender=display.get("gender_value", None),
+                                                     costume=display.get("costume_value", None))

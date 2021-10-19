@@ -7,7 +7,7 @@ from sqlalchemy import and_, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokemon, TrsSpawn, Pokestop, TrsStatsDetectWildMonRaw
+from mapadroid.db.model import Pokemon, TrsSpawn, Pokestop, TrsStatsDetectWildMonRaw, PokemonDisplay
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
@@ -292,19 +292,21 @@ class PokemonHelper:
     @staticmethod
     async def get_changed_since(session: AsyncSession, _timestamp: int,
                                 mon_types: Optional[Set[MonSeenTypes]] = None) -> List[Tuple[Pokemon, TrsSpawn,
-                                                                                             Optional[Pokestop]]]:
+                                                                                             Optional[Pokestop],
+                                                                                             Optional[PokemonDisplay]]]:
         if not mon_types:
             mon_types = {MonSeenTypes.encounter, MonSeenTypes.lure_encounter}
 
         raw_types: List[str] = [x.name for x in mon_types]
         if {MonSeenTypes.nearby_stop, MonSeenTypes.lure_wild, MonSeenTypes.lure_encounter} & mon_types:
             # Lured/Nearby stops are to be included in the result set...
-            stmt = select(Pokemon, TrsSpawn, Pokestop) \
+            stmt = select(Pokemon, TrsSpawn, Pokestop, PokemonDisplay) \
                 .join(TrsSpawn, TrsSpawn.spawnpoint == Pokemon.spawnpoint_id, isouter=True)
             stmt = stmt.join(Pokestop, Pokestop.pokestop_id == Pokemon.fort_id, isouter=True)
         else:
-            stmt = select(Pokemon, TrsSpawn, None) \
+            stmt = select(Pokemon, TrsSpawn, None, PokemonDisplay) \
                 .join(TrsSpawn, TrsSpawn.spawnpoint == Pokemon.spawnpoint_id, isouter=True)
+        stmt = stmt.join(PokemonDisplay, Pokemon.encounter_id == PokemonDisplay.encounter_id, isouter=True)
         stmt = stmt.where(and_(Pokemon.last_modified >= DatetimeWrapper.fromtimestamp(_timestamp),
                                Pokemon.seen_type.in_(raw_types)))
 
