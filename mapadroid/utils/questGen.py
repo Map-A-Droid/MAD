@@ -57,9 +57,9 @@ class QuestGen:
                 return
 
             if apk_locale is None:
-                self.apk_locale = {}
+                apk_locale = {}
             if remote_locale is None:
-                self.remote_locale = {}
+                remote_locale = {}
             self.locale_resources = {**apk_locale, **remote_locale}
         else:
             self.locale_resources = None
