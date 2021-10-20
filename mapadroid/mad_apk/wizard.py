@@ -37,6 +37,10 @@ class WizardError(Exception):
     pass
 
 
+class SearchError(WizardError):
+    pass
+
+
 class InvalidDownload(WizardError):
     pass
 
@@ -63,9 +67,13 @@ class APKWizard(object):
         self._db_wrapper: DbWrapper = db_wrapper
 
     async def apk_all_search(self) -> None:
-        "Search for updates for any required package"
-        await self.find_latest_pogo(APKArch.armeabi_v7a)
-        await self.find_latest_pogo(APKArch.arm64_v8a)
+        """Search for updates for any required package"""
+        try:
+            await self.find_latest_pogo(APKArch.armeabi_v7a)
+            await self.find_latest_pogo(APKArch.arm64_v8a)
+        except SearchError:
+            # The error has already been logged as a warning
+            pass
         await self.find_latest_rgc(APKArch.noarch)
         await self.find_latest_pd(APKArch.noarch)
 
@@ -111,7 +119,11 @@ class APKWizard(object):
         """
         # TODO: Async calls
         if package == APKType.pogo:
-            await self.find_latest_pogo(architecture)
+            try:
+                await self.find_latest_pogo(architecture)
+            except SearchError:
+                # The error has already been logged as a warning
+                pass
         elif package == APKType.rgc:
             await self.find_latest_rgc(architecture)
         elif package == APKType.pd:
@@ -132,7 +144,11 @@ class APKWizard(object):
                 " Please configure this to use the wizard for downloading PokemonGo."
             )
             return None
-        latest_pogo_info = await self.find_latest_pogo(architecture)
+        try:
+            latest_pogo_info = await self.find_latest_pogo(architecture)
+        except SearchError:
+            # The error has already been logged as a warning
+            return None
         if latest_pogo_info[0] is None:
             logger.warning('Unable to find latest data for PoGo. Try again later')
             return None
@@ -542,7 +558,7 @@ async def get_available_versions() -> Dict[str, PackageBase]:
             "Unable to query APKMirror. There is probably a recaptcha that needs to be solved and that "
             "functionality is not currently implemented. Please manually download and upload to the wizard"
         )
-        return {}
+        raise SearchError
     else:
         logger.info("Successfully queried APKMirror to get the latest releases")
         return available
