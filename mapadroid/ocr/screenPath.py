@@ -161,20 +161,12 @@ class WordToScreenMatching(object):
             logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:
-            if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
-                    MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
-                                               delay_after=2):
-                logger.error("_check_windows: Failed getting screenshot")
-                return ScreenType.ERROR, global_dict, diff
-
-            screenpath = await self.get_screenshot_path()
-
-            result = await self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self.origin)
-            if result is None:
-                logger.error("Failed analyzing screen")
+            result = await self._take_and_analyze_screenshot()
+            if not result:
+                logger.error("_check_windows: Failed getting/analyzing screenshot")
                 return ScreenType.ERROR, global_dict, diff
             else:
-                returntype, global_dict, self._width, self._height, diff = result
+                returntype, global_dict, diff = result
             if not global_dict:
                 self._nextscreen = ScreenType.UNDEFINED
                 logger.warning('Could not understand any text on screen - starting next round...')
@@ -308,7 +300,7 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.MARKETING:
             await self.__handle_marketing_screen(diff, global_dict)
         elif screentype == ScreenType.CONSENT:
-            self._nextscreen = await self.__handle_ggl_consent_screen()
+            screentype = await self.__handle_ggl_consent_screen()
         elif screentype == ScreenType.SN:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.UPDATE:
@@ -459,10 +451,18 @@ class WordToScreenMatching(object):
         await self.__handle_returning_player_or_wrong_credentials()
 
     async def __handle_ggl_consent_screen(self) -> ScreenType:
+        if self._width == 0 and self._height == 0:
+            logger.warning("Screen width and height are zero - try to get real values from new screenshot ...")
+            # this updates self._width, self._height
+            result = self._take_and_analyze_screenshot()
+            if not result:
+                logger.error("Failed getting/analyzing screenshot")
+                return ScreenType.ERROR
         if self._width != 720 and self._height != 1280:
-            logger.warning("The google consent screen can only be handled on 720x1280 screens")
+            logger.warning("The google consent screen can only be handled on 720x1280 screens "
+                           f"(width is {self._width}, height is {self._height})")
             return ScreenType.ERROR
-
+        logger.info("Click accept button")
         await self._communicator.click(520, 1185)
         await asyncio.sleep(10)
         return ScreenType.UNDEFINED
@@ -471,9 +471,9 @@ class WordToScreenMatching(object):
         self._nextscreen = ScreenType.UNDEFINED
         screenshot_path = await self.get_screenshot_path()
         coordinates: Optional[ScreenCoordinates] = await self._pogoWindowManager.look_for_button(
-                                                                                                 screenshot_path,
-                                                                                                 2.20, 3.01,
-                                                                                                 upper=True)
+            screenshot_path,
+            2.20, 3.01,
+            upper=True)
         if coordinates:
             await self._communicator.click(coordinates.x, coordinates.y)
             await asyncio.sleep(2)
@@ -664,3 +664,26 @@ class WordToScreenMatching(object):
         self._nextscreen = ScreenType.UNDEFINED
         click_text = 'SIGNOUT,SIGN,ABMELDEN'
         await self.__click_center_button_text(click_text, diff, global_dict)
+
+    async def _take_and_analyze_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False) -> \
+    Optional[Tuple[ScreenType,
+                   Optional[
+                       dict], int]]:
+        if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
+                MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
+                                           delay_after=2):
+            logger.error("Failed getting screenshot")
+            return None
+
+        screenpath = await self.get_screenshot_path()
+
+        result: Optional[Tuple[ScreenType,
+                               Optional[
+                                   dict], int, int, int]] = await self._pogoWindowManager.screendetection_get_type_by_screen_analysis(
+            screenpath, self.origin)
+        if result is None:
+            logger.error("Failed analyzing screen")
+            return None
+        else:
+            returntype, global_dict, self._width, self._height, diff = result
+            return returntype, global_dict, diff
