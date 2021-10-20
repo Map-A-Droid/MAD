@@ -662,7 +662,7 @@ class WordToScreenMatching(object):
 
     async def __handle_login_timeout(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        click_text = 'SIGNOUT,SIGN,ABMELDEN'
+        click_text = 'SIGNOUT,SIGN,ABMELDEN,_DECONNECTER'
         await self.__click_center_button_text(click_text, diff, global_dict)
 
     async def _take_and_analyze_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False) -> \
