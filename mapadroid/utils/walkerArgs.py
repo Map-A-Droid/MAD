@@ -214,8 +214,6 @@ def parse_args():
                         help='Username for MADmin Frontend.')
     parser.add_argument('-mmpassword', '--madmin_password', default='',
                         help='Password for MADmin Frontend.')
-    parser.add_argument('-mmsc', '--madmin_sort', default='6',
-                        help='MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)')
     parser.add_argument('-mmt', '--madmin_time', default='24',
                         help='MADmin clock format (12/24) (Default: 24)')
     parser.add_argument('-mmnrsp', '--madmin_noresponsive', action='store_false', default=True,
