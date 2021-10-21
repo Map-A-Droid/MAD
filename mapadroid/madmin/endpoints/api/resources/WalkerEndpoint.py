@@ -1,15 +1,25 @@
 from typing import Dict, List, Optional, Set
 
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
-from mapadroid.db.model import Base, SettingsWalker, SettingsWalkerToWalkerarea
+from mapadroid.db.model import Base, SettingsWalker, SettingsWalkerToWalkerarea, SettingsDevice
 from mapadroid.db.resource_definitions.Walker import Walker
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint
 
 
 class WalkerEndpoint(AbstractResourceEndpoint):
+    async def _get_unmet_dependencies(self, db_entry: SettingsWalker) -> Optional[Dict[int, str]]:
+        assigned_to_walker: List[SettingsDevice] = await SettingsDeviceHelper.get_all_assigned_to_walker(self._session,
+                                                                                                         db_entry)
+        if not assigned_to_walker:
+            return None
+        else:
+            names_of_devices: Dict[int, str] = {device.device_id: device.name for device in assigned_to_walker}
+            return names_of_devices
+
     async def _delete_connected_prior(self, db_entry):
         pass
 

@@ -38,23 +38,26 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                                                    methodology=DataHandlingMethodology.UPDATE)
 
     async def delete(self) -> web.Response:
-        # TODO: Handle dependencies/foreign key restraints
         identifier = self.request.match_info.get('identifier', None)
         if not identifier:
             return await self._json_response(self.request.method, status=405)
         db_entry: Optional[Base] = await self._fetch_from_db(identifier)
         if not db_entry:
             return await self._json_response(self.request.method, status=404)
+        # Check dependencies. If there are any, we need to abort and return a proper response
+        unmet_dependencies: Optional[Dict[int, str]] = await self._get_unmet_dependencies(db_entry)
+        if unmet_dependencies:
+            formatted: List[Dict] = [{"uri": elem_id, "name": name} for elem_id, name in unmet_dependencies.items()]
+            return await self._json_response(formatted, status=412)
         try:
-            # TODO: 2 different methods...
             await self._delete_connected_prior(db_entry)
         except pymysql.err.IntegrityError as e:
-            logger.debug("Failed deleting connected prio to deleting the main item. {}", e)
+            logger.warning("Failed deleting connected prio to deleting the main item. {}", e)
         await self._delete(db_entry)
         try:
             await self._delete_connected_post(db_entry)
         except pymysql.err.IntegrityError as e:
-            logger.debug("Failed deleting connected after deleting the main item. {}", e)
+            logger.warning("Failed deleting connected after deleting the main item. {}", e)
         headers = {
             'X-Status': 'Successfully deleted the object'
         }
@@ -325,6 +328,19 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         """
         return False
 
+    async def _check_dependencies_met(self, db_entry) -> bool:
+        """
+
+        Args:
+            db_entry:
+
+        Returns: True if dependencies are met, i.e. no nullable=False columns will be violated after deletion that
+        are not to be handled automatically. For example, deleting a walker shall be disallowed unless there are no
+        devices assigned to it.
+
+        """
+        return True
+
     @abstractmethod
     async def _delete_connected_prior(self, db_entry):
         pass
@@ -332,3 +348,17 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
     @abstractmethod
     async def _delete_connected_post(self, db_entry):
         pass
+
+    async def _get_unmet_dependencies(self, db_entry) -> Optional[Dict[int, str]]:
+        """
+
+        Args:
+            db_entry:
+
+        Returns: Dict of ID, human-readable strings if dependencies have not been met,, i.e. nullable=False columns will
+        be violated after deletion that are not to be handled automatically. For example, deleting a walker shall be
+        disallowed unless there are no
+        devices assigned to it.
+
+        """
+        return None

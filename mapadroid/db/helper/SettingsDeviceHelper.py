@@ -4,7 +4,7 @@ from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import SettingsDevice, AutoconfigRegistration
+from mapadroid.db.model import SettingsDevice, AutoconfigRegistration, SettingsWalker
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -60,6 +60,12 @@ class SettingsDeviceHelper:
     @staticmethod
     async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsDevice]:
         stmt = select(SettingsDevice).where(SettingsDevice.instance_id == instance_id)
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_all_assigned_to_walker(session: AsyncSession, walker: SettingsWalker) -> List[SettingsDevice]:
+        stmt = select(SettingsDevice).where(SettingsDevice.walker_id == walker.walker_id)
         result = await session.execute(stmt)
         return result.scalars().all()
 
