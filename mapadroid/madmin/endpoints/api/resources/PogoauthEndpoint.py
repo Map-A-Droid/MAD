@@ -8,6 +8,12 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 
 class PogoauthEndpoint(AbstractResourceEndpoint):
+    async def _get_unmet_dependencies(self, db_entry: SettingsPogoauth) -> Optional[Dict[int, str]]:
+        if db_entry.device_id is not None:
+            return {db_entry.device_id: f"PogoAuth entry {db_entry.account_id} is still assigned to device {db_entry.device}"}
+        else:
+            return None
+
     async def _delete_connected_prior(self, db_entry):
         pass
 

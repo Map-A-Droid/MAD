@@ -4,7 +4,7 @@ from sqlalchemy import and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import SettingsWalker, SettingsWalkerToWalkerarea
+from mapadroid.db.model import SettingsWalker, SettingsWalkerToWalkerarea, SettingsWalkerarea
 
 
 class SettingsWalkerToWalkerareaHelper:
@@ -15,6 +15,12 @@ class SettingsWalkerToWalkerareaHelper:
             .join(SettingsWalker, and_(SettingsWalkerToWalkerarea.walker_id == SettingsWalker.walker_id,
                                        SettingsWalker.instance_id == instance_id), isouter=True) \
             .order_by(SettingsWalkerToWalkerarea.area_order)
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_all_of_walkerarea(session: AsyncSession, walkerarea: SettingsWalkerarea) -> List[SettingsWalkerToWalkerarea]:
+        stmt = select(SettingsWalkerToWalkerarea).where(SettingsWalkerToWalkerarea.walkerarea_id == walkerarea.walkerarea_id)
         result = await session.execute(stmt)
         return result.scalars().all()
 

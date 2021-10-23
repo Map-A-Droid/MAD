@@ -1,10 +1,11 @@
-from typing import Optional
+import json
+from typing import Optional, List
 
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import AutoconfigFile
+from mapadroid.db.model import AutoconfigFile, SettingsAuth
 
 
 class AutoconfigFileHelper:
@@ -14,6 +15,20 @@ class AutoconfigFileHelper:
                                                  AutoconfigFile.name == name))
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def get_assigned_to_auth(session: AsyncSession, auth: SettingsAuth) -> List[AutoconfigFile]:
+        stmt = select(AutoconfigFile).where(AutoconfigFile.instance_id == auth.instance_id)
+        result = await session.execute(stmt)
+        assigned: List[AutoconfigFile] = []
+        for autoconfig_file in result.scalars().all():
+            data = json.loads(autoconfig_file.data)
+            if 'mad_auth' not in data or not data['mad_auth']:
+                continue
+            elif data['mad_auth'] != auth.auth_id:
+                continue
+            assigned.append(autoconfig_file)
+        return assigned
 
     @staticmethod
     async def insert_or_update(session: AsyncSession, instance_id: int,

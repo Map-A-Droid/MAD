@@ -1,13 +1,29 @@
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
 
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper import SettingsRoutecalcHelper
-from mapadroid.db.model import Base, SettingsRoutecalc
+from mapadroid.db.model import Base, SettingsRoutecalc, SettingsArea
 from mapadroid.db.resource_definitions.Routecalc import Routecalc
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint
 
 
 class RoutecalcEndpoint(AbstractResourceEndpoint):
+    async def _get_unmet_dependencies(self, db_entry: SettingsRoutecalc) -> Optional[Dict[int, str]]:
+        db_wrapper: DbWrapper = self._get_db_wrapper()
+        areas: Dict[int, SettingsArea] = await db_wrapper.get_all_areas(self._session)
+        areas_with_routecalc: List[SettingsArea] = []
+        for area_id, area in areas.values():
+            routecalc_id: Optional[int] = getattr(area, "routecalc")
+            if routecalc_id and routecalc_id == db_entry.routecalc_id:
+                areas_with_routecalc.append(area)
+
+        if not areas_with_routecalc:
+            return None
+        else:
+            mapped: Dict[int, str] = {area.area_id: f"area {area.name} ({area.area_id}) is still connected to routecalc" for area in areas_with_routecalc}
+            return mapped
+
     async def _delete_connected_prior(self, db_entry):
         pass
 

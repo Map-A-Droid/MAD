@@ -1,13 +1,29 @@
 from typing import Dict, List, Optional, Set
 
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.model import Base, SettingsMonivlist
+from mapadroid.db.model import Base, SettingsMonivlist, SettingsArea
 from mapadroid.db.resource_definitions.MonIvList import MonIvList
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
     AbstractResourceEndpoint)
 
 
 class MonIvListEndpoint(AbstractResourceEndpoint):
+    async def _get_unmet_dependencies(self, db_entry: SettingsMonivlist) -> Optional[Dict[int, str]]:
+        db_wrapper: DbWrapper = self._get_db_wrapper()
+        areas: Dict[int, SettingsArea] = await db_wrapper.get_all_areas(self._session)
+        areas_with_mon_iv_list: List[SettingsArea] = []
+        for area_id, area in areas.values():
+            monlist_id: Optional[int] = getattr(area, "monlist_id")
+            if monlist_id and monlist_id == db_entry.monlist_id:
+                areas_with_mon_iv_list.append(area)
+
+        if not areas_with_mon_iv_list:
+            return None
+        else:
+            mapped: Dict[int, str] = {area.area_id: str(area.name) for area in areas_with_mon_iv_list}
+            return mapped
+
     async def _delete_connected_post(self, db_entry):
         pass
 

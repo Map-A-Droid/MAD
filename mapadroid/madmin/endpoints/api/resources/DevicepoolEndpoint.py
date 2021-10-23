@@ -1,14 +1,23 @@
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
 
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsDevicepoolHelper import \
     SettingsDevicepoolHelper
-from mapadroid.db.model import Base, SettingsDevicepool
+from mapadroid.db.model import Base, SettingsDevicepool, SettingsDevice
 from mapadroid.db.resource_definitions.Devicepool import Devicepool
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint
 
 
 class DevicepoolEndpoint(AbstractResourceEndpoint):
+    async def _get_unmet_dependencies(self, db_entry: SettingsDevicepool) -> Optional[Dict[int, str]]:
+        assigned_to_pool: List[SettingsDevice] = await SettingsDeviceHelper.get_assigned_to_pool(self._session, db_entry)
+        if not assigned_to_pool:
+            return None
+        else:
+            mapped: Dict[int, str] = {device.device_id: f"Device {device.name} is still assigned" for device in assigned_to_pool}
+            return mapped
+
     async def _delete_connected_prior(self, db_entry):
         pass
 

@@ -1,11 +1,12 @@
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
 
 import sqlalchemy
 from aiohttp import web
 from loguru import logger
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
-from mapadroid.db.model import Base, SettingsArea, SettingsRoutecalc
+from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
+from mapadroid.db.model import Base, SettingsArea, SettingsRoutecalc, SettingsWalkerarea
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
@@ -17,6 +18,15 @@ from mapadroid.worker.WorkerType import WorkerType
 
 
 class AreaEndpoint(AbstractResourceEndpoint):
+    async def _get_unmet_dependencies(self, db_entry: SettingsArea) -> Optional[Dict[int, str]]:
+        assigned_to_area: List[SettingsWalkerarea] = await SettingsWalkerareaHelper.get_all_of_area(self._session,
+                                                                                                    db_entry.area_id)
+        if not assigned_to_area:
+            return None
+        else:
+            mapped: Dict[int, str] = {walkerarea.walkerarea_id: walkerarea.name for walkerarea in assigned_to_area}
+            return mapped
+
     async def _delete_connected_prior(self, db_entry):
         pass
 

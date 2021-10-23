@@ -4,7 +4,7 @@ from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import SettingsDevice, AutoconfigRegistration, SettingsWalker
+from mapadroid.db.model import SettingsDevice, AutoconfigRegistration, SettingsWalker, SettingsDevicepool
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -87,3 +87,9 @@ class SettingsDeviceHelper:
                         AutoconfigRegistration.session_id == session_id))
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def get_assigned_to_pool(session: AsyncSession, pool: SettingsDevicepool) -> List[SettingsDevice]:
+        stmt = select(SettingsDevice).where(SettingsDevice.pool_id == pool.pool_id)
+        result = await session.execute(stmt)
+        return result.scalars().all()

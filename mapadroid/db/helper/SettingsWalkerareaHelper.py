@@ -5,13 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import SettingsWalkerToWalkerareaHelper
-from mapadroid.db.model import SettingsWalkerarea, SettingsWalkerToWalkerarea
+from mapadroid.db.model import SettingsWalkerarea, SettingsWalkerToWalkerarea, SettingsArea
 
 
 class SettingsWalkerareaHelper:
     @staticmethod
     async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsWalkerarea]:
         stmt = select(SettingsWalkerarea).where(SettingsWalkerarea.instance_id == instance_id)
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_all_of_area(session: AsyncSession, area_id: int) -> List[SettingsWalkerarea]:
+        stmt = select(SettingsWalkerarea).where(SettingsWalkerarea.area_id == area_id)
         result = await session.execute(stmt)
         return result.scalars().all()
 

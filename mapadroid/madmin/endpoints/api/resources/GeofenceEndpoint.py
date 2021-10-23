@@ -1,13 +1,31 @@
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
 
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
-from mapadroid.db.model import Base, SettingsGeofence
+from mapadroid.db.model import Base, SettingsGeofence, SettingsArea
 from mapadroid.db.resource_definitions.Geofence import Geofence
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint
 
 
 class GeofenceEndpoint(AbstractResourceEndpoint):
+    async def _get_unmet_dependencies(self, db_entry: SettingsGeofence) -> Optional[Dict[int, str]]:
+        db_wrapper: DbWrapper = self._get_db_wrapper()
+        areas: Dict[int, SettingsArea] = await db_wrapper.get_all_areas(self._session)
+        areas_with_geofence: List[SettingsArea] = []
+        for area_id, area in areas.values():
+            geofence_included = getattr(area, "geofence_included")
+            geofence_excluded = getattr(area, "geofence_excluded")
+            if (geofence_included and geofence_included == db_entry.geofence_id
+                    or geofence_excluded and geofence_excluded == db_entry.geofence_id):
+                areas_with_geofence.append(area)
+
+        if not areas_with_geofence:
+            return None
+        else:
+            mapped: Dict[int, str] = {area.area_id: str(area.name) for area in areas_with_geofence}
+            return mapped
+
     async def _delete_connected_prior(self, db_entry):
         pass
 
