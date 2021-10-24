@@ -12,7 +12,7 @@ class PokemonDisplayHelper:
                             gender: Optional[int] = None, form: Optional[int] = None,
                             costume: Optional[int] = None) -> None:
         # SQL Specific IGNORE to execute INSERT IGNORE INTO
-        stmt = insert(PokemonDisplay.__tablename__).prefix_with("IGNORE") \
+        stmt = insert(PokemonDisplay).prefix_with("IGNORE") \
             .values(encounter_id=encounter_id,
                     pokemon=pokemon_id,
                     gender=gender,
