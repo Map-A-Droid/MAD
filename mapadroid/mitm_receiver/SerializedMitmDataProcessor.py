@@ -1,13 +1,12 @@
 import asyncio
 import time
 from datetime import datetime
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional
 
 import sqlalchemy
 from loguru import logger
 from aioredis import Redis
-
-from mapadroid.cache import NoopCache
+from sqlalchemy.exc import IntegrityError
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
@@ -152,7 +151,8 @@ class SerializedMitmDataProcessor:
             if application_args.game_stats and encounter:
                 encounter_id, is_shiny = encounter
                 loop = asyncio.get_running_loop()
-                loop.create_task(self.__stats_handler.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny))
+                loop.create_task(self.__stats_handler.stats_collect_mon_iv(origin, encounter_id, received_date,
+                                                                           is_shiny))
             end_time = self.get_time_ms() - start_time
             logger.debug("Done processing encounter in {}ms", end_time)
         else:
@@ -163,8 +163,8 @@ class SerializedMitmDataProcessor:
         loop = asyncio.get_running_loop()
         weather_task = loop.create_task(self.__process_weather(data, received_timestamp))
         stops_task = loop.create_task(self.__process_stops(data))
-        gyms_task = loop.create_task(self.__process_gyms(data))
-        raids_task = loop.create_task(self.__process_raids(data))
+        gyms_task = loop.create_task(self.__process_gyms(data, received_timestamp))
+        raids_task = loop.create_task(self.__process_raids(data, received_timestamp))
         spawnpoints_task = loop.create_task(self.__process_spawnpoints(data, received_timestamp))
         cells_task = loop.create_task(self.__process_cells(data))
         mons_task = loop.create_task(self.__process_wild_mons(data, received_timestamp))
@@ -288,23 +288,23 @@ class SerializedMitmDataProcessor:
         spawnpoints_time = self.get_time_ms() - spawnpoints_time_start
         return spawnpoints_time
 
-    async def __process_raids(self, data):
+    async def __process_raids(self, data, timestamp: int):
         raids_time_start = self.get_time_ms()
         async with self.__db_wrapper as session, session:
             try:
-                await self.__db_submit.raids(session, data["payload"])
+                await self.__db_submit.raids(session, data["payload"], timestamp)
                 await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting raids: {}", e)
         raids_time = self.get_time_ms() - raids_time_start
         return raids_time
 
-    async def __process_gyms(self, data):
+    async def __process_gyms(self, data, received_timestamp: int):
         gyms_time_start = self.get_time_ms()
         # TODO: If return value False, rollback transaction?
         async with self.__db_wrapper as session, session:
             try:
-                await self.__db_submit.gyms(session, data["payload"])
+                await self.__db_submit.gyms(session, data["payload"], received_timestamp)
                 await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting gyms: {}", e)
@@ -340,7 +340,7 @@ class SerializedMitmDataProcessor:
         if 'inventory_delta' not in data:
             logger.debug2('gen_player_stats cannot generate new stats')
             return
-        cache: Union[Redis, NoopCache] = await self.__db_wrapper.get_cache()
+        cache: Redis = await self.__db_wrapper.get_cache()
         cache_key: str = f"inv_data_{origin}_processed"
         if await cache.exists(cache_key):
             return

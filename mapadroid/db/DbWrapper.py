@@ -44,6 +44,7 @@ class DbWrapper:
         self.__instance_id: Optional[int] = None
 
     async def setup(self) -> None:
+        await self.proto_submit.setup()
         try:
             async with self as session, session:
                 await self.update_instance_id(session)

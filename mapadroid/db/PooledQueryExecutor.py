@@ -36,17 +36,14 @@ class PooledQueryExecutor:
         with self._pool_mutex:
             await self._init_pool()
             await self._db_accessor.setup()
-            if self.args.enable_cache:
-                redis_credentials = {"host": self.args.cache_host, "port": self.args.cache_port}
-                if self.args.cache_password:
-                    redis_credentials["password"] = self.args.cache_password
-                if self.args.cache_database:
-                    redis_credentials["db"] = self.args.cache_password
-                self._redis_cache: Redis = await aioredis.Redis(**redis_credentials)
-            else:
-                self._redis_cache: NoopCache = NoopCache()
+            redis_credentials = {"host": self.args.cache_host, "port": self.args.cache_port}
+            if self.args.cache_password:
+                redis_credentials["password"] = self.args.cache_password
+            if self.args.cache_database:
+                redis_credentials["db"] = self.args.cache_database
+            self._redis_cache: Redis = await aioredis.Redis(**redis_credentials)
 
-    async def get_cache(self) -> Union[Redis, NoopCache]:
+    async def get_cache(self) -> Redis:
         if self._redis_cache is None:
             await self.setup()
         return self._redis_cache
