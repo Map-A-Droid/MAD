@@ -77,7 +77,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
             speed = int(25)
             max_distance = int(200)
 
-        if (speed == 0 or
+        if (not speed or speed == 0 or
                 (max_distance and 0 < max_distance < distance) or
                 (self._worker_state.last_location.lat == 0.0 and self._worker_state.last_location.lng == 0.0)):
             logger.debug("main: Teleporting...")
