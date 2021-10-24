@@ -6,7 +6,6 @@ from typing import Optional, Union
 
 from aioredis import Redis
 
-from mapadroid.cache import NoopCache
 from mapadroid.data_handler.grpc.StatsHandlerClient import StatsHandlerClient
 from mapadroid.data_handler.grpc.StatsHandlerClientConnector import StatsHandlerClientConnector
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
@@ -211,7 +210,7 @@ async def start():
                 event_task.cancel()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
-                cache: Union[Redis, NoopCache] = db_wrapper.get_cache()
+                cache: Redis = await db_wrapper.get_cache()
                 await cache.close()
                 db_exec.shutdown()
                 logger.debug("Done shutting down db_pool_manager")

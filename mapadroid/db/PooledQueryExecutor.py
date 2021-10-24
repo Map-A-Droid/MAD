@@ -5,7 +5,6 @@ from typing import Optional, Union
 import aioredis as aioredis
 from aioredis import Redis
 
-from mapadroid.cache import NoopCache
 from mapadroid.db.DbAccessor import DbAccessor
 from loguru import logger
 from alembic.config import Config
@@ -26,7 +25,7 @@ class PooledQueryExecutor:
 
         self._db_accessor: Optional[DbAccessor] = None
         self._async_db_initiated = False
-        self._redis_cache: Optional[Union[Redis, NoopCache]] = None
+        self._redis_cache: Optional[Redis] = None
 
     def get_db_accessor(self) -> DbAccessor:
         return self._db_accessor

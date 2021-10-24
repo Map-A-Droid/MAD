@@ -5,7 +5,6 @@ from typing import Dict, Optional, Union
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.cache import NoopCache
 from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
@@ -132,8 +131,8 @@ class DbWrapper:
         else:
             return None
 
-    async def get_cache(self) -> Union[Redis, NoopCache]:
-        cache: Union[Redis, NoopCache] = await self._db_exec.get_cache()
+    async def get_cache(self) -> Redis:
+        cache: Redis = await self._db_exec.get_cache()
         return cache
 
 

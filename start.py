@@ -7,7 +7,6 @@ from typing import Optional, Union
 from aiohttp import web
 from aioredis import Redis
 
-from mapadroid.cache import NoopCache
 from mapadroid.data_handler.StandaloneMitmMapperAndStatsHandler import StandaloneMitmMapperAndStatsHandler
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
@@ -226,7 +225,7 @@ async def start():
             #    storage_manager.shutdown()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
-                cache: Union[Redis, NoopCache] = db_wrapper.get_cache()
+                cache: Redis = await db_wrapper.get_cache()
                 await cache.close()
                 db_exec.shutdown()
                 logger.debug("Done shutting down db_pool_manager")

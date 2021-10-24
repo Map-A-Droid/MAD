@@ -7,7 +7,6 @@ from typing import Optional, Union
 from aiohttp import web
 from aioredis import Redis
 
-from mapadroid.cache import NoopCache
 from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
 from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
     MitmMapperClientConnector
@@ -122,7 +121,7 @@ async def start():
                 await mitm_mapper_connector.close()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
-                cache: Union[Redis, NoopCache] = db_wrapper.get_cache()
+                cache: Redis = await db_wrapper.get_cache()
                 await cache.close()
                 db_exec.shutdown()
         except Exception:
