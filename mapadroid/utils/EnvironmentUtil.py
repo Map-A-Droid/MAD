@@ -8,7 +8,7 @@ from websockets.exceptions import WebSocketException
 import pkg_resources
 
 from mapadroid.utils.logging import get_logger, LoggerEnums, InterceptHandler
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import application_args, WebsocketWorkerConnectionClosedException
 
 logger = get_logger(LoggerEnums.system)
 
@@ -78,7 +78,7 @@ def install_task_create_excepthook():
             task.result()
         except asyncio.CancelledError as e:
             pass  # Task cancellation should not be logged as an error.
-        except (IndexError, WebSocketException) as e:
+        except (IndexError, WebSocketException, WebsocketWorkerConnectionClosedException) as e:
             pass  # We regularly throw index error in prioQ, websocket exceptions should be handled anyway as well
         # Ad the pylint ignore: we want to handle all exceptions here so that the result of the task
         # is properly logged. There is no point re-raising the exception in this callback.

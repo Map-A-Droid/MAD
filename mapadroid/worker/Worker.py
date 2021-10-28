@@ -52,7 +52,6 @@ class Worker(AbstractWorker):
         async with self._work_mutex:
             if self._scan_task:
                 self._scan_task.cancel()
-                self._scan_task = None
 
     async def set_devicesettings_value(self, key: MappingManagerDevicemappingKey, value: Optional[Any]):
         await self._mapping_manager.set_devicesetting_value_of(self._worker_state.origin, key, value)
@@ -119,10 +118,8 @@ class Worker(AbstractWorker):
         async with self._work_mutex:
             if self._scan_task:
                 self._scan_task.cancel()
-                self._scan_task = None
             if self._worker_task:
                 self._worker_task.cancel()
-                self._worker_task = None
         await self._scan_strategy.worker_specific_setup_stop()
         await self._internal_cleanup()
 
@@ -139,6 +136,8 @@ class Worker(AbstractWorker):
     async def _internal_cleanup(self):
         if self._scan_strategy:
             await self._scan_strategy.get_communicator().cleanup()
+
+    # TODO: Fix worker_task and scan_task cleanup to catch racing
 
     async def _run(self) -> None:
         # TODO: when to break?

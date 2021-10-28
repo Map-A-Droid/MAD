@@ -10,6 +10,8 @@ from mapadroid.db.resource_definitions.Device import Device
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
     AbstractResourceEndpoint)
 
+from loguru import logger
+
 
 class DeviceEndpoint(AbstractResourceEndpoint):
     async def _delete_connected_post(self, db_entry):
@@ -65,7 +67,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
             if not identifier:
                 return await self._json_response(self.request.method, status=405)
             device: Optional[SettingsDevice] = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),
-                                                                              identifier)
+                                                                              int(identifier))
             try:
                 if not device:
                     return await self._json_response(status=404)

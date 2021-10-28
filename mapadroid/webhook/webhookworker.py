@@ -411,7 +411,7 @@ class WebhookWorker:
 
         for mon in mon_data:
             if self.__is_in_excluded_area([mon["latitude"], mon["longitude"]]):
-                logger.debug2("Webhook ignoring (excluded area) mon ID {} with encounter ID {}. Stats: {}/{}/{}",
+                logger.debug3("Webhook ignoring (excluded area) mon ID {} with encounter ID {}. Stats: {}/{}/{}",
                               mon["pokemon_id"],
                               mon["encounter_id"],
                               mon.get("individual_attack"),
@@ -461,7 +461,7 @@ class WebhookWorker:
 
             if mon["individual_stamina"] is not None:
                 mon_payload["individual_stamina"] = mon["individual_stamina"]
-            logger.debug2("Webhook sending mon ID {} with encounter ID {}. Stats: {}/{}/{}", mon["pokemon_id"],
+            logger.debug3("Webhook sending mon ID {} with encounter ID {}. Stats: {}/{}/{}", mon["pokemon_id"],
                           mon["encounter_id"],
                           mon.get("individual_attack"),
                           mon.get("individual_defense"),

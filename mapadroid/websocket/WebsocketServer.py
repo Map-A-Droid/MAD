@@ -255,7 +255,8 @@ class WebsocketServer(object):
             logger.info("Updating strategy")
             await entry.worker_instance.set_scan_strategy(scan_strategy)
         communicator.worker_instance_ref = entry.worker_instance
-        return await entry.worker_instance.start_worker()
+        async with self.__current_users_mutex:
+            return await entry.worker_instance.start_worker()
 
     async def __authenticate_connection(self, websocket_client_connection: websockets.WebSocketClientProtocol) \
             -> Tuple[Optional[str], bool]:

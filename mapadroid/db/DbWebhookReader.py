@@ -177,7 +177,7 @@ class DbWebhookReader:
                 "seen_type": mon.seen_type,
                 "display_pokemon": mon_display.pokemon if mon_display else None,
                 "display_form": mon_display.form if mon_display else None,
-                "display_costume": mon_display.costumer if mon_display else None,
+                "display_costume": mon_display.costume if mon_display else None,
                 "display_gender": mon_display.gender if mon_display else None,
             })
         return ret
