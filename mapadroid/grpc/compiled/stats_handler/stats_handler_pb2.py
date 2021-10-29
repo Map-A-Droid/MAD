@@ -26,7 +26,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n!stats_handler/stats_handler.proto\x12\x17mapadroid.stats_handler\x1a\x15shared/Location.proto\x1a\x10shared/Ack.proto\x1a\x19shared/PositionType.proto\x1a\x1ashared/TransportType.proto\x1a\x19shared/MonSeenTypes.proto\x1a\x13shared/Worker.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xd9\x03\n\x05Stats\x12-\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.WorkerH\x01\x88\x01\x01\x12\x16\n\ttimestamp\x18\x02 \x01(\x04H\x02\x88\x01\x01\x12:\n\twild_mons\x18\x03 \x01(\x0b\x32%.mapadroid.stats_handler.StatsWildMonH\x00\x12\x35\n\x06mon_iv\x18\x04 \x01(\x0b\x32#.mapadroid.stats_handler.StatsMonIvH\x00\x12\x34\n\x05quest\x18\x05 \x01(\x0b\x32#.mapadroid.stats_handler.StatsQuestH\x00\x12\x32\n\x04raid\x18\x06 \x01(\x0b\x32\".mapadroid.stats_handler.StatsRaidH\x00\x12\x43\n\rlocation_data\x18\x07 \x01(\x0b\x32*.mapadroid.stats_handler.StatsLocationDataH\x00\x12;\n\tseen_type\x18\x08 \x01(\x0b\x32&.mapadroid.stats_handler.StatsSeenTypeH\x00\x42\x11\n\x0f\x64\x61ta_to_collectB\t\n\x07_workerB\x0c\n\n_timestamp\"%\n\x0cStatsWildMon\x12\x15\n\rencounter_ids\x18\x01 \x03(\x04\"4\n\nStatsMonIv\x12\x14\n\x0c\x65ncounter_id\x18\x01 \x01(\x04\x12\x10\n\x08is_shiny\x18\x02 \x01(\x08\"\x0c\n\nStatsQuest\"\x0b\n\tStatsRaid\"\x81\x02\n\x11StatsLocationData\x12,\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.Location\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x15\n\rfix_timestamp\x18\x03 \x01(\x04\x12\x16\n\x0e\x64\x61ta_timestamp\x18\x04 \x01(\x04\x12\x35\n\rposition_type\x18\x05 \x01(\x0e\x32\x1e.mapadroid.shared.PositionType\x12\x0e\n\x06walker\x18\x06 \x01(\t\x12\x37\n\x0etransport_type\x18\x07 \x01(\x0e\x32\x1f.mapadroid.shared.TransportType\"a\n\rStatsSeenType\x12\x15\n\rencounter_ids\x18\x01 \x03(\x04\x12\x39\n\x11type_of_detection\x18\x02 \x01(\x0e\x32\x1e.mapadroid.shared.MonSeenTypes2U\n\x0cStatsHandler\x12\x45\n\x0cStatsCollect\x12\x1e.mapadroid.stats_handler.Stats\x1a\x15.mapadroid.shared.Ackb\x06proto3'
+  serialized_pb=b'\n!stats_handler/stats_handler.proto\x12\x17mapadroid.stats_handler\x1a\x15shared/Location.proto\x1a\x10shared/Ack.proto\x1a\x19shared/PositionType.proto\x1a\x1ashared/TransportType.proto\x1a\x19shared/MonSeenTypes.proto\x1a\x13shared/Worker.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xd9\x03\n\x05Stats\x12-\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.WorkerH\x01\x88\x01\x01\x12\x16\n\ttimestamp\x18\x02 \x01(\x04H\x02\x88\x01\x01\x12:\n\twild_mons\x18\x03 \x01(\x0b\x32%.mapadroid.stats_handler.StatsWildMonH\x00\x12\x35\n\x06mon_iv\x18\x04 \x01(\x0b\x32#.mapadroid.stats_handler.StatsMonIvH\x00\x12\x34\n\x05quest\x18\x05 \x01(\x0b\x32#.mapadroid.stats_handler.StatsQuestH\x00\x12\x32\n\x04raid\x18\x06 \x01(\x0b\x32\".mapadroid.stats_handler.StatsRaidH\x00\x12\x43\n\rlocation_data\x18\x07 \x01(\x0b\x32*.mapadroid.stats_handler.StatsLocationDataH\x00\x12;\n\tseen_type\x18\x08 \x01(\x0b\x32&.mapadroid.stats_handler.StatsSeenTypeH\x00\x42\x11\n\x0f\x64\x61ta_to_collectB\t\n\x07_workerB\x0c\n\n_timestamp\"%\n\x0cStatsWildMon\x12\x15\n\rencounter_ids\x18\x01 \x03(\x04\"4\n\nStatsMonIv\x12\x14\n\x0c\x65ncounter_id\x18\x01 \x01(\x04\x12\x10\n\x08is_shiny\x18\x02 \x01(\x08\"\x0c\n\nStatsQuest\"\x1b\n\tStatsRaid\x12\x0e\n\x06\x61mount\x18\x01 \x01(\r\"\x81\x02\n\x11StatsLocationData\x12,\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.Location\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x15\n\rfix_timestamp\x18\x03 \x01(\x04\x12\x16\n\x0e\x64\x61ta_timestamp\x18\x04 \x01(\x04\x12\x35\n\rposition_type\x18\x05 \x01(\x0e\x32\x1e.mapadroid.shared.PositionType\x12\x0e\n\x06walker\x18\x06 \x01(\t\x12\x37\n\x0etransport_type\x18\x07 \x01(\x0e\x32\x1f.mapadroid.shared.TransportType\"a\n\rStatsSeenType\x12\x15\n\rencounter_ids\x18\x01 \x03(\x04\x12\x39\n\x11type_of_detection\x18\x02 \x01(\x0e\x32\x1e.mapadroid.shared.MonSeenTypes2U\n\x0cStatsHandler\x12\x45\n\x0cStatsCollect\x12\x1e.mapadroid.stats_handler.Stats\x1a\x15.mapadroid.shared.Ackb\x06proto3'
   ,
   dependencies=[shared_dot_Location__pb2.DESCRIPTOR,shared_dot_Ack__pb2.DESCRIPTOR,shared_dot_PositionType__pb2.DESCRIPTOR,shared_dot_TransportType__pb2.DESCRIPTOR,shared_dot_MonSeenTypes__pb2.DESCRIPTOR,shared_dot_Worker__pb2.DESCRIPTOR,google_dot_protobuf_dot_struct__pb2.DESCRIPTOR,])
 
@@ -233,6 +233,13 @@ _STATSRAID = _descriptor.Descriptor(
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
+    _descriptor.FieldDescriptor(
+      name='amount', full_name='mapadroid.stats_handler.StatsRaid.amount', index=0,
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -246,7 +253,7 @@ _STATSRAID = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=819,
-  serialized_end=830,
+  serialized_end=846,
 )
 
 
@@ -319,8 +326,8 @@ _STATSLOCATIONDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=833,
-  serialized_end=1090,
+  serialized_start=849,
+  serialized_end=1106,
 )
 
 
@@ -358,8 +365,8 @@ _STATSSEENTYPE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1092,
-  serialized_end=1189,
+  serialized_start=1108,
+  serialized_end=1205,
 )
 
 _STATS.fields_by_name['worker'].message_type = shared_dot_Worker__pb2._WORKER
@@ -464,8 +471,8 @@ _STATSHANDLER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=1191,
-  serialized_end=1276,
+  serialized_start=1207,
+  serialized_end=1292,
   methods=[
   _descriptor.MethodDescriptor(
     name='StatsCollect',

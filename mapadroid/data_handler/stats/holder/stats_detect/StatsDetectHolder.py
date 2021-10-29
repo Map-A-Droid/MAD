@@ -24,8 +24,8 @@ class StatsDetectHolder(AbstractStatsHolder, AbstractWorkerHolder):
     def add_mon(self, time_scanned: datetime) -> None:
         self._entry.update(time_scanned, new_mons=1)
 
-    def add_raid(self, time_scanned: datetime) -> None:
-        self._entry.update(time_scanned, new_raids=1)
+    def add_raid(self, time_scanned: datetime, amount: int = 1) -> None:
+        self._entry.update(time_scanned, new_raids=amount)
 
     def add_mon_iv(self, time_scanned: datetime) -> None:
         self._entry.update(time_scanned, new_mon_ivs=1)

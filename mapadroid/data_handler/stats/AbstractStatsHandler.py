@@ -31,7 +31,7 @@ class AbstractStatsHandler(ABC):
         pass
 
     @abstractmethod
-    async def stats_collect_raid(self, worker: str, time_scanned: datetime) -> None:
+    async def stats_collect_raid(self, worker: str, time_scanned: datetime, amount_raids: int = 1) -> None:
         pass
 
     @abstractmethod

@@ -190,7 +190,7 @@ class SerializedMitmDataProcessor:
             lure_encounter_ids, lure_processing_time = await lure_no_iv_task
 
         weather_time = await weather_task
-        raids_time = await raids_task
+        raids_time, amount_raids = await raids_task
         spawnpoints_time = await spawnpoints_task
         cells_time = await cells_task
         stops_time = await stops_task
@@ -207,17 +207,20 @@ class SerializedMitmDataProcessor:
                                                           wild_encounter_ids_in_gmo,
                                                           nearby_cell_encounter_ids,
                                                           nearby_stop_encounter_ids,
-                                                          lure_encounter_ids))
+                                                          lure_encounter_ids,
+                                                          amount_raids))
 
     async def __fire_stats_gmo_submission(self, worker: str, time_received_raw: datetime,
                                           wild_mon_encounter_ids_in_gmo: List[int],
                                           nearby_cell_mons: List[int],
                                           nearby_fort_mons: List[int],
-                                          lure_mons: List[int]):
+                                          lure_mons: List[int],
+                                          amount_raids: int):
         await self.__stats_handler.stats_collect_wild_mon(worker, wild_mon_encounter_ids_in_gmo, time_received_raw)
         await self.__stats_handler.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.nearby_cell, time_received_raw)
         await self.__stats_handler.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.nearby_stop, time_received_raw)
         await self.__stats_handler.stats_collect_seen_type(lure_mons, MonSeenTypes.lure_wild, time_received_raw)
+        await self.__stats_handler.stats_collect_raid(worker, time_received_raw, amount_raids)
 
     async def __process_gmo_mon_stats(self, cell_encounters, lure_wild, stop_encounters, wild_encounter_ids_processed):
         async with self.__db_wrapper as session, session:
@@ -288,16 +291,26 @@ class SerializedMitmDataProcessor:
         spawnpoints_time = self.get_time_ms() - spawnpoints_time_start
         return spawnpoints_time
 
-    async def __process_raids(self, data, timestamp: int):
+    async def __process_raids(self, data, timestamp: int) -> Tuple[int, int]:
+        """
+
+        Args:
+            data:
+            timestamp:
+
+        Returns: Tuple of duration taken to submit and amount of raids seen
+
+        """
         raids_time_start = self.get_time_ms()
+        amount_raids: int = 0
         async with self.__db_wrapper as session, session:
             try:
-                await self.__db_submit.raids(session, data["payload"], timestamp)
+                amount_raids = await self.__db_submit.raids(session, data["payload"], timestamp)
                 await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting raids: {}", e)
         raids_time = self.get_time_ms() - raids_time_start
-        return raids_time
+        return raids_time, amount_raids
 
     async def __process_gyms(self, data, received_timestamp: int):
         gyms_time_start = self.get_time_ms()

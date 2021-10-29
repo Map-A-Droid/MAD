@@ -35,10 +35,11 @@ class StatsHandlerClient(StatsHandlerStub, AbstractStatsHandler):
         request.timestamp = int(time_scanned.timestamp())
         await self.StatsCollect(request)
 
-    async def stats_collect_raid(self, worker: str, time_scanned: datetime) -> None:
+    async def stats_collect_raid(self, worker: str, time_scanned: datetime, amount: int = 1) -> None:
         request: Stats = Stats()
         request.worker.name = worker
         request.timestamp = int(time_scanned.timestamp())
+        request.raid.amount = amount
         await self.StatsCollect(request)
 
     async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,

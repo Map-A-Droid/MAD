@@ -810,20 +810,24 @@ class DbPogoProtoSubmit:
                     await nested_transaction.rollback()
         return True
 
-    async def raids(self, session: AsyncSession, map_proto: dict, timestamp: int):
+    async def raids(self, session: AsyncSession, map_proto: dict, timestamp: int) -> int:
         """
         Update/Insert raids from a map_proto dict
+
+        Returns: amount of raids in GMO processed
         """
         logger.debug3("DbPogoProtoSubmit::raids called with data received")
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
+        raids_seen: int = 0
         received_at: datetime = DatetimeWrapper.fromtimestamp(timestamp)
         for cell in cells:
             for gym in cell["forts"]:
                 if gym["type"] == 0 and gym["gym_details"]["has_raid"]:
                     gym_has_raid = gym["gym_details"]["raid_info"]["has_pokemon"]
                     if gym_has_raid:
+                        raids_seen += 1
                         raid_info = gym["gym_details"]["raid_info"]
 
                         pokemon_id = raid_info["raid_pokemon"]["id"]
@@ -893,7 +897,7 @@ class DbPogoProtoSubmit:
                             logger.warning("Failed committing raid for gym {} ({})", gymid, str(e))
                             await nested_transaction.rollback()
         logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
-        return True
+        return raids_seen
 
     async def weather(self, session: AsyncSession, map_proto, received_timestamp) -> bool:
         """

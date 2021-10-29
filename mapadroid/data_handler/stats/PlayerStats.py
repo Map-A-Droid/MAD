@@ -65,8 +65,8 @@ class PlayerStats(AbstractStatsHolder):
     def stats_collect_quest(self, time_scanned: datetime):
         self._stats_detect_holder.add_quest(time_scanned)
 
-    def stats_collect_raid(self, time_scanned: datetime):
-        self._stats_detect_holder.add_raid(time_scanned)
+    def stats_collect_raid(self, time_scanned: datetime, amount: int = 1):
+        self._stats_detect_holder.add_raid(time_scanned, amount)
 
     def stats_collect_location_data(self, location: Location, success: bool, fix_timestamp: int,
                                     position_type: PositionType, data_timestamp: int, worker_type: WorkerType,

@@ -45,23 +45,24 @@ class StandaloneMitmMapperAndStatsHandler(AbstractMitmMapper, AbstractStatsHandl
     async def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime,
                                    is_shiny: bool) -> None:
         if self.__stats_handler:
-            self.__stats_handler.stats_collect_mon_iv(worker, encounter_id, time_scanned, is_shiny)
+            await self.__stats_handler.stats_collect_mon_iv(worker, encounter_id, time_scanned, is_shiny)
 
     async def stats_collect_quest(self, worker: str, time_scanned: datetime) -> None:
         if self.__stats_handler:
-            self.__stats_handler.stats_collect_quest(worker, time_scanned)
+            await self.__stats_handler.stats_collect_quest(worker, time_scanned)
 
-    async def stats_collect_raid(self, worker: str, time_scanned: datetime) -> None:
+    async def stats_collect_raid(self, worker: str, time_scanned: datetime, amount_raids: int = 1) -> None:
         if self.__stats_handler:
-            self.__stats_handler.stats_collect_raid(worker, time_scanned)
+            await self.__stats_handler.stats_collect_raid(worker, time_scanned, amount_raids)
 
     async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
                                           position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                           transport_type: TransportType, timestamp_of_record: int) -> None:
         if self.__stats_handler:
-            self.__stats_handler.stats_collect_location_data(worker, location, success, fix_timestamp, position_type,
-                                                             data_timestamp, worker_type,
-                                                             transport_type, timestamp_of_record)
+            await self.__stats_handler.stats_collect_location_data(worker, location, success, fix_timestamp,
+                                                                   position_type,
+                                                                   data_timestamp, worker_type,
+                                                                   transport_type, timestamp_of_record)
 
     async def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
                                       time_of_scan: datetime) -> None:

@@ -39,6 +39,7 @@ message StatsQuest {
 }
 
 message StatsRaid {
+  uint32 amount = 1;
 }
 
 message StatsLocationData {

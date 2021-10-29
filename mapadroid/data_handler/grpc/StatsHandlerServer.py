@@ -80,7 +80,8 @@ class StatsHandlerServer(StatsHandlerServicer, StatsHandler):
         elif request.HasField("raid"):
             await self.stats_collect_raid(
                 request.worker.name,
-                time_scanned=DatetimeWrapper.fromtimestamp(request.timestamp))
+                time_scanned=DatetimeWrapper.fromtimestamp(request.timestamp),
+                amount_raids=request.raid.amount)
         elif request.HasField("location_data"):
             if not request.location_data.HasField("location"):
                 # TODO: Ack failure indicator?
