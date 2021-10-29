@@ -83,9 +83,11 @@ class Worker(AbstractWorker):
 
         """
         async with self._work_mutex:
+            if self._worker_task and self._worker_task.done():
+                self._worker_task = None
             if self._worker_task:
-                logger.warning("Task has not been removed before.")
-                return None
+                logger.warning("Task has not been removed before and is still running.")
+                return self._worker_task
             else:
 
                 loop = asyncio.get_running_loop()
@@ -116,8 +118,6 @@ class Worker(AbstractWorker):
             self._worker_state.stop_worker_event.set()
             logger.info("Worker stop called")
         async with self._work_mutex:
-            if self._scan_task:
-                self._scan_task.cancel()
             if self._worker_task:
                 self._worker_task.cancel()
         await self._scan_strategy.worker_specific_setup_stop()
@@ -171,8 +171,11 @@ class Worker(AbstractWorker):
         except Exception as e:
             logger.exception(e)
         finally:
-            self._worker_task = None
-            self._scan_task = None
+            async with self._work_mutex:
+                if self._scan_task:
+                    self._scan_task.cancel()
+                self._worker_task = None
+                self._scan_task = None
 
     async def _run_scan(self):
         with logger.contextualize(identifier=self._worker_state.origin, name="worker"):
