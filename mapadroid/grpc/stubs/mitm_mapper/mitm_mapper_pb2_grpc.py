@@ -16,11 +16,6 @@ class MitmMapperStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.StatsCollect = channel.unary_unary(
-                '/mapadroid.mitm_mapper.MitmMapper/StatsCollect',
-                request_serializer=mitm__mapper_dot_mitm__mapper__pb2.Stats.SerializeToString,
-                response_deserializer=shared_dot_Ack__pb2.Ack.FromString,
-                )
         self.GetLastPossiblyMoved = channel.unary_unary(
                 '/mapadroid.mitm_mapper.MitmMapper/GetLastPossiblyMoved',
                 request_serializer=shared_dot_Worker__pb2.Worker.SerializeToString,
@@ -80,12 +75,6 @@ class MitmMapperStub(object):
 
 class MitmMapperServicer(object):
     """Missing associated documentation comment in .proto file."""
-
-    def StatsCollect(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
 
     def GetLastPossiblyMoved(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -156,11 +145,6 @@ class MitmMapperServicer(object):
 
 def add_MitmMapperServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'StatsCollect': grpc.unary_unary_rpc_method_handler(
-                    servicer.StatsCollect,
-                    request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.Stats.FromString,
-                    response_serializer=shared_dot_Ack__pb2.Ack.SerializeToString,
-            ),
             'GetLastPossiblyMoved': grpc.unary_unary_rpc_method_handler(
                     servicer.GetLastPossiblyMoved,
                     request_deserializer=shared_dot_Worker__pb2.Worker.FromString,
@@ -225,23 +209,6 @@ def add_MitmMapperServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class MitmMapper(object):
     """Missing associated documentation comment in .proto file."""
-
-    @staticmethod
-    def StatsCollect(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/StatsCollect',
-            mitm__mapper_dot_mitm__mapper__pb2.Stats.SerializeToString,
-            shared_dot_Ack__pb2.Ack.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def GetLastPossiblyMoved(request,

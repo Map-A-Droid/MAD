@@ -5,7 +5,6 @@ import "shared/PositionType.proto";
 import "shared/TransportType.proto";
 import "shared/MonSeenTypes.proto";
 import "shared/Worker.proto";
-import "google/protobuf/struct.proto";
 
 package mapadroid.stats_handler;
 

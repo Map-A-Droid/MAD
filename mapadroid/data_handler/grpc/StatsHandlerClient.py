@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
-from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import Stats
+from mapadroid.grpc.compiled.stats_handler.stats_handler_pb2 import Stats
 from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import StatsHandlerStub
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import MonSeenTypes, PositionType, TransportType

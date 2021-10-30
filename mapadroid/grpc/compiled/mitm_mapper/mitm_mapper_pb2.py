@@ -13,9 +13,6 @@ _sym_db = _symbol_database.Default()
 
 from mapadroid.grpc.compiled.shared import Location_pb2 as shared_dot_Location__pb2
 from mapadroid.grpc.compiled.shared import Ack_pb2 as shared_dot_Ack__pb2
-from mapadroid.grpc.compiled.shared import PositionType_pb2 as shared_dot_PositionType__pb2
-from mapadroid.grpc.compiled.shared import TransportType_pb2 as shared_dot_TransportType__pb2
-from mapadroid.grpc.compiled.shared import MonSeenTypes_pb2 as shared_dot_MonSeenTypes__pb2
 from mapadroid.grpc.compiled.shared import Worker_pb2 as shared_dot_Worker__pb2
 from google.protobuf import struct_pb2 as google_dot_protobuf_dot_struct__pb2
 
@@ -26,9 +23,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1dmitm_mapper/mitm_mapper.proto\x12\x15mapadroid.mitm_mapper\x1a\x15shared/Location.proto\x1a\x10shared/Ack.proto\x1a\x19shared/PositionType.proto\x1a\x1ashared/TransportType.proto\x1a\x19shared/MonSeenTypes.proto\x1a\x13shared/Worker.proto\x1a\x1cgoogle/protobuf/struct.proto\"]\n\x18SetPokestopVisitsRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x17\n\x0fpokestop_visits\x18\x02 \x01(\x05\"J\n\x0fSetLevelRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\r\n\x05level\x18\x02 \x01(\x05\"[\n\x19LastKnownLocationResponse\x12\x31\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.LocationH\x00\x88\x01\x01\x42\x0b\n\t_location\"u\n\x0fInjectedRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x38\n\x08injected\x18\x02 \x01(\x0b\x32&.mapadroid.mitm_mapper.InjectionStatus\"&\n\x0fInjectionStatus\x12\x13\n\x0bis_injected\x18\x01 \x01(\x08\"\x1e\n\rLevelResponse\x12\r\n\x05level\x18\x01 \x01(\x05\"/\n\x16PokestopVisitsResponse\x12\x15\n\rstops_visited\x18\x01 \x01(\x04\"\xc6\x01\n\x1aLatestMitmDataFullResponse\x12M\n\x06latest\x18\x01 \x03(\x0b\x32=.mapadroid.mitm_mapper.LatestMitmDataFullResponse.LatestEntry\x1aY\n\x0bLatestEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x39\n\x05value\x18\x02 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntry:\x02\x38\x01\"\x93\x01\n LatestMitmDataEntryUpdateRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x38\n\x04\x64\x61ta\x18\x03 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntry\"g\n\x1bLatestMitmDataEntryResponse\x12>\n\x05\x65ntry\x18\x01 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntryH\x00\x88\x01\x01\x42\x08\n\x06_entry\"\x8b\x01\n\x1aLatestMitmDataEntryRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x1f\n\x12timestamp_earliest\x18\x03 \x01(\x04H\x00\x88\x01\x01\x42\x15\n\x13_timestamp_earliest\"\xc4\x02\n\x13LatestMitmDataEntry\x12\x31\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.LocationH\x01\x88\x01\x01\x12\x1f\n\x12timestamp_received\x18\x02 \x01(\x04H\x02\x88\x01\x01\x12(\n\x1btimestamp_of_data_retrieval\x18\x03 \x01(\x04H\x03\x88\x01\x01\x12\x32\n\x0fsome_dictionary\x18\x04 \x01(\x0b\x32\x17.google.protobuf.StructH\x00\x12/\n\tsome_list\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.ListValueH\x00\x42\x06\n\x04\x64\x61taB\x0b\n\t_locationB\x15\n\x13_timestamp_receivedB\x1e\n\x1c_timestamp_of_data_retrieval\"\x1e\n\tLastMoved\x12\x11\n\ttimestamp\x18\x01 \x01(\x04\"\x1b\n\x0c\x45ncounterIds\x12\x0b\n\x03ids\x18\x01 \x03(\x04\"\xcd\x03\n\x05Stats\x12-\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.WorkerH\x01\x88\x01\x01\x12\x16\n\ttimestamp\x18\x02 \x01(\x04H\x02\x88\x01\x01\x12\x38\n\twild_mons\x18\x03 \x01(\x0b\x32#.mapadroid.mitm_mapper.StatsWildMonH\x00\x12\x33\n\x06mon_iv\x18\x04 \x01(\x0b\x32!.mapadroid.mitm_mapper.StatsMonIvH\x00\x12\x32\n\x05quest\x18\x05 \x01(\x0b\x32!.mapadroid.mitm_mapper.StatsQuestH\x00\x12\x30\n\x04raid\x18\x06 \x01(\x0b\x32 .mapadroid.mitm_mapper.StatsRaidH\x00\x12\x41\n\rlocation_data\x18\x07 \x01(\x0b\x32(.mapadroid.mitm_mapper.StatsLocationDataH\x00\x12\x39\n\tseen_type\x18\x08 \x01(\x0b\x32$.mapadroid.mitm_mapper.StatsSeenTypeH\x00\x42\x11\n\x0f\x64\x61ta_to_collectB\t\n\x07_workerB\x0c\n\n_timestamp\"%\n\x0cStatsWildMon\x12\x15\n\rencounter_ids\x18\x01 \x03(\x04\"4\n\nStatsMonIv\x12\x14\n\x0c\x65ncounter_id\x18\x01 \x01(\x04\x12\x10\n\x08is_shiny\x18\x02 \x01(\x08\"\x0c\n\nStatsQuest\"\x0b\n\tStatsRaid\"\x81\x02\n\x11StatsLocationData\x12,\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.Location\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x15\n\rfix_timestamp\x18\x03 \x01(\x04\x12\x16\n\x0e\x64\x61ta_timestamp\x18\x04 \x01(\x04\x12\x35\n\rposition_type\x18\x05 \x01(\x0e\x32\x1e.mapadroid.shared.PositionType\x12\x0e\n\x06walker\x18\x06 \x01(\t\x12\x37\n\x0etransport_type\x18\x07 \x01(\x0e\x32\x1f.mapadroid.shared.TransportType\"a\n\rStatsSeenType\x12\x15\n\rencounter_ids\x18\x01 \x03(\x04\x12\x39\n\x11type_of_detection\x18\x02 \x01(\x0e\x32\x1e.mapadroid.shared.MonSeenTypes2\xbb\x08\n\nMitmMapper\x12\x43\n\x0cStatsCollect\x12\x1c.mapadroid.mitm_mapper.Stats\x1a\x15.mapadroid.shared.Ack\x12R\n\x14GetLastPossiblyMoved\x12\x18.mapadroid.shared.Worker\x1a .mapadroid.mitm_mapper.LastMoved\x12^\n\x0cUpdateLatest\x12\x37.mapadroid.mitm_mapper.LatestMitmDataEntryUpdateRequest\x1a\x15.mapadroid.shared.Ack\x12v\n\rRequestLatest\x12\x31.mapadroid.mitm_mapper.LatestMitmDataEntryRequest\x1a\x32.mapadroid.mitm_mapper.LatestMitmDataEntryResponse\x12`\n\x11RequestFullLatest\x12\x18.mapadroid.shared.Worker\x1a\x31.mapadroid.mitm_mapper.LatestMitmDataFullResponse\x12I\n\x08SetLevel\x12&.mapadroid.mitm_mapper.SetLevelRequest\x1a\x15.mapadroid.shared.Ack\x12[\n\x11SetPokestopVisits\x12/.mapadroid.mitm_mapper.SetPokestopVisitsRequest\x1a\x15.mapadroid.shared.Ack\x12\\\n\x11GetPokestopVisits\x12\x18.mapadroid.shared.Worker\x1a-.mapadroid.mitm_mapper.PokestopVisitsResponse\x12J\n\x08GetLevel\x12\x18.mapadroid.shared.Worker\x1a$.mapadroid.mitm_mapper.LevelResponse\x12V\n\x12GetInjectionStatus\x12\x18.mapadroid.shared.Worker\x1a&.mapadroid.mitm_mapper.InjectionStatus\x12L\n\x0bSetInjected\x12&.mapadroid.mitm_mapper.InjectedRequest\x1a\x15.mapadroid.shared.Ack\x12\x62\n\x14GetLastKnownLocation\x12\x18.mapadroid.shared.Worker\x1a\x30.mapadroid.mitm_mapper.LastKnownLocationResponseb\x06proto3'
+  serialized_pb=b'\n\x1dmitm_mapper/mitm_mapper.proto\x12\x15mapadroid.mitm_mapper\x1a\x15shared/Location.proto\x1a\x10shared/Ack.proto\x1a\x13shared/Worker.proto\x1a\x1cgoogle/protobuf/struct.proto\"]\n\x18SetPokestopVisitsRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x17\n\x0fpokestop_visits\x18\x02 \x01(\x05\"J\n\x0fSetLevelRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\r\n\x05level\x18\x02 \x01(\x05\"[\n\x19LastKnownLocationResponse\x12\x31\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.LocationH\x00\x88\x01\x01\x42\x0b\n\t_location\"u\n\x0fInjectedRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x38\n\x08injected\x18\x02 \x01(\x0b\x32&.mapadroid.mitm_mapper.InjectionStatus\"&\n\x0fInjectionStatus\x12\x13\n\x0bis_injected\x18\x01 \x01(\x08\"\x1e\n\rLevelResponse\x12\r\n\x05level\x18\x01 \x01(\x05\"/\n\x16PokestopVisitsResponse\x12\x15\n\rstops_visited\x18\x01 \x01(\x04\"\xc6\x01\n\x1aLatestMitmDataFullResponse\x12M\n\x06latest\x18\x01 \x03(\x0b\x32=.mapadroid.mitm_mapper.LatestMitmDataFullResponse.LatestEntry\x1aY\n\x0bLatestEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x39\n\x05value\x18\x02 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntry:\x02\x38\x01\"\x93\x01\n LatestMitmDataEntryUpdateRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x38\n\x04\x64\x61ta\x18\x03 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntry\"g\n\x1bLatestMitmDataEntryResponse\x12>\n\x05\x65ntry\x18\x01 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntryH\x00\x88\x01\x01\x42\x08\n\x06_entry\"\x8b\x01\n\x1aLatestMitmDataEntryRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x1f\n\x12timestamp_earliest\x18\x03 \x01(\x04H\x00\x88\x01\x01\x42\x15\n\x13_timestamp_earliest\"\xc4\x02\n\x13LatestMitmDataEntry\x12\x31\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.LocationH\x01\x88\x01\x01\x12\x1f\n\x12timestamp_received\x18\x02 \x01(\x04H\x02\x88\x01\x01\x12(\n\x1btimestamp_of_data_retrieval\x18\x03 \x01(\x04H\x03\x88\x01\x01\x12\x32\n\x0fsome_dictionary\x18\x04 \x01(\x0b\x32\x17.google.protobuf.StructH\x00\x12/\n\tsome_list\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.ListValueH\x00\x42\x06\n\x04\x64\x61taB\x0b\n\t_locationB\x15\n\x13_timestamp_receivedB\x1e\n\x1c_timestamp_of_data_retrieval\"\x1e\n\tLastMoved\x12\x11\n\ttimestamp\x18\x01 \x01(\x04\x32\xf6\x07\n\nMitmMapper\x12R\n\x14GetLastPossiblyMoved\x12\x18.mapadroid.shared.Worker\x1a .mapadroid.mitm_mapper.LastMoved\x12^\n\x0cUpdateLatest\x12\x37.mapadroid.mitm_mapper.LatestMitmDataEntryUpdateRequest\x1a\x15.mapadroid.shared.Ack\x12v\n\rRequestLatest\x12\x31.mapadroid.mitm_mapper.LatestMitmDataEntryRequest\x1a\x32.mapadroid.mitm_mapper.LatestMitmDataEntryResponse\x12`\n\x11RequestFullLatest\x12\x18.mapadroid.shared.Worker\x1a\x31.mapadroid.mitm_mapper.LatestMitmDataFullResponse\x12I\n\x08SetLevel\x12&.mapadroid.mitm_mapper.SetLevelRequest\x1a\x15.mapadroid.shared.Ack\x12[\n\x11SetPokestopVisits\x12/.mapadroid.mitm_mapper.SetPokestopVisitsRequest\x1a\x15.mapadroid.shared.Ack\x12\\\n\x11GetPokestopVisits\x12\x18.mapadroid.shared.Worker\x1a-.mapadroid.mitm_mapper.PokestopVisitsResponse\x12J\n\x08GetLevel\x12\x18.mapadroid.shared.Worker\x1a$.mapadroid.mitm_mapper.LevelResponse\x12V\n\x12GetInjectionStatus\x12\x18.mapadroid.shared.Worker\x1a&.mapadroid.mitm_mapper.InjectionStatus\x12L\n\x0bSetInjected\x12&.mapadroid.mitm_mapper.InjectedRequest\x1a\x15.mapadroid.shared.Ack\x12\x62\n\x14GetLastKnownLocation\x12\x18.mapadroid.shared.Worker\x1a\x30.mapadroid.mitm_mapper.LastKnownLocationResponseb\x06proto3'
   ,
-  dependencies=[shared_dot_Location__pb2.DESCRIPTOR,shared_dot_Ack__pb2.DESCRIPTOR,shared_dot_PositionType__pb2.DESCRIPTOR,shared_dot_TransportType__pb2.DESCRIPTOR,shared_dot_MonSeenTypes__pb2.DESCRIPTOR,shared_dot_Worker__pb2.DESCRIPTOR,google_dot_protobuf_dot_struct__pb2.DESCRIPTOR,])
+  dependencies=[shared_dot_Location__pb2.DESCRIPTOR,shared_dot_Ack__pb2.DESCRIPTOR,shared_dot_Worker__pb2.DESCRIPTOR,google_dot_protobuf_dot_struct__pb2.DESCRIPTOR,])
 
 
 
@@ -67,8 +64,8 @@ _SETPOKESTOPVISITSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=230,
-  serialized_end=323,
+  serialized_start=148,
+  serialized_end=241,
 )
 
 
@@ -106,8 +103,8 @@ _SETLEVELREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=325,
-  serialized_end=399,
+  serialized_start=243,
+  serialized_end=317,
 )
 
 
@@ -143,8 +140,8 @@ _LASTKNOWNLOCATIONRESPONSE = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=401,
-  serialized_end=492,
+  serialized_start=319,
+  serialized_end=410,
 )
 
 
@@ -182,8 +179,8 @@ _INJECTEDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=494,
-  serialized_end=611,
+  serialized_start=412,
+  serialized_end=529,
 )
 
 
@@ -214,8 +211,8 @@ _INJECTIONSTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=613,
-  serialized_end=651,
+  serialized_start=531,
+  serialized_end=569,
 )
 
 
@@ -246,8 +243,8 @@ _LEVELRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=653,
-  serialized_end=683,
+  serialized_start=571,
+  serialized_end=601,
 )
 
 
@@ -278,8 +275,8 @@ _POKESTOPVISITSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=685,
-  serialized_end=732,
+  serialized_start=603,
+  serialized_end=650,
 )
 
 
@@ -317,8 +314,8 @@ _LATESTMITMDATAFULLRESPONSE_LATESTENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=844,
-  serialized_end=933,
+  serialized_start=762,
+  serialized_end=851,
 )
 
 _LATESTMITMDATAFULLRESPONSE = _descriptor.Descriptor(
@@ -348,8 +345,8 @@ _LATESTMITMDATAFULLRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=735,
-  serialized_end=933,
+  serialized_start=653,
+  serialized_end=851,
 )
 
 
@@ -394,8 +391,8 @@ _LATESTMITMDATAENTRYUPDATEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=936,
-  serialized_end=1083,
+  serialized_start=854,
+  serialized_end=1001,
 )
 
 
@@ -431,8 +428,8 @@ _LATESTMITMDATAENTRYRESPONSE = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1085,
-  serialized_end=1188,
+  serialized_start=1003,
+  serialized_end=1106,
 )
 
 
@@ -482,8 +479,8 @@ _LATESTMITMDATAENTRYREQUEST = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1191,
-  serialized_end=1330,
+  serialized_start=1109,
+  serialized_end=1248,
 )
 
 
@@ -562,8 +559,8 @@ _LATESTMITMDATAENTRY = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1333,
-  serialized_end=1657,
+  serialized_start=1251,
+  serialized_end=1575,
 )
 
 
@@ -594,370 +591,8 @@ _LASTMOVED = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1659,
-  serialized_end=1689,
-)
-
-
-_ENCOUNTERIDS = _descriptor.Descriptor(
-  name='EncounterIds',
-  full_name='mapadroid.mitm_mapper.EncounterIds',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='ids', full_name='mapadroid.mitm_mapper.EncounterIds.ids', index=0,
-      number=1, type=4, cpp_type=4, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=1691,
-  serialized_end=1718,
-)
-
-
-_STATS = _descriptor.Descriptor(
-  name='Stats',
-  full_name='mapadroid.mitm_mapper.Stats',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='worker', full_name='mapadroid.mitm_mapper.Stats.worker', index=0,
-      number=1, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='timestamp', full_name='mapadroid.mitm_mapper.Stats.timestamp', index=1,
-      number=2, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='wild_mons', full_name='mapadroid.mitm_mapper.Stats.wild_mons', index=2,
-      number=3, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='mon_iv', full_name='mapadroid.mitm_mapper.Stats.mon_iv', index=3,
-      number=4, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='quest', full_name='mapadroid.mitm_mapper.Stats.quest', index=4,
-      number=5, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='raid', full_name='mapadroid.mitm_mapper.Stats.raid', index=5,
-      number=6, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='location_data', full_name='mapadroid.mitm_mapper.Stats.location_data', index=6,
-      number=7, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='seen_type', full_name='mapadroid.mitm_mapper.Stats.seen_type', index=7,
-      number=8, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-    _descriptor.OneofDescriptor(
-      name='data_to_collect', full_name='mapadroid.mitm_mapper.Stats.data_to_collect',
-      index=0, containing_type=None,
-      create_key=_descriptor._internal_create_key,
-    fields=[]),
-    _descriptor.OneofDescriptor(
-      name='_worker', full_name='mapadroid.mitm_mapper.Stats._worker',
-      index=1, containing_type=None,
-      create_key=_descriptor._internal_create_key,
-    fields=[]),
-    _descriptor.OneofDescriptor(
-      name='_timestamp', full_name='mapadroid.mitm_mapper.Stats._timestamp',
-      index=2, containing_type=None,
-      create_key=_descriptor._internal_create_key,
-    fields=[]),
-  ],
-  serialized_start=1721,
-  serialized_end=2182,
-)
-
-
-_STATSWILDMON = _descriptor.Descriptor(
-  name='StatsWildMon',
-  full_name='mapadroid.mitm_mapper.StatsWildMon',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='encounter_ids', full_name='mapadroid.mitm_mapper.StatsWildMon.encounter_ids', index=0,
-      number=1, type=4, cpp_type=4, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2184,
-  serialized_end=2221,
-)
-
-
-_STATSMONIV = _descriptor.Descriptor(
-  name='StatsMonIv',
-  full_name='mapadroid.mitm_mapper.StatsMonIv',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='encounter_id', full_name='mapadroid.mitm_mapper.StatsMonIv.encounter_id', index=0,
-      number=1, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='is_shiny', full_name='mapadroid.mitm_mapper.StatsMonIv.is_shiny', index=1,
-      number=2, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2223,
-  serialized_end=2275,
-)
-
-
-_STATSQUEST = _descriptor.Descriptor(
-  name='StatsQuest',
-  full_name='mapadroid.mitm_mapper.StatsQuest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2277,
-  serialized_end=2289,
-)
-
-
-_STATSRAID = _descriptor.Descriptor(
-  name='StatsRaid',
-  full_name='mapadroid.mitm_mapper.StatsRaid',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2291,
-  serialized_end=2302,
-)
-
-
-_STATSLOCATIONDATA = _descriptor.Descriptor(
-  name='StatsLocationData',
-  full_name='mapadroid.mitm_mapper.StatsLocationData',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='location', full_name='mapadroid.mitm_mapper.StatsLocationData.location', index=0,
-      number=1, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='success', full_name='mapadroid.mitm_mapper.StatsLocationData.success', index=1,
-      number=2, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='fix_timestamp', full_name='mapadroid.mitm_mapper.StatsLocationData.fix_timestamp', index=2,
-      number=3, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='data_timestamp', full_name='mapadroid.mitm_mapper.StatsLocationData.data_timestamp', index=3,
-      number=4, type=4, cpp_type=4, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='position_type', full_name='mapadroid.mitm_mapper.StatsLocationData.position_type', index=4,
-      number=5, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='walker', full_name='mapadroid.mitm_mapper.StatsLocationData.walker', index=5,
-      number=6, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='transport_type', full_name='mapadroid.mitm_mapper.StatsLocationData.transport_type', index=6,
-      number=7, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2305,
-  serialized_end=2562,
-)
-
-
-_STATSSEENTYPE = _descriptor.Descriptor(
-  name='StatsSeenType',
-  full_name='mapadroid.mitm_mapper.StatsSeenType',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='encounter_ids', full_name='mapadroid.mitm_mapper.StatsSeenType.encounter_ids', index=0,
-      number=1, type=4, cpp_type=4, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='type_of_detection', full_name='mapadroid.mitm_mapper.StatsSeenType.type_of_detection', index=1,
-      number=2, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2564,
-  serialized_end=2661,
+  serialized_start=1577,
+  serialized_end=1607,
 )
 
 _SETPOKESTOPVISITSREQUEST.fields_by_name['worker'].message_type = shared_dot_Worker__pb2._WORKER
@@ -999,41 +634,6 @@ _LATESTMITMDATAENTRY.fields_by_name['timestamp_received'].containing_oneof = _LA
 _LATESTMITMDATAENTRY.oneofs_by_name['_timestamp_of_data_retrieval'].fields.append(
   _LATESTMITMDATAENTRY.fields_by_name['timestamp_of_data_retrieval'])
 _LATESTMITMDATAENTRY.fields_by_name['timestamp_of_data_retrieval'].containing_oneof = _LATESTMITMDATAENTRY.oneofs_by_name['_timestamp_of_data_retrieval']
-_STATS.fields_by_name['worker'].message_type = shared_dot_Worker__pb2._WORKER
-_STATS.fields_by_name['wild_mons'].message_type = _STATSWILDMON
-_STATS.fields_by_name['mon_iv'].message_type = _STATSMONIV
-_STATS.fields_by_name['quest'].message_type = _STATSQUEST
-_STATS.fields_by_name['raid'].message_type = _STATSRAID
-_STATS.fields_by_name['location_data'].message_type = _STATSLOCATIONDATA
-_STATS.fields_by_name['seen_type'].message_type = _STATSSEENTYPE
-_STATS.oneofs_by_name['data_to_collect'].fields.append(
-  _STATS.fields_by_name['wild_mons'])
-_STATS.fields_by_name['wild_mons'].containing_oneof = _STATS.oneofs_by_name['data_to_collect']
-_STATS.oneofs_by_name['data_to_collect'].fields.append(
-  _STATS.fields_by_name['mon_iv'])
-_STATS.fields_by_name['mon_iv'].containing_oneof = _STATS.oneofs_by_name['data_to_collect']
-_STATS.oneofs_by_name['data_to_collect'].fields.append(
-  _STATS.fields_by_name['quest'])
-_STATS.fields_by_name['quest'].containing_oneof = _STATS.oneofs_by_name['data_to_collect']
-_STATS.oneofs_by_name['data_to_collect'].fields.append(
-  _STATS.fields_by_name['raid'])
-_STATS.fields_by_name['raid'].containing_oneof = _STATS.oneofs_by_name['data_to_collect']
-_STATS.oneofs_by_name['data_to_collect'].fields.append(
-  _STATS.fields_by_name['location_data'])
-_STATS.fields_by_name['location_data'].containing_oneof = _STATS.oneofs_by_name['data_to_collect']
-_STATS.oneofs_by_name['data_to_collect'].fields.append(
-  _STATS.fields_by_name['seen_type'])
-_STATS.fields_by_name['seen_type'].containing_oneof = _STATS.oneofs_by_name['data_to_collect']
-_STATS.oneofs_by_name['_worker'].fields.append(
-  _STATS.fields_by_name['worker'])
-_STATS.fields_by_name['worker'].containing_oneof = _STATS.oneofs_by_name['_worker']
-_STATS.oneofs_by_name['_timestamp'].fields.append(
-  _STATS.fields_by_name['timestamp'])
-_STATS.fields_by_name['timestamp'].containing_oneof = _STATS.oneofs_by_name['_timestamp']
-_STATSLOCATIONDATA.fields_by_name['location'].message_type = shared_dot_Location__pb2._LOCATION
-_STATSLOCATIONDATA.fields_by_name['position_type'].enum_type = shared_dot_PositionType__pb2._POSITIONTYPE
-_STATSLOCATIONDATA.fields_by_name['transport_type'].enum_type = shared_dot_TransportType__pb2._TRANSPORTTYPE
-_STATSSEENTYPE.fields_by_name['type_of_detection'].enum_type = shared_dot_MonSeenTypes__pb2._MONSEENTYPES
 DESCRIPTOR.message_types_by_name['SetPokestopVisitsRequest'] = _SETPOKESTOPVISITSREQUEST
 DESCRIPTOR.message_types_by_name['SetLevelRequest'] = _SETLEVELREQUEST
 DESCRIPTOR.message_types_by_name['LastKnownLocationResponse'] = _LASTKNOWNLOCATIONRESPONSE
@@ -1047,14 +647,6 @@ DESCRIPTOR.message_types_by_name['LatestMitmDataEntryResponse'] = _LATESTMITMDAT
 DESCRIPTOR.message_types_by_name['LatestMitmDataEntryRequest'] = _LATESTMITMDATAENTRYREQUEST
 DESCRIPTOR.message_types_by_name['LatestMitmDataEntry'] = _LATESTMITMDATAENTRY
 DESCRIPTOR.message_types_by_name['LastMoved'] = _LASTMOVED
-DESCRIPTOR.message_types_by_name['EncounterIds'] = _ENCOUNTERIDS
-DESCRIPTOR.message_types_by_name['Stats'] = _STATS
-DESCRIPTOR.message_types_by_name['StatsWildMon'] = _STATSWILDMON
-DESCRIPTOR.message_types_by_name['StatsMonIv'] = _STATSMONIV
-DESCRIPTOR.message_types_by_name['StatsQuest'] = _STATSQUEST
-DESCRIPTOR.message_types_by_name['StatsRaid'] = _STATSRAID
-DESCRIPTOR.message_types_by_name['StatsLocationData'] = _STATSLOCATIONDATA
-DESCRIPTOR.message_types_by_name['StatsSeenType'] = _STATSSEENTYPE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 SetPokestopVisitsRequest = _reflection.GeneratedProtocolMessageType('SetPokestopVisitsRequest', (_message.Message,), {
@@ -1156,62 +748,6 @@ LastMoved = _reflection.GeneratedProtocolMessageType('LastMoved', (_message.Mess
   })
 _sym_db.RegisterMessage(LastMoved)
 
-EncounterIds = _reflection.GeneratedProtocolMessageType('EncounterIds', (_message.Message,), {
-  'DESCRIPTOR' : _ENCOUNTERIDS,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.EncounterIds)
-  })
-_sym_db.RegisterMessage(EncounterIds)
-
-Stats = _reflection.GeneratedProtocolMessageType('Stats', (_message.Message,), {
-  'DESCRIPTOR' : _STATS,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.Stats)
-  })
-_sym_db.RegisterMessage(Stats)
-
-StatsWildMon = _reflection.GeneratedProtocolMessageType('StatsWildMon', (_message.Message,), {
-  'DESCRIPTOR' : _STATSWILDMON,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.StatsWildMon)
-  })
-_sym_db.RegisterMessage(StatsWildMon)
-
-StatsMonIv = _reflection.GeneratedProtocolMessageType('StatsMonIv', (_message.Message,), {
-  'DESCRIPTOR' : _STATSMONIV,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.StatsMonIv)
-  })
-_sym_db.RegisterMessage(StatsMonIv)
-
-StatsQuest = _reflection.GeneratedProtocolMessageType('StatsQuest', (_message.Message,), {
-  'DESCRIPTOR' : _STATSQUEST,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.StatsQuest)
-  })
-_sym_db.RegisterMessage(StatsQuest)
-
-StatsRaid = _reflection.GeneratedProtocolMessageType('StatsRaid', (_message.Message,), {
-  'DESCRIPTOR' : _STATSRAID,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.StatsRaid)
-  })
-_sym_db.RegisterMessage(StatsRaid)
-
-StatsLocationData = _reflection.GeneratedProtocolMessageType('StatsLocationData', (_message.Message,), {
-  'DESCRIPTOR' : _STATSLOCATIONDATA,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.StatsLocationData)
-  })
-_sym_db.RegisterMessage(StatsLocationData)
-
-StatsSeenType = _reflection.GeneratedProtocolMessageType('StatsSeenType', (_message.Message,), {
-  'DESCRIPTOR' : _STATSSEENTYPE,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.StatsSeenType)
-  })
-_sym_db.RegisterMessage(StatsSeenType)
-
 
 _LATESTMITMDATAFULLRESPONSE_LATESTENTRY._options = None
 
@@ -1222,23 +758,13 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=2664,
-  serialized_end=3747,
+  serialized_start=1610,
+  serialized_end=2624,
   methods=[
-  _descriptor.MethodDescriptor(
-    name='StatsCollect',
-    full_name='mapadroid.mitm_mapper.MitmMapper.StatsCollect',
-    index=0,
-    containing_service=None,
-    input_type=_STATS,
-    output_type=shared_dot_Ack__pb2._ACK,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
   _descriptor.MethodDescriptor(
     name='GetLastPossiblyMoved',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetLastPossiblyMoved',
-    index=1,
+    index=0,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_LASTMOVED,
@@ -1248,7 +774,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='UpdateLatest',
     full_name='mapadroid.mitm_mapper.MitmMapper.UpdateLatest',
-    index=2,
+    index=1,
     containing_service=None,
     input_type=_LATESTMITMDATAENTRYUPDATEREQUEST,
     output_type=shared_dot_Ack__pb2._ACK,
@@ -1258,7 +784,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='RequestLatest',
     full_name='mapadroid.mitm_mapper.MitmMapper.RequestLatest',
-    index=3,
+    index=2,
     containing_service=None,
     input_type=_LATESTMITMDATAENTRYREQUEST,
     output_type=_LATESTMITMDATAENTRYRESPONSE,
@@ -1268,7 +794,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='RequestFullLatest',
     full_name='mapadroid.mitm_mapper.MitmMapper.RequestFullLatest',
-    index=4,
+    index=3,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_LATESTMITMDATAFULLRESPONSE,
@@ -1278,7 +804,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='SetLevel',
     full_name='mapadroid.mitm_mapper.MitmMapper.SetLevel',
-    index=5,
+    index=4,
     containing_service=None,
     input_type=_SETLEVELREQUEST,
     output_type=shared_dot_Ack__pb2._ACK,
@@ -1288,7 +814,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='SetPokestopVisits',
     full_name='mapadroid.mitm_mapper.MitmMapper.SetPokestopVisits',
-    index=6,
+    index=5,
     containing_service=None,
     input_type=_SETPOKESTOPVISITSREQUEST,
     output_type=shared_dot_Ack__pb2._ACK,
@@ -1298,7 +824,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetPokestopVisits',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetPokestopVisits',
-    index=7,
+    index=6,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_POKESTOPVISITSRESPONSE,
@@ -1308,7 +834,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetLevel',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetLevel',
-    index=8,
+    index=7,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_LEVELRESPONSE,
@@ -1318,7 +844,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetInjectionStatus',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetInjectionStatus',
-    index=9,
+    index=8,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_INJECTIONSTATUS,
@@ -1328,7 +854,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='SetInjected',
     full_name='mapadroid.mitm_mapper.MitmMapper.SetInjected',
-    index=10,
+    index=9,
     containing_service=None,
     input_type=_INJECTEDREQUEST,
     output_type=shared_dot_Ack__pb2._ACK,
@@ -1338,7 +864,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetLastKnownLocation',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetLastKnownLocation',
-    index=11,
+    index=10,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_LASTKNOWNLOCATIONRESPONSE,

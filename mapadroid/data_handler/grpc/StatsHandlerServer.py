@@ -3,8 +3,7 @@ from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
 from mapadroid.data_handler.stats.StatsHandler import StatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import (
-    Stats)
+from mapadroid.grpc.compiled.stats_handler.stats_handler_pb2 import Stats
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
 from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import StatsHandlerServicer, \
     add_StatsHandlerServicer_to_server

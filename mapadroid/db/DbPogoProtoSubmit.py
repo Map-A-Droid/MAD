@@ -634,7 +634,17 @@ class DbPogoProtoSubmit:
                     await nested_transaction.rollback()
         return stop is not None
 
-    async def quest(self, session: AsyncSession, quest_proto: dict, quest_gen: QuestGen):
+    async def quest(self, session: AsyncSession, quest_proto: dict, quest_gen: QuestGen) -> bool:
+        """
+
+        Args:
+            session:
+            quest_proto:
+            quest_gen:
+
+        Returns: True if quest was submitted to DB
+
+        """
         logger.debug3("DbPogoProtoSubmit::quest called")
         fort_id = quest_proto.get("fort_id", None)
         if fort_id is None:
