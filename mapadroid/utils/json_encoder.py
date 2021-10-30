@@ -6,6 +6,7 @@ from enum import Enum
 
 from mapadroid.db.model import Base
 from mapadroid.utils.apk_enums import APKArch, APKType
+from mapadroid.utils.collections import Location
 from mapadroid.utils.custom_types import MADapks, MADPackage, MADPackages
 
 
@@ -51,6 +52,8 @@ class MADEncoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, Enum):
             return obj.value
+        elif isinstance(obj, Location):
+            return [obj.lat, obj.lng]
         elif isinstance(obj, Base):
             # Dumb serialization of a model class to json... excluding private/protected attributes
             return {var: val for var, val in vars(obj).items() if not var.startswith("_")}

@@ -33,12 +33,13 @@
             xaxis: {
                 mode: "time",
                 {% if time == "12" %}
-                timeformat: "%d.%m<br>%I:00 %p - ",
+                twelveHourClock: true,
                 {% else %}
-                timeformat: "%d.%m<br>%H:00 - ",
+                twelveHourClock: false,
                 {% endif %}
                 minTickSize: [1, "hour"],
-                timezone: "browser"
+                timezone: "browser",
+                timeBase: "seconds"
             },
             series: {
                 lines: {
@@ -168,7 +169,6 @@
             "cache": false,
             "dataType": "json",
             success: function (result) {
-                console.log(result);
                 unfiltered_points = result.data.map(function (p) {
                     return {"count": p[0], "lat": p[1][0], "lon": p[1][1]};
                 })
@@ -225,6 +225,8 @@
         };
 
         function timeConverter(timestamp, mode) {
+            // Epoch timestamp in seconds are sent by python
+            timestamp = timestamp * 1000;
             var a = new Date(timestamp);
             var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             var year = a.getFullYear();
