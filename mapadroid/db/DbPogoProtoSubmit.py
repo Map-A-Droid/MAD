@@ -754,7 +754,7 @@ class DbPogoProtoSubmit:
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
             "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible), is_ar_scan_eligible=VALUES(is_ar_scan_eligible)"
+            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible), is_ar_scan_eligible=VALUES(is_ar_scan_eligible), is_in_battle=VALUES(is_in_battle)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
@@ -777,6 +777,7 @@ class DbPogoProtoSubmit:
                         last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
                     is_ar_scan_eligible = gym["is_ar_scan_eligible"]
+                    is_in_battle = gym['gym_details']['is_in_battle']
 
                     cache_key = "gym{}{}".format(gymid, last_modified_ts)
                     if cache.exists(cache_key):
@@ -788,7 +789,7 @@ class DbPogoProtoSubmit:
                             1,  # enabled
                             latitude, longitude,
                             0,  # total CP
-                            0,  # is_in_battle
+                            is_in_battle,
                             last_modified,  # last_modified
                             now,  # last_scanned
                             is_ex_raid_eligible,
