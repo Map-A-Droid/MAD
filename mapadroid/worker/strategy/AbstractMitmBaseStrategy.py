@@ -353,6 +353,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
             if not status:
                 status = TrsStatus()
+                status.instance_id = self._db_wrapper.get_instance_id()
                 status.device_id = self._worker_state.device_id
             status.currentPos = (self._worker_state.current_location.lat, self._worker_state.current_location.lng)
             status.lastPos = (self._worker_state.last_location.lat, self._worker_state.last_location.lng)
