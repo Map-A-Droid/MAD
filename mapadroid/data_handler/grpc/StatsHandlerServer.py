@@ -40,7 +40,7 @@ class StatsHandlerServer(StatsHandlerServicer, StatsHandler):
             await self.__insecure_port(address)
             logger.warning("Insecure StatsHandler gRPC API server")
 
-        logger.info("Starting server on %s", address)
+        logger.info("Starting server at {}", address)
         await self.__server.start()
 
     async def __secure_port(self, address):

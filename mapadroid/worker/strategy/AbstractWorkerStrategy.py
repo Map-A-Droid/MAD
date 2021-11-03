@@ -15,6 +15,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.ocr.screen_type import ScreenType
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
 from mapadroid.utils.madConstants import WALK_AFTER_TELEPORT_SPEED
@@ -570,9 +571,11 @@ class AbstractWorkerStrategy(ABC):
         x_offset = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET, 0)
         y_offset_settings = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SOFTBAR_ENABLED, False):
-            y_offset = await self._communicator.get_y_offset()
-            if not y_offset:
+            y_offset_raw: Optional[MessageTyping] = await self._communicator.get_y_offset()
+            if not y_offset_raw:
                 raise WebsocketWorkerRemovedException
+            else:
+                y_offset = int(y_offset_raw.strip())
         else:
             y_offset = 0
         y_offset += y_offset_settings

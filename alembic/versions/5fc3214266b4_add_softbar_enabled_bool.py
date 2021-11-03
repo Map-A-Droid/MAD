@@ -7,7 +7,8 @@ Create Date: 2021-08-22 08:50:24.041540
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy import (Column, Float, ForeignKey, Index,
+                        String, Table, text)
 
 # revision identifiers, used by Alembic.
 revision = '5fc3214266b4'
@@ -17,7 +18,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('settings_device', sa.Column('softbar_enabled', sa.BOOLEAN(), default="'0'", nullable=False))
+    op.add_column('settings_device', sa.Column('softbar_enabled', sa.BOOLEAN(), default=text("'0'"), nullable=False))
 
 
 def downgrade():
