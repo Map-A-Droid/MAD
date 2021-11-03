@@ -183,7 +183,7 @@ class Worker(AbstractWorker):
 
             if not await self.check_max_walkers_reached():
                 logger.warning('Max. Walkers in Area {}.',
-                               self._mapping_manager.routemanager_get_name(
+                               await self._mapping_manager.routemanager_get_name(
                                    self._scan_strategy.area_id))
                 await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
                 return
