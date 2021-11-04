@@ -4,6 +4,8 @@ import logging
 import os
 import sys
 from asyncio import Task
+
+import grpc
 from websockets.exceptions import WebSocketException
 import pkg_resources
 
@@ -78,9 +80,9 @@ def install_task_create_excepthook():
         try:
             task.result()
         except asyncio.CancelledError as e:
-            pass  # Task cancellation should not be logged as an error.
+            raise e  # Task cancellation should not be logged as an error.
         except (IndexError, WebSocketException, WebsocketWorkerConnectionClosedException,
-                InternalStopWorkerException) as e:
+                InternalStopWorkerException, grpc.aio._call.AioRpcError) as e:
             logger.debug("Potential uncaught exception: " + str(e))
             logger.debug3("Potential uncaught exception.", exc_info=True)
             raise e  # We regularly throw index error in prioQ, websocket exceptions should be handled anyway as well

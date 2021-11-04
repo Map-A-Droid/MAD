@@ -14,6 +14,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes, application_args
 from mapadroid.utils.questGen import QuestGen
+from grpc.aio import AioRpcError
 
 
 class SerializedMitmDataProcessor:
@@ -89,7 +90,11 @@ class SerializedMitmDataProcessor:
                     try:
                         new_quest: bool = await self.__db_submit.quest(session, data["payload"], self.__quest_gen)
                         if new_quest:
-                            await self.__stats_handler.stats_collect_quest(origin, processed_timestamp)
+                            try:
+                                await self.__stats_handler.stats_collect_quest(origin, processed_timestamp)
+                            except AioRpcError as e:
+                                logger.warning("Failed submitting stats: {}", e)
+                                pass
                         await session.commit()
                     except Exception as e:
                         logger.warning("Failed submitting quests to DB: {}", e)
@@ -151,12 +156,18 @@ class SerializedMitmDataProcessor:
             if application_args.game_stats and encounter:
                 encounter_id, is_shiny = encounter
                 loop = asyncio.get_running_loop()
-                loop.create_task(self.__stats_handler.stats_collect_mon_iv(origin, encounter_id, received_date,
-                                                                           is_shiny))
+                loop.create_task(self.__stats_mon_iv(origin, encounter_id, received_date, is_shiny))
             end_time = self.get_time_ms() - start_time
             logger.debug("Done processing encounter in {}ms", end_time)
         else:
             logger.warning("Playerlevel lower than 30 - not processing encounter IVs")
+
+    async def __stats_mon_iv(self, origin: str, encounter_id: int, received_date: datetime, is_shiny: bool):
+        try:
+            await self.__stats_handler.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny)
+        except AioRpcError as e:
+            logger.warning("Failed submitting mon IV stats: {}", e)
+            pass
 
     async def __process_gmo(self, data, origin, received_date: datetime, received_timestamp: int, start_time):
         logger.info("Processing GMO. Received at {}", received_date)
@@ -216,11 +227,15 @@ class SerializedMitmDataProcessor:
                                           nearby_fort_mons: List[int],
                                           lure_mons: List[int],
                                           amount_raids: int):
-        await self.__stats_handler.stats_collect_wild_mon(worker, wild_mon_encounter_ids_in_gmo, time_received_raw)
-        await self.__stats_handler.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.nearby_cell, time_received_raw)
-        await self.__stats_handler.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.nearby_stop, time_received_raw)
-        await self.__stats_handler.stats_collect_seen_type(lure_mons, MonSeenTypes.lure_wild, time_received_raw)
-        await self.__stats_handler.stats_collect_raid(worker, time_received_raw, amount_raids)
+        try:
+            await self.__stats_handler.stats_collect_wild_mon(worker, wild_mon_encounter_ids_in_gmo, time_received_raw)
+            await self.__stats_handler.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.nearby_cell, time_received_raw)
+            await self.__stats_handler.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.nearby_stop, time_received_raw)
+            await self.__stats_handler.stats_collect_seen_type(lure_mons, MonSeenTypes.lure_wild, time_received_raw)
+            await self.__stats_handler.stats_collect_raid(worker, time_received_raw, amount_raids)
+        except AioRpcError as e:
+            logger.warning("Failed submitting stats: {}", e)
+            pass
 
     async def __process_gmo_mon_stats(self, cell_encounters, lure_wild, stop_encounters, wild_encounter_ids_processed):
         async with self.__db_wrapper as session, session:

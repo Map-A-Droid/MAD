@@ -48,7 +48,7 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             await self.__insecure_port(address)
             logger.warning("Insecure MitmMapper gRPC API server")
 
-        logger.info("Starting server on %s", address)
+        logger.info("Starting to listen on {}", address)
         await self.__server.start()
 
     async def __secure_port(self, address):

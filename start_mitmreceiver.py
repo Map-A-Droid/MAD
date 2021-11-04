@@ -70,7 +70,7 @@ async def start():
         mitm_mapper: RedisMitmMapper = RedisMitmMapper(db_wrapper)
         await mitm_mapper.start()
     else:
-        logger.fatal("Unsupported MitmMapper type for multi-host/process setup {}", application_args.mitmmapper_type)
+        logger.critical("Unsupported MitmMapper type for multi-host/process setup {}", application_args.mitmmapper_type)
         sys.exit(1)
 
     stats_handler_connector = StatsHandlerClientConnector()
