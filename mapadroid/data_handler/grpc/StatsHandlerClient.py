@@ -33,6 +33,7 @@ class StatsHandlerClient(StatsHandlerStub, AbstractStatsHandler):
         request: Stats = Stats()
         request.worker.name = worker
         request.timestamp = int(time_scanned.timestamp())
+        request.quest.SetInParent()
         await self.StatsCollect(request)
 
     async def stats_collect_raid(self, worker: str, time_scanned: datetime, amount: int = 1) -> None:
