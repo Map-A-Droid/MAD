@@ -352,12 +352,9 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         async with self._db_wrapper as session, session:
             status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
             if not status:
-                devicesettings: Optional[Tuple[SettingsDevice, SettingsDevicepool]] = await self._mapping_manager \
-                    .get_devicesettings_of(self._worker_state.origin)
-                if not devicesettings:
-                    return
-                status = TrsStatus(devicesettings[0])
-                logger.warning("Device {} has not settings_device entry in DB it appears?", self._worker_state.origin)
+                status = TrsStatus()
+                status.device_id = self._worker_state.device_id
+                status.instance_id = self._db_wrapper.get_instance_id()
             status.currentPos = (self._worker_state.current_location.lat, self._worker_state.current_location.lng)
             status.lastPos = (self._worker_state.last_location.lat, self._worker_state.last_location.lng)
             status.routePos = routemanager_status[0]
