@@ -60,7 +60,7 @@ $(document).ready(function () {
               {% if field.settings.type == "option" %}
                 <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
                     {% for option in field.settings["values"] %}
-                        <option value="{{ option }}"{% if key in element.__dict__ %}
+                        <option value="{{ option }}"{% if element and key in element.__dict__ %}
                             {{ 'selected="selected"' if option|tojson == element[key]|tojson or option is boolean and (1 if option else 0) == element[key] }}{% endif %}>{{ option|lower }}</option>
                     {% endfor %}
                 </select>

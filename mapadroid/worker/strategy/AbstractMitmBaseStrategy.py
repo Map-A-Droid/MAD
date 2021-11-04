@@ -12,7 +12,7 @@ from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntr
     LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
-from mapadroid.db.model import SettingsArea, SettingsWalkerarea, TrsStatus
+from mapadroid.db.model import SettingsArea, SettingsWalkerarea, TrsStatus, SettingsDevice, SettingsDevicepool
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
@@ -352,9 +352,12 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         async with self._db_wrapper as session, session:
             status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
             if not status:
-                status = TrsStatus()
-                status.instance_id = self._db_wrapper.get_instance_id()
-                status.device_id = self._worker_state.device_id
+                devicesettings: Optional[Tuple[SettingsDevice, SettingsDevicepool]] = await self._mapping_manager \
+                    .get_devicesettings_of(self._worker_state.origin)
+                if not devicesettings:
+                    return
+                status = TrsStatus(devicesettings[0])
+                logger.warning("Device {} has not settings_device entry in DB it appears?", self._worker_state.origin)
             status.currentPos = (self._worker_state.current_location.lat, self._worker_state.current_location.lng)
             status.lastPos = (self._worker_state.last_location.lat, self._worker_state.last_location.lng)
             status.routePos = routemanager_status[0]

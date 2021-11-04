@@ -36,6 +36,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
         device: Optional[SettingsDevice] = None
         if self._identifier == "new":
             ptc_accounts_assigned = []
+            # device = SettingsDevice()
         else:
             device: SettingsDevice = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),
                                                                     int(self._identifier))

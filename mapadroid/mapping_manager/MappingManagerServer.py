@@ -36,7 +36,7 @@ class MappingManagerServer(MappingManagerServicer):
         else:
             await self.__insecure_port(address)
 
-        logger.info("Starting server on %s", address)
+        logger.info("Starting server listening on {}", address)
         await self.__server.start()
 
     async def __secure_port(self, address):

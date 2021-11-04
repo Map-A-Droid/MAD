@@ -7,7 +7,8 @@ from loguru import logger
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.model import SettingsArea
+from mapadroid.db.model import SettingsArea, SettingsAreaIdle, SettingsAreaIvMitm, SettingsAreaMonMitm, \
+    SettingsAreaPokestop, SettingsAreaRaidsMitm
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm

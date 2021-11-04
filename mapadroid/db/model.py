@@ -747,7 +747,7 @@ class SettingsDevice(Base):
     walker = relationship('SettingsWalker')
 
 
-class TrsStatus(SettingsDevice):
+class TrsStatus(Base):
     # class TrsStatus(Base):
     __tablename__ = 'trs_status'
 

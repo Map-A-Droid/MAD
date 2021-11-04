@@ -2,7 +2,7 @@ import asyncio
 import copy
 from asyncio import Task
 from threading import Event
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -350,11 +350,28 @@ class MappingManager(AbstractMappingManager):
         routemanager = self.__fetch_routemanager(routemanager_id)
         return await routemanager.get_next_location(origin) if routemanager is not None else None
 
-    async def get_routemanager_id_where_device_is_registered(self, device_name: str) -> Optional[int]:
+    async def get_routemanager_id_where_device_is_registered(self, device: Union[str, int]) -> Optional[int]:
+        """
+
+        Args:
+            device: either device_id (int) or origin/name (str)
+
+        Returns:
+
+        """
+        origin: Optional[str] = None
+        if isinstance(device, str):
+            origin = device
+        elif isinstance(device, int):
+            for origin, entry in self._devicemappings.items():
+                if entry.device_settings.device_id == device:
+                    origin = origin
+                    break
+
         routemanagers = await self.get_all_routemanager_ids()
         for routemanager in routemanagers:
             workers = await self.routemanager_get_registered_workers(routemanager)
-            if device_name in workers:
+            if origin in workers:
                 return routemanager
         return None
 
