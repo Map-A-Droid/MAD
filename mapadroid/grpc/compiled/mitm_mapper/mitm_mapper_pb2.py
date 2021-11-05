@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1dmitm_mapper/mitm_mapper.proto\x12\x15mapadroid.mitm_mapper\x1a\x15shared/Location.proto\x1a\x10shared/Ack.proto\x1a\x13shared/Worker.proto\x1a\x1cgoogle/protobuf/struct.proto\"]\n\x18SetPokestopVisitsRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x17\n\x0fpokestop_visits\x18\x02 \x01(\x05\"J\n\x0fSetLevelRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\r\n\x05level\x18\x02 \x01(\x05\"[\n\x19LastKnownLocationResponse\x12\x31\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.LocationH\x00\x88\x01\x01\x42\x0b\n\t_location\"u\n\x0fInjectedRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x38\n\x08injected\x18\x02 \x01(\x0b\x32&.mapadroid.mitm_mapper.InjectionStatus\"&\n\x0fInjectionStatus\x12\x13\n\x0bis_injected\x18\x01 \x01(\x08\"\x1e\n\rLevelResponse\x12\r\n\x05level\x18\x01 \x01(\x05\"/\n\x16PokestopVisitsResponse\x12\x15\n\rstops_visited\x18\x01 \x01(\x04\"\xc6\x01\n\x1aLatestMitmDataFullResponse\x12M\n\x06latest\x18\x01 \x03(\x0b\x32=.mapadroid.mitm_mapper.LatestMitmDataFullResponse.LatestEntry\x1aY\n\x0bLatestEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x39\n\x05value\x18\x02 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntry:\x02\x38\x01\"\x93\x01\n LatestMitmDataEntryUpdateRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x38\n\x04\x64\x61ta\x18\x03 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntry\"g\n\x1bLatestMitmDataEntryResponse\x12>\n\x05\x65ntry\x18\x01 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntryH\x00\x88\x01\x01\x42\x08\n\x06_entry\"\x8b\x01\n\x1aLatestMitmDataEntryRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x1f\n\x12timestamp_earliest\x18\x03 \x01(\x04H\x00\x88\x01\x01\x42\x15\n\x13_timestamp_earliest\"\xc4\x02\n\x13LatestMitmDataEntry\x12\x31\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.LocationH\x01\x88\x01\x01\x12\x1f\n\x12timestamp_received\x18\x02 \x01(\x04H\x02\x88\x01\x01\x12(\n\x1btimestamp_of_data_retrieval\x18\x03 \x01(\x04H\x03\x88\x01\x01\x12\x32\n\x0fsome_dictionary\x18\x04 \x01(\x0b\x32\x17.google.protobuf.StructH\x00\x12/\n\tsome_list\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.ListValueH\x00\x42\x06\n\x04\x64\x61taB\x0b\n\t_locationB\x15\n\x13_timestamp_receivedB\x1e\n\x1c_timestamp_of_data_retrieval\"\x1e\n\tLastMoved\x12\x11\n\ttimestamp\x18\x01 \x01(\x04\x32\xf6\x07\n\nMitmMapper\x12R\n\x14GetLastPossiblyMoved\x12\x18.mapadroid.shared.Worker\x1a .mapadroid.mitm_mapper.LastMoved\x12^\n\x0cUpdateLatest\x12\x37.mapadroid.mitm_mapper.LatestMitmDataEntryUpdateRequest\x1a\x15.mapadroid.shared.Ack\x12v\n\rRequestLatest\x12\x31.mapadroid.mitm_mapper.LatestMitmDataEntryRequest\x1a\x32.mapadroid.mitm_mapper.LatestMitmDataEntryResponse\x12`\n\x11RequestFullLatest\x12\x18.mapadroid.shared.Worker\x1a\x31.mapadroid.mitm_mapper.LatestMitmDataFullResponse\x12I\n\x08SetLevel\x12&.mapadroid.mitm_mapper.SetLevelRequest\x1a\x15.mapadroid.shared.Ack\x12[\n\x11SetPokestopVisits\x12/.mapadroid.mitm_mapper.SetPokestopVisitsRequest\x1a\x15.mapadroid.shared.Ack\x12\\\n\x11GetPokestopVisits\x12\x18.mapadroid.shared.Worker\x1a-.mapadroid.mitm_mapper.PokestopVisitsResponse\x12J\n\x08GetLevel\x12\x18.mapadroid.shared.Worker\x1a$.mapadroid.mitm_mapper.LevelResponse\x12V\n\x12GetInjectionStatus\x12\x18.mapadroid.shared.Worker\x1a&.mapadroid.mitm_mapper.InjectionStatus\x12L\n\x0bSetInjected\x12&.mapadroid.mitm_mapper.InjectedRequest\x1a\x15.mapadroid.shared.Ack\x12\x62\n\x14GetLastKnownLocation\x12\x18.mapadroid.shared.Worker\x1a\x30.mapadroid.mitm_mapper.LastKnownLocationResponseb\x06proto3'
+  serialized_pb=b'\n\x1dmitm_mapper/mitm_mapper.proto\x12\x15mapadroid.mitm_mapper\x1a\x15shared/Location.proto\x1a\x10shared/Ack.proto\x1a\x13shared/Worker.proto\x1a\x1cgoogle/protobuf/struct.proto\"]\n\x18SetPokestopVisitsRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x17\n\x0fpokestop_visits\x18\x02 \x01(\x05\"J\n\x0fSetLevelRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\r\n\x05level\x18\x02 \x01(\x05\"[\n\x19LastKnownLocationResponse\x12\x31\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.LocationH\x00\x88\x01\x01\x42\x0b\n\t_location\"u\n\x0fInjectedRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x38\n\x08injected\x18\x02 \x01(\x0b\x32&.mapadroid.mitm_mapper.InjectionStatus\"&\n\x0fInjectionStatus\x12\x13\n\x0bis_injected\x18\x01 \x01(\x08\"\x1e\n\rLevelResponse\x12\r\n\x05level\x18\x01 \x01(\x05\"/\n\x16PokestopVisitsResponse\x12\x15\n\rstops_visited\x18\x01 \x01(\x04\"\x93\x01\n LatestMitmDataEntryUpdateRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x38\n\x04\x64\x61ta\x18\x03 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntry\"g\n\x1bLatestMitmDataEntryResponse\x12>\n\x05\x65ntry\x18\x01 \x01(\x0b\x32*.mapadroid.mitm_mapper.LatestMitmDataEntryH\x00\x88\x01\x01\x42\x08\n\x06_entry\"\x8b\x01\n\x1aLatestMitmDataEntryRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\x1f\n\x12timestamp_earliest\x18\x03 \x01(\x04H\x00\x88\x01\x01\x42\x15\n\x13_timestamp_earliest\"\xc4\x02\n\x13LatestMitmDataEntry\x12\x31\n\x08location\x18\x01 \x01(\x0b\x32\x1a.mapadroid.shared.LocationH\x01\x88\x01\x01\x12\x1f\n\x12timestamp_received\x18\x02 \x01(\x04H\x02\x88\x01\x01\x12(\n\x1btimestamp_of_data_retrieval\x18\x03 \x01(\x04H\x03\x88\x01\x01\x12\x32\n\x0fsome_dictionary\x18\x04 \x01(\x0b\x32\x17.google.protobuf.StructH\x00\x12/\n\tsome_list\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.ListValueH\x00\x42\x06\n\x04\x64\x61taB\x0b\n\t_locationB\x15\n\x13_timestamp_receivedB\x1e\n\x1c_timestamp_of_data_retrieval\"\x1e\n\tLastMoved\x12\x11\n\ttimestamp\x18\x01 \x01(\x04\x32\x94\x07\n\nMitmMapper\x12R\n\x14GetLastPossiblyMoved\x12\x18.mapadroid.shared.Worker\x1a .mapadroid.mitm_mapper.LastMoved\x12^\n\x0cUpdateLatest\x12\x37.mapadroid.mitm_mapper.LatestMitmDataEntryUpdateRequest\x1a\x15.mapadroid.shared.Ack\x12v\n\rRequestLatest\x12\x31.mapadroid.mitm_mapper.LatestMitmDataEntryRequest\x1a\x32.mapadroid.mitm_mapper.LatestMitmDataEntryResponse\x12I\n\x08SetLevel\x12&.mapadroid.mitm_mapper.SetLevelRequest\x1a\x15.mapadroid.shared.Ack\x12[\n\x11SetPokestopVisits\x12/.mapadroid.mitm_mapper.SetPokestopVisitsRequest\x1a\x15.mapadroid.shared.Ack\x12\\\n\x11GetPokestopVisits\x12\x18.mapadroid.shared.Worker\x1a-.mapadroid.mitm_mapper.PokestopVisitsResponse\x12J\n\x08GetLevel\x12\x18.mapadroid.shared.Worker\x1a$.mapadroid.mitm_mapper.LevelResponse\x12V\n\x12GetInjectionStatus\x12\x18.mapadroid.shared.Worker\x1a&.mapadroid.mitm_mapper.InjectionStatus\x12L\n\x0bSetInjected\x12&.mapadroid.mitm_mapper.InjectedRequest\x1a\x15.mapadroid.shared.Ack\x12\x62\n\x14GetLastKnownLocation\x12\x18.mapadroid.shared.Worker\x1a\x30.mapadroid.mitm_mapper.LastKnownLocationResponseb\x06proto3'
   ,
   dependencies=[shared_dot_Location__pb2.DESCRIPTOR,shared_dot_Ack__pb2.DESCRIPTOR,shared_dot_Worker__pb2.DESCRIPTOR,google_dot_protobuf_dot_struct__pb2.DESCRIPTOR,])
 
@@ -280,76 +280,6 @@ _POKESTOPVISITSRESPONSE = _descriptor.Descriptor(
 )
 
 
-_LATESTMITMDATAFULLRESPONSE_LATESTENTRY = _descriptor.Descriptor(
-  name='LatestEntry',
-  full_name='mapadroid.mitm_mapper.LatestMitmDataFullResponse.LatestEntry',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='key', full_name='mapadroid.mitm_mapper.LatestMitmDataFullResponse.LatestEntry.key', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='value', full_name='mapadroid.mitm_mapper.LatestMitmDataFullResponse.LatestEntry.value', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=b'8\001',
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=762,
-  serialized_end=851,
-)
-
-_LATESTMITMDATAFULLRESPONSE = _descriptor.Descriptor(
-  name='LatestMitmDataFullResponse',
-  full_name='mapadroid.mitm_mapper.LatestMitmDataFullResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='latest', full_name='mapadroid.mitm_mapper.LatestMitmDataFullResponse.latest', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[_LATESTMITMDATAFULLRESPONSE_LATESTENTRY, ],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=653,
-  serialized_end=851,
-)
-
-
 _LATESTMITMDATAENTRYUPDATEREQUEST = _descriptor.Descriptor(
   name='LatestMitmDataEntryUpdateRequest',
   full_name='mapadroid.mitm_mapper.LatestMitmDataEntryUpdateRequest',
@@ -391,8 +321,8 @@ _LATESTMITMDATAENTRYUPDATEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=854,
-  serialized_end=1001,
+  serialized_start=653,
+  serialized_end=800,
 )
 
 
@@ -428,8 +358,8 @@ _LATESTMITMDATAENTRYRESPONSE = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1003,
-  serialized_end=1106,
+  serialized_start=802,
+  serialized_end=905,
 )
 
 
@@ -479,8 +409,8 @@ _LATESTMITMDATAENTRYREQUEST = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1109,
-  serialized_end=1248,
+  serialized_start=908,
+  serialized_end=1047,
 )
 
 
@@ -559,8 +489,8 @@ _LATESTMITMDATAENTRY = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=1251,
-  serialized_end=1575,
+  serialized_start=1050,
+  serialized_end=1374,
 )
 
 
@@ -591,8 +521,8 @@ _LASTMOVED = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1577,
-  serialized_end=1607,
+  serialized_start=1376,
+  serialized_end=1406,
 )
 
 _SETPOKESTOPVISITSREQUEST.fields_by_name['worker'].message_type = shared_dot_Worker__pb2._WORKER
@@ -603,9 +533,6 @@ _LASTKNOWNLOCATIONRESPONSE.oneofs_by_name['_location'].fields.append(
 _LASTKNOWNLOCATIONRESPONSE.fields_by_name['location'].containing_oneof = _LASTKNOWNLOCATIONRESPONSE.oneofs_by_name['_location']
 _INJECTEDREQUEST.fields_by_name['worker'].message_type = shared_dot_Worker__pb2._WORKER
 _INJECTEDREQUEST.fields_by_name['injected'].message_type = _INJECTIONSTATUS
-_LATESTMITMDATAFULLRESPONSE_LATESTENTRY.fields_by_name['value'].message_type = _LATESTMITMDATAENTRY
-_LATESTMITMDATAFULLRESPONSE_LATESTENTRY.containing_type = _LATESTMITMDATAFULLRESPONSE
-_LATESTMITMDATAFULLRESPONSE.fields_by_name['latest'].message_type = _LATESTMITMDATAFULLRESPONSE_LATESTENTRY
 _LATESTMITMDATAENTRYUPDATEREQUEST.fields_by_name['worker'].message_type = shared_dot_Worker__pb2._WORKER
 _LATESTMITMDATAENTRYUPDATEREQUEST.fields_by_name['data'].message_type = _LATESTMITMDATAENTRY
 _LATESTMITMDATAENTRYRESPONSE.fields_by_name['entry'].message_type = _LATESTMITMDATAENTRY
@@ -641,7 +568,6 @@ DESCRIPTOR.message_types_by_name['InjectedRequest'] = _INJECTEDREQUEST
 DESCRIPTOR.message_types_by_name['InjectionStatus'] = _INJECTIONSTATUS
 DESCRIPTOR.message_types_by_name['LevelResponse'] = _LEVELRESPONSE
 DESCRIPTOR.message_types_by_name['PokestopVisitsResponse'] = _POKESTOPVISITSRESPONSE
-DESCRIPTOR.message_types_by_name['LatestMitmDataFullResponse'] = _LATESTMITMDATAFULLRESPONSE
 DESCRIPTOR.message_types_by_name['LatestMitmDataEntryUpdateRequest'] = _LATESTMITMDATAENTRYUPDATEREQUEST
 DESCRIPTOR.message_types_by_name['LatestMitmDataEntryResponse'] = _LATESTMITMDATAENTRYRESPONSE
 DESCRIPTOR.message_types_by_name['LatestMitmDataEntryRequest'] = _LATESTMITMDATAENTRYREQUEST
@@ -698,21 +624,6 @@ PokestopVisitsResponse = _reflection.GeneratedProtocolMessageType('PokestopVisit
   })
 _sym_db.RegisterMessage(PokestopVisitsResponse)
 
-LatestMitmDataFullResponse = _reflection.GeneratedProtocolMessageType('LatestMitmDataFullResponse', (_message.Message,), {
-
-  'LatestEntry' : _reflection.GeneratedProtocolMessageType('LatestEntry', (_message.Message,), {
-    'DESCRIPTOR' : _LATESTMITMDATAFULLRESPONSE_LATESTENTRY,
-    '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-    # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.LatestMitmDataFullResponse.LatestEntry)
-    })
-  ,
-  'DESCRIPTOR' : _LATESTMITMDATAFULLRESPONSE,
-  '__module__' : 'mitm_mapper.mitm_mapper_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.mitm_mapper.LatestMitmDataFullResponse)
-  })
-_sym_db.RegisterMessage(LatestMitmDataFullResponse)
-_sym_db.RegisterMessage(LatestMitmDataFullResponse.LatestEntry)
-
 LatestMitmDataEntryUpdateRequest = _reflection.GeneratedProtocolMessageType('LatestMitmDataEntryUpdateRequest', (_message.Message,), {
   'DESCRIPTOR' : _LATESTMITMDATAENTRYUPDATEREQUEST,
   '__module__' : 'mitm_mapper.mitm_mapper_pb2'
@@ -749,7 +660,6 @@ LastMoved = _reflection.GeneratedProtocolMessageType('LastMoved', (_message.Mess
 _sym_db.RegisterMessage(LastMoved)
 
 
-_LATESTMITMDATAFULLRESPONSE_LATESTENTRY._options = None
 
 _MITMMAPPER = _descriptor.ServiceDescriptor(
   name='MitmMapper',
@@ -758,8 +668,8 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=1610,
-  serialized_end=2624,
+  serialized_start=1409,
+  serialized_end=2325,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetLastPossiblyMoved',
@@ -792,19 +702,9 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
-    name='RequestFullLatest',
-    full_name='mapadroid.mitm_mapper.MitmMapper.RequestFullLatest',
-    index=3,
-    containing_service=None,
-    input_type=shared_dot_Worker__pb2._WORKER,
-    output_type=_LATESTMITMDATAFULLRESPONSE,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-  _descriptor.MethodDescriptor(
     name='SetLevel',
     full_name='mapadroid.mitm_mapper.MitmMapper.SetLevel',
-    index=4,
+    index=3,
     containing_service=None,
     input_type=_SETLEVELREQUEST,
     output_type=shared_dot_Ack__pb2._ACK,
@@ -814,7 +714,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='SetPokestopVisits',
     full_name='mapadroid.mitm_mapper.MitmMapper.SetPokestopVisits',
-    index=5,
+    index=4,
     containing_service=None,
     input_type=_SETPOKESTOPVISITSREQUEST,
     output_type=shared_dot_Ack__pb2._ACK,
@@ -824,7 +724,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetPokestopVisits',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetPokestopVisits',
-    index=6,
+    index=5,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_POKESTOPVISITSRESPONSE,
@@ -834,7 +734,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetLevel',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetLevel',
-    index=7,
+    index=6,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_LEVELRESPONSE,
@@ -844,7 +744,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetInjectionStatus',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetInjectionStatus',
-    index=8,
+    index=7,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_INJECTIONSTATUS,
@@ -854,7 +754,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='SetInjected',
     full_name='mapadroid.mitm_mapper.MitmMapper.SetInjected',
-    index=9,
+    index=8,
     containing_service=None,
     input_type=_INJECTEDREQUEST,
     output_type=shared_dot_Ack__pb2._ACK,
@@ -864,7 +764,7 @@ _MITMMAPPER = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='GetLastKnownLocation',
     full_name='mapadroid.mitm_mapper.MitmMapper.GetLastKnownLocation',
-    index=10,
+    index=9,
     containing_service=None,
     input_type=shared_dot_Worker__pb2._WORKER,
     output_type=_LASTKNOWNLOCATIONRESPONSE,

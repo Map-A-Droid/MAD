@@ -6,14 +6,14 @@ from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapp
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
 from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import LastMoved, LatestMitmDataEntryResponse, \
-    LatestMitmDataEntryRequest, LatestMitmDataFullResponse, PokestopVisitsResponse, \
+    LatestMitmDataEntryRequest, PokestopVisitsResponse, \
     LevelResponse, InjectionStatus, InjectedRequest, LastKnownLocationResponse, SetLevelRequest, \
     SetPokestopVisitsRequest
 from mapadroid.grpc.compiled.shared.Worker_pb2 import Worker
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperStub
 from mapadroid.utils.collections import Location
 from google.protobuf import json_format
-
+from grpc.aio import AioRpcError
 from loguru import logger
 
 
@@ -34,7 +34,10 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request: SetLevelRequest = SetLevelRequest()
         request.worker.name = worker
         request.level = level
-        await self.SetLevel(request)
+        try:
+            await self.SetLevel(request)
+        except AioRpcError as e:
+            logger.warning("Failed submitting level {}", e)
 
     @cached(ttl=60)
     async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
@@ -46,11 +49,19 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request: SetPokestopVisitsRequest = SetPokestopVisitsRequest()
         request.worker.name = worker
         request.pokestop_visits = pokestop_visits
-        await self.SetPokestopVisits(request)
+        try:
+            await self.SetPokestopVisits(request)
+        except AioRpcError as e:
+            logger.warning("Failed submitting pokestop visits {}", e)
 
     async def get_last_possibly_moved(self, worker: str) -> int:
-        response: LastMoved = await self.GetLastPossiblyMoved(name=worker)
-        return response.timestamp
+        try:
+            response: LastMoved = await self.GetLastPossiblyMoved(name=worker)
+            return response.timestamp
+        except AioRpcError as e:
+            logger.warning("Failed requesting last possibly moved {}", e)
+            # TODO: Return time.time() to continue scans or throw a custom exception that needs to be handled?
+            return 0
 
     async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
@@ -71,7 +82,10 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             request.data.some_dictionary.update(value)
         else:
             raise ValueError("Cannot handle data")
-        await self.UpdateLatest(request)
+        try:
+            await self.UpdateLatest(request)
+        except AioRpcError as e:
+            logger.warning("Failed submitting latest data {}", e)
 
     async def request_latest(self, worker: str, key: str,
                              timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
@@ -80,7 +94,12 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request.key = str(key)
         if timestamp_earliest:
             request.timestamp_earliest = timestamp_earliest
-        response: LatestMitmDataEntryResponse = await self.RequestLatest(request)
+        try:
+            response: LatestMitmDataEntryResponse = await self.RequestLatest(request)
+        except AioRpcError as e:
+            logger.warning("Failed requesting latest data {}", e)
+            # TODO: Throw custom exception?
+            return None
         if not response.HasField("entry"):
             return None
         loop = asyncio.get_running_loop()
@@ -111,51 +130,61 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
                                                          data=formatted)
         return entry
 
-    async def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
-        request = Worker()
-        request.name = worker
-        response: LatestMitmDataFullResponse = await self.RequestFullLatest(request)
-        loop = asyncio.get_running_loop()
-        full_latest: Dict[str, LatestMitmDataEntry] = await loop.run_in_executor(
-            None, self.__full_transformation, response)
-        return full_latest
-
-    def __full_transformation(self, response: LatestMitmDataFullResponse) -> Dict[str, LatestMitmDataEntry]:
-        full_latest: Dict[str, LatestMitmDataEntry] = {}
-        for key in response.latest:
-            full_latest[key] = self.__transform_proto_data_entry(response.latest[key])
-        return full_latest
-
     @cached(ttl=30)
     async def get_poke_stop_visits(self, worker: str) -> int:
         request: Worker = Worker()
         request.name = worker
-        response: PokestopVisitsResponse = await self.GetPokestopVisits(request)
-        return response.stops_visited
+        try:
+            response: PokestopVisitsResponse = await self.GetPokestopVisits(request)
+            return response.stops_visited
+        except AioRpcError as e:
+            logger.warning("Failed requesting pokestop visits {}", e)
+            # TODO: Custom Exception
+            return self._pokestop_visits_cache.get(worker, 0)
 
     @cached(ttl=60)
     async def get_level(self, worker: str) -> int:
         request: Worker = Worker()
         request.name = worker
-        response: LevelResponse = await self.GetLevel(request)
-        return response.level
+        try:
+            response: LevelResponse = await self.GetLevel(request)
+            return response.level
+        except AioRpcError as e:
+            logger.warning("Failed requesting level {}", e)
+            # TODO: Custom Exception
+            return self._level_cache.get(worker, 0)
 
     async def get_injection_status(self, worker: str) -> bool:
         request: Worker = Worker()
         request.name = worker
-        response: InjectionStatus = await self.GetInjectionStatus(request)
-        return response.is_injected
+        try:
+            response: InjectionStatus = await self.GetInjectionStatus(request)
+            return response.is_injected
+        except AioRpcError as e:
+            logger.warning("Failed submitting injection status {}", e)
+            # TODO: Custom exception
+            return False
 
     async def set_injection_status(self, worker: str, status: bool) -> None:
         request: InjectedRequest = InjectedRequest()
         request.worker.name = worker
         request.injected.is_injected = status
-        await self.SetInjected(request)
+        try:
+            await self.SetInjected(request)
+        except AioRpcError as e:
+            logger.warning("Failed setting injection status {}", e)
+            # TODO: Custom exception?
+            return
 
     async def get_last_known_location(self, worker: str) -> Optional[Location]:
         request: Worker = Worker()
         request.name = worker
-        response: LastKnownLocationResponse = await self.GetLastKnownLocation(request)
+        try:
+            response: LastKnownLocationResponse = await self.GetLastKnownLocation(request)
+        except AioRpcError as e:
+            logger.warning("Failed requesting last known location {}", e)
+            # TODO: Custom exception?
+            return None
         if response.HasField("location"):
             return Location(response.location.latitude, response.location.longitude)
         else:

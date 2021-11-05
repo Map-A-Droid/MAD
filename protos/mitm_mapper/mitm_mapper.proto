@@ -10,7 +10,6 @@ service MitmMapper {
   rpc GetLastPossiblyMoved(mapadroid.shared.Worker) returns (LastMoved);
   rpc UpdateLatest(LatestMitmDataEntryUpdateRequest) returns (mapadroid.shared.Ack);
   rpc RequestLatest(LatestMitmDataEntryRequest) returns (LatestMitmDataEntryResponse);
-  rpc RequestFullLatest(mapadroid.shared.Worker) returns (LatestMitmDataFullResponse);
   rpc SetLevel(SetLevelRequest) returns (mapadroid.shared.Ack);
   rpc SetPokestopVisits(SetPokestopVisitsRequest) returns (mapadroid.shared.Ack);
   rpc GetPokestopVisits(mapadroid.shared.Worker) returns (PokestopVisitsResponse);
@@ -51,9 +50,6 @@ message PokestopVisitsResponse {
   uint64 stops_visited = 1;
 }
 
-message LatestMitmDataFullResponse {
-  map<string, LatestMitmDataEntry> latest = 1;
-}
 
 message LatestMitmDataEntryUpdateRequest {
   mapadroid.shared.Worker worker = 1;

@@ -30,9 +30,6 @@ class MitmMapper(AbstractMitmMapper):
                              timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
         return self.__mitm_data_handler.request_latest(worker, key, timestamp_earliest)
 
-    async def get_full_latest_data(self, worker: str) -> Dict[str, LatestMitmDataEntry]:
-        return self.__mitm_data_handler.get_full_latest_data(worker)
-
     async def get_poke_stop_visits(self, worker: str) -> int:
         return await self.__mitm_data_handler.get_poke_stop_visits(worker)
 

@@ -130,15 +130,6 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             entry_message.some_dictionary.update(latest.data)
         return entry_message
 
-    async def RequestFullLatest(self, request: Worker,
-                                context: grpc.aio.ServicerContext) -> LatestMitmDataFullResponse:
-        logger.debug("RequestFullLatest called")
-        data: Dict[str, LatestMitmDataEntry] = await self.get_full_latest_data(worker=request.name)
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            None, self.__generate_full_response, data.copy())
-        return result
-
     def __generate_full_response(self, data: Dict[str, LatestMitmDataEntry]) -> LatestMitmDataFullResponse:
         response: LatestMitmDataFullResponse = LatestMitmDataFullResponse()
         for key, entry in data.items():

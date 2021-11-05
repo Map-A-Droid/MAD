@@ -31,11 +31,6 @@ class MitmMapperStub(object):
                 request_serializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataEntryRequest.SerializeToString,
                 response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataEntryResponse.FromString,
                 )
-        self.RequestFullLatest = channel.unary_unary(
-                '/mapadroid.mitm_mapper.MitmMapper/RequestFullLatest',
-                request_serializer=shared_dot_Worker__pb2.Worker.SerializeToString,
-                response_deserializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataFullResponse.FromString,
-                )
         self.SetLevel = channel.unary_unary(
                 '/mapadroid.mitm_mapper.MitmMapper/SetLevel',
                 request_serializer=mitm__mapper_dot_mitm__mapper__pb2.SetLevelRequest.SerializeToString,
@@ -89,12 +84,6 @@ class MitmMapperServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def RequestLatest(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def RequestFullLatest(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -159,11 +148,6 @@ def add_MitmMapperServicer_to_server(servicer, server):
                     servicer.RequestLatest,
                     request_deserializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataEntryRequest.FromString,
                     response_serializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataEntryResponse.SerializeToString,
-            ),
-            'RequestFullLatest': grpc.unary_unary_rpc_method_handler(
-                    servicer.RequestFullLatest,
-                    request_deserializer=shared_dot_Worker__pb2.Worker.FromString,
-                    response_serializer=mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataFullResponse.SerializeToString,
             ),
             'SetLevel': grpc.unary_unary_rpc_method_handler(
                     servicer.SetLevel,
@@ -258,23 +242,6 @@ class MitmMapper(object):
         return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/RequestLatest',
             mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataEntryRequest.SerializeToString,
             mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataEntryResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def RequestFullLatest(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/mapadroid.mitm_mapper.MitmMapper/RequestFullLatest',
-            shared_dot_Worker__pb2.Worker.SerializeToString,
-            mitm__mapper_dot_mitm__mapper__pb2.LatestMitmDataFullResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
