@@ -3,7 +3,7 @@ from sqlalchemy import (Column, Float, ForeignKey, Index,
                         String, Table, text)
 from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
                                        LONGTEXT, MEDIUMINT, SMALLINT, TINYINT,
-                                       VARCHAR)
+                                       VARCHAR, TIMESTAMP)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -760,12 +760,12 @@ class TrsStatus(Base):
     area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), index=True)
     idle = Column(TINYINT(4), server_default=text("'0'"))
     rebootCounter = Column(INTEGER(11))
-    lastProtoDateTime = Column(TZDateTime)
-    lastPogoRestart = Column(TZDateTime)
+    lastProtoDateTime = Column(TIMESTAMP)
+    lastPogoRestart = Column(TIMESTAMP)
     init = Column(TINYINT(1))
     rebootingOption = Column(TINYINT(1))
     restartCounter = Column(INTEGER(11))
-    lastPogoReboot = Column(TZDateTime)
+    lastPogoReboot = Column(TIMESTAMP)
     globalrebootcount = Column(INTEGER(11), server_default=text("'0'"))
     globalrestartcount = Column(INTEGER(11), server_default=text("'0'"))
     currentSleepTime = Column(INTEGER(11), nullable=False, server_default=text("'0'"))

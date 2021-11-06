@@ -4,6 +4,8 @@ from loguru import logger
 from sqlalchemy import DateTime
 from sqlalchemy.types import TypeDecorator
 
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+
 
 class TZDateTime(TypeDecorator):
     def process_literal_param(self, value, dialect):
@@ -29,5 +31,8 @@ class TZDateTime(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         if value is not None:
-            value = value.replace(tzinfo=datetime.timezone.utc)
+            try:
+                value = value.replace(tzinfo=datetime.timezone.utc)
+            except Exception:
+                return DatetimeWrapper.fromtimestamp(0)
         return value

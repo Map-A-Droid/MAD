@@ -42,8 +42,8 @@ class TrsStatusHelper:
             status.instance_id = instance_id
         status.globalrebootcount = 0
         status.globalrestartcount = 0
-        status.lastPogoReboot = 0
-        status.lastPogoRestart = 0
+        status.lastPogoReboot = DatetimeWrapper.fromtimestamp(0)
+        status.lastPogoRestart = DatetimeWrapper.fromtimestamp(0)
         session.add(status)
 
     @staticmethod
