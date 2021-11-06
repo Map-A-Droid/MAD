@@ -11,7 +11,7 @@ import pkg_resources
 
 from mapadroid.utils.logging import get_logger, LoggerEnums, InterceptHandler
 from mapadroid.utils.madGlobals import application_args, WebsocketWorkerConnectionClosedException, \
-    InternalStopWorkerException
+    InternalStopWorkerException, WebsocketWorkerTimeoutException
 
 logger = get_logger(LoggerEnums.system)
 
@@ -82,7 +82,8 @@ def install_task_create_excepthook():
         except asyncio.CancelledError as e:
             raise e  # Task cancellation should not be logged as an error.
         except (IndexError, WebSocketException, WebsocketWorkerConnectionClosedException,
-                InternalStopWorkerException, grpc.aio._call.AioRpcError) as e:
+                InternalStopWorkerException, grpc.aio._call.AioRpcError,
+                WebsocketWorkerTimeoutException) as e:
             logger.debug("Potential uncaught exception: " + str(e))
             logger.debug3("Potential uncaught exception.", exc_info=True)
             raise e  # We regularly throw index error in prioQ, websocket exceptions should be handled anyway as well
