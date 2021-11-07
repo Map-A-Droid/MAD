@@ -13,7 +13,7 @@ from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import (
     InjectedRequest, InjectionStatus,
     LastKnownLocationResponse, LastMoved, LatestMitmDataEntryRequest,
     LatestMitmDataEntryResponse, LatestMitmDataEntryUpdateRequest,
-    LatestMitmDataFullResponse, LevelResponse, PokestopVisitsResponse,
+    LevelResponse, PokestopVisitsResponse,
     SetLevelRequest, SetPokestopVisitsRequest)
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
 from mapadroid.grpc.compiled.shared.Worker_pb2 import Worker
@@ -129,15 +129,6 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
             logger.debug("Placing dict data")
             entry_message.some_dictionary.update(latest.data)
         return entry_message
-
-    def __generate_full_response(self, data: Dict[str, LatestMitmDataEntry]) -> LatestMitmDataFullResponse:
-        response: LatestMitmDataFullResponse = LatestMitmDataFullResponse()
-        for key, entry in data.items():
-            try:
-                self.__transform_latest_mitm_data_entry(response.latest[key], entry)
-            except Exception as e:
-                logger.exception(e)
-        return response
 
     async def GetPokestopVisits(self, request: Worker,
                                 context: grpc.aio.ServicerContext) -> PokestopVisitsResponse:
