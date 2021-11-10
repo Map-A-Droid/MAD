@@ -187,7 +187,7 @@ class GeofenceHelper:
 
         return inside
 
-    def get_middle_from_fence(self):
+    def get_middle_from_fence(self) -> Tuple[float, float]:
         max_lat, min_lat, max_lon, min_lon = -90, 90, -180, 180
         if self.geofenced_areas:
             for va in self.geofenced_areas:

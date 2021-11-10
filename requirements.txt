@@ -46,3 +46,4 @@ Jinja2~=3.0.1
 PyMySQL~=0.9.3
 multidict~=5.1.0
 orjson
+timezonefinder

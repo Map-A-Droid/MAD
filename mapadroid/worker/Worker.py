@@ -9,6 +9,7 @@ from loguru import logger
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
@@ -259,6 +260,15 @@ class Worker(AbstractWorker):
             except Exception as e:
                 logger.warning("Failed saving scanned location of {}: {}", self._worker_state.origin, e)
 
+    async def __area_middle_of_current_fence(self) -> Optional[Location]:
+        geofence_helper: Optional[GeofenceHelper] = await self._mapping_manager.routemanager_get_geofence_helper(
+            self._scan_strategy.area_id)
+        location: Optional[Location] = None
+        if geofence_helper:
+            lat, lng = geofence_helper.get_middle_from_fence()
+            location = Location(lat, lng)
+        return location
+
     async def check_walker(self):
         if not self._scan_strategy.walker:
             logger.warning("No walker set")
@@ -286,7 +296,8 @@ class Worker(AbstractWorker):
             if not exittime or ':' not in exittime:
                 logger.error("No or wrong Value for Mode - check your settings! Killing worker")
                 return False
-            return check_walker_value_type(exittime)
+            # Fetch middle of geofence included..
+            return check_walker_value_type(exittime, await self.__area_middle_of_current_fence())
         elif mode == "round":
             logger.debug("Checking walker mode 'round'")
             rounds = self._scan_strategy.walker.algo_value
@@ -305,12 +316,12 @@ class Worker(AbstractWorker):
             if len(period) == 0:
                 logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
-            return check_walker_value_type(period)
+            return check_walker_value_type(period, await self.__area_middle_of_current_fence())
         elif mode == "coords":
             exittime = self._scan_strategy.walker.algo_value
             logger.debug("Routemode coords, exittime {}", exittime)
             if exittime: # TODO: Check if routemanager still has coords (e.g. questmode should make this one stop?)
-                return check_walker_value_type(exittime)
+                return check_walker_value_type(exittime, await self.__area_middle_of_current_fence())
             return True
         elif mode == "idle":
             logger.debug("Checking walker mode 'idle'")
@@ -320,7 +331,7 @@ class Worker(AbstractWorker):
             sleeptime = self._scan_strategy.walker.algo_value
             logger.info('going to sleep')
             killpogo = False
-            if check_walker_value_type(sleeptime):
+            if check_walker_value_type(sleeptime, await self.__area_middle_of_current_fence()):
                 await self._scan_strategy.stop_pogo()
                 killpogo = True
                 logger.debug("Setting device to idle for routemanager")
@@ -328,7 +339,8 @@ class Worker(AbstractWorker):
                     await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
                                                            self._worker_state.device_id, 0)
                     await session.commit()
-            while not self._worker_state.stop_worker_event.is_set() and check_walker_value_type(sleeptime):
+            while (not self._worker_state.stop_worker_event.is_set()
+                    and check_walker_value_type(sleeptime, await self.__area_middle_of_current_fence())):
                 await asyncio.sleep(1)
             logger.info('just woke up')
             if killpogo:

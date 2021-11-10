@@ -7,6 +7,7 @@ from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapp
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsDevicepool, SettingsDevice, SettingsWalkerarea
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry, MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -174,8 +175,9 @@ class StrategyFactory:
             logger.warning('No area defined for the current walker')
             return None
 
-        # preckeck walker setting
-        while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
+        # preckeck walker setting using the geofence_included's first location
+        location = await self.__area_middle_of_fence(walker_settings)
+        while not pre_check_value(walker_settings, self.__event.get_current_event_id(), location) \
                 and client_mapping.walker_area_index < len(client_mapping.walker_areas):
             logger.info('not using area {} - Walkervalue out of range',
                         await self.__mapping_manager.routemanager_get_name(walker_settings.area_id))
@@ -191,6 +193,7 @@ class StrategyFactory:
                                                                     MappingManagerDevicemappingKey.WALKER_AREA_INDEX,
                                                                     client_mapping.walker_area_index)
             walker_settings = client_mapping.walker_areas[client_mapping.walker_area_index]
+            location = await self.__area_middle_of_fence(walker_settings)
 
         logger.debug("Checking walker_area_index length")
         if client_mapping.walker_area_index >= len(client_mapping.walker_areas):
@@ -207,6 +210,15 @@ class StrategyFactory:
                                                    total_walkers_allowed_for_assigned_area=len(
                                                        client_mapping.walker_areas))
         return walker_configuration
+
+    async def __area_middle_of_fence(self, walker_settings: SettingsWalkerarea):
+        geofence_helper: Optional[GeofenceHelper] = await self.__mapping_manager.routemanager_get_geofence_helper(
+            walker_settings.area_id)
+        location: Optional[Location] = None
+        if geofence_helper:
+            lat, lng = geofence_helper.get_middle_from_fence()
+            location = Location(lat, lng)
+        return location
 
     async def __update_walker_index(self, origin: str, mapping_entry: DeviceMappingsEntry) -> None:
         if mapping_entry.walker_area_index > 0:
