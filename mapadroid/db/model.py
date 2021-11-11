@@ -78,7 +78,7 @@ class MadApkAutosearch(Base):
     arch = Column(INTEGER(11), primary_key=True, nullable=False)
     version = Column(String(32, 'utf8mb4_unicode_ci'))
     url = Column(String(256, 'utf8mb4_unicode_ci'))
-    download_status = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
+    download_status = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
     last_checked = Column(TZDateTime, nullable=False)
 
 
@@ -199,7 +199,7 @@ class Raid(Base):
     last_scanned = Column(TZDateTime, nullable=False, index=True)
     form = Column(SMALLINT(6))
     is_exclusive = Column(BOOLEAN)
-    gender = Column(BOOLEAN)
+    gender = Column(TINYINT(1))
     costume = Column(BOOLEAN)
     evolution = Column(SMALLINT(6))
 
@@ -393,11 +393,11 @@ class TrsStatsLocationRaw(Base):
     lng = Column(Float(asdecimal=True), nullable=False)
     fix_ts = Column(INTEGER(11), nullable=False)
     data_ts = Column(INTEGER(11), nullable=False)
-    type = Column(BOOLEAN, nullable=False)
+    type = Column(TINYINT(1), nullable=False)
     walker = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False)
     success = Column(BOOLEAN, nullable=False)
     period = Column(INTEGER(11), nullable=False)
-    transporttype = Column(BOOLEAN, nullable=False)
+    transporttype = Column(TINYINT(1), nullable=False)
 
 
 class TrsUsage(Base):
