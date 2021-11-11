@@ -69,7 +69,7 @@
             {
                 "targets": [5, 9],
                 "render": function (data, type, row) {
-                    return (parseInt(data) == 0 ? "False" : "True");
+                    return (!data ? "False" : "True");
                 }
             },
             {

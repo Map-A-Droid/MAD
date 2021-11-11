@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -7,8 +7,8 @@ from loguru import logger
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.model import SettingsArea, SettingsAreaIdle, SettingsAreaIvMitm, SettingsAreaMonMitm, \
-    SettingsAreaPokestop, SettingsAreaRaidsMitm
+from mapadroid.db.model import SettingsArea
+from sqlalchemy.dialects.mysql import TINYINT
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
@@ -88,14 +88,16 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
 
     @aiohttp_jinja2.template('settings_areas.html')
     async def _render_area_overview(self):
+        # TODO: Pass list of boolean settings of all config types?
+        all_areas: Dict[int, SettingsArea] = await self._get_db_wrapper().get_all_areas(self._session)
         template_data: Dict = {
             'base_uri': self._url_for('api_area'),
             'monlist': await SettingsMonivlistHelper.get_entries_mapped(self._session, self._get_instance_id()),
-            # 'fences': await SettingsGeofenceHelper.get_all_mapped(self._session, self._get_instance_id()),
+            'fences': await SettingsGeofenceHelper.get_all_mapped(self._session, self._get_instance_id()),
             'config_mode': self._get_mad_args().config_mode,
             'ortools_info': self._ortools_info,
             'subtab': 'area',
-            'section': await self._get_db_wrapper().get_all_areas(self._session)
+            'section': all_areas
         }
         return template_data
 

@@ -86,7 +86,7 @@
                             var recalc_status = $(recalc_elem).data('recalc');
                             var elem;
                             if (in_recalc.includes(area_id)) {
-                                if (recalc_status == 0 || recalc_status == undefined) {
+                                if (recalc_status == false || recalc_status == undefined) {
                                     elem = $(document.createElement("img")).attr({
                                         'src': "{{ static('loading.gif') }}",
                                         'class': 'recalc_disp',
@@ -96,7 +96,7 @@
                                     });
                                 }
                             } else {
-                                if (recalc_status == '1' || recalc_status == undefined) {
+                                if (recalc_status == true || recalc_status == undefined) {
                                     var fa_img = $(document.createElement("i")).attr({
                                         'class': "fa fa-sync"
                                     });
@@ -206,7 +206,7 @@
                             <td class="d-none d-lg-table-cell">
                                 <p style="font-size: 65%; min-height: 40px; display: inline-box">
                                     {% for key, value in area.__dict__.items()|sort %}
-                                        {% if not key.startswith("_") and key not in ["area_id", "instance_id", "name"] and value %}
+                                        {% if not key.startswith("_") and key not in ["area_id", "instance_id", "name", "routecalc"] and value != None %}
                                             {% if key == "monlist_id" %}
                                                 {% if area.monlist_id in monlist %}
                                                     {{ key }}:
@@ -216,6 +216,9 @@
                                                     {{ key }}:
                                                     <b><font color="red">ERROR IN IV LIST - CHECK IT</font></b>
                                                 {% endif %}
+                                            {% elif key in ["geofence_included", "geofence_excluded"] %}
+                                                {{ key }}: <a href="{{ url('settings_geofence', query_={'id': value}) }}">{{ fences[value | int].name }}</a>
+                                                <br>
                                             {% else %}
                                                 {{ key }}: {{ value }}<br>
                                             {% endif %}
@@ -241,7 +244,7 @@
                                 </a>
                                 <button data-identifier='{{ area_id }}' type="button"
                                         class="delete btn btn-danger btn-sm" data-toggle="tooltip" title="Delete area">
-                                    <i class="fas fa-trash-alt"></i>
+                                    <i class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>
                     {% endfor %}

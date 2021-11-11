@@ -191,9 +191,9 @@ $(document).ready(function () {
           <td class="align-middle d-none d-lg-table-cell">
             <p style="font-size: 65%; min-height: 50px; display: inline-box">
             {% for key in device.__dict__|sort %}
-            {% if key in ["post_walk_delay", "post_teleport_delay", "walk_after_teleport_distance", "mitm_wait_timeout", "restart_thresh"] and device.__dict__[key] %}
-            {{ key }}: {{ device.__dict__[key] }}<br>
-            {% endif %}
+                {% if key in ["post_walk_delay", "post_teleport_delay", "walk_after_teleport_distance", "mitm_wait_timeout", "restart_thresh"] and device.__dict__[key] != None %}
+                    {{ key }}: {{ device.__dict__[key] }}<br>
+                {% endif %}
             {% endfor %}
             </p>
           </td>

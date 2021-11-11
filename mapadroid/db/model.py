@@ -3,7 +3,7 @@ from sqlalchemy import (Column, Float, ForeignKey, Index,
                         String, Table, text)
 from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
                                        LONGTEXT, MEDIUMINT, SMALLINT, TINYINT,
-                                       VARCHAR, TIMESTAMP)
+                                       VARCHAR, TIMESTAMP, BOOLEAN)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -45,20 +45,20 @@ class Gym(Base):
     team_id = Column(SMALLINT(6), nullable=False)
     guard_pokemon_id = Column(SMALLINT(6), nullable=False)
     slots_available = Column(SMALLINT(6), nullable=False)
-    enabled = Column(TINYINT(1), nullable=False)
+    enabled = Column(BOOLEAN, nullable=False)
     latitude = Column(Float(asdecimal=True), nullable=False)
     longitude = Column(Float(asdecimal=True), nullable=False)
     total_cp = Column(SMALLINT(6), nullable=False)
-    is_in_battle = Column(TINYINT(1), nullable=False)
+    is_in_battle = Column(BOOLEAN, nullable=False)
     gender = Column(SMALLINT(6))
     form = Column(SMALLINT(6))
     costume = Column(SMALLINT(6))
     weather_boosted_condition = Column(SMALLINT(6))
-    shiny = Column(TINYINT(1))
+    shiny = Column(BOOLEAN)
     last_modified = Column(TZDateTime, nullable=False, index=True)
     last_scanned = Column(TZDateTime, nullable=False, index=True)
-    is_ex_raid_eligible = Column(TINYINT(1))
-    is_ar_scan_eligible = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    is_ex_raid_eligible = Column(BOOLEAN)
+    is_ar_scan_eligible = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
 
 
 class GymDetail(Base):
@@ -78,7 +78,7 @@ class MadApkAutosearch(Base):
     arch = Column(INTEGER(11), primary_key=True, nullable=False)
     version = Column(String(32, 'utf8mb4_unicode_ci'))
     url = Column(String(256, 'utf8mb4_unicode_ci'))
-    download_status = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    download_status = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
     last_checked = Column(TZDateTime, nullable=False)
 
 
@@ -169,7 +169,7 @@ class Pokestop(Base):
     )
 
     pokestop_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True)
-    enabled = Column(TINYINT(1), nullable=False)
+    enabled = Column(BOOLEAN, nullable=False)
     latitude = Column(Float(asdecimal=True), nullable=False)
     longitude = Column(Float(asdecimal=True), nullable=False)
     last_modified = Column(TZDateTime, nullable=False, index=True)
@@ -181,7 +181,7 @@ class Pokestop(Base):
     incident_start = Column(TZDateTime)
     incident_expiration = Column(TZDateTime)
     incident_grunt_type = Column(SMALLINT(1))
-    is_ar_scan_eligible = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    is_ar_scan_eligible = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
 
 
 class Raid(Base):
@@ -198,9 +198,9 @@ class Raid(Base):
     move_2 = Column(SMALLINT(6))
     last_scanned = Column(TZDateTime, nullable=False, index=True)
     form = Column(SMALLINT(6))
-    is_exclusive = Column(TINYINT(1))
-    gender = Column(TINYINT(1))
-    costume = Column(TINYINT(1))
+    is_exclusive = Column(BOOLEAN)
+    gender = Column(BOOLEAN)
+    costume = Column(BOOLEAN)
     evolution = Column(SMALLINT(6))
 
 
@@ -221,7 +221,7 @@ class Scannedlocation(Base):
     latitude = Column(Float(asdecimal=True), nullable=False)
     longitude = Column(Float(asdecimal=True), nullable=False)
     last_modified = Column(TZDateTime, index=True)
-    done = Column(TINYINT(1), nullable=False)
+    done = Column(BOOLEAN, nullable=False)
     band1 = Column(SMALLINT(6), nullable=False)
     band2 = Column(SMALLINT(6), nullable=False)
     band3 = Column(SMALLINT(6), nullable=False)
@@ -254,7 +254,7 @@ class SettingsRoutecalc(Base):
     routecalc_id = Column(INTEGER(10), primary_key=True)
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(INTEGER(10), nullable=False)
-    recalc_status = Column(TINYINT(1), server_default=text("'0'"))
+    recalc_status = Column(BOOLEAN, server_default=text("'0'"))
     last_updated = Column(TZDateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     routefile = Column(LONGTEXT)
 
@@ -353,7 +353,7 @@ class TrsStatsDetectWildMonRaw(Base):
     worker = Column(String(128, 'utf8mb4_unicode_ci'), primary_key=True)
     encounter_id = Column(BIGINT(20), primary_key=True)
     count = Column(INTEGER(), nullable=False)
-    is_shiny = Column(TINYINT(1), server_default='0', nullable=False)
+    is_shiny = Column(BOOLEAN, server_default='0', nullable=False)
     first_scanned = Column(TZDateTime, nullable=False)
     last_scanned = Column(TZDateTime, nullable=False)
 
@@ -393,11 +393,11 @@ class TrsStatsLocationRaw(Base):
     lng = Column(Float(asdecimal=True), nullable=False)
     fix_ts = Column(INTEGER(11), nullable=False)
     data_ts = Column(INTEGER(11), nullable=False)
-    type = Column(TINYINT(1), nullable=False)
+    type = Column(BOOLEAN, nullable=False)
     walker = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False)
-    success = Column(TINYINT(1), nullable=False)
+    success = Column(BOOLEAN, nullable=False)
     period = Column(INTEGER(11), nullable=False)
-    transporttype = Column(TINYINT(1), nullable=False)
+    transporttype = Column(BOOLEAN, nullable=False)
 
 
 class TrsUsage(Base):
@@ -440,9 +440,9 @@ t_v_trs_status = Table(
     Column('rmname', String(128)),
     Column('mode', String(10)),
     Column('rebootCounter', INTEGER(11)),
-    Column('init', TINYINT(1)),
+    Column('init', BOOLEAN),
     Column('currentSleepTime', INTEGER(11), server_default=text("'0'")),
-    Column('rebootingOption', TINYINT(1)),
+    Column('rebootingOption', BOOLEAN),
     Column('restartCounter', INTEGER(11)),
     Column('globalrebootcount', INTEGER(11), server_default=text("'0'")),
     Column('globalrestartcount', INTEGER(11), server_default=text("'0'")),
@@ -541,12 +541,12 @@ class SettingsAreaIvMitm(SettingsArea):
     max_distance = Column(Float)
     delay_after_prio_event = Column(INTEGER(11))
     priority_queue_clustering_timedelta = Column(Float)
-    remove_from_queue_backlog = Column(TINYINT(1))
-    starve_route = Column(TINYINT(1))
+    remove_from_queue_backlog = Column(BOOLEAN)
+    starve_route = Column(BOOLEAN)
     monlist_id = Column(ForeignKey('settings_monivlist.monlist_id'), index=True)
-    all_mons = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    all_mons = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
     min_time_left_seconds = Column(INTEGER(11))
-    encounter_all = Column(TINYINT(1))
+    encounter_all = Column(BOOLEAN)
 
     settings_geofence = relationship('SettingsGeofence')
     monlist = relationship('SettingsMonivlist')
@@ -557,24 +557,24 @@ class SettingsAreaMonMitm(SettingsArea):
     __tablename__ = 'settings_area_mon_mitm'
 
     area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True, autoincrement=True)
-    init = Column(TINYINT(1), nullable=False)
+    init = Column(BOOLEAN, nullable=False)
     geofence_included = Column(ForeignKey('settings_geofence.geofence_id'), nullable=False, index=True)
     geofence_excluded = Column(String(256, 'utf8mb4_unicode_ci'))
     routecalc = Column(ForeignKey('settings_routecalc.routecalc_id'), nullable=False, index=True)
-    coords_spawns_known = Column(TINYINT(1))
+    coords_spawns_known = Column(BOOLEAN)
     speed = Column(Float)
     max_distance = Column(Float)
     delay_after_prio_event = Column(INTEGER(11))
     priority_queue_clustering_timedelta = Column(Float)
     remove_from_queue_backlog = Column(Float)
-    starve_route = Column(TINYINT(1))
+    starve_route = Column(BOOLEAN)
     init_mode_rounds = Column(INTEGER(11))
     monlist_id = Column(ForeignKey('settings_monivlist.monlist_id'), index=True)
-    all_mons = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    all_mons = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
     min_time_left_seconds = Column(INTEGER(11))
     max_clustering = Column(INTEGER(11))
     include_event_id = Column(INTEGER(11))
-    encounter_all = Column(TINYINT(1))
+    encounter_all = Column(BOOLEAN)
 
     settings_geofence = relationship('SettingsGeofence')
     monlist = relationship('SettingsMonivlist')
@@ -588,13 +588,13 @@ class SettingsAreaPokestop(SettingsArea):
     geofence_included = Column(ForeignKey('settings_geofence.geofence_id'), nullable=False, index=True)
     geofence_excluded = Column(String(256, 'utf8mb4_unicode_ci'))
     routecalc = Column(ForeignKey('settings_routecalc.routecalc_id'), nullable=False, index=True)
-    init = Column(TINYINT(1), nullable=False)
-    level = Column(TINYINT(1))
+    init = Column(BOOLEAN, nullable=False)
+    level = Column(BOOLEAN)
     route_calc_algorithm = Column(ENUM('route', 'routefree'))
     speed = Column(Float)
     max_distance = Column(Float)
-    ignore_spinned_stops = Column(TINYINT(1))
-    cleanup_every_spin = Column(TINYINT(1))
+    ignore_spinned_stops = Column(BOOLEAN)
+    cleanup_every_spin = Column(BOOLEAN)
 
     settings_geofence = relationship('SettingsGeofence')
     settings_routecalc = relationship('SettingsRoutecalc')
@@ -604,21 +604,21 @@ class SettingsAreaRaidsMitm(SettingsArea):
     __tablename__ = 'settings_area_raids_mitm'
 
     area_id = Column(ForeignKey('settings_area.area_id', ondelete='CASCADE'), primary_key=True, autoincrement=True)
-    init = Column(TINYINT(1), nullable=False)
+    init = Column(BOOLEAN, nullable=False)
     geofence_included = Column(ForeignKey('settings_geofence.geofence_id'), nullable=False, index=True)
     geofence_excluded = Column(String(256, 'utf8mb4_unicode_ci'))
     routecalc = Column(ForeignKey('settings_routecalc.routecalc_id'), nullable=False, index=True)
-    including_stops = Column(TINYINT(1))
+    including_stops = Column(BOOLEAN)
     speed = Column(Float)
     max_distance = Column(Float)
     delay_after_prio_event = Column(INTEGER(11))
     priority_queue_clustering_timedelta = Column(Float)
     remove_from_queue_backlog = Column(Float)
-    starve_route = Column(TINYINT(1))
+    starve_route = Column(BOOLEAN)
     init_mode_rounds = Column(INTEGER(11))
     monlist_id = Column(ForeignKey('settings_monivlist.monlist_id'), index=True)
-    all_mons = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    encounter_all = Column(TINYINT(1))
+    all_mons = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
+    encounter_all = Column(BOOLEAN)
 
     settings_geofence = relationship('SettingsGeofence')
     monlist = relationship('SettingsMonivlist')
@@ -647,14 +647,14 @@ class SettingsDevicepool(Base):
     post_walk_delay = Column(Float)
     post_teleport_delay = Column(Float)
     walk_after_teleport_distance = Column(Float)
-    cool_down_sleep = Column(TINYINT(1))
+    cool_down_sleep = Column(BOOLEAN)
     post_turn_screen_on_delay = Column(Float)
     post_pogo_start_delay = Column(Float)
     restart_pogo = Column(INTEGER(11))
     inventory_clear_rounds = Column(INTEGER(11))
     mitm_wait_timeout = Column(Float)
     vps_delay = Column(Float)
-    reboot = Column(TINYINT(1))
+    reboot = Column(BOOLEAN)
     reboot_thresh = Column(INTEGER(11))
     restart_thresh = Column(INTEGER(11))
     post_screenshot_delay = Column(Float)
@@ -664,8 +664,8 @@ class SettingsDevicepool(Base):
     screenshot_quality = Column(INTEGER(11))
     startcoords_of_walker = Column(String(256, 'utf8mb4_unicode_ci'))
     injection_thresh_reboot = Column(INTEGER(11))
-    screendetection = Column(TINYINT(1))
-    enhanced_mode_quest = Column(TINYINT(1), server_default=text("'0'"))
+    screendetection = Column(BOOLEAN)
+    enhanced_mode_quest = Column(BOOLEAN, server_default=text("'0'"))
     enhanced_mode_quest_safe_items = Column(String(500, 'utf8mb4_unicode_ci'))
 
     instance = relationship('MadminInstance')
@@ -712,14 +712,14 @@ class SettingsDevice(Base):
     post_walk_delay = Column(Float)
     post_teleport_delay = Column(Float)
     walk_after_teleport_distance = Column(Float)
-    cool_down_sleep = Column(TINYINT(1))
+    cool_down_sleep = Column(BOOLEAN)
     post_turn_screen_on_delay = Column(Float)
     post_pogo_start_delay = Column(Float)
     restart_pogo = Column(INTEGER(11))
     inventory_clear_rounds = Column(INTEGER(11))
     mitm_wait_timeout = Column(Float)
     vps_delay = Column(Float)
-    reboot = Column(TINYINT(1))
+    reboot = Column(BOOLEAN)
     reboot_thresh = Column(INTEGER(11))
     restart_thresh = Column(INTEGER(11))
     post_screenshot_delay = Column(Float)
@@ -728,19 +728,19 @@ class SettingsDevice(Base):
     screenshot_type = Column(ENUM('jpeg', 'png'))
     screenshot_quality = Column(INTEGER(11))
     startcoords_of_walker = Column(String(256, 'utf8mb4_unicode_ci'))
-    screendetection = Column(TINYINT(1))
+    screendetection = Column(BOOLEAN)
     logintype = Column(ENUM('google', 'ptc'))
     ggl_login_mail = Column(String(256, 'utf8mb4_unicode_ci'))
-    clear_game_data = Column(TINYINT(1))
-    account_rotation = Column(TINYINT(1))
+    clear_game_data = Column(BOOLEAN)
+    account_rotation = Column(BOOLEAN)
     rotation_waittime = Column(Float)
-    rotate_on_lvl_30 = Column(TINYINT(1))
+    rotate_on_lvl_30 = Column(BOOLEAN)
     injection_thresh_reboot = Column(INTEGER(11))
-    enhanced_mode_quest = Column(TINYINT(1), server_default=text("'0'"))
+    enhanced_mode_quest = Column(BOOLEAN, server_default=text("'0'"))
     enhanced_mode_quest_safe_items = Column(String(500, 'utf8mb4_unicode_ci'))
     mac_address = Column(String(17, 'utf8mb4_unicode_ci'))
     interface_type = Column(ENUM('lan', 'wlan'), server_default=text("'lan'"))
-    softbar_enabled = Column(TINYINT(1), server_default=text("'0'"))
+    softbar_enabled = Column(BOOLEAN, server_default=text("'0'"))
 
     instance = relationship('MadminInstance')
     pool = relationship('SettingsDevicepool')
@@ -762,8 +762,8 @@ class TrsStatus(Base):
     rebootCounter = Column(INTEGER(11))
     lastProtoDateTime = Column(TZDateTime)
     lastPogoRestart = Column(TZDateTime)
-    init = Column(TINYINT(1))
-    rebootingOption = Column(TINYINT(1))
+    init = Column(BOOLEAN)
+    rebootingOption = Column(BOOLEAN)
     restartCounter = Column(INTEGER(11))
     lastPogoReboot = Column(TZDateTime)
     globalrebootcount = Column(INTEGER(11), server_default=text("'0'"))

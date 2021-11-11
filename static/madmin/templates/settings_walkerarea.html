@@ -141,12 +141,12 @@
     <div class="form-group">
       <label for='name'>Description</label><br>
       <small class="form-text text-muted"></small>
-      <input type="text" class= "form-control" name="name" value="{{ element.name }}" data-default="{{ element.name }}">
+      <input type="text" class= "form-control" name="name" value="{% if element.name %}{{ element.name }}{% endif %}" data-default="{% if element.name %}{{ element.name }}{% endif %}">
     </div>
     <div class="form-group">
       <label for='eventid'>Event ID</label><br>
       <small class="form-text text-muted"></small>
-      <input type="text" class= "form-control" name="eventid" value="{{ element.eventid }}" data-default="{{ element.eventid }}">
+      <input type="text" class= "form-control" name="eventid" value="{% if element.eventid %}{{ element.eventid }}{% endif %}" data-default="{% if element.eventid %}{{ element.eventid }}{% endif %}">
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
   </div>

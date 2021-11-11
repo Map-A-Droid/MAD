@@ -82,7 +82,7 @@ $(document).ready(function () {
           <td>
             <p style="font-size: 65%; min-height: 40px; display: inline-box">
             {% for key, val in devicepool.__dict__.items()|sort %}
-            {% if not key.startswith("_") and val and key not in ["name", "instance_id", "pool_id"] %}
+            {% if not key.startswith("_") and val != None and key not in ["name", "instance_id", "pool_id"] %}
             {{ key }}: {{ val }}<br>
             {% endif %}
             {% endfor %}
@@ -90,7 +90,7 @@ $(document).ready(function () {
           </td>
           <td class="text-right align-middle">
               <a href="{{ redirect }}?id={{ pool_id }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
-            <button data-identifier='{{ pool_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+              <button data-identifier='{{ pool_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
           </td>
         </tr>
         {% endfor %}

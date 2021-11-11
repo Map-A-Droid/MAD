@@ -31,7 +31,7 @@ class ScannedLocationHelper:
         scanned_location.latitude = lat
         scanned_location.longitude = lng
         scanned_location.last_modified = DatetimeWrapper.fromtimestamp(_timestamp)
-        scanned_location.done = -1
+        scanned_location.done = True
         scanned_location.band1 = -1
         scanned_location.band2 = -1
         scanned_location.band3 = -1

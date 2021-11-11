@@ -263,8 +263,8 @@ class MappingManager(AbstractMappingManager):
         elif key == MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE:
             return devicemapping_entry.pool_settings.walk_after_teleport_distance if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.walk_after_teleport_distance else devicemapping_entry.device_settings.walk_after_teleport_distance
         elif key == MappingManagerDevicemappingKey.COOLDOWN_SLEEP:
-            cool_down_sleep: int = devicemapping_entry.pool_settings.cool_down_sleep if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.cool_down_sleep else devicemapping_entry.device_settings.cool_down_sleep
-            return True if cool_down_sleep != 0 else False
+            cool_down_sleep: bool = devicemapping_entry.pool_settings.cool_down_sleep if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.cool_down_sleep else devicemapping_entry.device_settings.cool_down_sleep
+            return cool_down_sleep
         elif key == MappingManagerDevicemappingKey.POST_POGO_START_DELAY:
             return devicemapping_entry.pool_settings.post_pogo_start_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.post_pogo_start_delay else devicemapping_entry.device_settings.post_pogo_start_delay
         elif key == MappingManagerDevicemappingKey.RESTART_POGO:
@@ -276,8 +276,8 @@ class MappingManager(AbstractMappingManager):
         elif key == MappingManagerDevicemappingKey.VPS_DELAY:
             return devicemapping_entry.pool_settings.vps_delay if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.vps_delay else devicemapping_entry.device_settings.vps_delay
         elif key == MappingManagerDevicemappingKey.REBOOT:
-            reboot_int: int = devicemapping_entry.pool_settings.reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot else devicemapping_entry.device_settings.reboot
-            return True if reboot_int != 0 else False
+            reboot: bool = devicemapping_entry.pool_settings.reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot else devicemapping_entry.device_settings.reboot
+            return reboot
         elif key == MappingManagerDevicemappingKey.REBOOT_THRESH:
             return devicemapping_entry.pool_settings.reboot_thresh if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.reboot_thresh else devicemapping_entry.device_settings.reboot_thresh
         elif key == MappingManagerDevicemappingKey.RESTART_THRESH:

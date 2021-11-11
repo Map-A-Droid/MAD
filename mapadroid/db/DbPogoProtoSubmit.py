@@ -751,11 +751,11 @@ class DbPogoProtoSubmit:
                     gym_obj.team_id = team_id
                     gym_obj.guard_pokemon_id = guard_pokemon_id
                     gym_obj.slots_available = slots_available
-                    gym_obj.enabled = 1  # TODO: read in proto?
+                    gym_obj.enabled = True  # TODO: read in proto?
                     gym_obj.latitude = latitude
                     gym_obj.longitude = longitude
                     gym_obj.total_cp = 0  # TODO: Read from proto..
-                    gym_obj.is_in_battle = 0
+                    gym_obj.is_in_battle = False
                     gym_obj.last_modified = last_modified
                     gym_obj.last_scanned = time_receiver
                     gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
