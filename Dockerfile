@@ -1,7 +1,7 @@
 ############################
 # MAD
 ############################
-FROM python:3.7-slim AS mad-core
+FROM python:3.9-slim AS mad-core
 # Working directory for the application
 WORKDIR /usr/src/app
 
@@ -18,6 +18,7 @@ default-libmysqlclient-dev \
 # OpenCV & dependencies
 python3-opencv \
 libsm6 \
+libgl1-mesa-glx \
 # python reqs
 && python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
 # cleanup
