@@ -18,8 +18,8 @@ class WorkerState:
         self.resolution_calculator: ResolutionCalculator = ResolutionCalculator()
         self.active_event: PogoEvent = active_event
 
-        self.current_location = Location(0.0, 0.0)
-        self.last_location = Location(0.0, 0.0)
+        self.current_location: Optional[Location] = Location(0.0, 0.0)
+        self.last_location: Optional[Location] = Location(0.0, 0.0)
         self.location_count: int = 0
         self.login_error_count: int = 0
         self.last_transport_type: TransportType = TransportType.TELEPORT

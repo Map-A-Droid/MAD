@@ -335,9 +335,10 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         logger.debug('Reboot Counter: {}', self._worker_state.reboot_count)
         logger.debug('Reboot Option: {}',
                      await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True))
-        logger.debug('Current Pos: {} {}', self._worker_state.current_location.lat,
-                     self._worker_state.current_location.lng)
-        logger.debug('Last Pos: {} {}', self._worker_state.last_location.lat, self._worker_state.last_location.lng)
+        if self._worker_state.current_location:
+            logger.debug('Current Pos: {}', self._worker_state.current_location)
+        if self._worker_state.last_location:
+            logger.debug('Last Pos: {}', self._worker_state.last_location)
         routemanager_status = await self._mapping_manager.routemanager_get_route_stats(self._area_id,
                                                                                        self._worker_state.origin)
         if routemanager_status is None:
@@ -355,8 +356,10 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 status = TrsStatus()
                 status.device_id = self._worker_state.device_id
                 status.instance_id = self._db_wrapper.get_instance_id()
-            status.currentPos = (self._worker_state.current_location.lat, self._worker_state.current_location.lng)
-            status.lastPos = (self._worker_state.last_location.lat, self._worker_state.last_location.lng)
+            if self._worker_state.current_location:
+                status.currentPos = (self._worker_state.current_location.lat, self._worker_state.current_location.lng)
+            if self._worker_state.last_location:
+                status.lastPos = (self._worker_state.last_location.lat, self._worker_state.last_location.lng)
             status.routePos = routemanager_status[0]
             status.routeMax = routemanager_status[1]
             status.area_id = self._area_id

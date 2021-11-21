@@ -209,9 +209,9 @@ class Worker(AbstractWorker):
 
                 last_location: Location = await self.get_devicesettings_value(
                     MappingManagerDevicemappingKey.LAST_LOCATION, Location(0.0, 0.0))
-                logger.debug2('LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
-                              last_location.lat, last_location.lng,
-                              self._worker_state.current_location.lat, self._worker_state.current_location.lng)
+                logger.debug2('Last location: {}, Current location: {}',
+                              last_location,
+                              self._worker_state.current_location)
                 time_snapshot, process_location = await self._scan_strategy.move_to_location()
 
                 if process_location:
@@ -360,7 +360,7 @@ class Worker(AbstractWorker):
             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
             return False
         elif self._worker_state.current_location is not None:
-            # TODO: WTF Weird validation....
+            # TODO: Rather check whether the location is within the geofence?
             logger.debug2('Coords are valid')
             return True
 

@@ -16,6 +16,9 @@ class Location:
     def to_json(self) -> bytes:
         return orjson.dumps(self)
 
+    def __str__(self) -> str:
+        return f"{self.lat}, {self.lng}"
+
     @staticmethod
     def from_json(json_str: Union[bytes, str]):
         raw = orjson.loads(json_str)
