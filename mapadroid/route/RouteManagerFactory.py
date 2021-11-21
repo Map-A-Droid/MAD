@@ -6,6 +6,7 @@ from mapadroid.db.model import (SettingsArea, SettingsAreaPokestop,
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerIV import RouteManagerIV
+from mapadroid.route.RouteManagerIdle import RouteManagerIdle
 from mapadroid.route.RouteManagerLeveling import RouteManagerLeveling
 from mapadroid.route.RouteManagerLevelingRoutefree import \
     RouteManagerLevelingRoutefree
@@ -44,11 +45,11 @@ class RouteManagerFactory:
                                            mon_ids_iv=mon_ids_iv
                                            )
         elif area.mode == WorkerType.IDLE.value:
-            route_manager = RouteManagerRaids(db_wrapper=db_wrapper, area=area, coords=coords, max_radius=max_radius,
-                                              max_coords_within_radius=max_coords_within_radius,
-                                              geofence_helper=geofence_helper, routecalc=routecalc,
-                                              use_s2=use_s2, s2_level=s2_level, mon_ids_iv=mon_ids_iv
-                                              )
+            route_manager = RouteManagerIdle(db_wrapper=db_wrapper, area=area, coords=coords, max_radius=max_radius,
+                                             max_coords_within_radius=max_coords_within_radius,
+                                             geofence_helper=geofence_helper, routecalc=routecalc,
+                                             use_s2=use_s2, s2_level=s2_level, mon_ids_iv=mon_ids_iv
+                                             )
         elif area.mode == WorkerType.STOPS.value:
             area: SettingsAreaPokestop = area
             if area.level and area.route_calc_algorithm == 'routefree':
