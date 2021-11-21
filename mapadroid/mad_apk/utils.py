@@ -239,14 +239,14 @@ def lookup_arch_enum(name: Union[int, str]) -> APKArch:
 
 
 async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
-                              architecture: APKArch = None) -> Union[MADPackage, MADPackages]:
+                              architecture: APKArch = None) -> Optional[Union[MADPackage, MADPackages]]:
     """ Retrieve the information about the package.  If no architecture is specified, it will return MAD_PACKAGES
         containing all relevant architectures
 
     Args:
         storage_obj (AbstractAPKStorage): Storage interface for lookup
         package (APKType): Package to lookup
-        architecture (APKArch): Architecture of the package to loopup
+        architecture (APKArch): Architecture of the package to lookup
 
     Returns:
         Package or Packages info
@@ -271,7 +271,8 @@ async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
                 raise ValueError("Version is not supported anymore.")
             return fileinfo
         except KeyError:
-            raise ValueError("Unable to find package {} for arch {}".format(package.value, architecture.value))
+            logger.warning("Unable to find package {} for arch {}".format(package.value, architecture.value))
+            return None
 
 
 async def stream_package(session: AsyncSession, storage_obj,

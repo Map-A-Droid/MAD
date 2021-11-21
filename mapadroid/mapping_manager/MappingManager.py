@@ -295,14 +295,14 @@ class MappingManager(AbstractMappingManager):
         elif key == MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT:
             return devicemapping_entry.pool_settings.injection_thresh_reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.injection_thresh_reboot else devicemapping_entry.device_settings.injection_thresh_reboot
         elif key == MappingManagerDevicemappingKey.SCREENDETECTION:
-            screen_detection: int = devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
-            return True if screen_detection != 0 else False
+            screen_detection: Optional[bool] = devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
+            return screen_detection if screen_detection is not None else False
         elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST_SAFE_ITEMS:
             return devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items else devicemapping_entry.device_settings.enhanced_mode_quest_safe_items
         elif key == MappingManagerDevicemappingKey.CLEAR_GAME_DATA:
-            return True if devicemapping_entry.device_settings.clear_game_data != 0 else False
+            return devicemapping_entry.device_settings.clear_game_data if devicemapping_entry.device_settings.clear_game_data is not None else False
         elif key == MappingManagerDevicemappingKey.SOFTBAR_ENABLED:
-            return True if devicemapping_entry.device_settings.softbar_enabled != 0 else False
+            return devicemapping_entry.device_settings.softbar_enabled if devicemapping_entry.device_settings.softbar_enabled is not None else False
         # Extra keys to e.g. retrieve PTC accounts
         elif key == MappingManagerDevicemappingKey.PTC_LOGIN:
             return devicemapping_entry.ptc_logins

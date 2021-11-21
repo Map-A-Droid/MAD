@@ -123,12 +123,14 @@
                                 <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
                                         {% for option in field.settings["values"] %}
                                             <option value="{{ option }}"{% if element and key in element.__dict__ %}
-                                                {{ 'selected="selected"' if option|tojson == element[key]|tojson or option is boolean and (1 if option else 0) == element[key] }}{% endif %}>{{ option|lower }}</option>
+                                                {{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
                                         {% endfor %}
                                     </select>
                             {% elif field.settings.type == "select" %}
                                 <select class="form-control {{ key }}" data-default="
-                                        {% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}"
+                                        {% if element is none and "default" in field.settings %}
+                                        {{ field.settings.default }}
+                                        {% elif element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}"
                                         name="{{ key }}" setting='true' multiple="multiple"></select>
                             {% else %}
                                     <input type="{{ field.type }}" name="{{ key }}" data-default="{{ element[key] }}" {{ 'required=true' if field.settings.require }}

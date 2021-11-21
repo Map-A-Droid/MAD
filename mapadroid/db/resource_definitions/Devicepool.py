@@ -211,9 +211,10 @@ class Devicepool(Resource):
                 "settings": {
                     "type": "select",
                     "require": False,
-                    "description": "Undeletable items for enhanced quest mode (Default: 1301, 1401,1402, "
+                    "description": "Items not to be deleted in enhanced quest mode (Default: 1301, 1401,1402, "
                                    "1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301)",
-                    "expected": str
+                    "expected": str,
+                    "default": "1301, 1401, 1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
                 }
             }
         }
