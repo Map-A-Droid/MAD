@@ -613,6 +613,9 @@ class RouteManagerBase(ABC):
             next_coord = routepool_entry.queue.popleft()
             logger.info("Moving on with location {}, {} [{} coords left (Workerpool)]", next_coord.lat,
                         next_coord.lng, len(routepool_entry.queue) + 1)
+        if not self._check_coord_and_remove_from_route_if_applicable(next_coord, origin):
+            logger.info("Location in routepool ({}) is not to be scanned", next_coord)
+            return None
         self.__set_routepool_entry_location(origin, next_coord)
         return next_coord
 
