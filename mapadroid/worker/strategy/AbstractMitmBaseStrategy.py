@@ -12,7 +12,7 @@ from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntr
     LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
-from mapadroid.db.model import SettingsArea, SettingsWalkerarea, TrsStatus, SettingsDevice, SettingsDevicepool
+from mapadroid.db.model import SettingsArea, SettingsWalkerarea, TrsStatus
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
@@ -215,12 +215,12 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         if not await self._mapping_manager.routemanager_present(self._area_id) \
                 or self._worker_state.stop_worker_event.is_set():
             logger.error("killed while sleeping")
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Worker is supposed to be stopped or route is not present anymore")
         position_type = await self._mapping_manager.routemanager_get_position_type(self._area_id,
                                                                                    self._worker_state.origin)
         if position_type is None:
             logger.info("Mappings/Routemanagers have changed, stopping worker to be created again")
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Mappings have changed")
 
     async def _is_location_within_allowed_range(self, latest_location):
         logger.debug2("Checking (data) location reported by {} at {} against real data location {}",
@@ -274,7 +274,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
     async def _get_route_manager_settings_and_distance_to_current_location(self) -> Tuple[float, SettingsArea]:
         if not await self._mapping_manager.routemanager_present(self._area_id) \
                 or self._worker_state.stop_worker_event.is_set():
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Route not present anymore or worker is to be stopped")
         routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
         distance = get_distance_of_two_points_in_meters(float(self._worker_state.last_location.lat),
                                                         float(
@@ -313,7 +313,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                     and await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
                 logger.warning("Too many timeouts - Rebooting device")
                 await self._reboot()
-                raise InternalStopWorkerException
+                raise InternalStopWorkerException("Too many timeouts, reboot issued")
 
             # self._mitm_mapper.
             self._worker_state.restart_count = 0
@@ -400,7 +400,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         started_pogo: bool = await super().start_pogo()
         if not await self._wait_for_injection() or self._worker_state.stop_worker_event.is_set():
             await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Failed waiting for injection")
         else:
             return started_pogo
 

@@ -55,13 +55,13 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         await self.__update_injection_settings()
 
         if not await self._wait_for_injection() or self._worker_state.stop_worker_event.is_set():
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Worker stopped in pre work loop")
 
         reached_main_menu = await self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
             if not await self._restart_pogo():
                 # TODO: put in loop, count up for a reboot ;)
-                raise InternalStopWorkerException
+                raise InternalStopWorkerException("Worker stopped in pre work loop")
 
     async def pre_location_update(self):
         await self.__update_injection_settings()

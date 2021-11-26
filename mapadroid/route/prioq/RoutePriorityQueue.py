@@ -9,6 +9,7 @@ from loguru import logger
 
 from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
     RoutePriorityQueueEntry
+from mapadroid.utils.madGlobals import PrioQueueNoDueEntry
 
 
 class RoutePriorityQueue:
@@ -59,7 +60,7 @@ class RoutePriorityQueue:
         """
         Pops a coord off the queue if applicable, else None
         Returns: RoutePriorityQueueEntry if one is available
-        Raises: IndexError if no coord is available
+        Raises: PrioQueueNoDueEntry if no coord is available
         Raises asyncio.TimeoutError if an update if blocking the prioQ event retrieval
 
         """
@@ -70,9 +71,9 @@ class RoutePriorityQueue:
     async def __pop_event_internal(self) -> RoutePriorityQueueEntry:
         async with self._update_lock:
             if not self.__queue:
-                raise IndexError("No items in queue")
+                raise PrioQueueNoDueEntry("No items in queue")
             elif self.__queue[0].timestamp_due > int(time.time()):
-                raise IndexError("No item available that is due at this time")
+                raise PrioQueueNoDueEntry("No item available that is due at this time")
             else:
                 coord = heapq.heappop(self.__queue)
                 logger.info("Got event: {}", coord)

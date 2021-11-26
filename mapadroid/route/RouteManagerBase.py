@@ -22,7 +22,7 @@ from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.madGlobals import PositionType
+from mapadroid.utils.madGlobals import PositionType, PrioQueueNoDueEntry
 from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -469,7 +469,7 @@ class RouteManagerBase(ABC):
                             prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
                             next_timestamp = prioq_entry.timestamp_due
                             next_coord = prioq_entry.location
-                        except (IndexError, asyncio.TimeoutError):
+                        except (PrioQueueNoDueEntry, asyncio.TimeoutError):
                             # No item available yet, sleep
                             await asyncio.sleep(1)
                 else:
@@ -481,7 +481,7 @@ class RouteManagerBase(ABC):
                 next_readable_time = DatetimeWrapper.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
                 now = time.time()
                 if next_timestamp > now:
-                    raise IndexError("Next event at {} has not taken place yet", next_readable_time)
+                    raise PrioQueueNoDueEntry("Next event at {} has not taken place yet", next_readable_time)
                 if self._remove_deprecated_prio_events():
                     if self.remove_from_queue_backlog not in [None, 0]:
                         delete_before = now - self.remove_from_queue_backlog
@@ -516,7 +516,7 @@ class RouteManagerBase(ABC):
                               next_coord.lng, next_readable_time)
                 self.__set_routepool_entry_location(origin, next_coord)
                 return next_coord
-            except (IndexError, asyncio.TimeoutError):
+            except (IndexError, PrioQueueNoDueEntry, asyncio.TimeoutError):
                 # Get next coord "normally"
                 logger.debug("No prioQ location available")
                 pass

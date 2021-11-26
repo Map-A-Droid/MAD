@@ -38,6 +38,13 @@ class InternalStopWorkerException(Exception):
     pass
 
 
+class PrioQueueNoDueEntry(Exception):
+    """
+    Exception to be called when the prio q is empty during checks
+    """
+    pass
+
+
 class ScreenshotType(Enum):
     JPEG = 0
     PNG = 1

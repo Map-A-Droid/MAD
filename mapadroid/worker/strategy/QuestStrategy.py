@@ -213,7 +213,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         self.clear_inventory_task: Task = loop.create_task(self._clear_thread())
 
         if self._worker_state.stop_worker_event.is_set() or not await self._wait_for_injection():
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Worker is supposed to be stopped while working waiting for injection")
 
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION, False) and not \
                 await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, False):
@@ -222,13 +222,13 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             # switch to first account if first started and rotation is activated
             if not await self._switch_user():
                 logger.error('Something happened during account rotation')
-                raise InternalStopWorkerException
+                raise InternalStopWorkerException("Worker was supposed to switch accounts")
             else:
                 reached_main_menu = await self._check_pogo_main_screen(10, True)
                 if not reached_main_menu:
                     if not await self._restart_pogo():
                         # TODO: put in loop, count up for a reboot ;)
-                        raise InternalStopWorkerException
+                        raise InternalStopWorkerException("Failed to reach pogo main screen")
 
                 await self.set_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, True)
             await asyncio.sleep(10)
@@ -237,7 +237,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             if not reached_main_menu:
                 if not await self._restart_pogo():
                     # TODO: put in loop, count up for a reboot ;)
-                    raise InternalStopWorkerException
+                    raise InternalStopWorkerException("Failed to reach pogo main screen")
 
         if await self._mapping_manager.routemanager_get_init(self._area_id):
             logger.info("Starting Level Mode")
@@ -346,7 +346,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                         or self._worker_state.stop_worker_event.is_set():
                     logger.error("Worker was killed while sleeping")
                     self._worker_state.current_sleep_time = 0
-                    raise InternalStopWorkerException
+                    raise InternalStopWorkerException("Worker has been removed from routemanager or is supposed to stop"
+                                                      "during the move to a location")
                 await asyncio.sleep(1)
 
         self._worker_state.current_sleep_time = 0
@@ -357,12 +358,12 @@ class QuestStrategy(AbstractMitmBaseStrategy):
 
     async def post_move_location_routine(self, timestamp):
         if self._worker_state.stop_worker_event.is_set():
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Worker is supposed to stop, aborting post_move_location_routine")
         position_type = await self._mapping_manager.routemanager_get_position_type(self._area_id,
                                                                                    self._worker_state.origin)
         if position_type is None:
             logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Mappings/Routemanagers have changed, stopping worker")
 
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATE_ON_LVL_30, False) \
                 and await self._mitm_mapper.get_level(self._worker_state.origin) >= 30 \
@@ -559,7 +560,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                             logger.error("Unable to delete any items 3 times in a row - restart pogo ...")
                             if not await self._restart_pogo():
                                 # TODO: put in loop, count up for a reboot ;)
-                                raise InternalStopWorkerException
+                                raise InternalStopWorkerException("Failed restarting pogo after attempting to "
+                                                                  "delete items")
                     continue
                 logger.info('Found no item to delete. Scrolling down ({} times)', error_counter)
                 await self._communicator.touch_and_hold(int(200), int(600), int(200), int(100))
@@ -661,14 +663,14 @@ class QuestStrategy(AbstractMitmBaseStrategy):
     async def switch_account(self):
         if not self._switch_user():
             logger.error('Something happend while account switching :(')
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Failed switching accounts")
         else:
             await asyncio.sleep(10)
             reached_main_menu = await self._check_pogo_main_screen(10, True)
             if not reached_main_menu:
                 if not await self._restart_pogo():
                     # TODO: put in loop, count up for a reboot ;)
-                    raise InternalStopWorkerException
+                    raise InternalStopWorkerException("Failed reaching the pogo main screen after switching accounts")
 
     async def _update_injection_settings(self):
         injected_settings = {}
@@ -817,7 +819,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                                 if not reached_main_menu:
                                     if not await self._restart_pogo():
                                         # TODO: put in loop, count up for a reboot ;)
-                                        raise InternalStopWorkerException
+                                        raise InternalStopWorkerException("Failed restarting pogo after attempting to "
+                                                                          "reach the main menu")
                                 self.clear_thread_task = ClearThreadTasks.QUEST
                                 self._clear_quest_counter = 0
                         else:
@@ -826,7 +829,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                             if not reached_main_menu:
                                 if not await self._restart_pogo():
                                     # TODO: put in loop, count up for a reboot ;)
-                                    raise InternalStopWorkerException
+                                    raise InternalStopWorkerException("Failed restarting pogo after attempting to "
+                                                                      "reach the main menu")
                             self.clear_thread_task = ClearThreadTasks.QUEST
                         break
 
@@ -849,7 +853,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                     if not reached_main_menu:
                         if not await self._restart_pogo():
                             # TODO: put in loop, count up for a reboot ;)
-                            raise InternalStopWorkerException
+                            raise InternalStopWorkerException("Failed restarting pogo after attempting to "
+                                                              "reach the main menu")
                     self.clear_thread_task = ClearThreadTasks.QUEST
                     self._clear_quest_counter = 0
                     break
@@ -996,7 +1001,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
             logger.warning("Worker failed spinning stop with GMO/data issues 10+ times - restart pogo")
             if not await self._restart_pogo():
                 # TODO: put in loop, count up for a reboot ;)
-                raise InternalStopWorkerException
+                raise InternalStopWorkerException("Failed restarting pogo after attempting to "
+                                                  "spin a stop")
         else:
             self._spinnable_data_failcount += 1
 
