@@ -11,9 +11,7 @@ from aiofile import async_open
 import mapadroid
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
-
 logger = get_logger(LoggerEnums.system)
-
 
 with open(os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates/phone.tpl'), 'r') as file:
     phone_template = file.read().replace('\n', '')
@@ -29,7 +27,7 @@ def generate_path(path):
 
 async def image_resize(image, savepath, width=None, height=None):
     loop = asyncio.get_running_loop()
-    #with concurrent.futures.ThreadPoolExecutor() as pool:
+    # with concurrent.futures.ThreadPoolExecutor() as pool:
     await loop.run_in_executor(
         None, _process_image_resize, image, savepath, width)
 

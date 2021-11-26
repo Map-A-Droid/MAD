@@ -52,7 +52,8 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
         del locations_transformed_for_clustering
         new_coords: List[RoutePriorityQueueEntry] = []
         for (timestamp_due, location) in clustered:
-            entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due + self.get_delay_after_event(),
-                                                                     location=location)
+            entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(
+                timestamp_due=timestamp_due + self.get_delay_after_event(),
+                location=location)
             new_coords.append(entry)
         return new_coords

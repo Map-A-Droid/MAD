@@ -1,14 +1,14 @@
 import asyncio
 from threading import Lock
-from typing import Optional, Union
+from typing import Optional
 
 import aioredis as aioredis
 from aioredis import Redis
+from alembic import command
+from alembic.config import Config
+from loguru import logger
 
 from mapadroid.db.DbAccessor import DbAccessor
-from loguru import logger
-from alembic.config import Config
-from alembic import command
 
 
 class PooledQueryExecutor:

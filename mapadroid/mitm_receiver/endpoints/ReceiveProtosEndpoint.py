@@ -1,9 +1,6 @@
 import asyncio
-import json
 import time
-from concurrent.futures import ThreadPoolExecutor
 
-import ujson
 from aiohttp import web
 from loguru import logger
 from orjson import orjson

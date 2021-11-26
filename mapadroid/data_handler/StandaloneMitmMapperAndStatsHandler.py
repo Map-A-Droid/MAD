@@ -110,4 +110,3 @@ class StandaloneMitmMapperAndStatsHandler(AbstractMitmMapper, AbstractStatsHandl
 
     async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
         await self.__mitm_data_handler.set_pokestop_visits(worker, pokestop_visits)
-

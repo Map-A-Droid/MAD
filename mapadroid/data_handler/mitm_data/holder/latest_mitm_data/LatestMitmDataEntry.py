@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Optional, Any, Union, Dict
 
-import ujson
 from orjson import orjson
 
 from mapadroid.utils.collections import Location

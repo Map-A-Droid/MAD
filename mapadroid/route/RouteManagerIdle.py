@@ -1,14 +1,12 @@
 from typing import List, Optional
 
+from loguru import logger
+
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.GymHelper import GymHelper
-from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsRoutecalc, SettingsAreaIdle
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.collections import Location
-
-from loguru import logger
 
 
 class RouteManagerIdle(RouteManagerBase):

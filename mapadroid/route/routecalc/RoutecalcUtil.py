@@ -1,5 +1,4 @@
 import asyncio
-import concurrent.futures
 from typing import List, Tuple, Optional
 
 import numpy as np
@@ -62,7 +61,7 @@ class RoutecalcUtil:
         if len(coords) > 0 and max_radius and max_coords_within_radius:
             logger.info("Calculating route for {}", route_name)
             loop = asyncio.get_running_loop()
-            #with concurrent.futures.ThreadPoolExecutor() as pool:
+            # with concurrent.futures.ThreadPoolExecutor() as pool:
             new_coords = await loop.run_in_executor(
                 None, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
                 s2_level)

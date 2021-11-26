@@ -3,6 +3,8 @@ import math
 import time
 from typing import Dict, Tuple, Optional, List
 
+from loguru import logger
+
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
@@ -13,7 +15,6 @@ from mapadroid.utils.madGlobals import TransportType, InternalStopWorkerExceptio
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import AbstractMitmBaseStrategy
-from loguru import logger
 
 
 class WorkerMitmStrategy(AbstractMitmBaseStrategy):
@@ -173,7 +174,8 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
             if encounter_ids:
                 logger.debug("Found {} new encounter_ids", len(encounter_ids))
             # str keys since protobuf requires string keys for json...
-            encounter_ids_prepared: Dict[str, int] = { str(encounter_id): timestamp for encounter_id, timestamp in encounter_ids.items() }
+            encounter_ids_prepared: Dict[str, int] = {str(encounter_id): timestamp for encounter_id, timestamp in
+                                                      encounter_ids.items()}
             self._encounter_ids: Dict[str, int] = {**encounter_ids_prepared, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.

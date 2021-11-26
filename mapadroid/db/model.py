@@ -3,7 +3,7 @@ from sqlalchemy import (Column, Float, ForeignKey, Index,
                         String, Table, text)
 from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
                                        LONGTEXT, MEDIUMINT, SMALLINT, TINYINT,
-                                       VARCHAR, TIMESTAMP, BOOLEAN)
+                                       VARCHAR, BOOLEAN)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 

@@ -2,13 +2,13 @@ import asyncio
 from asyncio import Task
 from typing import List
 
+from loguru import logger
+
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.SerializedMitmDataProcessor import \
     SerializedMitmDataProcessor
-from loguru import logger
-
 from mapadroid.utils.madGlobals import application_args
 from mapadroid.utils.questGen import QuestGen
 

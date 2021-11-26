@@ -11,12 +11,14 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 class WalkerareaEndpoint(AbstractResourceEndpoint):
     async def _get_unmet_dependencies(self, db_entry: SettingsWalkerarea) -> Optional[Dict[int, str]]:
-        assigned_to_walkerarea: List[SettingsWalkerToWalkerarea] = await SettingsWalkerToWalkerareaHelper.get_all_of_walkerarea(self._session,
-                                                                                                    db_entry)
+        assigned_to_walkerarea: List[
+            SettingsWalkerToWalkerarea] = await SettingsWalkerToWalkerareaHelper.get_all_of_walkerarea(self._session,
+                                                                                                       db_entry)
         if not assigned_to_walkerarea:
             return None
         else:
-            mapped: Dict[int, str] = {walker_to_walkerarea.walkerarea_id: str(walker_to_walkerarea.walker_id) for walker_to_walkerarea in assigned_to_walkerarea}
+            mapped: Dict[int, str] = {walker_to_walkerarea.walkerarea_id: str(walker_to_walkerarea.walker_id) for
+                                      walker_to_walkerarea in assigned_to_walkerarea}
             return mapped
 
     async def _delete_connected_prior(self, db_entry):

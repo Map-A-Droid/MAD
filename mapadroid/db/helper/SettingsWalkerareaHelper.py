@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import SettingsWalkerToWalkerareaHelper
-from mapadroid.db.model import SettingsWalkerarea, SettingsWalkerToWalkerarea, SettingsArea
+from mapadroid.db.model import SettingsWalkerarea, SettingsWalkerToWalkerarea
 
 
 class SettingsWalkerareaHelper:

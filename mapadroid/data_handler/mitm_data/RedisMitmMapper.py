@@ -3,13 +3,13 @@ from typing import Optional, List, Dict, Union
 
 import ujson
 from aioredis import Redis
+from loguru import logger
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
-from loguru import logger
 
 
 class RedisMitmMapper(AbstractMitmMapper):
@@ -65,7 +65,8 @@ class RedisMitmMapper(AbstractMitmMapper):
             await self.__parse_gmo_for_location(worker, value, timestamp_received_raw, location)
             await self.__cache.set(RedisMitmMapper.IS_INJECTED_KEY.format(worker), 1)
 
-    async def __parse_gmo_for_location(self, worker: str, gmo_payload: Dict, timestamp: int, location: Optional[Location]):
+    async def __parse_gmo_for_location(self, worker: str, gmo_payload: Dict, timestamp: int,
+                                       location: Optional[Location]):
         cells = gmo_payload.get("cells", None)
         if not cells:
             return

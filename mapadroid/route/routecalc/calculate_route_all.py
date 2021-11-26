@@ -1,6 +1,6 @@
 import math
-from loguru import logger
 
+from loguru import logger
 
 try:
     from ortools.constraint_solver import pywrapcp, routing_enums_pb2

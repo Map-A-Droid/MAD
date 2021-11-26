@@ -3,7 +3,6 @@ import base64
 import json
 import os
 import zipfile
-from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 from aiofile import async_open
@@ -54,7 +53,7 @@ class DownloadPluginEndpoint(AbstractPluginEndpoint):
             os.remove(plugin_file_temp)
 
         loop = asyncio.get_running_loop()
-        #with ThreadPoolExecutor() as pool:
+        # with ThreadPoolExecutor() as pool:
         await loop.run_in_executor(
             None, self.__zip, (folder, plugin_file_temp))
 

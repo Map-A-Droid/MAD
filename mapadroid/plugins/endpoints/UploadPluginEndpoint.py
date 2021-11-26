@@ -3,7 +3,6 @@ import base64
 import json
 import os
 import zipfile
-from concurrent.futures import ThreadPoolExecutor
 
 from aiofile import async_open
 from aiohttp import MultipartReader, web
@@ -90,7 +89,7 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
 
         try:
             loop = asyncio.get_running_loop()
-            #with ThreadPoolExecutor() as pool:
+            # with ThreadPoolExecutor() as pool:
             await loop.run_in_executor(
                 None, self.__unzip, (extractpath, plugin_tmp_zip))
 

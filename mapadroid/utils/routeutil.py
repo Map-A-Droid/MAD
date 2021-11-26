@@ -3,10 +3,11 @@ import re
 from typing import Optional
 
 import pytz
+from timezonefinder import TimezoneFinder
+
 from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from timezonefinder import TimezoneFinder
 
 logger = get_logger(LoggerEnums.utils)
 timezone_finder = TimezoneFinder()

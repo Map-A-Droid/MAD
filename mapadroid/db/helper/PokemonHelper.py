@@ -36,7 +36,7 @@ class PokemonHelper:
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
 
         stmt = select(Pokemon).where(and_(Pokemon.disappear_time > DatetimeWrapper.now() - datetime.timedelta(
-                                              hours=1),
+            hours=1),
                                           Pokemon.last_modified > DatetimeWrapper.fromtimestamp(latest),
                                           Pokemon.latitude >= min_lat,
                                           Pokemon.longitude >= min_lon,

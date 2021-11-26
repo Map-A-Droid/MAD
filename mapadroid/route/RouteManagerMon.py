@@ -19,7 +19,8 @@ class RouteManagerMon(RouteManagerBase):
                  mon_ids_iv: Optional[List[int]] = None):
         self.remove_from_queue_backlog: Optional[int] = int(
             area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
-        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
+        self.delay_after_timestamp_prio: Optional[
+            int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
         mon_spawn_strategy: MonSpawnPrioStrategy = MonSpawnPrioStrategy(clustering_timedelta=120,
                                                                         clustering_count_per_circle=max_coords_within_radius,
                                                                         clustering_distance=max_radius,

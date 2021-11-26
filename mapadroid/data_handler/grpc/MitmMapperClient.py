@@ -1,6 +1,10 @@
 import asyncio
 from typing import Optional, Dict, Union
+
 from aiocache import cached
+from google.protobuf import json_format
+from grpc.aio import AioRpcError
+from loguru import logger
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
@@ -12,9 +16,6 @@ from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import LastMoved, Lates
 from mapadroid.grpc.compiled.shared.Worker_pb2 import Worker
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperStub
 from mapadroid.utils.collections import Location
-from google.protobuf import json_format
-from grpc.aio import AioRpcError
-from loguru import logger
 
 
 class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):

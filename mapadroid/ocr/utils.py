@@ -3,11 +3,10 @@ from typing import Optional, Tuple, List
 import cv2
 import numpy as np
 from PIL import Image
+from loguru import logger
 from pytesseract import pytesseract, Output
 
 from mapadroid.ocr.screen_type import ScreenType
-from loguru import logger
-
 
 screen_texts: dict = {1: ['Geburtdatum', 'birth.', 'naissance.', 'date'],
                       2: ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER'],

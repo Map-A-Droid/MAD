@@ -1,10 +1,11 @@
 import asyncio
 import time
 
+from loguru import logger
+
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.utils.collections import Location
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
-from loguru import logger
 
 
 class NopStrategy(AbstractWorkerStrategy):
@@ -47,4 +48,3 @@ class NopStrategy(AbstractWorkerStrategy):
         await super().grab_next_location()
         if not self._worker_state.current_location:
             self._worker_state.current_location = Location(0.0, 0.0)
-

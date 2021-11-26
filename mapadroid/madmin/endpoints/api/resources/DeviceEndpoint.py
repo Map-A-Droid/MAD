@@ -10,8 +10,6 @@ from mapadroid.db.resource_definitions.Device import Device
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import (
     AbstractResourceEndpoint)
 
-from loguru import logger
-
 
 class DeviceEndpoint(AbstractResourceEndpoint):
     async def _delete_connected_post(self, db_entry):

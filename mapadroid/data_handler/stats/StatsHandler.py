@@ -64,7 +64,8 @@ class StatsHandler(AbstractStatsHandler):
             if self.__stats_detect_seen_type_holder:
                 self.__stats_detect_seen_type_holder.add(encounter_id, MonSeenTypes.wild, time_scanned)
 
-    async def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime, is_shiny: bool) -> None:
+    async def stats_collect_mon_iv(self, worker: str, encounter_id: int, time_scanned: datetime,
+                                   is_shiny: bool) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
         player_stats.stats_collect_mon_iv(encounter_id, time_scanned, is_shiny)
         if self.__stats_detect_seen_type_holder:
@@ -79,14 +80,14 @@ class StatsHandler(AbstractStatsHandler):
         player_stats.stats_collect_raid(time_scanned, amount_raids)
 
     async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
-                                    position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
-                                    transport_type: TransportType, timestamp_of_record: int) -> None:
+                                          position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
+                                          transport_type: TransportType, timestamp_of_record: int) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
         player_stats.stats_collect_location_data(location, success, fix_timestamp, position_type, data_timestamp,
                                                  worker_type, transport_type, timestamp_of_record)
 
     async def stats_collect_seen_type(self, encounter_ids: List[int], type_of_detection: MonSeenTypes,
-                                time_of_scan: datetime) -> None:
+                                      time_of_scan: datetime) -> None:
         if self.__stats_detect_seen_type_holder:
             for encounter_id in encounter_ids:
                 self.__stats_detect_seen_type_holder.add(encounter_id, type_of_detection, time_of_scan)

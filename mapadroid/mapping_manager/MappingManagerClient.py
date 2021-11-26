@@ -1,4 +1,5 @@
 from typing import Optional, Dict, List, Set
+
 from aiocache import cached
 
 from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import GetAllLoadedOriginsResponse, \

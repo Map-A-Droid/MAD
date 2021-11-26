@@ -1,8 +1,8 @@
 import asyncio
+import calendar
 import datetime
 import gc
 import os
-import calendar
 from threading import active_count
 
 import psutil

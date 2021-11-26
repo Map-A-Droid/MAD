@@ -4,10 +4,10 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from mapadroid.db.model import MadApkAutosearch
-from mapadroid.utils.apk_enums import APKType, APKArch
-from mapadroid.utils.custom_types import MADapks
 from mapadroid.mad_apk.utils import get_apk_status, lookup_arch_enum, is_newer_version, lookup_apk_enum
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.utils.apk_enums import APKType, APKArch
+from mapadroid.utils.custom_types import MADapks
 
 
 class ApkUpdateStatusEndpoint(AbstractMadminRootEndpoint):

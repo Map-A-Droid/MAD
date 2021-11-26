@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Set
+from typing import Dict, Optional
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -8,7 +8,6 @@ from loguru import logger
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import SettingsArea
-from sqlalchemy.dialects.mysql import TINYINT
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm

@@ -16,10 +16,10 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
-from mapadroid.utils.apk_enums import APKArch, APKType, APKPackage
 from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
+from mapadroid.utils.apk_enums import APKArch, APKType, APKPackage
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.updater import DeviceUpdater
@@ -61,7 +61,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
                 await session.rollback()
         except web.HTTPFound as e:
             raise e
-        #except (ConnectionResetError, ConnectionError) as e:
+        # except (ConnectionResetError, ConnectionError) as e:
         #    raise web.HTTPInternalServerError()
         except Exception as e:
             logger.warning("Exception occurred in request! Details: " + str(e))

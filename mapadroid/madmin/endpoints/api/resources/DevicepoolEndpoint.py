@@ -11,11 +11,13 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 class DevicepoolEndpoint(AbstractResourceEndpoint):
     async def _get_unmet_dependencies(self, db_entry: SettingsDevicepool) -> Optional[Dict[int, str]]:
-        assigned_to_pool: List[SettingsDevice] = await SettingsDeviceHelper.get_assigned_to_pool(self._session, db_entry)
+        assigned_to_pool: List[SettingsDevice] = await SettingsDeviceHelper.get_assigned_to_pool(self._session,
+                                                                                                 db_entry)
         if not assigned_to_pool:
             return None
         else:
-            mapped: Dict[int, str] = {device.device_id: f"Device {device.name} is still assigned" for device in assigned_to_pool}
+            mapped: Dict[int, str] = {device.device_id: f"Device {device.name} is still assigned" for device in
+                                      assigned_to_pool}
             return mapped
 
     async def _delete_connected_prior(self, db_entry):

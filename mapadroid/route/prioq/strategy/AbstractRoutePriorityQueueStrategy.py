@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from typing import List, Optional
+
+from dataclasses import dataclass, field
 
 from mapadroid.utils.collections import Location
 

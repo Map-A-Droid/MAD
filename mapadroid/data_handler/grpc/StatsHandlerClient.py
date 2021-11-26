@@ -1,14 +1,15 @@
 from datetime import datetime
 from typing import List
 
+from grpc.aio import AioRpcError
+from loguru import logger
+
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.grpc.compiled.stats_handler.stats_handler_pb2 import Stats
 from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import StatsHandlerStub
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import MonSeenTypes, PositionType, TransportType
 from mapadroid.worker.WorkerType import WorkerType
-from grpc.aio import AioRpcError
-from loguru import logger
 
 
 class StatsHandlerClient(StatsHandlerStub, AbstractStatsHandler):
@@ -88,4 +89,3 @@ class StatsHandlerClient(StatsHandlerStub, AbstractStatsHandler):
             await self.StatsCollect(request)
         except AioRpcError as e:
             logger.warning("Failed submitting seen type stats {}", e)
-

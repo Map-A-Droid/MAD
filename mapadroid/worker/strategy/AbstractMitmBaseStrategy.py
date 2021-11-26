@@ -7,9 +7,9 @@ from typing import Optional, Tuple, Union
 from loguru import logger
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsArea, SettingsWalkerarea, TrsStatus
@@ -18,8 +18,9 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
-from mapadroid.utils.collections import Location
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
+from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madConstants import (
     FALLBACK_MITM_WAIT_TIMEOUT, MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO,
@@ -29,13 +30,12 @@ from mapadroid.utils.madGlobals import (FortSearchResultTypes,
                                         PositionType, TransportType,
                                         WebsocketWorkerRemovedException,
                                         application_args)
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
-from mapadroid.worker.strategy.AbstractWorkerStrategy import \
-    AbstractWorkerStrategy
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
+from mapadroid.worker.strategy.AbstractWorkerStrategy import \
+    AbstractWorkerStrategy
 
 
 class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
@@ -292,12 +292,12 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         worker_type: WorkerType = WorkerType(routemanager_settings.mode)
 
         await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
-                                                            self._worker_state.current_location, False,
-                                                            fix_ts,
-                                                            position_type,
-                                                            TIMESTAMP_NEVER,
-                                                            worker_type, self._worker_state.last_transport_type,
-                                                            now_ts)
+                                                              self._worker_state.current_location, False,
+                                                              fix_ts,
+                                                              position_type,
+                                                              TIMESTAMP_NEVER,
+                                                              worker_type, self._worker_state.last_transport_type,
+                                                              now_ts)
 
         self._worker_state.restart_count += 1
         restart_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.RESTART_THRESH, 5)
@@ -390,11 +390,11 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         worker_type: WorkerType = WorkerType(routemanager_settings.mode)
 
         await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
-                                                            self._worker_state.current_location, True,
-                                                            fix_ts,
-                                                            position_type, timestamp_received_raw,
-                                                            worker_type, self._worker_state.last_transport_type,
-                                                            now_ts)
+                                                              self._worker_state.current_location, True,
+                                                              fix_ts,
+                                                              position_type, timestamp_received_raw,
+                                                              worker_type, self._worker_state.last_transport_type,
+                                                              now_ts)
 
     async def start_pogo(self) -> bool:
         started_pogo: bool = await super().start_pogo()
@@ -449,4 +449,5 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
     async def _additional_health_check(self) -> None:
         # Ensure PogoDroid was started...
-        await self._communicator.passthrough("su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
+        await self._communicator.passthrough(
+            "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")

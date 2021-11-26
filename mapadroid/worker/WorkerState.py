@@ -4,9 +4,9 @@ from typing import Optional
 
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Location
-from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.madConstants import TIMESTAMP_NEVER
 from mapadroid.utils.madGlobals import TransportType
+from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.resolution import ResolutionCalculator
 
 
@@ -30,5 +30,3 @@ class WorkerState:
         self.restart_count: int = 0
         self.reboot_count: int = 0
         self.same_screen_count: int = 0
-
-

@@ -1,13 +1,13 @@
 import os
-from typing import List, Optional
+from typing import List
 
 import cv2
 import imutils
 import numpy as np
+from loguru import logger
 
 import mapadroid
 from mapadroid.utils.collections import ScreenCoordinates
-from loguru import logger
 
 
 def get_delete_quest_coords(coord_x):

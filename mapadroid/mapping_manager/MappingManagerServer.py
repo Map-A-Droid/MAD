@@ -40,7 +40,8 @@ class MappingManagerServer(MappingManagerServicer):
         await self.__server.start()
 
     async def __secure_port(self, address):
-        with open(application_args.mappingmanager_tls_private_key_file, 'r') as keyfile, open(application_args.mappingmanager_tls_cert_file, 'r') as certfile:
+        with open(application_args.mappingmanager_tls_private_key_file, 'r') as keyfile, open(
+                application_args.mappingmanager_tls_cert_file, 'r') as certfile:
             private_key = keyfile.read()
             certificate_chain = certfile.read()
         credentials = grpc.ssl_server_credentials(
@@ -83,5 +84,6 @@ class MappingManagerServer(MappingManagerServicer):
     async def IsRoutemanagerOfOriginLevelmode(self, request: IsRoutemanagerOfOriginLevelmodeRequest,
                                               context: grpc.aio.ServicerContext) -> IsRoutemanagerOfOriginLevelmodeResponse:
         response = IsRoutemanagerOfOriginLevelmodeResponse()
-        response.is_levelmode = await self.__mapping_manager_impl.routemanager_of_origin_is_levelmode(origin=request.worker.name)
+        response.is_levelmode = await self.__mapping_manager_impl.routemanager_of_origin_is_levelmode(
+            origin=request.worker.name)
         return response

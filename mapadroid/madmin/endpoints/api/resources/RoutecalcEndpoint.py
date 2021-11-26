@@ -21,7 +21,8 @@ class RoutecalcEndpoint(AbstractResourceEndpoint):
         if not areas_with_routecalc:
             return None
         else:
-            mapped: Dict[int, str] = {area.area_id: f"area {area.name} ({area.area_id}) is still connected to routecalc" for area in areas_with_routecalc}
+            mapped: Dict[int, str] = {area.area_id: f"area {area.name} ({area.area_id}) is still connected to routecalc"
+                                      for area in areas_with_routecalc}
             return mapped
 
     async def _delete_connected_prior(self, db_entry):

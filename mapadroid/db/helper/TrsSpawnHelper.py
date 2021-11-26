@@ -1,12 +1,11 @@
 import asyncio
-import concurrent
 import functools
 import time
 from _datetime import timedelta
 from datetime import datetime
 from typing import List, Optional, Tuple, Dict, Collection
 
-from sqlalchemy import and_, update, func, or_, not_, delete
+from sqlalchemy import and_, update, func, not_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -131,7 +130,7 @@ class TrsSpawnHelper:
                                            TrsSpawn.calc_endminsec != None))
         result = await session.execute(stmt)
         loop = asyncio.get_running_loop()
-        #with concurrent.futures.ThreadPoolExecutor() as pool:
+        # with concurrent.futures.ThreadPoolExecutor() as pool:
         next_up = await loop.run_in_executor(
             None, functools.partial(TrsSpawnHelper.__process_next_to_encounter, result=result.scalars().all(),
                                     geofence_helper=geofence_helper,
@@ -209,7 +208,7 @@ class TrsSpawnHelper:
             where_conditions.append(TrsSpawn.eventid == event_id)
         if today_only:
             where_conditions.append(and_(last_midnight <= TrsSpawn.last_scanned,
-                                        last_midnight <= TrsSpawn.last_non_scanned))
+                                         last_midnight <= TrsSpawn.last_non_scanned))
         elif older_than_x_days:
             # elif as it makes no sense to check for older than X days AND today
             older_than_date: datetime = last_midnight - timedelta(days=older_than_x_days)

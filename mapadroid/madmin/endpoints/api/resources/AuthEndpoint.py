@@ -10,11 +10,13 @@ from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
 
 class AuthEndpoint(AbstractResourceEndpoint):
     async def _get_unmet_dependencies(self, db_entry: SettingsAuth) -> Optional[Dict[int, str]]:
-        assigned_to_auth: List[AutoconfigFile] = await AutoconfigFileHelper.get_assigned_to_auth(self._session, db_entry)
+        assigned_to_auth: List[AutoconfigFile] = await AutoconfigFileHelper.get_assigned_to_auth(self._session,
+                                                                                                 db_entry)
         if not assigned_to_auth:
             return None
         else:
-            mapped: Dict[int, str] = {0: f"Used in autconfig file {autoconfig_file.name}" for autoconfig_file in assigned_to_auth}
+            mapped: Dict[int, str] = {0: f"Used in autconfig file {autoconfig_file.name}" for autoconfig_file in
+                                      assigned_to_auth}
             return mapped
 
     async def _delete_connected_prior(self, db_entry):

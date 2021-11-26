@@ -666,9 +666,9 @@ class WordToScreenMatching(object):
         await self.__click_center_button_text(click_text, diff, global_dict)
 
     async def _take_and_analyze_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False) -> \
-    Optional[Tuple[ScreenType,
-                   Optional[
-                       dict], int]]:
+            Optional[Tuple[ScreenType,
+                           Optional[
+                               dict], int]]:
         if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
                 MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
                                            delay_after=2):

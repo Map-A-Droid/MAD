@@ -34,7 +34,7 @@ class AutoconfigLogsHelper:
 
         """
         all_of_instance: List[AutoconfigLog] = await AutoconfigLogsHelper.get_all_of_instance(session, instance_id,
-                                                                                             session_id)
+                                                                                              session_id)
         transformed_list: List[Tuple[int, int, str]] = []
         for log in all_of_instance:
             timestamp: int = int(time.mktime(log.log_time.timetuple()))

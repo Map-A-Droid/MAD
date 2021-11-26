@@ -1,6 +1,8 @@
 import asyncio
 from typing import List, Optional
 
+from loguru import logger
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
@@ -8,7 +10,6 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.utils.collections import Location
-from loguru import logger
 
 
 class RouteManagerLeveling(RouteManagerQuests):

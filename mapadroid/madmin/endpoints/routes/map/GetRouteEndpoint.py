@@ -1,5 +1,4 @@
 import asyncio
-import concurrent
 from typing import List, Dict
 
 from mapadroid.db.helper import SettingsRoutecalcHelper

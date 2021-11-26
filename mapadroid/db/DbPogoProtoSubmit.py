@@ -8,8 +8,9 @@ import sqlalchemy
 from aioredis import Redis
 from bitstring import BitArray
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.GymDetailHelper import GymDetailHelper
 from mapadroid.db.helper.GymHelper import GymHelper
@@ -1141,7 +1142,8 @@ class DbPogoProtoSubmit:
     def get_time_ms(self):
         return int(time.time() * 1000)
 
-    async def maybe_save_ditto(self, session: AsyncSession, display: Dict, encounter_id: int, mon_id: int, pokemon_data: Dict):
+    async def maybe_save_ditto(self, session: AsyncSession, display: Dict, encounter_id: int, mon_id: int,
+                               pokemon_data: Dict):
         if mon_id == 132:
             # Save ditto disguise
             await PokemonDisplayHelper.insert_ignore(session, encounter_id,

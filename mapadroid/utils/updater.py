@@ -10,10 +10,10 @@ from enum import Enum
 from typing import Optional, List
 
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
-from mapadroid.utils.apk_enums import APKPackage, APKType, APKArch
-from mapadroid.utils.custom_types import MADPackages
 from mapadroid.mad_apk.utils import lookup_arch_enum, supported_pogo_version, is_newer_version, file_generator
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.apk_enums import APKPackage, APKType, APKArch
+from mapadroid.utils.custom_types import MADPackages
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.utils)

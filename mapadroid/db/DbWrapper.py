@@ -1,6 +1,6 @@
 import re
 import time
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession

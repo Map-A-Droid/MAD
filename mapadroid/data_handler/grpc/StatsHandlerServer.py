@@ -3,12 +3,12 @@ from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
 from mapadroid.data_handler.stats.StatsHandler import StatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.grpc.compiled.stats_handler.stats_handler_pb2 import Stats
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
+from mapadroid.grpc.compiled.stats_handler.stats_handler_pb2 import Stats
 from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import StatsHandlerServicer, \
     add_StatsHandlerServicer_to_server
-from mapadroid.utils.collections import Location
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (MonSeenTypes, PositionType,
                                         TransportType, application_args)
@@ -44,7 +44,8 @@ class StatsHandlerServer(StatsHandlerServicer, StatsHandler):
         await self.__server.start()
 
     async def __secure_port(self, address):
-        with open(application_args.statshandler_tls_private_key_file, 'r') as keyfile, open(application_args.statshandler_tls_cert_file, 'r') as certfile:
+        with open(application_args.statshandler_tls_private_key_file, 'r') as keyfile, open(
+                application_args.statshandler_tls_cert_file, 'r') as certfile:
             private_key = keyfile.read()
             certificate_chain = certfile.read()
         credentials = grpc.ssl_server_credentials(

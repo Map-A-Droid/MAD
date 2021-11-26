@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional, Dict, Union
+from typing import Optional, Union
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
@@ -50,4 +50,3 @@ class MitmMapper(AbstractMitmMapper):
 
     async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
         await self.__mitm_data_handler.set_pokestop_visits(worker, pokestop_visits)
-

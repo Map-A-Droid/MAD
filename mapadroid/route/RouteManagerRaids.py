@@ -1,5 +1,7 @@
 from typing import List, Optional
 
+from loguru import logger
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
@@ -10,8 +12,6 @@ from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import RaidSpawnPrioSt
 from mapadroid.utils.collections import Location
 from mapadroid.worker.WorkerType import WorkerType
 
-from loguru import logger
-
 
 class RouteManagerRaids(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaRaidsMitm, coords, max_radius, max_coords_within_radius,
@@ -19,8 +19,10 @@ class RouteManagerRaids(RouteManagerBase):
                  use_s2: bool = False, s2_level: int = 15, mon_ids_iv: Optional[List[int]] = None):
         self.remove_from_queue_backlog: Optional[int] = int(
             area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
-        clustering_timedelta: int = int(area.priority_queue_clustering_timedelta if area.priority_queue_clustering_timedelta else 0)
-        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
+        clustering_timedelta: int = int(
+            area.priority_queue_clustering_timedelta if area.priority_queue_clustering_timedelta else 0)
+        self.delay_after_timestamp_prio: Optional[
+            int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
         strategy: RaidSpawnPrioStrategy = RaidSpawnPrioStrategy(clustering_timedelta=clustering_timedelta,
                                                                 clustering_count_per_circle=max_coords_within_radius,
                                                                 clustering_distance=max_radius,

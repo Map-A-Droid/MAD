@@ -17,7 +17,7 @@ class SettingsDeviceHelper:
     async def save_last_walker_position(session: AsyncSession, instance_id: int, origin: str,
                                         location: Location) -> None:
         stmt = update(SettingsDevice).where(and_(SettingsDevice.instance_id == instance_id,
-                                                 SettingsDevice.name == origin))\
+                                                 SettingsDevice.name == origin)) \
             .values(startcoords_of_walker=f"{location.lat}, {location.lng}")
         await session.execute(stmt)
 

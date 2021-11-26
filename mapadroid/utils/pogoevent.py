@@ -34,4 +34,3 @@ class PogoEvent:
 
     def get_current_event_id(self):
         return self._event_id
-

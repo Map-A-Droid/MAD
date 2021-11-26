@@ -4,9 +4,10 @@ from datetime import datetime
 from typing import List, Tuple, Optional
 
 import sqlalchemy
-from loguru import logger
 from aioredis import Redis
+from loguru import logger
 from sqlalchemy.exc import IntegrityError
+
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
@@ -219,8 +220,10 @@ class SerializedMitmDataProcessor:
                                           lure_mons: List[int],
                                           amount_raids: int):
         await self.__stats_handler.stats_collect_wild_mon(worker, wild_mon_encounter_ids_in_gmo, time_received_raw)
-        await self.__stats_handler.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.nearby_cell, time_received_raw)
-        await self.__stats_handler.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.nearby_stop, time_received_raw)
+        await self.__stats_handler.stats_collect_seen_type(nearby_cell_mons, MonSeenTypes.nearby_cell,
+                                                           time_received_raw)
+        await self.__stats_handler.stats_collect_seen_type(nearby_fort_mons, MonSeenTypes.nearby_stop,
+                                                           time_received_raw)
         await self.__stats_handler.stats_collect_seen_type(lure_mons, MonSeenTypes.lure_wild, time_received_raw)
         await self.__stats_handler.stats_collect_raid(worker, time_received_raw, amount_raids)
 

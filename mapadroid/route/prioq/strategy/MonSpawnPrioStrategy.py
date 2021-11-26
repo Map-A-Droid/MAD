@@ -1,5 +1,7 @@
 from typing import List, Optional, Tuple
 
+from loguru import logger
+
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -7,7 +9,6 @@ from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import Ab
     RoutePriorityQueueEntry
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
-from loguru import logger
 
 
 class MonSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
@@ -49,8 +50,9 @@ class MonSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
             del locations_transformed_for_clustering
             new_coords: List[RoutePriorityQueueEntry] = []
             for (timestamp_due, location) in clustered:
-                entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due + self.get_delay_after_event(),
-                                                                         location=location)
+                entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(
+                    timestamp_due=timestamp_due + self.get_delay_after_event(),
+                    location=location)
                 new_coords.append(entry)
             return new_coords
         except Exception as e:

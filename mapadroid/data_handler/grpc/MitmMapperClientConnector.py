@@ -53,4 +53,3 @@ class MitmMapperClientConnector:
 
     async def __aexit__(self, type_, value, traceback):
         pass
-

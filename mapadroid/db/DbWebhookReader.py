@@ -137,7 +137,8 @@ class DbWebhookReader:
                                     mon_types: Optional[Set[MonSeenTypes]] = None):
         logger.debug2("DbWebhookReader::get_mon_changed_since called")
         mons_with_changes: List[
-            Tuple[Pokemon, TrsSpawn, Optional[Pokestop], Optional[PokemonDisplay]]] = await PokemonHelper.get_changed_since(
+            Tuple[Pokemon, TrsSpawn, Optional[Pokestop], Optional[
+                PokemonDisplay]]] = await PokemonHelper.get_changed_since(
             session,
             _timestamp,
             mon_types)

@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
 
 

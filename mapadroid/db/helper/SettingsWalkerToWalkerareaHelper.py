@@ -19,8 +19,10 @@ class SettingsWalkerToWalkerareaHelper:
         return result.scalars().all()
 
     @staticmethod
-    async def get_all_of_walkerarea(session: AsyncSession, walkerarea: SettingsWalkerarea) -> List[SettingsWalkerToWalkerarea]:
-        stmt = select(SettingsWalkerToWalkerarea).where(SettingsWalkerToWalkerarea.walkerarea_id == walkerarea.walkerarea_id)
+    async def get_all_of_walkerarea(session: AsyncSession, walkerarea: SettingsWalkerarea) -> List[
+        SettingsWalkerToWalkerarea]:
+        stmt = select(SettingsWalkerToWalkerarea).where(
+            SettingsWalkerToWalkerarea.walkerarea_id == walkerarea.walkerarea_id)
         result = await session.execute(stmt)
         return result.scalars().all()
 

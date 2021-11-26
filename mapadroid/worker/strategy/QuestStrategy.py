@@ -14,8 +14,8 @@ from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper

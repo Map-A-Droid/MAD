@@ -410,10 +410,10 @@ class AbstractWorkerStrategy(ABC):
             routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
             worker_type: WorkerType = WorkerType(routemanager_settings.mode)
             await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
-                                                          self._worker_state.current_location, True,
-                                                          now_ts, PositionType.REBOOT, 0,
-                                                          worker_type, TransportType.TELEPORT,
-                                                          now_ts)
+                                                                  self._worker_state.current_location, True,
+                                                                  now_ts, PositionType.REBOOT, 0,
+                                                                  worker_type, TransportType.TELEPORT,
+                                                                  now_ts)
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True):
             async with self._db_wrapper as session, session:
                 try:
@@ -446,9 +446,9 @@ class AbstractWorkerStrategy(ABC):
                 routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
                 worker_type: WorkerType = WorkerType(routemanager_settings.mode)
                 await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
-                                                              self._worker_state.current_location, True, now_ts,
-                                                              PositionType.RESTART, 0, worker_type,
-                                                              self._worker_state.last_transport_type, now_ts)
+                                                                      self._worker_state.current_location, True, now_ts,
+                                                                      PositionType.RESTART, 0, worker_type,
+                                                                      self._worker_state.last_transport_type, now_ts)
             return await self.start_pogo()
         else:
             logger.warning("Failed restarting PoGo - reboot device")

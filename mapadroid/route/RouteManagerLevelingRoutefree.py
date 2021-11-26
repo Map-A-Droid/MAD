@@ -21,7 +21,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         RouteManagerLeveling.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                       max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
                                       geofence_helper=geofence_helper, routecalc=routecalc,
-                                    mon_ids_iv=mon_ids_iv
+                                      mon_ids_iv=mon_ids_iv
                                       )
         self._level = True
         self.init: bool = True if area.init == 1 else False

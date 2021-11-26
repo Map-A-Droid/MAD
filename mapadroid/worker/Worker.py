@@ -320,7 +320,7 @@ class Worker(AbstractWorker):
         elif mode == "coords":
             exittime = self._scan_strategy.walker.algo_value
             logger.debug("Routemode coords, exittime {}", exittime)
-            if exittime: # TODO: Check if routemanager still has coords (e.g. questmode should make this one stop?)
+            if exittime:  # TODO: Check if routemanager still has coords (e.g. questmode should make this one stop?)
                 return check_walker_value_type(exittime, await self.__area_middle_of_current_fence())
             return True
         elif mode == "idle":
@@ -340,7 +340,7 @@ class Worker(AbstractWorker):
                                                            self._worker_state.device_id, 0)
                     await session.commit()
             while (not self._worker_state.stop_worker_event.is_set()
-                    and check_walker_value_type(sleeptime, await self.__area_middle_of_current_fence())):
+                   and check_walker_value_type(sleeptime, await self.__area_middle_of_current_fence())):
                 await asyncio.sleep(1)
             logger.info('just woke up')
             if killpogo:

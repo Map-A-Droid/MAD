@@ -295,7 +295,8 @@ class MappingManager(AbstractMappingManager):
         elif key == MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT:
             return devicemapping_entry.pool_settings.injection_thresh_reboot if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.injection_thresh_reboot else devicemapping_entry.device_settings.injection_thresh_reboot
         elif key == MappingManagerDevicemappingKey.SCREENDETECTION:
-            screen_detection: Optional[bool] = devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
+            screen_detection: Optional[
+                bool] = devicemapping_entry.pool_settings.screendetection if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screendetection else devicemapping_entry.device_settings.screendetection
             return screen_detection if screen_detection is not None else False
         elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST_SAFE_ITEMS:
             return devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.enhanced_mode_quest_safe_items else devicemapping_entry.device_settings.enhanced_mode_quest_safe_items

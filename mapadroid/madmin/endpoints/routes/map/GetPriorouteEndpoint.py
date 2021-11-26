@@ -18,7 +18,8 @@ class GetPriorouteEndpoint(AbstractControlEndpoint):
         for routemanager_id in routemanager_ids:
             mode = await self._get_mapping_manager().routemanager_get_mode(routemanager_id)
             name = await self._get_mapping_manager().routemanager_get_name(routemanager_id)
-            route: Optional[List[RoutePriorityQueueEntry]] = await self._get_mapping_manager().routemanager_get_current_prioroute(
+            route: Optional[
+                List[RoutePriorityQueueEntry]] = await self._get_mapping_manager().routemanager_get_current_prioroute(
                 routemanager_id)
 
             if route is None:

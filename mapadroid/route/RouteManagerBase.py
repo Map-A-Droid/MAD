@@ -4,20 +4,20 @@ import math
 import time
 from abc import ABC, abstractmethod
 from asyncio import Task, CancelledError
-from asyncio_rlock import RLock
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
+from asyncio_rlock import RLock
 from dataclasses import dataclass
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.route.prioq.RoutePriorityQueue import RoutePriorityQueue
 from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
     RoutePriorityQueueEntry
-from mapadroid.route.prioq.RoutePriorityQueue import RoutePriorityQueue
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
@@ -513,7 +513,7 @@ class RouteManagerBase(ABC):
 
                 routepool_entry.last_position_type = PositionType.PRIOQ
                 logger.debug("Moving to {}, {} for a priority event scheduled for {}", next_coord.lat,
-                              next_coord.lng, next_readable_time)
+                             next_coord.lng, next_readable_time)
                 self.__set_routepool_entry_location(origin, next_coord)
                 return next_coord
             except (IndexError, PrioQueueNoDueEntry, asyncio.TimeoutError):

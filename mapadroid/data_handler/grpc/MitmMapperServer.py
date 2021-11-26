@@ -1,13 +1,13 @@
 import asyncio
-from typing import Dict, Optional
+from typing import Optional
 
 import grpc
 from google.protobuf import json_format
 from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
+from mapadroid.data_handler.mitm_data.MitmMapper import MitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
-from mapadroid.data_handler.mitm_data.MitmMapper import MitmMapper
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
 from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import (
     InjectedRequest, InjectionStatus,
@@ -52,7 +52,8 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         await self.__server.start()
 
     async def __secure_port(self, address):
-        with open(application_args.mitmmapper_tls_private_key_file, 'r') as keyfile, open(application_args.mitmmapper_tls_cert_file, 'r') as certfile:
+        with open(application_args.mitmmapper_tls_private_key_file, 'r') as keyfile, open(
+                application_args.mitmmapper_tls_cert_file, 'r') as certfile:
             private_key = keyfile.read()
             certificate_chain = certfile.read()
         credentials = grpc.ssl_server_credentials(
