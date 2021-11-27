@@ -11,7 +11,7 @@ from ..db.DbWrapper import DbWrapper
 from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
 from ..db.helper.FilestoreMetaHelper import FilestoreMetaHelper
 from ..db.helper.MadApkHelper import MadApkHelper
-from ..db.model import FilestoreMeta
+from ..db.model import FilestoreMeta, MadApk
 
 logger = get_logger(LoggerEnums.storage)
 
@@ -98,21 +98,21 @@ class APKStorageDatabase(AbstractAPKStorage):
                 file_length: int = data.getbuffer().nbytes
                 filename: str = generate_filename(package, architecture, version, mimetype)
 
-                filestore_meta: FilestoreMeta = await FilestoreMetaHelper.insert(session, filename,
-                                                                                 file_length, mimetype)
-                new_id: int = filestore_meta.filestore_id
-
-                await MadApkHelper.insert_or_update(session, new_id, package, architecture, version)
+                mad_apk: MadApk = await MadApkHelper.insert(session, package, architecture, version,
+                                                            filename,
+                                                            file_length, mimetype
+                                                            )
                 logger.info('Starting upload of APK')
                 chunk_size = global_variables.CHUNK_MAX_SIZE
                 for chunked_data in [data.getbuffer()[i * chunk_size:(i + 1) * chunk_size] for i in
                                      range((len(data.getbuffer()) + chunk_size - 1) // chunk_size)]:
-                    await FilestoreChunkHelper.insert(session, new_id, len(chunked_data), chunked_data.tobytes())
+                    await FilestoreChunkHelper.insert(session, mad_apk.filestore_id, len(chunked_data),
+                                                      chunked_data.tobytes())
                 logger.info('Finished upload of APK')
                 await session.commit()
                 return True
             except Exception as e:  # noqa: E722 B001
-                logger.warning("Unable to save/upload apk: {}", e)
+                logger.warning("Unable to save/upload apk: {}", e, exc_info=True)
             return False
 
     async def shutdown(self) -> None:

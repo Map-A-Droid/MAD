@@ -138,7 +138,7 @@ class APKWizard(object):
         Args:
             architecture (APKArch): Architecture of the package to download
         """
-        if not self.api_token:
+        if not self.storage.token:
             logger.warning(
                 "The MADdev API token (maddev_api_token) has not been configured in config.ini."
                 " Please configure this to use the wizard for downloading PokemonGo."
@@ -312,7 +312,7 @@ class APKWizard(object):
         except (ClientError, ValueError) as e:
             logger.warning("Request to {} failed: {}", url, e)
 
-        if not curr_info or (installed_size and installed_size != mirror_size):
+        if not curr_info or not installed_size or (installed_size and installed_size != mirror_size):
             logger.info('Newer version found on the mirror of size {}{}', mirror_size, curr_info_logstring)
             update_available = True
         else:

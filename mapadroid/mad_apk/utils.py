@@ -276,7 +276,7 @@ async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
 
 
 async def stream_package(session: AsyncSession, storage_obj,
-                         package: APKType, architecture: APKArch) -> Tuple[AsyncGenerator, str, str]:
+                         package: APKType, architecture: APKArch) -> Optional[Tuple[AsyncGenerator, str, str]]:
     """ Stream the package to the user
 
     Args:
@@ -289,6 +289,8 @@ async def stream_package(session: AsyncSession, storage_obj,
         Tuple consisting of generator to fetch the bytes of the apk, the mimetype and filetype
     """
     package_info: Union[MADPackage, MADPackages] = await lookup_package_info(storage_obj, package, architecture)
+    if not package_info:
+        return None
     if isinstance(package_info, MADPackage):
         mimetype = package_info.mimetype
         filename = package_info.filename

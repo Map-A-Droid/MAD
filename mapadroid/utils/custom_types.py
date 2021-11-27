@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+from mapadroid.db.model import MadApk
 from mapadroid.utils.apk_enums import APKArch, APKType
 
 
@@ -24,10 +25,17 @@ class MADPackage(object):
     size: Optional[int] = None
     version: Optional[str] = None
 
-    def __init__(self, package: APKType, architecture: APKArch, **kwargs):
+    def __init__(self, package: APKType, architecture: APKArch, mad_apk: Optional[MadApk] = None, **kwargs):
         self.architecture = architecture
         self.package = package
+        if mad_apk:
+            self.file_id = mad_apk.filestore_id
+            self.filename = mad_apk.filename
+            self.mimetype = mad_apk.mimetype
+            self.size = mad_apk.size
+            self.version = mad_apk.version
         for key, value in kwargs.items():
+            # TODO: We need the MADApk instance here?
             if hasattr(self, key):
                 setattr(self, key, value)
 

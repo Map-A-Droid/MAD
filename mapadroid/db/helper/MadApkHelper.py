@@ -51,16 +51,13 @@ class MadApkHelper:
     @staticmethod
     async def get_current_package_info(session: AsyncSession, package: APKType) -> Optional[MADPackages]:
         data = MADPackages()
-        stmt = select(MadApk.version, MadApk.arch, FilestoreMeta.filename, FilestoreMeta.size, FilestoreMeta.mimetype) \
-            .select_from(MadApk) \
-            .join(FilestoreMeta, MadApk.filestore_id == FilestoreMeta.filestore_id) \
+        stmt = select(MadApk) \
             .where(MadApk.usage == package.value)
         result = await session.execute(stmt)
-        for row in result.scalars():
-            arch = row['arch']
-            row['arch_disp'] = APKArch(arch).name
-            row['usage_disp'] = APKType(package).name
-            data[APKArch(arch)] = MADPackage(APKType(package), APKArch(arch), **row)
+        for apk in result.scalars():
+            arch = apk.arch
+            row = {'arch_disp': APKArch(arch).name, 'usage_disp': APKType(package).name}
+            data[APKArch(arch)] = MADPackage(APKType(package), APKArch(arch), apk, **row)
         return data if data else None
 
     @staticmethod
@@ -86,14 +83,19 @@ class MadApkHelper:
         return True
 
     @staticmethod
-    async def insert_or_update(session: AsyncSession, filestore_id: int,
-                               usage: APKType, arch: APKArch, version: str) -> None:
+    async def insert(session: AsyncSession,
+                               usage: APKType, arch: APKArch, version: str,
+                               filename: str, file_length: int, mimetype: str) -> MadApk:
         async with session.begin_nested() as nested_transaction:
             mad_apk: MadApk = MadApk()
-            mad_apk.filestore_id = filestore_id
-            await session.merge(mad_apk)
+            # First try to fetch an existing filestore entry
+            mad_apk.filename = filename
+            mad_apk.size = file_length
+            mad_apk.mimetype = mimetype
             mad_apk.usage = usage.value
             mad_apk.arch = arch.value
             mad_apk.version = version
+            session.add(mad_apk)
             await session.flush([mad_apk])
             await nested_transaction.commit()
+        return mad_apk
