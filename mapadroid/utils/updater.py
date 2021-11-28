@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Optional, List
 
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
-from mapadroid.mad_apk.utils import lookup_arch_enum, supported_pogo_version, is_newer_version, file_generator
+from mapadroid.mad_apk.utils import lookup_arch_enum, supported_pogo_version, is_newer_version, stream_package
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.apk_enums import APKPackage, APKType, APKArch
 from mapadroid.utils.custom_types import MADPackages
@@ -525,7 +525,7 @@ class DeviceUpdater(object):
                                 self._log[str(item)]['origin'])
                     apk_file = bytes()
                     # TODO: Fix...
-                    for chunk in await file_generator(self._db, self._storage_obj, package, architecture):
+                    for chunk in await stream_package(self._db, self._storage_obj, package, architecture):
                         apk_file += chunk
                     if mad_apk.mimetype == 'application/zip':
                         returning = await ws_conn.install_bundle(300, data=apk_file)

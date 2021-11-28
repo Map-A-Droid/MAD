@@ -17,6 +17,12 @@ class RestApiResult:
         self.status_code: int = 0
         self.result_body: Optional[Union[Dict, bytes]] = None
 
+    def __str__(self):
+        if isinstance(self.result_body, dict):
+            return f"{self.status_code}: {str(self.result_body)[:25]}[..]"
+        else:
+            return f"{self.status_code}: {self.result_body[:25]}[..]"
+
 
 class RestHelper:
     @staticmethod

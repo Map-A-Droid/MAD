@@ -1,17 +1,17 @@
 from io import BytesIO
-from typing import Optional
+from typing import Optional, AsyncGenerator, List, Union
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.utils import global_variables
 from mapadroid.utils.apk_enums import APKArch, APKType
-from mapadroid.utils.custom_types import MADPackages
+from mapadroid.utils.custom_types import MADPackages, MADPackage
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
 from .utils import generate_filename
 from ..db.DbWrapper import DbWrapper
 from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
-from ..db.helper.FilestoreMetaHelper import FilestoreMetaHelper
 from ..db.helper.MadApkHelper import MadApkHelper
-from ..db.model import FilestoreMeta, MadApk
+from ..db.model import MadApk
 
 logger = get_logger(LoggerEnums.storage)
 
@@ -26,6 +26,28 @@ class APKStorageDatabase(AbstractAPKStorage):
     Attributes:
         db_wrapper: Database wrapper
     """
+
+    async def get_async_generator(self, session: AsyncSession,
+                                  package_info: Union[MADPackage, MADPackages],
+                                  package: APKType,
+                                  architecture: APKArch) -> AsyncGenerator:
+        """ Create a generator for retrieving the stored package from the database
+
+        Args:
+            package_info:
+            session:
+            package (APKType): Package to save
+            architecture (APKArch): Architecture of the package to save
+        Returns:
+            Generator for retrieving the package
+        """
+        filestore_id: Optional[int] = await MadApkHelper.get_filestore_id(session, package, architecture)
+        if not filestore_id:
+            raise ValueError("Package appears to not be present in the database")
+        chunk_ids: List[int] = await FilestoreChunkHelper.get_chunk_ids(session, filestore_id)
+        if not chunk_ids:
+            raise ValueError("Could not locate chunks in DB, something is broken.")
+        return FilestoreChunkHelper.get_chunk_data_generator(session, chunk_ids)
 
     def __init__(self, db_wrapper: DbWrapper, token: Optional[str]):
         super().__init__(token)

@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import Optional
+from typing import Optional, AsyncGenerator, Union
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.utils.apk_enums import APKArch, APKType
-from mapadroid.utils.custom_types import MADPackages
+from mapadroid.utils.custom_types import MADPackages, MADPackage
 
 
 class AbstractAPKStorage(ABC):
@@ -79,4 +80,10 @@ class AbstractAPKStorage(ABC):
     @abstractmethod
     async def shutdown(self) -> None:
         """Perform any required steps to safely shutdown the interface"""
+        pass
+
+    @abstractmethod
+    async def get_async_generator(self, session: AsyncSession, package_info: Union[MADPackage, MADPackages],
+                                  package: APKType,
+                                  architecture: APKArch) -> AsyncGenerator:
         pass

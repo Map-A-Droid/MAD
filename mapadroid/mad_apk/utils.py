@@ -48,64 +48,6 @@ def convert_to_backend(req_type: str, req_arch: str) -> Tuple[Optional[APKType],
     return backend_type, backend_arch
 
 
-async def file_generator(db, storage_obj, package: APKType, architecture: APKArch) -> AsyncGenerator:
-    """ Create a generator for retrieving the stored package
-
-    Args:
-        db:
-        storage_obj (AbstractAPKStorage): Storage interface for saving
-        package (APKType): Package to save
-        architecture (APKArch): Architecture of the package to save
-    Returns:
-        Generator for retrieving the package
-    """
-    package_info: Union[MADPackage, MADPackages] = await lookup_package_info(storage_obj, package, architecture)
-    if isinstance(package_info, MADPackage):
-        filename = package_info.filename
-    else:
-        package: MADPackage = package_info.get(architecture)
-        filename = package.filename
-    if storage_obj.get_storage_type() == 'fs':
-        gen_func = _generator_from_filesystem(storage_obj.get_package_path(filename))
-    else:
-        gen_func = await _generator_from_db(db, package, architecture)
-    return gen_func
-
-
-async def _generator_from_db(session: AsyncSession, package: APKType, architecture: APKArch) -> AsyncGenerator:
-    """ Create a generator for retrieving the stored package from the database
-
-    Args:
-        package (APKType): Package to save
-        architecture (APKArch): Architecture of the package to save
-    Returns:
-        Generator for retrieving the package
-    """
-    filestore_id: Optional[int] = await MadApkHelper.get_filestore_id(session, package, architecture)
-    if not filestore_id:
-        raise ValueError("Package appears to not be present in the database")
-    chunk_ids: List[int] = await FilestoreChunkHelper.get_chunk_ids(session, filestore_id)
-    if not chunk_ids:
-        raise ValueError("Could not locate chunks in DB, something is broken.")
-    return FilestoreChunkHelper.get_chunk_data_generator(session, chunk_ids)
-
-
-async def _generator_from_filesystem(full_path) -> AsyncGenerator:
-    """ Create a generator for retrieving the stored package from the disk
-
-    Args:
-        full_path (str): path to the file to retrieve
-    Returns:
-        Generator for retrieving the package
-    """
-    async with async_open(full_path, 'rb') as fh:
-        while True:
-            data = await fh.read(CHUNK_MAX_SIZE)
-            if not data:
-                break
-            yield data
-
-
 async def get_apk_status(storage_obj: AbstractAPKStorage) -> MADapks:
     """ Returns all required packages and their status
 
@@ -276,19 +218,19 @@ async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
 
 
 async def stream_package(session: AsyncSession, storage_obj,
-                         package: APKType, architecture: APKArch) -> Optional[Tuple[AsyncGenerator, str, str]]:
+                         apk_type: APKType, architecture: APKArch) -> Optional[Tuple[AsyncGenerator, str, str]]:
     """ Stream the package to the user
 
     Args:
         session:
         storage_obj (AbstractAPKStorage): Storage interface for grabbing the package
-        package (APKType): Package to lookup
+        apk_type (APKType): Package to lookup
         architecture (APKArch): Architecture of the package to lookup
 
     Returns:
         Tuple consisting of generator to fetch the bytes of the apk, the mimetype and filetype
     """
-    package_info: Union[MADPackage, MADPackages] = await lookup_package_info(storage_obj, package, architecture)
+    package_info: Union[MADPackage, MADPackages] = await lookup_package_info(storage_obj, apk_type, architecture)
     if not package_info:
         return None
     if isinstance(package_info, MADPackage):
@@ -299,7 +241,7 @@ async def stream_package(session: AsyncSession, storage_obj,
         mimetype = package.mimetype
         filename = package.filename
 
-    gen_func: AsyncGenerator = await file_generator(session, storage_obj, package, architecture)
+    gen_func: AsyncGenerator = await storage_obj.get_async_generator(session, package_info, apk_type, architecture)
     return gen_func, mimetype, filename
 
 
