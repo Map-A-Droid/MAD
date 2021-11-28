@@ -23,10 +23,9 @@ class FilestoreChunkHelper:
     async def get_chunk_data_generator(session: AsyncSession, chunk_ids: List[int]) -> AsyncGenerator:
         stmt = select(FilestoreChunk.data).where(FilestoreChunk.chunk_id.in_(chunk_ids))
         result = await session.stream(stmt)
-        return result
-        ## TODO: Async iteratble possible?
-        # async for data_chunk in result:
-        #    yield data_chunk
+
+        async for data_chunk in result:
+            yield data_chunk.data
 
     @staticmethod
     async def insert(session: AsyncSession, filestore_id: int, size: int, data: bytes) -> None:

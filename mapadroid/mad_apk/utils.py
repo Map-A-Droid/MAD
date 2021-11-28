@@ -68,7 +68,7 @@ async def file_generator(db, storage_obj, package: APKType, architecture: APKArc
     if storage_obj.get_storage_type() == 'fs':
         gen_func = _generator_from_filesystem(storage_obj.get_package_path(filename))
     else:
-        gen_func = _generator_from_db(db, package, architecture)
+        gen_func = await _generator_from_db(db, package, architecture)
     return gen_func
 
 
@@ -87,7 +87,7 @@ async def _generator_from_db(session: AsyncSession, package: APKType, architectu
     chunk_ids: List[int] = await FilestoreChunkHelper.get_chunk_ids(session, filestore_id)
     if not chunk_ids:
         raise ValueError("Could not locate chunks in DB, something is broken.")
-    return await FilestoreChunkHelper.get_chunk_data_generator(session, chunk_ids)
+    return FilestoreChunkHelper.get_chunk_data_generator(session, chunk_ids)
 
 
 async def _generator_from_filesystem(full_path) -> AsyncGenerator:
