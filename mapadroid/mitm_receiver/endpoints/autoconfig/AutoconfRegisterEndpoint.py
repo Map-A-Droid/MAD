@@ -1,4 +1,5 @@
 from aiohttp import web
+from mapadroid.db.model import AutoconfigRegistration
 
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
 
@@ -29,4 +30,4 @@ class AutoconfRegisterEndpoint(AbstractMitmReceiverRootEndpoint):
             'msg': 'Registration request from {}'.format(self._get_request_address())
         }
         await self.autoconfig_log(**log_data)
-        return web.Response(status=201, body=str(session_id))
+        return web.Response(status=201, body=str(autoconfig_registration.session_id))
