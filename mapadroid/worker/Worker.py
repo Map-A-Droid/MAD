@@ -136,7 +136,10 @@ class Worker(AbstractWorker):
 
     async def _internal_cleanup(self):
         if self._scan_strategy:
-            await self._scan_strategy.get_communicator().cleanup()
+            try:
+                await self._scan_strategy.get_communicator().cleanup()
+            except WebsocketWorkerRemovedException as e:
+                logger.info("Failed cleaning up, connection has already been closed/worker removed")
 
     # TODO: Fix worker_task and scan_task cleanup to catch racing
 
