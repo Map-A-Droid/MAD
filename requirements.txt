@@ -1,11 +1,11 @@
 ConfigArgParse~=0.14
-Flask~=1.1.4
-Flask-Caching~=1.8.0
+Flask~=2.0.2
+Flask-Caching~=1.10.1
 ImageHash~=4.0
 bitstring~=3.1
 dataclasses>=0.6
 geopy~=1.20
-gevent~=20.9
+gevent~=21.8.0
 gpxdata~=1.2
 imutils~=0.5
 loguru~=0.4.0
@@ -18,8 +18,8 @@ pytesseract~=0.3
 requests~=2.22
 s2sphere~=0.2
 websockets>=7
-numpy~=1.18.0
-apkutils==0.8.3
+numpy==1.21.4
+apkutils==0.11.0
 greenlet~=1.1
 apkmirror-search
 cachetools
