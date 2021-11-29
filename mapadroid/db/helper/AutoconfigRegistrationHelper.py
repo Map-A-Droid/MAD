@@ -68,10 +68,13 @@ class AutoconfigRegistrationHelper:
         """
         stmt = select(AutoconfigRegistration, SettingsDevice) \
             .select_from(AutoconfigRegistration) \
-            .join(SettingsDevice, SettingsDevice.device_id == AutoconfigRegistration.device_id) \
+            .join(SettingsDevice, SettingsDevice.device_id == AutoconfigRegistration.device_id, isouter=True) \
             .where(AutoconfigRegistration.instance_id == instance_id)
         result = await session.execute(stmt)
-        return result.all()
+        result_list: List[Tuple[AutoconfigRegistration, SettingsDevice]] = []
+        for reg, dev in result.all():
+            result_list.append((reg, dev))
+        return result_list
 
     @staticmethod
     async def delete(session: AsyncSession, instance_id: int, session_id: int) -> None:
