@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 from aiohttp import web
 
@@ -49,20 +49,23 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                     return await self._json_response(text="Unknown device ID", status=400)
             except (AttributeError, KeyError):
                 hopper_name = 'madrom'
-                hopper_response = await origin_generator(self._session, self._get_instance_id(),
-                                                         OriginBase=hopper_name)
-                if type(hopper_response) != SettingsDevice:
-                    return hopper_response
-                else:
-                    device_entry = hopper_response
-                    is_hopper = True
+                async with self._session.begin_nested() as nested_transaction:
+                    hopper_response: Union[SettingsDevice, web.Response] = await origin_generator(self._session,
+                                                                                                  self._get_instance_id(),
+                                                                                                  OriginBase=hopper_name)
+                    if type(hopper_response) != SettingsDevice:
+                        return hopper_response
+                    else:
+                        device_entry = hopper_response
+                        is_hopper = True
+                        await nested_transaction.commit()
             assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
                 .get_assigned_to_device(self._session, self._get_instance_id(), device_entry.device_id)
             if not self._get_mad_args().autoconfig_no_auth and (not assigned_to_device):
                 try:
                     auth_type = LoginType(device_entry.logintype)
-                except KeyError:
-                    auth_type = LoginType('google')
+                except (KeyError, ValueError):
+                    auth_type = LoginType.GOOGLE
                 # Find one that matches authtype
                 unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper \
                     .get_unassigned(self._session, self._get_instance_id(), auth_type)
@@ -70,16 +73,21 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                     return await self._json_response(text="No configured emails", status=400)
                 auth: SettingsPogoauth = unassigned_accounts.pop()
                 auth.device_id = device_entry.device_id
-                if is_hopper and auth_type != 'google':
+                if is_hopper and auth_type != LoginType.GOOGLE:
                     auth.login_type = auth_type.value
-                self._session.add(auth)
+                self._save(auth)
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']
         await AutoconfigRegistrationHelper.update_status(self._session, self._get_instance_id(), session_id, status)
-        return await self._json_response()
+        # TODO: https://github.com/Map-A-Droid/MAD/blob/master/mapadroid/madmin/api/autoconf/ftr_autoconf.py#L56
+        autoconf_reg = await AutoconfigRegistrationHelper.get_by_session_id(self._session,
+                                                                            self._get_instance_id(),
+                                                                            session_id)
+        return await self._json_response(autoconf_reg)
 
     async def delete(self) -> web.Response:
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']
         await AutoconfigRegistrationHelper.delete(self._session, self._get_instance_id(), session_id)
-        return await self._json_response()
+        self._commit_trigger = True
+        return await self._json_response({})

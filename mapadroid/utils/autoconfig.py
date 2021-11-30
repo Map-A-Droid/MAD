@@ -47,7 +47,7 @@ async def origin_generator(session: AsyncSession,
             pool_id: int = int(pool_id)
         except ValueError:
             return web.Response(status=404, text='"pool" value must be an integer')
-    is_ready = validate_hopper_ready(session, instance_id)
+    is_ready = await validate_hopper_ready(session, instance_id)
     if not is_ready:
         return web.Response(status=404, text='Unable to verify hopper. Likely no walkers have been configured at all.')
     if origin is None:
@@ -80,6 +80,7 @@ async def origin_generator(session: AsyncSession,
     device.pool_id = pool_id
     device.walker_id = walker.walker_id
     device.name = origin
+    device.instance_id = instance_id
     session.add(device)
     return device
 
