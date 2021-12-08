@@ -459,7 +459,7 @@ class WordToScreenMatching(object):
             self._communicator.click(480, 1080)
         if self._width == 1080 and self._height == 1920:
             self._communicator.touch_and_hold(int(360), int(1800), int(360), int(400))
-            self._communicator.click(830, 1395)
+            self._communicator.click(830, 1638)
         time.sleep(10)
         return ScreenType.UNDEFINED
 
