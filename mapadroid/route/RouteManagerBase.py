@@ -426,7 +426,7 @@ class RouteManagerBase(ABC):
             logger.info("Another process already calculate the new route")
             try:
                 await asyncio.wait_for(self._wait_for_calc_end(), 180)
-            except CancelledError:
+            except (CancelledError, TimeoutError):
                 logger.info("Current recalc took too long, returning None location")
                 return None
         if origin not in self._workers_registered:
@@ -556,15 +556,20 @@ class RouteManagerBase(ABC):
             else:
                 async with self._manager_mutex:
                     self._start_calc = True
-                    self._clear_coords()
-                    coords = await self._get_coords_post_init()
-                    logger.debug("Setting {} coords to as new points ", len(coords))
-                    self.add_coords_list(coords)
-                    logger.debug("Route being calculated")
-                    await self._recalc_route_workertype()
-                    self.init = False
-                    await self._change_init_mapping()
-                    self._start_calc = False
+                    try:
+                        self._clear_coords()
+                        coords = await self._get_coords_post_init()
+                        logger.debug("Setting {} coords to as new points ", len(coords))
+                        self.add_coords_list(coords)
+                        logger.debug("Route being calculated")
+                        await self._recalc_route_workertype()
+                        self.init = False
+                        await self._change_init_mapping()
+                    except Exception as e:
+                        logger.error("Failed (re-)calculating route")
+                        logger.exception(e)
+                    finally:
+                        self._start_calc = False
                     logger.debug("Initroute is finished.")
                     if not await self._worker_changed_update_routepools():
                         logger.info("Failed updating routepools ...")
