@@ -47,10 +47,6 @@ class WebsocketConnectedClientEntry:
 
     async def send_and_wait(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
                             byte_command: Optional[int] = None) -> Optional[MessageTyping]:
-        return await self.send_and_wait_async(message, timeout, worker_instance, byte_command=byte_command)
-
-    async def send_and_wait_async(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
-                                  byte_command: Optional[int] = None) -> Optional[MessageTyping]:
         if self.worker_instance is None or self.worker_instance != worker_instance and worker_instance != 'madmin':
             # TODO: consider changing this...
             raise WebsocketWorkerRemovedException("Invalid worker instance, removed worker")

@@ -168,13 +168,14 @@ class Worker(AbstractWorker):
                 WebsocketWorkerTimeoutException) as e:
             # TODO: in case of WebsocketWorkerConnectionClosedException, wait for new connection rather than stopping
             logger.info("Worker is stopping")
-            await self._internal_cleanup()
         except (WebsocketWorkerRemovedException,
                 WebsocketWorkerConnectionClosedException) as e:
             logger.info("Connection to device closed")
         except Exception as e:
             logger.exception(e)
         finally:
+            await self._internal_cleanup()
+
             async with self._work_mutex:
                 if self._scan_task:
                     self._scan_task.cancel()
