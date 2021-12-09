@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogsHelper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
@@ -60,6 +61,9 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
             else:
                 await session.rollback()
         except web.HTTPFound as e:
+            raise e
+        except web.HTTPException as e:
+            logger.warning("HTTP Exception occurred in request! Details: " + str(e))
             raise e
         # except (ConnectionResetError, ConnectionError) as e:
         #    raise web.HTTPInternalServerError()
@@ -198,13 +202,17 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         return package, architecture
 
     async def autoconfig_log(self, **kwargs) -> None:
-        session_id: Optional[int] = kwargs.get('session_id', None)
+        session_id: int = self.request.match_info.get('session_id')
         try:
             level = kwargs['level']
             msg = kwargs['msg']
         except KeyError:
             level, msg = str(await self.request.read(), 'utf-8').split(',', 1)
-
+        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+            .get_by_session_id(self._session, self._get_instance_id(), session_id)
+        if not autoconf:
+            logger.warning("Autoconf registration session {} not present", session_id)
+            raise web.HTTPNotFound
         autoconfig_log: AutoconfigLog = AutoconfigLog()
         autoconfig_log.session_id = session_id
         autoconfig_log.instance_id = self._get_instance_id()
@@ -215,23 +223,13 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
             autoconfig_log.level = 0
             logger.warning('Unable to parse level for autoconfig log')
         self._save(autoconfig_log)
-        autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
-            .get_by_session_id(self._session, self._get_instance_id(), session_id)
         if int(level) == 4 and autoconf is not None and autoconf.status == 1:
             autoconf.status = 3
             self._save(autoconf)
         # TODO Commit?
 
     async def autoconfig_status(self) -> web.Response:
-        body = await self.request.json()
-        session_id: Optional[int] = body.get('session_id', None)
-        update_data = {
-            'ip': self._get_request_address()
-        }
-        where = {
-            'session_id': session_id,
-            'instance_id': self._get_instance_id()
-        }
+        session_id: int = self.request.match_info.get('session_id')
         await AutoconfigRegistrationHelper.update_ip(self._session, self._get_instance_id(), session_id,
                                                      self._get_request_address())
         return web.Response(text="", status=200)

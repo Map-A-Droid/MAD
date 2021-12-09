@@ -30,4 +30,4 @@ class AutoconfRegisterEndpoint(AbstractMitmReceiverRootEndpoint):
             'msg': 'Registration request from {}'.format(self._get_request_address())
         }
         await self.autoconfig_log(**log_data)
-        return web.Response(status=201, body=str(autoconfig_registration.session_id))
+        return self._json_response(data=autoconfig_registration, status=201)

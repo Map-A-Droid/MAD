@@ -64,7 +64,7 @@ class AbstractMadminRootEndpoint(web.View, ABC):
             logger.exception(e)
             await session.rollback()
             # TODO: Get previous URL...
-            raise web.HTTPFound("/")
+            raise web.HTTPInternalServerError()
         return response
 
     def _save(self, instance: Base):

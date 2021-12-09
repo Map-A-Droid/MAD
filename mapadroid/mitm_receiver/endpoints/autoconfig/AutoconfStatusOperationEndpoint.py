@@ -20,15 +20,14 @@ def validate_session(func) -> Any:
     @wraps(func)
     async def decorated(self: AutoconfStatusOperationEndpoint, *args, **kwargs):
         try:
-            body = await self.request.json()
-            session_id: Optional[int] = body.get('session_id', None)
+            session_id: int = self.request.match_info.get('session_id')
             session_id = int(session_id)
             autoconfig_registration: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
                 .get_by_session_id(self._session, self._get_instance_id(), session_id)
 
             if not autoconfig_registration:
                 raise web.HTTPNotFound()
-            return func(self, *args, **kwargs)
+            return await func(self, *args, **kwargs)
         except (TypeError, ValueError):
             raise web.HTTPNotFound()
 
@@ -53,7 +52,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
         return log_data, operation
 
     async def get(self):
-        log_data, operation = self.preprocess()
+        log_data, operation = await self.preprocess()
         if operation == 'status':
             if log_data:
                 log_data['msg'] = 'Device is checking status of the session'
@@ -68,13 +67,14 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
 
     # TODO: Auth/preprocessing for autoconfig?
     async def post(self):
-        log_data, operation = self.preprocess()
+        log_data, operation = await self.preprocess()
         if operation == 'log':
-            return await self.autoconfig_log()
+            await self.autoconfig_log(**log_data)
+            return web.Response(text="", status=201)
         raise web.HTTPNotFound()
 
     async def delete(self):
-        log_data, operation = self.preprocess()
+        log_data, operation = await self.preprocess()
         if operation == 'complete':
             if log_data:
                 log_data['msg'] = 'Device ihas requested the completion of the auto-configuration session'
@@ -84,9 +84,8 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
 
     @validate_session
     async def _autoconfig_get_config(self):
-        body = await self.request.json()
-        session_id: Optional[int] = body.get('session_id', None)
-        operation: Optional[str] = body.get('operation', None)
+        session_id: int = self.request.match_info.get('session_id')
+        operation: Optional[str] = self.request.match_info.get('operation')
         try:
             device_settings: Optional[SettingsDevice] = await SettingsDeviceHelper \
                 .get_device_settings_with_autoconfig_registration_pending(self._session, self._get_instance_id(),
@@ -98,8 +97,9 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
                     config = RGCConfig(self._session, self._get_instance_id(), self._get_mad_args())
                 await config.load_config()
                 # TODO: Fix return type of generate_config/stream it properly
-                return web.FileResponse(await config.generate_config(device_settings.name),
-                                        headers={'Content-Disposition': f"Attachment; filename=conf.xml"})
+                config_bytes = await config.generate_config(device_settings.name)
+                return web.Response(body=config_bytes,
+                                    headers={'Content-Disposition': f"Attachment; filename=conf.xml"})
             elif operation in ['google']:
                 login: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
                     .get_google_credentials_of_autoconfig_registered_device(self._session, self._get_instance_id(),
@@ -116,8 +116,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
 
     @validate_session
     async def _autoconfig_complete(self):
-        body = await self.request.json()
-        session_id: Optional[int] = body.get('session_id', None)
+        session_id: int = self.request.match_info.get('session_id')
         try:
             max_msg_level: Optional[int] = await AutoconfigLogsHelper \
                 .get_max_level_of_session(self._session, self._get_instance_id(), session_id)

@@ -40,7 +40,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                                                  headers=ac_issues.get_headers())
             # Set the device id.  If it was not requested use the origin hopper to create one
             try:
-                dev_id = request_body['device_id'].split('/')[-1]
+                dev_id = request_body['device_id']
                 # First check if a device entry was created
                 device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get(self._session,
                                                                                         self._get_instance_id(),
@@ -78,12 +78,11 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                 self._save(auth)
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']
-        await AutoconfigRegistrationHelper.update_status(self._session, self._get_instance_id(), session_id, status,
-                                                         device_entry.device_id if device_entry else None)
-        # TODO: https://github.com/Map-A-Droid/MAD/blob/master/mapadroid/madmin/api/autoconf/ftr_autoconf.py#L56
-        autoconf_reg = await AutoconfigRegistrationHelper.get_by_session_id(self._session,
-                                                                            self._get_instance_id(),
-                                                                            session_id)
+        autoconf_reg = await AutoconfigRegistrationHelper.update_status(self._session, self._get_instance_id(),
+                                                                        session_id, status,
+                                                                        device_entry.device_id if device_entry else None)
+        if not autoconf_reg:
+            raise web.HTTPNotFound()
         self._commit_trigger = True
         return await self._json_response(autoconf_reg)
 

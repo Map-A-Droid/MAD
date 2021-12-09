@@ -35,17 +35,18 @@ class AutoconfigRegistrationHelper:
 
     @staticmethod
     async def update_status(session: AsyncSession, instance_id: int, session_id: int, status: int,
-                            device_id: Optional[int] = None) -> None:
+                            device_id: Optional[int] = None) -> Optional[AutoconfigRegistration]:
         registration: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
             .get_by_session_id(session, instance_id, session_id)
         if not registration:
-            return
+            return registration
         async with session.begin_nested() as nested_transaction:
             registration.status = status
             if device_id:
                 registration.device_id = device_id
             await session.flush([registration])
             await nested_transaction.commit()
+        return registration
 
     @staticmethod
     async def update_ip(session: AsyncSession, instance_id: int, session_id: int, request_ip: str) -> None:
