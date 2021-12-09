@@ -137,7 +137,7 @@ class StrategyFactory:
             return None
 
         if walker_configuration.area_id not in await self.__mapping_manager.get_all_routemanager_ids():
-            raise WrongAreaInWalker()
+            raise WrongAreaInWalker("Wrong area in walker")
 
         logger.info('using walker area {} [{}/{}]',
                     await self.__mapping_manager.routemanager_get_name(walker_configuration.area_id),

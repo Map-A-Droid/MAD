@@ -326,4 +326,4 @@ class APKStorageFilesystem(AbstractAPKStorage):
                 raise FileNotFoundError(package_path)
             return True
         except KeyError:
-            raise FileNotFoundError
+            raise FileNotFoundError("Could not locate APK")

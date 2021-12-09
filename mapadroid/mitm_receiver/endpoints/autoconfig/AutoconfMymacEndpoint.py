@@ -16,12 +16,12 @@ class AutoconfMymacEndpoint(AbstractMitmReceiverRootEndpoint):
     async def preprocess(self) -> Tuple[Dict, SettingsDevice]:
         origin = self.request.headers.get('Origin')
         if origin is None:
-            raise web.HTTPNotFound
+            raise web.HTTPNotFound()
         device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(self._session,
                                                                                     self._get_instance_id(),
                                                                                     origin)
         if not device:
-            raise web.HTTPNotFound
+            raise web.HTTPNotFound()
         autoconf: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper.get_of_device(self._session,
                                                                                                       self._get_instance_id(),
                                                                                                       device.device_id)

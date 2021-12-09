@@ -255,7 +255,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         auth = self.request.headers.get('Authorization')
         if self._get_mad_args().mitm_status_password != "" and \
                 (not auth or auth != self._get_mad_args().mitm_status_password):
-            raise web.HTTPUnauthorized
+            raise web.HTTPUnauthorized()
 
     async def _check_mitm_device_auth(self):
         """
@@ -267,7 +267,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         auths_allowed: Optional[Dict[str, str]] = await self._get_mapping_manager().get_auths()
         if not check_auth(logger, auth, self._get_mad_args(), auths_allowed):
             logger.warning("Unauthorized attempt to connect from {}", self._get_request_address())
-            raise web.HTTPUnauthorized
+            raise web.HTTPUnauthorized()
 
     async def _check_origin_header(self):
         """
@@ -278,7 +278,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         origin = self._request.headers.get('Origin')
         if origin is None:
             logger.warning("Missing Origin header in request")
-            raise web.HTTPUnauthorized
+            raise web.HTTPUnauthorized()
         elif origin not in (await self._get_mapping_manager().get_all_loaded_origins()):
             logger.warning("MITMReceiver request without Origin or disallowed Origin")
-            raise web.HTTPUnauthorized
+            raise web.HTTPUnauthorized()

@@ -175,7 +175,7 @@ class WebsocketServer(object):
             # -> we can just create a new task
             if not await self.__add_worker_and_thread_to_entry(entry, origin, use_configmode=device_paused):
                 logger.warning("Failed to start worker for {}", origin)
-                raise WebsocketAbortRegistrationException
+                raise WebsocketAbortRegistrationException("Failed starting worker")
             else:
                 logger.info("Worker added/started successfully for {}", origin)
         except WebsocketAbortRegistrationException as e:
@@ -221,7 +221,7 @@ class WebsocketServer(object):
         if entry.websocket_client_connection.open:
             logger.error("Old connection open while a new one is attempted to be established, "
                          "aborting handling of connection")
-            raise WebsocketAbortRegistrationException
+            raise WebsocketAbortRegistrationException("Old connection still open")
         elif entry.websocket_client_connection.closed:
             # Old connection is closed, i.e. no active connection present...
             logger.info("Old connection of {} closed.",
@@ -229,7 +229,7 @@ class WebsocketServer(object):
         else:
             # Old connection neither open or closed - either closing or opening...
             # Should have been handled by the while loop above...
-            raise WebsocketAbortRegistrationException
+            raise WebsocketAbortRegistrationException("Old connection in some intermediate state")
 
     async def __add_worker_and_thread_to_entry(self, entry: WebsocketConnectedClientEntry,
                                                origin, use_configmode: bool = None) -> bool:

@@ -90,7 +90,7 @@ class MadApkEndpoint(AbstractMadminRootEndpoint):
                     await wizard.apk_search(apk_type, apk_arch)
                 except ValueError as e:
                     logger.exception(e)
-                    raise web.HTTPNotFound
+                    raise web.HTTPNotFound()
                 return web.Response(status=204)
             elif call == 'search_download':
                 try:

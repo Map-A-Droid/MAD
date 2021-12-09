@@ -232,7 +232,7 @@ class AbstractWorkerStrategy(ABC):
             value = await self._mapping_manager.get_devicesetting_value_of_device(self._worker_state.origin, key)
         except (EOFError, FileNotFoundError) as e:
             logger.warning("Failed fetching devicemappings with description: {}. Stopping worker", e)
-            raise InternalStopWorkerException
+            raise InternalStopWorkerException("Failed fetching devicesettings value")
         return value if value is not None else default_value
 
     async def _wait_pogo_start_delay(self):
@@ -245,7 +245,7 @@ class AbstractWorkerStrategy(ABC):
             if not await self._mapping_manager.routemanager_present(self._area_id) \
                     or self._worker_state.stop_worker_event.is_set():
                 logger.error("Killed while waiting for pogo start")
-                raise InternalStopWorkerException
+                raise InternalStopWorkerException("Worker killed while waiting for pogo to start")
             await asyncio.sleep(1)
             delay_count += 1
 
@@ -562,10 +562,10 @@ class AbstractWorkerStrategy(ABC):
 
     async def _update_screen_size(self):
         if self._worker_state.stop_worker_event.is_set():
-            raise WebsocketWorkerRemovedException
+            raise WebsocketWorkerRemovedException("Worker is to be stopped rather than update screensize")
         screen = await self._communicator.get_screensize()
         if not screen:
-            raise WebsocketWorkerRemovedException
+            raise WebsocketWorkerRemovedException("Could not retrieve screensize")
 
         screen = screen.strip().split(' ')
         x_offset = await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET, 0)
@@ -573,7 +573,7 @@ class AbstractWorkerStrategy(ABC):
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SOFTBAR_ENABLED, False):
             y_offset_raw: Optional[MessageTyping] = await self._communicator.get_y_offset()
             if not y_offset_raw:
-                raise WebsocketWorkerRemovedException
+                raise WebsocketWorkerRemovedException("No y offset available")
             else:
                 y_offset = int(y_offset_raw.strip())
         else:

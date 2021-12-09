@@ -558,7 +558,7 @@ async def get_available_versions() -> Dict[str, PackageBase]:
             "Unable to query APKMirror. There is probably a recaptcha that needs to be solved and that "
             "functionality is not currently implemented. Please manually download and upload to the wizard"
         )
-        raise SearchError
+        raise SearchError("Unable to query APKMirror")
     else:
         logger.info("Successfully queried APKMirror to get the latest releases")
         return available
