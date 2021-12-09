@@ -164,7 +164,7 @@
                             </td>
                             <td class="align-middle">
                                 {% if settings_dev is not none %}
-                                    <a href="{{ url('settings_devices', query_={'id': settings_dev.device_id}) }}">{{ settings_dev.origin }}</a>
+                                    <a href="{{ url('settings_devices', query_={'id': settings_dev.device_id}) }}">{{ settings_dev.name }}</a>
                                 {% else %}
                                     {{ '' }}
                                 {% endif %}

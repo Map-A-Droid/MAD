@@ -30,7 +30,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                 status = 1
         except KeyError:
             raise web.HTTPBadRequest()
-
+        device_entry: Optional[SettingsDevice] = None
         if status == 1:
             is_hopper = False
             ac_issues = AutoConfIssueGenerator()
@@ -78,11 +78,13 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                 self._save(auth)
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']
-        await AutoconfigRegistrationHelper.update_status(self._session, self._get_instance_id(), session_id, status)
+        await AutoconfigRegistrationHelper.update_status(self._session, self._get_instance_id(), session_id, status,
+                                                         device_entry.device_id if device_entry else None)
         # TODO: https://github.com/Map-A-Droid/MAD/blob/master/mapadroid/madmin/api/autoconf/ftr_autoconf.py#L56
         autoconf_reg = await AutoconfigRegistrationHelper.get_by_session_id(self._session,
                                                                             self._get_instance_id(),
                                                                             session_id)
+        self._commit_trigger = True
         return await self._json_response(autoconf_reg)
 
     async def delete(self) -> web.Response:

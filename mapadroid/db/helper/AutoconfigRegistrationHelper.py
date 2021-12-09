@@ -34,12 +34,18 @@ class AutoconfigRegistrationHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def update_status(session: AsyncSession, instance_id: int, session_id: int, status: int) -> None:
-        stmt = update(AutoconfigRegistration) \
-            .where(and_(AutoconfigRegistration.instance_id == instance_id,
-                        AutoconfigRegistration.session_id == session_id)) \
-            .values(status=status)
-        await session.execute(stmt)
+    async def update_status(session: AsyncSession, instance_id: int, session_id: int, status: int,
+                            device_id: Optional[int] = None) -> None:
+        registration: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper\
+            .get_by_session_id(session, instance_id, session_id)
+        if not registration:
+            return
+        async with session.begin_nested() as nested_transaction:
+            registration.status = status
+            if device_id:
+                registration.device_id = device_id
+            await session.flush([registration])
+            await nested_transaction.commit()
 
     @staticmethod
     async def update_ip(session: AsyncSession, instance_id: int, session_id: int, request_ip: str) -> None:

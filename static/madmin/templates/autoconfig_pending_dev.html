@@ -78,8 +78,8 @@ $(document).ready(function () {
         <select class="form-control device_id" name="device_id" data-default="{{ element.device_id }}">
         <option value='None'>None</option>
         {% if devices is not none %}
-        {% for device_id, device in devices.items() %}
-         <option value="{{ device.identifier }}" {{ 'selected=selected' if element.device_id == device_id else "" }}>{{ device.origin }}</option>
+        {% for device in devices %}
+         <option value="{{ device.device_id }}" {{ 'selected=selected' if element.device_id == device.device_id else "" }}>{{ device.name }}</option>
         {% endfor %}
         {% endif %}
         </select>
