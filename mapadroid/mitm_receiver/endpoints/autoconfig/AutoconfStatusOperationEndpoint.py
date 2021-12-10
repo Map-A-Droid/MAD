@@ -27,6 +27,8 @@ def validate_session(func) -> Any:
 
             if not autoconfig_registration:
                 raise web.HTTPNotFound()
+            elif autoconfig_registration.status != 1:
+                raise web.HTTPConflict()
             return await func(self, *args, **kwargs)
         except (TypeError, ValueError):
             raise web.HTTPNotFound()
@@ -110,7 +112,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
                     raise web.HTTPNotFound
             elif operation == 'origin':
                 return web.Response(status=200, text=device_settings.name)
-        except Exception:
+        except Exception as e:
             logger.opt(exception=True).critical('Unable to process autoconfig')
             raise web.HTTPNotAcceptable()
 

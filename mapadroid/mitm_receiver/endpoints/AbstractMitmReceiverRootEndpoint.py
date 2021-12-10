@@ -203,6 +203,8 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
     async def autoconfig_log(self, **kwargs) -> None:
         session_id: int = self.request.match_info.get('session_id')
+        if not session_id:
+            session_id = kwargs.get("session_id")
         try:
             level = kwargs['level']
             msg = kwargs['msg']
