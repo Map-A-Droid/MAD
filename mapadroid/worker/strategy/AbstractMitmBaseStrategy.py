@@ -126,8 +126,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             await self._update_screen_size()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker")
-            # no cleanup required here? TODO: signal websocket server somehow
-            self._worker_state.stop_worker_event.set()
+            raise InternalStopWorkerException("Timeout during init of worker")
 
     async def _wait_for_data(self, timestamp: float = None,
                              proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \

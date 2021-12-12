@@ -67,8 +67,7 @@ class Worker(AbstractWorker):
             value = await self._mapping_manager.get_devicesetting_value_of_device(self._worker_state.origin, key)
         except (EOFError, FileNotFoundError) as e:
             logger.warning("Failed fetching devicemappings with description: {}. Stopping worker", e)
-            self._worker_state.stop_worker_event.set()
-            return None
+            raise InternalStopWorkerException("Failed fetching devicemappings")
         return value if value is not None else default_value
 
     async def check_max_walkers_reached(self):
@@ -128,8 +127,6 @@ class Worker(AbstractWorker):
         await self._scan_strategy.worker_specific_setup_stop()
 
     async def _cleanup_current(self):
-        # set the event just to make sure - in case of exceptions for example
-        self._worker_state.stop_worker_event.set()
         try:
             await self._mapping_manager.unregister_worker_from_routemanager(self._scan_strategy.area_id,
                                                                             self._worker_state.origin)
@@ -170,6 +167,7 @@ class Worker(AbstractWorker):
             async with self._work_mutex:
                 if self._scan_task:
                     self._scan_task.cancel()
+                    await self._scan_strategy.worker_specific_setup_stop()
                 self._scan_task = None
 
     async def _run_scan(self):

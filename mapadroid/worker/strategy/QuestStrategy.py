@@ -506,11 +506,10 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                         await self._clear_quests(vps_delay)
                         self.clear_thread_task = ClearThreadTasks.IDLE
                     await asyncio.sleep(1)
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException,
-                        WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException):
-                    logger.error("Worker removed while clearing quest/box")
-                    self._worker_state.stop_worker_event.set()
-                    return
+                except (InternalStopWorkerException,
+                        WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException) as e:
+                    logger.error("Worker issue while clearing quest/box: {}", e)
+                    raise InternalStopWorkerException("Worker issue while clearing quest box")
                 finally:
                     self.clear_thread_task = ClearThreadTasks.IDLE
 
