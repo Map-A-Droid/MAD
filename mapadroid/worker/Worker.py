@@ -49,7 +49,11 @@ class Worker(AbstractWorker):
         self._work_mutex: asyncio.Lock = asyncio.Lock()
 
     async def _scan_strategy_changed(self):
-        self._worker_state.stop_worker_event.set()
+        async with self._work_mutex:
+            if self._scan_task:
+                self._scan_task.cancel()
+
+    async def cancel_scan(self) -> None:
         async with self._work_mutex:
             if self._scan_task:
                 self._scan_task.cancel()
@@ -122,7 +126,6 @@ class Worker(AbstractWorker):
             if self._worker_task:
                 self._worker_task.cancel()
         await self._scan_strategy.worker_specific_setup_stop()
-        await self._internal_cleanup()
 
     async def _cleanup_current(self):
         # set the event just to make sure - in case of exceptions for example
@@ -134,48 +137,38 @@ class Worker(AbstractWorker):
             logger.warning("Failed unregistering from routemanager, routemanager may have stopped running already."
                            "Exception: {}", e)
 
-    async def _internal_cleanup(self):
-        if self._scan_strategy:
-            try:
-                await self._scan_strategy.get_communicator().cleanup()
-            except WebsocketWorkerRemovedException as e:
-                logger.info("Failed cleaning up, connection has already been closed/worker removed")
-
     # TODO: Fix worker_task and scan_task cleanup to catch racing
-
     async def _run(self) -> None:
-        # TODO: when to break?
         try:
             loop = asyncio.get_running_loop()
+            self._worker_state.stop_worker_event.clear()
             while True:
-                self._worker_state.stop_worker_event.clear()
                 logger.info("Starting scan strategy...")
                 async with self._work_mutex:
                     await self._start_of_new_strategy()
                     self._scan_task = loop.create_task(self._run_scan())
-                # TODO: Try/except CancelledError?
                 try:
                     await self._scan_task
-                    async with self._work_mutex:
-                        self._scan_task = None
-                    await asyncio.sleep(5)
-                    await self.__update_strategy()
                 except CancelledError as e:
                     logger.warning("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
                     # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
                     #  be handled accordingly
-        except (CancelledError, InternalStopWorkerException,
-                WebsocketWorkerTimeoutException) as e:
+                except (InternalStopWorkerException, WebsocketWorkerTimeoutException,
+                        WebsocketWorkerConnectionClosedException) as e:
+                    logger.info("Websocket connectivity issues or stop was issued internally")
+                finally:
+                    await asyncio.sleep(5)
+                    async with self._work_mutex:
+                        self._scan_task = None
+                    await self.__update_strategy()
+        except (CancelledError,
+                WebsocketWorkerRemovedException) as e:
             # TODO: in case of WebsocketWorkerConnectionClosedException, wait for new connection rather than stopping
-            logger.info("Worker is stopping")
-        except (WebsocketWorkerRemovedException,
-                WebsocketWorkerConnectionClosedException) as e:
-            logger.info("Connection to device closed")
+            logger.info("Worker task cancelled or websocket worker removed")
         except Exception as e:
             logger.exception(e)
         finally:
-            await self._internal_cleanup()
-
+            logger.info("Stopping worker task")
             async with self._work_mutex:
                 if self._scan_task:
                     self._scan_task.cancel()

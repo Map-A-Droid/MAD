@@ -376,8 +376,7 @@ class AbstractWorkerStrategy(ABC):
         await self.turn_screen_on_and_start_pogo()
         if not self._ensure_pogo_topmost():
             logger.error('Kill Worker...')
-            self._worker_state.stop_worker_event.set()
-            return False
+            raise InternalStopWorkerException("Pogo not topmost app during switching of users")
         logger.info('Switching finished ...')
         return True
 

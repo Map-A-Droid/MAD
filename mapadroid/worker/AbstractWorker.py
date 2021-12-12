@@ -33,6 +33,16 @@ class AbstractWorker(ABC):
         await self._scan_strategy_changed()
 
     @abstractmethod
+    async def cancel_scan(self) -> None:
+        """
+        Method resulting in the current scan to be cancelled.
+        This should not stop the worker itself from running
+        Returns:
+
+        """
+        pass
+
+    @abstractmethod
     async def _scan_strategy_changed(self):
         """
         Routine to be run upon a strategy change

@@ -47,11 +47,11 @@ class WebsocketConnectedClientEntry:
 
     async def send_and_wait(self, message: MessageTyping, timeout: float, worker_instance: AbstractWorker,
                             byte_command: Optional[int] = None) -> Optional[MessageTyping]:
-        if self.worker_instance is None or self.worker_instance != worker_instance and worker_instance != 'madmin':
+        if not self.worker_instance or self.worker_instance != worker_instance and worker_instance != 'madmin':
             # TODO: consider changing this...
             raise WebsocketWorkerRemovedException("Invalid worker instance, removed worker")
         elif not self.websocket_client_connection.open:
-            raise WebsocketWorkerConnectionClosedException("Connection closed, stopping worker")
+            raise WebsocketWorkerConnectionClosedException("Connection closed, stopping")
 
         # install new ReceivedMessageEntry
         message_id: int = await self.__get_new_message_id()

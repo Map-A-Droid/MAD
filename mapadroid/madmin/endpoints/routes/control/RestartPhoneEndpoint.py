@@ -34,5 +34,5 @@ class RestartPhoneEndpoint(AbstractControlEndpoint):
         else:
             temp_comm = self._get_ws_server().get_origin_communicator(origin)
             await temp_comm.reboot()
-        await self._get_ws_server().force_disconnect(origin)
+        await self._get_ws_server().force_cancel_worker(origin)
         raise web.HTTPFound(self._url_for("get_phonescreens"))

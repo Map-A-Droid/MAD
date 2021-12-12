@@ -195,10 +195,7 @@ class WebsocketServer(object):
             # also check if thread is already running to not start it again. If it is not alive, we need to create it..
             finally:
                 logger.info("Awaiting unregister")
-                if entry.worker_instance:
-                    await entry.worker_instance.stop_worker()
                 # TODO: Only remove after some time to keep a worker state
-                # await self.__remove_from_current_users(origin)
 
         logger.info("Done with connection ({})", websocket_client_connection.remote_address)
 
@@ -310,19 +307,17 @@ class WebsocketServer(object):
                 message = await asyncio.wait_for(connection.recv(), timeout=4.0)
             except asyncio.TimeoutError:
                 await asyncio.sleep(0.02)
-            except websockets.exceptions.ConnectionClosed as cc:
-                # TODO: cleanup needed here? better suited for the handler
+            except websockets.ConnectionClosed as cc:
                 logger.warning("Connection was closed, stopping receiver. Exception: {}", cc)
-                entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-                if entry and entry.worker_instance and connection == entry.websocket_client_connection:
-                    await entry.worker_instance.stop_worker()
                 return
 
             if message is not None:
                 await self.__on_message(client_entry, message)
         logger.warning("Connection closed in __client_message_receiver")
+
+    async def _stop_worker(self, origin: str) -> None:
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-        if entry and entry.worker_instance and connection == entry.websocket_client_connection:
+        if entry and entry.worker_instance:
             await entry.worker_instance.stop_worker()
 
     @staticmethod
@@ -343,9 +338,9 @@ class WebsocketServer(object):
     async def __close_websocket_client_connection(origin_of_worker: str,
                                                   websocket_client_connection: websockets.WebSocketClientProtocol) \
             -> None:
-        logger.info('Closing connections')
+        logger.info('Closing connection of {}', origin_of_worker)
         await websocket_client_connection.close()
-        logger.info("Connection closed")
+        logger.info("Connection of {} closed", origin_of_worker)
 
     async def get_connected_origins(self) -> List[str]:
         async with self.__current_users_mutex:
@@ -378,18 +373,10 @@ class WebsocketServer(object):
         await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.JOB_ACTIVE,
                                                                 False)
 
-    async def __close_and_signal_stop(self, origin: str) -> None:
-        logger.info("Signaling to stop")
+    async def force_cancel_worker(self, origin) -> None:
         async with self.__current_users_mutex:
             entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
-            if entry is not None:
-                if entry.worker_instance:
-                    await entry.worker_instance.stop_worker()
-                await self.__close_websocket_client_connection(entry.origin,
-                                                               entry.websocket_client_connection)
-                logger.info("Done signaling stop")
-            else:
-                logger.warning("Unable to signal to stop, not present")
-
-    async def force_disconnect(self, origin) -> None:
-        await self.__close_and_signal_stop(origin)
+            if not entry or not entry.worker_instance:
+                return
+            # Cancelling the scan task should result in the scan strategy to be updated
+            await entry.worker_instance.cancel_scan()
