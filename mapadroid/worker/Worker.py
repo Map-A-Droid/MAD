@@ -94,7 +94,7 @@ class Worker(AbstractWorker):
                 logger.warning("Task has not been removed before and is still running.")
                 return self._worker_task
             else:
-
+                logger.info("Starting worker task")
                 loop = asyncio.get_running_loop()
                 self._worker_task = loop.create_task(self._run())
                 return self._worker_task
@@ -137,7 +137,6 @@ class Worker(AbstractWorker):
             logger.warning("Failed unregistering from routemanager, routemanager may have stopped running already."
                            "Exception: {}", e)
 
-    # TODO: Fix worker_task and scan_task cleanup to catch racing
     async def _run(self) -> None:
         try:
             loop = asyncio.get_running_loop()
@@ -151,7 +150,7 @@ class Worker(AbstractWorker):
                     await self._scan_task
                 except CancelledError as e:
                     logger.warning("Scan task was cancelled externally, assuming the strategy was changed (for now...)")
-                    # TODO: If the strategy was changed externally, we do not want to update it, all other cases should
+                    # If the strategy was changed externally, we do not want to update it, all other cases should
                     #  be handled accordingly
                 except (InternalStopWorkerException, WebsocketWorkerTimeoutException,
                         WebsocketWorkerConnectionClosedException) as e:
@@ -163,7 +162,6 @@ class Worker(AbstractWorker):
                     await self.__update_strategy()
         except (CancelledError,
                 WebsocketWorkerRemovedException) as e:
-            # TODO: in case of WebsocketWorkerConnectionClosedException, wait for new connection rather than stopping
             logger.info("Worker task cancelled or websocket worker removed")
         except Exception as e:
             logger.exception(e)
@@ -172,7 +170,6 @@ class Worker(AbstractWorker):
             async with self._work_mutex:
                 if self._scan_task:
                     self._scan_task.cancel()
-                self._worker_task = None
                 self._scan_task = None
 
     async def _run_scan(self):
