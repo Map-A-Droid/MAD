@@ -448,5 +448,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
     async def _additional_health_check(self) -> None:
         # Ensure PogoDroid was started...
+        if not await self.get_devicesettings_value(MappingManagerDevicemappingKey.EXTENDED_PERMISSION_TOGGLING, False):
+            return
         await self._communicator.passthrough(
             "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")

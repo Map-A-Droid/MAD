@@ -741,6 +741,7 @@ class SettingsDevice(Base):
     mac_address = Column(String(17, 'utf8mb4_unicode_ci'))
     interface_type = Column(ENUM('lan', 'wlan'), server_default=text("'lan'"))
     softbar_enabled = Column(BOOLEAN, server_default=text("'0'"))
+    extended_permission_toggling = Column(BOOLEAN, server_default=text("'0'"))
 
     instance = relationship('MadminInstance')
     pool = relationship('SettingsDevicepool')

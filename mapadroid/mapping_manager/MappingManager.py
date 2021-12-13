@@ -313,6 +313,8 @@ class MappingManager(AbstractMappingManager):
             return devicemapping_entry.device_settings.account_rotation
         elif key == MappingManagerDevicemappingKey.ROTATE_ON_LVL_30:
             return devicemapping_entry.device_settings.rotate_on_lvl_30
+        elif key == MappingManagerDevicemappingKey.EXTENDED_PERMISSION_TOGGLING:
+            return devicemapping_entry.device_settings.extended_permission_toggling
         else:
             # TODO: Get all the DB values...
             pass

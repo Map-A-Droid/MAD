@@ -244,6 +244,15 @@ class Device(Resource):
                     "expected": bool,
                 }
             },
+            "extended_permission_toggling": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [None, True, False],
+                    "description": "Whether e.g. magisk should be toggled on/off regularly (Default: False)",
+                    "expected": bool,
+                }
+            },
             "screenshot_type": {
                 "settings": {
                     "type": "option",

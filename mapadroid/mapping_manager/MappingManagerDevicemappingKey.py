@@ -44,3 +44,4 @@ class MappingManagerDevicemappingKey(IntEnum):
     ENHANCED_MODE_QUEST_SAFE_ITEMS = 40
     PTC_LOGIN = 41
     SOFTBAR_ENABLED = 42
+    EXTENDED_PERMISSION_TOGGLING = 43

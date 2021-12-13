@@ -358,10 +358,11 @@ class AbstractWorkerStrategy(ABC):
         if application_args.enable_worker_specific_extra_start_stop_handling:
             await self.worker_specific_setup_stop()
             await asyncio.sleep(1)
-        await self._communicator.magisk_off()
-        await asyncio.sleep(1)
-        await self._communicator.magisk_on()
-        await asyncio.sleep(1)
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.EXTENDED_PERMISSION_TOGGLING, False):
+            await self._communicator.magisk_off()
+            await asyncio.sleep(1)
+            await self._communicator.magisk_on()
+            await asyncio.sleep(1)
         await self._communicator.start_app("com.nianticlabs.pokemongo")
         await asyncio.sleep(25)
         await self.stop_pogo()
@@ -590,6 +591,8 @@ class AbstractWorkerStrategy(ABC):
         # self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, x_offset, y_offset)
 
     async def _grant_permissions_to_pogo(self) -> None:
+        if not await self.get_devicesettings_value(MappingManagerDevicemappingKey.EXTENDED_PERMISSION_TOGGLING, False):
+            return
         command: str = "su -c 'magiskhide --add com.nianticlabs.pokemongo " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_FINE_LOCATION " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_COARSE_LOCATION " \
