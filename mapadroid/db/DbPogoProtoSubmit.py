@@ -68,6 +68,7 @@ class DbPogoProtoSubmit:
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
 
+                mitm_mapper.collect_mon_stats(origin, str(encounter_id))
                 cache_key = "mon{}-{}".format(encounter_id, mon_id)
                 if cache.exists(cache_key):
                     continue
@@ -81,8 +82,6 @@ class DbPogoProtoSubmit:
                 gender = pokemon_display.get('gender_value')
                 costume = pokemon_display.get('costume_value')
                 form = pokemon_display.get('form_value')
-
-                mitm_mapper.collect_mon_stats(origin, str(encounter_id))
 
                 now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -231,11 +230,13 @@ class DbPogoProtoSubmit:
         pokemon_display = pokemon_data.get("display", {})
         mon_id = pokemon_data.get("id")
         weather_boosted = pokemon_display.get("weather_boosted_value")
+        shiny = pokemon_display.get("is_shiny", 0)
         spawnid = int(str(wild_pokemon["spawnpoint_id"]), 16)
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
+        mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
         cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
         if cache.exists(cache_key):
             return
@@ -248,9 +249,6 @@ class DbPogoProtoSubmit:
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
-        shiny = pokemon_display.get("is_shiny", 0)
-
-        mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if getdetspawntime is None:
             origin_logger.debug3("updating IV mon #{} at {}, {}. Despawning at {} (init)", pokemon_data["id"], latitude,
