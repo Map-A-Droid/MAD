@@ -7,7 +7,7 @@ from mapadroid.madmin.endpoints.api.autoconf.AutoconfStatusEndpoint import Autoc
 
 
 def register_api_autoconf_endpoints(app: web.Application):
-    app.router.add_view('/api/autoconf/{session_id}', AutoconfStatusEndpoint, name='api_autoconf_status')
     app.router.add_view('/api/autoconf', AutoconfEndpoint, name='api_autoconf')
     app.router.add_view('/api/autoconf/rgc', AutoconfRgcEndpoint, name='api_autoconf_rgc')
     app.router.add_view('/api/autoconf/pd', AutoconfPdEndpoint, name='api_autoconf_pd')
+    app.router.add_view('/api/autoconf/{session_id}', AutoconfStatusEndpoint, name='api_autoconf_status')
