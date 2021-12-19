@@ -13,23 +13,28 @@ class MadApkDownloadEndpoint(AbstractMitmReceiverRootEndpoint):
     """
 
     # TODO: Auth/preprocessing for autoconfig?
+    async def head(self):
+        data_generator, response = await self.__handle_download_request()
+        return response
+
     async def get(self):
+        data_generator, response = await self.__handle_download_request()
+        async for data in data_generator:
+            await response.write(data)
+        return response
+
+    async def __handle_download_request(self):
         parsed = self._parse_frontend()
-        if type(parsed) == web.Response:
-            return parsed
         apk_type, apk_arch = parsed
         response = web.StreamResponse()
-
         streaming_package: Optional[Tuple[AsyncGenerator, str, str]] = await stream_package(self._session,
                                                                                             self._get_storage_obj(),
                                                                                             apk_type, apk_arch)
         if not streaming_package:
-            return web.Response(status=404)
+            raise web.HTTPNotFound()
         else:
             data_generator, mimetype, filename = streaming_package
         response.content_type = mimetype
         response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
         await response.prepare(self.request)
-        async for data in data_generator:
-            await response.write(data)
-        return response
+        return data_generator, response

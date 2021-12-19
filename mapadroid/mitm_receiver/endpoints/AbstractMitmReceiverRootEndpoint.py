@@ -195,10 +195,10 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         package, architecture = convert_to_backend(apk_type_o, apk_arch_o)
         if apk_type_o is not None and package is None:
             resp_msg = 'Invalid Type.  Valid types are {}'.format([e.name for e in APKPackage])
-            return web.Response(status=404, body=resp_msg)
+            raise web.HTTPNotFound(body=resp_msg)
         if architecture is None and apk_arch_o is not None:
             resp_msg = 'Invalid Architecture.  Valid types are {}'.format([e.name for e in APKArch])
-            return web.Response(status=404, body=resp_msg)
+            raise web.HTTPNotFound(body=resp_msg)
         return package, architecture
 
     async def autoconfig_log(self, **kwargs) -> None:
