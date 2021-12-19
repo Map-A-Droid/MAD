@@ -1,6 +1,7 @@
 import asyncio
 from typing import Optional
 
+import websockets
 from aiofile import async_open
 
 from mapadroid.utils.CustomTypes import MessageTyping
@@ -19,7 +20,6 @@ logger = get_logger(LoggerEnums.websocket)
 
 
 class Communicator(AbstractCommunicator):
-
     def __init__(self, websocket_client_entry: WebsocketConnectedClientEntry, worker_id: str,
                  worker_instance_ref: Optional[AbstractWorker],
                  command_timeout: float):
@@ -29,6 +29,12 @@ class Communicator(AbstractCommunicator):
         self.websocket_client_entry = websocket_client_entry
         self.__command_timeout: float = command_timeout
         self.__send_mutex = asyncio.Lock()
+
+    async def is_alive(self) -> bool:
+        if not self.websocket_client_entry or not self.websocket_client_entry.websocket_client_connection:
+            return False
+        connection: websockets.WebSocketClientProtocol = self.websocket_client_entry.websocket_client_connection
+        return connection.open
 
     async def cleanup(self) -> None:
         logger.info("Communicator calling exit to cleanup worker in websocket")

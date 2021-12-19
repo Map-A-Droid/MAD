@@ -16,6 +16,10 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
+    async def is_alive(self) -> bool:
+        pass
+
+    @abstractmethod
     async def install_apk(self, timeout: float, filepath: str = None, data=None) -> bool:
         pass
 

@@ -140,6 +140,9 @@ class Worker(AbstractWorker):
             self._worker_state.stop_worker_event.clear()
             while True:
                 logger.info("Starting scan strategy...")
+                while not self.get_communicator() or not await self.get_communicator().is_alive():
+                    logger.debug2("No active connection present...")
+                    await asyncio.sleep(1)
                 async with self._work_mutex:
                     await self._start_of_new_strategy()
                     self._scan_task = loop.create_task(self._run_scan())
