@@ -218,7 +218,7 @@ async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
 
 
 async def stream_package(session: AsyncSession, storage_obj,
-                         apk_type: APKType, architecture: APKArch) -> Optional[Tuple[AsyncGenerator, str, str]]:
+                         apk_type: APKType, architecture: APKArch) -> Optional[Tuple[AsyncGenerator, str, str, str]]:
     """ Stream the package to the user
 
     Args:
@@ -236,13 +236,15 @@ async def stream_package(session: AsyncSession, storage_obj,
     if isinstance(package_info, MADPackage):
         mimetype = package_info.mimetype
         filename = package_info.filename
+        version = package_info.version
     else:
         package: MADPackage = package_info.get(architecture)
         mimetype = package.mimetype
         filename = package.filename
+        version = package.version
 
     gen_func: AsyncGenerator = await storage_obj.get_async_generator(session, package_info, apk_type, architecture)
-    return gen_func, mimetype, filename
+    return gen_func, mimetype, filename, version
 
 
 async def supported_pogo_version(architecture: APKArch, version: str, token: Optional[str]) -> bool:

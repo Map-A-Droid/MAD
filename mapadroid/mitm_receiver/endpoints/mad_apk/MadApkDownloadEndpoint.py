@@ -27,14 +27,15 @@ class MadApkDownloadEndpoint(AbstractMitmReceiverRootEndpoint):
         parsed = self._parse_frontend()
         apk_type, apk_arch = parsed
         response = web.StreamResponse()
-        streaming_package: Optional[Tuple[AsyncGenerator, str, str]] = await stream_package(self._session,
-                                                                                            self._get_storage_obj(),
-                                                                                            apk_type, apk_arch)
+        streaming_package: Optional[Tuple[AsyncGenerator, str, str, str]] = await stream_package(self._session,
+                                                                                                 self._get_storage_obj(),
+                                                                                                 apk_type, apk_arch)
         if not streaming_package:
             raise web.HTTPNotFound()
         else:
-            data_generator, mimetype, filename = streaming_package
+            data_generator, mimetype, filename, version = streaming_package
         response.content_type = mimetype
         response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+        response.headers['APK-Version'] = '{}'.format(version)
         await response.prepare(self.request)
         return data_generator, response
