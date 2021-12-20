@@ -200,7 +200,7 @@ class Raid(Base):
     form = Column(SMALLINT(6))
     is_exclusive = Column(BOOLEAN)
     gender = Column(TINYINT(1))
-    costume = Column(BOOLEAN)
+    costume = Column(TINYINT(1))
     evolution = Column(SMALLINT(6))
 
 
