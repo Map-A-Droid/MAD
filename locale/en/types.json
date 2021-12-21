@@ -147,6 +147,10 @@
     "prototext": "QUEST_USE_INCENSE",
     "text": "Use an Incense"
   },
+  "42": {
+    "prototext": "QUEST_WALK_BUDDY",
+    "text": "Walk {0} km with your buddy"
+  },
   "43": {
     "prototext": "QUEST_MEGA_EVOLVE",
     "text": "Mega Evolve {0} Pokemon"
