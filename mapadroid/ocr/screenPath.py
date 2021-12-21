@@ -463,7 +463,8 @@ class WordToScreenMatching(object):
                            f"(width is {self._width}, height is {self._height})")
             return ScreenType.ERROR
         logger.info("Click accept button")
-        await self._communicator.click(520, 1185)
+        await self._communicator.touch_and_hold(int(360), int(1080), int(360), int(500))
+        await self._communicator.click(480, 1080)
         await asyncio.sleep(10)
         return ScreenType.UNDEFINED
 
