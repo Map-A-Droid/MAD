@@ -536,7 +536,8 @@ class WebhookWorker:
                 "team_id": gym["team_id"],
                 "name": gym["name"],
                 "slots_available": gym["slots_available"],
-                "is_ar_scan_eligible": gym["is_ar_scan_eligible"]
+                "is_ar_scan_eligible": gym["is_ar_scan_eligible"],
+                "is_in_battle": gym["is_in_battle"]
             }
 
             if gym.get("description", None) is not None:

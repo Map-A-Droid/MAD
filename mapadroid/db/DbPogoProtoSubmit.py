@@ -740,6 +740,8 @@ class DbPogoProtoSubmit:
                         last_modified_ts)
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
                     is_ar_scan_eligible = gym["is_ar_scan_eligible"]
+                    is_in_battle = gym['gym_details']['is_in_battle']
+                    is_enabled = gym['gym_details']['enabled']
 
                     cache_key = "gym{}{}".format(gymid, last_modified_ts)
                     if await self._cache.exists(cache_key):
@@ -752,11 +754,11 @@ class DbPogoProtoSubmit:
                     gym_obj.team_id = team_id
                     gym_obj.guard_pokemon_id = guard_pokemon_id
                     gym_obj.slots_available = slots_available
-                    gym_obj.enabled = True  # TODO: read in proto?
+                    gym_obj.enabled = is_enabled
                     gym_obj.latitude = latitude
                     gym_obj.longitude = longitude
-                    gym_obj.total_cp = 0  # TODO: Read from proto..
-                    gym_obj.is_in_battle = False
+                    gym_obj.total_cp = 0  # TODO: Read from proto?
+                    gym_obj.is_in_battle = is_in_battle
                     gym_obj.last_modified = last_modified
                     gym_obj.last_scanned = time_receiver
                     gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
