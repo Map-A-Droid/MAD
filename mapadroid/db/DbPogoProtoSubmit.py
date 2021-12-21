@@ -741,7 +741,7 @@ class DbPogoProtoSubmit:
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
                     is_ar_scan_eligible = gym["is_ar_scan_eligible"]
                     is_in_battle = gym['gym_details']['is_in_battle']
-                    is_enabled = gym['gym_details']['enabled']
+                    is_enabled = gym.get('enabled', 1)
 
                     cache_key = "gym{}{}".format(gymid, last_modified_ts)
                     if await self._cache.exists(cache_key):
