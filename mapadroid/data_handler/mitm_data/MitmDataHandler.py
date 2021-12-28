@@ -1,6 +1,7 @@
 import time
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, List
 
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.utils.collections import Location
@@ -13,7 +14,6 @@ class MitmDataHandler:
     """
     Class storing the last received proto of an origin and other relevant data that has to be available asap
     """
-
     def __init__(self):
         self.__worker_data: Dict[str, PlayerData] = {}
 
@@ -57,7 +57,7 @@ class MitmDataHandler:
         logger.debug2("Request full latest called")
         return player_data.get_full_latest_data()
 
-    def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
+    async def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
                       timestamp_received_receiver: float = None, location: Location = None) -> None:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         if timestamp_received_raw is None:
@@ -75,3 +75,12 @@ class MitmDataHandler:
     def get_last_known_location(self, worker) -> Optional[Location]:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         return player_data.get_last_known_location()
+
+    async def set_quests_held(self, worker: str, quests_held: Optional[List[int]]) -> None:
+        player_data: PlayerData = self.__ensure_worker_data(worker)
+        await player_data.set_quests_held(quests_held)
+
+    async def get_quests_held(self, worker: str) -> Optional[List[int]]:
+        player_data: PlayerData = self.__ensure_worker_data(worker)
+        return await player_data.get_quests_held()
+

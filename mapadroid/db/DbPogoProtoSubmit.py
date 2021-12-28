@@ -30,7 +30,7 @@ from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
-from mapadroid.utils.madGlobals import MonSeenTypes
+from mapadroid.utils.madGlobals import MonSeenTypes, QuestLayer
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
@@ -635,10 +635,12 @@ class DbPogoProtoSubmit:
                     await nested_transaction.rollback()
         return stop is not None
 
-    async def quest(self, session: AsyncSession, quest_proto: dict, quest_gen: QuestGen) -> bool:
+    async def quest(self, session: AsyncSession, quest_proto: dict, quest_gen: QuestGen,
+                    quest_layer: QuestLayer) -> bool:
         """
 
         Args:
+            quest_layer: the quest layer being scanned
             session:
             quest_proto:
             quest_gen:
@@ -687,10 +689,11 @@ class DbPogoProtoSubmit:
         json_condition = json.dumps(condition)
         task = await quest_gen.questtask(int(quest_type), json_condition, int(target), str(quest_template),
                                          quest_title_resource_id)
-        quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id)
+        quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id, quest_layer)
         if not quest:
             quest = TrsQuest()
             quest.GUID = fort_id
+            quest.layer = quest_layer.value
         quest.quest_type = quest_type
         quest.quest_timestamp = int(time.time())
         quest.quest_stardust = stardust

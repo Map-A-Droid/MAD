@@ -1,10 +1,11 @@
 import time
 from datetime import timedelta
-from typing import Set
+from typing import Set, List, Optional
 
 from loguru import logger
 
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.madGlobals import QuestLayer
 
 
 def calculate_mon_level(cp_multiplier):
@@ -13,6 +14,17 @@ def calculate_mon_level(cp_multiplier):
     else:
         pokemon_level = 171.0112688 * cp_multiplier - 95.20425243
     return round(pokemon_level) * 2 / 2
+
+
+def determine_current_quest_layer(quests_held: Optional[List[int]]) -> QuestLayer:
+    if quests_held is None:
+        raise ValueError("Unknown quest layer of worker")
+    if 46 in quests_held:
+        # 46 is the quest ID for AR quests, thus we are scanning the NON AR layer since we will only receive
+        # quests without AR quests
+        return QuestLayer.NON_AR
+    else:
+        return QuestLayer.AR
 
 
 def gen_despawn_timestamp(known_despawn, timestamp, default_time_left_minutes=3) -> int:

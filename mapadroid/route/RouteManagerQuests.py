@@ -8,6 +8,7 @@ from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.collections import Location
+from mapadroid.utils.madGlobals import QuestLayer
 
 
 class RouteManagerQuests(RouteManagerBase):
@@ -33,7 +34,8 @@ class RouteManagerQuests(RouteManagerBase):
 
     async def generate_stop_list(self):
         async with self.db_wrapper as session, session:
-            stops = await PokestopHelper.get_without_quests(session, self.geofence_helper)
+            stops = await PokestopHelper.get_without_quests(session, self.geofence_helper,
+                                                            QuestLayer(self._settings.layer))
         locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for stop_id, stop in
                                               stops.items()]
         logger.info('Detected stops without quests: {}', len(locations_of_stops))
@@ -45,7 +47,8 @@ class RouteManagerQuests(RouteManagerBase):
 
     async def _get_coords_post_init(self):
         async with self.db_wrapper as session, session:
-            return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
+            return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper,
+                                                               QuestLayer(self._settings.layer))
 
     def _cluster_priority_queue_criteria(self):
         pass
@@ -226,9 +229,12 @@ class RouteManagerQuests(RouteManagerBase):
 
     async def _change_init_mapping(self) -> None:
         self._settings.init = False
-        # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
         async with self.db_wrapper as session, session:
             await session.merge(self._settings)
+            await session.commit()
 
     def _should_get_new_coords_after_finishing_route(self) -> bool:
         return not self.init
+
+    def get_quest_layer_to_scan(self) -> Optional[int]:
+        return self._settings.layer

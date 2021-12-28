@@ -22,6 +22,7 @@ class PlayerData(AbstractWorkerHolder):
         # Timestamp when the GMO last contained different cell IDs than the GMO before that
         self.__last_possibly_moved: int = 0
         self.__last_known_location: Optional[Location] = None
+        self.__quests_held: Optional[List[int]] = None
 
     # TODO: Move to MappingManager?
     async def set_injection_status(self, status: bool):
@@ -93,3 +94,9 @@ class PlayerData(AbstractWorkerHolder):
 
     async def set_level(self, level: int) -> None:
         self._level = level
+
+    async def set_quests_held(self, quests_held: Optional[List[int]]) -> None:
+        self.__quests_held = quests_held
+
+    async def get_quests_held(self) -> Optional[List[int]]:
+        return self.__quests_held

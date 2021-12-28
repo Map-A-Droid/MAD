@@ -25,7 +25,7 @@ class GetStopsEndpoint(AbstractMadminRootEndpoint):
                                                   old_ne_corner=Location(o_ne_lat, o_ne_lng),
                                                   old_sw_corner=Location(o_sw_lat, o_sw_lng),
                                                   timestamp=timestamp)
-        stops_with_quests: Dict[int, Tuple[Pokestop, TrsQuest]] = \
+        stops_with_quests: Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]] = \
             await PokestopHelper.get_with_quests(self._session,
                                                  ne_corner=Location(ne_lat, ne_lng),
                                                  sw_corner=Location(sw_lat, sw_lng),

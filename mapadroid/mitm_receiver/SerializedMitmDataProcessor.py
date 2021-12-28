@@ -13,7 +13,8 @@ from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandl
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes, application_args
+from mapadroid.utils.gamemechanicutil import determine_current_quest_layer
+from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes, application_args, QuestLayer
 from mapadroid.utils.questGen import QuestGen
 
 
@@ -88,7 +89,10 @@ class SerializedMitmDataProcessor:
                 logger.debug("Processing proto 101 (FORT_SEARCH)")
                 async with self.__db_wrapper as session, session:
                     try:
-                        new_quest: bool = await self.__db_submit.quest(session, data["payload"], self.__quest_gen)
+                        quest_layer: QuestLayer = determine_current_quest_layer(await self.__mitm_mapper
+                                                                                .get_quests_held(origin))
+                        new_quest: bool = await self.__db_submit.quest(session, data["payload"], self.__quest_gen,
+                                                                       quest_layer)
                         if new_quest:
                             await self.__stats_handler.stats_collect_quest(origin, processed_timestamp)
                         await session.commit()

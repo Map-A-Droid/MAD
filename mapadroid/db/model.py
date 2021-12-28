@@ -290,6 +290,8 @@ class TrsQuest(Base):
     __tablename__ = 'trs_quest'
 
     GUID = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True)
+    # 0: AR layer, 1: layer when holding AR quest
+    layer = Column(TINYINT(3), primary_key=True, default=1, nullable=False, autoincrement=False)
     quest_type = Column(TINYINT(3), nullable=False, index=True)
     quest_timestamp = Column(INTEGER(11), nullable=False)
     quest_stardust = Column(SMALLINT(4), nullable=False)
@@ -595,6 +597,7 @@ class SettingsAreaPokestop(SettingsArea):
     max_distance = Column(Float)
     ignore_spinned_stops = Column(BOOLEAN)
     cleanup_every_spin = Column(BOOLEAN)
+    layer = Column(TINYINT(3), default=1, nullable=False, autoincrement=False, index=True)
 
     settings_geofence = relationship('SettingsGeofence')
     settings_routecalc = relationship('SettingsRoutecalc')

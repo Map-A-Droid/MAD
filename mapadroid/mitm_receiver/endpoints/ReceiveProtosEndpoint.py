@@ -1,5 +1,6 @@
 import asyncio
 import time
+from typing import Optional, List
 
 from aiohttp import web
 from loguru import logger
@@ -72,6 +73,8 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
                 location_of_data.lng > 180 or location_of_data.lng < -180):
             location_of_data: Location = Location(0.0, 0.0)
         time_received: int = int(time.time())
+        quests_held: Optional[List[int]] = data.get("quests_held", None)
+        await self._get_mitm_mapper().set_quests_held(origin, quests_held)
         await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
                                                     timestamp_received_receiver=time_received, key=str(proto_type),
                                                     value=data["payload"],

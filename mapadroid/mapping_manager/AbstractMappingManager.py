@@ -18,3 +18,7 @@ class AbstractMappingManager(ABC):
     @abstractmethod
     async def routemanager_of_origin_is_levelmode(self, origin: str) -> bool:
         pass
+
+    @abstractmethod
+    async def routemanager_get_quest_layer_to_scan_of_origin(self, origin: str) -> Optional[int]:
+        pass

@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     try:
-        op.add_column('trs_quest', sa.Column('quest_title', sa.String(100, 'utf8mb4_unicode_ci'), default=None,
+        op.add_column('trs_quest', sa.Column('quest_title', sa.String(100, 'utf8mb4_unicode_ci'), server_default=None,
                                              nullable=True))
     except Exception as e:
         print("Failed adding column quest_title to trs_quest. Likely was placed there beforehand (master branch)")

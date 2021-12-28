@@ -988,12 +988,19 @@ class RouteManagerBase(ABC):
     def get_calc_type(self):
         return self._calctype
 
-    def redo_stop(self, worker, lat: float, lon: float):
+    def redo_stop_immediately(self, worker, lat: float, lon: float):
         logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
         if worker in self._routepool:
             self._routepool[worker].prio_coord = Location(lat, lon)
             return True
         return False
+
+    def redo_stop_at_end(self, worker: str, location: Location):
+        logger.info('Redo an unprocessed location at the end of the route of {} ({})', worker, location)
+        if worker in self._routepool:
+            self._routepool[worker].queue.append(location)
+        if self._delete_coord_after_fetch():
+            self._current_route_round_coords.append(location)
 
     def set_worker_startposition(self, worker, lat: float, lon: float):
         logger.info("Getting startposition ({} / {})", lat, lon)
@@ -1019,3 +1026,10 @@ class RouteManagerBase(ABC):
 
         """
         return self._mode != WorkerType.IDLE
+
+    def get_quest_layer_to_scan(self) -> Optional[int]:
+        """
+        Returns: Quest layer to scan (if any)
+
+        """
+        return None

@@ -26,6 +26,6 @@ def upgrade():
 def downgrade():
     try:
         op.add_column('settings_devicepool', sa.Column('inventory_clear_item_amount_tap_duration', sa.Integer,
-                                                       default=None))
+                                                       server_default=None))
     except Exception as e:
         print(e)

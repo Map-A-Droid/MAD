@@ -12,6 +12,7 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import QuestLayer
 
 logger = get_logger(LoggerEnums.database)
 
@@ -199,7 +200,7 @@ class PokestopHelper:
                               ne_corner: Optional[Location] = None, sw_corner: Optional[Location] = None,
                               old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
                               timestamp: Optional[int] = None,
-                              fence: Optional[str] = None) -> Dict[int, Tuple[Pokestop, TrsQuest]]:
+                              fence: Optional[str] = None) -> Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]]:
         """
         quests_from_db
         Args:
@@ -214,6 +215,7 @@ class PokestopHelper:
         Returns:
 
         """
+        # TODO: Check that a stop is returned multiple times
         stmt = select(Pokestop, TrsQuest) \
             .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)
         where_conditions = []
@@ -221,8 +223,7 @@ class PokestopHelper:
         today_midnight = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
         where_conditions.append(TrsQuest.quest_timestamp > today_midnight.timestamp())
 
-        if (ne_corner and sw_corner
-                and ne_corner.lat and ne_corner.lng and sw_corner.lat and sw_corner.lng):
+        if ne_corner and sw_corner and ne_corner.lat and ne_corner.lng and sw_corner.lat and sw_corner.lng:
             where_conditions.append(and_(Pokestop.latitude >= sw_corner.lat,
                                          Pokestop.longitude >= sw_corner.lng,
                                          Pokestop.latitude <= ne_corner.lat,
@@ -242,17 +243,21 @@ class PokestopHelper:
                                                      func.POINT(Pokestop.latitude, Pokestop.longitude)))
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
-        stop_with_quest: Dict[int, Tuple[Pokestop, TrsQuest]] = {}
+        stop_with_quest: Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]] = {}
         for (stop, quest) in result.all():
-            stop_with_quest[stop.pokestop_id] = (stop, quest)
+            if stop.pokestop_id not in stop_with_quest:
+                stop_with_quest[stop.pokestop_id] = (stop, {})
+            stop_with_quest[stop.pokestop_id][1][quest.layer] = quest
         return stop_with_quest
 
     @staticmethod
     async def get_without_quests(session: AsyncSession,
-                                 geofence_helper: GeofenceHelper) -> Dict[int, Pokestop]:
+                                 geofence_helper: GeofenceHelper,
+                                 quest_layer: QuestLayer) -> Dict[int, Pokestop]:
         """
         stop_from_db_without_quests
         Args:
+            quest_layer:
             geofence_helper:
             session:
 
@@ -260,7 +265,8 @@ class PokestopHelper:
 
         """
         stmt = select(Pokestop) \
-            .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)
+            .join(TrsQuest, and_(TrsQuest.GUID == Pokestop.pokestop_id,
+                                 TrsQuest.layer == quest_layer.value), isouter=True)
         where_conditions = []
         # TODO: Verify this works for all timezones...
         today_midnight = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)

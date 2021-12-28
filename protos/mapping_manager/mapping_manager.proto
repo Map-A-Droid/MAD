@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "shared/Worker.proto";
 
 package mapadroid.mapping_manager;
 
@@ -7,14 +8,19 @@ service MappingManager {
   rpc GetAllLoadedOrigins(GetAllLoadedOriginsRequest) returns (GetAllLoadedOriginsResponse);
   rpc GetSafeItemsNotToDelete(GetSafeItemsNotToDeleteRequest) returns (GetSafeItemsNotToDeleteResponse);
   rpc IsRoutemanagerOfOriginLevelmode(IsRoutemanagerOfOriginLevelmodeRequest) returns (IsRoutemanagerOfOriginLevelmodeResponse);
+  rpc GetQuestLayerToScanOfOrigin(GetQuestLayerToScanOfOriginRequest) returns (GetQuestLayerToScanOfOriginResponse);
 }
 
-message Worker {
-  string name = 1;
+message GetQuestLayerToScanOfOriginRequest {
+  mapadroid.shared.Worker worker = 1;
+}
+
+message GetQuestLayerToScanOfOriginResponse {
+  optional int32 layer = 1;
 }
 
 message IsRoutemanagerOfOriginLevelmodeRequest {
-  Worker worker = 1;
+  mapadroid.shared.Worker worker = 1;
 }
 
 message IsRoutemanagerOfOriginLevelmodeResponse {
@@ -23,7 +29,7 @@ message IsRoutemanagerOfOriginLevelmodeResponse {
 
 
 message GetSafeItemsNotToDeleteRequest {
-  Worker worker = 1;
+  mapadroid.shared.Worker worker = 1;
 }
 
 message GetSafeItemsNotToDeleteResponse {

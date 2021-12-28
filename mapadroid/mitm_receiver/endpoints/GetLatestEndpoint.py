@@ -35,6 +35,7 @@ class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
 
         safe_items = await self._get_mapping_manager().get_safe_items(origin)
         level_mode = await self._get_mapping_manager().routemanager_of_origin_is_levelmode(origin)
+        quest_layer_to_scan: int = await self._get_mapping_manager().routemanager_get_quest_layer_to_scan_of_origin(origin)
 
         ids_encountered_entry: Optional[LatestMitmDataEntry] = await self._get_mitm_mapper().request_latest(
             origin, "ids_encountered")
@@ -53,5 +54,6 @@ class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings_dict,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,
                     "lvl_mode": level_mode, 'unquest_stops': unquest_stops_res,
-                    "check_lured": self._get_mad_args().scan_lured_mons}
+                    "check_lured": self._get_mad_args().scan_lured_mons,
+                    "quest_layer_scan": quest_layer_to_scan}
         return self._json_response(response)

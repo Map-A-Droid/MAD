@@ -19,7 +19,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('settings_device', sa.Column('extended_permission_toggling', sa.BOOLEAN(), default=text("'0'"),
+    op.add_column('settings_device', sa.Column('extended_permission_toggling', sa.BOOLEAN(), server_default=text("'0'"),
                                                nullable=False))
 
 

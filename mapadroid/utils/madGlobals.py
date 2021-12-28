@@ -89,3 +89,8 @@ class FortSearchResultTypes(Enum):
     UNAVAILABLE = 6
     OUT_OF_RANGE = 7
     FULL = 8
+
+
+class QuestLayer(Enum):
+    AR = 0
+    NON_AR = 1

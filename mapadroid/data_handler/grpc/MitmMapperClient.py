@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Union, List
 
 from aiocache import cached
 from google.protobuf import json_format
@@ -12,7 +12,7 @@ from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
 from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import LastMoved, LatestMitmDataEntryResponse, \
     LatestMitmDataEntryRequest, PokestopVisitsResponse, \
     LevelResponse, InjectionStatus, InjectedRequest, LastKnownLocationResponse, SetLevelRequest, \
-    SetPokestopVisitsRequest
+    SetPokestopVisitsRequest, SetQuestsHeldRequest, GetQuestsHeldResponse
 from mapadroid.grpc.compiled.shared.Worker_pb2 import Worker
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperStub
 from mapadroid.utils.collections import Location
@@ -190,3 +190,30 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             return Location(response.location.latitude, response.location.longitude)
         else:
             return None
+
+    @cached(ttl=30)
+    async def set_quests_held(self, worker: str, quests_held: Optional[List[int]]) -> None:
+        request: SetQuestsHeldRequest = SetQuestsHeldRequest()
+        request.worker.name = worker
+        if quests_held:
+            request.quests_held.quest_ids = quests_held
+        try:
+            await self.SetQuestsHeld(request)
+        except AioRpcError as e:
+            logger.warning("Failed requesting setting quests held of {}: {}", worker, e)
+
+    @cached(ttl=30)
+    async def get_quests_held(self, worker: str) -> Optional[List[int]]:
+        request: Worker = Worker()
+        request.name = worker
+        try:
+            response: GetQuestsHeldResponse = await self.GetQuestsHeld(request)
+        except AioRpcError as e:
+            logger.warning("Failed requesting quests held of {}: {}", worker, e)
+            # TODO: Custom exception?
+            return None
+        if not response.HasField("quests_held"):
+            return None
+        else:
+            return [quest_id for quest_id in response.quests_held.quest_ids]
+

@@ -41,9 +41,10 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
                 # TODO: Just get tuples with Optional[TrsQuest]?
                 stops_in_fence: List[Location] = await PokestopHelper.get_locations_in_fence(self._session,
                                                                                              fence=fence)
-                quests_in_fence: Dict[int, Tuple[Pokestop, TrsQuest]] = await PokestopHelper \
+                quests_in_fence: Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]] = await PokestopHelper \
                     .get_with_quests(self._session, fence=fence)
                 stops = len(stops_in_fence)
+                # TODO: Consider the different layers having been scanned
                 quests = len(quests_in_fence)
 
                 processed: int = 0

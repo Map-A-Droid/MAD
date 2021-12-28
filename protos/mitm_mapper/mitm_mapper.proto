@@ -17,6 +17,21 @@ service MitmMapper {
   rpc GetInjectionStatus(mapadroid.shared.Worker) returns (InjectionStatus);
   rpc SetInjected(InjectedRequest) returns (mapadroid.shared.Ack);
   rpc GetLastKnownLocation(mapadroid.shared.Worker) returns (LastKnownLocationResponse);
+  rpc SetQuestsHeld(SetQuestsHeldRequest) returns (mapadroid.shared.Ack);
+  rpc GetQuestsHeld(mapadroid.shared.Worker) returns (GetQuestsHeldResponse);
+}
+
+message SetQuestsHeldRequest {
+  mapadroid.shared.Worker worker = 1;
+  optional QuestsHeld quests_held = 2;
+}
+
+message GetQuestsHeldResponse {
+  optional QuestsHeld quests_held = 1;
+}
+
+message QuestsHeld {
+  repeated int32 quest_ids = 1;
 }
 
 message SetPokestopVisitsRequest {

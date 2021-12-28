@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import Pokestop, TrsQuest
@@ -27,7 +27,7 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
         timestamp: Optional[int] = self._request.query.get("timestamp")
         if timestamp:
             timestamp = int(timestamp)
-        data: Dict[int, Tuple[Pokestop, TrsQuest]] = \
+        data: Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]] = \
             await PokestopHelper.get_with_quests(self._session,
                                                  ne_corner=Location(ne_lat, ne_lng),
                                                  sw_corner=Location(sw_lat, sw_lng),
@@ -36,8 +36,9 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
                                                  timestamp=timestamp,
                                                  fence=fence)
         quest_gen: QuestGen = self._get_quest_gen()
-        for stop_id, (stop, quest) in data.items():
-            quests.append(await quest_gen.generate_quest(stop, quest))
+        for stop_id, (stop, quests_of_stop) in data.items():
+            for quest in quests_of_stop.values():
+                quests.append(await quest_gen.generate_quest(stop, quest))
         del data
         resp = await self._json_response(quests)
         del quests

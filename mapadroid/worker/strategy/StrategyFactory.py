@@ -13,15 +13,16 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import WrongAreaInWalker
+from mapadroid.utils.madGlobals import WrongAreaInWalker, QuestLayer
 from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
 from mapadroid.worker.strategy.NopStrategy import NopStrategy
-from mapadroid.worker.strategy.QuestStrategy import QuestStrategy
 from mapadroid.worker.strategy.WorkerMitmStrategy import WorkerMitmStrategy
+from mapadroid.worker.strategy.quest.ARQuestLayerStrategy import ARQuestLayerStrategy
+from mapadroid.worker.strategy.quest.NonARQuestLayerStrategy import NonARQuestLayerStrategy
 
 
 class WalkerConfiguration(NamedTuple):
@@ -115,15 +116,28 @@ class StrategyFactory:
                                           mitm_mapper=self.__mitm_mapper,
                                           stats_handler=self.__stats_handler)
         elif worker_type in [WorkerType.STOPS]:
-            strategy = QuestStrategy(area_id=area_id,
-                                     communicator=communicator, mapping_manager=self.__mapping_manager,
-                                     db_wrapper=self.__db_wrapper,
-                                     word_to_screen_matching=word_to_screen_matching,
-                                     pogo_windows_handler=self.__pogo_windows,
-                                     walker=walker_settings,
-                                     worker_state=worker_state,
-                                     mitm_mapper=self.__mitm_mapper,
-                                     stats_handler=self.__stats_handler)
+            layer_to_scan: Optional[int] = await self.__mapping_manager.routemanager_get_quest_layer_to_scan(area_id)
+            quest_layer: QuestLayer = QuestLayer(layer_to_scan)
+            if quest_layer == QuestLayer.AR:
+                strategy = ARQuestLayerStrategy(area_id=area_id,
+                                                communicator=communicator, mapping_manager=self.__mapping_manager,
+                                                db_wrapper=self.__db_wrapper,
+                                                word_to_screen_matching=word_to_screen_matching,
+                                                pogo_windows_handler=self.__pogo_windows,
+                                                walker=walker_settings,
+                                                worker_state=worker_state,
+                                                mitm_mapper=self.__mitm_mapper,
+                                                stats_handler=self.__stats_handler)
+            else:
+                strategy = NonARQuestLayerStrategy(area_id=area_id,
+                                                   communicator=communicator, mapping_manager=self.__mapping_manager,
+                                                   db_wrapper=self.__db_wrapper,
+                                                   word_to_screen_matching=word_to_screen_matching,
+                                                   pogo_windows_handler=self.__pogo_windows,
+                                                   walker=walker_settings,
+                                                   worker_state=worker_state,
+                                                   mitm_mapper=self.__mitm_mapper,
+                                                   stats_handler=self.__stats_handler)
         else:
             logger.error("WorkerFactor::get_worker failed to create a worker...")
         return strategy

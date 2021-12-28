@@ -2,6 +2,7 @@ import asyncio
 import math
 import os
 import time
+from abc import ABC, abstractmethod
 from asyncio import Task
 from datetime import timedelta
 from difflib import SequenceMatcher
@@ -13,6 +14,7 @@ from loguru import logger
 from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.utils.madGlobals import QuestLayer
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
@@ -28,11 +30,11 @@ from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import ScreenCoordinates, Location
-from mapadroid.utils.gamemechanicutil import calculate_cooldown
+from mapadroid.utils.gamemechanicutil import calculate_cooldown, determine_current_quest_layer
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madConstants import TIMESTAMP_NEVER
 from mapadroid.utils.madGlobals import InternalStopWorkerException, WebsocketWorkerTimeoutException, \
-    WebsocketWorkerRemovedException, WebsocketWorkerConnectionClosedException, TransportType, FortSearchResultTypes
+    WebsocketWorkerConnectionClosedException, TransportType, FortSearchResultTypes
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
@@ -70,7 +72,7 @@ class PositionStopType(Enum):
                                       PositionStopType.STOP_DISABLED)
 
 
-class QuestStrategy(AbstractMitmBaseStrategy):
+class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     def __init__(self, area_id: int, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  db_wrapper: DbWrapper, word_to_screen_matching: WordToScreenMatching,
@@ -78,7 +80,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                  walker: SettingsWalkerarea,
                  worker_state: WorkerState,
                  mitm_mapper: AbstractMitmMapper,
-                 stats_handler: AbstractStatsHandler):
+                 stats_handler: AbstractStatsHandler,
+                 quest_layer_to_scan: QuestLayer):
         super().__init__(area_id=area_id,
                          communicator=communicator, mapping_manager=mapping_manager,
                          db_wrapper=db_wrapper,
@@ -88,6 +91,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                          worker_state=worker_state,
                          mitm_mapper=mitm_mapper,
                          stats_handler=stats_handler)
+        self._ready_for_scan: asyncio.Event = asyncio.Event()
         self.clear_inventory_task: Optional[Task] = None
         self.clear_thread_task: ClearThreadTasks = ClearThreadTasks.IDLE
 
@@ -101,6 +105,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         # TODO: Move to worker_state?
         self._delay_add: int = 0
         self._stop_process_time = TIMESTAMP_NEVER
+        self._quest_layer_to_scan: QuestLayer = quest_layer_to_scan
 
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
@@ -166,7 +171,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                          timestamp_of_proto, timestamp)
         elif proto_to_wait_for == ProtoIdentifier.FORT_SEARCH:
             quest_type: int = latest_proto.get('challenge_quest', {}) \
-                .get('quest', {}) \
+                .get('', {}) \
                 .get('quest_type', False)
             result: int = latest_proto.get("result", 0)
             if result == 1 and len(latest_proto.get('items_awarded', [])) == 0:
@@ -247,6 +252,39 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         else:
             # initial cleanup old quests
             self.clear_thread_task: ClearThreadTasks = ClearThreadTasks.QUEST
+        # TODO: Ensure the correct layer will be scanned
+
+    @abstractmethod
+    async def pre_work_loop_layer_preparation(self) -> None:
+        """
+        Operation to run before any scan is started. E.g., ensuring no AR quest is present in inventory upon starting
+        layer 0 (AR) scanning
+        Check currently held quests -> Mode
+        If it does not match the mode desired, open the quest menu to trigger cleanup accordingly.
+        However, if a quest is needed to scan the desired layer, quests and locations need to be ignored until the
+        necessary mode has been reached...
+        Returns:
+
+        """
+        pass
+
+    async def get_current_layer_of_worker(self) -> QuestLayer:
+        """
+
+        Returns:
+        Raises: ValueError if the layer cannot be determined yet
+        """
+        quests_held: Optional[List[int]] = await self._mitm_mapper.get_quests_held(self._worker_state.origin)
+        return determine_current_quest_layer(quests_held)
+
+    @abstractmethod
+    async def _check_layer(self) -> None:
+        """
+        Update self._ready_for_scan as needed
+        Returns:
+
+        """
+        pass
 
     async def pre_location_update(self):
         await self._update_injection_settings()
@@ -385,6 +423,13 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                 if type_received is not None and type_received == ReceivedType.STOP:
                     await self._handle_stop(self._stop_process_time)
 
+                await self._check_layer()
+                if not self._ready_for_scan.is_set():
+                    # Return location to the routemanager to be considered for a scan later on
+                    # TODO: What if the route is too small to fetch any useful data needed to scan the layer?...
+                    await self._mapping_manager.routemanager_redo_stop_at_end(self.area_id,
+                                                                              self._worker_state.origin,
+                                                                              self._worker_state.current_location)
             else:
                 logger.debug('Currently in INIT Mode - no Stop processing')
                 await asyncio.sleep(5)
@@ -513,7 +558,7 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                 finally:
                     self.clear_thread_task = ClearThreadTasks.IDLE
 
-    async def clear_box(self, delayadd):
+    async def clear_box(self, delayadd) -> None:
         # TODO: these events are odd...
         stop_inventory_clear = asyncio.Event()
         stop_screen_clear = asyncio.Event()
@@ -644,7 +689,6 @@ class QuestStrategy(AbstractMitmBaseStrategy):
         x, y = self._worker_state.resolution_calculator.get_close_main_button_coords()
         await self._communicator.click(int(x), int(y))
         await asyncio.sleep(1 + int(delayadd))
-        return True
 
     async def _clear_quests(self, delayadd, openmenu=True):
         logger.debug('{_clear_quests} called')
@@ -773,10 +817,10 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                     logger.info('Box is full... clear out items!')
                     self.clear_thread_task = ClearThreadTasks.BOX
                     await asyncio.sleep(5)
-                    if not await self._mapping_manager.routemanager_redo_stop(self._area_id,
-                                                                              self._worker_state.origin,
-                                                                              self._worker_state.current_location.lat,
-                                                                              self._worker_state.current_location.lng):
+                    if not await self._mapping_manager.routemanager_redo_stop_immediately(self._area_id,
+                                                                                          self._worker_state.origin,
+                                                                                          self._worker_state.current_location.lat,
+                                                                                          self._worker_state.current_location.lng):
                         logger.warning('Cannot process this stop again')
                     break
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
@@ -801,7 +845,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                         logger.info('Stop is on cooldown.. sleeping 10 seconds but probably should just move on')
                         await asyncio.sleep(10)
 
-                        if await TrsQuestHelper.check_stop_has_quest(session, self._worker_state.current_location):
+                        if await TrsQuestHelper.check_stop_has_quest(session, self._worker_state.current_location,
+                                                                     self._quest_layer_to_scan):
                             logger.info('Quest is done without us noticing. Getting new Quest...')
                         self.clear_thread_task = ClearThreadTasks.QUEST
                         break
@@ -863,7 +908,8 @@ class QuestStrategy(AbstractMitmBaseStrategy):
                     else:
                         logger.info("Brief speed lock or we already spun it, trying again")
                     if to > 2 and await TrsQuestHelper.check_stop_has_quest(session,
-                                                                            self._worker_state.current_location):
+                                                                            self._worker_state.current_location,
+                                                                            self._quest_layer_to_scan):
                         logger.info('Quest is done without us noticing. Getting new Quest...')
                         if not self._enhanced_mode:
                             self.clear_thread_task = ClearThreadTasks.QUEST

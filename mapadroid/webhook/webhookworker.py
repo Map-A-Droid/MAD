@@ -124,20 +124,20 @@ class WebhookWorker:
                 current_pl_num += 1
             current_wh_num += 1
 
-    async def __prepare_quest_data(self, quest_data: Dict[int, Tuple[Pokestop, TrsQuest]]):
+    async def __prepare_quest_data(self, quest_data: Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]]):
         ret = []
-        for stop, quest in quest_data.values():
+        for stop, quests in quest_data.values():
             if self.__is_in_excluded_area([stop.latitude, stop.longitude]):
                 continue
+            for layer, quest in quests.items():
+                try:
+                    transformed_quest = await self.__quest_gen.generate_quest(stop, quest)
+                    quest_payload = self.__construct_quest_payload(transformed_quest)
 
-            try:
-                transformed_quest = await self.__quest_gen.generate_quest(stop, quest)
-                quest_payload = self.__construct_quest_payload(transformed_quest)
-
-                entire_payload = {"type": "quest", "message": quest_payload}
-                ret.append(entire_payload)
-            except Exception as e:
-                logger.error("Exception occured while generating quest webhook: {}", e)
+                    entire_payload = {"type": "quest", "message": quest_payload}
+                    ret.append(entire_payload)
+                except Exception as e:
+                    logger.error("Exception occured while generating quest webhook: {}", e)
 
         return ret
 

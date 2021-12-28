@@ -407,10 +407,10 @@ class MappingManager(AbstractMappingManager):
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_rounds(worker_name) if routemanager is not None else None
 
-    async def routemanager_redo_stop(self, routemanager_id: int, worker_name: str, lat: float,
-                                     lon: float) -> bool:
+    async def routemanager_redo_stop_immediately(self, routemanager_id: int, worker_name: str, lat: float,
+                                                 lon: float) -> bool:
         routemanager = self.__fetch_routemanager(routemanager_id)
-        return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
+        return routemanager.redo_stop_immediately(worker_name, lat, lon) if routemanager is not None else False
 
     async def routemanager_get_registered_workers(self, routemanager_id: int) -> Optional[Set[str]]:
         routemanager = self.__fetch_routemanager(routemanager_id)
@@ -872,3 +872,20 @@ class MappingManager(AbstractMappingManager):
         if not device_routemananger:
             return False
         return await self.routemanager_is_levelmode(device_routemananger)
+
+    async def routemanager_get_quest_layer_to_scan_of_origin(self, origin: str) -> Optional[int]:
+        if not origin:
+            # just avoid undefined behaviour....
+            return None
+        device_routemananger: Optional[int] = await self.get_routemanager_id_where_device_is_registered(origin)
+        if not device_routemananger:
+            return None
+        return await self.routemanager_get_quest_layer_to_scan(device_routemananger)
+
+    async def routemanager_get_quest_layer_to_scan(self, routemanager_id: int) -> Optional[int]:
+        routemanager = self.__fetch_routemanager(routemanager_id)
+        return routemanager.get_quest_layer_to_scan() if routemanager is not None else None
+
+    async def routemanager_redo_stop_at_end(self, routemanager_id: int, worker_name: str, location: Location) -> None:
+        routemanager = self.__fetch_routemanager(routemanager_id)
+        routemanager.redo_stop_at_end(worker_name, location)

@@ -152,7 +152,8 @@ class QuestGen:
             'quest_condition': quest.quest_condition,
             'quest_template': quest.quest_template,
             'is_ar_scan_eligible': stop.is_ar_scan_eligible,
-            'quest_title': quest.quest_title
+            'quest_title': quest.quest_title,
+            'quest_layer': quest.layer
         })
         return quest_raw
 

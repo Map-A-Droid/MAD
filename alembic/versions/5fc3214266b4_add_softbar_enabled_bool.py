@@ -18,7 +18,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('settings_device', sa.Column('softbar_enabled', sa.BOOLEAN(), default=text("'0'"), nullable=False))
+    op.add_column('settings_device', sa.Column('softbar_enabled', sa.BOOLEAN(), server_default=text("'0'"), nullable=False))
 
 
 def downgrade():

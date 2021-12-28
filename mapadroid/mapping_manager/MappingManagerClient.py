@@ -5,7 +5,8 @@ from aiocache import cached
 from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import GetAllLoadedOriginsResponse, \
     GetAllLoadedOriginsRequest, GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse, \
     GetAllowedAuthenticationCredentialsRequest, GetAllowedAuthenticationCredentialsResponse, \
-    IsRoutemanagerOfOriginLevelmodeRequest, IsRoutemanagerOfOriginLevelmodeResponse
+    IsRoutemanagerOfOriginLevelmodeRequest, IsRoutemanagerOfOriginLevelmodeResponse, \
+    GetQuestLayerToScanOfOriginResponse, GetQuestLayerToScanOfOriginRequest
 from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import MappingManagerStub
 from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
 
@@ -44,3 +45,9 @@ class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
         request.worker.name = origin
         response: IsRoutemanagerOfOriginLevelmodeResponse = await self.IsRoutemanagerOfOriginLevelmode(request)
         return response.is_levelmode
+
+    async def routemanager_get_quest_layer_to_scan_of_origin(self, origin: str) -> Optional[int]:
+        request = GetQuestLayerToScanOfOriginRequest()
+        request.worker.name = origin
+        response: GetQuestLayerToScanOfOriginResponse = await self.GetQuestLayerToScanOfOrigin(request)
+        return response.layer

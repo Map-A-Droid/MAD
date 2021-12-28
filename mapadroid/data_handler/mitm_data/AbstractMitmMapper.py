@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.utils.collections import Location
@@ -49,4 +49,12 @@ class AbstractMitmMapper(ABC):
 
     @abstractmethod
     async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
+        pass
+
+    @abstractmethod
+    async def set_quests_held(self, worker: str, quests_held: Optional[List[int]]) -> None:
+        pass
+
+    @abstractmethod
+    async def get_quests_held(self, worker: str) -> Optional[List[int]]:
         pass

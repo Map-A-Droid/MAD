@@ -43,6 +43,17 @@ class AreaPokestops:
                     "uri_source": "api_routecalc"
                 }
             },
+            "layer": {
+                "settings": {
+                    "type": "option",
+                    "require": True,
+                    "values": [1, 0],
+                    "description": "The quest layer that is to be scanned. Default: 1 (when AR quest is being held onto)."
+                                   "0: AR layer",
+                    "expected": int,
+                    "data_source": "layer",
+                }
+            },
             "init": {
                 "settings": {
                     "type": "option",
