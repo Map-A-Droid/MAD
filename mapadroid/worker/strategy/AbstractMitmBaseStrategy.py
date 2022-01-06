@@ -257,18 +257,18 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                                               speed)
         # We need to roughly estimate when data could have been available, just picking half way for now, distance
         # check should do the rest...
-        delay_used = math.floor(time.time())
-        if delay_used - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER < time_before_walk:
+        time_returned = math.floor(time.time())
+        if time_returned - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER < time_before_walk:
             # duration of walk was rather short, let's go with that...
-            delay_used = time_before_walk
+            time_returned = time_before_walk
         elif (math.floor((math.floor(time.time()) + time_before_walk) / 2) <
-              delay_used - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER):
+              time_returned - SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER):
             # half way through the walk was earlier than 10s in the past, just gonna go with magic numbers once more
-            delay_used -= SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
+            time_returned -= SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER
         else:
             # half way through was within the last 10s, we can use that to check for data afterwards
-            delay_used = math.floor((math.floor(time.time()) + time_before_walk) / 2)
-        return delay_used
+            time_returned = math.floor((math.floor(time.time()) + time_before_walk) / 2)
+        return time_returned
 
     async def _get_route_manager_settings_and_distance_to_current_location(self) -> Tuple[float, SettingsArea]:
         if not await self._mapping_manager.routemanager_present(self._area_id) \
@@ -407,7 +407,6 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         not_injected_count = 0
         injection_thresh_reboot = int(
             await self.get_devicesettings_value(MappingManagerDevicemappingKey.INJECTION_THRESH_REBOOT, 20))
-        # TODO: Else check MitmApp was started...
         window_check_frequency = 3
         while not await self._mitm_mapper.get_injection_status(self._worker_state.origin):
             await self._check_for_mad_job()

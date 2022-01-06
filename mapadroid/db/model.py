@@ -773,6 +773,8 @@ class TrsStatus(Base):
     globalrebootcount = Column(INTEGER(11), server_default=text("'0'"))
     globalrestartcount = Column(INTEGER(11), server_default=text("'0'"))
     currentSleepTime = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
+    last_softban_action = Column(TZDateTime, nullable=True)
+    last_softban_action_location = Column(GeometryColumnType, nullable=True)
 
     area = relationship('SettingsArea')
     instance = relationship('MadminInstance')

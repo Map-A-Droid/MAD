@@ -273,7 +273,16 @@ class AbstractWorkerStrategy(ABC):
     async def _handle_screen(self):
         screen_type: ScreenType = ScreenType.UNDEFINED
         while not self._worker_state.stop_worker_event.is_set():
-            # TODO: Make this not block the loop somehow... asyncio waiting for a thread?
+            if self._worker_state.login_error_count > 2:
+                logger.warning('Could not login again - (clearing game data + restarting device')
+                await self.stop_pogo()
+                await self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
+                if await self.get_devicesettings_value(MappingManagerDevicemappingKey.CLEAR_GAME_DATA, False):
+                    logger.info('Clearing game data')
+                    await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+                self._worker_state.login_error_count = 0
+                await self._reboot()
+                break
             screen_type: ScreenType = await self._word_to_screen_matching.detect_screentype(
                 y_offset=self._worker_state.resolution_calculator.y_offset)
             if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
@@ -303,8 +312,8 @@ class AbstractWorkerStrategy(ABC):
                 await asyncio.sleep(20)
             elif screen_type == ScreenType.CLOSE:
                 logger.debug("screendetection found pogo closed, start it...")
-                await self.start_pogo()
                 self._worker_state.login_error_count += 1
+                await self.start_pogo()
             elif screen_type == ScreenType.GAMEDATA:
                 logger.info('Error getting Gamedata or strange ggl message appears')
                 self._worker_state.login_error_count += 1
@@ -334,17 +343,6 @@ class AbstractWorkerStrategy(ABC):
                 await self._restart_pogo_safe()
                 break
             elif screen_type == ScreenType.NOTRESPONDING:
-                await self._reboot()
-                break
-
-            if self._worker_state.login_error_count > 2:
-                logger.warning('Could not login again - (clearing game data + restarting device')
-                await self.stop_pogo()
-                await self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
-                if await self.get_devicesettings_value(MappingManagerDevicemappingKey.CLEAR_GAME_DATA, False):
-                    logger.info('Clearing game data')
-                    await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
-                self._worker_state.login_error_count = 0
                 await self._reboot()
                 break
 

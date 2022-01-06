@@ -14,6 +14,7 @@ from loguru import logger
 from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.utils.madGlobals import QuestLayer
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
@@ -22,7 +23,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
-from mapadroid.db.model import SettingsAreaPokestop, Pokestop, SettingsWalkerarea
+from mapadroid.db.model import SettingsAreaPokestop, Pokestop, SettingsWalkerarea, TrsStatus
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -45,6 +46,10 @@ from mapadroid.worker.strategy.AbstractMitmBaseStrategy import AbstractMitmBaseS
 S2_GMO_CELL_LEVEL = 15
 RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN = 35
 DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP = 0.00006
+
+
+class AbortStopProcessingException(Exception):
+    pass
 
 
 class ClearThreadTasks(Enum):
@@ -171,8 +176,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                          timestamp_of_proto, timestamp)
         elif proto_to_wait_for == ProtoIdentifier.FORT_SEARCH:
             quest_type: int = latest_proto.get('challenge_quest', {}) \
-                .get('', {}) \
-                .get('quest_type', False)
+                .get('quest', {}) \
+                .get('quest_type', 0)
             result: int = latest_proto.get("result", 0)
             if result == 1 and len(latest_proto.get('items_awarded', [])) == 0:
                 return ReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.TIME
@@ -252,7 +257,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         else:
             # initial cleanup old quests
             self.clear_thread_task: ClearThreadTasks = ClearThreadTasks.QUEST
-        # TODO: Ensure the correct layer will be scanned
+        await self.pre_work_loop_layer_preparation()
 
     @abstractmethod
     async def pre_work_loop_layer_preparation(self) -> None:
@@ -304,61 +309,60 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             cur_time = math.floor(time.time())
 
             delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TELEPORT_DELAY, 0)
-            speed = 16.67  # Speed can be 60 km/h up to distances of 3km
-
-            if self._worker_state.last_location.lat == 0.0 and self._worker_state.last_location.lng == 0.0:
-                logger.info('Starting fresh round - using lower delay')
-            else:
-                delay_used = calculate_cooldown(distance, speed)
-            logger.debug(
-                "Need more sleep after Teleport: {} seconds!", int(delay_used))
+            walk_distance_post_teleport = await self.get_devicesettings_value(
+                MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE, 0)
+            if 0 < walk_distance_post_teleport < distance:
+                to_walk = await self._walk_after_teleport(walk_distance_post_teleport)
+                delay_used -= (to_walk / 3.05) - 1.  # We already waited for a bit because of this walking part
+                if delay_used < 0:
+                    delay_used = 0
         else:
-            delay_used = distance / (area_settings.speed / 3.6)  # speed is in kmph , delay_used need mps
-            logger.info("main: Walking {} m, this will take {} seconds", distance, delay_used)
+            time_it_takes_to_walk = distance / (area_settings.speed / 3.6)  # speed is in kmph , delay_used need mps
+            logger.info("main: Walking {} m, this will take {} seconds", distance, time_it_takes_to_walk)
             cur_time = await self._walk_to_location(area_settings.speed)
-
             delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)
-        walk_distance_post_teleport = await self.get_devicesettings_value(
-            MappingManagerDevicemappingKey.WALK_AFTER_TELEPORT_DISTANCE, 0)
-        if 0 < walk_distance_post_teleport < distance:
-            # TODO: actually use to_walk for distance
-            to_walk = await self._walk_after_teleport(walk_distance_post_teleport)
-            delay_used -= (to_walk / 3.05) - 1.  # We already waited for a bit because of this walking part
-            if delay_used < 0:
-                delay_used = 0
 
-        if await self._mapping_manager.routemanager_get_init(self._area_id):
-            delay_used = 5
+        # Calculate distance to the previous location and wait for the time needed. This also applies to "walking"
+        #  since walking above a given speed may result in softbans as well
+        delay_to_avoid_softban: int = 0
+        speed = 16.67  # Speed can be 60 km/h up to distances of 3km
+        async with self._db_wrapper as session, session:
+            status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
+            last_action_time: Optional[int] = await self.get_devicesettings_value(MappingManagerDevicemappingKey
+                                                                                  .LAST_ACTION_TIME, None)
+            if status and status.last_softban_action and status.last_softban_action_location:
+                last_action_location: Location = Location(status.last_softban_action_location[0],
+                                                          status.last_softban_action_location[1])
+                distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
+                                                                            last_action_location.lng,
+                                                                            self._worker_state.current_location.lat,
+                                                                            self._worker_state.current_location.lng)
+                delay_to_last_action = calculate_cooldown(distance_last_action, speed)
+                if status.last_softban_action.timestamp() + delay_to_last_action > cur_time:
+                    delay_to_avoid_softban = cur_time - status.last_softban_action.timestamp() + delay_to_last_action
+                    distance = distance_last_action
+            elif last_action_time and last_action_time > 0:
+                timediff = time.time() - last_action_time
+                logger.info("Timediff between now and last action time: {}", int(timediff))
+                delay_to_avoid_softban = delay_used - timediff
+            elif self._worker_state.last_location.lat == 0.0 and self._worker_state.last_location.lng == 0.0:
+                logger.info('Starting fresh round - using lower delay')
+                # Take into account trs_status possible softban
+            else:
+                delay_to_avoid_softban = calculate_cooldown(distance, speed)
+        if delay_to_avoid_softban > 0 and delay_to_avoid_softban > delay_used:
+            delay_used = delay_to_avoid_softban
 
-        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, None) is not None:
-            timediff = time.time() - await self.get_devicesettings_value(
-                MappingManagerDevicemappingKey.LAST_ACTION_TIME, 0)
-            logger.info("Timediff between now and last action time: {}", int(timediff))
-            delay_used = delay_used - timediff
-        elif await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME,
-                                                 None) is None and not await self._mapping_manager.routemanager_is_levelmode(
-            self._area_id):
-            logger.info('Starting first time - we wait because of some default pogo delays ...')
-            delay_used = 20
-        else:
-            logger.debug("No last action time found - no calculation")
-            delay_used = -1
+        if delay_used > 0:
+            logger.debug(
+                "Need more sleep after moving to the new location: {} seconds!", int(delay_used))
+        delay_used = await self._rotate_account_after_moving_locations_if_applicable(delay_used)
 
-        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True) and \
-                await self._word_to_screen_matching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
-                and await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION,
-                                                        False) and not await self._mapping_manager.routemanager_is_levelmode(
-            self._area_id):
-            # Waiting time to long and more then one account - switch! (not level mode!!)
-            logger.info('Could use more then 1 account - switch & no cooldown')
-            await self.switch_account()
-            delay_used = -1
-
-        if delay_used < 0:
+        delay_used = math.floor(delay_used)
+        if delay_used <= 0:
             self._worker_state.current_sleep_time = 0
             logger.info('No need to wait before spinning, continuing...')
         else:
-            delay_used = math.floor(delay_used)
             logger.info("Real sleep time: {} seconds: next action {}", delay_used,
                         DatetimeWrapper.now() + timedelta(seconds=delay_used))
             cleanupbox: bool = False
@@ -387,6 +391,12 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     raise InternalStopWorkerException("Worker has been removed from routemanager or is supposed to stop"
                                                       "during the move to a location")
                 await asyncio.sleep(1)
+            cur_time = int(time.time())
+            # subtract up to 10s if the delay was less than that or bigger
+            if delay_used > 10:
+                cur_time -= 10
+            elif delay_used > 0:
+                cur_time -= delay_used
 
         self._worker_state.current_sleep_time = 0
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION,
@@ -394,35 +404,48 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         self._worker_state.last_location = self._worker_state.current_location
         return cur_time, True
 
+    async def _rotate_account_after_moving_locations_if_applicable(self, delay_used: int) -> int:
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True) and \
+                await self._word_to_screen_matching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
+                and await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION,
+                                                        False) and not await self._mapping_manager.routemanager_is_levelmode(
+            self._area_id):
+            # Waiting time to long and more then one account - switch! (not level mode!!)
+            logger.info('Can use more than 1 account - switch & no cooldown')
+            await self.switch_account()
+            delay_used = -1
+        return delay_used
+
     async def post_move_location_routine(self, timestamp):
         if self._worker_state.stop_worker_event.is_set():
             raise InternalStopWorkerException("Worker is supposed to stop, aborting post_move_location_routine")
-        position_type = await self._mapping_manager.routemanager_get_position_type(self._area_id,
-                                                                                   self._worker_state.origin)
-        if position_type is None:
-            logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
-            raise InternalStopWorkerException("Mappings/Routemanagers have changed, stopping worker")
+        await self._check_position_type()
+        await self._switch_account_if_needed()
 
-        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATE_ON_LVL_30, False) \
-                and await self._mitm_mapper.get_level(self._worker_state.origin) >= 30 \
-                and await self._mapping_manager.routemanager_is_levelmode(self._area_id):
-            # switch if player lvl >= 30
-            await self.switch_account()
+        if not await self._mapping_manager.routemanager_get_init(self._area_id):
+            await self._process_stop_at_location(timestamp)
+        else:
+            logger.debug('Currently in INIT Mode - no Stop processing')
+            await asyncio.sleep(5)
 
+    async def _process_stop_at_location(self, timestamp):
         async with self._work_mutex:
-            if not await self._mapping_manager.routemanager_get_init(self._area_id):
-                logger.info("Processing Stop / Quest...")
-
-                on_main_menu = await self._check_pogo_main_screen(10, False)
-                if not on_main_menu:
-                    await self._restart_pogo()
-
+            logger.info("Processing Stop / Quest...")
+            on_main_menu = await self._check_pogo_main_screen(10, False)
+            if not on_main_menu:
+                await self._restart_pogo()
+            try:
+                await self._ensure_stop_present(timestamp)
                 logger.info('Open Stop')
-                self._stop_process_time = math.floor(time.time())
-                type_received: ReceivedType = await self._try_to_open_pokestop(timestamp)
-                if type_received is not None and type_received == ReceivedType.STOP:
-                    await self._handle_stop(self._stop_process_time)
-
+                if not self._enhanced_mode:
+                    await self._handle_stop_normally(timestamp)
+                else:
+                    await self._handle_stop_enhanced(timestamp)
+            except AbortStopProcessingException as e:
+                # The stop cannot be processed for whatever reason.
+                # Stop processing the location.
+                return
+            finally:
                 await self._check_layer()
                 if not self._ready_for_scan.is_set():
                     # Return location to the routemanager to be considered for a scan later on
@@ -430,9 +453,26 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     await self._mapping_manager.routemanager_redo_stop_at_end(self.area_id,
                                                                               self._worker_state.origin,
                                                                               self._worker_state.current_location)
-            else:
-                logger.debug('Currently in INIT Mode - no Stop processing')
-                await asyncio.sleep(5)
+
+    async def _handle_stop_normally(self, timestamp):
+        self._stop_process_time = math.floor(time.time())
+        type_received: ReceivedType = await self._try_to_open_pokestop(timestamp)
+        if type_received is not None and type_received == ReceivedType.STOP:
+            await self._handle_stop(self._stop_process_time)
+
+    async def _check_position_type(self):
+        position_type = await self._mapping_manager.routemanager_get_position_type(self._area_id,
+                                                                                   self._worker_state.origin)
+        if position_type is None:
+            logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
+            raise InternalStopWorkerException("Mappings/Routemanagers have changed, stopping worker")
+
+    async def _switch_account_if_needed(self):
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATE_ON_LVL_30, False) \
+                and await self._mitm_mapper.get_level(self._worker_state.origin) >= 30 \
+                and await self._mapping_manager.routemanager_is_levelmode(self._area_id):
+            # switch if player lvl >= 30
+            await self.switch_account()
 
     async def worker_specific_setup_start(self):
         if not self._work_mutex:
@@ -728,19 +768,16 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="injected_settings",
                                               value=injected_settings)
 
-    async def _try_to_open_pokestop(self, timestamp: float) -> ReceivedType:
-        to = 0
-        type_received: ReceivedType = ReceivedType.UNDEFINED
-        proto_entry = None
+    async def _ensure_stop_present(self, timestamp: float) -> ReceivedType:
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
-
+        type_received: ReceivedType = ReceivedType.UNDEFINED
         recheck_count = 0
         while stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
                             PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1
             logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
-            type_received, proto_entry = await self._wait_for_data(timestamp=time.time(),
+            type_received, proto_entry = await self._wait_for_data(timestamp=timestamp,
                                                                    proto_to_wait_for=ProtoIdentifier.GMO,
                                                                    timeout=20)
             if type_received != ReceivedType.UNDEFINED:
@@ -754,21 +791,26 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             await self._mapping_manager.routemanager_add_coords_to_be_removed(self._area_id,
                                                                               self._worker_state.current_location.lat,
                                                                               self._worker_state.current_location.lng)
-            return type_received
+            raise AbortStopProcessingException("Stop not present")
         elif stop_type in (PositionStopType.STOP_CLOSED, PositionStopType.STOP_COOLDOWN,
                            PositionStopType.STOP_DISABLED):
-            logger.info("Stop at {}, {} is not spinnable at the moment ({})",
+            logger.info("Stop at {}, {} cannot be spun at the moment ({})",
                         self._worker_state.current_location.lat,
                         self._worker_state.current_location.lng,
                         stop_type)
-            return type_received
+            raise AbortStopProcessingException("Stop cannot be spun at the moment")
         elif stop_type == PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE:
             logger.info("Stop at {}, {} has been spun before and is to be ignored in the next round.")
             await self._mapping_manager.routemanager_add_coords_to_be_removed(self._area_id,
                                                                               self._worker_state.current_location.lat,
                                                                               self._worker_state.current_location.lng)
-            return type_received
+            raise AbortStopProcessingException("Stop has been spun before but levelmode is active")
+        return type_received
 
+    async def _try_to_open_pokestop(self, timestamp: float) -> ReceivedType:
+        to = 0
+        proto_entry = None
+        type_received: ReceivedType = await self._ensure_stop_present(timestamp)
         while type_received != ReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
             await self._click_pokestop_at_current_location(self._delay_add)
@@ -1007,6 +1049,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     cooldown: int = fort.get("cooldown_complete_ms", 0)
                     if not cooldown == 0:
                         logger.info("Can't spin the stop - it has cooldown")
+                        # TODO: sleep for cooldown * 1000 ?
                         return PositionStopType.STOP_COOLDOWN
                     self._spinnable_data_failcount = 0
                     return PositionStopType.SPINNABLE_STOP
@@ -1163,3 +1206,110 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 await self._mapping_manager.routemanager_add_coords_to_be_removed(self._area_id,
                                                                                   stop_location.lat,
                                                                                   stop_location.lng)
+
+    async def _handle_stop_enhanced(self, timestamp):
+        self._stop_process_time = math.floor(timestamp)
+        # Stop will automatically be spun, thus we only need to check for fort search protos of the stop(s) we are
+        # waiting for.
+        # TODO: Additionally, we may need to limit the amount of quests to be processed/accepted depending on the layer?
+        to = 0
+        timeout = 35
+        type_received: ReceivedType = ReceivedType.UNDEFINED
+        data_received = FortSearchResultTypes.UNDEFINED
+        # TODO: Only try it once basically, then try clicking stop. Detect softban for sleeping?
+        async with self._db_wrapper as session, session:
+            while data_received != FortSearchResultTypes.QUEST and int(to) < 5:
+                logger.info('Waiting for stop to be spun (enhanced)')
+                type_received, data_received = await self._wait_for_data(
+                    timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_SEARCH, timeout=timeout)
+
+                if (type_received == ReceivedType.FORT_SEARCH_RESULT
+                        and data_received == FortSearchResultTypes.INVENTORY):
+                    logger.info('Box is full... clear out items!')
+                    self.clear_thread_task = ClearThreadTasks.BOX
+                    await asyncio.sleep(5)
+                    if not await self._mapping_manager.routemanager_redo_stop_at_end(self._area_id,
+                                                                                     self._worker_state.origin,
+                                                                                     self._worker_state.current_location):
+                        logger.warning('Cannot process this stop again')
+                    break
+                elif (type_received == ReceivedType.FORT_SEARCH_RESULT
+                      and (data_received == FortSearchResultTypes.QUEST
+                           or data_received == FortSearchResultTypes.COOLDOWN
+                           or (
+                                   data_received == FortSearchResultTypes.FULL
+                                   and await self._mapping_manager.routemanager_is_levelmode(self._area_id)))):
+                    # Levelmode or data has been received...
+                    if await self._mapping_manager.routemanager_is_levelmode(self._area_id):
+                        logger.info("Saving visitation info...")
+                        self._last_time_quest_received = math.floor(time.time())
+                        await TrsVisitedHelper.mark_visited(session, self._worker_state.origin,
+                                                            self._worker_state.current_location)
+                        try:
+                            await session.commit()
+                        except Exception as e:
+                            logger.warning("Failed marking stop as visited: {}", e)
+                        # This is leveling mode, it's faster to just ignore spin result and continue ?
+                        break
+
+                    if data_received == FortSearchResultTypes.COOLDOWN:
+                        logger.info('Stop is on cooldown, moving on')
+                        if await TrsQuestHelper.check_stop_has_quest(session, self._worker_state.current_location,
+                                                                     self._quest_layer_to_scan):
+                            logger.info('Quest is done without us noticing. Getting new Quest...')
+                        else:
+                            # We need to try again later on
+                            await self._mapping_manager.routemanager_redo_stop_at_end(self._area_id,
+                                                                                      self._worker_state.origin,
+                                                                                      self._worker_state.current_location)
+                        self.clear_thread_task = ClearThreadTasks.QUEST
+                        break
+                    elif data_received == FortSearchResultTypes.QUEST:
+                        logger.info('Received new Quest')
+                        self._last_time_quest_received = math.floor(time.time())
+
+                elif (type_received == ReceivedType.FORT_SEARCH_RESULT
+                      and (data_received == FortSearchResultTypes.TIME
+                           or data_received == FortSearchResultTypes.OUT_OF_RANGE)):
+                    logger.warning('Softban - return to main screen and wait for the stop to be spun again...')
+                    on_main_menu = await self._check_pogo_main_screen(10, False)
+                    if not on_main_menu:
+                        await self._restart_pogo()
+                    self._stop_process_time = math.floor(time.time())
+                    # TODO: if await self._try_to_open_pokestop(self._stop_process_time) == ReceivedType.UNDEFINED:
+                    #    return
+                elif (type_received == ReceivedType.FORT_SEARCH_RESULT
+                      and data_received == FortSearchResultTypes.FULL):
+                    logger.warning(
+                        "Failed getting quest but got items - quest box is probably full. Starting cleanup "
+                        "routine.")
+                    reached_main_menu = await self._check_pogo_main_screen(10, True)
+                    if not reached_main_menu:
+                        if not await self._restart_pogo():
+                            # TODO: put in loop, count up for a reboot ;)
+                            raise InternalStopWorkerException("Failed restarting pogo after attempting to "
+                                                              "reach the main menu")
+                    self.clear_thread_task = ClearThreadTasks.QUEST
+                    self._clear_quest_counter = 0
+                    break
+                else:
+                    logger.info("Brief speed lock or we already spun it, trying again")
+                    if to > 2 and await TrsQuestHelper.check_stop_has_quest(session,
+                                                                            self._worker_state.current_location,
+                                                                            self._quest_layer_to_scan):
+                        logger.info('Quest is done without us noticing. Getting new Quest...')
+                        if not self._enhanced_mode:
+                            self.clear_thread_task = ClearThreadTasks.QUEST
+                        break
+                    elif to > 2 and await self._mapping_manager.routemanager_is_levelmode(
+                            self._area_id) and await self._mitm_mapper.get_poke_stop_visits(
+                        self._worker_state.origin) > 6800:
+                        logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
+                                       await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
+                    self._stop_process_time = math.floor(time.time())
+                    await asyncio.sleep(1)
+                    to += 1
+                    if to > 3:
+                        logger.warning("giving up spinning after 4 tries in handle_stop loop")
+
+        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())

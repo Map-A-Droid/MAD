@@ -12,6 +12,7 @@ from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapp
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import determine_current_quest_layer
 from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes, application_args, QuestLayer

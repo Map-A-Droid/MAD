@@ -5,6 +5,7 @@ from sqlalchemy.future import select
 
 from mapadroid.db.model import TrsStatus
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -114,4 +115,20 @@ class TrsStatusHelper:
             status.device_id = device_id
             status.instance_id = instance_id
         status.idle = idle_state
+        session.add(status)
+
+    @staticmethod
+    async def set_last_softban_action(session: AsyncSession, instance_id: int, device_id: int,
+                                      location: Location,
+                                      timestamp: Optional[int] = None) -> None:
+        status: Optional[TrsStatus] = await TrsStatusHelper.get(session, device_id)
+        if not status:
+            status = TrsStatus()
+            status.device_id = device_id
+            status.instance_id = instance_id
+        if timestamp:
+            status.last_softban_action = DatetimeWrapper.fromtimestamp(timestamp)
+        else:
+            status.last_softban_action = DatetimeWrapper.now()
+        status.last_softban_action_location = (location.lat, location.lng)
         session.add(status)

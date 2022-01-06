@@ -91,6 +91,8 @@ class MappingManagerServer(MappingManagerServicer):
     async def GetQuestLayerToScanOfOrigin(self, request: GetQuestLayerToScanOfOriginRequest,
                                           context: grpc.aio.ServicerContext) -> GetQuestLayerToScanOfOriginResponse:
         response: GetQuestLayerToScanOfOriginResponse = GetQuestLayerToScanOfOriginResponse()
-        response.layer = await self.__mapping_manager_impl\
+        quest_layer_to_scan: Optional[int] = await self.__mapping_manager_impl\
             .routemanager_get_quest_layer_to_scan_of_origin(request.worker.name)
+        if quest_layer_to_scan:
+            response.layer = quest_layer_to_scan
         return response

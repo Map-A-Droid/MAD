@@ -26,13 +26,20 @@ class ARQuestLayerStrategy(QuestStrategy):
 
     async def pre_work_loop_layer_preparation(self) -> None:
         vps_delay: int = await self._get_vps_delay()
-        if not await self.get_current_layer_of_worker() == QuestLayer.AR:
+        current_layer = None
+        try:
+            current_layer = await self.get_current_layer_of_worker()
+        except ValueError as e:
+            pass
+        if current_layer != QuestLayer.AR:
             # Trigger the deletion of quests
             await self._clear_quests(vps_delay, openmenu=True)
         # Nothing else to do given the deletion of quests leaves us on the AR layer
         self._ready_for_scan.set()
 
     async def _check_layer(self) -> None:
-        if await self.get_current_layer_of_worker() == QuestLayer.AR:
-            self._ready_for_scan.set()
-
+        try:
+            if await self.get_current_layer_of_worker() == QuestLayer.AR:
+                self._ready_for_scan.set()
+        except ValueError as e:
+            pass

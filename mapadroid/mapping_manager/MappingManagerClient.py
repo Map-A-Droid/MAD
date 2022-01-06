@@ -50,4 +50,7 @@ class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
         request = GetQuestLayerToScanOfOriginRequest()
         request.worker.name = origin
         response: GetQuestLayerToScanOfOriginResponse = await self.GetQuestLayerToScanOfOrigin(request)
-        return response.layer
+        if response.HasField("layer"):
+            return response.layer
+        else:
+            return None

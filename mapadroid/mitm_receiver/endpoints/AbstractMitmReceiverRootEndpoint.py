@@ -68,6 +68,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         # except (ConnectionResetError, ConnectionError) as e:
         #    raise web.HTTPInternalServerError()
         except Exception as e:
+            logger.exception(e)
             logger.warning("Exception occurred in request! Details: " + str(e))
             logger.debug3("Potential uncaught exception in MITMReceiver.", exc_info=True)
             await session.rollback()

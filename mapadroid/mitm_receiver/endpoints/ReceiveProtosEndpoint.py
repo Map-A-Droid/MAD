@@ -1,12 +1,16 @@
 import asyncio
 import time
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from aiohttp import web
 from loguru import logger
 from orjson import orjson
 
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
+from mapadroid.db.model import SettingsDevice
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 
 
@@ -73,6 +77,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
                 location_of_data.lng > 180 or location_of_data.lng < -180):
             location_of_data: Location = Location(0.0, 0.0)
         time_received: int = int(time.time())
+
+        if proto_type == ProtoIdentifier.FORT_SEARCH.value:
+            await self._handle_fort_search_proto(origin, data["payload"], location_of_data, timestamp)
         quests_held: Optional[List[int]] = data.get("quests_held", None)
         await self._get_mitm_mapper().set_quests_held(origin, quests_held)
         await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
@@ -81,3 +88,23 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
                                                     location=location_of_data)
         logger.debug2("Placing data received to data_queue")
         await self._add_to_queue((timestamp, data, origin))
+
+    async def _handle_fort_search_proto(self, origin: str, quest_proto: Dict, location_of_data: Location,
+                                        timestamp: int) -> None:
+        device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(self._session,
+                                                                                    self._get_db_wrapper().get_instance_id(),
+                                                                                    origin)
+        if device:
+            fort_id = quest_proto.get("fort_id", None)
+            if fort_id is None:
+                return
+            if "challenge_quest" not in quest_proto:
+                return
+            protoquest = quest_proto["challenge_quest"]["quest"]
+            rewards = protoquest.get("quest_rewards", None)
+            if not rewards:
+                return
+            await TrsStatusHelper.set_last_softban_action(self._session,
+                                                          self._get_db_wrapper().get_instance_id(),
+                                                          device.device_id, location_of_data, timestamp)
+            self._commit_trigger = True

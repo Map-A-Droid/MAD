@@ -29,8 +29,13 @@ class NonARQuestLayerStrategy(QuestStrategy):
 
     async def pre_work_loop_layer_preparation(self) -> None:
         vps_delay: int = await self._get_vps_delay()
-        if not await self.get_current_layer_of_worker() == QuestLayer.NON_AR:
-            # Trigger the deletion of quests if there are any special quests...
+        current_layer = None
+        try:
+            current_layer = await self.get_current_layer_of_worker()
+        except ValueError as e:
+            pass
+        if current_layer != QuestLayer.NON_AR:
+            # Trigger the deletion of quests
             await self._clear_quests(vps_delay, openmenu=True)
         # Nothing else to do given the deletion of quests leaves us on the AR layer
         self._ready_for_scan.set()
