@@ -1218,7 +1218,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         data_received = FortSearchResultTypes.UNDEFINED
         # TODO: Only try it once basically, then try clicking stop. Detect softban for sleeping?
         async with self._db_wrapper as session, session:
-            while data_received != FortSearchResultTypes.QUEST and int(to) < 5:
+            while data_received != FortSearchResultTypes.QUEST and int(to) < 2:
                 logger.info('Waiting for stop to be spun (enhanced)')
                 type_received, data_received = await self._wait_for_data(
                     timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_SEARCH, timeout=timeout)
@@ -1309,7 +1309,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     self._stop_process_time = math.floor(time.time())
                     await asyncio.sleep(1)
                     to += 1
-                    if to > 3:
-                        logger.warning("giving up spinning after 4 tries in handle_stop loop")
+                    if to > 2:
+                        logger.warning("giving up spinning after 3 tries in handle_stop loop")
+            else:
+                if data_received != FortSearchResultTypes.QUEST:
+                    await self._handle_stop_normally(timestamp)
 
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
