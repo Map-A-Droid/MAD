@@ -446,7 +446,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 # Stop processing the location.
                 return
             finally:
-                await self._check_layer()
+                try:
+                    await self._check_layer()
+                except ValueError as e:
+                    pass
                 if not self._ready_for_scan.is_set():
                     # Return location to the routemanager to be considered for a scan later on
                     # TODO: What if the route is too small to fetch any useful data needed to scan the layer?...
