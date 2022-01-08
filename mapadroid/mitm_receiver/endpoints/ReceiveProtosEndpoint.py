@@ -79,6 +79,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         time_received: int = int(time.time())
 
         if proto_type == ProtoIdentifier.FORT_SEARCH.value:
+            logger.debug("Checking fort search proto type 101")
             await self._handle_fort_search_proto(origin, data["payload"], location_of_data, timestamp)
         quests_held: Optional[List[int]] = data.get("quests_held", None)
         await self._get_mitm_mapper().set_quests_held(origin, quests_held)
