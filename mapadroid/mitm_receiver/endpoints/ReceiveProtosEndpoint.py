@@ -92,6 +92,8 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
 
     async def _handle_fort_search_proto(self, origin: str, quest_proto: Dict, location_of_data: Location,
                                         timestamp: int) -> None:
+        instance_id = self._get_db_wrapper().get_instance_id()
+        logger.debug("Checking fort search of {} of instance {}", origin, instance_id)
         device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(self._session,
                                                                                     self._get_db_wrapper().get_instance_id(),
                                                                                     origin)
