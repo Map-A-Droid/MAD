@@ -141,7 +141,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         # successful bag clear or last successful quest clear. This eliminates
         # the need to add arbitrary timedeltas for possible small delays,
         # which we don't do in other workers either
-        if self._enhanced_mode and proto_to_wait_for in [ProtoIdentifier.FORT_SEARCH, ProtoIdentifier.FORT_DETAILS]:
+        if not self._enhanced_mode and proto_to_wait_for in [ProtoIdentifier.FORT_SEARCH, ProtoIdentifier.FORT_DETAILS]:
             potential_replacements = [
                 self._last_time_quest_received,
                 await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_CLEANUP_TIME, 0),
