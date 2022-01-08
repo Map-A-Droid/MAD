@@ -95,6 +95,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(self._session,
                                                                                     self._get_db_wrapper().get_instance_id(),
                                                                                     origin)
+
         if device:
             fort_id = quest_proto.get("fort_id", None)
             if fort_id is None:
@@ -112,3 +113,5 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
                                                           self._get_db_wrapper().get_instance_id(),
                                                           device.device_id, location_of_data, timestamp)
             self._commit_trigger = True
+        else:
+            logger.debug("Device not found")
