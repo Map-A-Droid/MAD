@@ -146,34 +146,22 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                                                                                    self._worker_state.origin)
         type_of_data_returned = ReceivedType.UNDEFINED
         data = None
-        # Any data after timestamp + timeout should be valid!
         last_time_received = TIMESTAMP_NEVER
+
+        data, latest, type_of_data_returned = await self._request_data(data, key, proto_to_wait_for, timestamp,
+                                                                       type_of_data_returned)
+        if latest:
+            last_time_received = latest.timestamp_of_data_retrieval
+        # Any data after timestamp + timeout should be valid!
         logger.debug("Waiting for data ({}) after {} with timeout of {}s.",
                      proto_to_wait_for, DatetimeWrapper.fromtimestamp(timestamp), timeout)
-        while not self._worker_state.stop_worker_event.is_set() and int(timestamp + timeout) >= int(time.time()) \
+        while not latest and not self._worker_state.stop_worker_event.is_set() \
+                and int(timestamp + timeout) >= int(time.time()) \
                 and last_time_received < timestamp:
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
-            latest_location: Optional[Location] = await self._mitm_mapper.get_last_known_location(
-                self._worker_state.origin)
-            check_data = True
-            if (latest_location is None or latest_location.lat == latest_location.lng == 1000
-                    or not (latest_location.lat != 0.0 and latest_location.lng != 0.0 and
-                            -90.0 <= latest_location.lat <= 90.0 and
-                            -180.0 <= latest_location.lng <= 180.0)):
-                logger.debug("Data may be valid but does not contain a proper location yet: {}",
-                             str(latest_location))
-                check_data = False
-            elif proto_to_wait_for == ProtoIdentifier.GMO:
-                check_data = await self._is_location_within_allowed_range(latest_location)
-
-            latest: Optional[LatestMitmDataEntry] = None
-            if check_data:
-                latest = await self._mitm_mapper.request_latest(
-                    self._worker_state.origin,
-                    key, timestamp)
-                type_of_data_returned, data = await self._check_for_data_content(
-                    latest, proto_to_wait_for, timestamp)
+            data, latest, type_of_data_returned = await self._request_data(data, key, proto_to_wait_for, timestamp,
+                                                                           type_of_data_returned)
 
             await self.raise_stop_worker_if_applicable()
             if type_of_data_returned == ReceivedType.UNDEFINED:
@@ -205,6 +193,28 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         # TODO: Rather freeze the state that is to be submitted and pass it to another task for performance reasons
         # await self.worker_stats()
         return type_of_data_returned, data
+
+    async def _request_data(self, data, key, proto_to_wait_for, timestamp, type_of_data_returned):
+        latest_location: Optional[Location] = await self._mitm_mapper.get_last_known_location(
+            self._worker_state.origin)
+        check_data = True
+        if (latest_location is None or latest_location.lat == latest_location.lng == 1000
+                or not (latest_location.lat != 0.0 and latest_location.lng != 0.0 and
+                        -90.0 <= latest_location.lat <= 90.0 and
+                        -180.0 <= latest_location.lng <= 180.0)):
+            logger.debug("Data may be valid but does not contain a proper location yet: {}",
+                         str(latest_location))
+            check_data = False
+        elif proto_to_wait_for == ProtoIdentifier.GMO:
+            check_data = await self._is_location_within_allowed_range(latest_location)
+        latest: Optional[LatestMitmDataEntry] = None
+        if check_data:
+            latest = await self._mitm_mapper.request_latest(
+                self._worker_state.origin,
+                key, timestamp)
+            type_of_data_returned, data = await self._check_for_data_content(
+                latest, proto_to_wait_for, timestamp)
+        return data, latest, type_of_data_returned
 
     async def raise_stop_worker_if_applicable(self):
         """

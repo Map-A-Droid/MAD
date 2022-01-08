@@ -141,7 +141,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         # successful bag clear or last successful quest clear. This eliminates
         # the need to add arbitrary timedeltas for possible small delays,
         # which we don't do in other workers either
-        if proto_to_wait_for in [ProtoIdentifier.FORT_SEARCH, ProtoIdentifier.FORT_DETAILS]:
+        if self._enhanced_mode and proto_to_wait_for in [ProtoIdentifier.FORT_SEARCH, ProtoIdentifier.FORT_DETAILS]:
             potential_replacements = [
                 self._last_time_quest_received,
                 await self.get_devicesettings_value(MappingManagerDevicemappingKey.LAST_CLEANUP_TIME, 0),
@@ -592,6 +592,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                             self._area_id):
                         logger.info("Clearing quest")
                         await self._clear_quests(vps_delay)
+                        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME,
+                                                            int(time.time()))
                         self.clear_thread_task = ClearThreadTasks.IDLE
                     await asyncio.sleep(1)
                 except (InternalStopWorkerException,
@@ -776,15 +778,17 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
         type_received: ReceivedType = ReceivedType.UNDEFINED
         recheck_count = 0
+        timestamp_to_use_waiting_for_gmo: float = timestamp
         while stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
                             PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1
             logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
-            type_received, proto_entry = await self._wait_for_data(timestamp=timestamp,
+            type_received, proto_entry = await self._wait_for_data(timestamp=timestamp_to_use_waiting_for_gmo,
                                                                    proto_to_wait_for=ProtoIdentifier.GMO,
                                                                    timeout=20)
             if type_received != ReceivedType.UNDEFINED:
-                stop_type = await self._current_position_has_spinnable_stop(timestamp)
+                stop_type = await self._current_position_has_spinnable_stop(timestamp_to_use_waiting_for_gmo)
+            timestamp_to_use_waiting_for_gmo = time.time()
 
         if not PositionStopType.type_contains_stop_at_all(stop_type):
             logger.info("Location {}, {} considered to be ignored in the next round due to failed "
@@ -1297,6 +1301,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     break
                 else:
                     logger.info("Brief speed lock or we already spun it, trying again")
+                    self._stop_process_time = math.floor(time.time())
                     if to > 2 and await TrsQuestHelper.check_stop_has_quest(session,
                                                                             self._worker_state.current_location,
                                                                             self._quest_layer_to_scan):
@@ -1309,7 +1314,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                         self._worker_state.origin) > 6800:
                         logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
-                    self._stop_process_time = math.floor(time.time())
                     await asyncio.sleep(1)
                     to += 1
                     if to > 2:
