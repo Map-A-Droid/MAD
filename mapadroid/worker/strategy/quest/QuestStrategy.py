@@ -331,6 +331,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             last_action_time: Optional[int] = await self.get_devicesettings_value(MappingManagerDevicemappingKey
                                                                                   .LAST_ACTION_TIME, None)
             if status and status.last_softban_action and status.last_softban_action_location:
+                logger.debug("Checking DB for last softban action")
                 last_action_location: Location = Location(status.last_softban_action_location[0],
                                                           status.last_softban_action_location[1])
                 distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
@@ -341,7 +342,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 if status.last_softban_action.timestamp() + delay_to_last_action > cur_time:
                     delay_to_avoid_softban = cur_time - status.last_softban_action.timestamp() + delay_to_last_action
                     distance = distance_last_action
-            elif last_action_time and last_action_time > 0:
+        if delay_to_avoid_softban == 0:
+            if last_action_time and last_action_time > 0:
                 timediff = time.time() - last_action_time
                 logger.info("Timediff between now and last action time: {}", int(timediff))
                 delay_to_avoid_softban = delay_used - timediff
