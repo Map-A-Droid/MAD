@@ -155,7 +155,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         # Any data after timestamp + timeout should be valid!
         logger.debug("Waiting for data ({}) after {} with timeout of {}s.",
                      proto_to_wait_for, DatetimeWrapper.fromtimestamp(timestamp), timeout)
-        while not latest and not self._worker_state.stop_worker_event.is_set() \
+        while not self._worker_state.stop_worker_event.is_set() \
                 and int(timestamp + timeout) >= int(time.time()) \
                 and last_time_received < timestamp:
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.

@@ -328,8 +328,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         speed = 16.67  # Speed can be 60 km/h up to distances of 3km
         async with self._db_wrapper as session, session:
             status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
-            last_action_time: Optional[int] = await self.get_devicesettings_value(MappingManagerDevicemappingKey
-                                                                                  .LAST_ACTION_TIME, None)
             if status and status.last_softban_action and status.last_softban_action_location:
                 logger.debug("Checking DB for last softban action")
                 last_action_location: Location = Location(status.last_softban_action_location[0],
@@ -339,10 +337,17 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                                             self._worker_state.current_location.lat,
                                                                             self._worker_state.current_location.lng)
                 delay_to_last_action = calculate_cooldown(distance_last_action, speed)
+                logger.debug("Last registered softban was at {} at {}", status.last_softban_action,
+                             status.last_softban_action_location)
                 if status.last_softban_action.timestamp() + delay_to_last_action > cur_time:
+                    logger.debug("Last registered softban requires further cooldown")
                     delay_to_avoid_softban = cur_time - status.last_softban_action.timestamp() + delay_to_last_action
                     distance = distance_last_action
+                else:
+                    logger.debug("Last registered softban action long enough in the past")
         if delay_to_avoid_softban == 0:
+            last_action_time: Optional[int] = await self.get_devicesettings_value(MappingManagerDevicemappingKey
+                                                                                  .LAST_ACTION_TIME, None)
             if last_action_time and last_action_time > 0:
                 timediff = time.time() - last_action_time
                 logger.info("Timediff between now and last action time: {}", int(timediff))
