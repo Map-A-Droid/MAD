@@ -4,7 +4,8 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
-from mapadroid.db.model import Base, SettingsWalker, SettingsWalkerToWalkerarea, SettingsDevice
+from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
+from mapadroid.db.model import Base, SettingsWalker, SettingsWalkerToWalkerarea, SettingsDevice, SettingsWalkerarea
 from mapadroid.db.resource_definitions.Walker import Walker
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint
@@ -21,7 +22,16 @@ class WalkerEndpoint(AbstractResourceEndpoint):
             return names_of_devices
 
     async def _delete_connected_prior(self, db_entry):
-        pass
+        all_walkerareas_mapped: Optional[List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper \
+            .get(self._session, self._get_instance_id(), db_entry.walker_id)
+        if all_walkerareas_mapped:
+            for walkerarea_mapped in all_walkerareas_mapped:
+                await self._session.delete(walkerarea_mapped)
+        walkerareas: Optional[List[SettingsWalkerarea]] = await SettingsWalkerareaHelper.get_mapped_to_walker(
+            self._session, self._get_instance_id(), db_entry.walker_id)
+        if walkerareas:
+            for walkerarea in walkerareas:
+                await self._session.delete(walkerarea)
 
     async def _delete_connected_post(self, db_entry):
         pass
