@@ -9,3 +9,6 @@ MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO = 5
 # Since GMOs may arrive during walks, we define sort of a buffer to use.
 # That buffer can be subtracted in case a walk was longer than that buffer.
 SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER = 10
+
+
+STOP_SPIN_DISTANCE = 40

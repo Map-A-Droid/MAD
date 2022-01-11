@@ -598,6 +598,7 @@ class SettingsAreaPokestop(SettingsArea):
     ignore_spinned_stops = Column(BOOLEAN)
     cleanup_every_spin = Column(BOOLEAN)
     layer = Column(TINYINT(3), default=1, nullable=False, autoincrement=False, index=True)
+    enable_clustering = Column(BOOLEAN)
 
     settings_geofence = relationship('SettingsGeofence')
     settings_routecalc = relationship('SettingsRoutecalc')

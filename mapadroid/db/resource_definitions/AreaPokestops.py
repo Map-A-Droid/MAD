@@ -73,6 +73,16 @@ class AreaPokestops:
                     "expected": bool
                 }
             },
+            "enable_clustering": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [False, True],
+                    "description": "Enable clustering for stops (only respected if level is set to True). "
+                                   "(Default: False)",
+                    "expected": bool
+                }
+            },
             "route_calc_algorithm": {
                 "settings": {
                     "type": "option",

@@ -7,7 +7,7 @@ from asyncio import Task
 from datetime import timedelta
 from difflib import SequenceMatcher
 from enum import Enum
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Tuple, Optional, List, Set
 
 import sqlalchemy
 from loguru import logger
@@ -33,7 +33,7 @@ from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import ScreenCoordinates, Location
 from mapadroid.utils.gamemechanicutil import calculate_cooldown, determine_current_quest_layer
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.madConstants import TIMESTAMP_NEVER
+from mapadroid.utils.madConstants import TIMESTAMP_NEVER, STOP_SPIN_DISTANCE
 from mapadroid.utils.madGlobals import InternalStopWorkerException, WebsocketWorkerTimeoutException, \
     WebsocketWorkerConnectionClosedException, TransportType, FortSearchResultTypes
 from mapadroid.utils.s2Helper import S2Helper
@@ -104,12 +104,13 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         self._always_cleanup: bool = False
         self._rotation_waittime: int = 0
         self._work_mutex = None
-        self._enhanced_mode: False = False
+        self._enhanced_mode: bool = False
+        self._clustering_enabled: bool = False
         self._ignore_spinned_stops: bool = False
         self._last_time_quest_received: int = TIMESTAMP_NEVER
         # TODO: Move to worker_state?
         self._delay_add: int = 0
-        self._stop_process_time = TIMESTAMP_NEVER
+        self._stop_process_time: int = TIMESTAMP_NEVER
         self._quest_layer_to_scan: QuestLayer = quest_layer_to_scan
 
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
@@ -489,6 +490,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             self._work_mutex: asyncio.Lock = asyncio.Lock()
         area_settings: Optional[SettingsAreaPokestop] = await self._mapping_manager.routemanager_get_settings(
             self._area_id)
+        self._clustering_enabled: bool = area_settings.enable_clustering
         self._rotation_waittime = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATION_WAITTIME,
                                                                       300)
         self._always_cleanup: bool = False if area_settings.cleanup_every_spin == 0 else True
@@ -1001,7 +1003,11 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             await self._spinnable_data_failure()
             return PositionStopType.GMO_EMPTY
 
+        distance_to_consider_for_stops = DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP
+        if self._enhanced_mode:
+            distance_to_consider_for_stops = STOP_SPIN_DISTANCE
         cells_with_stops = self._directly_surrounding_gmo_cells_containing_stops_around_current_position(gmo_cells)
+        stop_types: Set[PositionStopType] = set()
         async with self._db_wrapper as session, session:
             for cell in cells_with_stops:
                 forts: list = cell.get("forts", None)
@@ -1013,9 +1019,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     longitude: float = fort.get("longitude", 0.0)
                     if latitude == 0.0 or longitude == 0.0:
                         continue
-                    elif (abs(self._worker_state.current_location.lat - latitude) <= DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP
+                    elif (abs(self._worker_state.current_location.lat - latitude) <= distance_to_consider_for_stops
                           and abs(
-                                self._worker_state.current_location.lng - longitude) <= DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP):
+                                self._worker_state.current_location.lng - longitude) <= distance_to_consider_for_stops):
                         # We are basically on top of a stop
                         logger.info("Found stop/gym at current location!")
                     else:
@@ -1036,7 +1042,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                             await session.commit()
                         except Exception as e:
                             logger.warning("Failed deleting pokestop: {}", e)
-                        return PositionStopType.GYM
+                        stop_types.add(PositionStopType.GYM)
+                        continue
 
                     visited: bool = fort.get("visited", False)
                     if await self._mapping_manager.routemanager_is_levelmode(
@@ -1049,37 +1056,56 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                             await session.commit()
                         except Exception as e:
                             logger.warning("Failed mark pokestop visited: {}", e)
-                        return PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE
+                        stop_types.add(PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE)
+                        continue
 
                     enabled: bool = fort.get("enabled", True)
                     if not enabled:
                         logger.info("Can't spin the stop - it is disabled")
-                        return PositionStopType.STOP_DISABLED
+                        stop_types.add(PositionStopType.STOP_DISABLED)
+                        continue
                     closed: bool = fort.get("closed", False)
                     if closed:
                         logger.info("Can't spin the stop - it is closed")
-                        return PositionStopType.STOP_CLOSED
+                        stop_types.add(PositionStopType.STOP_CLOSED)
+                        continue
 
                     cooldown: int = fort.get("cooldown_complete_ms", 0)
                     if not cooldown == 0:
                         logger.info("Can't spin the stop - it has cooldown")
                         # TODO: sleep for cooldown * 1000 ?
-                        return PositionStopType.STOP_COOLDOWN
+                        stop_types.add(PositionStopType.STOP_COOLDOWN)
+                        continue
                     self._spinnable_data_failcount = 0
-                    return PositionStopType.SPINNABLE_STOP
-
-            # by now we should've found the stop in the GMO
-            logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
-                           "- likely not standing exactly on top ...",
-                           self._worker_state.current_location)
-            await self._check_if_stop_was_nearby_and_update_location(session, gmo_cells)
-            await self._spinnable_data_failure()
-            try:
-                await session.commit()
-            except Exception as e:
-                logger.exception(e)
-                await session.rollback()
-            return PositionStopType.NO_FORT
+                    stop_types.add(PositionStopType.SPINNABLE_STOP)
+            if not stop_types:
+                # by now we should've found the stop in the GMO
+                logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
+                               "- likely not standing exactly on top ...",
+                               self._worker_state.current_location)
+                await self._check_if_stop_was_nearby_and_update_location(session, gmo_cells)
+                await self._spinnable_data_failure()
+                try:
+                    await session.commit()
+                except Exception as e:
+                    logger.exception(e)
+                    await session.rollback()
+                return PositionStopType.NO_FORT
+            if len(stop_types) == 1:
+                return stop_types.pop()
+            elif PositionStopType.SPINNABLE_STOP in stop_types:
+                return PositionStopType.SPINNABLE_STOP
+            elif PositionStopType.STOP_COOLDOWN in stop_types:
+                return PositionStopType.STOP_COOLDOWN
+            elif PositionStopType.STOP_CLOSED in stop_types:
+                return PositionStopType.STOP_CLOSED
+            elif PositionStopType.STOP_DISABLED in stop_types:
+                return PositionStopType.STOP_DISABLED
+            elif PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE in stop_types:
+                return PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE
+            else:
+                # More than one stop and various outcomes, just pop one...
+                return stop_types.pop()
 
     async def _click_pokestop_at_current_location(self, delayadd):
         logger.debug('{_open_gym} called')
@@ -1170,9 +1196,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     continue
                 else:
                     stops.pop(fort_id)
-                if stop.latitude == latitude and stop.longitude == longitude:
+                if float(stop.latitude) == latitude and float(stop.longitude) == longitude:
                     # Location of fort has not changed
-                    logger.debug2("Fort {} has not moved", fort_id)
+                    # logger.debug2("Fort {} has not moved", fort_id)
                     continue
                 else:
                     # now we have a location from DB for the given stop we are currently processing but does not equal
@@ -1232,7 +1258,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         data_received = FortSearchResultTypes.UNDEFINED
         # TODO: Only try it once basically, then try clicking stop. Detect softban for sleeping?
         async with self._db_wrapper as session, session:
-            while data_received != FortSearchResultTypes.QUEST and int(to) < 2:
+            while data_received != FortSearchResultTypes.QUEST and int(to) < 3:
                 logger.info('Waiting for stop to be spun (enhanced)')
                 type_received, data_received = await self._wait_for_data(
                     timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_SEARCH, timeout=timeout)
@@ -1326,7 +1352,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     if to > 2:
                         logger.warning("giving up spinning after 3 tries in handle_stop loop")
             else:
-                if data_received != FortSearchResultTypes.QUEST:
+                if data_received != FortSearchResultTypes.QUEST and not self._clustering_enabled:
                     await self._handle_stop_normally(timestamp)
 
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
