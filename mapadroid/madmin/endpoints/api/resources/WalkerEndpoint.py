@@ -24,14 +24,18 @@ class WalkerEndpoint(AbstractResourceEndpoint):
     async def _delete_connected_prior(self, db_entry):
         all_walkerareas_mapped: Optional[List[SettingsWalkerToWalkerarea]] = await SettingsWalkerToWalkerareaHelper \
             .get(self._session, self._get_instance_id(), db_entry.walker_id)
+        walkerarea_ids: List[int] = []
         if all_walkerareas_mapped:
             for walkerarea_mapped in all_walkerareas_mapped:
+                walkerarea_ids.append(walkerarea_mapped.walkerarea_id)
                 await self._session.delete(walkerarea_mapped)
-        walkerareas: Optional[List[SettingsWalkerarea]] = await SettingsWalkerareaHelper.get_mapped_to_walker(
-            self._session, self._get_instance_id(), db_entry.walker_id)
+        # Delete all SettingsWalkerarea entries....
+        walkerareas: Dict[int, SettingsWalkerarea] = await SettingsWalkerareaHelper.get_all_mapped(
+            self._session, self._get_instance_id())
         if walkerareas:
-            for walkerarea in walkerareas:
-                await self._session.delete(walkerarea)
+            for walkerarea_id in walkerarea_ids:
+                if walkerarea_id in walkerareas:
+                    await self._session.delete(walkerareas.get(walkerarea_id))
 
     async def _delete_connected_post(self, db_entry):
         pass
