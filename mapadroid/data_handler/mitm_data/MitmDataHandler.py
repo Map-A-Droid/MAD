@@ -57,7 +57,7 @@ class MitmDataHandler:
         logger.debug2("Request full latest called")
         return player_data.get_full_latest_data()
 
-    async def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
+    def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
                       timestamp_received_receiver: float = None, location: Location = None) -> None:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         if timestamp_received_raw is None:
