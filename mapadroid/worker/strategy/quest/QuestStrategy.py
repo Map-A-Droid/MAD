@@ -3,25 +3,24 @@ import math
 import os
 import time
 from abc import ABC, abstractmethod
-from asyncio import Task
+from asyncio import Task, CancelledError
 from datetime import timedelta
 from difflib import SequenceMatcher
 from enum import Enum
-from typing import Dict, Tuple, Optional, List, Set
+from typing import Dict, Tuple, Optional, List, Set, Union
 
 import sqlalchemy
 from loguru import logger
 from s2sphere import CellId
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
-from mapadroid.utils.madGlobals import QuestLayer
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
+from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
 from mapadroid.db.model import SettingsAreaPokestop, Pokestop, SettingsWalkerarea, TrsStatus
 from mapadroid.mapping_manager.MappingManager import MappingManager
@@ -36,6 +35,7 @@ from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madConstants import TIMESTAMP_NEVER, STOP_SPIN_DISTANCE
 from mapadroid.utils.madGlobals import InternalStopWorkerException, WebsocketWorkerTimeoutException, \
     WebsocketWorkerConnectionClosedException, TransportType, FortSearchResultTypes
+from mapadroid.utils.madGlobals import QuestLayer
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
@@ -399,8 +399,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     raise InternalStopWorkerException("Worker has been removed from routemanager or is supposed to stop"
                                                       "during the move to a location")
                 await asyncio.sleep(1)
-            cur_time = int(time.time())
-            # subtract up to 10s if the delay was less than that or bigger
+            if not self._enhanced_mode:
+                cur_time = int(time.time())
+                # subtract up to 10s if the delay was less than that or bigger
             if delay_used > 10:
                 cur_time -= 10
             elif delay_used > 0:
@@ -782,6 +783,15 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="injected_settings",
                                               value=injected_settings)
 
+    async def _wait_for_data_after_moving(self, timestamp: float, proto_to_wait_for: ProtoIdentifier, timeout) \
+            -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
+        try:
+            return await asyncio.wait_for(self._wait_for_data(timestamp=timestamp,
+                                                              proto_to_wait_for=proto_to_wait_for,
+                                                              timeout=None), timeout)
+        except asyncio.exceptions.TimeoutError as e:
+            return ReceivedType.UNDEFINED, None
+
     async def _ensure_stop_present(self, timestamp: float) -> ReceivedType:
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
@@ -792,9 +802,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                             PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1
             logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
-            type_received, proto_entry = await self._wait_for_data(timestamp=timestamp_to_use_waiting_for_gmo,
-                                                                   proto_to_wait_for=ProtoIdentifier.GMO,
-                                                                   timeout=20)
+            type_received, proto_entry = await self._wait_for_data_after_moving(timestamp_to_use_waiting_for_gmo,
+                                                                                ProtoIdentifier.GMO, 20)
             if type_received != ReceivedType.UNDEFINED:
                 stop_type = await self._current_position_has_spinnable_stop(timestamp_to_use_waiting_for_gmo)
             timestamp_to_use_waiting_for_gmo = time.time()
@@ -861,15 +870,15 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     #  /FortSearchResponse.proto#L12
     async def _handle_stop(self, timestamp: float):
         to = 0
-        timeout = 35
+        timeout = 20
         type_received: ReceivedType = ReceivedType.UNDEFINED
         data_received = FortSearchResultTypes.UNDEFINED
         async with self._db_wrapper as session, session:
             while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
                 logger.info('Spin Stop')
-                type_received, data_received = await self._wait_for_data(
-                    timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_SEARCH, timeout=timeout)
-
+                type_received, data_received = await self._wait_for_data_after_moving(self._stop_process_time,
+                                                                                      ProtoIdentifier.FORT_SEARCH,
+                                                                                      timeout)
                 if (type_received == ReceivedType.FORT_SEARCH_RESULT
                         and data_received == FortSearchResultTypes.INVENTORY):
                     logger.info('Box is full... clear out items!')
@@ -990,8 +999,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
 
     async def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
-        type_received, data_received = await self._wait_for_data(timestamp=timestamp,
-                                                                 proto_to_wait_for=ProtoIdentifier.GMO)
+        type_received, data_received = await self._wait_for_data_after_moving(timestamp, ProtoIdentifier.GMO, 20)
         if type_received != ReceivedType.GMO or data_received is None:
             await self._spinnable_data_failure()
             return PositionStopType.GMO_NOT_AVAILABLE
@@ -1260,9 +1268,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         async with self._db_wrapper as session, session:
             while data_received != FortSearchResultTypes.QUEST and int(to) < 3:
                 logger.info('Waiting for stop to be spun (enhanced)')
-                type_received, data_received = await self._wait_for_data(
-                    timestamp=self._stop_process_time, proto_to_wait_for=ProtoIdentifier.FORT_SEARCH, timeout=timeout)
-
+                type_received, data_received = await self._wait_for_data_after_moving(self._stop_process_time,
+                                                                                      ProtoIdentifier.FORT_SEARCH,
+                                                                                      timeout)
                 if (type_received == ReceivedType.FORT_SEARCH_RESULT
                         and data_received == FortSearchResultTypes.INVENTORY):
                     logger.info('Box is full... clear out items!')
@@ -1339,14 +1347,18 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                                             self._worker_state.current_location,
                                                                             self._quest_layer_to_scan):
                         logger.info('Quest is done without us noticing. Getting new Quest...')
-                        if not self._enhanced_mode:
-                            self.clear_thread_task = ClearThreadTasks.QUEST
                         break
                     elif to > 2 and await self._mapping_manager.routemanager_is_levelmode(
                             self._area_id) and await self._mitm_mapper.get_poke_stop_visits(
                         self._worker_state.origin) > 6800:
                         logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
+                    else:
+                        vps_delay: int = await self._get_vps_delay()
+                        if not await self._check_pogo_main_screen(10, True):
+                            raise InternalStopWorkerException("Failed clearing quests")
+                        await self._clear_quests(vps_delay)
+
                     await asyncio.sleep(1)
                     to += 1
                     if to > 2:

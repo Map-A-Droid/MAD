@@ -139,6 +139,9 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         if timeout is None:
             timeout = await self.get_devicesettings_value(MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT,
                                                           FALLBACK_MITM_WAIT_TIMEOUT)
+        elif timeout < 0:
+            # never timeout
+            timeout = 0
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         logger.info('Waiting for data after {}',
                     DatetimeWrapper.fromtimestamp(timestamp))
@@ -156,7 +159,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         logger.debug("Waiting for data ({}) after {} with timeout of {}s.",
                      proto_to_wait_for, DatetimeWrapper.fromtimestamp(timestamp), timeout)
         while not self._worker_state.stop_worker_event.is_set() \
-                and int(timestamp + timeout) >= int(time.time()) \
+                and (int(timestamp + timeout) >= int(time.time()) or timeout == 0) \
                 and last_time_received < timestamp:
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
@@ -206,6 +209,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                          str(latest_location))
             check_data = False
         elif proto_to_wait_for == ProtoIdentifier.GMO:
+            # always check the distance?
             check_data = await self._is_location_within_allowed_range(latest_location)
         latest: Optional[LatestMitmDataEntry] = None
         if check_data:
