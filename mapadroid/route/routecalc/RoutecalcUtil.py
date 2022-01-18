@@ -58,7 +58,7 @@ class RoutecalcUtil:
 
         # TODO: Move to method running calculation in a thread/executor...
         less_coords = coords
-        if len(coords) > 0 and max_radius and max_coords_within_radius:
+        if len(coords) > 0 and max_radius and max_radius >= 1 and max_coords_within_radius:
             logger.info("Calculating route for {}", route_name)
             loop = asyncio.get_running_loop()
             # with concurrent.futures.ThreadPoolExecutor() as pool:

@@ -27,6 +27,8 @@ from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
 
 args = parse_args()
+# Duration in seconds to be waited for a route to be recalculated
+RECALC_WAIT_DURATION: int = 600
 
 Relation = collections.namedtuple(
     'Relation', ['other_event', 'distance', 'timedelta'])
@@ -410,8 +412,10 @@ class RouteManagerBase(ABC):
             self._routepool[origin].last_access = time.time()
             self._routepool[origin].worker_sleeping = 0
 
-    async def _wait_for_calc_end(self):
+    async def _wait_for_calc_end(self, origin: str) -> None:
         while self._start_calc:
+            # in order to prevent the worker from being removed from the routepool
+            self._routepool[origin].last_access = time.time()
             await asyncio.sleep(1)
 
     async def get_next_location(self, origin: str) -> Optional[Location]:
@@ -425,8 +429,8 @@ class RouteManagerBase(ABC):
         if self._start_calc:
             logger.info("Another process already calculate the new route")
             try:
-                await asyncio.wait_for(self._wait_for_calc_end(), 180)
-            except (CancelledError, TimeoutError):
+                await asyncio.wait_for(self._wait_for_calc_end(origin), RECALC_WAIT_DURATION)
+            except (CancelledError, asyncio.exceptions.TimeoutError):
                 logger.info("Current recalc took too long, returning None location")
                 return None
         if origin not in self._workers_registered:
@@ -549,8 +553,8 @@ class RouteManagerBase(ABC):
             if self._start_calc:
                 logger.info("Another process already calculate the new route")
                 try:
-                    await asyncio.wait_for(self._wait_for_calc_end(), 180)
-                except CancelledError:
+                    await asyncio.wait_for(self._wait_for_calc_end(origin), RECALC_WAIT_DURATION)
+                except (CancelledError, asyncio.exceptions.TimeoutError):
                     logger.info("Current recalc took too long, returning None location")
                     return None
             else:

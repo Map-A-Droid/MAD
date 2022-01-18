@@ -79,7 +79,7 @@ def install_task_create_excepthook():
     ) -> None:
         try:
             task.result()
-        except (asyncio.CancelledError, PrioQueueNoDueEntry, TimeoutError) as e:
+        except (asyncio.CancelledError, PrioQueueNoDueEntry, asyncio.exceptions.TimeoutError) as e:
             """
             Exceptions that should not be logged at all
             """
