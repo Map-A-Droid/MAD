@@ -26,7 +26,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         if not latest:
             return type_of_data_found, data_found
         # proto has previously been received, let's check the timestamp...
-        mode = await self._mapping_manager.routemanager_get_mode(self._area_id)
+        mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
         timestamp_of_proto: int = latest.timestamp_of_data_retrieval
         logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
                      DatetimeWrapper.fromtimestamp(timestamp_of_proto), DatetimeWrapper.fromtimestamp(timestamp),
@@ -41,7 +41,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         latest_proto_data: dict = latest.data
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
-        key_to_check: str = "wild_pokemon" if mode in [WorkerType.MON_MITM.value, WorkerType.IV_MITM.value] else "forts"
+        key_to_check: str = "wild_pokemon" if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] else "forts"
         if self._gmo_cells_contain_multiple_of_key(latest_proto_data, key_to_check):
             data_found = latest_proto_data
             type_of_data_found = ReceivedType.GMO
@@ -133,7 +133,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         injected_settings = {}
 
         # don't try catch here, the injection settings update is called in the main loop anyway...
-        routemanager_mode = await self._mapping_manager.routemanager_get_mode(self._area_id)
+        routemanager_mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
 
         ids_iv = []
         if routemanager_mode is None:

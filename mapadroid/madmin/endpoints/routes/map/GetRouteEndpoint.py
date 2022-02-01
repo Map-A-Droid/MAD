@@ -9,6 +9,7 @@ from mapadroid.madmin.functions import get_coord_float
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class GetRouteEndpoint(AbstractControlEndpoint):
@@ -26,14 +27,14 @@ class GetRouteEndpoint(AbstractControlEndpoint):
             if route is None:
                 continue
 
-            mode = await self._get_mapping_manager().routemanager_get_mode(routemanager_id)
+            mode: WorkerType = await self._get_mapping_manager().routemanager_get_mode(routemanager_id)
             name = await self._get_mapping_manager().routemanager_get_name(routemanager_id)
             routecalc_id = await self._get_mapping_manager().routemanager_get_routecalc_id(routemanager_id)
             routeinfo_by_id[routecalc_id] = routeinfo = {
                 "id": routecalc_id,
                 "route": route,
                 "name": name,
-                "mode": mode,
+                "mode": mode.value,
                 "subroutes": []
             }
 
