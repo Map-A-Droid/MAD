@@ -1,7 +1,7 @@
 import asyncio
 import math
 import time
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Tuple, Optional, List, Set
 
 from loguru import logger
 
@@ -120,8 +120,8 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
 
     async def post_move_location_routine(self, timestamp):
         # TODO: pass the appropriate proto number if IV?
-        type_received, data = await self._wait_for_data(timestamp)
-        if type_received != ReceivedType.GMO:
+        type_received, data_gmo = await self._wait_for_data(timestamp)
+        if type_received != ReceivedType.GMO or not data_gmo:
             logger.warning("Worker failed to retrieve proper data at {}, {}. Worker will continue with "
                            "the next location",
                            self._worker_state.current_location.lat,
@@ -130,7 +130,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         # Wait for IV data if applicable
         # TODO: Specific mon/iv strategy to avoid such knowledge
         mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
-        if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM]:
+        if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] and await self._gmo_contains_mons_to_be_encountered(data_gmo):
             # TODO: Check if there are mons that are lacking IV and only then wait for the encounter in a loop?
             type_received, data = await self._wait_for_data(timestamp, ProtoIdentifier.ENCOUNTER, 20)
             if type_received != ReceivedType.MON:
@@ -139,6 +139,40 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                                self._worker_state.current_location.lat,
                                self._worker_state.current_location.lng)
                 return
+
+    async def _gmo_contains_mons_to_be_encountered(self, gmo) -> bool:
+        cells = gmo.get("cells", None)
+        if not cells:
+            return False
+        ids_to_encounter: Set[int] = set()
+        mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
+        if mode == WorkerType.MON_MITM:
+            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+            if routemanager_settings is not None:
+                # TODO: Moving to async
+                ids_iv = self._mapping_manager.get_monlist(self._area_id)
+                ids_to_encounter = {id_to_encounter for id_to_encounter in ids_iv}
+        else:
+            ids_iv = await self._mapping_manager.routemanager_get_encounter_ids_left(self._area_id)
+            ids_to_encounter = {id_to_encounter for id_to_encounter in ids_iv}
+
+        for cell in cells:
+            for wild_mon in cell["wild_pokemon"]:
+                spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
+                lat = wild_mon["latitude"]
+                lon = wild_mon["longitude"]
+                mon_id = wild_mon["pokemon_data"]["id"]
+                encounter_id = wild_mon["encounter_id"]
+                if encounter_id in self._encounter_ids:
+                    # already encountered
+                    continue
+                # now check whether mon_mitm's mon IDs to scan are present and unscanned
+                # OR iv_mitm...
+                if mode == WorkerType.MON_MITM and mon_id in ids_to_encounter:
+                    return True
+                elif mode == WorkerType.IV_MITM and encounter_id in ids_to_encounter:
+                    return True
+        return False
 
     async def worker_specific_setup_start(self):
         pass
