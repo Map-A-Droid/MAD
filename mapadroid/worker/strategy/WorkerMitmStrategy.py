@@ -41,12 +41,16 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         latest_proto_data: dict = latest.data
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
-        key_to_check: str = "wild_pokemon" if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] else "forts"
-        if self._gmo_cells_contain_multiple_of_key(latest_proto_data, key_to_check):
+        if proto_to_wait_for == ProtoIdentifier.GMO:
+            key_to_check: str = "wild_pokemon" if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] else "forts"
+            if self._gmo_cells_contain_multiple_of_key(latest_proto_data, key_to_check):
+                data_found = latest_proto_data
+                type_of_data_found = ReceivedType.GMO
+            else:
+                logger.debug("{} not in GMO", key_to_check)
+        elif proto_to_wait_for == ProtoIdentifier.ENCOUNTER and latest_proto_data.get('status', None) == 1:
             data_found = latest_proto_data
-            type_of_data_found = ReceivedType.GMO
-        else:
-            logger.debug("{} not in GMO", key_to_check)
+            type_of_data_found = ReceivedType.MON
 
         return type_of_data_found, data_found
 
@@ -122,6 +126,19 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                            "the next location",
                            self._worker_state.current_location.lat,
                            self._worker_state.current_location.lng)
+            return
+        # Wait for IV data if applicable
+        # TODO: Specific mon/iv strategy to avoid such knowledge
+        mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
+        if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM]:
+            # TODO: Check if there are mons that are lacking IV and only then wait for the encounter in a loop?
+            type_received, data = await self._wait_for_data(timestamp, ProtoIdentifier.ENCOUNTER, 20)
+            if type_received != ReceivedType.MON:
+                logger.warning("Worker failed to receive encounter data at {}, {}. Worker will continue with "
+                               "the next location",
+                               self._worker_state.current_location.lat,
+                               self._worker_state.current_location.lng)
+                return
 
     async def worker_specific_setup_start(self):
         pass

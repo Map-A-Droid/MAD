@@ -2,7 +2,7 @@ import asyncio
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Dict
 
 from loguru import logger
 
@@ -58,7 +58,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         self._mitm_mapper: AbstractMitmMapper = mitm_mapper
         # TODO: Consider placement
         self._latest_encounter_update = 0
-        self._encounter_ids = {}
+        self._encounter_ids: Dict[str, int] = {}
 
     @abstractmethod
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
@@ -177,7 +177,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 break
             await asyncio.sleep(application_args.wait_for_data_sleep_duration)
 
-        if proto_to_wait_for == ProtoIdentifier.GMO:
+        if proto_to_wait_for in [ProtoIdentifier.GMO, ProtoIdentifier.ENCOUNTER]:
             if type_of_data_returned != ReceivedType.UNDEFINED:
                 await self._reset_restart_count_and_collect_stats(timestamp,
                                                                   last_time_received,
