@@ -22,4 +22,4 @@ numpy~=1.18.0
 apkutils==0.8.3
 greenlet<0.4.17
 apkmirror-search
-cachetools
+cachetools<5.0
