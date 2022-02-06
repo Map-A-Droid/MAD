@@ -43,12 +43,14 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
         if proto_to_wait_for == ProtoIdentifier.GMO:
-            key_to_check: str = "wild_pokemon" if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] else "forts"
-            if self._gmo_cells_contain_multiple_of_key(latest_proto_data, key_to_check):
+            if (mode in [WorkerType.MON_MITM, WorkerType.IV_MITM]
+                    and self._gmo_contains_wild_mons_closeby(latest_proto_data)
+                    or mode not in [WorkerType.MON_MITM, WorkerType.IV_MITM]
+                    and self._gmo_cells_contain_multiple_of_key(latest_proto_data, "forts")):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO
             else:
-                logger.debug("{} not in GMO", key_to_check)
+                logger.debug("Data looked for not in GMO")
         elif proto_to_wait_for == ProtoIdentifier.ENCOUNTER and latest_proto_data.get('status', None) == 1:
             data_found = latest_proto_data
             type_of_data_found = ReceivedType.MON
@@ -131,7 +133,8 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         # Wait for IV data if applicable
         mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
         # TODO: Only check mons within certain range
-        if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] and await self._gmo_contains_mons_to_be_encountered(data_gmo):
+        if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] and await self._gmo_contains_mons_to_be_encountered(
+                data_gmo):
             type_received, data = await self._wait_for_data(timestamp, ProtoIdentifier.ENCOUNTER, 20)
             if type_received != ReceivedType.MON:
                 logger.warning("Worker failed to receive encounter data at {}, {}. Worker will continue with "
@@ -139,6 +142,25 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                                self._worker_state.current_location.lat,
                                self._worker_state.current_location.lng)
                 return
+
+    async def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
+        cells = gmo.get("cells", None)
+        if not cells:
+            return False
+        for cell in cells:
+            for wild_mon in cell["wild_pokemon"]:
+                lat = wild_mon["latitude"]
+                lon = wild_mon["longitude"]
+                distance_to_mon: float = get_distance_of_two_points_in_meters(lat, lon,
+                                                                              self._worker_state.current_location.lat,
+                                                                              self._worker_state.current_location.lng)
+                # TODO: Distance probably incorrect
+                if distance_to_mon > 70:
+                    logger.debug("Distance to mon around considered to be too far away to await encounter")
+                    continue
+                else:
+                    return True
+        return False
 
     async def _gmo_contains_mons_to_be_encountered(self, gmo) -> bool:
         cells = gmo.get("cells", None)
