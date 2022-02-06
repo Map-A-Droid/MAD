@@ -143,7 +143,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                                self._worker_state.current_location.lng)
                 return
 
-    async def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
+    def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
         cells = gmo.get("cells", None)
         if not cells:
             return False
