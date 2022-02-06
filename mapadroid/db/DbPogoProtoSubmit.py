@@ -239,7 +239,7 @@ class DbPogoProtoSubmit:
         """
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None or wild_pokemon.get("encounter_id", 0) == 0 or not str(wild_pokemon["spawnpoint_id"]):
-            logger.debug("Encounter proto of no use (status: {}).", encounter_proto.get('status', None))
+            logger.warning("Encounter proto of no use (status: {}).", encounter_proto.get('status', None))
             return None
 
         encounter_id = wild_pokemon["encounter_id"]

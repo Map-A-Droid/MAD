@@ -11,6 +11,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingMana
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
+from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import TransportType, InternalStopWorkerException
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.WorkerType import WorkerType
@@ -128,10 +129,9 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                            self._worker_state.current_location.lng)
             return
         # Wait for IV data if applicable
-        # TODO: Specific mon/iv strategy to avoid such knowledge
         mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
+        # TODO: Only check mons within certain range
         if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] and await self._gmo_contains_mons_to_be_encountered(data_gmo):
-            # TODO: Check if there are mons that are lacking IV and only then wait for the encounter in a loop?
             type_received, data = await self._wait_for_data(timestamp, ProtoIdentifier.ENCOUNTER, 20)
             if type_received != ReceivedType.MON:
                 logger.warning("Worker failed to receive encounter data at {}, {}. Worker will continue with "
@@ -161,6 +161,13 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                 spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
                 lat = wild_mon["latitude"]
                 lon = wild_mon["longitude"]
+                distance_to_mon: float = get_distance_of_two_points_in_meters(lat, lon,
+                                                                              self._worker_state.current_location.lat,
+                                                                              self._worker_state.current_location.lng)
+                # TODO: Distance probably incorrect
+                if distance_to_mon > 70:
+                    logger.debug("Distance to mon around considered to be too far away to await encounter")
+                    continue
                 mon_id = wild_mon["pokemon_data"]["id"]
                 encounter_id = wild_mon["encounter_id"]
                 if encounter_id in self._encounter_ids:

@@ -71,6 +71,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         elif proto_type == 106 and not data["payload"].get("cells", []):
             logger.debug("Ignoring apparently empty GMO")
             return
+        elif proto_type == 102 and not data["payload"].get("status", None) == 1:
+            logger.warning("Encounter with status {} being ignored", data["payload"].get("status", None))
+            return
 
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
