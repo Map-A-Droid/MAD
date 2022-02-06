@@ -135,7 +135,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         # TODO: Only check mons within certain range
         if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] and await self._gmo_contains_mons_to_be_encountered(
                 data_gmo):
-            type_received, data = await self._wait_for_data(timestamp, ProtoIdentifier.ENCOUNTER, 20)
+            type_received, data = await self._wait_for_data(timestamp, ProtoIdentifier.ENCOUNTER, 80)
             if type_received != ReceivedType.MON:
                 logger.warning("Worker failed to receive encounter data at {}, {}. Worker will continue with "
                                "the next location",
