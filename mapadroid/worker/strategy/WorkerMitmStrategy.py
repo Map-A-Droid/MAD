@@ -158,6 +158,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                     logger.debug("Distance to mon around considered to be too far away to await encounter")
                     continue
                 else:
+                    logger.debug("Mon at {}, {} at distance {}", lat, lon, distance_to_mon)
                     return True
         return False
 
