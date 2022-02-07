@@ -177,7 +177,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 break
             await asyncio.sleep(application_args.wait_for_data_sleep_duration)
 
-        if proto_to_wait_for in [ProtoIdentifier.GMO]:
+        if proto_to_wait_for in [ProtoIdentifier.GMO, ProtoIdentifier.ENCOUNTER]:
             if type_of_data_returned != ReceivedType.UNDEFINED:
                 await self._reset_restart_count_and_collect_stats(timestamp,
                                                                   last_time_received,
