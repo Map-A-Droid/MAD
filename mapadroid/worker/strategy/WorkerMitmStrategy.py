@@ -43,10 +43,10 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
         if proto_to_wait_for == ProtoIdentifier.GMO:
-            if (mode in [WorkerType.MON_MITM, WorkerType.IV_MITM]
-                    and self._gmo_contains_wild_mons_closeby(latest_proto_data)
-                    or mode not in [WorkerType.MON_MITM, WorkerType.IV_MITM]
-                    and self._gmo_cells_contain_multiple_of_key(latest_proto_data, "forts")):
+            if ((mode in [WorkerType.MON_MITM, WorkerType.IV_MITM]
+                    and self._gmo_contains_wild_mons_closeby(latest_proto_data))
+                    or (mode not in [WorkerType.MON_MITM, WorkerType.IV_MITM]
+                        and self._gmo_cells_contain_multiple_of_key(latest_proto_data, "forts"))):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO
             else:
@@ -158,7 +158,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                     logger.debug("Distance to mon around considered to be too far away to await encounter")
                     continue
                 else:
-                    logger.debug("Mon at {}, {} at distance {}", lat, lon, distance_to_mon)
+                    logger.debug2("Mon at {}, {} at distance {}", lat, lon, distance_to_mon)
                     return True
         return False
 
