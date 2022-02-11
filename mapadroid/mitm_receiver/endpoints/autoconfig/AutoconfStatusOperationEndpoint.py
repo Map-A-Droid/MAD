@@ -28,8 +28,6 @@ def validate_session(func) -> Any:
 
             if not autoconfig_registration:
                 raise web.HTTPNotFound()
-            # elif autoconfig_registration.status != 1:
-            #    raise web.HTTPConflict()
             return await func(self, *args, **kwargs)
         except (TypeError, ValueError):
             raise web.HTTPNotFound()
