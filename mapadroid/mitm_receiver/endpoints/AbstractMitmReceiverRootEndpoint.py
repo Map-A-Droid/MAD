@@ -2,6 +2,7 @@ import asyncio
 import json
 import socket
 from abc import ABC
+from functools import wraps
 from typing import Any, Optional, Dict, Union, Tuple
 
 from aiohttp import web
@@ -13,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogsHelper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
@@ -24,6 +24,26 @@ from mapadroid.utils.apk_enums import APKArch, APKType, APKPackage
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.updater import DeviceUpdater
+
+
+def validate_accepted(func) -> Any:
+    @wraps(func)
+    async def decorated(self: AbstractMitmReceiverRootEndpoint, *args, **kwargs):
+        try:
+            session_id: int = self.request.match_info.get('session_id')
+            session_id = int(session_id)
+            autoconfig_registration: Optional[AutoconfigRegistration] = await AutoconfigRegistrationHelper \
+                .get_by_session_id(self._session, self._get_instance_id(), session_id)
+
+            if not autoconfig_registration:
+                raise web.HTTPNotFound()
+            # elif autoconfig_registration.status != 1:
+            #    raise web.HTTPConflict()
+            return await func(self, *args, **kwargs)
+        except (TypeError, ValueError):
+            raise web.HTTPNotFound()
+
+    return decorated
 
 
 class AbstractMitmReceiverRootEndpoint(web.View, ABC):
@@ -231,6 +251,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
             self._save(autoconf)
         # TODO Commit?
 
+    @validate_accepted
     async def autoconfig_status(self) -> web.Response:
         session_id: int = self.request.match_info.get('session_id')
         await AutoconfigRegistrationHelper.update_ip(self._session, self._get_instance_id(), session_id,

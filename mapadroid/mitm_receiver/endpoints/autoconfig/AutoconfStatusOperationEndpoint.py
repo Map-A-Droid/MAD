@@ -11,7 +11,8 @@ from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrat
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
+from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint, \
+    validate_accepted
 from mapadroid.utils.PDConfig import PDConfig
 from mapadroid.utils.RGCConfig import RGCConfig
 
@@ -53,6 +54,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
         }
         return log_data, operation
 
+    @validate_session
     async def get(self):
         log_data, operation = await self.preprocess()
         if operation == 'status':
@@ -84,7 +86,7 @@ class AutoconfStatusOperationEndpoint(AbstractMitmReceiverRootEndpoint):
             return await self._autoconfig_complete()
         raise web.HTTPNotFound()
 
-    @validate_session
+    @validate_accepted
     async def _autoconfig_get_config(self):
         session_id: int = self.request.match_info.get('session_id')
         operation: Optional[str] = self.request.match_info.get('operation')
