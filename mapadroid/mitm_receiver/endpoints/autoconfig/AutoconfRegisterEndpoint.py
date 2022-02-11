@@ -31,4 +31,4 @@ class AutoconfRegisterEndpoint(AbstractMitmReceiverRootEndpoint):
         }
         await self.autoconfig_log(**log_data)
         self._commit_trigger = True
-        return self._json_response(data=autoconfig_registration, status=201)
+        return self._json_response(text=str(autoconfig_registration.session_id), status=201)
