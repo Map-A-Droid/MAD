@@ -21,7 +21,7 @@ class DbWebhookReader:
             "SELECT raid.gym_id, raid.level, raid.spawn, raid.start, raid.end, raid.pokemon_id, "
             "raid.cp, raid.move_1, raid.move_2, raid.last_scanned, raid.form, raid.is_exclusive, raid.gender, "
             "raid.costume, raid.evolution, gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
-            "gym.team_id, weather_boosted_condition, gym.is_ex_raid_eligible "
+            "gym.team_id, gym.weather_boosted_condition, gym.is_ex_raid_eligible "
             "FROM raid "
             "LEFT JOIN gymdetails ON gymdetails.gym_id = raid.gym_id "
             "LEFT JOIN gym ON gym.gym_id = raid.gym_id "

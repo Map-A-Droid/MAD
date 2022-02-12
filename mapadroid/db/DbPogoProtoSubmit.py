@@ -746,15 +746,15 @@ class DbPogoProtoSubmit:
 
         query_gym = (
             "INSERT INTO gym (gym_id, team_id, guard_pokemon_id, slots_available, enabled, latitude, longitude, "
-            "total_cp, is_in_battle, last_modified, last_scanned, is_ex_raid_eligible, is_ar_scan_eligible) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "total_cp, is_in_battle, last_modified, last_scanned, is_ex_raid_eligible, is_ar_scan_eligible, "
+            "weather_boosted_condition) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE "
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
             "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible),"
-            "is_ar_scan_eligible=VALUES(is_ar_scan_eligible),"
-            "is_in_battle=VALUES(is_in_battle)"
+            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible), is_ar_scan_eligible=VALUES(is_ar_scan_eligible), "
+            "is_in_battle=VALUES(is_in_battle), weather_boosted_condition=VALUES(weather_boosted_condition)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
@@ -778,6 +778,15 @@ class DbPogoProtoSubmit:
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
                     is_ar_scan_eligible = gym["is_ar_scan_eligible"]
                     is_in_battle = gym['gym_details']['is_in_battle']
+                    s2_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude)
+                    sql = "SELECT `gameplay_weather` " \
+                        "FROM weather " \
+                        "WHERE s2_cell_id = {}".format(s2_cell_id)
+                    found = self._db_exec.execute(sql)
+                    if len(found) == 1:
+                        weather_id = found[0][0]
+                    else:
+                        weather_id = 0  # unknown
 
                     cache_key = "gym{}{}".format(gymid, last_modified_ts)
                     if cache.exists(cache_key):
@@ -793,7 +802,8 @@ class DbPogoProtoSubmit:
                             last_modified,  # last_modified
                             now,  # last_scanned
                             is_ex_raid_eligible,
-                            is_ar_scan_eligible
+                            is_ar_scan_eligible,
+                            weather_id  # weather_boosted_condition
                         )
                     )
 
