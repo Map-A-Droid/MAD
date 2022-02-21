@@ -16,6 +16,20 @@ function bulk_patch(uri, patch_data) {
       async: false
   });
 }
+function pause_toggle(uri, data) {
+  rpc_call = {
+    'call': 'device_state',
+    'args': {
+      'active': data
+    }
+  }
+  $.ajax({
+    url : uri,
+    contentType : 'application/json-rpc',
+    data: JSON.stringify(rpc_call),
+    type : 'POST'
+  });
+}
 function flush_level(uri, data) {
   rpc_call = {
     'call': 'flush_level'
@@ -54,6 +68,12 @@ $(document).ready(function () {
           data = {"walker": selected_uri};
         } else if(selected_uri.indexOf('pool') > 0) {
           data = {"pool": selected_uri};
+        } else if(selected_uri === 'unpause') {
+          operation = pause_toggle;
+          data = 1;
+        } else if(selected_uri === 'pause') {
+          operation = pause_toggle;
+          data = 0;
         } else {
           operation = flush_level;
         }
@@ -211,6 +231,8 @@ $(document).ready(function () {
       {% for pool_id, pool in pools.items() %}
        <option value="{{ url_for('api_devicepool') + '/'+ pool_id|string }}">Set devicepool to {{ pool.devicepool }}</option>
       {% endfor %}
+      <option value='pause'>Pause</option>
+      <option value='unpause'>Unpause</option>
       <option value='flush_level'>Clear levelup data</option>
     </select>
   </div>

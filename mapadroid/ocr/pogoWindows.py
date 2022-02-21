@@ -55,7 +55,7 @@ class PogoWindows:
         self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
                                       'found.', 'gefunden.', 'Signal', 'geortet', 'detect', '(12)']
         self._ScreenType[23]: list = ['CLUB', 'KIDS']
-        self._ScreenType[25]: list = ['SIGNOUT', 'SIGN', 'ABMELDEN']
+        self._ScreenType[25]: list = ['SIGNOUT', 'SIGN', 'ABMELDEN', '_DECONNECTER']
 
     def __read_circle_count(self, filename, identifier, ratio, communicator, xcord=False, crop=False,
                             click=False,

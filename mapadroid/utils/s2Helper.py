@@ -199,3 +199,7 @@ class S2Helper:
         coverer.max_level = level
         cells = coverer.get_covering(region)
         return cells
+
+    @staticmethod
+    def get_cell_level(cell_id):
+        return s2sphere.Cell(s2sphere.CellId(cell_id)).level()

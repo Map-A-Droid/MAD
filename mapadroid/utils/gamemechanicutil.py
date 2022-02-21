@@ -1,5 +1,6 @@
 import time
 from datetime import datetime, timedelta
+from typing import Dict, Tuple
 
 
 def calculate_mon_level(cp_multiplier):
@@ -250,26 +251,44 @@ def form_mapper(mon_id, form_id):
     return mon_form
 
 
-def is_mon_ditto(logger, pokemon_data):
+def is_mon_ditto(logger, pokemon_data: Dict) -> Tuple[int, int, int, int, int]:
+    """
+    Handle the ditto detection before saving mon
+    :param logger: log helper
+    :param pokemon_data: encounter data
+    :return: a tuple with 5 values: (mon_id, gender, move_1, move_2, form
+    """
+
+    pokemon_display = pokemon_data.get("display", {})
+    mon_id = pokemon_data.get("id")
+    # ditto detector
     logger.debug3('Determining if mon is a ditto')
     logger.debug4(pokemon_data)
-    potential_dittos = [92, 96, 223, 216, 316, 322, 434, 557, 590]
     weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
     valid_atk = pokemon_data.get("individual_attack") < 4
     valid_def = pokemon_data.get("individual_defense") < 4
     valid_sta = pokemon_data.get("individual_stamina") < 4
     cp_multi = pokemon_data.get("cp_multiplier")
     valid_boost_attrs = valid_atk or valid_def or valid_sta or cp_multi < .3
-    if pokemon_data.get("id") not in potential_dittos:
-        return False
-    elif weather_boost is None:
-        return False
-    elif weather_boost > 0 and valid_boost_attrs:
-        return True
-    elif weather_boost == 0 and cp_multi > 0.733:
-        return True
-    else:
-        return False
+    if weather_boost is not None:
+        if weather_boost > 0 and valid_boost_attrs:
+            # Weather boosted mon, but the iv is lower than threshold
+            mon_id = 132
+        elif weather_boost == 0 and cp_multi > 0.733:
+            # Not weather boosted, but the level is > 30
+            mon_id = 132
+
+    if mon_id == 132:
+        # mon must be a ditto :D
+        # we return ditto with hardcoded moves
+        return 132, 3, 242, 133, 0
+
+    # Not a ditto
+    return (mon_id,
+            pokemon_display.get("gender_value", None),
+            pokemon_data.get("move_1"),
+            pokemon_data.get("move_2"),
+            pokemon_display.get("form_value", None))
 
 
 def calculate_cooldown(distance, speed):
