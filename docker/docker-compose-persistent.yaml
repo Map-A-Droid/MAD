@@ -27,7 +27,7 @@ services:
     env_file:
       - .dev.env
     tty: true
-    command: ["/usr/local/bin/python3", "start.py"]
+    command: ["python3", "start.py"]
 
   mariadb:
     image: mariadb:10.3
