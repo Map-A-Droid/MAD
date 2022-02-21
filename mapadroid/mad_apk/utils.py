@@ -323,9 +323,10 @@ def supported_pogo_version(architecture: APKArch, version: str, token: str) -> b
     else:
         bits = '64'
     # Use the MADdev endpoint for supported
-    supported_versions = get_backend_versions(token)
-    if version in supported_versions[bits]:
-        return True
+    if token:
+        supported_versions = get_backend_versions(token)
+        if version in supported_versions[bits]:
+            return True
     # If the version is not supported, check the local
     # file for supported versions
     supported_versions = get_local_versions()

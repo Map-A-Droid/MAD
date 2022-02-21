@@ -151,6 +151,10 @@
     "prototext": "QUEST_USE_INCENSE",
     "text": "Verwende einen Rauch"
   },
+  "42": {
+    "prototext": "QUEST_WALK_BUDDY",
+    "text": "Laufe {0} km mit deinem Kumpel"
+  },
   "46": {
     "prototext": "GEOTARGETED_AR_SCAN",
     "text": "Pok\u00e9stop scannen"

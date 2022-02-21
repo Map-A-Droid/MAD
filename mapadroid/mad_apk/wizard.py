@@ -41,6 +41,10 @@ class InvalidFile(WizardError):
     pass
 
 
+class SearchError(WizardError):
+    pass
+
+
 class APKWizard(object):
     """ The wizard will allow for simplified APK management for the required packages
 
@@ -69,8 +73,12 @@ class APKWizard(object):
 
     def apk_all_search(self) -> NoReturn:
         "Search for updates for any required package"
-        self.find_latest_pogo(APKArch.armeabi_v7a)
-        self.find_latest_pogo(APKArch.arm64_v8a)
+        try:
+            self.find_latest_pogo(APKArch.armeabi_v7a)
+            self.find_latest_pogo(APKArch.arm64_v8a)
+        except SearchError:
+            # The error has already been logged as a warning
+            pass
         self.find_latest_rgc(APKArch.noarch)
         self.find_latest_pd(APKArch.noarch)
 
@@ -110,7 +118,11 @@ class APKWizard(object):
             architecture (APKArch): Architecture of the package to search
         """
         if package == APKType.pogo:
-            self.find_latest_pogo(architecture)
+            try:
+                self.find_latest_pogo(architecture)
+            except SearchError:
+                # The error has already been logged as a warning
+                pass
         elif package == APKType.rgc:
             self.find_latest_rgc(architecture)
         elif package == APKType.pd:
@@ -126,7 +138,17 @@ class APKWizard(object):
         Args:
             architecture (APKArch): Architecture of the package to download
         """
-        latest_pogo_info = self.find_latest_pogo(architecture)
+        if not self.api_token:
+            logger.warning(
+                "The MADdev API token (maddev_api_token) has not been configured in config.ini."
+                " Please configure this to use the wizard for downloading PokemonGo."
+            )
+            return None
+        try:
+            latest_pogo_info = self.find_latest_pogo(architecture)
+        except SearchError:
+            # The error has already been logged as a warning
+            return None
         if latest_pogo_info[0] is None:
             logger.warning('Unable to find latest data for PoGo. Try again later')
             return None
@@ -479,7 +501,7 @@ def get_available_versions() -> Dict[str, PackageVersion]:
             "Unable to query APKMirror. There is probably a recaptcha that needs to be solved and that "
             "functionality is not currently implemented. Please manually download and upload to the wizard"
         )
-        return {}
+        raise SearchError
     else:
         logger.info("Successfully queried APKMirror to get the latest releases")
         return available["Pokemon GO"]

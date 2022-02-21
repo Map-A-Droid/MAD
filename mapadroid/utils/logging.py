@@ -295,7 +295,14 @@ class InterceptHandler(logging.Handler):
 
     def emit(self, record):
         with logger.contextualize(identifier=self.log_identifier):
-            logger.opt(depth=6, exception=record.exc_info).log("DEBUG5", record.getMessage())
+            level = record.levelno
+            # Downgrade anything INFO and lower to DEBUG5 to match legacy behavior.
+            # Werkzeug is a bit too chatty at INFO level for it to be useful.
+            if level <= logging.INFO:
+                level = "DEBUG5"
+            else:
+                level = logging.getLevelName(level)
+            logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())
 
 
 # this is being used to change log level for gevent/Flask/Werkzeug

@@ -3,13 +3,11 @@
 # Please ensure to leave a space after the colon if a value is needed ("example-setting" "example-setting-with: value")
 # When your configuration is done, rename this file by removing the ".example" extension
 # A different config-files can be included directly in processes by "--config" or "-cf" and path
-# Value without # are needed for this script
 
 # MySQL Settings
 ######################
 # You really need to fill those. Most of the times you want to have frontend (RM/PMSF) already installed before running MAD.
 # You need to have MySQL Database and User/Grants already created!
-# If you just need clean schema take a look at scripts/SQL/rocketmap.sql
 #dbip:                      # IP or hostname of MySql Server
 #dbport:                    # Port of the database (Default: 3306)
 #dbusername:                # Username for MySQL login
@@ -69,7 +67,6 @@
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
 #upload_path:                # Path for uploaded Files via madmin and for device installation. (Default: upload/)
 #file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
-#mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
 
 
 # other settings
@@ -80,15 +77,15 @@
 #language:                   # Language for several things like quests or mon names in the IV list (default:en - others: de, fr )
 #no_quest_titles             # Do not fetch quest title resources from pokeminers. Will instead use internal parsing
 
+
 # MADmin
 ######################
+#madmin_user:                # PLEASE SET. MADmin username for login
+#madmin_password:            # PLEASE SET. MADmin password for login
 #disable_madmin              # Disable Madmin on the instance
 #madmin_base_path:           # Base path for madmin
 #madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
 #madmin_port:                # Highly recommended to change. MADmin web port (Default: 5000)
-#madmin_user:                # MADmin username for login
-#madmin_password:            # MADmin password for login
-#madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
 #madmin_time:                # MADmin clock format (12/24) (Default: 24)
 #madmin_noresponsive         # MADmin deactivate responsive tables
 #quests_public               # Enables MADmin /quests_pub, /get_quests, and pushassets endpoints for public quests overview
@@ -153,13 +150,11 @@
 #no_log_colors               # Disable colored logs.
 
 
-# MADAPKs
+# MADAPKs wizard
 ######################
+#maddev_api_token:          # Token used by the wizard to query supported versions. You can find it as 'API token' on first page after logging into MADdev auth backend (not device/account password).
 #token_dispenser:           # Path to token dispenser config (MAD-provided)
 #token_dispenser_user:      # Path to token dispenser config (User-provided)
-#gmail_user:                # (Deprecated) Email address if not using a token dispenser
-#gmail_passwd:              # (Deprecated) Google Mail Password for interacting with the Google Play Store.  Must be an app password or 2fa will be triggered (this should be enabled on your account anyways')
-#maddev_api_token:          # Token used by the wizard to query supported versions
 
 
 # Auto-Config
