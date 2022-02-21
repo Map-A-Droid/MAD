@@ -92,6 +92,8 @@ class WorkerQuests(MITMBase):
         self._latest_quest = 0
         self._clear_box_failcount = 0
         self._spinnable_data_failcount = 0
+        self._open_pokestop_failcount = 0
+        self._got_items_failcount = 0
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -624,8 +626,22 @@ class WorkerQuests(MITMBase):
                     self._check_pogo_close(takescreen=True)
 
             to += 1
-            if to > 2:
-                self.logger.warning("Giving up on this stop after 3 failures in open_pokestop loop")
+
+        if to > 2:
+            self._open_pokestop_failcount += 1
+            self.logger.warning(f"Giving up on this stop after 3 failures in open_pokestop loop - failcount is "
+                                f"now {self._open_pokestop_failcount}")
+            if self._open_pokestop_failcount > 2:
+                self.logger.error(f"open_pokestop loop failcount is over 2 ({self._open_pokestop_failcount}) - reboot")
+                self._open_pokestop_failcount = 0
+                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                    # TODO: put in loop, count up for a reboot ;)
+                    raise InternalStopWorkerException
+        else:
+            self.logger.success("Seems like open_pokestop loop was ok - reset failcount of "
+                                f"{self._open_pokestop_failcount} to 0")
+            self._open_pokestop_failcount = 0
+
         return type_received
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
@@ -673,6 +689,7 @@ class WorkerQuests(MITMBase):
                     self.clear_thread_task = ClearThreadTasks.QUEST
                     break
                 elif data_received == FortSearchResultTypes.QUEST:
+                    self._got_items_failcount = 0
                     self.logger.info('Received new Quest')
                     self._latest_quest = math.floor(time.time())
 
@@ -710,15 +727,24 @@ class WorkerQuests(MITMBase):
                     return
             elif (type_received == LatestReceivedType.FORT_SEARCH_RESULT
                     and data_received == FortSearchResultTypes.FULL):
-                self.logger.warning("Failed getting quest but got items - quest box is probably full. Starting cleanup "
-                                    "routine.")
-                reached_main_menu = self._check_pogo_main_screen(10, True)
-                if not reached_main_menu:
+                self._got_items_failcount += 1
+                if self._got_items_failcount < 3:
+                    self.logger.warning(f"Failed getting quest but got items ({self._got_items_failcount}) - quest "
+                                        "box is probably full. Starting cleanup routine.")
+                    reached_main_menu = self._check_pogo_main_screen(10, True)
+                    if not reached_main_menu:
+                        if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                            # TODO: put in loop, count up for a reboot ;)
+                            raise InternalStopWorkerException
+                    self.clear_thread_task = ClearThreadTasks.QUEST
+                    self._clear_quest_counter = 0
+                else:
+                    self.logger.warning(f"Failed getting quest but got items {self._got_items_failcount} times in a "
+                                        "row. Restart pogo ...")
+                    self._got_items_failcount = 0
                     if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
-                self.clear_thread_task = ClearThreadTasks.QUEST
-                self._clear_quest_counter = 0
                 break
             else:
                 if data_received == LatestReceivedType.MON:
