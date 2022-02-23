@@ -159,8 +159,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         logger.debug("Waiting for data ({}) after {} with timeout of {}s.",
                      proto_to_wait_for, DatetimeWrapper.fromtimestamp(timestamp), timeout)
         while not self._worker_state.stop_worker_event.is_set() \
-                and (int(timestamp + timeout) >= int(time.time()) or timeout == 0) \
-                and last_time_received < timestamp:
+                and (int(timestamp + timeout) >= int(time.time()) or timeout == 0):
             # Not checking the timestamp against the proto awaited in here since custom handling may be adequate.
             # E.g. Questscan may yield errors like clicking mons instead of stops - which we need to detect as well
             data, latest, type_of_data_returned = await self._request_data(data, key, proto_to_wait_for, timestamp,
