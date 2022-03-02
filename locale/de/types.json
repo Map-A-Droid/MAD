@@ -143,10 +143,6 @@
     "prototext": "QUEST_BUDDY_YATTA",
     "text": ""
   },
-  "43": {
-    "prototext": "QUEST_MEGA_EVOLVE",
-    "text": "Mega Entwickle {0} Pokemon"
-  },
   "39": {
     "prototext": "QUEST_USE_INCENSE",
     "text": "Verwende einen Rauch"
@@ -155,6 +151,10 @@
     "prototext": "QUEST_WALK_BUDDY",
     "text": "Laufe {0} km mit deinem Kumpel"
   },
+  "43": {
+    "prototext": "QUEST_MEGA_EVOLVE",
+    "text": "Mega Entwickle {0} Pokemon"
+  },
   "46": {
     "prototext": "GEOTARGETED_AR_SCAN",
     "text": "Pok\u00e9stop scannen"
@@ -162,5 +162,9 @@
   "57": {
     "prototext": "QUEST_TAKE_WILD_SNAPSHOT",
     "text": "Mache {0} Schnappschüsse von wilden Pokémon"
+  },
+  "59": {
+    "prototext": "QUEST_OPEN_GIFT",
+    "text": "Öffne {0} Geschenke"
   }
 }
