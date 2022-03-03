@@ -752,7 +752,9 @@ class DbPogoProtoSubmit:
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
             "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible), is_ar_scan_eligible=VALUES(is_ar_scan_eligible), is_in_battle=VALUES(is_in_battle)"
+            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible),"
+            "is_ar_scan_eligible=VALUES(is_ar_scan_eligible),"
+            "is_in_battle=VALUES(is_in_battle)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
