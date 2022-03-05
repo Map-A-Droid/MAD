@@ -454,7 +454,8 @@ class WordToScreenMatching(object):
 
         self._logger.info("_handle_ggl_consent_screen: Click accept button")
         self._nextscreen = ScreenType.UNDEFINED
-        self._communicator.click(520, 1185)
+        self._communicator.touch_and_hold(int(360), int(1080), int(360), int(500))
+        self._communicator.click(480, 1080)
         time.sleep(10)
         return ScreenType.UNDEFINED
 
