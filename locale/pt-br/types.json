@@ -1,0 +1,174 @@
+{
+  "0": {
+    "prototext": "QUEST_UNKNOWN_TYPE",
+    "text": "Tipo de missão desconhecida"
+  },
+  "1": {
+    "prototext": "QUEST_FIRST_CATCH_OF_THE_DAY",
+    "text": "Primeira captura do dia"
+  },
+  "2": {
+    "prototext": "QUEST_FIRST_POKESTOP_OF_THE_DAY",
+    "text": "Primeiro poképarada do dia"
+  },
+  "3": {
+    "prototext": "QUEST_MULTI_PART",
+    "text": "Multi parte"
+  },
+  "4": {
+    "prototext": "QUEST_CATCH_POKEMON",
+    "text": "Pegar {0} pokémon"
+  },
+  "5": {
+    "prototext": "QUEST_SPIN_POKESTOP",
+    "text": "Girar {0} Poképaradas ou Ginásios"
+  },
+  "6": {
+    "prototext": "QUEST_HATCH_EGG",
+    "text": "Chocar {0} ovos"
+  },
+  "7": {
+    "prototext": "QUEST_COMPLETE_GYM_BATTLE",
+    "text": "Batalhar em um ginásio {0} vezes"
+  },
+  "8": {
+    "prototext": "QUEST_COMPLETE_RAID_BATTLE",
+    "text": "Batalhar em {0} Reides"
+  },
+  "9": {
+    "prototext": "QUEST_COMPLETE_QUEST",
+    "text": "Completar {0} missões"
+  },
+  "10": {
+    "prototext": "QUEST_TRANSFER_POKEMON",
+    "text": "Transferir {0} pokémon"
+  },
+  "11": {
+    "prototext": "QUEST_FAVORITE_POKEMON",
+    "text": "Favoritar {0} pokémon"
+  },
+  "12": {
+    "prototext": "QUEST_AUTOCOMPLETE",
+    "text": "Autocompletar"
+  },
+  "13": {
+    "prototext": "QUEST_USE_BERRY_IN_ENCOUNTER",
+    "text": "Pegar {0} pokémon com doce(s)"
+  },
+  "14": {
+    "prototext": "QUEST_UPGRADE_POKEMON",
+    "text": "Fortalecer seu Pokémon {0} vezes"
+  },
+  "15": {
+    "prototext": "QUEST_EVOLVE_POKEMON",
+    "text": "Evoluir {0} Pokémon"
+  },
+  "16": {
+    "prototext": "QUEST_LAND_TROW",
+    "text": "Acertar {0} arremesso(s)"
+  },
+  "17": {
+    "prototext": "QUEST_GET_BUDDY_CANDY",
+    "text": "Ganhar {0} doces caminhando com seu companheiro"
+  },
+  "18": {
+    "prototext": "QUEST_BADGE_RANK",
+    "text": "Coletar {0} medalha(s)"
+  },
+  "19": {
+    "prototext": "QUEST_PLAYER_LEVEL",
+    "text": "Chegar no level {0}"
+  },
+  "20": {
+    "prototext": "QUEST_JOIN_RAID",
+    "text": "Entrar {0} reide(s)"
+  },
+  "21": {
+    "prototext": "QUEST_COMPLETE_BATTLE",
+    "text": "Completar {0} batalhas de reide(s)"
+  },
+  "22": {
+    "prototext": "QUEST_ADD_FRIEND",
+    "text": "Fazer {0} amigos"
+  },
+  "23": {
+    "prototext": "QUEST_TRADE_POKEMON",
+    "text": "Trocar {0} pokémon"
+  },
+  "24": {
+    "prototext": "QUEST_SEND_GIFT",
+    "text": "Enviar {0} presentes para amigos"
+  },
+  "25": {
+    "prototext": "QUEST_EVOLVE_INTO_POKEMON",
+    "text": "Evoluir {0} pokémon para"
+  },
+  "27": {
+    "prototext": "QUEST_COMPLETE_COMBAT",
+    "text": "Completar {0} Batalha PVP"
+  },
+  "28": {
+    "prototext": "QUEST_TAKE_SNAPSHOT",
+    "text": "Tirar {0} fotos"
+  },
+  "29": {
+    "prototext": "QUEST_BATTLE_TEAM_ROCKET",
+    "text": "{verb} {0} membros da Equipe GO Rocket"
+  },
+  "30": {
+    "prototext": "QUEST_PURIFY_POKEMON",
+    "text": "Purificar {0} Pokémon"
+  },
+  "33": {
+    "prototext": "QUEST_BUDDY_FEED",
+    "text": "Dar {0} guloseimas ao seu companheiro"
+  },
+  "34": {
+    "prototext": "QUEST_BUDDY_EARN_AFFECTION_POINTS",
+    "text": "Ganhar {0} corações com seu companheiro"
+  },
+  "35": {
+    "prototext": "QUEST_BUDDY_PET",
+    "text": "Brincar com o seu companheiro"
+  },
+  "36": {
+    "prototext": "QUEST_BUDDY_LEVEL",
+    "text": "Tornar-se {level} companheiro de 1 Pokémon"
+  },
+  "37": {
+    "prototext": "QUEST_BUDDY_WALK",
+    "text": ""
+  },
+  "38": {
+    "prototext": "QUEST_BUDDY_YATTA",
+    "text": ""
+  },
+  "39": {
+    "prototext": "QUEST_USE_INCENSE",
+    "text": "Usar 1 Incenso"
+  },
+  "42": {
+    "prototext": "QUEST_WALK_BUDDY",
+    "text": "Caminhar {0} km com seu companheiro"
+  },
+  "43": {
+    "prototext": "QUEST_MEGA_EVOLVE",
+    "text": "Mega Evolua {0} Pokémon"
+  },
+  "46": {
+    "prototext": "GEOTARGETED_AR_SCAN",
+    "text": "Escanear Poképarada"
+  },
+  "56": {
+    "prototext": "QUEST_EARN_FORT_POWER_UP_POINTS",
+    "text": "Ganhar {0} pontos energizando um Pokéstop or Ginásio"
+  },
+  "57": {
+    "prototext": "QUEST_TAKE_WILD_SNAPSHOT",
+    "text": "Tirar {0} fotos de Pokémon selvagem"
+  },
+  "59": {
+    "prototext": "QUEST_OPEN_GIFT",
+    "text": "Abrir {0} presentes"
+  }
+}

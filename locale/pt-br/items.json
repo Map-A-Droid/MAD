@@ -1,0 +1,278 @@
+{
+  "0": {
+    "protoname": "ITEM_UNKNOWN",
+    "name": "ITEM_UNKNOWN"
+  },
+  "1": {
+    "protoname": "ITEM_POKE_BALL",
+    "name": "Poké bola"
+  },
+  "2": {
+    "protoname": "ITEM_GREAT_BALL",
+    "name": "Grande bola"
+  },
+  "3": {
+    "protoname": "ITEM_ULTRA_BALL",
+    "name": "Ultra bola"
+  },
+  "4": {
+    "protoname": "ITEM_MASTER_BALL",
+    "name": "Master bola"
+  },
+  "5": {
+    "protoname": "ITEM_PREMIER_BALL",
+    "name": "ITEM_PREMIER_BALL"
+  },
+  "101": {
+    "protoname": "ITEM_POTION",
+    "name": "Poção"
+  },
+  "102": {
+    "protoname": "ITEM_SUPER_POTION",
+    "name": "Superpoção"
+  },
+  "103": {
+    "protoname": "ITEM_HYPER_POTION",
+    "name": "Hiperpoção"
+  },
+  "104": {
+    "protoname": "ITEM_MAX_POTION",
+    "name": "Poção Máxima"
+  },
+  "201": {
+    "protoname": "ITEM_REVIVE",
+    "name": "Reviver"
+  },
+  "202": {
+    "protoname": "ITEM_MAX_REVIVE",
+    "name": "Máximo Reviver"
+  },
+  "301": {
+    "protoname": "ITEM_LUCKY_EGG",
+    "name": "Ovo da Sorte"
+  },
+  "401": {
+    "protoname": "ITEM_INCENSE_ORDINARY",
+    "name": "Incenso"
+  },
+  "402": {
+    "protoname": "ITEM_INCENSE_SPICY",
+    "name": "ITEM_INCENSE_SPICY"
+  },
+  "403": {
+    "protoname": "ITEM_INCENSE_COOL",
+    "name":  "ITEM_INCENSE_COOL"
+  },
+  "404": {
+    "protoname": "ITEM_INCENSE_FLORAL",
+    "name": "ITEM_INCENSE_FLORAL"
+  },
+  "405": {
+    "protoname": "ITEM_INCENSE_BELUGA_BOX",
+    "name": "Caixa Misteriosa"
+  },
+  "501": {
+    "protoname": "ITEM_TROY_DISK",
+    "name": "Módulo Atrair"
+  },
+  "502": {
+    "protoname": "ITEM_TROY_DISK_GLACIAL",
+    "name": "Mód. Atrair Glacial"
+  },
+  "503": {
+    "protoname": "ITEM_TROY_DISK_MOSSY",
+    "name": "Mód. Atrair Musgoso"
+  },
+  "504": {
+    "protoname": "ITEM_TROY_DISK_MAGNETIC",
+    "name": "Mód. Atrair Magnético"
+  },
+  "505": {
+    "protoname": "ITEM_TROY_DISK_RAINY",
+    "name": "Módulo Atrair Chuvoso"
+  },
+  "602": {
+    "protoname": "ITEM_X_ATTACK",
+    "name": "X Ataque"
+  },
+  "603": {
+    "protoname": "ITEM_X_DEFENSE",
+    "name": "X Defesa"
+  },
+  "604": {
+    "protoname": "ITEM_X_MIRACLE",
+    "name": "UNDEFINED"
+  },
+  "701": {
+    "protoname": "ITEM_RAZZ_BERRY",
+    "name": "Fruta Frambo"
+  },
+  "702": {
+    "protoname": "ITEM_BLUK_BERRY",
+    "name": "Fruta Bluk"
+  },
+  "703": {
+    "protoname": "ITEM_NANAB_BERRY",
+    "name": "Fruta Anaba"
+  },
+  "704": {
+    "protoname": "ITEM_WEPAR_BERRY",
+    "name": "Fruta Wepar"
+  },
+  "705": {
+    "protoname": "ITEM_PINAP_BERRY",
+    "name": "Fruta Caxí"
+  },
+  "706": {
+    "protoname": "ITEM_GOLDEN_RAZZ_BERRY",
+    "name": "Fruta Frambo dourada"
+  },
+  "707": {
+    "protoname": "ITEM_GOLDEN_NANAB_BERRY",
+    "name": "ITEM_GOLDEN_NANAB_BERRY"
+  },
+  "708": {
+    "protoname": "ITEM_GOLDEN_PINAP_BERRY",
+    "name": "Fruta Caxí prateada"
+  },
+  "709": {
+    "protoname": "ITEM_POFFIN",
+    "name": "Poffin"
+  },
+  "801": {
+    "protoname": "ITEM_SPECIAL_CAMERA",
+    "name": "Câmera"
+  },
+  "802": {
+    "protoname": "ITEM_STICKER_INVENTORY",
+    "name": "Adesivos"
+  },
+  "901": {
+    "protoname": "ITEM_INCUBATOR_BASIC_UNLIMITED",
+    "name": "Imcubadora de Ovo Infinita"
+  },
+  "902": {
+    "protoname": "ITEM_INCUBATOR_BASIC",
+    "name": "Incubadora de Ovo"
+  },
+  "903": {
+    "protoname": "ITEM_INCUBATOR_SUPER",
+    "name": "Superincubadora"
+  },
+  "1001": {
+    "protoname": "ITEM_POKEMON_STORAGE_UPGRADE",
+    "name": "Upgrade do estoque de Pokémon"
+  },
+  "1002": {
+    "protoname": "ITEM_ITEM_STORAGE_UPGRADE",
+    "name": "Bolsa"
+  },
+  "1101": {
+    "protoname": "ITEM_SUN_STONE",
+    "name": "Pedra Solar"
+  },
+  "1102": {
+    "protoname": "ITEM_KINGS_ROCK",
+    "name": "Pedra do Rei"
+  },
+  "1103": {
+    "protoname": "ITEM_METAL_COAT",
+    "name": "Revestimento Metálico"
+  },
+  "1104": {
+    "protoname": "ITEM_DRAGON_SCALE",
+    "name": "Escama de Dragão"
+  },
+  "1105": {
+    "protoname": "ITEM_UP_GRADE",
+    "name": "Melhora"
+  },
+  "1106": {
+    "protoname": "ITEM_GEN4_EVOLUTION_STONE",
+    "name": "Pedra de Sinnoh"
+  },
+  "1107": {
+    "protoname": "ITEM_GEN5_EVOLUTION_STONE",
+    "name": "Pedra de Unova"
+  },
+  "1201": {
+    "protoname": "ITEM_MOVE_REROLL_FAST_ATTACK",
+    "name": "MT ataque ágil"
+  },
+  "1202": {
+    "protoname": "ITEM_MOVE_REROLL_SPECIAL_ATTACK",
+    "name": "MT ataque carregado"
+  },
+  "1203": {
+    "protoname": "ITEM_MOVE_REROLL_ELITE_FAST_ATTACK",
+    "name": "MT elite de ataque ágil"
+  },
+  "1204": {
+    "protoname": "ITEM_MOVE_REROLL_ELITE_SPECIAL_ATTACK",
+    "name": "MT elite de ataque carregado"
+  },
+  "1301": {
+    "protoname": "ITEM_RARE_CANDY",
+    "name": "Doce Raro"
+  },
+  "1302": {
+    "protoname": "ITEM_XL_RARE_CANDY",
+    "name": "Doce Raro GG"
+  },
+  "1401": {
+    "protoname": "ITEM_FREE_RAID_TICKET",
+    "name": "Passe de Reide"
+  },
+  "1402": {
+    "protoname": "ITEM_PAID_RAID_TICKET",
+    "name": "Passe de Batalha Premium"
+  },
+  "1403": {
+    "protoname": "ITEM_LEGENDARY_RAID_TICKET",
+    "name": "Passe de Reide EX"
+  },
+  "1404": {
+    "protoname": "ITEM_STAR_PIECE",
+    "name": "Pedaço de Estrela"
+  },
+  "1405": {
+    "protoname": "ITEM_FRIEND_GIFT_BOX",
+    "name": "Presente"
+  },
+  "1406": {
+    "protoname": "ITEM_TEAM_CHANGE",
+    "name": "Medalhão de Equipe"
+  },
+  "1407": {
+    "protoname": "ITEM_ROUTE_MAKER",
+    "name": "ITEM_ROUTE_MAKER"
+  },
+  "1408": {
+    "protoname": "ITEM_REMOTE_RAID_TICKET",
+    "name": "Passe de Reide a Distância"
+  },
+  "1501": {
+    "protoname": "ITEM_LEADER_MAP_FRAGMENT",
+    "name": "Componente Misterioso"
+  },
+  "1502": {
+    "protoname": "ITEM_LEADER_MAP",
+    "name": "Radar Rocket"
+  },
+  "1503": {
+    "protoname": "ITEM_GIOVANNI_MAP",
+    "name": "Radar Super Rocket"
+  },
+  "1600": {
+    "protoname": "ITEM_GLOBAL_EVENT_TICKET",
+    "name": "Ticket"
+  },
+  "1601": {
+    "protoname": "ITEM_EVENT_TICKET_PINK",
+    "name": "Ticket"
+  },
+  "1602": {
+    "protoname": "ITEM_EVENT_TICKET_GRAY",
+    "name": "ITEM_EVENT_TICKET_GRAY"
+  }
+}

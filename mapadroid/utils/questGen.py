@@ -12,7 +12,8 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 QUEST_LANGUAGES: Dict[str, str] = {
     'de': 'German',
     'en': 'English',
-    'fr': 'French'
+    'fr': 'French',
+    'pt-br': 'BrazilianPortuguese'
 }
 
 logger = get_logger(LoggerEnums.utils)

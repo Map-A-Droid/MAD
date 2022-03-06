@@ -9,6 +9,7 @@ Go into the locale folder and update the translation files for german and french
 
 > msgmerge --update de/LC_MESSAGES/quest.po quest.pot
 > msgmerge --update fr/LC_MESSAGES/quest.po quest.pot
+> msgmerge --update pt-br/LC_MESSAGES/quest.po quest.pot
 
 Replace quest.pot with the new generated quest.po
 > rm quest.pot
