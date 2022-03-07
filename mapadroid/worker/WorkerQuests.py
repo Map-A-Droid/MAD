@@ -632,10 +632,10 @@ class WorkerQuests(MITMBase):
             self.logger.warning(f"Giving up on this stop after 3 failures in open_pokestop loop - failcount is "
                                 f"now {self._open_pokestop_failcount}")
             if self._open_pokestop_failcount > 2:
-                self.logger.error(f"open_pokestop loop failcount is over 2 ({self._open_pokestop_failcount}) - reboot")
+                self.logger.error(f"open_pokestop loop failcount is over 2 ({self._open_pokestop_failcount}) - "
+                                  "restart pogo")
                 self._open_pokestop_failcount = 0
                 if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
-                    # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
         else:
             self.logger.success("Seems like open_pokestop loop was ok - reset failcount of "
@@ -734,7 +734,6 @@ class WorkerQuests(MITMBase):
                     reached_main_menu = self._check_pogo_main_screen(10, True)
                     if not reached_main_menu:
                         if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
-                            # TODO: put in loop, count up for a reboot ;)
                             raise InternalStopWorkerException
                     self.clear_thread_task = ClearThreadTasks.QUEST
                     self._clear_quest_counter = 0
