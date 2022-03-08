@@ -113,6 +113,9 @@ setup: setup-precommit
 	git config commit.template .gitmessage
 	git config blame.ignoreRevsFile .git-blame-ignore-revs
 
+requirements:
+	"$(MAKE)" shell CMD="pip-compile --upgrade --no-emit-index-url --output-file requirements.txt requirements.in"
+
 up:
 	docker-compose -f ${COMPOSE_FILE_DEV} up --detach
 
