@@ -59,7 +59,7 @@ mode_mapping = {
     },
     "pokestops": {
         "s2_cell_level": 13,
-        "range": 75, # stop interaction radius is 80m
+        "range": 70, # stop interaction radius is 80m
         "range_init": 980,
         "max_count": 1
     },
