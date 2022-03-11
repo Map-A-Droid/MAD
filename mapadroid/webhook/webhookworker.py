@@ -138,6 +138,7 @@ class WebhookWorker:
                     ret.append(entire_payload)
                 except Exception as e:
                     logger.error("Exception occured while generating quest webhook: {}", e)
+                    logger.exception(e)
 
         return ret
 
