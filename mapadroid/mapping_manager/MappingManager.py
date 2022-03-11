@@ -59,9 +59,9 @@ mode_mapping = {
     },
     "pokestops": {
         "s2_cell_level": 13,
-        "range": 0.001,
+        "range": 75, # stop interaction radius is 80m
         "range_init": 980,
-        "max_count": 100000
+        "max_count": 1
     },
     "iv_mitm": {
         "range": 67,
@@ -620,12 +620,12 @@ class MappingManager(AbstractMappingManager):
                                                    include_event_id=include_event_id)
 
                 route_manager.add_coords_list(coords)
-                max_radius = mode_mapping[area.mode]["range"]
-                max_count_in_radius = mode_mapping[area.mode]["max_count"]
                 task: Optional[Task] = None
                 if not getattr(area, "init", False):
                     # TODO: proper usage in asnycio loop
-                    task = loop.create_task(route_manager.initial_calculation(max_radius, max_count_in_radius, 0,
+                    task = loop.create_task(route_manager.initial_calculation(route_manager.get_max_radius(),
+                                            route_manager.get_max_coords_within_radius(),
+                                                                              0,
                                                                               False))
                 else:
                     logger.info("Init mode enabled. Going row-based for {}", area.name)

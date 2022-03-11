@@ -52,29 +52,27 @@ class RouteManagerFactory:
                                              )
         elif area.mode == WorkerType.STOPS.value:
             area: SettingsAreaPokestop = area
-            max_radius_stops = max_radius
             max_coords_within_radius_stops = max_coords_within_radius
-            if area.level and area.enable_clustering:
-                max_radius_stops = 35
+            if area.enable_clustering:
                 max_coords_within_radius_stops = 9999
 
             if area.level and area.route_calc_algorithm == 'routefree':
                 route_manager = RouteManagerLevelingRoutefree(db_wrapper=db_wrapper, area=area, coords=coords,
-                                                              max_radius=max_radius_stops,
+                                                              max_radius=max_radius,
                                                               max_coords_within_radius=max_coords_within_radius_stops,
                                                               geofence_helper=geofence_helper, routecalc=routecalc,
                                                               mon_ids_iv=mon_ids_iv
                                                               )
             elif area.level:
                 route_manager = RouteManagerLeveling(db_wrapper=db_wrapper, area=area, coords=coords,
-                                                     max_radius=max_radius_stops,
+                                                     max_radius=max_radius,
                                                      max_coords_within_radius=max_coords_within_radius_stops,
                                                      geofence_helper=geofence_helper, routecalc=routecalc,
                                                      mon_ids_iv=mon_ids_iv
                                                      )
             else:
                 route_manager = RouteManagerQuests(db_wrapper=db_wrapper, area=area, coords=coords,
-                                                   max_radius=max_radius_stops,
+                                                   max_radius=max_radius,
                                                    max_coords_within_radius=max_coords_within_radius_stops,
                                                    geofence_helper=geofence_helper, routecalc=routecalc,
                                                    mon_ids_iv=mon_ids_iv

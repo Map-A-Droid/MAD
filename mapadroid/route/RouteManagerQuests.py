@@ -8,6 +8,7 @@ from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.collections import Location
+from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import QuestLayer
 
 
@@ -221,8 +222,8 @@ class RouteManagerQuests(RouteManagerBase):
             return True
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', stop)
-        if stop not in self._stoplist and stop not in self._coords_to_be_ignored:
-            logger.info('Already got this Stop')
+        if stop in self._coords_to_be_ignored or not self._is_coord_within_range_of_stoplist(stop):
+            logger.info('Already got this stop or stop is out of range of stops to be scanned')
             return False
         logger.info('Getting new Stop')
         return True
@@ -238,3 +239,17 @@ class RouteManagerQuests(RouteManagerBase):
 
     def get_quest_layer_to_scan(self) -> Optional[int]:
         return self._settings.layer
+
+    def _is_coord_within_range_of_stoplist(self, location: Location) -> bool:
+        if self._max_clustering == 1:
+            return location in self._stoplist
+        elif location in self._stoplist:
+            # Clustering is enabled but the stoplist contains the location to be checked. I.e., the location
+            # only has one stop in range that is to be scanned
+            return True
+        # Clustering is enabled, go through the stoplist one by one and check the range
+        for stop in self._stoplist:
+            if get_distance_of_two_points_in_meters(stop.lat, stop.lng,
+                                                    location.lat, location.lng) < self.get_max_radius():
+                return True
+        return False

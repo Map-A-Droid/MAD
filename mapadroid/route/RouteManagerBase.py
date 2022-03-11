@@ -131,6 +131,9 @@ class RouteManagerBase(ABC):
     def get_max_radius(self):
         return self._max_radius
 
+    def get_max_coords_within_radius(self):
+        return self._max_coords_within_radius
+
     async def set_priority_queue_strategy(self, new_strategy: Optional[AbstractRoutePriorityQueueStrategy]) -> None:
         if not new_strategy:
             await self._prio_queue.stop()
