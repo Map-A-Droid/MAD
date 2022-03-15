@@ -21,6 +21,8 @@ libsm6 \
 libgl1-mesa-glx \
 # python reqs
 && python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
+&& python3 -m pip install --no-cache-dir discord_webhook \
+&& python3 -m pip install --no-cache-dir paho-mqtt \
 # cleanup
 && apt-get remove -y build-essential \
 && apt-get remove -y python2.7 && rm -rf /usr/lib/python2.7 \
