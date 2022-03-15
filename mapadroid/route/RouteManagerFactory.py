@@ -54,7 +54,7 @@ class RouteManagerFactory:
             area: SettingsAreaPokestop = area
             max_coords_within_radius_stops = max_coords_within_radius
             if area.enable_clustering:
-                max_coords_within_radius_stops = 9999
+                max_coords_within_radius_stops = 9999 if area.level else 3
 
             if area.level and area.route_calc_algorithm == 'routefree':
                 route_manager = RouteManagerLevelingRoutefree(db_wrapper=db_wrapper, area=area, coords=coords,
