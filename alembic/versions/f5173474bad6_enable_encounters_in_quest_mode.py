@@ -1,7 +1,7 @@
 """enable encounters in quest mode
 
 Revision ID: f5173474bad6
-Revises: 288e656b3be6
+Revises: 3d16f94ed34a
 Create Date: 2021-11-10 20:41:19.051158
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'f5173474bad6'
-down_revision = '288e656b3be6'
+down_revision = '3d16f94ed34a'
 branch_labels = None
 depends_on = None
 
