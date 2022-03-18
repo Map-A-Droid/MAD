@@ -193,7 +193,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     raise InternalStopWorkerException("Failed to reach pogo main screen")
 
         if await self._mapping_manager.routemanager_get_init(self._area_id):
-            logger.info("Starting Level Mode")
+            logger.info("Starting Init Mode")
             if await self._mapping_manager.routemanager_get_calc_type(self._area_id) == "routefree":
                 logger.info("Sleeping one minute for getting data")
                 await asyncio.sleep(60)

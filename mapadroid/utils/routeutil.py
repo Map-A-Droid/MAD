@@ -62,7 +62,7 @@ def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Opti
         return False
     if walker_settings.algo_type in ('timer', 'period', 'coords', 'idle'):
         walkervalue = walker_settings.algo_value
-        if len(walkervalue) == 0:
+        if walkervalue is None and walker_settings.algo_type == 'coords' or len(walkervalue) == 0:
             return True
         return check_walker_value_type(walkervalue, location)
     return True
