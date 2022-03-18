@@ -545,7 +545,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
         type_received: ReceivedType = ReceivedType.UNDEFINED
         recheck_count = 0
-        timestamp_to_use_waiting_for_gmo: float = timestamp
+        timestamp_to_use_waiting_for_gmo: float = time.time()
         while stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
                             PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1
