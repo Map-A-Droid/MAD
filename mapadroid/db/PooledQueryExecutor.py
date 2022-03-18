@@ -1,14 +1,20 @@
 import asyncio
+import os
+import sys
+from datetime import datetime
 from threading import Lock
 from typing import Optional
 
 import aioredis as aioredis
+from aiofile import async_open
 from aioredis import Redis
 from alembic import command
 from alembic.config import Config
 from loguru import logger
 
 from mapadroid.db.DbAccessor import DbAccessor
+from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 
 
 class PooledQueryExecutor:
@@ -34,7 +40,6 @@ class PooledQueryExecutor:
         # TODO: Shutdown...
         with self._pool_mutex:
             await self._init_pool()
-            await self._db_accessor.setup()
             redis_credentials = {"host": self.args.cache_host, "port": self.args.cache_port}
             if self.args.cache_password:
                 redis_credentials["password"] = self.args.cache_password
@@ -57,9 +62,50 @@ class PooledQueryExecutor:
     async def _init_pool(self):
         # Run Alembic DB migrations
         db_uri: str = f"mysql+aiomysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
-        loop = asyncio.get_running_loop()
-        # self.run_migrations(db_uri)
-        await loop.run_in_executor(None, self.run_migrations, db_uri)
 
         logger.info("Connecting to DB")
         self._db_accessor: DbAccessor = DbAccessor(db_uri, self._poolsize)
+        await self._db_accessor.setup()
+
+        loop = asyncio.get_running_loop()
+        await self.initialize_db()
+        await loop.run_in_executor(None, self.run_migrations, db_uri)
+
+    async def initialize_db(self):
+        try:
+            async with self._db_accessor as session:
+                # TODO: Probably can be written in a nicer way or master's "sanity checker" adapted?
+                check_table_exists = f"""
+                SELECT COUNT(TABLE_NAME)
+                FROM 
+                   information_schema.TABLES 
+                WHERE 
+                   TABLE_SCHEMA LIKE '{self.database}' AND 
+                    TABLE_TYPE LIKE 'BASE TABLE' AND
+                    TABLE_NAME = 'pokemon';
+                """
+                table_exists_result = await session.execute(check_table_exists)
+                table_exists = table_exists_result.first()[0]
+                if table_exists == 1:
+                    return
+
+                sql_file = ["scripts", "SQL", "mad.sql"]
+                async with async_open(os.path.join(*sql_file), "r") as fh:
+                    tables = "".join(await fh.read()).split(";")
+                    for table in tables:
+                        install_cmd = '%s;%s;%s'
+                        args = ('SET FOREIGN_KEY_CHECKS=0', 'SET NAMES utf8mb4', table)
+                        await session.execute(install_cmd % args)
+                        await session.commit()
+            logger.success('Successfully initialized database')
+            await self.__add_default_event()
+        except Exception:
+            logger.opt(exception=True).critical('Unable to install default MAD schema.  Please install the schema from '
+                                                'scripts/SQL/rocketmap.sql')
+            sys.exit(1)
+
+    async def __add_default_event(self):
+        async with self._db_accessor as session:
+            await TrsEventHelper.save(session, event_name="DEFAULT", event_start=DatetimeWrapper.fromtimestamp(0),
+                                      event_end=datetime.now().replace(year=2099), event_lure_duration=30)
+            await session.commit()
