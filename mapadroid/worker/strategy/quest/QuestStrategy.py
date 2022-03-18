@@ -306,7 +306,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         delay_used = await self._rotate_account_after_moving_locations_if_applicable(delay_used)
 
         delay_used = math.floor(delay_used)
-        if delay_used <= 0:
+        if delay_used <= 0 or await self._mapping_manager.routemanager_get_init(self._area_id):
             self._worker_state.current_sleep_time = 0
             logger.info('No need to wait before spinning, continuing...')
         else:
