@@ -584,7 +584,8 @@ class MappingManager(AbstractMappingManager):
                 # replace list name
                 area_settings['mon_ids_iv_raw'] = self.get_monlist(area_id)
             init_area: bool = False
-            if area.mode in ("mon_mitm", "raids_mitm", "pokestop") and area.init:
+            if area.mode in (WorkerType.MON_MITM.value, WorkerType.RAID_MITM.value, WorkerType.STOPS.value) \
+                    and area.init:
                 init_area: bool = area.init
             spawns_known: bool = area.coords_spawns_known if area.mode == "mon_mitm" else True
             routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper \
@@ -640,7 +641,7 @@ class MappingManager(AbstractMappingManager):
                     #         routecalc.routefile = str(calc_coords)
                     #         session.add(routecalc)
                     #         await nested.commit()
-                    task = loop.create_task(route_manager.recalc_route(1, 99999999, 0, False))
+                    task = loop.create_task(route_manager.recalc_route(1, 99999999, 0, True, True))
                 areas_procs[area_id] = task
 
             routemanagers[area.area_id] = route_manager
@@ -851,6 +852,7 @@ class MappingManager(AbstractMappingManager):
                     self._geofence_helpers = await self.__get_latest_geofence_helpers(session)
 
         logger.info("Mappings have been updated")
+        # Lastly, kill all strategies and update them accordingly?
 
     async def get_all_devicenames(self) -> List[str]:
         async with self.__db_wrapper as session, session:
