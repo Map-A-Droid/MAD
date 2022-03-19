@@ -39,9 +39,9 @@ class RouteManagerRaids(RouteManagerBase):
                                   initial_prioq_strategy=strategy)
         self._settings: SettingsAreaRaidsMitm = area
 
-        self.starve_route: bool = True if area.starve_route == 1 else False
+        self.starve_route: bool = area.starve_route if area.starve_route is not None else False
         self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
-        self.init: bool = True if area.init == 1 else False
+        self.init: bool = area.init if area.init is not None else False
 
     async def _get_coords_after_finish_route(self):
         self._init_route_queue()

@@ -39,12 +39,11 @@ class RouteManagerMon(RouteManagerBase):
         self._settings: SettingsAreaMonMitm = area
         self.coords_spawns_known: bool = True if area.coords_spawns_known == 1 else False
         self.include_event_id: Optional[int] = area.include_event_id
-        self.init: bool = True if area.init == 1 else False
+        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
+        self.init: bool = area.init if area.init is not None else False
 
-        self.starve_route: bool = True if area.starve_route == 1 else False
         if area.max_clustering:
             self._max_clustering: int = area.max_clustering
-        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
 
     async def _get_coords_after_finish_route(self) -> bool:
         self._init_route_queue()
