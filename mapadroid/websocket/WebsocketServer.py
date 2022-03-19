@@ -270,17 +270,17 @@ class WebsocketServer(object):
             return None, False
         logger.info("Client registering")
         if self.__mapping_manager is None:
-            logger.warning("No configuration has been defined.  Please define in MADmin and click "
+            logger.warning("No configuration has been defined. Please define in MADmin and click "
                            "'APPLY SETTINGS'")
             return origin, False
         elif origin not in (await self.__mapping_manager.get_all_devicemappings()).keys():
             async with self.__db_wrapper as session, session:
                 device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(), origin)
             if device:
-                logger.warning("Device is created but not loaded.  Click 'APPLY SETTINGS' in MADmin to Update")
+                logger.warning("Device is created but not loaded. Click 'APPLY SETTINGS' in MADmin to Update")
             else:
-                logger.warning("Register attempt of unknown origin.  Please create the device in MADmin and "
-                               " click 'APPLY SETTINGS'")
+                logger.warning("Register attempt of unknown origin ({}). Please create the device in MADmin and"
+                               " click 'APPLY SETTINGS'", origin)
             return origin, False
 
         valid_auths = await self.__mapping_manager.get_auths()

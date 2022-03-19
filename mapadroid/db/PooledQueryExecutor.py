@@ -101,7 +101,7 @@ class PooledQueryExecutor:
             await self.__add_default_event()
         except Exception:
             logger.opt(exception=True).critical('Unable to install default MAD schema.  Please install the schema from '
-                                                'scripts/SQL/rocketmap.sql')
+                                                'scripts/SQL/mad.sql')
             sys.exit(1)
 
     async def __add_default_event(self):
