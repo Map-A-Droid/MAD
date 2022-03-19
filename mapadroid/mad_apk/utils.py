@@ -308,7 +308,7 @@ async def get_backend_versions(token: Optional[str]) -> Dict[str, List[str]]:
             "the configuration to include 'maddev_api_token' to "
             "utilize the wizard."
         )
-        logger.error(msg)
+        logger.warning(msg)
         raise NoMaddevApiTokenError(msg)
     headers = {
         "Authorization": "Bearer {}".format(token),
