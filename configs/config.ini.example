@@ -57,7 +57,7 @@
 # Walk Settings
 ######################
 #enable_worker_specific_extra_start_stop_handling # Option to enable/disable extra handling for the start/stop routine of workers. Default: False
-#maximum_valid_distance:       # The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 50m
+#maximum_valid_distance:       # The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 5m
 
 
 # Job Processor

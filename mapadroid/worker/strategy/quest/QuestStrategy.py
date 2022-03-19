@@ -606,9 +606,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                         # invalid location or fort is a gym
                         continue
 
-                    elif (abs(self._worker_state.current_location.lat - latitude) <= distance_to_consider_for_stops
-                          and abs(
-                                self._worker_state.current_location.lng - longitude) <= distance_to_consider_for_stops):
+                    elif get_distance_of_two_points_in_meters(latitude, longitude,
+                                                              self._worker_state.current_location.lat,
+                                                              self._worker_state.current_location.lng) \
+                            < distance_to_consider_for_stops:
                         # We are basically on top of a stop
                         logger.info("Found stop/gym at current location!")
                     else:
@@ -872,9 +873,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     on_main_menu = await self._check_pogo_main_screen(10, False)
                     if not on_main_menu:
                         await self._restart_pogo()
-                    self._stop_process_time = math.floor(time.time())
-                    # TODO: if await self._try_to_open_pokestop(self._stop_process_time) == ReceivedType.UNDEFINED:
-                    #    return
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and data_received == FortSearchResultTypes.FULL):
                     logger.warning(

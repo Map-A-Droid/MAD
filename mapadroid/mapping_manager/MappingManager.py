@@ -852,7 +852,7 @@ class MappingManager(AbstractMappingManager):
                     self._geofence_helpers = await self.__get_latest_geofence_helpers(session)
 
         logger.info("Mappings have been updated")
-        # Lastly, kill all strategies and update them accordingly?
+        # Lastly, kill all strategies and update them accordingly
 
     async def get_all_devicenames(self) -> List[str]:
         async with self.__db_wrapper as session, session:

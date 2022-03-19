@@ -13,8 +13,8 @@ class MadApkDownloadEndpoint(AbstractMadminRootEndpoint):
 
         apk_type, apk_arch = convert_to_backend(apk_type_raw, apk_arch_raw)
 
-        data_generator, mimetype, filename, version = stream_package(self._session, self._get_storage_obj(),
-                                                                     apk_type, apk_arch)
+        data_generator, mimetype, filename, version = await stream_package(self._session, self._get_storage_obj(),
+                                                                           apk_type, apk_arch)
         response.content_type = mimetype
         response.headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
         response.headers['APK-Version'] = '{}'.format(version)

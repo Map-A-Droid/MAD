@@ -134,7 +134,7 @@ class RedisMitmMapper(AbstractMitmMapper):
     async def set_quests_held(self, worker: str, quests_held: Optional[List[int]]) -> None:
         await self.__cache.set(RedisMitmMapper.QUESTS_HELD_KEY.format(worker), ujson.dumps(quests_held))
 
-    @cached(ttl=30)
+    @cached(ttl=10)
     async def get_quests_held(self, worker: str) -> Optional[List[int]]:
         value = await self.__cache.get(RedisMitmMapper.QUESTS_HELD_KEY.format(worker))
         if not value:

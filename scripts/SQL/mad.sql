@@ -1290,8 +1290,6 @@ CREATE TABLE `weather` (
 /*!50001 SET character_set_client      = utf8 */;
 /*!50001 SET character_set_results     = utf8 */;
 /*!50001 SET collation_connection      = utf8_general_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`map_nidda_user`@`%` SQL SECURITY DEFINER */
 /*!50001 VIEW `v_trs_status` AS select `trs`.`instance_id` AS `instance_id`,`trs`.`device_id` AS `device_id`,`dev`.`name` AS `name`,`trs`.`routePos` AS `routePos`,`trs`.`routeMax` AS `routeMax`,`trs`.`area_id` AS `area_id`,if((`trs`.`idle` = 1),'Idle',ifnull(`sa`.`name`,'Idle')) AS `rmname`,if((`trs`.`idle` = 1),'Idle',ifnull(`sa`.`mode`,'Idle')) AS `mode`,`trs`.`rebootCounter` AS `rebootCounter`,`trs`.`init` AS `init`,`trs`.`currentSleepTime` AS `currentSleepTime`,`trs`.`rebootingOption` AS `rebootingOption`,`trs`.`restartCounter` AS `restartCounter`,`trs`.`globalrebootcount` AS `globalrebootcount`,`trs`.`globalrestartcount` AS `globalrestartcount`,unix_timestamp(`trs`.`lastPogoRestart`) AS `lastPogoRestart`,unix_timestamp(`trs`.`lastProtoDateTime`) AS `lastProtoDateTime`,unix_timestamp(`trs`.`lastPogoReboot`) AS `lastPogoReboot`,concat(round(st_x(`trs`.`currentPos`),5),', ',round(st_y(`trs`.`currentPos`),5)) AS `currentPos`,concat(round(st_x(`trs`.`lastPos`),5),', ',round(st_y(`trs`.`lastPos`),5)) AS `lastPos`,`trs`.`currentPos` AS `currentPos_raw`,`trs`.`lastPos` AS `lastPos_raw` from ((`trs_status` `trs` join `settings_device` `dev` on((`dev`.`device_id` = `trs`.`device_id`))) left join `settings_area` `sa` on((`sa`.`area_id` = `trs`.`area_id`))) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
@@ -1305,5 +1303,3 @@ CREATE TABLE `weather` (
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2022-03-18  8:06:59
