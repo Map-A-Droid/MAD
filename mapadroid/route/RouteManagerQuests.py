@@ -27,7 +27,6 @@ class RouteManagerQuests(RouteManagerBase):
         self._settings: SettingsAreaPokestop = area
         self._calctype: str = area.route_calc_algorithm
         self._stoplist: List[Location] = []
-        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
         self.init: bool = area.init if area.init is not None else False
         self._shutdown_route: bool = False
         self._routecopy: List[Location] = []
