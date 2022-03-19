@@ -40,7 +40,7 @@ class RouteManagerRaids(RouteManagerBase):
         self._settings: SettingsAreaRaidsMitm = area
 
         self.starve_route: bool = True if area.starve_route == 1 else False
-        self.init_mode_rounds: int = area.init_mode_rounds
+        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
         self.init: bool = True if area.init == 1 else False
 
     async def _get_coords_after_finish_route(self):
