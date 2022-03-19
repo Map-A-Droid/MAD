@@ -25,6 +25,7 @@ from ..db.DbWrapper import DbWrapper
 from ..db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from ..db.model import MadApkAutosearch
 from ..utils.RestHelper import RestHelper
+from ..utils.madGlobals import NoMaddevApiTokenError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 APK_HEADERS = {
@@ -143,7 +144,7 @@ class APKWizard(object):
                 "The MADdev API token (maddev_api_token) has not been configured in config.ini."
                 " Please configure this to use the wizard for downloading PokemonGo."
             )
-            return None
+            raise NoMaddevApiTokenError()
         try:
             latest_pogo_info = await self.find_latest_pogo(architecture)
         except SearchError:
