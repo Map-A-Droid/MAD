@@ -21,8 +21,7 @@ class RouteManagerRaids(RouteManagerBase):
             area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
         clustering_timedelta: int = int(
             area.priority_queue_clustering_timedelta if area.priority_queue_clustering_timedelta else 0)
-        self.delay_after_timestamp_prio: Optional[
-            int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
+        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
         strategy: Optional[RaidSpawnPrioStrategy] = None
         if self.delay_after_timestamp_prio is not None:
             strategy: RaidSpawnPrioStrategy = RaidSpawnPrioStrategy(clustering_timedelta=clustering_timedelta,
