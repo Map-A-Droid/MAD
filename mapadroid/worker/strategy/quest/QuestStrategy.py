@@ -900,8 +900,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
                     else:
                         vps_delay: int = await self._get_vps_delay()
-                        if not await self._check_pogo_main_screen(10, True):
-                            raise InternalStopWorkerException("Failed clearing quests")
                         await self._clear_quests(vps_delay)
 
                     await asyncio.sleep(1)
