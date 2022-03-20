@@ -137,11 +137,7 @@ CREATE TABLE `gym` (
   `longitude` double NOT NULL,
   `total_cp` smallint(6) NOT NULL,
   `is_in_battle` tinyint(1) NOT NULL,
-  `gender` smallint(6) DEFAULT NULL,
-  `form` smallint(6) DEFAULT NULL,
-  `costume` smallint(6) DEFAULT NULL,
   `weather_boosted_condition` smallint(6) DEFAULT NULL,
-  `shiny` tinyint(1) DEFAULT NULL,
   `last_modified` datetime NOT NULL,
   `last_scanned` datetime NOT NULL,
   `is_ex_raid_eligible` tinyint(1) DEFAULT NULL,
@@ -222,28 +218,6 @@ CREATE TABLE `madmin_instance` (
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `nests`
---
-
-DROP TABLE IF EXISTS `nests`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `nests` (
-  `nest_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `lat` double DEFAULT NULL,
-  `lon` double DEFAULT NULL,
-  `pokemon_id` int(11) DEFAULT NULL,
-  `updated` bigint(20) DEFAULT NULL,
-  `type` tinyint(4) NOT NULL,
-  `name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `pokemon_count` double DEFAULT NULL,
-  `pokemon_avg` double DEFAULT NULL,
-  PRIMARY KEY (`nest_id`),
-  KEY `UpdatedIndex` (`updated`),
-  KEY `CoordsIndex` (`lat`,`lon`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `origin_hopper`
@@ -324,7 +298,7 @@ CREATE TABLE `pokemon_display` (
   PRIMARY KEY (`encounter_id`),
   KEY `ix_pokemon_display_pokemon` (`pokemon`),
   CONSTRAINT `pokemon_encounter_id_casc` FOREIGN KEY (`encounter_id`) REFERENCES `pokemon` (`encounter_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -389,20 +363,6 @@ CREATE TABLE `raid` (
   KEY `raid_last_scanned` (`last_scanned`),
   KEY `raid_pokemon_id` (`pokemon_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `rmversion`
---
-
-DROP TABLE IF EXISTS `rmversion`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `rmversion` (
-  `key` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `val` smallint(6) DEFAULT NULL,
-  PRIMARY KEY (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -922,7 +882,7 @@ CREATE TABLE `trs_event` (
   `event_lure_duration` int(11) NOT NULL DEFAULT '30',
   PRIMARY KEY (`id`),
   KEY `trs_event_event_start_end` (`event_start`,`event_end`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1040,7 +1000,7 @@ CREATE TABLE `trs_stats_detect_seen_type` (
   `lure_encounter` datetime DEFAULT NULL,
   `lure_wild` datetime DEFAULT NULL,
   PRIMARY KEY (`encounter_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1062,7 +1022,7 @@ CREATE TABLE `trs_stats_detect_wild_mon_raw` (
   KEY `ix_trs_stats_detect_wild_mon_raw_is_shiny` (`is_shiny`),
   KEY `trs_stats_detect_wild_mon_raw_is_shiny` (`is_shiny`),
   KEY `trs_stats_detect_wild_mon_raw_last_scanned` (`last_scanned`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1182,24 +1142,6 @@ CREATE TABLE `trs_visited` (
   `pokestop_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `origin` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`pokestop_id`,`origin`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `trshash`
---
-
-DROP TABLE IF EXISTS `trshash`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `trshash` (
-  `hashid` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `count` int(10) NOT NULL DEFAULT '1',
-  `modify` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`hashid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
