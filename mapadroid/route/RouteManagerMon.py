@@ -21,14 +21,16 @@ class RouteManagerMon(RouteManagerBase):
             area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
         self.delay_after_timestamp_prio: Optional[
             int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
-        mon_spawn_strategy: MonSpawnPrioStrategy = MonSpawnPrioStrategy(clustering_timedelta=120,
-                                                                        clustering_count_per_circle=max_coords_within_radius,
-                                                                        clustering_distance=max_radius,
-                                                                        max_backlog_duration=self.remove_from_queue_backlog,
-                                                                        db_wrapper=db_wrapper,
-                                                                        geofence_helper=geofence_helper,
-                                                                        include_event_id=area.include_event_id,
-                                                                        delay_after_event=self.delay_after_timestamp_prio)
+        mon_spawn_strategy: Optional[MonSpawnPrioStrategy] = None
+        if self.delay_after_timestamp_prio is not None:
+            mon_spawn_strategy: MonSpawnPrioStrategy = MonSpawnPrioStrategy(clustering_timedelta=120,
+                                                                            clustering_count_per_circle=max_coords_within_radius,
+                                                                            clustering_distance=max_radius,
+                                                                            max_backlog_duration=self.remove_from_queue_backlog,
+                                                                            db_wrapper=db_wrapper,
+                                                                            geofence_helper=geofence_helper,
+                                                                            include_event_id=area.include_event_id,
+                                                                            delay_after_event=self.delay_after_timestamp_prio)
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,

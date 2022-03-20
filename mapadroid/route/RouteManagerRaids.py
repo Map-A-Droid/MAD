@@ -23,13 +23,15 @@ class RouteManagerRaids(RouteManagerBase):
             area.priority_queue_clustering_timedelta if area.priority_queue_clustering_timedelta else 0)
         self.delay_after_timestamp_prio: Optional[
             int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
-        strategy: RaidSpawnPrioStrategy = RaidSpawnPrioStrategy(clustering_timedelta=clustering_timedelta,
-                                                                clustering_count_per_circle=max_coords_within_radius,
-                                                                clustering_distance=max_radius,
-                                                                db_wrapper=db_wrapper,
-                                                                max_backlog_duration=self.remove_from_queue_backlog,
-                                                                geofence_helper=geofence_helper,
-                                                                delay_after_event=self.delay_after_timestamp_prio)
+        strategy: Optional[RaidSpawnPrioStrategy] = None
+        if self.delay_after_timestamp_prio is not None:
+            strategy: RaidSpawnPrioStrategy = RaidSpawnPrioStrategy(clustering_timedelta=clustering_timedelta,
+                                                                    clustering_count_per_circle=max_coords_within_radius,
+                                                                    clustering_distance=max_radius,
+                                                                    db_wrapper=db_wrapper,
+                                                                    max_backlog_duration=self.remove_from_queue_backlog,
+                                                                    geofence_helper=geofence_helper,
+                                                                    delay_after_event=self.delay_after_timestamp_prio)
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
