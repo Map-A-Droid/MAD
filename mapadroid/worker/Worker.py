@@ -225,8 +225,9 @@ class Worker(AbstractWorker):
                     logger.info("Worker finished iteration, continuing work")
             await self._cleanup_current()
 
-    async def __get_current_strategy_to_use(self) -> Optional[AbstractWorkerStrategy]:
-        await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+    async def __get_current_strategy_to_use(self, set_finished=False) -> Optional[AbstractWorkerStrategy]:
+        if set_finished:
+            await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
         device_paused: bool = not await self._mapping_manager.is_device_active(
             self._worker_state.device_id)
         configmode: bool = application_args.config_mode
@@ -244,7 +245,7 @@ class Worker(AbstractWorker):
         configmode: bool = application_args.config_mode
         paused_or_config: bool = device_paused or configmode
         if not paused_or_config:
-            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use()
+            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use(set_finished=True)
             if scan_strategy:
                 await self.set_scan_strategy(scan_strategy)
 
