@@ -123,7 +123,6 @@ class MappingManager(AbstractMappingManager):
     async def setup(self):
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
 
-        loop = asyncio.get_running_loop()
         await self.update(full_lock=True)
 
     def shutdown(self):

@@ -4,8 +4,8 @@ from typing import List, Tuple, Optional
 
 import numpy as np
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.model import SettingsRoutecalc
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
@@ -15,11 +15,11 @@ from mapadroid.utils.collections import Location
 
 class RoutecalcUtil:
     @staticmethod
-    async def get_json_route(session: AsyncSession, routecalc_id: int, coords: List[Location], max_radius,
+    async def get_json_route(db_wrapper: DbWrapper, routecalc_id: int, coords: List[Location], max_radius,
                              max_coords_within_radius,
                              in_memory, num_processes, algorithm, use_s2, s2_level, route_name,
                              delete_old_route: bool = False):
-        async with session.begin_nested() as nested:
+        async with db_wrapper as session, session:
             routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
             if not in_memory:
                 saved_route = RoutecalcUtil.read_saved_json_route(routecalc_entry)
@@ -39,19 +39,19 @@ class RoutecalcUtil:
             session.add(routecalc_entry)
 
             try:
-                await nested.commit()
+                await session.commit()
             except Exception as e:
                 logger.exception(e)
-                await nested.rollback()
-        await session.refresh(routecalc_entry)
+                await session.rollback()
+            await session.refresh(routecalc_entry)
 
         if not in_memory and delete_old_route:
             logger.debug("Deleting routefile...")
-            async with session.begin_nested() as nested:
+            async with db_wrapper as session, session:
                 routecalc_entry.routefile = "[]"
                 session.add(routecalc_entry)
-                await nested.commit()
-            await session.refresh(routecalc_entry)
+                await session.commit()
+                await session.refresh(routecalc_entry)
 
         export_data = []
         if use_s2:
@@ -62,10 +62,10 @@ class RoutecalcUtil:
         if len(coords) > 0 and max_radius and max_radius >= 1 and max_coords_within_radius:
             logger.info("Calculating route for {}", route_name)
             loop = asyncio.get_running_loop()
-            # with concurrent.futures.ThreadPoolExecutor() as pool:
-            new_coords = await loop.run_in_executor(
-                None, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
-                s2_level)
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                new_coords = await loop.run_in_executor(
+                    pool, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
+                    s2_level)
             less_coords = np.zeros(shape=(len(new_coords), 2))
             for i in range(len(less_coords)):
                 less_coords[i][0] = new_coords[i][0]
@@ -85,7 +85,7 @@ class RoutecalcUtil:
             from mapadroid.route.routecalc.calculate_route_all import \
                 route_calc_all
             loop = asyncio.get_running_loop()
-            with concurrent.futures.ProcessPoolExecutor() as pool:
+            with concurrent.futures.ThreadPoolExecutor() as pool:
                 sol_best = await loop.run_in_executor(
                     pool, route_calc_all, less_coords, route_name, num_processes, algorithm)
 
@@ -102,7 +102,7 @@ class RoutecalcUtil:
             for i in range(len(sol_best)):
                 export_data.append({'lat': less_coords[int(sol_best[i])][0].item(),
                                     'lng': less_coords[int(sol_best[i])][1].item()})
-        async with session.begin_nested() as nested:
+        async with db_wrapper as session, session:
             if not in_memory:
                 calc_coords = []
                 for coord in export_data:
@@ -116,11 +116,10 @@ class RoutecalcUtil:
 
             session.add(routecalc_entry)
             try:
-                # await session.flush([routecalc_entry])
-                await nested.commit()
+                await session.commit()
             except Exception as e:
                 logger.exception(e)
-                await nested.rollback()
+                await session.rollback()
         return export_data
 
     @staticmethod
@@ -138,18 +137,22 @@ class RoutecalcUtil:
         Returns:
 
         """
-        coordinates: List[Tuple[int, Location]] = []
-        for coord in coords:
-            coordinates.append(
-                (0, coord)
-            )
 
-        clustering_helper = ClusteringHelper(max_radius=max_radius, max_count_per_circle=max_coords_within_radius,
-                                             max_timedelta_seconds=0, use_s2=use_s2, s2_level=s2_level)
-        clustered_events = clustering_helper.get_clustered(coordinates)
         coords_cleaned_up: List[Location] = []
-        for event in clustered_events:
-            coords_cleaned_up.append(event[1])
+        if max_radius > 1:
+            # Hardly feasible to cluster a distance of less than 1m...
+            coordinates: List[Tuple[int, Location]] = []
+            for coord in coords:
+                coordinates.append(
+                    (0, coord)
+                )
+            clustering_helper = ClusteringHelper(max_radius=max_radius, max_count_per_circle=max_coords_within_radius,
+                                                 max_timedelta_seconds=0, use_s2=use_s2, s2_level=s2_level)
+            clustered_events = clustering_helper.get_clustered(coordinates)
+            for event in clustered_events:
+                coords_cleaned_up.append(event[1])
+        else:
+            coords_cleaned_up = coords
         return coords_cleaned_up
 
     @staticmethod

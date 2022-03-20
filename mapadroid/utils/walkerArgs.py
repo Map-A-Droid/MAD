@@ -53,8 +53,8 @@ def parse_args():
                         help='Password for MySQL login')
     parser.add_argument('-dbname', '--dbname', required=False,
                         help='Name of MySQL Database')
-    parser.add_argument('-dbps', '--db_poolsize', type=int, default=2,
-                        help='Size of MySQL pool (open connections to DB). Default: 2')
+    parser.add_argument('-dbps', '--db_poolsize', type=int, default=5,
+                        help='Size of MySQL pool (open connections to DB). Default: 5')
 
     # Websocket Settings (RGC receiver)
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,

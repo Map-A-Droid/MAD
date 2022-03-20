@@ -14,7 +14,7 @@
 #dbusername:                # Username for MySQL login
 #dbpassword:                # Password for MySQL login
 #dbname:                    # Name of MySQL Database
-#db_poolsize:               # Size of MySQL pool (open connections to DB). Default: 2.
+#db_poolsize:               # Size of MySQL pool (open connections to DB). If you have a lot of devices and madmin usage, this may need to be increased. Default: 5.
 
 # MappingManager gRPC
 #mappingmanager_ip:         # IP of MappingManager gRPC server to connect to OR - if serving - to listen on. Default: all interfaces
