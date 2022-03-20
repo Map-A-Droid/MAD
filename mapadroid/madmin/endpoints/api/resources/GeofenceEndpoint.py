@@ -13,7 +13,7 @@ class GeofenceEndpoint(AbstractResourceEndpoint):
         db_wrapper: DbWrapper = self._get_db_wrapper()
         areas: Dict[int, SettingsArea] = await db_wrapper.get_all_areas(self._session)
         areas_with_geofence: List[SettingsArea] = []
-        for area_id, area in areas.values():
+        for area_id, area in areas.items():
             geofence_included = getattr(area, "geofence_included")
             geofence_excluded = getattr(area, "geofence_excluded")
             if (geofence_included and geofence_included == db_entry.geofence_id
