@@ -196,13 +196,13 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         request: SetQuestsHeldRequest = SetQuestsHeldRequest()
         request.worker.name = worker
         if quests_held:
-            request.quests_held.quest_ids = quests_held
+            request.quests_held.quest_ids.extend(quests_held)
         try:
             await self.SetQuestsHeld(request)
         except AioRpcError as e:
             logger.warning("Failed requesting setting quests held of {}: {}", worker, e)
 
-    @cached(ttl=30)
+    @cached(ttl=10)
     async def get_quests_held(self, worker: str) -> Optional[List[int]]:
         request: Worker = Worker()
         request.name = worker

@@ -264,12 +264,12 @@ class PokestopHelper:
         Returns:
 
         """
-        stmt = select(Pokestop) \
+        stmt = select(Pokestop, TrsQuest) \
             .join(TrsQuest, and_(TrsQuest.GUID == Pokestop.pokestop_id,
                                  TrsQuest.layer == quest_layer.value), isouter=True)
         where_conditions = []
         # TODO: Verify this works for all timezones...
-        today_midnight = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_midnight = DatetimeWrapper.now().replace(hour=0, minute=0, second=0, microsecond=0)
         where_conditions.append(or_(TrsQuest.quest_timestamp < today_midnight.timestamp(),
                                     TrsQuest.GUID == None))
 
@@ -282,7 +282,9 @@ class PokestopHelper:
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
         stops_without_quests: Dict[int, Pokestop] = {}
-        for stop in result.scalars().all():
+        for (stop, quest) in result.all():
+            if quest and (quest.layer != quest_layer.value or quest.quest_timestamp > today_midnight.timestamp()):
+                continue
             if geofence_helper.is_coord_inside_include_geofence(Location(float(stop.latitude), float(stop.longitude))):
                 stops_without_quests[stop.pokestop_id] = stop
         return stops_without_quests

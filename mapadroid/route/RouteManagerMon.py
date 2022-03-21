@@ -19,16 +19,17 @@ class RouteManagerMon(RouteManagerBase):
                  mon_ids_iv: Optional[List[int]] = None):
         self.remove_from_queue_backlog: Optional[int] = int(
             area.remove_from_queue_backlog) if area.remove_from_queue_backlog else None
-        self.delay_after_timestamp_prio: Optional[
-            int] = area.delay_after_prio_event if area.delay_after_prio_event else 15
-        mon_spawn_strategy: MonSpawnPrioStrategy = MonSpawnPrioStrategy(clustering_timedelta=120,
-                                                                        clustering_count_per_circle=max_coords_within_radius,
-                                                                        clustering_distance=max_radius,
-                                                                        max_backlog_duration=self.remove_from_queue_backlog,
-                                                                        db_wrapper=db_wrapper,
-                                                                        geofence_helper=geofence_helper,
-                                                                        include_event_id=area.include_event_id,
-                                                                        delay_after_event=self.delay_after_timestamp_prio)
+        self.delay_after_timestamp_prio: Optional[int] = area.delay_after_prio_event
+        mon_spawn_strategy: Optional[MonSpawnPrioStrategy] = None
+        if self.delay_after_timestamp_prio is not None:
+            mon_spawn_strategy: MonSpawnPrioStrategy = MonSpawnPrioStrategy(clustering_timedelta=120,
+                                                                            clustering_count_per_circle=max_coords_within_radius,
+                                                                            clustering_distance=max_radius,
+                                                                            max_backlog_duration=self.remove_from_queue_backlog,
+                                                                            db_wrapper=db_wrapper,
+                                                                            geofence_helper=geofence_helper,
+                                                                            include_event_id=area.include_event_id,
+                                                                            delay_after_event=self.delay_after_timestamp_prio)
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
@@ -39,12 +40,11 @@ class RouteManagerMon(RouteManagerBase):
         self._settings: SettingsAreaMonMitm = area
         self.coords_spawns_known: bool = True if area.coords_spawns_known == 1 else False
         self.include_event_id: Optional[int] = area.include_event_id
-        self.init: bool = True if area.init == 1 else False
+        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
+        self.init: bool = area.init if area.init is not None else False
 
-        self.starve_route: bool = True if area.starve_route == 1 else False
         if area.max_clustering:
             self._max_clustering: int = area.max_clustering
-        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
 
     async def _get_coords_after_finish_route(self) -> bool:
         self._init_route_queue()

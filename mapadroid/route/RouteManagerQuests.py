@@ -26,9 +26,8 @@ class RouteManagerQuests(RouteManagerBase):
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaPokestop = area
         self._calctype: str = area.route_calc_algorithm
-        self.starve_route = False
         self._stoplist: List[Location] = []
-        self.init: bool = True if area.init == 1 else False
+        self.init: bool = area.init if area.init is not None else False
         self._shutdown_route: bool = False
         self._routecopy: List[Location] = []
         self._tempinit: bool = False

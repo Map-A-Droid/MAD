@@ -123,7 +123,6 @@ class MappingManager(AbstractMappingManager):
     async def setup(self):
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
 
-        loop = asyncio.get_running_loop()
         await self.update(full_lock=True)
 
     def shutdown(self):
@@ -852,7 +851,7 @@ class MappingManager(AbstractMappingManager):
                     self._geofence_helpers = await self.__get_latest_geofence_helpers(session)
 
         logger.info("Mappings have been updated")
-        # Lastly, kill all strategies and update them accordingly?
+        # Lastly, kill all strategies and update them accordingly
 
     async def get_all_devicenames(self) -> List[str]:
         async with self.__db_wrapper as session, session:
