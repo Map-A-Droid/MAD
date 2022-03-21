@@ -9,9 +9,6 @@ from mapadroid.utils.collections import Location
 
 class MitmMapper(AbstractMitmMapper):
     def __init__(self):
-        self.__init_handlers()
-
-    def __init_handlers(self):
         self.__mitm_data_handler: MitmDataHandler = MitmDataHandler()
 
     # ##

@@ -1,3 +1,5 @@
+import asyncio
+
 from aiohttp import web
 from aiohttp.abc import Request
 
@@ -14,5 +16,6 @@ class ReloadEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        await self._get_mapping_manager().update()
+        loop = asyncio.get_running_loop()
+        loop.create_task(self._get_mapping_manager().update())
         raise web.HTTPFound(self._url_for("settings_devices"))

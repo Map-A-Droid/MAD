@@ -18,6 +18,7 @@ from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
 from ..db.helper.MadApkHelper import MadApkHelper
 from ..utils.RestHelper import RestHelper, RestApiResult
 from ..utils.functions import get_version_codes
+from ..utils.madGlobals import NoMaddevApiTokenError
 
 logger = get_logger(LoggerEnums.package_mgr)
 
@@ -260,8 +261,12 @@ async def supported_pogo_version(architecture: APKArch, version: str, token: Opt
     else:
         bits = '64'
     # Use the MADdev endpoint for supported
-    supported_versions: Dict[str, List[str]] = await get_backend_versions(token)
-    if version in supported_versions[bits]:
+    try:
+        supported_versions: Dict[str, List[str]] = await get_backend_versions(token)
+    except NoMaddevApiTokenError as e:
+        logger.warning("Maddev API token is not set, assuming a supported version being used.")
+        return True
+    if version in supported_versions.get(bits, []):
         return True
     # If the version is not supported, check the local
     # file for supported versions
@@ -303,8 +308,8 @@ async def get_backend_versions(token: Optional[str]) -> Dict[str, List[str]]:
             "the configuration to include 'maddev_api_token' to "
             "utilize the wizard."
         )
-        logger.error(msg)
-        raise ValueError(msg)
+        logger.warning(msg)
+        raise NoMaddevApiTokenError(msg)
     headers = {
         "Authorization": "Bearer {}".format(token),
         "Accept": "application/json",

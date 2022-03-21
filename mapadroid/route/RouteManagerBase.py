@@ -230,26 +230,25 @@ class RouteManagerBase(ABC):
         if calctype is None:
             calctype = self._calctype
         if coords:
-            if self._overwrite_calculation:
+            async with self._manager_mutex:
+                overwrite_calc = self._overwrite_calculation
+            if overwrite_calc:
                 calctype = 'route'
 
-            async with self.db_wrapper as session, session:
-                async with session.begin() as transaction:
-                    try:
-                        new_route = await RoutecalcUtil.get_json_route(session, self._routecalc.routecalc_id, coords,
-                                                                       max_radius, max_coords_within_radius, in_memory,
-                                                                       num_processes=num_procs,
-                                                                       algorithm=calctype, use_s2=self.useS2,
-                                                                       s2_level=self.S2level,
-                                                                       route_name=self.name,
-                                                                       delete_old_route=delete_old_route)
-                        await transaction.commit()
-                    except Exception as e:
-                        logger.exception(e)
-                        await transaction.rollback()
-                        new_route = []
-            if self._overwrite_calculation:
-                self._overwrite_calculation = False
+            try:
+                new_route = await RoutecalcUtil.get_json_route(self.db_wrapper, self._routecalc.routecalc_id, coords,
+                                                               max_radius, max_coords_within_radius, in_memory,
+                                                               num_processes=num_procs,
+                                                               algorithm=calctype, use_s2=self.useS2,
+                                                               s2_level=self.S2level,
+                                                               route_name=self.name,
+                                                               delete_old_route=delete_old_route)
+            except Exception as e:
+                logger.exception(e)
+                new_route = []
+            if overwrite_calc:
+                async with self._manager_mutex:
+                    self._overwrite_calculation = False
             return new_route
         return []
 
@@ -268,22 +267,23 @@ class RouteManagerBase(ABC):
 
     async def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                            delete_old_route: bool = False, in_memory: bool = False, calctype: str = None):
+        current_coords: List[Location] = []
         async with self._manager_mutex:
-            current_coords: List[Location] = []
             for coord in self._coords_unstructured:
                 if isinstance(coord, Location):
                     current_coords.append(coord)
                 else:
                     current_coords.append(Location(coord[0], coord[1]))
-            new_route = await self._calculate_new_route(current_coords, max_radius, max_coords_within_radius,
-                                                        delete_old_route, num_procs,
-                                                        in_memory=in_memory,
-                                                        calctype=calctype)
+        new_route = await self._calculate_new_route(current_coords, max_radius, max_coords_within_radius,
+                                                    delete_old_route, num_procs,
+                                                    in_memory=in_memory,
+                                                    calctype=calctype)
+        async with self._manager_mutex:
             self._route.clear()
             for coord in new_route:
                 self._route.append(Location(coord["lat"], coord["lng"]))
             self._current_route_round_coords = self._route.copy()
-            return new_route
+        return new_route
 
     async def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                                  active: bool = False, calctype: str = 'route'):
@@ -291,25 +291,25 @@ class RouteManagerBase(ABC):
             self._clear_coords()
             coords = await self._get_coords_post_init()
             self.add_coords_list(coords)
-            new_route = await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
-                                                in_memory=True,
-                                                calctype=calctype)
-            calc_coords = []
-            for coord in new_route:
-                calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
-            async with self.db_wrapper as session, session:
-                await session.merge(self._routecalc)
-                self._routecalc.routefile = str(calc_coords).replace("\'", "\"")
-                self._routecalc.last_updated = DatetimeWrapper.now()
-                # TODO: First update the resource or simply set using helper which fetches the object first?
-                await session.flush([self._routecalc])
-                await session.commit()
-            connected_worker_count = len(self._workers_registered)
-            if connected_worker_count > 0:
-                for worker in self._workers_registered.copy():
-                    await self.unregister_worker(worker, True)
-            else:
-                await self.stop_routemanager()
+        new_route = await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
+                                            in_memory=True,
+                                            calctype=calctype)
+        calc_coords = []
+        for coord in new_route:
+            calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
+        async with self.db_wrapper as session, session:
+            await session.merge(self._routecalc)
+            self._routecalc.routefile = str(calc_coords).replace("\'", "\"")
+            self._routecalc.last_updated = DatetimeWrapper.now()
+            # TODO: First update the resource or simply set using helper which fetches the object first?
+            await session.flush([self._routecalc])
+            await session.commit()
+        connected_worker_count = len(self._workers_registered)
+        if connected_worker_count > 0:
+            for worker in self._workers_registered.copy():
+                await self.unregister_worker(worker, True)
+        else:
+            await self.stop_routemanager()
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1

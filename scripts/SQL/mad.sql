@@ -28,6 +28,16 @@ CREATE TABLE `alembic_version` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `alembic_version`
+--
+
+LOCK TABLES `alembic_version` WRITE;
+/*!40000 ALTER TABLE `alembic_version` DISABLE KEYS */;
+INSERT INTO `alembic_version` VALUES ('3d16f94ed34a');
+/*!40000 ALTER TABLE `alembic_version` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `autoconfig_file`
 --
 
@@ -61,7 +71,7 @@ CREATE TABLE `autoconfig_logs` (
   KEY `k_acl` (`instance_id`,`session_id`),
   KEY `fk_ac_l_instance` (`session_id`),
   CONSTRAINT `fk_ac_l_instance` FOREIGN KEY (`session_id`) REFERENCES `autoconfig_registration` (`session_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=653 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -82,7 +92,7 @@ CREATE TABLE `autoconfig_registration` (
   KEY `fk_ac_r_device` (`device_id`),
   CONSTRAINT `fk_ac_r_device` FOREIGN KEY (`device_id`) REFERENCES `settings_device` (`device_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_ac_r_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -101,7 +111,7 @@ CREATE TABLE `filestore_chunks` (
   UNIQUE KEY `chunk_id` (`chunk_id`,`filestore_id`),
   KEY `k_fs_chunks` (`filestore_id`),
   CONSTRAINT `fk_fs_chunks` FOREIGN KEY (`filestore_id`) REFERENCES `filestore_meta` (`filestore_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=176 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -117,7 +127,7 @@ CREATE TABLE `filestore_meta` (
   `size` int(11) NOT NULL,
   `mimetype` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`filestore_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -137,11 +147,7 @@ CREATE TABLE `gym` (
   `longitude` double NOT NULL,
   `total_cp` smallint(6) NOT NULL,
   `is_in_battle` tinyint(1) NOT NULL,
-  `gender` smallint(6) DEFAULT NULL,
-  `form` smallint(6) DEFAULT NULL,
-  `costume` smallint(6) DEFAULT NULL,
   `weather_boosted_condition` smallint(6) DEFAULT NULL,
-  `shiny` tinyint(1) DEFAULT NULL,
   `last_modified` datetime NOT NULL,
   `last_scanned` datetime NOT NULL,
   `is_ex_raid_eligible` tinyint(1) DEFAULT NULL,
@@ -204,7 +210,7 @@ CREATE TABLE `mad_apks` (
   PRIMARY KEY (`filestore_id`),
   UNIQUE KEY `usage` (`usage`,`arch`),
   CONSTRAINT `fk_fs_apks` FOREIGN KEY (`filestore_id`) REFERENCES `filestore_meta` (`filestore_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -219,31 +225,9 @@ CREATE TABLE `madmin_instance` (
   `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`instance_id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `nests`
---
-
-DROP TABLE IF EXISTS `nests`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `nests` (
-  `nest_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `lat` double DEFAULT NULL,
-  `lon` double DEFAULT NULL,
-  `pokemon_id` int(11) DEFAULT NULL,
-  `updated` bigint(20) DEFAULT NULL,
-  `type` tinyint(4) NOT NULL,
-  `name` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `pokemon_count` double DEFAULT NULL,
-  `pokemon_avg` double DEFAULT NULL,
-  PRIMARY KEY (`nest_id`),
-  KEY `UpdatedIndex` (`updated`),
-  KEY `CoordsIndex` (`lat`,`lon`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `origin_hopper`
@@ -324,7 +308,7 @@ CREATE TABLE `pokemon_display` (
   PRIMARY KEY (`encounter_id`),
   KEY `ix_pokemon_display_pokemon` (`pokemon`),
   CONSTRAINT `pokemon_encounter_id_casc` FOREIGN KEY (`encounter_id`) REFERENCES `pokemon` (`encounter_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=18423289944087712655 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -392,20 +376,6 @@ CREATE TABLE `raid` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `rmversion`
---
-
-DROP TABLE IF EXISTS `rmversion`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `rmversion` (
-  `key` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `val` smallint(6) DEFAULT NULL,
-  PRIMARY KEY (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `scannedlocation`
 --
 
@@ -447,7 +417,7 @@ CREATE TABLE `settings_area` (
   PRIMARY KEY (`area_id`),
   KEY `fk_sa_instance` (`instance_id`),
   CONSTRAINT `fk_sa_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -622,7 +592,7 @@ CREATE TABLE `settings_auth` (
   PRIMARY KEY (`auth_id`),
   KEY `fk_sauth_instance` (`instance_id`),
   CONSTRAINT `fk_sauth_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -680,7 +650,7 @@ CREATE TABLE `settings_device` (
   CONSTRAINT `fk_sd_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE,
   CONSTRAINT `settings_device_ibfk_1` FOREIGN KEY (`walker_id`) REFERENCES `settings_walker` (`walker_id`),
   CONSTRAINT `settings_device_ibfk_2` FOREIGN KEY (`pool_id`) REFERENCES `settings_devicepool` (`pool_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -721,7 +691,7 @@ CREATE TABLE `settings_devicepool` (
   PRIMARY KEY (`pool_id`),
   KEY `fk_sds_instance` (`instance_id`),
   CONSTRAINT `fk_sds_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -740,7 +710,7 @@ CREATE TABLE `settings_geofence` (
   `fence_data` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`geofence_id`),
   UNIQUE KEY `name` (`name`,`instance_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -758,7 +728,7 @@ CREATE TABLE `settings_monivlist` (
   PRIMARY KEY (`monlist_id`),
   KEY `fk_mil_instance` (`instance_id`),
   CONSTRAINT `fk_mil_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -800,7 +770,7 @@ CREATE TABLE `settings_pogoauth` (
   KEY `settings_pogoauth_login_type` (`login_type`),
   CONSTRAINT `fk_ac_g_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_spa_device_id` FOREIGN KEY (`device_id`) REFERENCES `settings_device` (`device_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -819,7 +789,7 @@ CREATE TABLE `settings_routecalc` (
   `routefile` longtext COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`routecalc_id`),
   KEY `settings_routecalc_instance_id` (`instance_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -837,7 +807,7 @@ CREATE TABLE `settings_walker` (
   PRIMARY KEY (`walker_id`),
   KEY `fk_w_instance` (`instance_id`),
   CONSTRAINT `fk_w_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -881,7 +851,7 @@ CREATE TABLE `settings_walkerarea` (
   KEY `settings_walkerarea_ibfk_1` (`area_id`),
   CONSTRAINT `fk_wa_instance` FOREIGN KEY (`instance_id`) REFERENCES `madmin_instance` (`instance_id`) ON DELETE CASCADE,
   CONSTRAINT `settings_walkerarea_ibfk_1` FOREIGN KEY (`area_id`) REFERENCES `settings_area` (`area_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -922,7 +892,7 @@ CREATE TABLE `trs_event` (
   `event_lure_duration` int(11) NOT NULL DEFAULT '30',
   PRIMARY KEY (`id`),
   KEY `trs_event_event_start_end` (`event_start`,`event_end`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1021,7 +991,7 @@ CREATE TABLE `trs_stats_detect` (
   PRIMARY KEY (`id`),
   KEY `worker` (`worker`),
   KEY `trs_stats_detect_timestamp_scan` (`timestamp_scan`)
-) ENGINE=InnoDB AUTO_INCREMENT=941492 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1040,7 +1010,7 @@ CREATE TABLE `trs_stats_detect_seen_type` (
   `lure_encounter` datetime DEFAULT NULL,
   `lure_wild` datetime DEFAULT NULL,
   PRIMARY KEY (`encounter_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18443791328707560961 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1062,7 +1032,7 @@ CREATE TABLE `trs_stats_detect_wild_mon_raw` (
   KEY `ix_trs_stats_detect_wild_mon_raw_is_shiny` (`is_shiny`),
   KEY `trs_stats_detect_wild_mon_raw_is_shiny` (`is_shiny`),
   KEY `trs_stats_detect_wild_mon_raw_last_scanned` (`last_scanned`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1081,7 +1051,7 @@ CREATE TABLE `trs_stats_location` (
   PRIMARY KEY (`id`),
   KEY `worker` (`worker`),
   KEY `trs_stats_location_timestamp_scan` (`timestamp_scan`)
-) ENGINE=InnoDB AUTO_INCREMENT=940624 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1110,7 +1080,7 @@ CREATE TABLE `trs_stats_location_raw` (
   KEY `trs_stats_location_raw_walker` (`walker`(191)),
   KEY `trs_stats_location_raw_worker` (`worker`),
   KEY `trs_stats_location_raw_period` (`period`)
-) ENGINE=InnoDB AUTO_INCREMENT=19639330 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1168,7 +1138,7 @@ CREATE TABLE `trs_usage` (
   KEY `trs_usage_inst_ts` (`instance`,`timestamp`),
   KEY `trs_usage_instance` (`instance`),
   KEY `trs_usage_timestamp` (`timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=604154 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1182,24 +1152,6 @@ CREATE TABLE `trs_visited` (
   `pokestop_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `origin` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`pokestop_id`,`origin`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `trshash`
---
-
-DROP TABLE IF EXISTS `trshash`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `trshash` (
-  `hashid` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `count` int(10) NOT NULL DEFAULT '1',
-  `modify` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`hashid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1290,8 +1242,6 @@ CREATE TABLE `weather` (
 /*!50001 SET character_set_client      = utf8 */;
 /*!50001 SET character_set_results     = utf8 */;
 /*!50001 SET collation_connection      = utf8_general_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`map_nidda_user`@`%` SQL SECURITY DEFINER */
 /*!50001 VIEW `v_trs_status` AS select `trs`.`instance_id` AS `instance_id`,`trs`.`device_id` AS `device_id`,`dev`.`name` AS `name`,`trs`.`routePos` AS `routePos`,`trs`.`routeMax` AS `routeMax`,`trs`.`area_id` AS `area_id`,if((`trs`.`idle` = 1),'Idle',ifnull(`sa`.`name`,'Idle')) AS `rmname`,if((`trs`.`idle` = 1),'Idle',ifnull(`sa`.`mode`,'Idle')) AS `mode`,`trs`.`rebootCounter` AS `rebootCounter`,`trs`.`init` AS `init`,`trs`.`currentSleepTime` AS `currentSleepTime`,`trs`.`rebootingOption` AS `rebootingOption`,`trs`.`restartCounter` AS `restartCounter`,`trs`.`globalrebootcount` AS `globalrebootcount`,`trs`.`globalrestartcount` AS `globalrestartcount`,unix_timestamp(`trs`.`lastPogoRestart`) AS `lastPogoRestart`,unix_timestamp(`trs`.`lastProtoDateTime`) AS `lastProtoDateTime`,unix_timestamp(`trs`.`lastPogoReboot`) AS `lastPogoReboot`,concat(round(st_x(`trs`.`currentPos`),5),', ',round(st_y(`trs`.`currentPos`),5)) AS `currentPos`,concat(round(st_x(`trs`.`lastPos`),5),', ',round(st_y(`trs`.`lastPos`),5)) AS `lastPos`,`trs`.`currentPos` AS `currentPos_raw`,`trs`.`lastPos` AS `lastPos_raw` from ((`trs_status` `trs` join `settings_device` `dev` on((`dev`.`device_id` = `trs`.`device_id`))) left join `settings_area` `sa` on((`sa`.`area_id` = `trs`.`area_id`))) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
@@ -1305,5 +1255,3 @@ CREATE TABLE `weather` (
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2022-03-18  8:06:59

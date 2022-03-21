@@ -53,8 +53,8 @@ def parse_args():
                         help='Password for MySQL login')
     parser.add_argument('-dbname', '--dbname', required=False,
                         help='Name of MySQL Database')
-    parser.add_argument('-dbps', '--db_poolsize', type=int, default=2,
-                        help='Size of MySQL pool (open connections to DB). Default: 2')
+    parser.add_argument('-dbps', '--db_poolsize', type=int, default=5,
+                        help='Size of MySQL pool (open connections to DB). Default: 5')
 
     # Websocket Settings (RGC receiver)
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,
@@ -123,9 +123,9 @@ def parse_args():
     parser.add_argument('--enable_worker_specific_extra_start_stop_handling', default=False,
                         help='Option to enable/disable extra handling for the start/stop routine of workers. Default: '
                              'False')
-    parser.add_argument('-mvd', '--maximum_valid_distance', required=False, type=int, default=50,
+    parser.add_argument('-mvd', '--maximum_valid_distance', required=False, type=int, default=5,
                         help='The maximum distance for a scan of a location to be considered a valid/correct scan of'
-                             ' that location in meters. Default: 50m')
+                             ' that location in meters. Default: 5m')
 
     # Job Processor
     parser.add_argument('-jobdtwh', '--job_dt_wh', action='store_true', default=False,

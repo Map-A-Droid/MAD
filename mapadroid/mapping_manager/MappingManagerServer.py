@@ -93,6 +93,6 @@ class MappingManagerServer(MappingManagerServicer):
         response: GetQuestLayerToScanOfOriginResponse = GetQuestLayerToScanOfOriginResponse()
         quest_layer_to_scan: Optional[int] = await self.__mapping_manager_impl\
             .routemanager_get_quest_layer_to_scan_of_origin(request.worker.name)
-        if quest_layer_to_scan:
+        if quest_layer_to_scan is not None:
             response.layer = quest_layer_to_scan
         return response

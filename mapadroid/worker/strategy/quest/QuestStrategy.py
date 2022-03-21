@@ -306,7 +306,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         delay_used = await self._rotate_account_after_moving_locations_if_applicable(delay_used)
 
         delay_used = math.floor(delay_used)
-        if delay_used <= 0:
+        if delay_used <= 0 or await self._mapping_manager.routemanager_get_init(self._area_id):
             self._worker_state.current_sleep_time = 0
             logger.info('No need to wait before spinning, continuing...')
         else:
@@ -606,9 +606,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                         # invalid location or fort is a gym
                         continue
 
-                    elif (abs(self._worker_state.current_location.lat - latitude) <= distance_to_consider_for_stops
-                          and abs(
-                                self._worker_state.current_location.lng - longitude) <= distance_to_consider_for_stops):
+                    elif get_distance_of_two_points_in_meters(latitude, longitude,
+                                                              self._worker_state.current_location.lat,
+                                                              self._worker_state.current_location.lng) \
+                            < distance_to_consider_for_stops:
                         # We are basically on top of a stop
                         logger.info("Found stop/gym at current location!")
                     else:
@@ -817,7 +818,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         data_received = FortSearchResultTypes.UNDEFINED
         # TODO: Only try it once basically, then try clicking stop. Detect softban for sleeping?
         async with self._db_wrapper as session, session:
-            while data_received != FortSearchResultTypes.QUEST and int(to) < 3:
+            while data_received != FortSearchResultTypes.QUEST and int(to) < 2:
                 logger.info('Waiting for stop to be spun (enhanced)')
                 type_received, data_received = await self._wait_for_data_after_moving(self._stop_process_time,
                                                                                       ProtoIdentifier.FORT_SEARCH,
@@ -872,9 +873,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     on_main_menu = await self._check_pogo_main_screen(10, False)
                     if not on_main_menu:
                         await self._restart_pogo()
-                    self._stop_process_time = math.floor(time.time())
-                    # TODO: if await self._try_to_open_pokestop(self._stop_process_time) == ReceivedType.UNDEFINED:
-                    #    return
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and data_received == FortSearchResultTypes.FULL):
                     logger.warning(
@@ -902,14 +900,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
                     else:
                         vps_delay: int = await self._get_vps_delay()
-                        if not await self._check_pogo_main_screen(10, True):
-                            raise InternalStopWorkerException("Failed clearing quests")
                         await self._clear_quests(vps_delay)
 
                     await asyncio.sleep(1)
-                    to += 1
-                    if to > 2:
-                        logger.warning("giving up spinning after 3 tries in handle_stop loop")
+                to += 1
             else:
                 if data_received != FortSearchResultTypes.QUEST and not self._clustering_enabled:
                     # TODO

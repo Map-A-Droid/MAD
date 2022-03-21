@@ -84,7 +84,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         else:
             package: MADPackage = package_info.get(architecture)
             filename = package.filename
-        async with async_open(filename, 'rb') as fh:
+        async with async_open(self.get_package_path(filename), 'rb') as fh:
             while True:
                 data = await fh.read(CHUNK_MAX_SIZE)
                 if not data:

@@ -191,32 +191,29 @@ class StrategyFactory:
 
         # preckeck walker setting using the geofence_included's first location
         location = await self.__area_middle_of_fence(walker_settings)
+        loop_exit = False
         while not pre_check_value(walker_settings, self.__event.get_current_event_id(), location) \
                 and client_mapping.walker_area_index < len(client_mapping.walker_areas):
             logger.info('not using area {} - Walkervalue out of range',
                         await self.__mapping_manager.routemanager_get_name(walker_settings.area_id))
             if client_mapping.walker_area_index >= len(client_mapping.walker_areas) - 1:
-                logger.warning('Cannot find any active area defined for current time. Check Walker entries')
-                client_mapping.walker_area_index = 0
+                await self.__reset_settings(client_mapping, origin)
+                if loop_exit:
+                    logger.warning('Cannot find any active area defined for current time. Check Walker entries')
+                    return None
+                loop_exit = True
+            else:
+                client_mapping.walker_area_index += 1
                 await self.__mapping_manager.set_devicesetting_value_of(origin,
                                                                         MappingManagerDevicemappingKey.WALKER_AREA_INDEX,
                                                                         client_mapping.walker_area_index)
-                return None
-            client_mapping.walker_area_index += 1
-            await self.__mapping_manager.set_devicesetting_value_of(origin,
-                                                                    MappingManagerDevicemappingKey.WALKER_AREA_INDEX,
-                                                                    client_mapping.walker_area_index)
             walker_settings = client_mapping.walker_areas[client_mapping.walker_area_index]
             location = await self.__area_middle_of_fence(walker_settings)
 
         logger.debug("Checking walker_area_index length")
         if client_mapping.walker_area_index >= len(client_mapping.walker_areas):
             # check if array is smaller than expected - f.e. on the fly changes in mappings.json
-            await self.__mapping_manager.set_devicesetting_value_of(origin,
-                                                                    MappingManagerDevicemappingKey.WALKER_AREA_INDEX, 0)
-            await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.FINISHED,
-                                                                    False)
-            client_mapping.walker_area_index = 0
+            await self.__reset_settings(client_mapping, origin)
 
         walker_configuration = WalkerConfiguration(area_id=walker_settings.area_id,
                                                    walker_index=client_mapping.walker_area_index,
@@ -224,6 +221,13 @@ class StrategyFactory:
                                                    total_walkers_allowed_for_assigned_area=len(
                                                        client_mapping.walker_areas))
         return walker_configuration
+
+    async def __reset_settings(self, client_mapping, origin):
+        await self.__mapping_manager.set_devicesetting_value_of(origin,
+                                                                MappingManagerDevicemappingKey.WALKER_AREA_INDEX, 0)
+        await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.FINISHED,
+                                                                False)
+        client_mapping.walker_area_index = 0
 
     async def __area_middle_of_fence(self, walker_settings: SettingsWalkerarea):
         geofence_helper: Optional[GeofenceHelper] = await self.__mapping_manager.routemanager_get_geofence_helper(

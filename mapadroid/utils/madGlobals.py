@@ -45,6 +45,13 @@ class PrioQueueNoDueEntry(Exception):
     pass
 
 
+class NoMaddevApiTokenError(Exception):
+    """
+    Exception to be called when there is no maddev_api_token set
+    """
+    pass
+
+
 class ScreenshotType(Enum):
     JPEG = 0
     PNG = 1
