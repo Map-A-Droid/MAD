@@ -733,23 +733,28 @@ class DbPogoProtoSubmit:
         for cell in cells:
             for gym in cell["forts"]:
                 if gym["type"] == 0:
-                    guard_pokemon_id = gym["gym_details"]["guard_pokemon"]
                     gymid = gym["id"]
+                    last_modified_ts = gym["last_modified_timestamp_ms"] / 1000
+                    last_modified = DatetimeWrapper.fromtimestamp(
+                        last_modified_ts)
+
+
+                    cache_key = "gym{}{}".format(gymid, last_modified_ts)
+                    if await self._cache.exists(cache_key):
+                        continue
+                    guard_pokemon_id = gym["gym_details"]["guard_pokemon"]
                     team_id = gym["gym_details"]["owned_by_team"]
                     latitude = gym["latitude"]
                     longitude = gym["longitude"]
                     slots_available = gym["gym_details"]["slots_available"]
-                    last_modified_ts = gym["last_modified_timestamp_ms"] / 1000
-                    last_modified = DatetimeWrapper.fromtimestamp(
-                        last_modified_ts)
+
                     is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
                     is_ar_scan_eligible = gym["is_ar_scan_eligible"]
                     is_in_battle = gym['gym_details']['is_in_battle']
                     is_enabled = gym.get('enabled', 1)
 
-                    cache_key = "gym{}{}".format(gymid, last_modified_ts)
-                    if await self._cache.exists(cache_key):
-                        continue
+                    s2_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude)
+                    weather: Optional[Weather] = await WeatherHelper.get(session, s2_cell_id)
 
                     gym_obj: Optional[Gym] = await GymHelper.get(session, gymid)
                     if not gym_obj:
@@ -767,6 +772,7 @@ class DbPogoProtoSubmit:
                     gym_obj.last_scanned = time_receiver
                     gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
                     gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
+                    gym_obj.weather_boosted_condition = weather.gameplay_weather if weather else 0
 
                     gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gymid)
                     if not gym_detail:
