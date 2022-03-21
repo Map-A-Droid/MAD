@@ -50,6 +50,7 @@ class Gym(Base):
     longitude = Column(Float(asdecimal=True), nullable=False)
     total_cp = Column(SMALLINT(6), nullable=False)
     is_in_battle = Column(BOOLEAN, nullable=False)
+    weather_boosted_condition = Column(SMALLINT(6))
     last_modified = Column(TZDateTime, nullable=False, index=True)
     last_scanned = Column(TZDateTime, nullable=False, index=True)
     is_ex_raid_eligible = Column(BOOLEAN)
