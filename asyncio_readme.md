@@ -3,9 +3,6 @@
 1) Ensure Python >= 3.8 venv is present
 2) `source venv/bin/activate`
 3) `pip3 install -r requirements.txt`
-4) `cp alembic.ini.example alembic.ini`
-5) Adjust `sqlalchemy.url` to yield DB connection data: `mysql+aiomysql://db_user:password@host:port/db_name`
-6) `alembic upgrade head`
 
 ###Modes of operation:
   - Single Host (small setups, approx <20)
