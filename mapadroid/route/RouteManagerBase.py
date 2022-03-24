@@ -4,12 +4,12 @@ import math
 import time
 from abc import ABC, abstractmethod
 from asyncio import Task, CancelledError
+from dataclasses import dataclass
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 from asyncio_rlock import RLock
-from dataclasses import dataclass
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
@@ -22,7 +22,7 @@ from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.madGlobals import PositionType, PrioQueueNoDueEntry
+from mapadroid.utils.madGlobals import PositionType, PrioQueueNoDueEntry, RoutecalculationTypes
 from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -60,8 +60,6 @@ class RouteManagerBase(ABC):
             mon_ids_iv = []
 
         self.db_wrapper: DbWrapper = db_wrapper
-        # self.init: bool = area.init if area.mode in ("mon_mitm", "raids_mitm", "pokestop") and area.init else False
-        self.init: bool = False
         self.name: str = area.name
         self.useS2: bool = use_s2
         self.S2level: int = s2_level
@@ -115,7 +113,6 @@ class RouteManagerBase(ABC):
         self.delay_after_timestamp_prio: int = 0
         self.starve_route: bool = False
         self.remove_from_queue_backlog: Optional[int] = 0
-        self.init_mode_rounds: int = 1
         self._mon_ids_iv: List[int] = mon_ids_iv
         # initialize priority queue variables
         if initial_prioq_strategy:
@@ -216,100 +213,46 @@ class RouteManagerBase(ABC):
             self._coords_unstructured = np.concatenate(
                 (self._coords_unstructured, fenced_coords))
 
-    def add_coords_list(self, list_coords: List[Location]):
+    def _add_coords_list(self, list_coords: List[Location]):
         to_be_appended = np.zeros(shape=(len(list_coords), 2))
         for i in range(len(list_coords)):
             to_be_appended[i][0] = float(list_coords[i].lat)
             to_be_appended[i][1] = float(list_coords[i].lng)
         self._add_coords_numpy(to_be_appended)
 
-    # TODO: Really go async or just use threading in routemanagers and make all calls towards it async in executors?
-    async def _calculate_new_route(self, coords: List[Location], max_radius, max_coords_within_radius, delete_old_route,
-                                   num_procs=0,
-                                   in_memory=False, calctype=None):
-        if calctype is None:
-            calctype = self._calctype
-        if coords:
-            async with self._manager_mutex:
-                overwrite_calc = self._overwrite_calculation
-            if overwrite_calc:
-                calctype = 'route'
+    async def calculate_route(self, dynamic: bool) -> None:
+        """
+        Calculates a new route based off the internal acquisition of coords within the routemanager itself.
 
-            try:
-                new_route = await RoutecalcUtil.get_json_route(self.db_wrapper, self._routecalc.routecalc_id, coords,
-                                                               max_radius, max_coords_within_radius, in_memory,
-                                                               num_processes=num_procs,
-                                                               algorithm=calctype, use_s2=self.useS2,
-                                                               s2_level=self.S2level,
-                                                               route_name=self.name,
-                                                               delete_old_route=delete_old_route)
-            except Exception as e:
-                logger.exception(e)
-                new_route = []
-            if overwrite_calc:
-                async with self._manager_mutex:
-                    self._overwrite_calculation = False
-            return new_route
-        return []
-
-    async def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                                  delete_old_route: bool = False):
-        if not self._routecalc.routefile:
-            await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
-                                    delete_old_route=delete_old_route,
-                                    in_memory=True,
-                                    calctype='quick')
-            # Route has not previously been calculated.  Recalculate a quick route then calculate the optimized route
-            loop = asyncio.get_running_loop()
-            loop.create_task(self.recalc_route_adhoc(self._max_radius, self._max_coords_within_radius, num_procs=0))
-        else:
-            await self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
-
-    async def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                           delete_old_route: bool = False, in_memory: bool = False, calctype: str = None):
-        current_coords: List[Location] = []
+        :param dynamic: Whether the calculated route should be persisted in the database (False -> persist)
+        """
+        # If dynamic, recalc using OR tools in all cases (if possible) and do not persist to DB
+        coords: list[Location] = await self._get_coords_fresh()
+        try:
+            new_route: list[Location] = await RoutecalcUtil.calculate_route(self.db_wrapper,
+                                                                            self._routecalc.routecalc_id,
+                                                                            coords,
+                                                                            self.get_max_radius(),
+                                                                            self.get_max_coords_within_radius(),
+                                                                            algorithm=RoutecalculationTypes.OR_TOOLS,
+                                                                            use_s2=self.useS2,
+                                                                            s2_level=self.S2level,
+                                                                            route_name=self.name,
+                                                                            overwrite_persisted_route=not dynamic,
+                                                                            load_persisted_route=not dynamic)
+        except Exception as e:
+            logger.exception(e)
+            raise e
         async with self._manager_mutex:
-            for coord in self._coords_unstructured:
-                if isinstance(coord, Location):
-                    current_coords.append(coord)
-                else:
-                    current_coords.append(Location(coord[0], coord[1]))
-        new_route = await self._calculate_new_route(current_coords, max_radius, max_coords_within_radius,
-                                                    delete_old_route, num_procs,
-                                                    in_memory=in_memory,
-                                                    calctype=calctype)
-        async with self._manager_mutex:
-            self._route.clear()
-            for coord in new_route:
-                self._route.append(Location(coord["lat"], coord["lng"]))
+            self._route = new_route
             self._current_route_round_coords = self._route.copy()
-        return new_route
-
-    async def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                                 active: bool = False, calctype: str = 'route'):
-        async with self._manager_mutex:
-            self._clear_coords()
-            coords = await self._get_coords_post_init()
-            self.add_coords_list(coords)
-        new_route = await self.recalc_route(max_radius, max_coords_within_radius, num_procs,
-                                            in_memory=True,
-                                            calctype=calctype)
-        calc_coords = []
-        for coord in new_route:
-            calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
-        async with self.db_wrapper as session, session:
-            await session.merge(self._routecalc)
-            self._routecalc.routefile = str(calc_coords).replace("\'", "\"")
-            self._routecalc.last_updated = DatetimeWrapper.now()
-            # TODO: First update the resource or simply set using helper which fetches the object first?
-            await session.flush([self._routecalc])
-            await session.commit()
-        connected_worker_count = len(self._workers_registered)
-        if connected_worker_count > 0:
-            for worker in self._workers_registered.copy():
-                await self.unregister_worker(worker, True)
-        else:
-            await self.stop_routemanager()
+            # TODO:
+            # connected_worker_count = len(self._workers_registered)
+            # if connected_worker_count > 0:
+            #    for worker in self._workers_registered.copy():
+            #        await self.unregister_worker(worker, True)
+            # else:
+            #    await self.stop_routemanager()
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
@@ -349,7 +292,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    async def _get_coords_post_init(self) -> List[Location]:
+    async def _get_coords_fresh(self) -> List[Location]:
         """
         Return list of coords to be fetched and used for routecalc
         :return:
@@ -546,43 +489,7 @@ class RouteManagerBase(ABC):
         if len(routepool_entry.queue) == 0:
             # worker done with his subroute
             routepool_entry.rounds += 1
-
-        # Check if we are in init:
-        if self.init and self._get_worker_rounds_run_through() >= self.init_mode_rounds and \
-                len(routepool_entry.queue) == 0:
-            # we are done with init, let's calculate a new route
-            logger.warning("Init done, it took {}, calculating new route...",
-                           self._get_round_finished_string())
-            if self._start_calc:
-                logger.info("Another process already calculate the new route")
-                try:
-                    await asyncio.wait_for(self._wait_for_calc_end(origin), RECALC_WAIT_DURATION)
-                except (CancelledError, asyncio.exceptions.TimeoutError):
-                    logger.info("Current recalc took too long, returning None location")
-                    return None
-            else:
-                async with self._manager_mutex:
-                    self._start_calc = True
-                    try:
-                        self._clear_coords()
-                        coords = await self._get_coords_post_init()
-                        logger.debug("Setting {} coords to as new points ", len(coords))
-                        self.add_coords_list(coords)
-                        logger.debug("Route being calculated")
-                        await self._recalc_route_workertype()
-                        self.init = False
-                        await self._change_init_mapping()
-                    except Exception as e:
-                        logger.error("Failed (re-)calculating route")
-                        logger.exception(e)
-                    finally:
-                        self._start_calc = False
-                    logger.debug("Initroute is finished.")
-                    if not await self._worker_changed_update_routepools():
-                        logger.info("Failed updating routepools ...")
-                        return None
-
-        elif len(self._current_route_round_coords) >= 0 and len(routepool_entry.queue) == 0:
+        if len(self._current_route_round_coords) >= 0 and len(routepool_entry.queue) == 0:
             # only quest could hit this else!
             logger.info("finished subroute, updating all subroutes if necessary")
 
@@ -643,8 +550,7 @@ class RouteManagerBase(ABC):
 
         """
         if self._check_coords_before_returning(next_coord.lat, next_coord.lng, origin):
-            if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
-                    and not self.init:
+            if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                 self._current_route_round_coords.remove(next_coord)
             return True
         return False
@@ -945,13 +851,6 @@ class RouteManagerBase(ABC):
         #   the new route, remove the old rest of it (or just fetch the first coord of the next subroute and
         #   remove the coords of that coord onward)
 
-    @abstractmethod
-    async def _change_init_mapping(self) -> None:
-        """
-        Used to adjust the init flag of areas if applicable...
-        """
-        pass
-
     def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route and origin in self._routepool:
             entry: RoutePoolEntry = self._routepool[origin]
@@ -970,9 +869,6 @@ class RouteManagerBase(ABC):
 
     def get_geofence_helper(self) -> GeofenceHelper:
         return self.geofence_helper
-
-    def get_init(self) -> bool:
-        return self.init
 
     def get_mode(self) -> WorkerType:
         return self._mode

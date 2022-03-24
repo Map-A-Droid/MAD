@@ -41,8 +41,6 @@ class RouteManagerRaids(RouteManagerBase):
         self._settings: SettingsAreaRaidsMitm = area
 
         self.starve_route: bool = area.starve_route if area.starve_route is not None else False
-        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
-        self.init: bool = area.init if area.init is not None else False
 
     async def _get_coords_after_finish_route(self):
         self._init_route_queue()
@@ -56,7 +54,7 @@ class RouteManagerRaids(RouteManagerBase):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    async def _get_coords_post_init(self) -> List[Location]:
+    async def _get_coords_fresh(self) -> List[Location]:
         async with self.db_wrapper as session, session:
             coords: List[Location] = await GymHelper.get_locations_in_fence(session, self.geofence_helper)
             if self._settings.including_stops:
@@ -83,14 +81,3 @@ class RouteManagerRaids(RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
-
-    async def _change_init_mapping(self) -> None:
-        async with self.db_wrapper as session, session:
-            self._settings.init = False
-            # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
-            # TODO: Ensure that even works with SQLAlchemy's functionality in regards to objects and sessions etc...
-            try:
-                session.add(self._settings)
-                await session.commit()
-            except Exception as e:
-                logger.warning("Failed changing init to False: {}", e)

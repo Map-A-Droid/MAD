@@ -3,13 +3,12 @@ from typing import List, Optional
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.GymHelper import GymHelper
-from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsRoutecalc, SettingsAreaInitMitm
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
+from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -36,7 +35,6 @@ class RouteManagerInit(RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=strategy)
         self._settings: SettingsAreaInitMitm = area
-
         self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
 
     async def _get_coords_after_finish_route(self):
@@ -51,14 +49,8 @@ class RouteManagerInit(RouteManagerBase):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    async def _get_coords_post_init(self) -> List[Location]:
-        async with self.db_wrapper as session, session:
-            coords: List[Location] = await GymHelper.get_locations_in_fence(session, self.geofence_helper)
-            if self._settings.including_stops:
-                logger.info("Include stops in coords list too!")
-                coords.extend(await PokestopHelper.get_locations_in_fence(session, self.geofence_helper))
-
-        return coords
+    async def _get_coords_fresh(self) -> List[Location]:
+        return S2Helper.generate_locations(self.get_max_radius(), self.get_geofence_helper())
 
     async def start_routemanager(self):
         async with self._manager_mutex:

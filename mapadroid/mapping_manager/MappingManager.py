@@ -7,8 +7,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.GymHelper import GymHelper
-from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsDevicepoolHelper import \
@@ -22,12 +20,11 @@ from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import \
     SettingsWalkerareaHelper
-from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
                                 SettingsPogoauth, SettingsRoutecalc,
                                 SettingsWalker, SettingsWalkerarea,
-                                SettingsWalkerToWalkerarea, TrsSpawn)
+                                SettingsWalkerToWalkerarea)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
@@ -39,7 +36,6 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import ScreenshotType, PositionType
-from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.utils)
@@ -502,13 +498,11 @@ class MappingManager(AbstractMappingManager):
                 await routemanager.start_routemanager()
                 active = False
                 successful = True
-            args = (routemanager._max_radius, routemanager._max_coords_within_radius)
+            args = (False,)
             kwargs = {
-                'num_procs': 0,
-                'active': active
             }
             loop = asyncio.get_running_loop()
-            loop.create_task(coro=routemanager.recalc_route_adhoc(*args, **kwargs))
+            loop.create_task(coro=routemanager.calculate_route(*args, **kwargs))
         except Exception:
             logger.opt(exception=True).error('Unable to start recalculation')
         return successful
@@ -582,10 +576,7 @@ class MappingManager(AbstractMappingManager):
             if area.mode in ("iv_mitm", "mon_mitm", "raids_mitm") and area.monlist_id:
                 # replace list name
                 area_settings['mon_ids_iv_raw'] = self.get_monlist(area_id)
-            init_area: bool = False
-            if area.mode in (WorkerType.MON_MITM.value, WorkerType.RAID_MITM.value, WorkerType.STOPS.value) \
-                    and area.init:
-                init_area: bool = area.init
+
             spawns_known: bool = area.coords_spawns_known if area.mode == "mon_mitm" else True
             routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper \
                 .get(session, area.routecalc)
@@ -610,37 +601,7 @@ class MappingManager(AbstractMappingManager):
                                                                  )
             logger.info("Initializing area {}", area.name)
             if area.mode not in ("iv_mitm", "idle") and calc_type != "routefree":
-                include_event_id = area.include_event_id if area.mode == "mon_mitm" else None
-                coords = await self.__fetch_coords(session, area.mode, geofence_helper,
-                                                   coords_spawns_known=spawns_known,
-                                                   init=init_area,
-                                                   range_init=mode_mapping.get(area.mode, {}).get("range_init",
-                                                                                                  630),
-                                                   including_stops=including_stops,
-                                                   include_event_id=include_event_id)
-
-                route_manager.add_coords_list(coords)
-                task: Optional[Task] = None
-                if not getattr(area, "init", False):
-                    # TODO: proper usage in asnycio loop
-                    task = loop.create_task(route_manager.initial_calculation(route_manager.get_max_radius(),
-                                            route_manager.get_max_coords_within_radius(),
-                                                                              0,
-                                                                              False))
-                else:
-                    logger.info("Init mode enabled. Going row-based for {}", area.name)
-                    # we are in init, let's write the init route to file to make it visible in madmin
-                    # async with session.begin_nested() as nested:
-                    #     calc_coords = []
-                    #     if getattr(area, "routecalc", None) is not None:
-                    #         for loc in coords:
-                    #             calc_coord = '%s,%s' % (str(loc.lat), str(loc.lng))
-                    #             calc_coords.append(calc_coord)
-                    #         calc_coords = str(calc_coords).replace("\'", "\"")
-                    #         routecalc.routefile = str(calc_coords)
-                    #         session.add(routecalc)
-                    #         await nested.commit()
-                    task = loop.create_task(route_manager.recalc_route(1, 99999999, 0, True, True))
+                task = loop.create_task(route_manager.calculate_route(False))
                 areas_procs[area_id] = task
 
             routemanagers[area.area_id] = route_manager
@@ -691,44 +652,6 @@ class MappingManager(AbstractMappingManager):
                     device_entry.walker_areas.append(all_walkerareas.get(walker_to_walkerareas.walkerarea_id))
             devices[device.name] = device_entry
         return devices
-
-    async def __fetch_coords(self, session: AsyncSession, mode: str, geofence_helper: GeofenceHelper,
-                             coords_spawns_known: bool = True,
-                             init: bool = False, range_init: int = 630, including_stops: bool = False,
-                             include_event_id=None) -> List[Location]:
-        coords: List[Location] = []
-        if not init:
-            # grab data from DB depending on mode
-            # TODO: move routemanagers to factory
-            if mode == "raids_mitm":
-                coords = await GymHelper.get_locations_in_fence(session, geofence_helper)
-                if including_stops:
-                    try:
-                        stops = await PokestopHelper.get_locations_in_fence(session, geofence_helper)
-                        if stops:
-                            coords.extend(stops)
-                    except Exception:
-                        pass
-            elif mode == "mon_mitm":
-                spawns: List[TrsSpawn] = []
-                if coords_spawns_known:
-                    logger.debug("Reading known Spawnpoints from DB")
-                    spawns = await TrsSpawnHelper.get_known_of_area(session, geofence_helper, include_event_id)
-                else:
-                    logger.debug("Reading unknown Spawnpoints from DB")
-                    spawns = await TrsSpawnHelper.get_known_without_despawn_of_area(session, geofence_helper,
-                                                                                    include_event_id)
-                for spawn in spawns:
-                    coords.append(Location(float(spawn.latitude), float(spawn.longitude)))
-            elif mode == "pokestops":
-                coords = await PokestopHelper.get_locations_in_fence(session, geofence_helper)
-            else:
-                logger.info("Mode not implemented yet: {}", mode)
-                exit(1)
-        else:
-            # calculate all level N cells (mapping back from mapping above linked to mode)
-            coords = S2Helper._generate_locations(range_init, geofence_helper)
-        return coords
 
     async def __get_latest_auths(self, session: AsyncSession) -> Dict[str, str]:
         """

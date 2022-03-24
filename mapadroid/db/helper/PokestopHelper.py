@@ -38,19 +38,16 @@ class PokestopHelper:
         min_lat, min_lon, max_lat, max_lon = -90, -180, 90, 180
         if geofence_helper:
             min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
+        stmt = select(Pokestop)
+        where_and_clauses = [Pokestop.latitude >= min_lat,
+                             Pokestop.longitude >= min_lon,
+                             Pokestop.latitude <= max_lat,
+                             Pokestop.longitude <= max_lon]
         if fence:
             polygon = "POLYGON(({}))".format(fence)
-            stmt = select(Pokestop).where(and_(Pokestop.latitude >= min_lat,
-                                               Pokestop.longitude >= min_lon,
-                                               Pokestop.latitude <= max_lat,
-                                               Pokestop.longitude <= max_lon,
-                                               func.ST_Contains(func.ST_GeomFromText(polygon),
-                                                                func.POINT(Pokestop.latitude, Pokestop.longitude))))
-        else:
-            stmt = select(Pokestop).where(and_(Pokestop.latitude >= min_lat,
-                                               Pokestop.longitude >= min_lon,
-                                               Pokestop.latitude <= max_lat,
-                                               Pokestop.longitude <= max_lon))
+            where_and_clauses.append(func.ST_Contains(func.ST_GeomFromText(polygon),
+                                                      func.POINT(Pokestop.latitude, Pokestop.longitude)))
+
         result = await session.execute(stmt)
         list_of_coords: List[Location] = []
         for pokestop in result.scalars().all():
