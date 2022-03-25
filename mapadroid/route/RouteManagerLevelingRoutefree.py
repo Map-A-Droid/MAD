@@ -24,7 +24,6 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                                       mon_ids_iv=mon_ids_iv
                                       )
         self._level = True
-        self.init: bool = True if area.init == 1 else False
 
     async def _worker_changed_update_routepools(self):
         async with self._manager_mutex:
@@ -137,8 +136,6 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         if self._is_started:
             self._is_started = False
             self._round_started_time = None
-            if self.init:
-                self._first_started = False
             self._shutdown_route = False
 
         # clear not processed stops
@@ -147,9 +144,6 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         self._stoplist.clear()
 
     def _check_coords_before_returning(self, lat: float, lng: float, origin):
-        if self.init:
-            logger.debug('Init Mode - coord is valid')
-            return True
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', stop)
         if stop in self._coords_to_be_ignored:

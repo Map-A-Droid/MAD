@@ -70,7 +70,7 @@ class RouteManagerIV(RouteManagerBase):
     def get_encounter_ids_left(self) -> List[int]:
         return self.encounter_ids_left
 
-    def _get_coords_post_init(self):
+    def _get_coords_fresh(self):
         # not necessary
         pass
 
@@ -96,14 +96,6 @@ class RouteManagerIV(RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
-
-    async def _change_init_mapping(self) -> None:
-        """
-        No init in IV mode anyway...
-        Returns:
-
-        """
-        pass
 
     def _remove_deprecated_prio_events(self) -> bool:
         return False

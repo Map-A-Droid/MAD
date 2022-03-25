@@ -2,7 +2,6 @@ import asyncio
 import concurrent.futures
 from typing import List, Tuple, Optional
 
-import numpy as np
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
@@ -11,28 +10,29 @@ from mapadroid.db.model import SettingsRoutecalc
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.madGlobals import RoutecalculationTypes
 
 
 class RoutecalcUtil:
     @staticmethod
-    async def get_json_route(db_wrapper: DbWrapper, routecalc_id: int, coords: List[Location], max_radius,
-                             max_coords_within_radius,
-                             in_memory, num_processes, algorithm, use_s2, s2_level, route_name,
-                             delete_old_route: bool = False):
+    async def calculate_route(db_wrapper: DbWrapper, routecalc_id: int, coords: List[Location], max_radius,
+                              max_coords_within_radius,
+                              load_persisted_route, algorithm: RoutecalculationTypes,
+                              use_s2, s2_level, route_name,
+                              overwrite_persisted_route: bool = False) -> list[Location]:
         async with db_wrapper as session, session:
             routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
-            if not in_memory:
-                saved_route = RoutecalcUtil.read_saved_json_route(routecalc_entry)
+            if load_persisted_route and routecalc_entry:
+                saved_route: list[Location] = RoutecalcUtil.read_persisted_route(routecalc_entry)
                 if saved_route:
                     logger.debug('Using routefile from DB')
                     return saved_route
 
-            routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
             if not routecalc_entry:
-                # TODO: Can this even be the case? Handle correctly
                 #  Missing instance_id...
                 routecalc_entry = SettingsRoutecalc()
                 routecalc_entry.routecalc_id = routecalc_id
+                routecalc_entry.instance_id = db_wrapper.get_instance_id()
 
             routecalc_entry.recalc_status = 1
             # Commit to make the recalc_status visible to others
@@ -43,41 +43,23 @@ class RoutecalcUtil:
             except Exception as e:
                 logger.exception(e)
                 await session.rollback()
-            await session.refresh(routecalc_entry)
 
-        if not in_memory and delete_old_route:
-            logger.debug("Deleting routefile...")
-            async with db_wrapper as session, session:
-                routecalc_entry.routefile = "[]"
-                session.add(routecalc_entry)
-                await session.commit()
-                await session.refresh(routecalc_entry)
-
-        export_data = []
+        calculated_route: list[Location] = []
         if use_s2:
             logger.debug("Using S2 method for calculation with S2 level: {}", s2_level)
 
-        # TODO: Move to method running calculation in a thread/executor...
-        less_coords = coords
         if len(coords) > 0 and max_radius and max_radius >= 1 and max_coords_within_radius:
             logger.info("Calculating route for {}", route_name)
             loop = asyncio.get_running_loop()
             with concurrent.futures.ThreadPoolExecutor() as pool:
-                new_coords = await loop.run_in_executor(
+                calculated_route = await loop.run_in_executor(
                     pool, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
                     s2_level)
-            less_coords = np.zeros(shape=(len(new_coords), 2))
-            for i in range(len(less_coords)):
-                less_coords[i][0] = new_coords[i][0]
-                less_coords[i][1] = new_coords[i][1]
-            logger.debug("Coords summed up: {}, that's just {} coords", less_coords, len(less_coords))
-        logger.debug("Got {} coordinates", len(less_coords))
-        if len(less_coords) < 3:
+
+            logger.debug("Coords summed up to {} coords", len(calculated_route))
+        logger.debug("Got {} coordinates", len(calculated_route))
+        if len(calculated_route) < 3:
             logger.debug("less than 3 coordinates... not gonna take a shortest route on that")
-            export_data = []
-            for i in range(len(less_coords)):
-                export_data.append({'lat': less_coords[i][0].item(),
-                                    'lng': less_coords[i][1].item()})
         else:
             logger.info("Calculating a short route through all those coords. Might take a while")
             from timeit import default_timer as timer
@@ -87,7 +69,7 @@ class RoutecalcUtil:
             loop = asyncio.get_running_loop()
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 sol_best = await loop.run_in_executor(
-                    pool, route_calc_all, less_coords, route_name, num_processes, algorithm)
+                    pool, route_calc_all, calculated_route, route_name, algorithm)
 
             end = timer()
 
@@ -98,19 +80,14 @@ class RoutecalcUtil:
                 time_unit = 'seconds'
 
             logger.info("Calculated route for {} in {} {}", route_name, calc_dur, time_unit)
-
+            calculated_route_old = calculated_route
+            calculated_route = []
             for i in range(len(sol_best)):
-                export_data.append({'lat': less_coords[int(sol_best[i])][0].item(),
-                                    'lng': less_coords[int(sol_best[i])][1].item()})
+                calculated_route.append(calculated_route_old[int(sol_best[i])])
         async with db_wrapper as session, session:
-            if not in_memory:
-                calc_coords = []
-                for coord in export_data:
-                    calc_coord = '%s,%s' % (coord['lat'], coord['lng'])
-                    calc_coords.append(calc_coord)
-                # Only save if we aren't calculating in memory
-                to_be_written = str(calc_coords).replace("\'", "\"")
-                routecalc_entry.routefile = to_be_written
+            routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
+            if overwrite_persisted_route:
+                await RoutecalcUtil._write_route_to_db_entry(routecalc_entry, calculated_route)
                 routecalc_entry.last_updated = DatetimeWrapper.now()
             routecalc_entry.recalc_status = 0
 
@@ -120,7 +97,18 @@ class RoutecalcUtil:
             except Exception as e:
                 logger.exception(e)
                 await session.rollback()
-        return export_data
+        return calculated_route
+
+    @staticmethod
+    async def _write_route_to_db_entry(routecalc_entry: SettingsRoutecalc,
+                                       new_route: list[Location]) -> None:
+        calc_coords = []
+        for coord in new_route:
+            calc_coord = '%s,%s' % (coord.lat, coord.lng)
+            calc_coords.append(calc_coord)
+        # Only save if we aren't calculating in memory
+        to_be_written = str(calc_coords).replace("\'", "\"")
+        routecalc_entry.routefile = to_be_written
 
     @staticmethod
     def get_less_coords(coords: List[Location], max_radius: int, max_coords_within_radius: int,
@@ -165,4 +153,16 @@ class RoutecalcUtil:
                     continue
                 line_split = line.split(',')
                 result.append({'lat': float(line_split[0].strip()), 'lng': float(line_split[1].strip())})
+        return result
+
+    @staticmethod
+    def read_persisted_route(routecalc_entry: SettingsRoutecalc) -> list[Location]:
+        result: list[Location] = []
+        if routecalc_entry.routefile and routecalc_entry.routefile.strip():
+            for line in routecalc_entry.routefile.split("\","):
+                line = line.replace("\"", "").replace("]", "").replace("[", "").strip()
+                if not line:
+                    continue
+                line_split = line.split(',')
+                result.append(Location(float(line_split[0].strip()), float(line_split[1].strip())))
         return result

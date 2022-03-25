@@ -10,6 +10,7 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.utils.collections import Location
+from mapadroid.utils.madGlobals import QuestLayer
 
 
 class RouteManagerLeveling(RouteManagerQuests):
@@ -197,6 +198,11 @@ class RouteManagerLeveling(RouteManagerQuests):
         await self._recalc_route_workertype()
         self._init_route_queue()
 
+    async def _get_coords_fresh(self):
+        async with self.db_wrapper as session, session:
+            return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper,
+                                                               QuestLayer(self._settings.layer))
+
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
@@ -205,9 +211,6 @@ class RouteManagerLeveling(RouteManagerQuests):
         self._stoplist.clear()
 
     def _check_coords_before_returning(self, lat: float, lng: float, origin):
-        if self.init:
-            logger.debug('Init Mode - coord is valid')
-            return True
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', str(stop))
         if stop in self._coords_to_be_ignored:

@@ -32,7 +32,7 @@ class RouteManagerIdle(RouteManagerBase):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    async def _get_coords_post_init(self) -> List[Location]:
+    async def _get_coords_fresh(self) -> List[Location]:
         return [Location(0, 0)]
 
     async def start_routemanager(self):
@@ -49,9 +49,6 @@ class RouteManagerIdle(RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
-
-    async def _change_init_mapping(self) -> None:
-        pass
 
     async def get_next_location(self, origin: str) -> Optional[Location]:
         return Location(0, 0)
