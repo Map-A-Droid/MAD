@@ -66,7 +66,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                         new_route = await self._local_recalc_subroute(unvisited_stops)
                         origin_local_list.clear()
                         for coord in new_route:
-                            origin_local_list.append(Location(coord["lat"], coord["lng"]))
+                            origin_local_list.append(coord)
 
                     # subroute is all stops unvisited
                     logger.info("Origin {} has {} unvisited stops for this route", origin, len(origin_local_list))
