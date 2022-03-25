@@ -87,12 +87,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                     logger.warning("Failed storing last walker positions: {}", e)
                 return True
 
-    async def _recalc_route_workertype(self):
-        await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                                in_memory=True)
-        self._init_route_queue()
-
-    async def _get_coords_after_finish_route(self) -> bool:
+    async def _any_coords_left_after_finishing_route(self) -> bool:
         if self._shutdown_route:
             logger.info('Other worker shutdown route - leaving it')
             return False
@@ -102,7 +97,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
         return True
 
     def _check_unprocessed_stops(self):
-        # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
+        # We finish routes on a per walker/origin level, so the route itself is always as long as at
         # least one origin is connected to it.
         return self._stoplist
 
@@ -124,23 +119,9 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                 return True
         return True
 
-    async def _recalc_stop_route(self, stops):
-        self._clear_coords()
-        self.add_coords_list(stops)
-        self._overwrite_calculation = True
-        await self._recalc_route_workertype()
-        self._init_route_queue()
-
-    def _quit_route(self):
+    async def _quit_route(self):
         logger.info('Shutdown Route')
-        if self._is_started:
-            self._is_started = False
-            self._round_started_time = None
-            self._shutdown_route = False
-
-        # clear not processed stops
-        self._stops_not_processed.clear()
-        self._coords_to_be_ignored.clear()
+        await super()._quit_route()
         self._stoplist.clear()
 
     def _check_coords_before_returning(self, lat: float, lng: float, origin):

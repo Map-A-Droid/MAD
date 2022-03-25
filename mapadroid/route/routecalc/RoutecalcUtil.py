@@ -27,6 +27,9 @@ class RoutecalcUtil:
                 if saved_route:
                     logger.debug('Using routefile from DB')
                     return saved_route
+                else:
+                    logger.warning("No routecalc/persisted route found, persisting after calculation")
+                    overwrite_persisted_route = True
 
             if not routecalc_entry:
                 #  Missing instance_id...

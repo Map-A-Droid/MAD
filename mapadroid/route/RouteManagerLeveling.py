@@ -1,4 +1,3 @@
-import asyncio
 from typing import List, Optional
 
 from loguru import logger
@@ -9,8 +8,9 @@ from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
+from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import QuestLayer
+from mapadroid.utils.madGlobals import QuestLayer, RoutecalculationTypes
 
 
 class RouteManagerLeveling(RouteManagerQuests):
@@ -73,30 +73,24 @@ class RouteManagerLeveling(RouteManagerQuests):
                     any_at_all = len(origin_local_list) > 0 or any_at_all
                 return any_at_all
 
-    async def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]):
+    async def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]) -> list[Location]:
         coords: List[Location] = []
         for stop in unvisited_stops:
             coords.append(Location(float(stop.latitude), float(stop.longitude)))
-        new_route = await self._calculate_new_route(coords, self._max_radius, self._max_coords_within_radius,
-                                                    False, 1, True)
+        new_route: list[Location] = await RoutecalcUtil.calculate_route(self.db_wrapper,
+                                                                        self._routecalc.routecalc_id,
+                                                                        coords,
+                                                                        self.get_max_radius(),
+                                                                        self.get_max_coords_within_radius(),
+                                                                        algorithm=RoutecalculationTypes.OR_TOOLS,
+                                                                        use_s2=self.useS2,
+                                                                        s2_level=self.S2level,
+                                                                        route_name=self.name,
+                                                                        overwrite_persisted_route=False,
+                                                                        load_persisted_route=False)
         return new_route
 
-    async def generate_stop_list(self):
-        # TODO: Why is there a sleep here?
-        await asyncio.sleep(5)
-        async with self.db_wrapper as session, session:
-            stops_in_fence: List[Location] = await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
-
-        logger.info('Detected stops without quests: {}', len(stops_in_fence))
-        logger.debug('Detected stops without quests: {}', stops_in_fence)
-        self._stoplist: List[Location] = stops_in_fence
-
-    async def _recalc_route_workertype(self):
-        await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                                in_memory=True)
-        self._init_route_queue()
-
-    async def _get_coords_after_finish_route(self) -> bool:
+    async def _any_coords_left_after_finishing_route(self) -> bool:
         with self._manager_mutex:
             if self._shutdown_route:
                 logger.info('Other worker shutdown route - leaving it')
@@ -106,7 +100,6 @@ class RouteManagerLeveling(RouteManagerQuests):
                 logger.info("Another process already calculate the new route")
                 return True
             self._start_calc = True
-            self._restore_original_route()
 
             any_unvisited = False
             async with self.db_wrapper as session, session:
@@ -127,78 +120,12 @@ class RouteManagerLeveling(RouteManagerQuests):
             self._start_calc = False
             return True
 
-    def _restore_original_route(self):
-        if not self._tempinit:
-            logger.info("Restoring original route")
-            with self._manager_mutex:
-                self._route = self._routecopy.copy()
-
     def _check_unprocessed_stops(self):
         # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
         # least one origin is connected to it.
         return self._stoplist
 
-    async def start_routemanager(self):
-        async with self._manager_mutex:
-            if not self._is_started:
-                self._is_started = True
-                logger.info("Starting routemanager")
-
-                if self._shutdown_route:
-                    logger.info('Other worker shutdown route - leaving it')
-                    return False
-
-                await self.generate_stop_list()
-                stops = self._stoplist
-                self._prio_queue = None
-                self.delay_after_timestamp_prio = None
-                self.starve_route = False
-                await self._start_check_routepools()
-
-                if not self._first_started:
-                    logger.info("First starting quest route - copying original route for later use")
-                    self._routecopy = self._route.copy()
-                    self._first_started = True
-                else:
-                    logger.info("Restoring original route")
-                    self._route = self._routecopy.copy()
-
-                new_stops = list(set(stops) - set(self._route))
-                if len(new_stops) > 0:
-                    logger.info("There's {} new stops not in route", len(new_stops))
-
-                if len(stops) == 0:
-                    logger.info('No Stops detected in route - quit worker')
-                    self._shutdown_route = True
-                    self._restore_original_route()
-                    self._route: List[Location] = []
-                    return False
-
-                if 0 < len(stops) < len(self._route) \
-                        and len(stops) / len(self._route) <= 0.3:
-                    # Calculating new route because 70 percent of stops are processed
-                    logger.info('There are less stops without quest than route positions - recalc')
-                    await self._recalc_stop_route(stops)
-                elif len(self._route) == 0 and len(stops) > 0:
-                    logger.warning("Something wrong with area: it has a lot of new stops - you should delete the "
-                                   "routefile!!")
-                    logger.info("Recalc new route for area")
-                    await self._recalc_stop_route(stops)
-                else:
-                    self._init_route_queue()
-
-                logger.info('Getting {} positions', len(self._route))
-                return True
-        return True
-
-    async def _recalc_stop_route(self, stops):
-        self._clear_coords()
-        self.add_coords_list(stops)
-        self._overwrite_calculation = True
-        await self._recalc_route_workertype()
-        self._init_route_queue()
-
-    async def _get_coords_fresh(self):
+    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         async with self.db_wrapper as session, session:
             return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper,
                                                                QuestLayer(self._settings.layer))
@@ -206,8 +133,8 @@ class RouteManagerLeveling(RouteManagerQuests):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    def _quit_route(self):
-        super()._quit_route()
+    async def _quit_route(self):
+        await super()._quit_route()
         self._stoplist.clear()
 
     def _check_coords_before_returning(self, lat: float, lng: float, origin):

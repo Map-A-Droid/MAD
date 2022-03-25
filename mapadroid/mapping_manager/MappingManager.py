@@ -419,10 +419,6 @@ class MappingManager(AbstractMappingManager):
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_geofence_helper() if routemanager is not None else None
 
-    async def routemanager_get_init(self, routemanager_id: int) -> bool:
-        routemanager = self.__fetch_routemanager(routemanager_id)
-        return routemanager.get_init() if routemanager is not None else False
-
     async def routemanager_is_levelmode(self, routemanager_id: int) -> bool:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.is_level_mode() if routemanager is not None else None
@@ -484,21 +480,19 @@ class MappingManager(AbstractMappingManager):
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_max_radius() if routemanager is not None else None
 
-    async def routemanager_recalcualte(self, routemanager_id: int):
+    async def routemanager_recalculate(self, routemanager_id: int):
         successful = False
         try:
             routemanager = self.__fetch_routemanager(routemanager_id)
             if not routemanager:
                 return False
-            active = False
             if routemanager._check_routepools_thread:
-                active = True
+                # TODO: ??
                 successful = True
             else:
                 await routemanager.start_routemanager()
-                active = False
                 successful = True
-            args = (False,)
+            args = (False, True)
             kwargs = {
             }
             loop = asyncio.get_running_loop()
@@ -744,7 +738,7 @@ class MappingManager(AbstractMappingManager):
 
             for area_id, routemanager in self._routemanagers.items():
                 logger.info("Stopping all routemanagers and join threads")
-                await routemanager.stop_routemanager(joinwithqueue=False)
+                await routemanager.stop_routemanager()
                 await routemanager._stop_internal_tasks()
 
             logger.info("Restoring old devicesettings")
@@ -760,6 +754,7 @@ class MappingManager(AbstractMappingManager):
                 self._routemanagers = routemanagers_tmp
                 self._auths = auths_tmp
                 self._geofence_helpers = geofence_helpers_tmp
+            # Lastly, kill all strategies and update them accordingly
 
         else:
             logger.debug("Acquiring lock to update mappings,full")
@@ -774,7 +769,6 @@ class MappingManager(AbstractMappingManager):
                     self._geofence_helpers = await self.__get_latest_geofence_helpers(session)
 
         logger.info("Mappings have been updated")
-        # Lastly, kill all strategies and update them accordingly
 
     async def get_all_devicenames(self) -> List[str]:
         async with self.__db_wrapper as session, session:
