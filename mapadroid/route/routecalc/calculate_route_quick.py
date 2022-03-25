@@ -3,7 +3,7 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 logger = get_logger(LoggerEnums.routemanager)
 
 
-def route_calc_impl(coords, route_name, num_processes=1):
+def route_calc_impl(coords, route_name):
     with logger.contextualize(origin=route_name):
         less_coords_array = []
         for i in range(len(coords)):

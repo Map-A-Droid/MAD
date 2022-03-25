@@ -27,7 +27,6 @@ class RouteManagerQuests(RouteManagerBase):
         self._settings: SettingsAreaPokestop = area
         self._calctype: str = area.route_calc_algorithm
         self._stoplist: List[Location] = []
-        self.init: bool = area.init if area.init is not None else False
         self._shutdown_route: bool = False
         self._routecopy: List[Location] = []
         self._tempinit: bool = False
@@ -45,7 +44,7 @@ class RouteManagerQuests(RouteManagerBase):
     def _retrieve_latest_priority_queue(self):
         return None
 
-    async def _get_coords_post_init(self):
+    async def _get_coords_fresh(self):
         async with self.db_wrapper as session, session:
             return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper,
                                                                QuestLayer(self._settings.layer))
@@ -57,12 +56,8 @@ class RouteManagerQuests(RouteManagerBase):
         return 0
 
     async def _recalc_route_workertype(self):
-        if self.init:
-            await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                                    in_memory=False)
-        else:
-            await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                                    in_memory=True)
+        await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
+                                in_memory=True)
 
         self._init_route_queue()
 
@@ -148,12 +143,6 @@ class RouteManagerQuests(RouteManagerBase):
                 self.starve_route = False
                 await self._start_check_routepools()
 
-                if self.init:
-                    logger.info('Starting init mode')
-                    self._init_route_queue()
-                    self._tempinit = True
-                    return True
-
                 if not self._first_started:
                     logger.info("First starting quest route - copying original route for later use")
                     self._routecopy = self._route.copy()
@@ -206,8 +195,6 @@ class RouteManagerQuests(RouteManagerBase):
         if self._is_started:
             self._is_started = False
             self._round_started_time = None
-            if self.init:
-                self._first_started = False
             self._restore_original_route()
             self._shutdown_route = False
 
@@ -216,9 +203,6 @@ class RouteManagerQuests(RouteManagerBase):
         self._coords_to_be_ignored.clear()
 
     def _check_coords_before_returning(self, lat: float, lng: float, origin):
-        if self.init:
-            logger.debug('Init Mode - coord is valid')
-            return True
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', stop)
         if stop in self._coords_to_be_ignored or not self._is_coord_within_range_of_stoplist(stop):
@@ -226,12 +210,6 @@ class RouteManagerQuests(RouteManagerBase):
             return False
         logger.info('Getting new Stop')
         return True
-
-    async def _change_init_mapping(self) -> None:
-        self._settings.init = False
-        async with self.db_wrapper as session, session:
-            await session.merge(self._settings)
-            await session.commit()
 
     def _should_get_new_coords_after_finishing_route(self) -> bool:
         return not self.init

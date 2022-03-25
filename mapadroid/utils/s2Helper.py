@@ -68,7 +68,7 @@ class S2Helper:
 
     # the following stuff is drafts for further consideration
     @staticmethod
-    def _generate_locations(distance: float, geofence_helper: GeofenceHelper):
+    def generate_locations(distance: float, geofence_helper: GeofenceHelper):
         south, east, north, west = geofence_helper.get_polygon_from_fence()
 
         corners = [

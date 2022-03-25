@@ -64,6 +64,11 @@ class TeamColours(Enum):
     WHITE = "White"
 
 
+class RoutecalculationTypes(Enum):
+    TSP_QUICK = 0,
+    OR_TOOLS = 1
+
+
 class MonSeenTypes(IntEnum):
     wild = 0
     encounter = 1

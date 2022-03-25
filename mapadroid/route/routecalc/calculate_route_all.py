@@ -1,6 +1,11 @@
 import math
+from typing import List
 
+import numpy as np
 from loguru import logger
+
+from mapadroid.utils.collections import Location
+from mapadroid.utils.madGlobals import RoutecalculationTypes
 
 try:
     from ortools.constraint_solver import pywrapcp, routing_enums_pb2
@@ -86,10 +91,15 @@ def route_calc_ortools(less_coordinates, route_name):
     return format_solution(manager, routing, solution)
 
 
-def route_calc_all(less_coordinates, route_name, num_processes, algorithm):
+def route_calc_all(coords: List[Location], route_name, algorithm: RoutecalculationTypes):
     # check to see if we can use OR-Tools to perform our routecalc
+    coords_for_calc = np.zeros(shape=(len(coords), 2))
+    for i in range(len(coords)):
+        coords_for_calc[i][0] = coords[i].lat
+        coords_for_calc[i][1] = coords[i].lng
     import platform
-    if platform.architecture()[0] == "64bit" and algorithm == 'route':  # OR-Tools is only available for 64bit python
+    if platform.architecture()[
+        0] == "64bit" and algorithm == RoutecalculationTypes.OR_TOOLS:  # OR-Tools is only available for 64bit python
         logger.debug("64-bit python detected, checking if we can use OR-Tools")
         try:
             pywrapcp
@@ -98,8 +108,7 @@ def route_calc_all(less_coordinates, route_name, num_processes, algorithm):
             logger.debug("OR-Tools not available, using MAD routecalc")
         else:
             logger.debug("Using OR-Tools for routecalc")
-            return route_calc_ortools(less_coordinates, route_name)
-
+            return route_calc_ortools(coords_for_calc, route_name)
     logger.debug("Using MAD quick routecalc")
     from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
-    return route_calc_impl(less_coordinates, route_name, num_processes)
+    return route_calc_impl(coords_for_calc, route_name)
