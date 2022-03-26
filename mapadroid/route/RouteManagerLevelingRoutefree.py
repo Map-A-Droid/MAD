@@ -48,7 +48,7 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                         origin=origin,
                         location=current_worker_pos,
                         limit=30,
-                        ignore_spinned=self._settings.ignore_spinned_stops == 1,
+                        ignore_spinned=self._settings.ignore_spinned_stops,
                         max_distance=5)
                     if not unvisited_stops:
                         logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
