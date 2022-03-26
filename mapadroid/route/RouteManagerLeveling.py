@@ -82,7 +82,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                                                                         coords,
                                                                         self.get_max_radius(),
                                                                         self.get_max_coords_within_radius(),
-                                                                        algorithm=RoutecalculationTypes.OR_TOOLS,
+                                                                        algorithm=RoutecalculationTypes.TSP_QUICK,
                                                                         use_s2=self.useS2,
                                                                         s2_level=self.S2level,
                                                                         route_name=self.name,
@@ -92,7 +92,7 @@ class RouteManagerLeveling(RouteManagerQuests):
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
         with self._manager_mutex:
-            if self._shutdown_route:
+            if self._shutdown_route.is_set():
                 logger.info('Other worker shutdown route - leaving it')
                 return False
 

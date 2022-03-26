@@ -88,12 +88,11 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
                 return True
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
-        if self._shutdown_route:
+        if self._shutdown_route.is_set():
             logger.info('Other worker shutdown route - leaving it')
             return False
 
         await self._worker_changed_update_routepools()
-        self._start_calc = False
         return True
 
     def _check_unprocessed_stops(self):
@@ -103,11 +102,11 @@ class RouteManagerLevelingRoutefree(RouteManagerLeveling):
 
     async def start_routemanager(self):
         async with self._manager_mutex:
-            if not self._is_started:
-                self._is_started = True
+            if not self._is_started.is_set():
+                self._is_started.set()
                 logger.info("Starting routemanager")
 
-                if self._shutdown_route:
+                if self._shutdown_route.is_set():
                     logger.info('Other worker shutdown route - leaving it')
                     return False
 
