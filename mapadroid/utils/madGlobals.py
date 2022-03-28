@@ -52,6 +52,13 @@ class NoMaddevApiTokenError(Exception):
     pass
 
 
+class RoutemanagerShuttingDown(Exception):
+    """
+    Exception indicating a shutdown of the routemanager
+    """
+    pass
+
+
 class ScreenshotType(Enum):
     JPEG = 0
     PNG = 1

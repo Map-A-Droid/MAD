@@ -54,16 +54,6 @@ class AreaPokestops:
                     "data_source": "layer",
                 }
             },
-            "init": {
-                "settings": {
-                    "type": "option",
-                    "require": True,
-                    "values": [False, True],
-                    "empty": False,
-                    "description": "Set this option to True, if you scan the area for stops for the first time",
-                    "expected": bool
-                }
-            },
             "level": {
                 "settings": {
                     "type": "option",

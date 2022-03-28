@@ -44,7 +44,7 @@ class RouteManagerIV(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 60
 
-    async def _get_coords_after_finish_route(self) -> bool:
+    async def _any_coords_left_after_finishing_route(self) -> bool:
         return True
 
     async def _recalc_route_workertype(self):
@@ -70,7 +70,7 @@ class RouteManagerIV(RouteManagerBase):
     def get_encounter_ids_left(self) -> List[int]:
         return self.encounter_ids_left
 
-    def _get_coords_fresh(self):
+    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         # not necessary
         pass
 
@@ -89,7 +89,7 @@ class RouteManagerIV(RouteManagerBase):
                 await self._start_priority_queue()
         return True
 
-    def _quit_route(self):
+    async def _quit_route(self):
         logger.info('Shutdown Route')
         self._is_started = False
         self._round_started_time = None

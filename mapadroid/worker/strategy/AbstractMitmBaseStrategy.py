@@ -314,11 +314,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         self._worker_state.restart_count += 1
         restart_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.RESTART_THRESH, 5)
         reboot_thresh = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT_THRESH, 3)
-        if await self._mapping_manager.routemanager_get_route_stats(self._area_id,
-                                                                    self._worker_state.origin) is not None:
-            if await self._mapping_manager.routemanager_get_init(self._area_id):
-                restart_thresh = restart_thresh * 2
-                reboot_thresh = reboot_thresh * 2
+
         if self._worker_state.restart_count > restart_thresh:
             self._worker_state.reboot_count += 1
             if self._worker_state.reboot_count > reboot_thresh \
@@ -358,8 +354,6 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             routemanager_status = [None, None]
         else:
             logger.debug('Route Pos: {} - Route Length: {}', routemanager_status[0], routemanager_status[1])
-        routemanager_init: bool = await self._mapping_manager.routemanager_get_init(self._area_id)
-        logger.debug('Init Mode: {}', routemanager_init)
         logger.debug('Last Date/Time of Data: {}', self._worker_state.last_received_data_time)
         logger.debug('===============================')
         async with self._db_wrapper as session, session:
@@ -376,7 +370,6 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             status.routeMax = routemanager_status[1]
             status.area_id = self._area_id
             status.rebootCounter = self._worker_state.reboot_count
-            status.init = routemanager_init
             status.rebootingOption = await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True)
             status.restartCounter = self._worker_state.restart_count
             status.currentSleepTime = self._worker_state.current_sleep_duration

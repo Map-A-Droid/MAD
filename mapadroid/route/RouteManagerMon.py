@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from loguru import logger
 
@@ -45,20 +45,11 @@ class RouteManagerMon(RouteManagerBase):
             self._max_clustering: int = area.max_clustering
         # TODO:         await self._start_priority_queue()
 
-    async def _get_coords_after_finish_route(self) -> bool:
+    async def _any_coords_left_after_finishing_route(self) -> bool:
         self._init_route_queue()
         return True
 
-    async def _recalc_route_workertype(self):
-        await self.recalc_route(self._max_radius, self._max_coords_within_radius, delete_old_route=True,
-                                in_memory=False)
-        self._init_route_queue()
-
-    async def _retrieve_latest_priority_queue(self) -> List[Tuple[int, Location]]:
-        async with self.db_wrapper as session, session:
-            return await TrsSpawnHelper.get_next_spawns(session, self.geofence_helper, self.include_event_id)
-
-    async def _get_coords_fresh(self) -> List[Location]:
+    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         async with self.db_wrapper as session, session:
             if self.coords_spawns_known:
                 logger.info("Reading known Spawnpoints from DB")
@@ -74,8 +65,8 @@ class RouteManagerMon(RouteManagerBase):
 
     async def start_routemanager(self):
         async with self._manager_mutex:
-            if not self._is_started:
-                self._is_started = True
+            if not self._is_started.is_set():
+                self._is_started.set()
                 logger.info("Starting routemanager {}", self.name)
                 await self._start_check_routepools()
                 self._init_route_queue()
@@ -84,9 +75,9 @@ class RouteManagerMon(RouteManagerBase):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    def _quit_route(self):
+    async def _quit_route(self):
         logger.info('Shutdown Route {}', self.name)
-        self._is_started = False
+        self._is_started.clear()
         self._round_started_time = None
 
     def _check_coords_before_returning(self, lat, lng, origin):

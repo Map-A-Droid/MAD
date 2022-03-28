@@ -27,6 +27,9 @@ class RoutecalcUtil:
                 if saved_route:
                     logger.debug('Using routefile from DB')
                     return saved_route
+                else:
+                    logger.warning("No routecalc/persisted route found, persisting after calculation")
+                    overwrite_persisted_route = True
 
             if not routecalc_entry:
                 #  Missing instance_id...
@@ -51,7 +54,7 @@ class RoutecalcUtil:
         if len(coords) > 0 and max_radius and max_radius >= 1 and max_coords_within_radius:
             logger.info("Calculating route for {}", route_name)
             loop = asyncio.get_running_loop()
-            with concurrent.futures.ThreadPoolExecutor() as pool:
+            with concurrent.futures.ProcessPoolExecutor() as pool:
                 calculated_route = await loop.run_in_executor(
                     pool, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
                     s2_level)
@@ -67,7 +70,7 @@ class RoutecalcUtil:
             from mapadroid.route.routecalc.calculate_route_all import \
                 route_calc_all
             loop = asyncio.get_running_loop()
-            with concurrent.futures.ThreadPoolExecutor() as pool:
+            with concurrent.futures.ProcessPoolExecutor() as pool:
                 sol_best = await loop.run_in_executor(
                     pool, route_calc_all, calculated_route, route_name, algorithm)
 

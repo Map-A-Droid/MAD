@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
-import numpy as np
 from asyncio_rlock import RLock
 from loguru import logger
 
@@ -22,7 +21,8 @@ from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.madGlobals import PositionType, PrioQueueNoDueEntry, RoutecalculationTypes
+from mapadroid.utils.madGlobals import PositionType, PrioQueueNoDueEntry, RoutecalculationTypes, \
+    RoutemanagerShuttingDown
 from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -74,7 +74,7 @@ class RouteManagerBase(ABC):
         #  Or move usages of self.settings to the classes inheriting...
         self._settings: SettingsArea = area
         self._mode: WorkerType = WorkerType(area.mode)
-        self._is_started: bool = False
+        self._is_started: asyncio.Event = asyncio.Event()
         self._first_started = False
         self._current_route_round_coords: List[Location] = []
         self._start_calc: bool = False
@@ -120,7 +120,7 @@ class RouteManagerBase(ABC):
         else:
             self._prio_queue: Optional[RoutePriorityQueue] = None
         self._check_routepools_thread: Optional[Task] = None
-        self._stop_update_thread: asyncio.Event = asyncio.Event()
+        self._shutdown_route: asyncio.Event = asyncio.Event()
 
     def get_ids_iv(self) -> List[int]:
         return self._mon_ids_iv
@@ -154,15 +154,17 @@ class RouteManagerBase(ABC):
         if self._check_routepools_thread is not None:
             self._check_routepools_thread.cancel()
         self._check_routepools_thread: Optional[Task] = None
-        self._stop_update_thread.clear()
+        self._shutdown_route.clear()
         logger.info("Shutdown Route Threads completed")
 
-    async def stop_routemanager(self, joinwithqueue=True):
+    async def stop_routemanager(self):
         # call routetype stoppper
-        self._quit_route()
-        self._stop_update_thread.set()
-        await self._stop_internal_tasks()
-        self._is_started = False
+        if not self._shutdown_route.is_set():
+            async with self._manager_mutex:
+                self._shutdown_route.set()
+                self._is_started.clear()
+                await self._quit_route()
+                await self._stop_internal_tasks()
 
         logger.info("Shutdown of route completed")
 
@@ -195,7 +197,7 @@ class RouteManagerBase(ABC):
         if remove_routepool_entry and worker_name in self._routepool:
             logger.info("Deleting old routepool of {}", worker_name)
             del self._routepool[worker_name]
-        if len(self._workers_registered) == 0 and self._is_started:
+        if len(self._workers_registered) == 0 and self._is_started.is_set():
             logger.info("Routemanager does not have any subscribing workers anymore, calling stop", self.name)
             await self.stop_routemanager()
 
@@ -203,31 +205,21 @@ class RouteManagerBase(ABC):
         if self._prio_queue:
             await self._prio_queue.start()
 
-    # list_coords is a numpy array of arrays!
-    def _add_coords_numpy(self, list_coords: np.ndarray):
-        fenced_coords = self.geofence_helper.get_geofenced_coordinates(
-            list_coords)
-        if self._coords_unstructured is None:
-            self._coords_unstructured = fenced_coords
-        else:
-            self._coords_unstructured = np.concatenate(
-                (self._coords_unstructured, fenced_coords))
-
-    def _add_coords_list(self, list_coords: List[Location]):
-        to_be_appended = np.zeros(shape=(len(list_coords), 2))
-        for i in range(len(list_coords)):
-            to_be_appended[i][0] = float(list_coords[i].lat)
-            to_be_appended[i][1] = float(list_coords[i].lng)
-        self._add_coords_numpy(to_be_appended)
-
-    async def calculate_route(self, dynamic: bool) -> None:
+    async def calculate_route(self, dynamic: bool, overwrite_persisted_route: bool = False) -> None:
         """
         Calculates a new route based off the internal acquisition of coords within the routemanager itself.
 
-        :param dynamic: Whether the calculated route should be persisted in the database (False -> persist)
+        :param dynamic: If True, coords to be ignored are respected and route is not loaded from the DB
+        :param overwrite_persisted_route: Whether the calculated route should be persisted in the database (True -> persist)
         """
         # If dynamic, recalc using OR tools in all cases (if possible) and do not persist to DB
-        coords: list[Location] = await self._get_coords_fresh()
+        coords: list[Location] = await self._get_coords_fresh(dynamic)
+        if dynamic:
+            coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
+        if not coords:
+            # Empty route, return immediately after shutdown
+            await self.stop_routemanager()
+            raise RoutemanagerShuttingDown("No coords to calculate a route")
         try:
             new_route: list[Location] = await RoutecalcUtil.calculate_route(self.db_wrapper,
                                                                             self._routecalc.routecalc_id,
@@ -238,7 +230,7 @@ class RouteManagerBase(ABC):
                                                                             use_s2=self.useS2,
                                                                             s2_level=self.S2level,
                                                                             route_name=self.name,
-                                                                            overwrite_persisted_route=not dynamic,
+                                                                            overwrite_persisted_route=overwrite_persisted_route,
                                                                             load_persisted_route=not dynamic)
         except Exception as e:
             logger.exception(e)
@@ -246,13 +238,9 @@ class RouteManagerBase(ABC):
         async with self._manager_mutex:
             self._route = new_route
             self._current_route_round_coords = self._route.copy()
-            # TODO:
-            # connected_worker_count = len(self._workers_registered)
-            # if connected_worker_count > 0:
-            #    for worker in self._workers_registered.copy():
-            #        await self.unregister_worker(worker, True)
-            # else:
-            #    await self.stop_routemanager()
+            # TODO: Also reset the subroutes of the workers?
+            self._init_route_queue()
+            await self._worker_changed_update_routepools()
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
@@ -292,9 +280,11 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    async def _get_coords_fresh(self) -> List[Location]:
+    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         """
         Return list of coords to be fetched and used for routecalc
+        :param dynamic: Whether the coord should be retrieved as if the scanning is taking place for the first time or
+        some data has been processed already (e.g., some stops having been scanned for quests already)
         :return:
         """
         pass
@@ -308,15 +298,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    async def _recalc_route_workertype(self):
-        """
-        Return a new route for worker
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    async def _get_coords_after_finish_route(self) -> bool:
+    async def _any_coords_left_after_finishing_route(self) -> bool:
         """
         :return:
         """
@@ -366,7 +348,9 @@ class RouteManagerBase(ABC):
 
     async def get_next_location(self, origin: str) -> Optional[Location]:
         logger.debug4("get_next_location called")
-        if not self._is_started:
+        if self._shutdown_route.is_set():
+            raise RoutemanagerShuttingDown("Routemanager is shutting down, not requesting a new location")
+        if not self._is_started.is_set():
             logger.info("Starting routemanager in get_next_location")
             if not await self.start_routemanager():
                 logger.info('No coords available - quit worker')
@@ -495,9 +479,11 @@ class RouteManagerBase(ABC):
 
             if self._should_get_new_coords_after_finishing_route():
                 # check for coords not in other workers to get a real open coord list
-                if not await self._get_coords_after_finish_route():
-                    logger.info("No more coords available - dont update routepool")
+                if not await self._any_coords_left_after_finishing_route():
+                    logger.info("No more coords available - don't update routepool")
                     return None
+                else:
+                    await self.calculate_route(True)
 
             if not await self._worker_changed_update_routepools():
                 logger.info("Failed updating routepools ...")
@@ -610,7 +596,7 @@ class RouteManagerBase(ABC):
 
     # to be called regularly to remove inactive workers that used to be registered
     async def _check_routepools(self, timeout: int = 300):
-        while not self._stop_update_thread.is_set():
+        while not self._shutdown_route.is_set():
             logger.debug("Checking routepool for idle/dead workers")
             for origin in list(self._routepool):
                 entry: RoutePoolEntry = self._routepool[origin]
@@ -627,7 +613,7 @@ class RouteManagerBase(ABC):
     async def _worker_changed_update_routepools(self):
         less_coords: bool = False
         workers: int = 0
-        if not self._is_started:
+        if not self._is_started.is_set():
             return True
         # TODO: Idle mode...
         if not self._may_update_routepool() and len(self._current_route_round_coords) == 0:

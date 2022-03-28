@@ -4,13 +4,12 @@ import os
 import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
-from difflib import SequenceMatcher
 from enum import Enum
 from typing import Dict, Tuple, Optional, List, Set, Union
 
-from sqlalchemy import exc
 from loguru import logger
 from s2sphere import CellId
+from sqlalchemy import exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
@@ -192,11 +191,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException("Failed to reach pogo main screen")
 
-        if await self._mapping_manager.routemanager_get_init(self._area_id):
-            logger.info("Starting Init Mode")
-            if await self._mapping_manager.routemanager_get_calc_type(self._area_id) == "routefree":
-                logger.info("Sleeping one minute for getting data")
-                await asyncio.sleep(60)
         await self.pre_work_loop_layer_preparation()
 
     @abstractmethod
@@ -306,7 +300,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         delay_used = await self._rotate_account_after_moving_locations_if_applicable(delay_used)
 
         delay_used = math.floor(delay_used)
-        if delay_used <= 0 or await self._mapping_manager.routemanager_get_init(self._area_id):
+        if delay_used <= 0:
             self._worker_state.current_sleep_time = 0
             logger.info('No need to wait before spinning, continuing...')
         else:
@@ -356,12 +350,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             raise InternalStopWorkerException("Worker is supposed to stop, aborting post_move_location_routine")
         await self._check_position_type()
         await self._switch_account_if_needed()
-
-        if not await self._mapping_manager.routemanager_get_init(self._area_id):
-            await self._process_stop_at_location(timestamp)
-        else:
-            logger.debug('Currently in INIT Mode - no Stop processing')
-            await asyncio.sleep(5)
+        await self._process_stop_at_location(timestamp)
 
     async def _process_stop_at_location(self, timestamp):
         async with self._work_mutex:
@@ -415,7 +404,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         self._delay_add = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.VPS_DELAY, 0))
         self._enhanced_mode = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST,
                                                                   False)
-        self._ignore_spinned_stops: bool = False if area_settings.ignore_spinned_stops == 0 else True
+        self._ignore_spinned_stops: bool = area_settings.ignore_spinned_stops
 
     async def worker_specific_setup_stop(self):
         pass
