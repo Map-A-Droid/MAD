@@ -78,12 +78,8 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         distance, routemanager_settings = await self._get_route_manager_settings_and_distance_to_current_location()
         # TODO: Either remove routemanager from scan strategy in case we split apart everything or access init
         #  bool directly...
-        if not await self._mapping_manager.routemanager_get_init(self._area_id):
-            speed = getattr(routemanager_settings, "speed", 0)
-            max_distance = getattr(routemanager_settings, "max_distance", None)
-        else:
-            speed = int(25)
-            max_distance = int(200)
+        speed = getattr(routemanager_settings, "speed", 0)
+        max_distance = getattr(routemanager_settings, "max_distance", None)
 
         if (not speed or speed == 0 or
                 (max_distance and 0 < max_distance < distance) or

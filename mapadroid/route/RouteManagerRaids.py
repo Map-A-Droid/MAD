@@ -42,19 +42,14 @@ class RouteManagerRaids(RouteManagerBase):
 
         self.starve_route: bool = area.starve_route if area.starve_route is not None else False
 
-    async def _get_coords_after_finish_route(self):
+    async def _any_coords_left_after_finishing_route(self):
         self._init_route_queue()
         return True
-
-    async def _recalc_route_workertype(self):
-        await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                                in_memory=False)
-        self._init_route_queue()
 
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    async def _get_coords_fresh(self) -> List[Location]:
+    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         async with self.db_wrapper as session, session:
             coords: List[Location] = await GymHelper.get_locations_in_fence(session, self.geofence_helper)
             if self._settings.including_stops:
@@ -74,7 +69,7 @@ class RouteManagerRaids(RouteManagerBase):
                     self._init_route_queue()
         return True
 
-    def _quit_route(self):
+    async def _quit_route(self):
         logger.info("Shutdown Route")
         self._is_started = False
         self._round_started_time = None

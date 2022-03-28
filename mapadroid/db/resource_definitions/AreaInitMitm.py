@@ -1,6 +1,6 @@
-class AreaPokestops:
+class AreaIvMitm:
     configuration = {
-        "description": "Discover all quests from Pokestops",
+        "description": "Init worker for getting location data",
         "fields": {
             "name": {
                 "settings": {
@@ -43,84 +43,35 @@ class AreaPokestops:
                     "uri_source": "api_routecalc"
                 }
             },
-            "layer": {
+            "init_type": {
                 "settings": {
                     "type": "option",
+                    "values": ['forts', 'mons'],
                     "require": True,
-                    "values": [1, 0],
-                    "description": "The quest layer that is to be scanned. Default: 1 (when AR quest is being held onto)."
-                                   "0: AR layer",
-                    "expected": int,
-                    "data_source": "layer",
-                }
-            },
-            "level": {
-                "settings": {
-                    "type": "option",
-                    "require": False,
-                    "values": [False, True],
-                    "description": "Level up an account mode.  (Default: False)",
-                    "expected": bool
-                }
-            },
-            "enable_clustering": {
-                "settings": {
-                    "type": "option",
-                    "require": False,
-                    "values": [False, True],
-                    "description": "Enable clustering for stops (only respected if level is set to True). "
-                                   "(Default: False)",
-                    "expected": bool
-                }
-            },
-            "route_calc_algorithm": {
-                "settings": {
-                    "type": "option",
-                    "values": ['route', 'routefree'],
-                    "require": False,
-                    "description": "Method of calculation for routes. (Default route)",
+                    "description": "Depending on the type of data to be acquired in the area, either scan for forts or "
+                                   "spawnpoints",
                     "expected": str
-                }
-            },
-            "speed": {
-                "settings": {
-                    "type": "text",
-                    "require": False,
-                    "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to "
-                                   "determine if the worker should walk or teleport (Default: 0)",
-                    "expected": float
                 }
             },
             "max_distance": {
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Max. distance of walking - If the distance between points is greater than this "
-                                   "value the worker will teleport (Default: 0)",
+                    "description": "Max. distance of walking - otherwise teleport to new location",
                     "expected": float
                 }
             },
-            "ignore_spinned_stops": {
+            "init_mode_rounds": {
                 "settings": {
-                    "type": "option",
-                    "values": [None, True, False],
+                    "type": "text",
                     "require": False,
-                    "description": "Do not spin stops that have been spun in the past (for level mode) (Default: True)",
-                    "expected": bool
-                }
-            },
-            "cleanup_every_spin": {
-                "settings": {
-                    "type": "option",
-                    "values": [None, False, True],
-                    "require": False,
-                    "description": "Cleanup quest inventory after every stop (Default: False)",
-                    "expected": bool
+                    "description": "The amount of rounds to be taken through the area",
+                    "expected": int
                 }
             },
             "mon_ids_iv": {
                 "settings": {
-                    "type": "mon_ids_iv",
+                    "type": "hidden",
                     "display": {
                         "name": "monlist",
                         "section": "monivlist"

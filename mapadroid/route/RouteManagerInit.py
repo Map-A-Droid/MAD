@@ -37,25 +37,16 @@ class RouteManagerInit(RouteManagerBase):
         self._settings: SettingsAreaInitMitm = area
         self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
 
-    async def _get_coords_after_finish_route(self):
-        self._init_route_queue()
-        return True
-
-    async def _recalc_route_workertype(self):
-        await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                                in_memory=False)
-        self._init_route_queue()
-
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    async def _get_coords_fresh(self) -> List[Location]:
+    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         return S2Helper.generate_locations(self.get_max_radius(), self.get_geofence_helper())
 
     async def start_routemanager(self):
         async with self._manager_mutex:
-            if not self._is_started:
-                self._is_started = True
+            if not self._is_started.is_set():
+                self._is_started.set()
                 logger.info("Starting routemanager")
                 if self._mode != WorkerType.IDLE:
                     await self._start_priority_queue()
@@ -63,21 +54,10 @@ class RouteManagerInit(RouteManagerBase):
                     self._init_route_queue()
         return True
 
-    def _quit_route(self):
+    async def _quit_route(self):
         logger.info("Shutdown Route")
-        self._is_started = False
+        self._is_started.clear()
         self._round_started_time = None
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
-
-    async def _change_init_mapping(self) -> None:
-        async with self.db_wrapper as session, session:
-            self._settings.init = False
-            # TODO: Add or merge? Or first fetch the data? Or just toggle using the helper?
-            # TODO: Ensure that even works with SQLAlchemy's functionality in regards to objects and sessions etc...
-            try:
-                session.add(self._settings)
-                await session.commit()
-            except Exception as e:
-                logger.warning("Failed changing init to False: {}", e)

@@ -22,29 +22,26 @@ class RouteManagerIdle(RouteManagerBase):
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaIdle = area
 
-    async def _get_coords_after_finish_route(self):
+    async def _any_coords_left_after_finishing_route(self):
         self._init_route_queue()
         return True
-
-    async def _recalc_route_workertype(self):
-        pass
 
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    async def _get_coords_fresh(self) -> List[Location]:
+    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         return [Location(0, 0)]
 
     async def start_routemanager(self):
         async with self._manager_mutex:
-            if not self._is_started:
-                self._is_started = True
+            if not self._is_started.is_set():
+                self._is_started.set()
                 logger.info("Starting routemanager")
         return True
 
-    def _quit_route(self):
+    async def _quit_route(self):
         logger.info("Shutdown Route")
-        self._is_started = False
+        self._is_started.clear()
         self._round_started_time = None
 
     def _check_coords_before_returning(self, lat, lng, origin):

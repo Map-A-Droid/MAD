@@ -10,16 +10,6 @@ class AreaRaidsMitm:
                     "expected": str
                 }
             },
-            "init": {
-                "settings": {
-                    "type": "option",
-                    "require": True,
-                    "values": [False, True],
-                    "empty": False,
-                    "description": "Set this option to True, if you scan the area for gyms the first time",
-                    "expected": bool
-                }
-            },
             "geofence_included": {
                 "settings": {
                     "type": "geofence",
@@ -116,14 +106,6 @@ class AreaRaidsMitm:
                     "description": "Disable round-robin of route vs. priority queue events. If True, your route may "
                                    "not be completed in time and e.g. only spawns will be scanned (Default: False)",
                     "expected": bool
-                }
-            },
-            "init_mode_rounds": {
-                "settings": {
-                    "type": "text",
-                    "require": False,
-                    "description": "Rounds in Init Mode. (Default: 1)",
-                    "expected": int
                 }
             },
             "mon_ids_iv": {
