@@ -20,15 +20,22 @@
                 {
                     "targets": [5],
                     "render": function (data, type, row) {
-                       if(row["event_name"] !== "DEFAULT") {
+                        if (row["event_name"] !== "DEFAULT") {
                             var link = "<a href='edit_event?id=" + row.id +
                                 "' title='Edit Event'><button type='button' class='delete btn btn-info btn-sm'><i class='fas fa-edit'></i></button></a> <a href='del_event?id=" +
                                 row.id +
                                 "' class='confirm' title='Do you really want to delete this event and all SP for it?'><button type='button' class='delete btn btn-danger btn-sm'><i class='fas fa-times'></i></button></a>";
-                             return link
-                       } else {
-                           return ""
-                       }
+                            return link
+                        } else {
+                            return ""
+                        }
+                    }
+                },
+                {
+                    "targets": [2, 3],
+                    "render": function (value) {
+                        if (value === null) return "";
+                        return moment(value * 1000).format('YYYY-MM-DD HH:mm:ss');
                     }
                 }
             ],

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 
 from loguru import logger
-from sqlalchemy import and_, asc, delete, between
+from sqlalchemy import and_, asc, delete, between, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -14,13 +14,13 @@ class TrsEventHelper:
     @staticmethod
     async def get_current_event(session: AsyncSession, include_default: bool = False) -> Optional[TrsEvent]:
         if include_default:
-            # TODO: order by event_start desc?
             stmt = select(TrsEvent).where(and_(TrsEvent.event_start < DatetimeWrapper.now(),
                                                TrsEvent.event_end > DatetimeWrapper.now()))
         else:
             stmt = select(TrsEvent).where(and_(TrsEvent.event_start < DatetimeWrapper.now(),
                                                TrsEvent.event_end > DatetimeWrapper.now(),
                                                TrsEvent.event_name != "DEFAULT"))
+        stmt = stmt.order_by(desc(TrsEvent.event_start))
         result = await session.execute(stmt)
         return result.scalars().first()
 
