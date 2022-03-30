@@ -574,7 +574,7 @@ class DbPogoProtoSubmit:
                         spawn.spawndef = newspawndef
                         spawn.eventid = current_event.id if current_event else 1
                         spawn.first_detection = DatetimeWrapper.fromtimestamp(received_timestamp)
-                    spawn.last_scanned = DatetimeWrapper.now()
+                    spawn.last_scanned = DatetimeWrapper.fromtimestamp(received_timestamp)
                     spawn.calc_endminsec = calcendtime
                 else:
                     # TODO: Reduce "complexity..."
