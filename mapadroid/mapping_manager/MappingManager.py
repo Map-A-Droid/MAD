@@ -35,7 +35,7 @@ from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import Ro
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import ScreenshotType, PositionType
+from mapadroid.utils.madGlobals import ScreenshotType, PositionType, RoutemanagerShuttingDown
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.utils)
@@ -602,8 +602,11 @@ class MappingManager(AbstractMappingManager):
         for area in areas_procs.keys():
             # TODO: Async executors...
             to_be_checked: Task = areas_procs[area]
-            await to_be_checked
-
+            try:
+                await to_be_checked
+            except RoutemanagerShuttingDown as e:
+                logger.warning("Ignoring area {} due to failure to calculate route.", area)
+                del routemanagers[area]
         return routemanagers
 
     async def __get_latest_devicemappings(self, session: AsyncSession) -> Dict[str, DeviceMappingsEntry]:
