@@ -81,7 +81,6 @@ class RouteManagerBase(ABC):
         self._coords_to_be_ignored = set()
         # self._level = area.level if area.mode == "pokestop" else False
         # self._calctype = area.route_calc_algorithm if area.mode == "pokestop" else "route"
-        self._level = False
         self._calctype = "route"
         self._overwrite_calculation: bool = False
         self._stops_not_processed: Dict[Location, int] = {}
@@ -872,7 +871,7 @@ class RouteManagerBase(ABC):
             return []
 
     def is_level_mode(self) -> bool:
-        return self._level
+        return False
 
     def get_calc_type(self):
         return self._calctype

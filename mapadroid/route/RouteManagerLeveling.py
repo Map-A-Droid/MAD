@@ -4,30 +4,32 @@ from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.RouteManagerBase import RoutePoolEntry
-from mapadroid.route.RouteManagerQuests import RouteManagerQuests
+from mapadroid.route.RouteManagerBase import RoutePoolEntry, RouteManagerBase
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import QuestLayer, RoutecalculationTypes
+from mapadroid.utils.madGlobals import RoutecalculationTypes
 
 
-class RouteManagerLeveling(RouteManagerQuests):
+class RouteManagerLeveling(RouteManagerBase):
+    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
+        # TODO
+        return [Location(0, 0)]
+
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  mon_ids_iv: Optional[List[int]] = None):
-        RouteManagerQuests.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
-                                    max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
-                                    geofence_helper=geofence_helper, routecalc=routecalc,
-                                    mon_ids_iv=mon_ids_iv
-                                    )
-        self._level = True
-        self._stoplist: List[Location] = []
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
+                                  max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
+                                  geofence_helper=geofence_helper, routecalc=routecalc,
+                                  mon_ids_iv=mon_ids_iv,
+                                  initial_prioq_strategy=None)
 
     async def _worker_changed_update_routepools(self):
-        with self._manager_mutex:
+        async with self._manager_mutex:
             logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
             if len(self._workers_registered) == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
@@ -42,27 +44,32 @@ class RouteManagerLeveling(RouteManagerQuests):
                     if len(entry.queue) > 0:
                         logger.debug("origin {} already has a queue, do not touch...", origin)
                         continue
-                    unvisited_stops: List[Pokestop] = await PokestopHelper.stops_not_visited(session,
-                                                                                             self.geofence_helper,
-                                                                                             origin)
-                    if len(unvisited_stops) == 0:
+                    current_worker_pos = entry.current_pos
+                    unvisited_stops: List[Pokestop] = await PokestopHelper.get_nearby_increasing_range_within_area(
+                        session,
+                        geofence_helper=self.geofence_helper,
+                        origin=origin,
+                        location=current_worker_pos,
+                        limit=30,
+                        ignore_spinned=self._settings.ignore_spinned_stops,
+                        max_distance=5)
+                    if not unvisited_stops:
                         logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
                         continue
-                    if len(self._route) > 0:
-                        logger.info("Making a subroute of unvisited stops..")
-                        for coord in self._route:
-                            coord_location = Location(coord.lat, coord.lng)
-                            if coord_location in self._coords_to_be_ignored:
-                                logger.info('Already tried this Stop but it failed spinnable test, skip it')
-                                continue
-                            for stop in unvisited_stops:
-                                if coord_location == Location(float(stop.latitude), float(stop.longitude)):
-                                    origin_local_list.append(coord_location)
-                    if len(origin_local_list) == 0:
-                        logger.info("None of the stops in original route was unvisited, recalc a route")
+
+                    for stop in unvisited_stops:
+                        coord_location = Location(float(stop.latitude), float(stop.longitude))
+                        if coord_location in self._coords_to_be_ignored:
+                            logger.info('Already tried this Stop but it failed spinnable test, skip it')
+                            continue
+                        origin_local_list.append(coord_location)
+
+                    if unvisited_stops:
+                        logger.info("Recalc a route")
                         new_route = await self._local_recalc_subroute(unvisited_stops)
+                        origin_local_list.clear()
                         for coord in new_route:
-                            origin_local_list.append(Location(coord.lat, coord.lng))
+                            origin_local_list.append(coord)
 
                     # subroute is all stops unvisited
                     logger.info("Origin {} has {} unvisited stops for this route", origin, len(origin_local_list))
@@ -71,7 +78,17 @@ class RouteManagerLeveling(RouteManagerQuests):
                     entry.queue.clear()
                     [entry.queue.append(i) for i in origin_local_list]
                     any_at_all = len(origin_local_list) > 0 or any_at_all
-                return any_at_all
+                    # saving new startposition of walker in db
+                    newstartposition: Location = entry.queue[0]
+                    await SettingsDeviceHelper.save_last_walker_position(session,
+                                                                         instance_id=self.db_wrapper.get_instance_id(),
+                                                                         origin=origin,
+                                                                         location=newstartposition)
+                try:
+                    await session.commit()
+                except Exception as e:
+                    logger.warning("Failed storing last walker positions: {}", e)
+                return True
 
     async def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]) -> list[Location]:
         coords: List[Location] = []
@@ -91,57 +108,47 @@ class RouteManagerLeveling(RouteManagerQuests):
         return new_route
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
-        with self._manager_mutex:
-            if self._shutdown_route.is_set():
-                logger.info('Other worker shutdown route - leaving it')
-                return False
+        # TODO: Return False/stop route of single worker based on whether that worker has any stops left...
+        if self._shutdown_route.is_set():
+            logger.info('Other worker shutdown route - leaving it')
+            return False
 
-            if self._start_calc:
-                logger.info("Another process already calculate the new route")
+        await self._worker_changed_update_routepools()
+        return True
+
+    async def start_routemanager(self):
+        async with self._manager_mutex:
+            if not self._is_started.is_set():
+                self._is_started.set()
+                logger.info("Starting routemanager")
+
+                if self._shutdown_route.is_set():
+                    logger.info('Other worker shutdown route - leaving it')
+                    return False
+
+                self._prio_queue = None
+                self.delay_after_timestamp_prio = None
+                self.starve_route = False
+                await self._start_check_routepools()
+
                 return True
-            self._start_calc = True
-
-            any_unvisited = False
-            async with self.db_wrapper as session, session:
-                for origin in self._routepool:
-                    any_unvisited: bool = await PokestopHelper.any_stops_unvisited(session, self.geofence_helper,
-                                                                                   origin)
-                    if any_unvisited:
-                        break
-
-            if not any_unvisited:
-                logger.info("Not getting any stops - leaving now.")
-                self._shutdown_route = True
-                self._start_calc = False
-                return False
-
-            # Redo individual routes
-            await self._worker_changed_update_routepools()
-            self._start_calc = False
-            return True
-
-    def _check_unprocessed_stops(self):
-        # We finish routes on a per walker/origin level, so the route itself is always the same as long as at
-        # least one origin is connected to it.
-        return self._stoplist
-
-    async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
-        async with self.db_wrapper as session, session:
-            return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper,
-                                                               QuestLayer(self._settings.layer))
-
-    def _delete_coord_after_fetch(self) -> bool:
-        return False
+        return True
 
     async def _quit_route(self):
+        logger.info('Shutdown Route')
         await super()._quit_route()
-        self._stoplist.clear()
 
     def _check_coords_before_returning(self, lat: float, lng: float, origin):
         stop = Location(lat, lng)
-        logger.info('Checking Stop with ID {}', str(stop))
+        logger.info('Checking Stop with ID {}', stop)
         if stop in self._coords_to_be_ignored:
             logger.info('Already tried this Stop and failed it')
             return False
         logger.info('DB knows nothing of this stop for {} lets try and go there', origin)
+        return True
+
+    def _delete_coord_after_fetch(self) -> bool:
+        return False
+
+    def is_level_mode(self) -> bool:
         return True

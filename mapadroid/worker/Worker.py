@@ -16,7 +16,7 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException,
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException, application_args)
+    WebsocketWorkerTimeoutException, application_args, RoutemanagerShuttingDown)
 from mapadroid.utils.resolution import ResolutionCalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.worker.AbstractWorker import AbstractWorker
@@ -155,6 +155,8 @@ class Worker(AbstractWorker):
                 except (InternalStopWorkerException, WebsocketWorkerTimeoutException,
                         WebsocketWorkerConnectionClosedException) as e:
                     logger.info("Websocket connectivity issues or stop was issued internally")
+                except RoutemanagerShuttingDown as e:
+                    logger.info("Routemanager is shutting down, moving on through walker.")
                 finally:
                     await asyncio.sleep(5)
                     async with self._work_mutex:
