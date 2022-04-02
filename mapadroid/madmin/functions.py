@@ -2,10 +2,11 @@ import glob
 import os
 from functools import update_wrapper, wraps
 from math import floor
-from typing import Dict
+from typing import Dict, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager.MappingManager import (AreaEntry, DeviceMappingsEntry,
                                                       MappingManager)
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
@@ -149,17 +150,18 @@ async def get_geofences(mapping_manager: MappingManager, session: AsyncSession, 
             continue
 
         # area_geofences = GeofenceHelper(geofence_included, geofence_excluded, area_entry.settings.name)
-        area_geofences = await mapping_manager.routemanager_get_geofence_helper(area_id)
+        area_geofences: Optional[GeofenceHelper] = await mapping_manager.routemanager_get_geofence_helper(area_id)
         include = {}
         exclude = {}
-        for fences in area_geofences.geofenced_areas:
-            include[fences['name']] = []
-            for fence in fences['polygon']:
-                include[fences['name']].append([get_coord_float(fence['lat']), get_coord_float(fence['lon'])])
-        for fences in area_geofences.excluded_areas:
-            exclude[fences['name']] = []
-            for fence in fences['polygon']:
-                exclude[fences['name']].append([get_coord_float(fence['lat']), get_coord_float(fence['lon'])])
+        if area_geofences:
+            for fences in area_geofences.geofenced_areas:
+                include[fences['name']] = []
+                for fence in fences['polygon']:
+                    include[fences['name']].append([get_coord_float(fence['lat']), get_coord_float(fence['lon'])])
+            for fences in area_geofences.excluded_areas:
+                exclude[fences['name']] = []
+                for fence in fences['polygon']:
+                    exclude[fences['name']].append([get_coord_float(fence['lat']), get_coord_float(fence['lon'])])
         geofences[area_id] = {
             'include': include,
             'exclude': exclude,
