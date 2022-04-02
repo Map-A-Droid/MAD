@@ -178,7 +178,7 @@ class RouteManagerBase(ABC):
     def _clear_coords(self):
         self._coords_unstructured = None
 
-    def register_worker(self, worker_name) -> bool:
+    async def register_worker(self, worker_name) -> bool:
         async with self._manager_mutex:
             if worker_name in self._workers_registered:
                 logger.info("already registered")
@@ -361,7 +361,7 @@ class RouteManagerBase(ABC):
                 return None
 
         if origin not in self._workers_registered:
-            self.register_worker(origin)
+            await self.register_worker(origin)
         if self._start_calc.is_set():
             logger.info("Another process is already calculating a new route")
             try:
