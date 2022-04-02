@@ -46,7 +46,7 @@ class RestHelper:
                         logger.success("Successfully got data from our request to {}: {}", url, result)
                     except Exception as e:
                         logger.warning("Failed converting response of request to '{}' with raw result '{}' to json: {}",
-                                       url, result.result_body, e)
+                                       url, result, e)
         except (ClientConnectionError, asyncio.exceptions.TimeoutError) as e:
             logger.warning("Connecting to {} failed: {}", url, str(e))
         except ClientError as e:
