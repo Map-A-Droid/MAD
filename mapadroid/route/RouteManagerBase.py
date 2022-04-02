@@ -77,7 +77,7 @@ class RouteManagerBase(ABC):
         self._is_started: asyncio.Event = asyncio.Event()
         self._first_started = False
         self._current_route_round_coords: List[Location] = []
-        self._start_calc: bool = False
+        self._start_calc: asyncio.Event = asyncio.Event()
         self._coords_to_be_ignored = set()
         # self._level = area.level if area.mode == "pokestop" else False
         # self._calctype = area.route_calc_algorithm if area.mode == "pokestop" else "route"
@@ -179,26 +179,28 @@ class RouteManagerBase(ABC):
         self._coords_unstructured = None
 
     def register_worker(self, worker_name) -> bool:
-        if worker_name in self._workers_registered:
-            logger.info("already registered")
-            return False
-        else:
-            logger.info("registering to routemanager")
-            self._workers_registered.add(worker_name)
-            return True
+        async with self._manager_mutex:
+            if worker_name in self._workers_registered:
+                logger.info("already registered")
+                return False
+            else:
+                logger.info("registering to routemanager")
+                self._workers_registered.add(worker_name)
+                return True
 
     async def unregister_worker(self, worker_name, remove_routepool_entry: bool = False):
-        if worker_name in self._workers_registered:
-            logger.info("unregistering from routemanager")
-            self._workers_registered.remove(worker_name)
-        else:
-            logger.info("failed unregistering from routemanager since subscription was previously lifted")
-        if remove_routepool_entry and worker_name in self._routepool:
-            logger.info("Deleting old routepool of {}", worker_name)
-            del self._routepool[worker_name]
-        if len(self._workers_registered) == 0 and self._is_started.is_set():
-            logger.info("Routemanager does not have any subscribing workers anymore, calling stop", self.name)
-            await self.stop_routemanager()
+        async with self._manager_mutex:
+            if worker_name in self._workers_registered:
+                logger.info("unregistering from routemanager")
+                self._workers_registered.remove(worker_name)
+            else:
+                logger.info("failed unregistering from routemanager since subscription was previously lifted")
+            if remove_routepool_entry and worker_name in self._routepool:
+                logger.info("Deleting old routepool of {}", worker_name)
+                del self._routepool[worker_name]
+            if len(self._workers_registered) == 0 and self._is_started.is_set():
+                logger.info("Routemanager does not have any subscribing workers anymore, calling stop", self.name)
+                await self.stop_routemanager()
 
     async def _start_priority_queue(self):
         if self._prio_queue:
@@ -220,6 +222,7 @@ class RouteManagerBase(ABC):
             await self.stop_routemanager()
             raise RoutemanagerShuttingDown("No coords to calculate a route")
         try:
+            self._start_calc.set()
             new_route: list[Location] = await RoutecalcUtil.calculate_route(self.db_wrapper,
                                                                             self._routecalc.routecalc_id,
                                                                             coords,
@@ -234,6 +237,8 @@ class RouteManagerBase(ABC):
         except Exception as e:
             logger.exception(e)
             raise e
+        finally:
+            self._start_calc.clear()
         async with self._manager_mutex:
             self._route = new_route
             self._current_route_round_coords = self._route.copy()
@@ -271,7 +276,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    def _quit_route(self):
+    async def _quit_route(self):
         """
         Killing the Route Thread
         :return:
@@ -340,7 +345,7 @@ class RouteManagerBase(ABC):
             self._routepool[origin].worker_sleeping = 0
 
     async def _wait_for_calc_end(self, origin: str) -> None:
-        while self._start_calc:
+        while self._start_calc.is_set():
             # in order to prevent the worker from being removed from the routepool
             self._routepool[origin].last_access = time.time()
             await asyncio.sleep(1)
@@ -355,15 +360,15 @@ class RouteManagerBase(ABC):
                 logger.info('No coords available - quit worker')
                 return None
 
-        if self._start_calc:
-            logger.info("Another process already calculate the new route")
+        if origin not in self._workers_registered:
+            self.register_worker(origin)
+        if self._start_calc.is_set():
+            logger.info("Another process is already calculating a new route")
             try:
                 await asyncio.wait_for(self._wait_for_calc_end(origin), RECALC_WAIT_DURATION)
             except (CancelledError, asyncio.exceptions.TimeoutError):
                 logger.info("Current recalc took too long, returning None location")
                 return None
-        if origin not in self._workers_registered:
-            self.register_worker(origin)
 
         routepool_entry: RoutePoolEntry = self._routepool.get(origin, None)
         if not routepool_entry:

@@ -49,10 +49,9 @@ class RouteManagerQuests(RouteManagerBase):
                 logger.info('Other worker shutdown - leaving it')
                 return False
 
-            if self._start_calc:
+            if self._start_calc.is_set():
                 logger.info("Another process already calculate the new route")
                 return True
-            self._start_calc = True
             if len(self._stoplist) == 0:
                 logger.info("No new stops - leaving now.")
                 await self.stop_routemanager()
@@ -64,7 +63,6 @@ class RouteManagerQuests(RouteManagerBase):
             if len(coords) > 0:
                 logger.info("Getting new coords - recalculating route")
                 await self.calculate_route(True)
-                self._start_calc = False
             else:
                 logger.info("Dont getting new stops - leaving now.")
                 await self.stop_routemanager()
