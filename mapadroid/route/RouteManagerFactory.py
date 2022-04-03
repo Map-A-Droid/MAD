@@ -8,8 +8,6 @@ from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.route.RouteManagerIdle import RouteManagerIdle
 from mapadroid.route.RouteManagerLeveling import RouteManagerLeveling
-from mapadroid.route.RouteManagerLevelingRoutefree import \
-    RouteManagerLevelingRoutefree
 from mapadroid.route.RouteManagerMon import RouteManagerMon
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.route.RouteManagerRaids import RouteManagerRaids
@@ -56,14 +54,7 @@ class RouteManagerFactory:
             if area.enable_clustering:
                 max_coords_within_radius_stops = 9999 if area.level else 3
 
-            if area.level and area.route_calc_algorithm == 'routefree':
-                route_manager = RouteManagerLevelingRoutefree(db_wrapper=db_wrapper, area=area, coords=coords,
-                                                              max_radius=max_radius,
-                                                              max_coords_within_radius=max_coords_within_radius_stops,
-                                                              geofence_helper=geofence_helper, routecalc=routecalc,
-                                                              mon_ids_iv=mon_ids_iv
-                                                              )
-            elif area.level:
+            if area.level:
                 route_manager = RouteManagerLeveling(db_wrapper=db_wrapper, area=area, coords=coords,
                                                      max_radius=max_radius,
                                                      max_coords_within_radius=max_coords_within_radius_stops,
