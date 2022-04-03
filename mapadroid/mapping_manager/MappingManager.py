@@ -383,7 +383,7 @@ class MappingManager(AbstractMappingManager):
 
     async def register_worker_to_routemanager(self, routemanager_id: int, worker_name: str) -> bool:
         routemanager = self.__fetch_routemanager(routemanager_id)
-        return routemanager.register_worker(worker_name) if routemanager is not None else False
+        return await routemanager.register_worker(worker_name) if routemanager is not None else False
 
     async def unregister_worker_from_routemanager(self, routemanager_id: int, worker_name: str):
         routemanager = self.__fetch_routemanager(routemanager_id)

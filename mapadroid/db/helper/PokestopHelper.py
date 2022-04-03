@@ -232,7 +232,7 @@ class PokestopHelper:
                                          Pokestop.latitude <= old_ne_corner.lat,
                                          Pokestop.longitude <= old_ne_corner.lng))
         if timestamp:
-            where_conditions.append(Pokestop.last_updated >= DatetimeWrapper.fromtimestamp(timestamp))
+            where_conditions.append(TrsQuest.quest_timestamp >= timestamp)
 
         if fence:
             polygon = "POLYGON(({}))".format(fence)
