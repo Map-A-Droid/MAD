@@ -571,13 +571,9 @@ class MappingManager(AbstractMappingManager):
                 # replace list name
                 area_settings['mon_ids_iv_raw'] = self.get_monlist(area_id)
 
-            spawns_known: bool = area.coords_spawns_known if area.mode == "mon_mitm" else True
             routecalc: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper \
                 .get(session, area.routecalc)
 
-            calc_type: str = area.route_calc_algorithm if area.mode == "pokestop" else "route"
-            including_stops: bool = area.including_stops if area.mode == "raids_mitm" else False
-            level_mode: bool = area.level if area.mode == "pokestop" else False
             # TODO: Refactor most of the code in here moving it to the factory
             # TODO: Use use_s2 ?
             route_manager = RouteManagerFactory.get_routemanager(db_wrapper=self.__db_wrapper,
@@ -594,9 +590,8 @@ class MappingManager(AbstractMappingManager):
                                                                  mon_ids_iv=self.get_monlist(area_id)
                                                                  )
             logger.info("Initializing area {}", area.name)
-            if area.mode not in ("iv_mitm", "idle") and calc_type != "routefree":
-                task = loop.create_task(route_manager.calculate_route(False))
-                areas_procs[area_id] = task
+            task = loop.create_task(route_manager.calculate_route(False))
+            areas_procs[area_id] = task
 
             routemanagers[area.area_id] = route_manager
         for area in areas_procs.keys():

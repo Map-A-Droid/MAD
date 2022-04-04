@@ -41,6 +41,8 @@ class RouteManagerQuests(RouteManagerBase):
                 locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for
                                                       stop_id, stop in
                                                       stops.items()]
+                # also store the latest set in _stoplist
+                self._stoplist = locations_of_stops
                 return locations_of_stops
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
