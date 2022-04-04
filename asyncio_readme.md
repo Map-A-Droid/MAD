@@ -5,6 +5,7 @@
 3) `python3.9 -m venv ~/venv/`
 4) `source ~/venv/bin/activate`
 5) `pip3 install -r requirements.txt --upgrade`
+6) If you are using QuestEnhancer you also need async PD - just just download `PogoDroid_async.apk` from usual place.
 
 ###Modes of operation:
   - Single Host (small setups, approx <20)
