@@ -346,8 +346,9 @@ class RouteManagerBase(ABC):
 
     async def _wait_for_calc_end(self, origin: str) -> None:
         while self._start_calc.is_set():
-            # in order to prevent the worker from being removed from the routepool
-            self._routepool[origin].last_access = time.time()
+            # in order to prevent the worker from being removed from the routepool (if registered at all)
+            if origin in self._routepool:
+                self._routepool[origin].last_access = time.time()
             await asyncio.sleep(1)
 
     async def get_next_location(self, origin: str) -> Optional[Location]:
@@ -360,8 +361,6 @@ class RouteManagerBase(ABC):
                 logger.info('No coords available - quit worker')
                 return None
 
-        if origin not in self._workers_registered:
-            await self.register_worker(origin)
         if self._start_calc.is_set():
             logger.info("Another process is already calculating a new route")
             try:
@@ -369,6 +368,8 @@ class RouteManagerBase(ABC):
             except (CancelledError, asyncio.exceptions.TimeoutError):
                 logger.info("Current recalc took too long, returning None location")
                 return None
+        if origin not in self._workers_registered:
+            await self.register_worker(origin)
 
         routepool_entry: RoutePoolEntry = self._routepool.get(origin, None)
         if not routepool_entry:
