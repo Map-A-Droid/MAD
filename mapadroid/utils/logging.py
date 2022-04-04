@@ -151,7 +151,6 @@ def init_logging(args):
     try:
         init_custom(logger)
     except Exception as e:
-        print(f"Foo {e}")
         pass
     logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
 
