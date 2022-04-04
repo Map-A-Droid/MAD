@@ -1,7 +1,6 @@
 import time
 from typing import Dict, Any, Optional, Union, List
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.utils.collections import Location
