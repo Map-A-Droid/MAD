@@ -216,7 +216,7 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
             # worker has to sleep, just empty out the settings...
             ids_iv = []
             scanmode = "nothing"
-        elif routemanager_mode == WorkerType.MON_MITM:
+        elif routemanager_mode == WorkerType.MON_MITM or routemanager_mode == WorkerType.IV_MITM:
             scanmode = "mons"
             routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
             if routemanager_settings is not None:
@@ -228,9 +228,6 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
             if routemanager_settings is not None:
                 # TODO: Moving to async
                 ids_iv = self._mapping_manager.get_monlist(self._area_id)
-        elif routemanager_mode == WorkerType.IV_MITM:
-            scanmode = "ivs"
-            ids_iv = await self._mapping_manager.routemanager_get_encounter_ids_left(self._area_id)
         else:
             # TODO: should we throw an exception here?
             ids_iv = []

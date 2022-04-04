@@ -507,6 +507,11 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         scanmode = "quests"
         injected_settings["scanmode"] = scanmode
         ids_iv: List[int] = []
+        routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
+        if routemanager_settings is not None:
+            # TODO: Moving to async
+            ids_iv = self._mapping_manager.get_monlist(self._area_id)
+
         self._encounter_ids = {}
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_encountered",
                                               value=self._encounter_ids)
@@ -529,7 +534,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
         type_received: ReceivedType = ReceivedType.UNDEFINED
         recheck_count = 0
-        timestamp_to_use_waiting_for_gmo: float = timestamp
+        timestamp_to_use_waiting_for_gmo: float = time.time()
         while stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
                             PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1

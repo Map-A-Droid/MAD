@@ -556,6 +556,8 @@ class SettingsAreaPokestop(SettingsArea):
     cleanup_every_spin = Column(BOOLEAN)
     layer = Column(TINYINT(3), default=1, nullable=False, autoincrement=False, index=True)
     enable_clustering = Column(BOOLEAN)
+    all_mons = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    monlist_id = Column(ForeignKey('settings_monivlist.monlist_id'), index=True)
 
     settings_geofence = relationship('SettingsGeofence')
     settings_routecalc = relationship('SettingsRoutecalc')
