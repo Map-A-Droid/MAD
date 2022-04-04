@@ -1,9 +1,10 @@
 #Moving towards scalability...
 
-1) Ensure Python 3.9 venv is present (`apt install python3.9-venv python3.9-dev`)
-2) `python3.9 -m venv ~/venv/`
-3) `source ~/venv/bin/activate`
-4) `pip3 install -r requirements.txt --upgrade`
+1) Have a full backup - database, old files. Make double sure you have it already.
+2) Ensure Python 3.9 venv is present (`apt install python3.9-venv python3.9-dev`)
+3) `python3.9 -m venv ~/venv/`
+4) `source ~/venv/bin/activate`
+5) `pip3 install -r requirements.txt --upgrade`
 
 ###Modes of operation:
   - Single Host (small setups, approx <20)
