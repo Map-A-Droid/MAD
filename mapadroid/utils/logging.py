@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 from enum import Enum
-from functools import wraps
+from functools import wraps, partialmethod
 from typing import Optional
 
 from loguru import logger
@@ -150,7 +150,7 @@ def init_logging(args):
         sys.exit(1)
     try:
         init_custom(logger)
-    except:
+    except Exception as e:
         pass
     logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
 
@@ -219,6 +219,8 @@ def apply_custom(func):
         log = func(self, *args, **kwargs)
         try:
             init_custom(log)
+        except Exception as e:
+            pass
         finally:
             return log
 
@@ -231,11 +233,12 @@ def init_custom(log_out: logger):
     log_out.level("DEBUG4", no=7, color="<blue>")
     log_out.level("DEBUG5", no=6, color="<blue>")
     log_out.level("BAN", no=35, color="<yellow>")
-    log_out.debug2 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG2", message, *args, **kwargs)
-    log_out.debug3 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG3", message, *args, **kwargs)
-    log_out.debug4 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG4", message, *args, **kwargs)
-    log_out.debug5 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG5", message, *args, **kwargs)
-    log_out.ban = lambda message, *args, **kwargs: log_out.opt(depth=1).log("BAN", message, *args, **kwargs)
+    # https://loguru.readthedocs.io/en/stable/resources/recipes.html#using-logging-function-based-on-custom-added-levels
+    log_out.__class__.debug2 = partialmethod(logger.__class__.log, "DEBUG2")
+    log_out.__class__.debug3 = partialmethod(logger.__class__.log, "DEBUG3")
+    log_out.__class__.debug4 = partialmethod(logger.__class__.log, "DEBUG4")
+    log_out.__class__.debug5 = partialmethod(logger.__class__.log, "DEBUG5")
+    log_out.__class__.ban = partialmethod(logger.__class__.log, "BAN")
 
 
 # ==================================

@@ -19,7 +19,7 @@ def mad_json_filter(input: object) -> str:
     return text
 
 
-@jinja2.contextfunction
+@jinja2.pass_context
 def subapp_url(context,
                subapp_name: str,
                __route_name: str,
@@ -55,7 +55,7 @@ def subapp_url(context,
     return url
 
 
-@jinja2.contextfunction
+@jinja2.pass_context
 def subapp_static(context, subapp_name: str, static_file_path: str) -> str:
     """Filter for generating urls for static files.
 

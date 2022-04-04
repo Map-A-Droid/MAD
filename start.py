@@ -2,18 +2,18 @@ import asyncio
 import os
 import sys
 from asyncio import CancelledError, Task
-from typing import Optional, Union
+from typing import Optional
 
 from aiohttp import web
 from aioredis import Redis
 
 from mapadroid.data_handler.StandaloneMitmMapperAndStatsHandler import StandaloneMitmMapperAndStatsHandler
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
-from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer
 from mapadroid.data_handler.grpc.MitmMapperServer import MitmMapperServer
+from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.MitmMapperType import MitmMapperType
 from mapadroid.data_handler.mitm_data.RedisMitmMapper import RedisMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import get_storage_obj
 from mapadroid.madmin.madmin import MADmin

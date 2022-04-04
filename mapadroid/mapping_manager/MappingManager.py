@@ -755,7 +755,7 @@ class MappingManager(AbstractMappingManager):
             # Lastly, kill all strategies and update them accordingly
 
         else:
-            logger.debug("Acquiring lock to update mappings,full")
+            logger.debug2("Acquiring lock to update mappings,full")
             async with self.__mappings_mutex:
                 async with self.__db_wrapper as session, session:
                     self._areas = await self.__get_latest_areas(session)
