@@ -13,7 +13,7 @@ from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.json_encoder import mad_json_dumps
 from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes
+from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes, QuestLayer
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
@@ -167,7 +167,8 @@ class WebhookWorker:
                 "quest_condition": transformed_quest["quest_condition"].replace("'", '"').lower(),
                 "quest_template": transformed_quest["quest_template"],
                 "is_ar_scan_eligible": transformed_quest["is_ar_scan_eligible"],
-                "quest_title": transformed_quest["quest_title"]
+                "quest_title": transformed_quest["quest_title"],
+                "with_ar": bool(transformed_quest["quest_layer"])
             }
 
         # Other known type is Poracle/RDM compatible.
@@ -300,6 +301,7 @@ class WebhookWorker:
             "target": transformed_quest["quest_target"],
             "updated": transformed_quest["timestamp"],
             "quest_task": transformed_quest["quest_task"],
+            "with_ar": bool(transformed_quest["quest_layer"])
         }
 
     def __prepare_weather_data(self, weather_data):
