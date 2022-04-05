@@ -13,7 +13,7 @@ from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.json_encoder import mad_json_dumps
 from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes, QuestLayer
+from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
