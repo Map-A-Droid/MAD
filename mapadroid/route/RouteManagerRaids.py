@@ -60,8 +60,8 @@ class RouteManagerRaids(RouteManagerBase):
 
     async def start_routemanager(self):
         async with self._manager_mutex:
-            if not self._is_started:
-                self._is_started = True
+            if not self._is_started.is_set():
+                self._is_started.set()
                 logger.info("Starting routemanager")
                 if self._mode != WorkerType.IDLE:
                     await self._start_priority_queue()
@@ -71,7 +71,7 @@ class RouteManagerRaids(RouteManagerBase):
 
     async def _quit_route(self):
         logger.info("Shutdown Route")
-        self._is_started = False
+        self._is_started.clear()
         self._round_started_time = None
 
     def _check_coords_before_returning(self, lat, lng, origin):
