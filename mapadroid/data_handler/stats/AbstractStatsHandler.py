@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes
@@ -35,7 +35,8 @@ class AbstractStatsHandler(ABC):
         pass
 
     @abstractmethod
-    async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
+    async def stats_collect_location_data(self, worker: str, location: Optional[Location], success: bool,
+                                          fix_timestamp: int,
                                           position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                           transport_type: TransportType, timestamp_of_record: int) -> None:
         pass

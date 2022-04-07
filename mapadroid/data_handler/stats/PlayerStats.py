@@ -68,10 +68,10 @@ class PlayerStats(AbstractStatsHolder):
     def stats_collect_raid(self, time_scanned: datetime, amount: int = 1):
         self._stats_detect_holder.add_raid(time_scanned, amount)
 
-    def stats_collect_location_data(self, location: Location, success: bool, fix_timestamp: int,
+    def stats_collect_location_data(self, location: Optional[Location], success: bool, fix_timestamp: int,
                                     position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                     transport_type: TransportType, timestamp_of_record: int):
-        if self._stats_location_raw_holder:
+        if self._stats_location_raw_holder and location:
             self._stats_location_raw_holder.add_location(location, success, fix_timestamp, position_type,
                                                          data_timestamp, worker_type, transport_type,
                                                          timestamp_of_record)
