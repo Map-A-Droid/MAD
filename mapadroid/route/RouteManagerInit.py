@@ -6,7 +6,6 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsRoutecalc, SettingsAreaInitMitm
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
@@ -17,23 +16,14 @@ class RouteManagerInit(RouteManagerBase):
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  use_s2: bool = False, s2_level: int = 15, mon_ids_iv: Optional[List[int]] = None):
 
-        strategy: Optional[RaidSpawnPrioStrategy] = None
-        if False:
-            # TODO: Mon Despawn targetted "learning"?
-            strategy: RaidSpawnPrioStrategy = RaidSpawnPrioStrategy(clustering_timedelta=clustering_timedelta,
-                                                                    clustering_count_per_circle=max_coords_within_radius,
-                                                                    clustering_distance=max_radius,
-                                                                    db_wrapper=db_wrapper,
-                                                                    max_backlog_duration=self.remove_from_queue_backlog,
-                                                                    geofence_helper=geofence_helper,
-                                                                    delay_after_event=self.delay_after_timestamp_prio)
+        # TODO: Mon Despawn targetted "learning"?
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   geofence_helper=geofence_helper,
                                   routecalc=routecalc, use_s2=use_s2, s2_level=s2_level,
                                   mon_ids_iv=mon_ids_iv,
-                                  initial_prioq_strategy=strategy)
+                                  initial_prioq_strategy=None)
         self._settings: SettingsAreaInitMitm = area
         self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
 

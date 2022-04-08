@@ -298,6 +298,7 @@ class AbstractWorkerStrategy(ABC):
                     logger.warning("Screen is frozen!")
                     if self._worker_state.same_screen_count > 4 or not await self._restart_pogo():
                         logger.warning("Restarting PoGo failed - reboot device")
+                        self._worker_state.login_error_count = 0
                         await self._reboot()
                     break
             elif self._worker_state.last_screen_type != screen_type:

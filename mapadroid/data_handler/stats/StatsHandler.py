@@ -79,7 +79,8 @@ class StatsHandler(AbstractStatsHandler):
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
         player_stats.stats_collect_raid(time_scanned, amount_raids)
 
-    async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
+    async def stats_collect_location_data(self, worker: str, location: Optional[Location], success: bool,
+                                          fix_timestamp: int,
                                           position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                           transport_type: TransportType, timestamp_of_record: int) -> None:
         player_stats: PlayerStats = self.__ensure_player_stat(worker)
