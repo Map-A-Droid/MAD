@@ -2,8 +2,8 @@
 from sqlalchemy import (Column, Float, ForeignKey, Index,
                         String, Table, text)
 from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
-                                       LONGTEXT, MEDIUMINT, SMALLINT, TINYINT,
-                                       VARCHAR, BOOLEAN)
+                                       LONGTEXT, SMALLINT, TINYINT,
+                                       BOOLEAN)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -549,7 +549,6 @@ class SettingsAreaPokestop(SettingsArea):
     geofence_excluded = Column(String(256, 'utf8mb4_unicode_ci'))
     routecalc = Column(ForeignKey('settings_routecalc.routecalc_id'), nullable=False, index=True)
     level = Column(BOOLEAN)
-    route_calc_algorithm = Column(ENUM('route', 'routefree'))
     speed = Column(Float)
     max_distance = Column(Float)
     ignore_spinned_stops = Column(BOOLEAN)

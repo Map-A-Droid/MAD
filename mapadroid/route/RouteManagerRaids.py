@@ -10,7 +10,6 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
-from mapadroid.worker.WorkerType import WorkerType
 
 
 class RouteManagerRaids(RouteManagerBase):
@@ -57,17 +56,6 @@ class RouteManagerRaids(RouteManagerBase):
                 coords.extend(await PokestopHelper.get_locations_in_fence(session, self.geofence_helper))
 
         return coords
-
-    async def start_routemanager(self):
-        async with self._manager_mutex:
-            if not self._is_started.is_set():
-                self._is_started.set()
-                logger.info("Starting routemanager")
-                if self._mode != WorkerType.IDLE:
-                    await self._start_priority_queue()
-                    await self._start_check_routepools()
-                    self._init_route_queue()
-        return True
 
     async def _quit_route(self):
         logger.info("Shutdown Route")

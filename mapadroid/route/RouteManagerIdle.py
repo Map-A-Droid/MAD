@@ -32,13 +32,6 @@ class RouteManagerIdle(RouteManagerBase):
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         return [Location(0, 0)]
 
-    async def start_routemanager(self):
-        async with self._manager_mutex:
-            if not self._is_started.is_set():
-                self._is_started.set()
-                logger.info("Starting routemanager")
-        return True
-
     async def _quit_route(self):
         logger.info("Shutdown Route")
         self._is_started.clear()

@@ -8,7 +8,6 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.collections import Location
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.worker.WorkerType import WorkerType
 
 
 class RouteManagerInit(RouteManagerBase):
@@ -32,17 +31,6 @@ class RouteManagerInit(RouteManagerBase):
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         return S2Helper.generate_locations(self.get_max_radius(), self.get_geofence_helper())
-
-    async def start_routemanager(self):
-        async with self._manager_mutex:
-            if not self._is_started.is_set():
-                self._is_started.set()
-                logger.info("Starting routemanager")
-                if self._mode != WorkerType.IDLE:
-                    await self._start_priority_queue()
-                    await self._start_check_routepools()
-                    self._init_route_queue()
-        return True
 
     async def _quit_route(self):
         logger.info("Shutdown Route")

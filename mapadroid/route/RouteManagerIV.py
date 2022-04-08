@@ -81,14 +81,6 @@ class RouteManagerIV(RouteManagerBase):
     def _delete_coord_after_fetch(self) -> bool:
         return False
 
-    async def start_routemanager(self):
-        async with self._manager_mutex:
-            if not self._is_started.is_set():
-                self._is_started.set()
-                logger.info("Starting routemanager")
-                await self._start_priority_queue()
-        return True
-
     async def _quit_route(self):
         logger.info('Shutdown Route')
         self._is_started.clear()

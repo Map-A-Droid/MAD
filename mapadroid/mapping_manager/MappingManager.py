@@ -423,10 +423,6 @@ class MappingManager(AbstractMappingManager):
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.is_level_mode() if routemanager is not None else None
 
-    async def routemanager_get_calc_type(self, routemanager_id: int) -> str:
-        routemanager = self.__fetch_routemanager(routemanager_id)
-        return routemanager.get_calc_type() if routemanager is not None else None
-
     async def routemanager_get_mode(self, routemanager_id: int) -> WorkerType:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_mode() if routemanager is not None else WorkerType.UNDEFINED.value

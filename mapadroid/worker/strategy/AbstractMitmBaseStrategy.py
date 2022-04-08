@@ -74,10 +74,9 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
     async def pre_work_loop(self) -> None:
         await self._mitm_mapper.set_injection_status(self._worker_state.origin, False)
         start_position = await self.get_devicesettings_value(MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER, None)
-        calc_type = await self._mapping_manager.routemanager_get_calc_type(self._area_id)
         geofence_helper_of_area = await self._mapping_manager.routemanager_get_geofence_helper(self._area_id)
         if (start_position
-                and await self._mapping_manager.routemanager_is_levelmode(self._area_id) and calc_type == "routefree"):
+                and await self._mapping_manager.routemanager_is_levelmode(self._area_id)):
             startcoords = (
                 await self.get_devicesettings_value(MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER)).replace(' ',
                                                                                                                    '') \
@@ -89,8 +88,8 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 lat, lng = geofence_helper_of_area.get_middle_from_fence()
                 start_position = str(lat) + "," + str(lng)
 
-        if start_position is None and \
-                (await self._mapping_manager.routemanager_is_levelmode(self.area_id) and calc_type == "routefree"):
+        if (start_position is None and
+                await self._mapping_manager.routemanager_is_levelmode(self.area_id)):
             logger.info("Starting level mode without worker start position")
             # setting coords
             lat, lng = geofence_helper_of_area.get_middle_from_fence()

@@ -43,7 +43,6 @@ class RouteManagerMon(RouteManagerBase):
 
         if area.max_clustering:
             self._max_clustering: int = area.max_clustering
-        # TODO:         await self._start_priority_queue()
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
         self._init_route_queue()
@@ -62,15 +61,6 @@ class RouteManagerMon(RouteManagerBase):
         for spawn in spawns:
             coords.append(Location(spawn.latitude, spawn.longitude))
         return coords
-
-    async def start_routemanager(self):
-        async with self._manager_mutex:
-            if not self._is_started.is_set():
-                self._is_started.set()
-                logger.info("Starting routemanager {}", self.name)
-                await self._start_check_routepools()
-                self._init_route_queue()
-        return True
 
     def _delete_coord_after_fetch(self) -> bool:
         return False

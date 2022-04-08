@@ -73,15 +73,6 @@ class AreaPokestops:
                     "expected": bool
                 }
             },
-            "route_calc_algorithm": {
-                "settings": {
-                    "type": "option",
-                    "values": ['route', 'routefree'],
-                    "require": False,
-                    "description": "Method of calculation for routes. (Default route)",
-                    "expected": str
-                }
-            },
             "speed": {
                 "settings": {
                     "type": "text",

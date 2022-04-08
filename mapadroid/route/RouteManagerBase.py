@@ -80,8 +80,6 @@ class RouteManagerBase(ABC):
         self._start_calc: asyncio.Event = asyncio.Event()
         self._coords_to_be_ignored = set()
         # self._level = area.level if area.mode == "pokestop" else False
-        # self._calctype = area.route_calc_algorithm if area.mode == "pokestop" else "route"
-        self._calctype = "route"
         self._overwrite_calculation: bool = False
         self._stops_not_processed: Dict[Location, int] = {}
         self._routepool: Dict[str, RoutePoolEntry] = {}
@@ -267,13 +265,20 @@ class RouteManagerBase(ABC):
             return
         self._coords_to_be_ignored.add(Location(lat, lon))
 
-    @abstractmethod
-    async def start_routemanager(self):
+    async def start_routemanager(self) -> bool:
         """
         Starts priority queue or whatever the implementations require
         :return:
         """
-        pass
+        async with self._manager_mutex:
+            if not self._is_started.is_set():
+                self._is_started.set()
+                logger.info("Starting routemanager {}", self.name)
+                await self.calculate_route(dynamic=False, overwrite_persisted_route=False)
+                await self._start_priority_queue()
+                await self._start_check_routepools()
+                self._init_route_queue()
+        return True
 
     @abstractmethod
     async def _quit_route(self):
@@ -878,9 +883,6 @@ class RouteManagerBase(ABC):
 
     def is_level_mode(self) -> bool:
         return False
-
-    def get_calc_type(self):
-        return self._calctype
 
     def redo_stop_immediately(self, worker, lat: float, lon: float):
         logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
