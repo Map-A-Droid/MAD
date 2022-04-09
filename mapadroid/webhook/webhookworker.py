@@ -25,7 +25,7 @@ class WebhookWorker:
 
     def __init__(self, args, db_wrapper: DbWrapper, mapping_manager: MappingManager, rarity, quest_gen: QuestGen):
         self.__quest_gen: QuestGen = quest_gen
-        self.__worker_interval_sec = 10
+        self.__worker_interval_sec = args.webhook_worker_interval
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__rarity = rarity
@@ -714,7 +714,7 @@ class WebhookWorker:
         return loop.create_task(self.__run_worker())
 
     async def __run_worker(self):
-        logger.info("Starting webhook worker thread")
+        logger.info("Starting webhook worker thread, sending payload every {} seconds", self.__worker_interval_sec)
 
         self.__build_webhook_receivers()
         await self.__build_excluded_areas()
