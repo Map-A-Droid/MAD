@@ -78,7 +78,7 @@ class RedisMitmMapper(AbstractMitmMapper):
         last_cell_ids: List[int] = []
         if last_cell_ids_raw:
             last_cell_ids: List[int] = ujson.loads(last_cell_ids_raw)
-        if not bool(set(cell_ids).intersection(set(last_cell_ids))):
+        if set(cell_ids) != set(last_cell_ids):
             await self.__cache.set(RedisMitmMapper.LAST_CELL_IDS_KEY.format(worker), ujson.dumps(cell_ids))
             await self.__cache.set(RedisMitmMapper.LAST_POSSIBLY_MOVED_KEY.format(worker), timestamp)
         if location:
