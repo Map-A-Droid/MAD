@@ -275,6 +275,8 @@ def parse_args():
                         help='Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.')
     parser.add_argument('-whmps', '--webhook_max_payload_size', default=0, type=int,
                         help='Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)')
+    parser.add_argument('-whwi', '--webhook_worker_interval', default=10, type=int,
+                        help='Send webhook every X seconds (Default: 10 [seconds])')
 
     # Dynamic Rarity
     parser.add_argument('-rh', '--rarity_hours', type=int, default=72,
