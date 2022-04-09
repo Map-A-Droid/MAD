@@ -764,7 +764,7 @@ class DbPogoProtoSubmit:
                     gym_obj.enabled = is_enabled
                     gym_obj.latitude = latitude
                     gym_obj.longitude = longitude
-                    gym_obj.total_cp = 0  # TODO: Read from proto?
+                    gym_obj.total_cp = gym.get("gym_display", {}).get("total_gym_cp", 0)
                     gym_obj.is_in_battle = is_in_battle
                     gym_obj.last_modified = last_modified
                     gym_obj.last_scanned = time_receiver
@@ -777,7 +777,8 @@ class DbPogoProtoSubmit:
                         gym_detail: GymDetail = GymDetail()
                         gym_detail.gym_id = gymid
                         gym_detail.name = "unknown"
-                    gym_detail.url = gym.get("image_url", "")
+                    gym_url = gym.get("image_url", "")
+                    gym_detail.url = gym_url if gym_url else ""
                     gym_detail.last_scanned = time_receiver
                     async with session.begin_nested() as nested_transaction:
                         try:
@@ -1051,7 +1052,7 @@ class DbPogoProtoSubmit:
         pokestop.latitude = stop_data["latitude"]
         pokestop.longitude = stop_data["longitude"]
         pokestop.name = name
-        pokestop.image = image
+        pokestop.image = image[0] if image and image[0] else ""
         pokestop.last_updated = now
         pokestop.enabled = stop_data.get("enabled", 1)
         pokestop.last_modified = DatetimeWrapper.fromtimestamp(
