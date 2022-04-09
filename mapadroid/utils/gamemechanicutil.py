@@ -261,16 +261,13 @@ def form_mapper(mon_id, form_id):
 def is_mon_ditto(pokemon_data):
     logger.debug3('Determining if mon is a ditto')
     logger.debug4(pokemon_data)
-    potential_dittos: Set[int] = {92, 96, 223, 216, 316, 322, 434, 557, 590}
     weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
     valid_atk = pokemon_data.get("individual_attack") < 4
     valid_def = pokemon_data.get("individual_defense") < 4
     valid_sta = pokemon_data.get("individual_stamina") < 4
     cp_multi = pokemon_data.get("cp_multiplier")
     valid_boost_attrs = valid_atk or valid_def or valid_sta or cp_multi < .3
-    if pokemon_data.get("id") not in potential_dittos:
-        return False
-    elif weather_boost is None:
+    if weather_boost is None:
         return False
     elif weather_boost > 0 and valid_boost_attrs:
         # Weather boosted mon, but the iv is lower than threshold
