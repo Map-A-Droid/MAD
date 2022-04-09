@@ -1034,7 +1034,7 @@ class DbPogoProtoSubmit:
         try:
             session.add(pokestop)
             await session.commit()
-            await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_STOP_DETAILS)
+            await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_POKESTOP_DATA)
         except sqlalchemy.exc.IntegrityError as e:
             logger.warning("Failed committing stop {} ({})", stop_id, str(e))
             await session.rollback()
