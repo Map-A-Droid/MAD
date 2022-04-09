@@ -19,11 +19,11 @@ class RoutecalcUtil:
                               max_coords_within_radius,
                               load_persisted_route, algorithm: RoutecalculationTypes,
                               use_s2, s2_level, route_name,
-                              overwrite_persisted_route: bool = False) -> list[Location]:
+                              overwrite_persisted_route: bool = False) -> List[Location]:
         async with db_wrapper as session, session:
             routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
             if load_persisted_route and routecalc_entry:
-                saved_route: list[Location] = RoutecalcUtil.read_persisted_route(routecalc_entry)
+                saved_route: List[Location] = RoutecalcUtil.read_persisted_route(routecalc_entry)
                 if saved_route:
                     logger.debug('Using routefile from DB')
                     return saved_route
@@ -47,7 +47,7 @@ class RoutecalcUtil:
                 logger.exception(e)
                 await session.rollback()
 
-        calculated_route: list[Location] = []
+        calculated_route: List[Location] = []
         if use_s2:
             logger.debug("Using S2 method for calculation with S2 level: {}", s2_level)
 
@@ -104,7 +104,7 @@ class RoutecalcUtil:
 
     @staticmethod
     async def _write_route_to_db_entry(routecalc_entry: SettingsRoutecalc,
-                                       new_route: list[Location]) -> None:
+                                       new_route: List[Location]) -> None:
         calc_coords = []
         for coord in new_route:
             calc_coord = '%s,%s' % (coord.lat, coord.lng)
@@ -159,8 +159,8 @@ class RoutecalcUtil:
         return result
 
     @staticmethod
-    def read_persisted_route(routecalc_entry: SettingsRoutecalc) -> list[Location]:
-        result: list[Location] = []
+    def read_persisted_route(routecalc_entry: SettingsRoutecalc) -> List[Location]:
+        result: List[Location] = []
         if routecalc_entry.routefile and routecalc_entry.routefile.strip():
             for line in routecalc_entry.routefile.split("\","):
                 line = line.replace("\"", "").replace("]", "").replace("[", "").strip()

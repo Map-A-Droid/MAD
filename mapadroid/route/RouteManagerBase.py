@@ -212,7 +212,7 @@ class RouteManagerBase(ABC):
         :param overwrite_persisted_route: Whether the calculated route should be persisted in the database (True -> persist)
         """
         # If dynamic, recalc using OR tools in all cases (if possible) and do not persist to DB
-        coords: list[Location] = await self._get_coords_fresh(dynamic)
+        coords: List[Location] = await self._get_coords_fresh(dynamic)
         if dynamic:
             coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
         if not coords:
@@ -221,7 +221,7 @@ class RouteManagerBase(ABC):
             raise RoutemanagerShuttingDown("No coords to calculate a route")
         try:
             self._start_calc.set()
-            new_route: list[Location] = await RoutecalcUtil.calculate_route(self.db_wrapper,
+            new_route: List[Location] = await RoutecalcUtil.calculate_route(self.db_wrapper,
                                                                             self._routecalc.routecalc_id,
                                                                             coords,
                                                                             self.get_max_radius(),
