@@ -1052,7 +1052,8 @@ class DbPogoProtoSubmit:
         pokestop.latitude = stop_data["latitude"]
         pokestop.longitude = stop_data["longitude"]
         pokestop.name = name
-        pokestop.image = image[0] if image and image[0] else ""
+        if image and image[0]:
+            pokestop.image = image[0]
         pokestop.last_updated = now
         pokestop.enabled = stop_data.get("enabled", 1)
         pokestop.last_modified = DatetimeWrapper.fromtimestamp(

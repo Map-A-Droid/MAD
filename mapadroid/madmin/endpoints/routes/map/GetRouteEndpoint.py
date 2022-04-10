@@ -38,7 +38,8 @@ class GetRouteEndpoint(AbstractControlEndpoint):
                 "subroutes": []
             }
 
-            if len(workers) > 1:
+            if len(workers) > 0:
+                # As soon as a single worker is registered, display subroutes. This is useful e.g. during leveling mode.
                 for worker, worker_route in workers.items():
                     routeinfo["subroutes"].append({
                         "id": "%d_sub_%s" % (routecalc_id, worker),

@@ -404,7 +404,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         self._delay_add = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.VPS_DELAY, 0))
         self._enhanced_mode = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST,
                                                                   False)
-        self._ignore_spinned_stops: bool = area_settings.ignore_spinned_stops
+        self._ignore_spinned_stops: bool = area_settings.ignore_spinned_stops \
+            if area_settings.ignore_spinned_stops or area_settings.ignore_spinned_stops is None else False
 
     async def worker_specific_setup_stop(self):
         pass
