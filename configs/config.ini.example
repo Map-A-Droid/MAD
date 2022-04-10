@@ -149,7 +149,7 @@
 #quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
 #webhook_start_time:         # Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.
 #webhook_max_payload_size:   # Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)
-
+#webhook_worker_interval: 10 # Send webhook payload every X seconds (Default: 10)
 
 # Dynamic Rarity
 ######################
