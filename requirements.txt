@@ -39,9 +39,9 @@ pytesseract==0.3.9
 pytz==2022.1
 requests==2.27.1
 s2sphere==0.2.5
-SQLAlchemy==1.4.34
+SQLAlchemy==1.4.35
 timezonefinder==5.2.0
-ujson==5.1.0
+ujson==5.2.0
 urllib3==1.26.9
 uvloop==0.16.0
 websockets==10.2
