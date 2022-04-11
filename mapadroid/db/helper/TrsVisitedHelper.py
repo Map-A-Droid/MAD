@@ -14,9 +14,18 @@ class TrsVisitedHelper:
         await session.execute(stmt)
 
     @staticmethod
-    async def mark_visited(session: AsyncSession, origin: str, location: Location) -> None:
+    async def mark_visited_by_location(session: AsyncSession, origin: str, location: Location) -> None:
         from mapadroid.db.helper.PokestopHelper import PokestopHelper
         pokestop: Optional[Pokestop] = await PokestopHelper.get_at_location(session, location)
+        if not pokestop:
+            return
+        stmt = insert(TrsVisited).values(pokestop_id=pokestop.pokestop_id, origin=origin).prefix_with("IGNORE")
+        await session.execute(stmt)
+
+    @staticmethod
+    async def mark_visited(session: AsyncSession, origin: str, stop_id: str) -> None:
+        from mapadroid.db.helper.PokestopHelper import PokestopHelper
+        pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_id)
         if not pokestop:
             return
         stmt = insert(TrsVisited).values(pokestop_id=pokestop.pokestop_id, origin=origin).prefix_with("IGNORE")

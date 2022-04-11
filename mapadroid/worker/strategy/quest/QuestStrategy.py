@@ -19,7 +19,6 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
-from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
 from mapadroid.db.model import SettingsAreaPokestop, Pokestop, SettingsWalkerarea, TrsStatus
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
@@ -615,13 +614,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     if await self._mapping_manager.routemanager_is_levelmode(
                             self._area_id) and self._ignore_spinned_stops and visited:
                         logger.info("Level mode: Stop already visited - skipping it")
-                        await TrsVisitedHelper.mark_visited(session, self._worker_state.origin,
-                                                            Location(latitude, longitude))
                         self._spinnable_data_failcount = 0
-                        try:
-                            await session.commit()
-                        except Exception as e:
-                            logger.warning("Failed mark pokestop visited: {}", e)
                         stop_types.add(PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE)
                         continue
 
@@ -832,13 +825,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     if await self._mapping_manager.routemanager_is_levelmode(self._area_id):
                         logger.info("Saving visitation info...")
                         self._last_time_quest_received = math.floor(time.time())
-                        await TrsVisitedHelper.mark_visited(session, self._worker_state.origin,
-                                                            self._worker_state.current_location)
-                        try:
-                            await session.commit()
-                        except Exception as e:
-                            logger.warning("Failed marking stop as visited: {}", e)
-                        # This is leveling mode, it's faster to just ignore spin result and continue ?
+                        # This is leveling mode, it's faster to just ignore spin result and continue
                         break
 
                     if data_received == FortSearchResultTypes.COOLDOWN:
