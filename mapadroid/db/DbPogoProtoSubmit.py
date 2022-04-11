@@ -30,9 +30,9 @@ from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
-from mapadroid.utils.madConstants import (REDIS_CACHETIME_MON_LURE_IV, REDIS_CACHETIME_IVS,
-                                          REDIS_CACHETIME_STOP_DETAILS, REDIS_CACHETIME_GYMS, 
-                                          REDIS_CACHETIME_RAIDS, REDIS_CACHETIME_CELLS, 
+from mapadroid.utils.madConstants import (REDIS_CACHETIME_MON_LURE_IV, REDIS_CACHETIME_STOP_DETAILS,
+                                          REDIS_CACHETIME_GYMS,
+                                          REDIS_CACHETIME_RAIDS, REDIS_CACHETIME_CELLS,
                                           REDIS_CACHETIME_WEATHER, REDIS_CACHETIME_POKESTOP_DATA)
 from mapadroid.utils.madGlobals import MonSeenTypes, QuestLayer
 from mapadroid.utils.questGen import QuestGen
@@ -781,8 +781,10 @@ class DbPogoProtoSubmit:
                         gym_detail: GymDetail = GymDetail()
                         gym_detail.gym_id = gymid
                         gym_detail.name = "unknown"
+                        gym_detail.url = ""
                     gym_url = gym.get("image_url", "")
-                    gym_detail.url = gym_url if gym_url else ""
+                    if gym_url and gym_url.strip():
+                        gym_detail.url = gym_url.strip()
                     gym_detail.last_scanned = time_receiver
                     async with session.begin_nested() as nested_transaction:
                         try:
