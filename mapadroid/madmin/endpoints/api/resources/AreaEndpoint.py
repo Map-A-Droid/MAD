@@ -8,6 +8,7 @@ from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
 from mapadroid.db.model import Base, SettingsArea, SettingsRoutecalc, SettingsWalkerarea
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
+from mapadroid.db.resource_definitions.AreaInitMitm import AreaInitMitm
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
 from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
@@ -76,6 +77,8 @@ class AreaEndpoint(AbstractResourceEndpoint):
             return AreaPokestops.configuration
         elif db_entry.mode == WorkerType.RAID_MITM.value:
             return AreaRaidsMitm.configuration
+        elif db_entry.mode == WorkerType.INIT.value:
+            return AreaInitMitm.configuration
         else:
             return {}
 

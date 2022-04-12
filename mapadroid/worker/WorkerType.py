@@ -9,3 +9,4 @@ class WorkerType(Enum):
     STOPS = "pokestops"
     IDLE = "idle"
     CONFIGMODE = "configmode"
+    INIT = "init"

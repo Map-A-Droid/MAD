@@ -44,25 +44,25 @@ mode_mapping = {
     "raids_mitm": {
         "s2_cell_level": 15,
         "range": 490,
-        "range_init": 980,
         "max_count": 100000
     },
     "mon_mitm": {
         "s2_cell_level": 17,
         "range": 67,
-        "range_init": 145,
         "max_count": 100000
     },
     "pokestops": {
         "s2_cell_level": 13,
-        "range": 70, # stop interaction radius is 80m
-        "range_init": 980,
+        "range": 70,  # stop interaction radius is 80m
         "max_count": 1
     },
     "iv_mitm": {
         "range": 67,
-        "range_init": 0,
         "max_count": 999999
+    },
+    "init": {
+        "range": 67,
+        "max_count": 1,
     }
 }
 

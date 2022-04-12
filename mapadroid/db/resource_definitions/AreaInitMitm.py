@@ -1,4 +1,4 @@
-class AreaIvMitm:
+class AreaInitMitm:
     configuration = {
         "description": "Init worker for getting location data",
         "fields": {

@@ -476,7 +476,7 @@ class SettingsArea(Base):
     guid = Column(String(32, 'utf8mb4_unicode_ci'))
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
-    mode = Column(ENUM('idle', 'iv_mitm', 'mon_mitm', 'pokestops', 'raids_mitm'), nullable=False)
+    mode = Column(ENUM('idle', 'iv_mitm', 'mon_mitm', 'pokestops', 'raids_mitm', 'init'), nullable=False)
 
     instance = relationship('MadminInstance')
 

@@ -9,6 +9,7 @@ from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import SettingsArea
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
+from mapadroid.db.resource_definitions.AreaInitMitm import AreaInitMitm
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
 from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
@@ -111,5 +112,7 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
             return AreaPokestops.configuration
         elif mode == WorkerType.RAID_MITM:
             return AreaRaidsMitm.configuration
+        elif mode == WorkerType.INIT:
+            return AreaInitMitm.configuration
         else:
             return None

@@ -113,3 +113,8 @@ class FortSearchResultTypes(Enum):
 class QuestLayer(Enum):
     AR = 0
     NON_AR = 1
+
+
+class InitTypes(Enum):
+    MONS = "mons"
+    FORTS = "forts"

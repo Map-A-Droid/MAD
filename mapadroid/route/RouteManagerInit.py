@@ -24,7 +24,6 @@ class RouteManagerInit(RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaInitMitm = area
-        self.init_mode_rounds: int = area.init_mode_rounds if area.init_mode_rounds else 1
 
     def _delete_coord_after_fetch(self) -> bool:
         return False
@@ -39,3 +38,11 @@ class RouteManagerInit(RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
+
+    async def _any_coords_left_after_finishing_route(self) -> bool:
+        return True
+
+    def _should_get_new_coords_after_finishing_route(self) -> bool:
+        # Subtract one round as this is called when the
+        # TODO
+        return self._settings.init_mode_rounds > 1

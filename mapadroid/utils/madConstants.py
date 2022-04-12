@@ -10,9 +10,9 @@ MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO = 5
 # That buffer can be subtracted in case a walk was longer than that buffer.
 SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER = 10
 
-
 STOP_SPIN_DISTANCE = 80
 
+# Parameters of routemanagers
 
 
 # Redis caching time.

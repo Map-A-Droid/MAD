@@ -130,7 +130,7 @@ class RoutecalcUtil:
         """
 
         coords_cleaned_up: List[Location] = []
-        if max_radius > 1:
+        if max_radius > 1 and max_coords_within_radius > 1:
             # Hardly feasible to cluster a distance of less than 1m...
             coordinates: List[Tuple[int, Location]] = []
             for coord in coords:

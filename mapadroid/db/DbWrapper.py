@@ -12,6 +12,7 @@ from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.MadminInstanceHelper import MadminInstanceHelper
 from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
 from mapadroid.db.helper.SettingsAreaIdleHelper import SettingsAreaIdleHelper
+from mapadroid.db.helper.SettingsAreaInitMitmHelper import SettingsAreaInitMitmHelper
 from mapadroid.db.helper.SettingsAreaIvMitm import SettingsAreaIvMitmHelper
 from mapadroid.db.helper.SettingsAreaMonMitmHelper import \
     SettingsAreaMonMitmHelper
@@ -20,7 +21,7 @@ from mapadroid.db.helper.SettingsAreaPokestopHelper import \
 from mapadroid.db.helper.SettingsAreaRaidsMitm import \
     SettingsAreaRaidsMitmHelper
 from mapadroid.db.model import SettingsArea, MadminInstance, SettingsAreaIdle, SettingsAreaIvMitm, SettingsAreaMonMitm, \
-    SettingsAreaPokestop, SettingsAreaRaidsMitm
+    SettingsAreaPokestop, SettingsAreaRaidsMitm, SettingsAreaInitMitm
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -89,6 +90,7 @@ class DbWrapper:
         areas.update(await SettingsAreaMonMitmHelper.get_all(session, self.__instance_id))
         areas.update(await SettingsAreaPokestopHelper.get_all(session, self.__instance_id))
         areas.update(await SettingsAreaRaidsMitmHelper.get_all(session, self.__instance_id))
+        areas.update(await SettingsAreaInitMitmHelper.get_all(session, self.__instance_id))
         return areas
 
     async def get_area(self, session: AsyncSession, area_id: int) -> Optional[SettingsArea]:
@@ -113,6 +115,8 @@ class DbWrapper:
             return await SettingsAreaPokestopHelper.get(session, self.__instance_id, area_id)
         elif area_base.mode == WorkerType.RAID_MITM.value:
             return await SettingsAreaRaidsMitmHelper.get(session, self.__instance_id, area_id)
+        elif area_base.mode == WorkerType.INIT.value:
+            return await SettingsAreaInitMitmHelper.get(session, self.__instance_id, area_id)
         else:
             return None
 
@@ -128,6 +132,8 @@ class DbWrapper:
             return SettingsAreaPokestop()
         elif mode == WorkerType.RAID_MITM:
             return SettingsAreaRaidsMitm()
+        elif mode == WorkerType.INIT:
+            return SettingsAreaInitMitm()
         else:
             return None
 
