@@ -208,7 +208,7 @@ class RouteManagerBase(ABC):
         """
         Calculates a new route based off the internal acquisition of coords within the routemanager itself.
 
-        :param dynamic: If True, coords to be ignored are respected and route is not loaded from the DB
+        :param dynamic: If True, coords to be ignored are respected and route is not loaded from the DB if overwrite_persisted_route is set
         :param overwrite_persisted_route: Whether the calculated route should be persisted in the database (True -> persist)
         """
         # If dynamic, recalc using OR tools in all cases (if possible) and do not persist to DB
@@ -231,7 +231,7 @@ class RouteManagerBase(ABC):
                                                                             s2_level=self.S2level,
                                                                             route_name=self.name,
                                                                             overwrite_persisted_route=overwrite_persisted_route,
-                                                                            load_persisted_route=not dynamic)
+                                                                            load_persisted_route=not dynamic and not overwrite_persisted_route)
         except Exception as e:
             logger.exception(e)
             raise e
