@@ -360,7 +360,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             try:
                 await self._ensure_stop_present(timestamp)
                 logger.info('Open Stop')
-                await self._handle_stop_enhanced(timestamp)
+                await self._handle_stop(timestamp)
             except AbortStopProcessingException as e:
                 # The stop cannot be processed for whatever reason.
                 # Stop processing the location.
@@ -401,8 +401,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                                       300)
         self._always_cleanup: bool = False if area_settings.cleanup_every_spin == 0 else True
         self._delay_add = int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.VPS_DELAY, 0))
-        self._enhanced_mode = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST,
-                                                                  False)
         self._ignore_spinned_stops: bool = area_settings.ignore_spinned_stops \
             if area_settings.ignore_spinned_stops or area_settings.ignore_spinned_stops is None else False
 
@@ -790,7 +788,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                                                   stop_location.lat,
                                                                                   stop_location.lng)
 
-    async def _handle_stop_enhanced(self, timestamp):
+    async def _handle_stop(self, timestamp):
         self._stop_process_time = math.floor(timestamp)
         # Stop will automatically be spun, thus we only need to check for fort search protos of the stop(s) we are
         # waiting for.
@@ -802,7 +800,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         # TODO: Only try it once basically, then try clicking stop. Detect softban for sleeping?
         async with self._db_wrapper as session, session:
             while data_received != FortSearchResultTypes.QUEST and int(to) < 2:
-                logger.info('Waiting for stop to be spun (enhanced)')
+                logger.info('Waiting for stop to be spun')
                 type_received, data_received = await self._wait_for_data_after_moving(self._stop_process_time,
                                                                                       ProtoIdentifier.FORT_SEARCH,
                                                                                       timeout)
