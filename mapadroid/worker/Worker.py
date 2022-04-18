@@ -187,6 +187,7 @@ class Worker(AbstractWorker):
                                await self._mapping_manager.routemanager_get_name(
                                    self._scan_strategy.area_id))
                 await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+                await self._cleanup_current()
                 return
 
             while not self._worker_state.stop_worker_event.is_set():
@@ -227,11 +228,11 @@ class Worker(AbstractWorker):
                     await self._scan_strategy.post_move_location_routine(time_snapshot)
 
                     logger.info("Worker finished iteration, continuing work")
-            await self._cleanup_current()
 
     async def __get_current_strategy_to_use(self, set_finished=False) -> Optional[AbstractWorkerStrategy]:
         if set_finished:
             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+            await self._cleanup_current()
         device_paused: bool = not await self._mapping_manager.is_device_active(
             self._worker_state.device_id)
         configmode: bool = application_args.config_mode
@@ -359,6 +360,7 @@ class Worker(AbstractWorker):
         if self._worker_state.current_location is None:
             # there are no more coords - so worker is finished successfully
             await self.set_devicesettings_value(MappingManagerDevicemappingKey.FINISHED, True)
+            await self._cleanup_current()
             return False
         elif self._worker_state.current_location is not None:
             # TODO: Rather check whether the location is within the geofence?
