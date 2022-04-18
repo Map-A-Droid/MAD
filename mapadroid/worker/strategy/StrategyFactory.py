@@ -196,7 +196,9 @@ class StrategyFactory:
         # preckeck walker setting using the geofence_included's first location
         location = await self.__area_middle_of_fence(walker_settings)
         loop_exit = False
-        while not pre_check_value(walker_settings, self.__event.get_current_event_id(), location) \
+        while not pre_check_value(walker_settings, self.__event.get_current_event_id(), location,
+                                  len(await self.__mapping_manager.routemanager_get_registered_workers(
+                                      walker_settings.area_id))) \
                 and client_mapping.walker_area_index < len(client_mapping.walker_areas):
             logger.info('not using area {} - Walkervalue out of range',
                         await self.__mapping_manager.routemanager_get_name(walker_settings.area_id))
@@ -211,7 +213,7 @@ class StrategyFactory:
                 await self.__mapping_manager.set_devicesetting_value_of(origin,
                                                                         MappingManagerDevicemappingKey.WALKER_AREA_INDEX,
                                                                         client_mapping.walker_area_index)
-            walker_settings = client_mapping.walker_areas[client_mapping.walker_area_index]
+            walker_settings: SettingsWalkerarea = client_mapping.walker_areas[client_mapping.walker_area_index]
             location = await self.__area_middle_of_fence(walker_settings)
 
         logger.debug("Checking walker_area_index length")
