@@ -5,17 +5,15 @@ from typing import Tuple, Union, Optional, List, AsyncGenerator, Dict
 
 import apkutils
 from aiocache import cached
-from aiofile import async_open
 from apkutils.apkfile import BadZipFile, LargeZipFile
+from bs4 import BeautifulSoup
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.custom_types import MADapks, MADPackage, MADPackages
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, BACKEND_SUPPORTED_VERSIONS
+from mapadroid.utils.global_variables import BACKEND_SUPPORTED_VERSIONS
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from .abstract_apk_storage import AbstractAPKStorage
-from ..db.helper.FilestoreChunkHelper import FilestoreChunkHelper
-from ..db.helper.MadApkHelper import MadApkHelper
 from ..utils.RestHelper import RestHelper, RestApiResult
 from ..utils.functions import get_version_codes
 from ..utils.madGlobals import NoMaddevApiTokenError
@@ -105,24 +103,28 @@ def get_apk_info(downloaded_file: io.BytesIO) -> Tuple[Optional[str], Optional[s
     package_version: Optional[str] = None
     package_name: Optional[str] = None
     try:
-        apk = apkutils.APK(downloaded_file)
-    except:  # noqa: E722 B001
+        apk = apkutils.APK.from_io(downloaded_file)
+    except Exception as e:  # noqa: E722 B001
         logger.warning('Unable to parse APK file')
+        logger.exception(e)
     else:
         manifest = apk.get_manifest()
         try:
-            package_version, package_name = (manifest['@android:versionName'], manifest['@package'])
-        except (TypeError, KeyError):
+            soup = BeautifulSoup(manifest, "lxml-xml")
+            package_version, package_name = (soup.manifest.get("android:versionName"), soup.manifest['package'])
+        except (TypeError, KeyError) as e:
             logger.debug("Invalid manifest file. Potentially a split package")
+            logger.exception(e)
             with zipfile.ZipFile(downloaded_file) as zip_data:
                 for item in zip_data.infolist():
                     try:
                         with zip_data.open(item, 'r') as fh:
-                            apk = apkutils.APK(io.BytesIO(fh.read()))
+                            apk = apkutils.APK.from_io(io.BytesIO(fh.read()))
                             manifest = apk.get_manifest()
                             try:
-                                package_version = manifest['@android:versionName']
-                                package_name = manifest['@package']
+                                soup = BeautifulSoup(manifest, "lxml-xml")
+                                package_version, package_name = (soup.manifest["android:versionName"],
+                                                                 soup.manifest['package'])
                             except KeyError:
                                 pass
                     except (BadZipFile, LargeZipFile):

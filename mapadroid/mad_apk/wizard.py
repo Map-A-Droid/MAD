@@ -262,7 +262,7 @@ class APKWizard(object):
                             logger.warning('Unable to successfully download the APK')
             except Exception as e:  # noqa: E722
                 logger.exception(e)
-                logger.warning('Unable to download the file @ {}', latest_data['url'])
+                logger.warning('Unable to download the file @ {}', latest_data.url)
             finally:
                 update_data['download_status'] = 0
                 async with self._db_wrapper as session, session:

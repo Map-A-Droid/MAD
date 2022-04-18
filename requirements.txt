@@ -47,3 +47,4 @@ uvloop==0.16.0
 websockets==10.2
 Werkzeug==2.1.1
 yarl==1.7.2
+beautifulsoup4==4.10.0
