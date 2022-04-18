@@ -71,6 +71,7 @@ async def origin_generator(session: AsyncSession,
     if not origin_hopper:
         origin_hopper = OriginHopper()
         origin_hopper.origin = origin
+        origin_hopper.last_id = 0
     next_id = origin_hopper.last_id + 1 if origin_hopper is not None else 0
     origin_hopper.last_id = next_id
     session.add(origin_hopper)
