@@ -58,7 +58,7 @@ def check_time_period(period, relevant_timezone: datetime.tzinfo):
 
 def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Optional[Location] = None,
                     workers_registered_to_route: int = 0):
-    if 0 < walker_settings.max_walkers <= workers_registered_to_route:
+    if walker_settings.max_walkers and 0 < walker_settings.max_walkers <= workers_registered_to_route:
         logger.warning("Max workers reached for routemanager {} of walker area {}, moving on", walker_settings.area_id,
                        walker_settings.name)
         return False
