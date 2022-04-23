@@ -51,7 +51,7 @@
       numprocs = 2
       numprocs_start = 1
       process_name = mad_mitm_receiver_%(process_num)s
-      command=/opt/MAD/venv/bin/python3 /opt/MAD/start_mitmreceiver.py -os -vv -ec --mitm_unix_socket=/tmp/mad_mitm_receiver_%(process_num)s.sock
+      command=/opt/MAD/venv/bin/python3 /opt/MAD/start_mitmreceiver.py -os -vv --mitm_unix_socket=/tmp/mad_mitm_receiver_%(process_num)s.sock
       environment=PATH="/opt/MAD/venv/bin:%(ENV_PATH)s"
       user = www-data
       directory=/opt/MAD
