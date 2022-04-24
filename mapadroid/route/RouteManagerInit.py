@@ -46,3 +46,13 @@ class RouteManagerInit(RouteManagerBase):
         # Subtract one round as this is called when the
         # TODO
         return self._settings.init_mode_rounds > 1
+
+    async def calculate_route(self, dynamic: bool, overwrite_persisted_route: bool = False) -> None:
+        coords: List[Location] = await self._get_coords_fresh(dynamic)
+        if dynamic:
+            coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
+        async with self._manager_mutex:
+            self._route = coords
+            self._current_route_round_coords = self._route.copy()
+            self._init_route_queue()
+            await self._worker_changed_update_routepools()
