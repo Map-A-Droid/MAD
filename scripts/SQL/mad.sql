@@ -299,16 +299,20 @@ CREATE TABLE `pokemon` (
 DROP TABLE IF EXISTS `pokemon_display`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `pokemon_display` (
-  `encounter_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `pokemon` smallint(6) NOT NULL,
-  `gender` smallint(6) DEFAULT NULL,
-  `form` smallint(6) DEFAULT NULL,
-  `costume` smallint(6) DEFAULT NULL,
-  PRIMARY KEY (`encounter_id`),
-  KEY `ix_pokemon_display_pokemon` (`pokemon`),
-  CONSTRAINT `pokemon_encounter_id_casc` FOREIGN KEY (`encounter_id`) REFERENCES `pokemon` (`encounter_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
+CREATE TABLE `pokemon_display`
+(
+    `encounter_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    `pokemon`      smallint(6)         NOT NULL,
+    `gender`       smallint(6) DEFAULT NULL,
+    `form`         smallint(6) DEFAULT NULL,
+    `costume`      smallint(6) DEFAULT NULL,
+    PRIMARY KEY (`encounter_id`),
+    KEY `ix_pokemon_display_pokemon` (`pokemon`),
+    CONSTRAINT `pokemon_encounter_id_casc` FOREIGN KEY (`encounter_id`) REFERENCES `pokemon` (`encounter_id`) ON DELETE CASCADE
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 0
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -316,9 +320,10 @@ CREATE TABLE `pokemon_display` (
 --
 
 DROP TABLE IF EXISTS `pokestop`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `pokestop` (
+CREATE TABLE `pokestop`
+(
   `pokestop_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `enabled` tinyint(1) NOT NULL,
   `latitude` double NOT NULL,
@@ -882,17 +887,21 @@ CREATE TABLE `spawnpoint` (
 --
 
 DROP TABLE IF EXISTS `trs_event`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `trs_event` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `event_name` varchar(100) DEFAULT NULL,
-  `event_start` datetime DEFAULT NULL,
-  `event_end` datetime DEFAULT NULL,
-  `event_lure_duration` int(11) NOT NULL DEFAULT '30',
-  PRIMARY KEY (`id`),
-  KEY `trs_event_event_start_end` (`event_start`,`event_end`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
+CREATE TABLE `trs_event`
+(
+    `id`                  int(11) NOT NULL AUTO_INCREMENT,
+    `event_name`          varchar(100)     DEFAULT NULL,
+    `event_start`         datetime         DEFAULT NULL,
+    `event_end`           datetime         DEFAULT NULL,
+    `event_lure_duration` int(11) NOT NULL DEFAULT '30',
+    PRIMARY KEY (`id`),
+    KEY `trs_event_event_start_end` (`event_start`, `event_end`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 0
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -900,7 +909,7 @@ CREATE TABLE `trs_event` (
 --
 
 DROP TABLE IF EXISTS `trs_quest`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `trs_quest` (
   `GUID` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1001,16 +1010,20 @@ CREATE TABLE `trs_stats_detect` (
 DROP TABLE IF EXISTS `trs_stats_detect_seen_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `trs_stats_detect_seen_type` (
-  `encounter_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `encounter` datetime DEFAULT NULL,
-  `wild` datetime DEFAULT NULL,
-  `nearby_stop` datetime DEFAULT NULL,
-  `nearby_cell` datetime DEFAULT NULL,
-  `lure_encounter` datetime DEFAULT NULL,
-  `lure_wild` datetime DEFAULT NULL,
-  PRIMARY KEY (`encounter_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4_unicode_ci;
+CREATE TABLE `trs_stats_detect_seen_type`
+(
+    `encounter_id`   bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    `encounter`      datetime DEFAULT NULL,
+    `wild`           datetime DEFAULT NULL,
+    `nearby_stop`    datetime DEFAULT NULL,
+    `nearby_cell`    datetime DEFAULT NULL,
+    `lure_encounter` datetime DEFAULT NULL,
+    `lure_wild`      datetime DEFAULT NULL,
+    PRIMARY KEY (`encounter_id`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 0
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1018,21 +1031,24 @@ CREATE TABLE `trs_stats_detect_seen_type` (
 --
 
 DROP TABLE IF EXISTS `trs_stats_detect_wild_mon_raw`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `trs_stats_detect_wild_mon_raw` (
-  `worker` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `encounter_id` bigint(20) unsigned NOT NULL,
-  `count` int(11) NOT NULL,
-  `is_shiny` tinyint(1) NOT NULL DEFAULT '0',
-  `first_scanned` datetime NOT NULL,
-  `last_scanned` datetime NOT NULL,
-  PRIMARY KEY (`worker`,`encounter_id`),
-  KEY `encounter_id` (`encounter_id`),
-  KEY `ix_trs_stats_detect_wild_mon_raw_is_shiny` (`is_shiny`),
-  KEY `trs_stats_detect_wild_mon_raw_is_shiny` (`is_shiny`),
-  KEY `trs_stats_detect_wild_mon_raw_last_scanned` (`last_scanned`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4_unicode_ci;
+CREATE TABLE `trs_stats_detect_wild_mon_raw`
+(
+    `worker`        varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    `encounter_id`  bigint(20) unsigned                                           NOT NULL,
+    `count`         int(11)                                                       NOT NULL,
+    `is_shiny`      tinyint(1)                                                    NOT NULL DEFAULT '0',
+    `first_scanned` datetime                                                      NOT NULL,
+    `last_scanned`  datetime                                                      NOT NULL,
+    PRIMARY KEY (`worker`, `encounter_id`),
+    KEY `encounter_id` (`encounter_id`),
+    KEY `ix_trs_stats_detect_wild_mon_raw_is_shiny` (`is_shiny`),
+    KEY `trs_stats_detect_wild_mon_raw_is_shiny` (`is_shiny`),
+    KEY `trs_stats_detect_wild_mon_raw_last_scanned` (`last_scanned`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1040,9 +1056,10 @@ CREATE TABLE `trs_stats_detect_wild_mon_raw` (
 --
 
 DROP TABLE IF EXISTS `trs_stats_location`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `trs_stats_location` (
+CREATE TABLE `trs_stats_location`
+(
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `worker` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `timestamp_scan` int(11) NOT NULL,
