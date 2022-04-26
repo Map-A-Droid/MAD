@@ -1173,40 +1173,6 @@ CREATE TABLE `trs_visited` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Temporary table structure for view `v_trs_status`
---
-
-DROP TABLE IF EXISTS `v_trs_status`;
-/*!50001 DROP VIEW IF EXISTS `v_trs_status`*/;
-SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8;
-/*!50001 CREATE TABLE `v_trs_status` (
-  `instance_id` tinyint NOT NULL,
-  `device_id` tinyint NOT NULL,
-  `name` tinyint NOT NULL,
-  `routePos` tinyint NOT NULL,
-  `routeMax` tinyint NOT NULL,
-  `area_id` tinyint NOT NULL,
-  `rmname` tinyint NOT NULL,
-  `mode` tinyint NOT NULL,
-  `rebootCounter` tinyint NOT NULL,
-  `init` tinyint NOT NULL,
-  `currentSleepTime` tinyint NOT NULL,
-  `rebootingOption` tinyint NOT NULL,
-  `restartCounter` tinyint NOT NULL,
-  `globalrebootcount` tinyint NOT NULL,
-  `globalrestartcount` tinyint NOT NULL,
-  `lastPogoRestart` tinyint NOT NULL,
-  `lastProtoDateTime` tinyint NOT NULL,
-  `lastPogoReboot` tinyint NOT NULL,
-  `currentPos` tinyint NOT NULL,
-  `lastPos` tinyint NOT NULL,
-  `currentPos_raw` tinyint NOT NULL,
-  `lastPos_raw` tinyint NOT NULL
-) ENGINE=MyISAM */;
-SET character_set_client = @saved_cs_client;
-
---
 -- Table structure for table `versions`
 --
 
@@ -1247,19 +1213,12 @@ CREATE TABLE `weather` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Final view structure for view `v_trs_status`
---
-
-/*!50001 DROP TABLE IF EXISTS `v_trs_status`*/;
-/*!50001 DROP VIEW IF EXISTS `v_trs_status`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
 /*!50001 SET character_set_client      = utf8 */;
 /*!50001 SET character_set_results     = utf8 */;
 /*!50001 SET collation_connection      = utf8_general_ci */;
-/*!50001 VIEW `v_trs_status` AS select `trs`.`instance_id` AS `instance_id`,`trs`.`device_id` AS `device_id`,`dev`.`name` AS `name`,`trs`.`routePos` AS `routePos`,`trs`.`routeMax` AS `routeMax`,`trs`.`area_id` AS `area_id`,if((`trs`.`idle` = 1),'Idle',ifnull(`sa`.`name`,'Idle')) AS `rmname`,if((`trs`.`idle` = 1),'Idle',ifnull(`sa`.`mode`,'Idle')) AS `mode`,`trs`.`rebootCounter` AS `rebootCounter`,`trs`.`init` AS `init`,`trs`.`currentSleepTime` AS `currentSleepTime`,`trs`.`rebootingOption` AS `rebootingOption`,`trs`.`restartCounter` AS `restartCounter`,`trs`.`globalrebootcount` AS `globalrebootcount`,`trs`.`globalrestartcount` AS `globalrestartcount`,unix_timestamp(`trs`.`lastPogoRestart`) AS `lastPogoRestart`,unix_timestamp(`trs`.`lastProtoDateTime`) AS `lastProtoDateTime`,unix_timestamp(`trs`.`lastPogoReboot`) AS `lastPogoReboot`,concat(round(st_x(`trs`.`currentPos`),5),', ',round(st_y(`trs`.`currentPos`),5)) AS `currentPos`,concat(round(st_x(`trs`.`lastPos`),5),', ',round(st_y(`trs`.`lastPos`),5)) AS `lastPos`,`trs`.`currentPos` AS `currentPos_raw`,`trs`.`lastPos` AS `lastPos_raw` from ((`trs_status` `trs` join `settings_device` `dev` on((`dev`.`device_id` = `trs`.`device_id`))) left join `settings_area` `sa` on((`sa`.`area_id` = `trs`.`area_id`))) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

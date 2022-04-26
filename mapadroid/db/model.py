@@ -1,6 +1,6 @@
 # coding: utf-8
 from sqlalchemy import (Column, Float, ForeignKey, Index,
-                        String, Table, text)
+                        String, text)
 from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
                                        LONGTEXT, SMALLINT, TINYINT,
                                        BOOLEAN)
@@ -390,32 +390,6 @@ class TrsVisited(Base):
 
     pokestop_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
     origin = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
-
-
-t_v_trs_status = Table(
-    'v_trs_status', metadata,
-    Column('instance_id', INTEGER(10)),
-    Column('device_id', INTEGER(10)),
-    Column('name', String(128)),
-    Column('routePos', INTEGER(11)),
-    Column('routeMax', INTEGER(11)),
-    Column('area_id', INTEGER(10)),
-    Column('rmname', String(128)),
-    Column('mode', String(10)),
-    Column('rebootCounter', INTEGER(11)),
-    Column('currentSleepTime', INTEGER(11), server_default=text("'0'")),
-    Column('rebootingOption', BOOLEAN),
-    Column('restartCounter', INTEGER(11)),
-    Column('globalrebootcount', INTEGER(11), server_default=text("'0'")),
-    Column('globalrestartcount', INTEGER(11), server_default=text("'0'")),
-    Column('lastPogoRestart', BIGINT(17)),
-    Column('lastProtoDateTime', BIGINT(17)),
-    Column('lastPogoReboot', BIGINT(17)),
-    Column('currentPos', String(46)),
-    Column('lastPos', String(46)),
-    Column('currentPos_raw', GeometryColumnType),
-    Column('lastPos_raw', GeometryColumnType)
-)
 
 
 class Version(Base):
