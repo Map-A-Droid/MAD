@@ -1,9 +1,8 @@
 import asyncio
 import math
 import time
-from typing import Dict, Tuple, Optional, List, Set
-
-from loguru import logger
+from abc import abstractmethod, ABC
+from typing import Dict, Tuple, Optional, List, Set, Union
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
@@ -12,50 +11,20 @@ from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.madGlobals import TransportType, InternalStopWorkerException
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import TransportType, InternalStopWorkerException, FortSearchResultTypes
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
-from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import AbstractMitmBaseStrategy
 
+logger = get_logger(LoggerEnums.worker)
 
-class WorkerMitmStrategy(AbstractMitmBaseStrategy):
+
+class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
+    @abstractmethod
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
                                       timestamp: int) -> Tuple[ReceivedType, Optional[object]]:
-        type_of_data_found: ReceivedType = ReceivedType.UNDEFINED
-        data_found: Optional[object] = None
-        if not latest:
-            return type_of_data_found, data_found
-        # proto has previously been received, let's check the timestamp...
-        mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
-        timestamp_of_proto: int = latest.timestamp_of_data_retrieval
-        logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
-                     DatetimeWrapper.fromtimestamp(timestamp_of_proto), DatetimeWrapper.fromtimestamp(timestamp),
-                     proto_to_wait_for)
-        if timestamp_of_proto < timestamp:
-            logger.debug("latest timestamp of proto {} ({}) is older than {}", proto_to_wait_for,
-                         timestamp_of_proto, timestamp)
-            # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
-            # TODO: latter indicates too high speeds for example
-            return type_of_data_found, data_found
-
-        latest_proto_data: dict = latest.data
-        if latest_proto_data is None:
-            return ReceivedType.UNDEFINED, data_found
-        if proto_to_wait_for == ProtoIdentifier.GMO:
-            if ((mode in [WorkerType.MON_MITM, WorkerType.IV_MITM]
-                    and self._gmo_contains_wild_mons_closeby(latest_proto_data))
-                    or (mode not in [WorkerType.MON_MITM, WorkerType.IV_MITM]
-                        and self._gmo_cells_contain_multiple_of_key(latest_proto_data, "forts"))):
-                data_found = latest_proto_data
-                type_of_data_found = ReceivedType.GMO
-            else:
-                logger.debug("Data looked for not in GMO")
-        elif proto_to_wait_for == ProtoIdentifier.ENCOUNTER and latest_proto_data.get('status', None) == 1:
-            data_found = latest_proto_data
-            type_of_data_found = ReceivedType.MON
-
-        return type_of_data_found, data_found
+        pass
 
     async def pre_work_loop(self):
         await super().pre_work_loop()
@@ -117,7 +86,9 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
         self._worker_state.last_location = self._worker_state.current_location
         return timestamp_to_use, True
 
-    async def post_move_location_routine(self, timestamp):
+    async def post_move_location_routine(self, timestamp) -> Optional[Tuple[ReceivedType,
+                                                                            Optional[Union[dict,
+                                                                                           FortSearchResultTypes]]]]:
         # TODO: pass the appropriate proto number if IV?
         type_received, data_gmo = await self._wait_for_data(timestamp)
         if type_received != ReceivedType.GMO or not data_gmo:
@@ -125,18 +96,8 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                            "the next location",
                            self._worker_state.current_location.lat,
                            self._worker_state.current_location.lng)
-            return
-        # Wait for IV data if applicable
-        mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
-        if mode in [WorkerType.MON_MITM, WorkerType.IV_MITM] and await self._gmo_contains_mons_to_be_encountered(
-                data_gmo):
-            type_received, data = await self._wait_for_data(timestamp, ProtoIdentifier.ENCOUNTER, 40)
-            if type_received != ReceivedType.MON:
-                logger.warning("Worker failed to receive encounter data at {}, {}. Worker will continue with "
-                               "the next location",
-                               self._worker_state.current_location.lat,
-                               self._worker_state.current_location.lng)
-                return
+            return type_received, data_gmo
+        return None
 
     def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
         cells = gmo.get("cells", None)
@@ -158,13 +119,12 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                     return True
         return False
 
-    async def _gmo_contains_mons_to_be_encountered(self, gmo) -> bool:
+    async def _gmo_contains_mons_to_be_encountered(self, gmo, check_encounter_id: bool = False) -> bool:
         cells = gmo.get("cells", None)
         if not cells:
             return False
         ids_to_encounter: Set[int] = set()
-        mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
-        if mode == WorkerType.MON_MITM:
+        if not check_encounter_id:
             routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
             if routemanager_settings is not None:
                 # TODO: Moving to async
@@ -193,9 +153,9 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
                     continue
                 # now check whether mon_mitm's mon IDs to scan are present and unscanned
                 # OR iv_mitm...
-                if mode == WorkerType.MON_MITM and mon_id in ids_to_encounter:
+                if not check_encounter_id and mon_id in ids_to_encounter:
                     return True
-                elif mode == WorkerType.IV_MITM and encounter_id in ids_to_encounter:
+                elif check_encounter_id and encounter_id in ids_to_encounter:
                     return True
         return False
 
@@ -205,36 +165,14 @@ class WorkerMitmStrategy(AbstractMitmBaseStrategy):
     async def worker_specific_setup_stop(self):
         pass
 
+    @abstractmethod
+    async def _get_ids_iv_and_scanmode(self) -> Tuple[List[int], str]:
+        pass
+
     async def __update_injection_settings(self):
         injected_settings = {}
 
-        # don't try catch here, the injection settings update is called in the main loop anyway...
-        routemanager_mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
-
-        ids_iv = []
-        if routemanager_mode is None:
-            # worker has to sleep, just empty out the settings...
-            ids_iv = []
-            scanmode = "nothing"
-        elif routemanager_mode == WorkerType.MON_MITM:
-            scanmode = "mons"
-            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
-            if routemanager_settings is not None:
-                # TODO: Moving to async
-                ids_iv = self._mapping_manager.get_monlist(self._area_id)
-        elif routemanager_mode == WorkerType.RAID_MITM:
-            scanmode = "raids"
-            routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
-            if routemanager_settings is not None:
-                # TODO: Moving to async
-                ids_iv = self._mapping_manager.get_monlist(self._area_id)
-        elif routemanager_mode == WorkerType.IV_MITM:
-            scanmode = "ivs"
-            ids_iv = await self._mapping_manager.routemanager_get_encounter_ids_left(self._area_id)
-        else:
-            # TODO: should we throw an exception here?
-            ids_iv = []
-            scanmode = "nothing"
+        ids_iv, scanmode = await self._get_ids_iv_and_scanmode()
         injected_settings["scanmode"] = scanmode
 
         # getting unprocessed stops (without quest)
