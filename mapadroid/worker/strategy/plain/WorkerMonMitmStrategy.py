@@ -54,7 +54,7 @@ class WorkerMonMitmStrategy(AbstractWorkerMitmStrategy):
         if not received:
             return None
         type_received, data_gmo = received
-        if await self._gmo_contains_mons_to_be_encountered(
+        if data_gmo and await self._gmo_contains_mons_to_be_encountered(
                 data_gmo):
             type_received, data = await self._wait_for_data(timestamp, ProtoIdentifier.ENCOUNTER, 10)
             if type_received != ReceivedType.MON:

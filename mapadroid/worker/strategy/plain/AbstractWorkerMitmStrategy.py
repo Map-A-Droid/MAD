@@ -96,8 +96,8 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
                            "the next location",
                            self._worker_state.current_location.lat,
                            self._worker_state.current_location.lng)
-            return type_received, data_gmo
-        return None
+            return None
+        return type_received, data_gmo
 
     def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
         cells = gmo.get("cells", None)
