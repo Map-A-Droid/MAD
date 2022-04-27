@@ -35,12 +35,12 @@ class WorkerMonMitmStrategy(AbstractWorkerMitmStrategy):
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
         if proto_to_wait_for == ProtoIdentifier.GMO:
-            if self._gmo_contains_wild_mons_closeby(latest_proto_data):
+            # if self._gmo_contains_wild_mons_closeby(latest_proto_data):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO
-            else:
-                # TODO: If there is no spawnpoint with a valid timer, this results in timeouts during ordinary routes...
-                logger.debug("Data looked for not in GMO")
+        # else:
+        # TODO: If there is no spawnpoint with a valid timer, this results in timeouts during ordinary routes...
+        #    logger.debug("Data looked for not in GMO")
         elif proto_to_wait_for == ProtoIdentifier.ENCOUNTER:
             data_found = latest_proto_data
             type_of_data_found = ReceivedType.MON
