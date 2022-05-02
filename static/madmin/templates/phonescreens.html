@@ -341,7 +341,7 @@ $('dialog-confirm').dialog();
   $(".downloadbutton").bind("click", function(event) {
        event.preventDefault();
        var origin = $(this).attr("origin");
-       var img = $('img#' + origin).attr("src").replace("/madmin", "");
+       var img = $('img#' + origin).attr("src").replace("?madmin=1", "");
        window.open(img, '_blank');
   });
 
