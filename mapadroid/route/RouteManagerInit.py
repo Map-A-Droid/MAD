@@ -29,7 +29,8 @@ class RouteManagerInit(RouteManagerBase):
         return False
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
-        return S2Helper.generate_locations(self.get_max_radius(), self.get_geofence_helper())
+        # Take the max radius times 2 as the areas would overlap otherwise
+        return S2Helper.generate_locations(self.get_max_radius() * 2, self.get_geofence_helper())
 
     async def _quit_route(self):
         logger.info("Shutdown Route")
