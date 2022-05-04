@@ -66,7 +66,7 @@
             }],
         "columnDefs": [
             {
-                "targets": [5, 9],
+                "targets": [8],
                 "render": function (data, type, row) {
                     return (!data ? "False" : "True");
                 }
@@ -80,24 +80,24 @@
             {
                 "targets": [1],
                 "render": function (data, type, row) {
-                    if (type == "sort") {
+                    if (type === "sort") {
                         return data;
                     }
                     var dateToShow = moment.utc(data * 1000);
-                    if (dateToShow.isValid() && data != null && data != undefined) {
+                    if (dateToShow.isValid() && data != null) {
                         return toHHMMSS_mark(Math.abs(dateToShow.diff(moment.utc()) / 1000));
                     }
                     return "None";
                 }
             },
             {
-                "targets": [8, 12],
+                "targets": [7],
                 "render": function (data, type, row) {
-                    if (type == "sort") {
+                    if (type === "sort") {
                         return data;
                     }
                     var dateToShow = moment.utc(data * 1000);
-                    if (dateToShow.isValid() && data != null && data != undefined && data > 0) {
+                    if (dateToShow.isValid() && data != null && data > 0) {
                         return toHHMMSS(Math.abs(dateToShow.diff(moment.utc()) / 1000));
                     }
                     return "None";
