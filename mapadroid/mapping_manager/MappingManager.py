@@ -339,6 +339,8 @@ class MappingManager(AbstractMappingManager):
 
     def __fetch_routemanager(self, routemanager_id: int) -> Optional[RouteManagerBase]:
         routemanager: RouteManagerBase = self._routemanagers.get(routemanager_id, None)
+        if not routemanager:
+            logger.debug2("No routemanager found with ID {}", routemanager_id)
         return routemanager
 
     async def routemanager_present(self, routemanager_id: int) -> bool:

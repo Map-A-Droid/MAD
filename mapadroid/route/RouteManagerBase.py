@@ -9,7 +9,6 @@ from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
 from asyncio_rlock import RLock
-from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
@@ -21,12 +20,12 @@ from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import PositionType, PrioQueueNoDueEntry, RoutecalculationTypes, \
     RoutemanagerShuttingDown
-from mapadroid.utils.walkerArgs import parse_args
 from mapadroid.worker.WorkerType import WorkerType
 
-args = parse_args()
+logger = get_logger(LoggerEnums.routemanager)
 # Duration in seconds to be waited for a route to be recalculated
 RECALC_WAIT_DURATION: int = 600
 
@@ -861,6 +860,8 @@ class RouteManagerBase(ABC):
 
     def get_position_type(self, origin: str) -> Optional[PositionType]:
         routepool_entry: RoutePoolEntry = self._routepool.get(origin)
+        if not routepool_entry:
+            logger.debug2("Routepool entry of {} not present in {}", origin, self.name)
         return routepool_entry.last_position_type if routepool_entry else None
 
     def get_geofence_helper(self) -> GeofenceHelper:
