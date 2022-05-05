@@ -616,6 +616,9 @@ class RouteManagerBase(ABC):
             await asyncio.sleep(60)
 
     def set_worker_sleeping(self, origin: str, sleep_duration: float) -> None:
+        """
+        Whether a worker is idling/sleeping/walking for long distances and should not be removed from the routepool
+        """
         if sleep_duration > 0 and origin in self._routepool:
             self._routepool[origin].worker_sleeping = sleep_duration
 

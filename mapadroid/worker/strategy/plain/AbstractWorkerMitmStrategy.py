@@ -80,6 +80,9 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
 
             delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)
         logger.debug2("Sleeping for {}s", delay_used)
+        await self._mapping_manager.routemanager_set_worker_sleeping(self._area_id,
+                                                                     self._worker_state.origin,
+                                                                     delay_used)
         await asyncio.sleep(float(delay_used))
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION,
                                             self._worker_state.current_location)
