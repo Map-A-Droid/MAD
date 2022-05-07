@@ -6,10 +6,11 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsRoutecalc, SettingsAreaIdle
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.utils.collections import Location
 
 
-class RouteManagerIdle(RouteManagerBase):
+class RouteManagerIdle(SubrouteReplacingMixin, RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaIdle, coords, max_radius, max_coords_within_radius,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  use_s2: bool = False, s2_level: int = 15, mon_ids_iv: Optional[List[int]] = None):
