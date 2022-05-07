@@ -521,8 +521,8 @@ class RouteManagerBase(ABC):
         # Recurse removal for very very large queue sizes - we know we should find the next available coord now
         # Indexerror should not be an issue as the queue must have been filled by now
         next_coord = routepool_entry.queue.popleft()
-        logger.info("Moving on with location {}, {} [{} coords left (Workerpool {})]", next_coord.lat,
-                    next_coord.lng, len(routepool_entry.queue) + 1, routepool_entry)
+        logger.info("Moving on with location {}, {} [{} coords left in routepool entry's queue]", next_coord.lat,
+                    next_coord.lng, len(routepool_entry.queue) + 1)
         while (len(routepool_entry.queue) > 0
                and not self._check_coord_and_remove_from_route_if_applicable(next_coord, origin)):
             next_coord = routepool_entry.queue.popleft()
