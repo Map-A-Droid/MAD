@@ -68,8 +68,9 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
             entry.subroute = new_subroute
             # Set the queue for the new subroute accordingly
             # Search for the closest spot within old queue and only start from there
-            closest_to_old_queue: Optional[Location] = self._find_closest_location(next(iter(entry.queue)),
-                                                                                   new_subroute)
+            closest_to_old_queue: Optional[Location] = self._find_closest_location(
+                next(iter(entry.queue) if entry.queue else None),
+                new_subroute)
             entry.queue.clear()
             if not closest_to_old_queue:
                 [entry.queue.append(i) for i in new_subroute]
@@ -84,8 +85,8 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
         logger.debug("Done updating subroutes")
         return routepool
 
-    def _find_closest_location(self, location: Location, route: Collection[Location]) -> Optional[Location]:
-        if not route:
+    def _find_closest_location(self, location: Optional[Location], route: Collection[Location]) -> Optional[Location]:
+        if not route or not location:
             return None
         closest: Location = next(iter(route))
         closest_distance: float = get_distance_of_two_points_in_meters(location.lat, location.lng,
