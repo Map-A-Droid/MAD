@@ -230,9 +230,9 @@ class RouteManagerBase(ABC):
             await self._update_routepool()
 
     async def _update_routepool(self) -> bool:
-        new_routepool = await self._worker_changed_update_routepools(self._routepool)
-        if new_routepool:
-            async with self._manager_mutex:
+        async with self._manager_mutex:
+            new_routepool = await self._worker_changed_update_routepools(self._routepool)
+            if new_routepool:
                 self._routepool = new_routepool
                 workers_removed: List[str] = []
                 for origin in self._workers_registered:
