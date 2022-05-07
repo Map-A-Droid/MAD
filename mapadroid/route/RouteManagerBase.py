@@ -180,6 +180,7 @@ class RouteManagerBase(ABC):
             if remove_routepool_entry and worker_name in self._routepool:
                 logger.info("Deleting old routepool of {}", worker_name)
                 del self._routepool[worker_name]
+                await self._update_routepool()
             if len(self._workers_registered) == 0 and self._is_started.is_set():
                 logger.info("Routemanager does not have any subscribing workers anymore, calling stop", self.name)
                 await self.stop_routemanager()
@@ -233,6 +234,12 @@ class RouteManagerBase(ABC):
         if new_routepool:
             async with self._manager_mutex:
                 self._routepool = new_routepool
+                workers_removed: List[str] = []
+                for origin in self._workers_registered:
+                    if origin not in self._routepool:
+                        workers_removed.append(origin)
+                for origin in workers_removed:
+                    await self.unregister_worker(origin)
         return new_routepool is not None
 
     def date_diff_in_seconds(self, dt2, dt1):
@@ -374,7 +381,7 @@ class RouteManagerBase(ABC):
             self._routepool[origin] = routepool_entry
             if origin in self._worker_start_position:
                 routepool_entry.current_pos = self._worker_start_position[origin]
-            if not await self._update_routepool():
+            if not await self._update_routepool() or origin not in self._routepool:
                 logger.info("Failed updating routepools after adding a worker to it")
                 return None
         elif routepool_entry.prio_coord and self._can_pass_prioq_coords():
@@ -486,7 +493,7 @@ class RouteManagerBase(ABC):
                 else:
                     await self.calculate_route(True)
 
-            if not await self._update_routepool():
+            if not await self._update_routepool() or origin not in self._routepool:
                 logger.info("Failed updating routepools ...")
                 return None
 
@@ -600,8 +607,8 @@ class RouteManagerBase(ABC):
         while not self._shutdown_route.is_set():
             logger.debug("Checking routepool for idle/dead workers")
             for origin in list(self._routepool):
-                entry: RoutePoolEntry = self._routepool[origin]
-                if time.time() - entry.last_access > timeout + entry.worker_sleeping:
+                entry: RoutePoolEntry = self._routepool.get(origin)
+                if entry and time.time() - entry.last_access > timeout + entry.worker_sleeping:
                     logger.warning("Worker {} has not accessed a location in {} seconds, removing from "
                                    "routemanager", origin, timeout)
                     await self.unregister_worker(origin, True)
