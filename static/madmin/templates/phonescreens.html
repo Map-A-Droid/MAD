@@ -381,8 +381,8 @@ $(".screenshot").mousedown(function(e){
        url: url,
        success: function(data){
          var date = new Date(data * 1000);
-         $('#date' + id).attr('data-original-title', data).tooltip('hide');
-         $('#date' + id).text(moment(date).fromNow());
+         $('#date' + id + ' span.date').attr('data-original-title', data).tooltip('hide');
+         $('#date' + id + ' span.date').text(moment(date).fromNow());
          $('img#' + id).attr('src', 'screenshot/screenshot_' + id + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
          $('div#' + id).unblock();
        }
