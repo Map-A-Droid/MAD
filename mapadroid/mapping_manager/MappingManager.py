@@ -140,6 +140,9 @@ class MappingManager(AbstractMappingManager):
     async def is_device_active(self, device_id: int) -> bool:
         return device_id not in self.__paused_devices
 
+    async def get_paused_devices(self) -> Set[int]:
+        return set(self.__paused_devices)
+
     async def get_devicemappings_of(self, device_name: str) -> Optional[DeviceMappingsEntry]:
         # Async method since we may move the logic to a different host
         return self._devicemappings.get(device_name, None)

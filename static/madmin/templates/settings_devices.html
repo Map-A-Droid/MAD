@@ -206,8 +206,8 @@ $(document).ready(function () {
           </td>
           <td class="text-right align-middle">
             <a href="{{ redirect }}?id={{ dev_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}" data-toggle="tooltip" title="Edit worker"><i class="far fa-edit"></i></button></a>
-            {% if device.state == 1 %}
-              <button data-identifier='{{ dev_uri }}' type="button" data-state="0" class="dev_state btn btn-info btn-sm" data-toggle="tooltip" title="Pause worker"><i class="fas fa-pause"></i></button>
+            {% if device.device_id not in paused %}
+            <button data-identifier='{{ dev_uri }}' type="button" data-state="0" class="dev_state btn btn-info btn-sm" data-toggle="tooltip" title="Pause worker"><i class="fas fa-pause"></i></button>
             {% else %}
               <button data-identifier='{{ dev_uri }}' type="button" data-state="1" class="dev_state btn btn-info btn-sm" data-toggle="tooltip" title="Start paused worker"><i class="fas fa-play"></i></button>
             {% endif %}

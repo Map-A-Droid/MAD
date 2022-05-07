@@ -83,6 +83,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
             'section': await SettingsDeviceHelper.get_all_mapped(self._session, self._get_instance_id()),
             'walkers': await SettingsWalkerHelper.get_all_mapped(self._session, self._get_instance_id()),
             'pools': await SettingsDevicepoolHelper.get_all_mapped(self._session, self._get_instance_id()),
+            'paused': await self._get_mapping_manager().get_paused_devices()
         }
         return template_data
 
