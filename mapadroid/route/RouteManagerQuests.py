@@ -7,12 +7,13 @@ from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import QuestLayer
 
 
-class RouteManagerQuests(RouteManagerBase):
+class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,

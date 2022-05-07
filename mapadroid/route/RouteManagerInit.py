@@ -6,15 +6,15 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsRoutecalc, SettingsAreaInitMitm
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.utils.collections import Location
 from mapadroid.utils.s2Helper import S2Helper
 
 
-class RouteManagerInit(RouteManagerBase):
+class RouteManagerInit(SubrouteReplacingMixin, RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaInitMitm, coords, max_radius, max_coords_within_radius,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  use_s2: bool = False, s2_level: int = 15, mon_ids_iv: Optional[List[int]] = None):
-
         # TODO: Mon Despawn targetted "learning"?
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius,
@@ -56,4 +56,4 @@ class RouteManagerInit(RouteManagerBase):
             self._route = coords
             self._current_route_round_coords = self._route.copy()
             self._init_route_queue()
-            await self._worker_changed_update_routepools()
+            await self._update_routepool()

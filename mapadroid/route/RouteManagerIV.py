@@ -5,6 +5,7 @@ from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import SettingsAreaIvMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.route.prioq.strategy.IvOnlyPrioStrategy import IvOnlyPrioStrategy
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -12,7 +13,7 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 logger = get_logger(LoggerEnums.routemanager)
 
 
-class RouteManagerIV(RouteManagerBase):
+class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaIvMitm, coords: Optional[List[Location]],
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,

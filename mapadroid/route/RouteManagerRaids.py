@@ -8,11 +8,12 @@ from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsAreaRaidsMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 
 
-class RouteManagerRaids(RouteManagerBase):
+class RouteManagerRaids(SubrouteReplacingMixin, RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaRaidsMitm, coords, max_radius, max_coords_within_radius,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
                  use_s2: bool = False, s2_level: int = 15, mon_ids_iv: Optional[List[int]] = None):

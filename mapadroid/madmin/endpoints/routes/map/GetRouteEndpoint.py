@@ -6,7 +6,7 @@ from mapadroid.db.model import SettingsRoutecalc
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import get_coord_float
-from mapadroid.route.RouteManagerBase import RoutePoolEntry
+from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
 from mapadroid.worker.WorkerType import WorkerType

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from loguru import logger
 
@@ -7,7 +7,8 @@ from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.RouteManagerBase import RoutePoolEntry, RouteManagerBase
+from mapadroid.route.RouteManagerBase import RouteManagerBase
+from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import RoutecalculationTypes
@@ -28,18 +29,19 @@ class RouteManagerLeveling(RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=None)
 
-    async def _worker_changed_update_routepools(self):
+    async def _worker_changed_update_routepools(self, routepool: Dict[str, RoutePoolEntry]) \
+            -> Optional[Dict[str, RoutePoolEntry]]:
         async with self._manager_mutex:
-            logger.info("Updating all routepools in level mode for {} origins", len(self._routepool))
+            logger.info("Updating all routepools in level mode for {} origins", len(routepool))
             if len(self._workers_registered) == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
-                return False
+                return None
 
             any_at_all = False
             async with self.db_wrapper as session, session:
-                for origin in self._routepool:
+                for origin in routepool:
                     origin_local_list = []
-                    entry: RoutePoolEntry = self._routepool[origin]
+                    entry: RoutePoolEntry = routepool[origin]
 
                     if len(entry.queue) > 0:
                         logger.debug("origin {} already has a queue, do not touch...", origin)
@@ -90,7 +92,7 @@ class RouteManagerLeveling(RouteManagerBase):
                     await session.commit()
                 except Exception as e:
                     logger.warning("Failed storing last walker positions: {}", e)
-                return True
+                return routepool
 
     async def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]) -> list[Location]:
         coords: List[Location] = []
@@ -115,8 +117,7 @@ class RouteManagerLeveling(RouteManagerBase):
             logger.info('Other worker shutdown route - leaving it')
             return False
 
-        await self._worker_changed_update_routepools()
-        return True
+        return await self._update_routepool()
 
     async def start_routemanager(self):
         async with self._manager_mutex:
