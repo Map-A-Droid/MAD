@@ -396,7 +396,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             self._work_mutex: asyncio.Lock = asyncio.Lock()
         area_settings: Optional[SettingsAreaPokestop] = await self._mapping_manager.routemanager_get_settings(
             self._area_id)
-        self._clustering_enabled: bool = area_settings.enable_clustering
         self._rotation_waittime = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATION_WAITTIME,
                                                                       300)
         self._always_cleanup: bool = False if area_settings.cleanup_every_spin == 0 else True
@@ -880,7 +879,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     await asyncio.sleep(1)
                 to += 1
             else:
-                if data_received != FortSearchResultTypes.QUEST and not self._clustering_enabled:
+                if data_received != FortSearchResultTypes.QUEST:
                     # TODO
                     pass
 

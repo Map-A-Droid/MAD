@@ -39,7 +39,6 @@ DEFAULT_OBJECTS = {
             'devicepool': '%s Pool - %s',
             'settings': {
                 'screenshot_type': 'jpeg',
-                'enhanced_mode_quest': False
             }
         }
     },

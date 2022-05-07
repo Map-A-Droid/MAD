@@ -52,21 +52,19 @@ class RouteManagerFactory:
                                              )
         elif area.mode == WorkerType.STOPS.value:
             area: SettingsAreaPokestop = area
-            max_coords_within_radius_stops = max_coords_within_radius
-            if area.enable_clustering:
-                max_coords_within_radius_stops = 9999 if area.level else 3
+            max_coords_within_radius = 9999 if area.level else max_coords_within_radius
 
             if area.level:
                 route_manager = RouteManagerLeveling(db_wrapper=db_wrapper, area=area, coords=coords,
                                                      max_radius=max_radius,
-                                                     max_coords_within_radius=max_coords_within_radius_stops,
+                                                     max_coords_within_radius=max_coords_within_radius,
                                                      geofence_helper=geofence_helper, routecalc=routecalc,
                                                      mon_ids_iv=mon_ids_iv
                                                      )
             else:
                 route_manager = RouteManagerQuests(db_wrapper=db_wrapper, area=area, coords=coords,
                                                    max_radius=max_radius,
-                                                   max_coords_within_radius=max_coords_within_radius_stops,
+                                                   max_coords_within_radius=max_coords_within_radius,
                                                    geofence_helper=geofence_helper, routecalc=routecalc,
                                                    mon_ids_iv=mon_ids_iv
                                                    )

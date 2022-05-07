@@ -198,20 +198,11 @@ class Devicepool(Resource):
                     "expected": int
                 }
             },
-            "enhanced_mode_quest": {
-                "settings": {
-                    "type": "option",
-                    "require": False,
-                    "values": [None, False, True],
-                    "description": "Activate enhanced quest mode",
-                    "expected": bool
-                }
-            },
             "enhanced_mode_quest_safe_items": {
                 "settings": {
                     "type": "select",
                     "require": False,
-                    "description": "Items not to be deleted in enhanced quest mode (Default: 1301, 1401,1402, "
+                    "description": "Items not to be deleted in quest mode (Default: 1301, 1401,1402, "
                                    "1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301)",
                     "expected": str,
                     "default": "1301, 1401, 1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"

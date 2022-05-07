@@ -528,7 +528,6 @@ class SettingsAreaPokestop(SettingsArea):
     ignore_spinned_stops = Column(BOOLEAN)
     cleanup_every_spin = Column(BOOLEAN)
     layer = Column(TINYINT(3), default=1, nullable=False, autoincrement=False, index=True)
-    enable_clustering = Column(BOOLEAN)
 
     settings_geofence = relationship('SettingsGeofence')
     settings_routecalc = relationship('SettingsRoutecalc')
@@ -616,7 +615,6 @@ class SettingsDevicepool(Base):
     startcoords_of_walker = Column(String(256, 'utf8mb4_unicode_ci'))
     injection_thresh_reboot = Column(INTEGER(11))
     screendetection = Column(BOOLEAN)
-    enhanced_mode_quest = Column(BOOLEAN, server_default=text("'0'"))
     enhanced_mode_quest_safe_items = Column(String(500, 'utf8mb4_unicode_ci'))
 
     instance = relationship('MadminInstance')
@@ -687,7 +685,6 @@ class SettingsDevice(Base):
     rotation_waittime = Column(Float)
     rotate_on_lvl_30 = Column(BOOLEAN)
     injection_thresh_reboot = Column(INTEGER(11))
-    enhanced_mode_quest = Column(BOOLEAN, server_default=text("'0'"))
     enhanced_mode_quest_safe_items = Column(String(500, 'utf8mb4_unicode_ci'))
     mac_address = Column(String(17, 'utf8mb4_unicode_ci'))
     interface_type = Column(ENUM('lan', 'wlan'), server_default=text("'lan'"))

@@ -54,7 +54,7 @@ mode_mapping = {
     "pokestops": {
         "s2_cell_level": 13,
         "range": 70,  # stop interaction radius is 80m
-        "max_count": 1
+        "max_count": 3
     },
     "iv_mitm": {
         "range": 67,
@@ -238,8 +238,6 @@ class MappingManager(AbstractMappingManager):
         elif key == MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME:
             return devicemapping_entry.last_questclear_time
         # DB stuff
-        elif key == MappingManagerDevicemappingKey.ENHANCED_MODE_QUEST:
-            return devicemapping_entry.pool_settings.enhanced_mode_quest if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.enhanced_mode_quest else devicemapping_entry.device_settings.enhanced_mode_quest
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET:
             return devicemapping_entry.pool_settings.screenshot_y_offset if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_y_offset else devicemapping_entry.device_settings.screenshot_y_offset
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET:
