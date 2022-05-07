@@ -69,7 +69,7 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
             # Set the queue for the new subroute accordingly
             # Search for the closest spot within old queue and only start from there
             closest_to_old_queue: Optional[Location] = self._find_closest_location(
-                next(iter(entry.queue) if entry.queue else None),
+                next(iter(entry.queue)) if entry.queue else None,
                 new_subroute)
             entry.queue.clear()
             if not closest_to_old_queue:
