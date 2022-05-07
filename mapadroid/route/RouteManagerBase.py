@@ -377,7 +377,9 @@ class RouteManagerBase(ABC):
         routepool_entry: RoutePoolEntry = self._routepool.get(origin, None)
         if not routepool_entry:
             logger.debug("No subroute/routepool entry present, creating it")
-            routepool_entry = RoutePoolEntry(time.time(), [], time_added=time.time())
+            routepool_entry = RoutePoolEntry(time.time(), [], time_added=time.time(), queue=collections.deque(),
+                                             rounds=0, last_position_type=PositionType.NORMAL, worker_sleeping=0.0,
+                                             prio_coord=None, current_pos=Location(0, 0))
             self._routepool[origin] = routepool_entry
             if origin in self._worker_start_position:
                 routepool_entry.current_pos = self._worker_start_position[origin]
