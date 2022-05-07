@@ -43,5 +43,5 @@ class RouteManagerIdle(RouteManagerBase):
     async def get_next_location(self, origin: str) -> Optional[Location]:
         return Location(0, 0)
 
-    async def _worker_changed_update_routepools(self) -> bool:
-        return True
+    def _may_update_routepool(self):
+        return False
