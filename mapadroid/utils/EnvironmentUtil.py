@@ -5,13 +5,13 @@ import os
 import sys
 from asyncio import Task
 
-import grpc
 import pkg_resources
+from grpc.aio import AioRpcError
 from websockets.exceptions import WebSocketException
 
 from mapadroid.utils.logging import get_logger, LoggerEnums, InterceptHandler
 from mapadroid.utils.madGlobals import application_args, WebsocketWorkerConnectionClosedException, \
-    InternalStopWorkerException, WebsocketWorkerTimeoutException, PrioQueueNoDueEntry
+    InternalStopWorkerException, WebsocketWorkerTimeoutException, PrioQueueNoDueEntry, RoutemanagerShuttingDown
 
 logger = get_logger(LoggerEnums.system)
 
@@ -85,8 +85,8 @@ def install_task_create_excepthook():
             """
             raise e
         except (IndexError, WebSocketException, WebsocketWorkerConnectionClosedException,
-                InternalStopWorkerException, grpc.aio._call.AioRpcError,
-                WebsocketWorkerTimeoutException) as e:
+                InternalStopWorkerException, AioRpcError,
+                WebsocketWorkerTimeoutException, RoutemanagerShuttingDown) as e:
             logger.debug("Potential uncaught exception: " + str(e))
             logger.debug3("Potential uncaught exception.", exc_info=True)
             raise e  # websocket exceptions should be handled anyway as well
