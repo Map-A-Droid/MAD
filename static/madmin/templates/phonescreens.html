@@ -380,9 +380,11 @@ $(".screenshot").mousedown(function(e){
        type: "GET",
        url: url,
        success: function(data){
-           $('#date' + id).text(data);
-           $('img#' + id).attr('src', 'screenshot/screenshot_' + id + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
-           $('div#' + id).unblock();
+         var date = new Date(data * 1000);
+         $('#date' + id).attr('data-original-title', data).tooltip('hide');
+         $('#date' + id).text(moment(date).fromNow());
+         $('img#' + id).attr('src', 'screenshot/screenshot_' + id + '.jpg?madmin=1&cachebuster=' + Math.round(new Date().getTime() / 1000));
+         $('div#' + id).unblock();
        }
     });
 
