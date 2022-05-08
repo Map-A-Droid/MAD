@@ -150,7 +150,7 @@ class WebhookWorker:
         return ret
 
     def __construct_quest_payload(self, quest):
-        if self.__args.quest_webhook_flavor == "default":
+        if self.__args.quest_webhook_flavor == "default":  # used by PokeAlarm
             return {
                 "pokestop_id": quest["pokestop_id"],
                 "latitude": quest["latitude"],
@@ -306,6 +306,24 @@ class WebhookWorker:
             "target": quest["quest_target"],
             "updated": quest["timestamp"],
             "quest_task": quest["quest_task"],
+            "quest_type": quest["quest_type"],
+            "quest_type_raw": quest["quest_type_raw"],
+            "item_type": quest["item_type"],
+            "name": quest["name"].replace('"', '\\"').replace("\n", "\\n"),
+            "url": quest["url"],
+            "timestamp": quest["timestamp"],
+            "quest_reward_type": quest["quest_reward_type"],
+            "quest_reward_type_raw": quest["quest_reward_type_raw"],
+            "quest_reward_raw": quest['quest_reward_raw'].replace("'", '"').lower(),
+            "quest_target": quest["quest_target"],
+            "pokemon_id": int(quest["pokemon_id"]),
+            "pokemon_form": int(quest.get("pokemon_form", '0')),
+            "pokemon_costume": int(quest.get("pokemon_costume", '0')),
+            "item_amount": quest["item_amount"],
+            "item_id": quest["item_id"],
+            "quest_condition": quest["quest_condition"].replace("'", '"').lower(),
+            "quest_template": quest["quest_template"],
+            "is_ar_scan_eligible": quest["is_ar_scan_eligible"],
         }
 
     def __prepare_weather_data(self, weather_data):
@@ -491,10 +509,7 @@ class WebhookWorker:
 
             if mon["weather_boosted_condition"] is not None \
                and mon["weather_boosted_condition"] > 0:
-                if self.__args.quest_webhook_flavor == "default":
-                    mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
-                if self.__args.quest_webhook_flavor == "poracle":
-                    mon_payload["weather"] = mon["weather_boosted_condition"]
+                mon_payload["weather"] = mon["weather_boosted_condition"]
 
             if mon["seen_type"] in ("nearby_stop", "lure_wild", "lure_encounter"):
                 mon_payload["pokestop_id"] = mon["fort_id"]
