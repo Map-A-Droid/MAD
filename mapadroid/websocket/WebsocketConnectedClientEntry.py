@@ -75,9 +75,9 @@ class WebsocketConnectedClientEntry:
                     logger.debug("Received answer in time, popping response")
                     self.fail_counter = 0
                     if isinstance(new_entry.message, str):
-                        logger.debug4("Response: {}", new_entry.message.strip())
+                        logger.debug("Response: {}", new_entry.message.strip())
                     else:
-                        logger.debug4("Received binary data , starting with {}", new_entry.message[:10])
+                        logger.debug("Received binary data , starting with {}", new_entry.message[:10])
                     response = new_entry.message
             except asyncio.TimeoutError:
                 logger.warning("Timeout, increasing timeout-counter")
