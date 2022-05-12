@@ -130,7 +130,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
     async def _wait_for_data(self, timestamp: float = None,
                              proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \
-            -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
+            -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]], float]:
         key = str(proto_to_wait_for.value)
         if timestamp is None:
             timestamp = time.time()
@@ -194,7 +194,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         loop.create_task(self.worker_stats())
         # TODO: Rather freeze the state that is to be submitted and pass it to another task for performance reasons
         # await self.worker_stats()
-        return type_of_data_returned, data
+        return type_of_data_returned, data, last_time_received
 
     async def _request_data(self, data, key, proto_to_wait_for, timestamp, type_of_data_returned):
         latest_location: Optional[Location] = await self._mitm_mapper.get_last_known_location(

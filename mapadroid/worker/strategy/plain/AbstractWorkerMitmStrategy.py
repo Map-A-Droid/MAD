@@ -91,16 +91,17 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def post_move_location_routine(self, timestamp) -> Optional[Tuple[ReceivedType,
                                                                             Optional[Union[dict,
-                                                                                           FortSearchResultTypes]]]]:
+                                                                                           FortSearchResultTypes]],
+                                                                            float]]:
         # TODO: pass the appropriate proto number if IV?
-        type_received, data_gmo = await self._wait_for_data(timestamp)
+        type_received, data_gmo, time_received = await self._wait_for_data(timestamp)
         if type_received != ReceivedType.GMO or not data_gmo:
             logger.warning("Worker failed to retrieve proper data at {}, {}. Worker will continue with "
                            "the next location",
                            self._worker_state.current_location.lat,
                            self._worker_state.current_location.lng)
             return None
-        return type_received, data_gmo
+        return type_received, data_gmo, time_received
 
     def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
         cells = gmo.get("cells", None)

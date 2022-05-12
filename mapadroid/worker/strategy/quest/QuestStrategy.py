@@ -513,13 +513,13 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                               value=injected_settings)
 
     async def _wait_for_data_after_moving(self, timestamp: float, proto_to_wait_for: ProtoIdentifier, timeout) \
-            -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]]]:
+            -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]], float]:
         try:
             return await asyncio.wait_for(self._wait_for_data(timestamp=timestamp,
                                                               proto_to_wait_for=proto_to_wait_for,
                                                               timeout=None), timeout)
         except asyncio.exceptions.TimeoutError as e:
-            return ReceivedType.UNDEFINED, None
+            return ReceivedType.UNDEFINED, None, 0.0
 
     async def _ensure_stop_present(self, timestamp: float) -> ReceivedType:
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
@@ -531,8 +531,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                             PositionStopType.NO_FORT) and not recheck_count > 2:
             recheck_count += 1
             logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
-            type_received, proto_entry = await self._wait_for_data_after_moving(timestamp_to_use_waiting_for_gmo,
-                                                                                ProtoIdentifier.GMO, 20)
+            type_received, proto_entry, time_received = await self._wait_for_data_after_moving(
+                timestamp_to_use_waiting_for_gmo, ProtoIdentifier.GMO, 20)
             if type_received != ReceivedType.UNDEFINED:
                 stop_type = await self._current_position_has_spinnable_stop(timestamp_to_use_waiting_for_gmo)
             timestamp_to_use_waiting_for_gmo = time.time()
@@ -562,7 +562,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         return type_received
 
     async def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
-        type_received, data_received = await self._wait_for_data_after_moving(timestamp, ProtoIdentifier.GMO, 20)
+        type_received, data_received, time_received = await self._wait_for_data_after_moving(timestamp,
+                                                                                             ProtoIdentifier.GMO, 20)
         if type_received != ReceivedType.GMO or data_received is None:
             await self._spinnable_data_failure()
             return PositionStopType.GMO_NOT_AVAILABLE
@@ -800,9 +801,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         async with self._db_wrapper as session, session:
             while data_received != FortSearchResultTypes.QUEST and int(to) < 2:
                 logger.info('Waiting for stop to be spun')
-                type_received, data_received = await self._wait_for_data_after_moving(self._stop_process_time,
-                                                                                      ProtoIdentifier.FORT_SEARCH,
-                                                                                      timeout)
+                type_received, data_received, time_received = await self._wait_for_data_after_moving(
+                    self._stop_process_time, ProtoIdentifier.FORT_SEARCH, timeout)
                 if (type_received == ReceivedType.FORT_SEARCH_RESULT
                         and data_received == FortSearchResultTypes.INVENTORY):
                     logger.info('Box is full... clear out items!')
