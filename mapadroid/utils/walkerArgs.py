@@ -184,6 +184,8 @@ def parse_args():
                         help='Set mappings file')
 
     # other settings
+    parser.add_argument('-w', '--weather', action='store_true', default=False,
+                        help='Read weather and post to db - if supported! (Default: False)')
     parser.add_argument('-hlat', '--home_lat', default='0.0', type=float,
                         help=('Set Lat from the center of your scan location.'
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
