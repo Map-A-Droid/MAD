@@ -35,6 +35,7 @@ class LoggerEnums(Enum):
     mitm_mapper = "mitm_mapper"
     stats_handler = "stats_handler"
     mapping_manager = "mapping-manager"
+    database_cleanup = "database_cleanup"
 
 
 # ==================================

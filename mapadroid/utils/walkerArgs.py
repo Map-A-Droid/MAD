@@ -56,6 +56,10 @@ def parse_args():
     parser.add_argument('-dbps', '--db_poolsize', type=int, default=5,
                         help='Size of MySQL pool (open connections to DB). Default: 5')
 
+    parser.add_argument('-delmons', '--delete_mons_n_hours', type=int, default=None,
+                        help='Remove mons from DB N hours after despawn. Only use positive values. '
+                             'None if no cleanup is to be run. Default: None')
+
     # Websocket Settings (RGC receiver)
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,
                         help='IP for websocket to listen on. Default: 0.0.0.0')

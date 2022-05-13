@@ -3,7 +3,7 @@ import time
 from functools import reduce
 from typing import Dict, List, Optional, Set, Tuple
 
-from sqlalchemy import and_, desc, func
+from sqlalchemy import and_, desc, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -312,3 +312,8 @@ class PokemonHelper:
 
         result = await session.execute(stmt)
         return result.all()
+
+    @staticmethod
+    async def delete_older_than_n_hours(session: AsyncSession, hours: int) -> None:
+        stmt = delete(Pokemon).where(Pokemon.disappear_time < DatetimeWrapper.now() - datetime.timedelta(hours=hours))
+        await session.execute(stmt)
