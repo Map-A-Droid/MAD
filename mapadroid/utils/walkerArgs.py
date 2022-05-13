@@ -37,12 +37,9 @@ def parse_args():
         auto_env_var_prefix='THERAIDMAPPER_')
     parser.add_argument('-cf', '--config',
                         is_config_file=True, help='Set configuration file')
-    parser.add_argument('-asi', '--apk_storage_interface', default='fs', help='APK Storage Interface')
+    parser.add_argument('-asi', '--apk_storage_interface', default='db', help='APK Storage Interface')
 
     # MySQL
-    # TODO - Depercate this
-    parser.add_argument('-dbm', '--db_method', required=False, default="rm",
-                        help='LEGACY: DB scheme to be used')
     parser.add_argument('-dbip', '--dbip', required=False,
                         help='IP or hostname of MySql Server')
     parser.add_argument('-dbport', '--dbport', type=int, default=3306,
@@ -187,8 +184,6 @@ def parse_args():
                         help='Set mappings file')
 
     # other settings
-    parser.add_argument('-w', '--weather', action='store_true', default=False,
-                        help='Read weather and post to db - if supported! (Default: False)')
     parser.add_argument('-hlat', '--home_lat', default='0.0', type=float,
                         help=('Set Lat from the center of your scan location.'
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))

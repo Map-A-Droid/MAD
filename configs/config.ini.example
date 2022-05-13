@@ -5,188 +5,339 @@
 # A different config-files can be included directly in processes by "--config" or "-cf" and path
 
 
-# MySQL Settings
+### MySQL Settings
 ######################
-# You really need to fill those. Most of the times you want to have frontend (RM/PMSF) already installed before running MAD.
-# You need to have MySQL Database and User/Grants already created!
-#dbip:                      # IP or hostname of MySql Server
-#dbport:                    # Port of the database (Default: 3306)
-#dbusername:                # Username for MySQL login
-#dbpassword:                # Password for MySQL login
-#dbname:                    # Name of MySQL Database
-#db_poolsize:               # Size of MySQL pool (open connections to DB). If you have a lot of devices and madmin usage, this may need to be increased. Default: 5.
-
-# MappingManager gRPC
-#mappingmanager_ip:         # IP of MappingManager gRPC server to connect to OR - if serving - to listen on. Default: all interfaces
-#mappingmanager_port:       # Port to listen on for the MappingManager gRPC API (main MAD component) or connect to. Default: 50052
-#mappingmanager_tls_private_key_file:   # In case a secure connection is desired, the server needs to know a private key.
-#mappingmanager_tls_cert_file:          # In case a secure connection is desired, clients and server need to have the cert file available.
-#mappingmanager_compression             # Enable compression of data of the MappingManager gRPC communication. Default: False
-
-# mitmmapper_type:                 # Pick the implementation type of mitmmapper to use. Valid types are grpc, redis and standalone
-# MitmMapper gRPC related settings
-#mitmmapper_ip:             # IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component. Default: [::]
-#mitmmapper_port:           # Port to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 50051
-#mitmmapper_tls_private_key_file:       # In case a secure connection is desired, the server needs to know a private key.
-#mitmmapper_tls_cert_file:              # In case a secure connection is desired, clients and server need to have the cert file available.
-#mitmmapper_compression                 # Enable compression of data of the MitmMapper gRPC communication. Default: False
-
-# Stats handler gRPC related settings
-#statshandler_ip:             # IP to listen on for the StatsHandler gRPC API or connect to (separate MAD component. Default: [::]
-#statshandler_port:           # Port to listen on for the StatsHandler gRPC API or connect to (separate MAD component). Default: 50053
-#statshandler_tls_private_key_file:       # In case a secure connection is desired, the server needs to know a private key.
-#statshandler_tls_cert_file:              # In case a secure connection is desired, clients and server need to have the cert file available.
-#statshandler_compression                 # Enable compression of data of the StatsHandler gRPC communication. Default: False
-
-# Websocket Settings (RGC receiver)
+## You really need to fill those. Most of the times you want to have frontend (RM/PMSF) already installed before running MAD.
+## You need to have MySQL Database and User/Grants already created!
 ######################
-#ws_ip:                     # IP for websocket to listen on. Default: 0.0.0.0
-#ws_port:                   # Port of the websocket to listen on. Default: 8080
-#websocket_command_timeout: # The max time to wait for a command to return (in seconds). Default: 30 seconds
+
+# IP or hostname of MySql Server
+#dbip:
+# Port of the database (Default: 3306)
+#dbport:
+# Username for MySQL login
+#dbusername:
+# Password for MySQL login
+#dbpassword:
+# Name of MySQL Database
+#dbname:
+# Size of MySQL pool (open connections to DB). If you have a lot of devices and madmin usage, this may need to be increased. Default: 5.
+#db_poolsize:
 
 
-# MITM Receiver (PD receiver)
+### Redis Caching
 ######################
-#mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0
-#mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000
-#mitmreceiver_data_workers: # Amount of workers to work off the data that queues up. Default: 2
-#mitm_ignore_pre_boot       # Ignore MITM data having a timestamp pre MAD's startup time
-#mitm_status_password:      # Header Authorization password for MITM /status/ page
-#mitm_unix_socket:          # Path to unix socket file to use if TCP is not to be used for MITMReceiver. Disabled TCP (ip/port) listening.
-
-# Walk Settings
+## Redis is especially used to not process data over and over again which has not changed. It is thus required to be
+## filled in.
 ######################
-#enable_worker_specific_extra_start_stop_handling # Option to enable/disable extra handling for the start/stop routine of workers. Default: False
-#maximum_valid_distance:       # The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 5m
+# Redis cache host (Default: localhost)
+#cache_host:
+# Redis cache port (Default: 6379)
+#cache_port:
+# Redis database. Use different numbers (0-15) if you are running multiple instances.
+#cache_database:
+# Redis password
+#cache_password:
 
 
-# Job Processor
+### MappingManager gRPC
 ######################
-#job_dt_wh                    # Send job status to discord (Default: False). Default: False
-#job_dt_wh_url:               # Discord Webhook URL for job messages
-#job_dt_send_type:            # Kind of Job Messages to send - separated by pipe | (Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)
-#job_restart_notconnect:      # Restart job if device is not connected (in minutes). Default: 0 (Off)
-#job_thread_count:            # Amount of threads to work off the device jobs. Default: 1
-
-
-# Runtypes
+## The following settings enable the communication to the mapping manager using gRPC. This is needed if MAD is split
+## across multiple processes/hosts (e.g., multiple mitm receivers)
 ######################
-#only_scan                    # Use this instance only for scanning. Default: True
-#ocr_thread_count:             # Amount of threads/processes to be used for screenshot-analysis. Default: 2
-#only_routes                  # Only calculate routes, then exit the program. No scanning. Default: False
-#config_mode                  # Run in ConfigMode. Default: False
-#scan_nearby_mons             # Enable scanning of nearby mons - Please make sure you know how this works before turning it on!
-#disable_nearby_cell          # Disables nearby_cell scans if scan_nearby_mons is enabled
-#scan_lured_mons              # Enable scanning of lured mons
-#default_nearby_timeleft:     # The default despawn time left in minutes for Nearby Mons. Default: 15
-#default_unknown_timeleft:    # The default despawn time left in minutes for Mons at unknown Spawnpoints. Default: 3
-#status-name:                 # Setup name for this instance - if not set: PID of the process will be used
-#no_event_checker             # Disable event checker task
+# IP of MappingManager gRPC server to connect to OR - if serving - to listen on. Default: all interfaces (0.0.0.0)
+#mappingmanager_ip:
+# Port to listen on for the MappingManager gRPC API (main MAD component) or connect to. Default: 50052
+#mappingmanager_port:
+# In case a secure connection is desired, the server needs to know a private key.
+#mappingmanager_tls_private_key_file:
+# In case a secure connection is desired, clients and server need to have the cert file available.
+#mappingmanager_tls_cert_file:
+# Enable compression of data of the MappingManager gRPC communication. Default: False
+#mappingmanager_compression:
 
-
-# Path Settings
+### MitmMapper
 ######################
-#temp_path:                  # Path for generated files while detecting raids (Default: temp/)
-#upload_path:                # Path for uploaded Files via madmin and for device installation. (Default: upload/)
-#file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
-
-
-# other settings
+## The MitmMapper is used to store various information used throughout MAD. As this data needs to be acquired quickly,
+## multiple implementations are available offering less overhead or scalability.
 ######################
-#weather                     # Detect weather - if your frontend support this!
-#home_lat:                   # Center Lat of your scan location (Default: 0.0)
-#home_lng:                   # Center Lng of your scan location (Default: 0.0)
-#language:                   # Language for several things like quests or mon names in the IV list (default:en - others: de, fr )
-#no_quest_titles              # Do not fetch quest title resources from pokeminers. Will instead use internal parsing
+# Pick the implementation type of the MitmMapper to use. Valid types are grpc, redis and standalone
+# mitmmapper_type:
 
+## MitmMapper gRPC related settings
+# IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: [::]
+#mitmmapper_ip:
+# Port to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 50051
+#mitmmapper_port:
+# In case a secure connection is desired, the server needs to know a private key.
+#mitmmapper_tls_private_key_file:
+# In case a secure connection is desired, clients and server need to have the cert file available.
+#mitmmapper_tls_cert_file:
+# Enable compression of data of the MitmMapper gRPC communication. Default: False
+#mitmmapper_compression:
 
-# MADmin
+### Stats handler gRPC related settings
 ######################
-#madmin_user:                # PLEASE SET IF NOT USING AUTH VIA REVERSE PROXY. MADmin username for login
-#madmin_password:            # PLEASE SET IF NOT USING AUTH VIA REVERSE PROXY. MADmin password for login
-#disable_madmin              # Disable Madmin on the instance
-#madmin_base_path:            # Base path for madmin
-#madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
-#madmin_port:                # Highly recommended to change. MADmin web port (Default: 5000)
-#madmin_time:                # MADmin clock format (12/24) (Default: 24)
-#madmin_noresponsive         # MADmin deactivate responsive tables
-#quests_public               # Enables MADmin /quests_pub, /get_quests, and pushassets endpoints for public quests overview
-#outdated_spawnpoints:       # Define when a spawnpoint is out of date (in days). Default: 3.
-#quest_stats_fences:         # Comma separated list of geofences names to use for Quest/Stop Stats page (Empty: all)
-
-
-# Statistics
+## The stats collection is usually run within the core component of MAD. If multiple processes/hosts are running MAD,
+## the connection information to the core stats handler need to be inserted. Optionally, the stats handler itself can
+## run as its own process (on another host as well) due to the use of gRPC.
 ######################
-#statistic                   # Activate system statistics
-#stat_gc                     # Enable statistics for collected object (garbage collector) - if you really need this info
-#statistic_interval:         # Update interval for the usage generator in seconds (Default: 60)
+# IP to listen on for the StatsHandler gRPC API or connect to (separate MAD component. Default: [::]
+#statshandler_ip:
+# Port to listen on for the StatsHandler gRPC API or connect to (separate MAD component). Default: 50053
+#statshandler_port:
+# In case a secure connection is desired, the server needs to know a private key.
+#statshandler_tls_private_key_file:
+# In case a secure connection is desired, clients and server need to have the cert file available.
+#statshandler_tls_cert_file:
+# Enable compression of data of the StatsHandler gRPC communication. Default: False
+#statshandler_compression:
 
-
-# Game Stats
+### Database cleanup
 ######################
-#game_stats                  # Generate worker stats
-#game_stats_raw              # Generate worker raw stats (only with --game_stats)')
-#game_stats_save_time:        # Number of seconds until worker information is saved to database (Default: 300)
-#raw_delete_shiny:           # Delete shiny mon in raw stats older then x days (0 =  Disable (Default))
-
-
-# ADB
+## As a lot of information is collected over time, cleaning up certain records in the database is advised if disk space
+## (and performance) are a limiting factor for your setup.
 ######################
-#use_adb                     # Use ADB for "device control" (Default: False)
-#adb_server_ip:              # IP address of ADB server (Default: 127.0.0.1)
-#adb_server_port:            # Port of ADB server (Default: 5037)
+# Delete all records of mons which disappeared more then the specified amount of hours ago (integer). If not specified, no cleanup is run due to default: None.
+#delete_mons_n_hours:
 
-
-# Webhook
+### Websocket Settings
 ######################
-#webhook                     # Activate support for webhook
-#webhook_url:                # webhook endpoint (multiple seperated by comma)
-                             #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
-                             #  possible types are: raid, gym, weather, pokestop, quest
-                             #  different pokemon types: encounter, wild, nearby_stop, nearby_cell, lure_encounter, lure_wild
-#webhook_submit_exraids      # Send Ex-raids to the webhook if detected
-#webhook_excluded_areas:     # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
-#quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
-#webhook_start_time:         # Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.
-#webhook_max_payload_size:   # Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)
-#webhook_worker_interval: 10 # Send webhook payload every X seconds (Default: 10)
-
-# Dynamic Rarity
+## The websocket of MAD is where all devices running RGC connect to. Using this websocket, devices are controlled
+## using the bidirectional communication.
 ######################
-#rarity_hours:               # Set the number of hours for the calculation of pokemon rarity (Default: 72)
-#rarity_update_frequency:    # Update frequency for dynamic rarity in minutes (Default: 60)
+# IP for websocket to listen on. Default: 0.0.0.0
+#ws_ip:
+# Port of the websocket to listen on. Default: 8080
+#ws_port:
+# The max time to wait for a command to return (in seconds). Default: 30 seconds
+#websocket_command_timeout:
 
 
-# Logging
+### MITM Receiver
 ######################
-#no_file_logs                # Disable file logging (Default: file logging is enabled by default)
-#log_path:                   # Defines directory to save log files to (Default: logs/)
-#log_filename:               # Defines the log filename to be saved. Allows date formatting, and replaces <SN>
-                             #  with the instance's status name (Default: Default: %Y%m%d_%H%M_<SN>.log)
-#log_file_rotation:          # This parameter expects a human-readable value like '18:00', 'sunday', 'weekly', 'monday
-                             #  at 12:00' or a maximum file size like '100 MB' or '0.5 GB'. Set to '0' to disable completely. (Default: 50 MB)
-#log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs.
-                             # Custom log levels like DEBUG[1-5] can be used too
-#log_file_level:             # File logging level. See description for --log_level.
-#log_file_retention:         # mount of days to keep file logs. Set to 0 to keep them forever (Default: 10)
-#no_log_colors               # Disable colored logs.
+## The MitmReceiver is the component of MAD which receives all data by the MITM client. I.e., this is where all the
+## data collected is processed.
+######################
+# IP to listen on for proto data (MITM data). Default: 0.0.0.0
+#mitmreceiver_ip:
+# Port to listen on for proto data (MITM data). Default: 8000
+#mitmreceiver_port:
+# Amount of workers to work off the data that queues up. Default: 2
+#mitmreceiver_data_workers:
+# Ignore MITM data having a timestamp pre MAD's startup time
+#mitm_ignore_pre_boot:
+# Header Authorization password for MITM /status/ page
+#mitm_status_password:
+# Path to unix socket file to use if TCP is not to be used for MITMReceiver. Disabled TCP (ip/port) listening.
+#mitm_unix_socket:
+
+
+### Job Processor
+######################
+## MAD allows for the creation of custom jobs used for, e.g., the maintenance of devices using MADmin.
+######################
+# Send job status to discord (Default: False). Default: False
+#job_dt_wh:
+# Discord Webhook URL for job messages
+#job_dt_wh_url:
+# Kind of Job Messages to send - separated by pipe | (Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)
+#job_dt_send_type:
+# Restart job if device is not connected (in minutes). Default: 0 (Off)
+#job_restart_notconnect:
+# Amount of threads to work off the device jobs. Default: 1
+#job_thread_count:
+
+
+### Miscellaneous
+######################
+# Use this instance only for scanning. Default: True
+#only_scan
+# Amount of threads/processes to be used for screenshot-analysis. Default: 2
+#ocr_thread_count:
+# Only calculate routes, then exit the program. No scanning. Default: False
+#only_routes:
+# Run in ConfigMode. Default: False
+#config_mode:
+# Enable scanning of nearby mons - Please make sure you know how this works before turning it on!
+#scan_nearby_mons:
+# Disables nearby_cell scans if scan_nearby_mons is enabled
+#disable_nearby_cell:
+# Enable scanning of lured mons
+#scan_lured_mons:
+# The default despawn time left in minutes for Nearby Mons. Default: 15
+#default_nearby_timeleft:
+# The default despawn time left in minutes for Mons at unknown Spawnpoints. Default: 3
+#default_unknown_timeleft:
+# Setup name for this instance - if not set: PID of the process will be used
+#status-name:
+# Disable event checker task
+#no_event_checker:
+# Option to enable/disable extra handling for the start/stop routine of workers. Default: False
+#enable_worker_specific_extra_start_stop_handling:
+# The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 5m
+#maximum_valid_distance:
+# The storage type used for APKs. Either APKs are stored in the DB (accessible by, e.g., MitmReceivers as well) or
+# entirely file based (only recommended for small setups running within a single process).
+# Default: db. Possible values: [db, fs].
+#apk_storage_interface:
+
+### Filepath Settings
+######################
+## MAD uses temporary files and file storage in general for some operations such as storing screenshots
+######################
+# Path for generated files while detecting raids (Default: temp/)
+#temp_path:
+# Path for uploaded Files via madmin and for device installation. (Default: upload/)
+#upload_path:
+# Defines directory to save worker stats- and position files and calculated routes (Default: files/)
+#file_path:
+
+
+### Other Settings
+######################
+# Center Lat of your scan location (Default: 0.0)
+#home_lat:
+# Center Lng of your scan location (Default: 0.0)
+#home_lng:
+# Language for several things like quests or mon names in the IV list (default:en - others: de, fr )
+#language:
+# Do not fetch quest title resources from pokeminers. Will instead use internal parsing: Default: False
+#no_quest_titles:
+
+
+### MADmin
+######################
+## MADmin is used to see the overall status of all devices connected, control devices manually, and display statistics.
+######################
+# PLEASE SET IF NOT USING AUTH VIA REVERSE PROXY. MADmin username for login
+#madmin_user:
+# PLEASE SET IF NOT USING AUTH VIA REVERSE PROXY. MADmin password for login
+#madmin_password:
+# Disable Madmin on the instance
+#disable_madmin:
+# Base path for madmin
+#madmin_base_path:
+# MADmin listening interface (Default: 0.0.0.0)
+#madmin_ip:
+# Highly recommended to change. MADmin web port (Default: 5000)
+#madmin_port:
+# MADmin clock format (12/24) (Default: 24)
+#madmin_time:
+# MADmin deactivate responsive tables
+#madmin_noresponsive:
+# Enables MADmin /quests_pub, /get_quests, and pushassets endpoints for public quests overview. Default: False
+#quests_public:
+# Define when a spawnpoint is out of date (in days). Default: 3.
+#outdated_spawnpoints:
+# Comma separated list of geofences names to use for Quest/Stop Stats page (Empty: all)
+#quest_stats_fences:
+
+
+### Statistics
+######################
+# Activate system statistics (CPU / Memory usage)
+#statistic:
+# Enable statistics for collected object (garbage collector) - if you really need this info. It may decrese performance
+# significantly.
+#stat_gc:
+# Update interval for the usage generator in seconds (Default: 60)
+#statistic_interval:
+
+
+### Game Stats
+######################
+# Generate worker stats
+#game_stats:
+# Generate worker raw stats (only with --game_stats)')
+#game_stats_raw:
+# Number of seconds until worker information is saved to database (Default: 300)
+#game_stats_save_time:
+# Delete shiny mon in raw stats older then x days (0 =  Disable (Default))
+#raw_delete_shiny:
+
+
+### ADB
+######################
+## If you want to have a fallback connection to control devices, ADB can optionally be used. For this purpose, the
+## following settings can be used.
+######################
+# Use ADB for "device control" (Default: False)
+#use_adb:
+# IP address of ADB server (Default: 127.0.0.1)
+#adb_server_ip:
+# Port of ADB server (Default: 5037)
+#adb_server_port:
+
+
+### Webhook
+######################
+## The following options allow you to configure where data is sent asap to inform users via, e.g., social media about
+## certain mon spawns
+######################
+# Activate support for webhook. Default: False
+#webhook:
+# webhook endpoint (multiple seperated by comma)
+#  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
+#  possible types are: raid, gym, weather, pokestop, quest
+#  different pokemon types: encounter, wild, nearby_stop, nearby_cell, lure_encounter, lure_wild
+#webhook_url:
+# Send Ex-raids to the webhook if detected
+#webhook_submit_exraids:
+# Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
+#webhook_excluded_areas:
+# Mode for quest webhooks (default or poracle)
+#quest_webhook_flavor:
+# Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.
+#webhook_start_time:
+# Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)
+#webhook_max_payload_size:
+# Send webhook payload every X seconds (Default: 10)
+#webhook_worker_interval: 10
+
+### Dynamic Rarity
+######################
+# Set the number of hours for the calculation of pokemon rarity (Default: 72)
+#rarity_hours:
+# Update frequency for dynamic rarity in minutes (Default: 60)
+#rarity_update_frequency:
+
+
+### Logging
+######################
+# Disable file logging (Default: file logging is enabled by default)
+#no_file_logs:
+# Defines directory to save log files to (Default: logs/)
+#log_path:
+# Defines the log filename to be saved. Allows date formatting, and replaces <SN>
+#  with the instance's status name (Default: Default: %Y%m%d_%H%M_<SN>.log)
+#log_filename:
+# This parameter expects a human-readable value like '18:00', 'sunday', 'weekly', 'monday
+#  at 12:00' or a maximum file size like '100 MB' or '0.5 GB'. Set to '0' to disable completely. (Default: 50 MB)
+#log_file_rotation:
+# Forces a certain log level. By default by the -v command to show DEBUG logs.
+# Custom log levels like DEBUG[1-5] can be used too
+#log_level:
+# File logging level. See description for --log_level.
+#log_file_level:
+# amount of days to keep file logs. Set to 0 to keep them forever (Default: 10)
+#log_file_retention:
+# Disable colored logs. Default: False
+#no_log_colors:
 
 
 # MADAPKs wizard
 ######################
-#maddev_api_token:          # Token used by the wizard to query supported versions. You can find it as 'API token' on first page after logging into MADdev auth backend (not device/account password).
-#token_dispenser:           # Path to token dispenser config (MAD-provided)
-#token_dispenser_user:      # Path to token dispenser config (User-provided)
+# Token used by the wizard to query supported versions. You can find it as 'API token' on first page after logging into MADdev auth backend (not device/account password).
+#maddev_api_token:
+# Path to token dispenser config (MAD-provided)
+#token_dispenser:
+# Path to token dispenser config (User-provided)
+#token_dispenser_user:
 
 
 # Auto-Config
 ######################
-#autoconfig_no_auth          # MAD PoGo auth is not required during autoconfiguration
+# MAD PoGo auth is not required during autoconfiguration
+#autoconfig_no_auth:
 
-
-# Redis caching
-######################
-#cache_host:            # Redis cache host (Default: localhost)
-#cache_port:            # Redis cache port (Default: 6379)
-#cache_database:        # Redis database. Use different numbers (0-15) if you are running multiple instances.
-#cache_password:        # Redis password
