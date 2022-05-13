@@ -169,6 +169,8 @@
 #default_nearby_timeleft:
 # The default despawn time left in minutes for Mons at unknown Spawnpoints. Default: 3
 #default_unknown_timeleft:
+# Detect weather - if your frontend support this! Default: False
+#weather:                        
 # Setup name for this instance - if not set: PID of the process will be used
 #status-name:
 # Disable event checker task
