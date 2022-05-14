@@ -4,7 +4,7 @@ from typing import Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
 
 logger = get_logger(LoggerEnums.database_cleanup)
@@ -35,7 +35,10 @@ class DbCleanup(object):
                 if application_args.delete_mons_n_hours:
                     logger.info("Cleaning up mon records of mons disappeared more than {} hours ago.",
                                 application_args.delete_mons_n_hours)
-                    await PokemonHelper.delete_older_than_n_hours(session, application_args.delete_mons_n_hours)
+                    mon_limit: Optional[int] = None if application_args.delete_mons_limit <= 0 \
+                        else application_args.delete_mons_limit
+                    await PokemonHelper.delete_older_than_n_hours(session, application_args.delete_mons_n_hours,
+                                                                  mon_limit)
 
                 await session.commit()
-            await asyncio.sleep(300)
+            await asyncio.sleep(application_args.cleanup_interval)

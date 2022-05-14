@@ -53,9 +53,14 @@ def parse_args():
     parser.add_argument('-dbps', '--db_poolsize', type=int, default=5,
                         help='Size of MySQL pool (open connections to DB). Default: 5')
 
-    parser.add_argument('-delmons', '--delete_mons_n_hours', type=int, default=None,
+    # DB Cleanup
+    parser.add_argument('-ci', '--cleanup_interval', type=int, default=300,
+                        help='Interval between database cleanup routines in seconds. Default: 300.')
+    parser.add_argument('-delmonshours', '--delete_mons_n_hours', type=int, default=None,
                         help='Remove mons from DB N hours after despawn. Only use positive values. '
                              'None if no cleanup is to be run. Default: None')
+    parser.add_argument('-delmonslimit', '--delete_mons_limit', type=int, default=5000,
+                        help='Limit the number of mon records to be deleted in each run. Default: 5000. 0 represents infinity - may cause long locks on tables.')
 
     # Websocket Settings (RGC receiver)
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,

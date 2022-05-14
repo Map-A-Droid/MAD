@@ -3,14 +3,15 @@ import time
 from functools import reduce
 from typing import Dict, List, Optional, Set, Tuple
 
-from sqlalchemy import and_, desc, func, delete
+from sqlalchemy import and_, delete, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokemon, TrsSpawn, Pokestop, TrsStatsDetectWildMonRaw, PokemonDisplay
+from mapadroid.db.model import (Pokemon, PokemonDisplay, Pokestop, TrsSpawn,
+                                TrsStatsDetectWildMonRaw)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import MonSeenTypes
 
@@ -314,6 +315,8 @@ class PokemonHelper:
         return result.all()
 
     @staticmethod
-    async def delete_older_than_n_hours(session: AsyncSession, hours: int) -> None:
+    async def delete_older_than_n_hours(session: AsyncSession, hours: int, limit: Optional[int]) -> None:
         stmt = delete(Pokemon).where(Pokemon.disappear_time < DatetimeWrapper.now() - datetime.timedelta(hours=hours))
+        if limit:
+            stmt = stmt.limit(limit)
         await session.execute(stmt)
