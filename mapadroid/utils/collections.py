@@ -1,7 +1,7 @@
 import collections
+import dataclasses
 from typing import Union
 
-import dataclasses
 from orjson import orjson
 
 

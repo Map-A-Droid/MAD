@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
 from typing import Optional, AsyncGenerator, Union
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.utils.apk_enums import APKArch, APKType

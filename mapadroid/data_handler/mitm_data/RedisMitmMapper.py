@@ -2,9 +2,9 @@ import time
 from typing import Optional, List, Dict, Union
 
 import ujson
+from aiocache import cached
 from aioredis import Redis
 from loguru import logger
-from aiocache import cached
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry

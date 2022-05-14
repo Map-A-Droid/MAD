@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List
 
 from aiohttp import web
 from aiohttp.abc import Request

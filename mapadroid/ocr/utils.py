@@ -2,8 +2,8 @@ from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
-from loguru import logger
 from PIL import Image
+from loguru import logger
 from pytesseract import Output, pytesseract
 
 from mapadroid.ocr.screen_type import ScreenType
