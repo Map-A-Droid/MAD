@@ -71,7 +71,7 @@ class PlayerStats(AbstractStatsHolder):
     def stats_collect_location_data(self, location: Optional[Location], success: bool, fix_timestamp: int,
                                     position_type: PositionType, data_timestamp: int, worker_type: WorkerType,
                                     transport_type: TransportType, timestamp_of_record: int):
-        if self._stats_location_raw_holder and location:
+        if self._stats_location_raw_holder and location is not None:
             self._stats_location_raw_holder.add_location(location, success, fix_timestamp, position_type,
                                                          data_timestamp, worker_type, transport_type,
                                                          timestamp_of_record)
