@@ -546,13 +546,17 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                                               self._worker_state.current_location.lat,
                                                                               self._worker_state.current_location.lng)
             raise AbortStopProcessingException("Stop not present")
-        elif stop_type in (PositionStopType.STOP_CLOSED, PositionStopType.STOP_COOLDOWN,
-                           PositionStopType.STOP_DISABLED):
+        elif stop_type in (PositionStopType.STOP_CLOSED, PositionStopType.STOP_DISABLED):
             logger.info("Stop at {}, {} cannot be spun at the moment ({})",
                         self._worker_state.current_location.lat,
                         self._worker_state.current_location.lng,
                         stop_type)
             raise AbortStopProcessingException("Stop cannot be spun at the moment")
+        elif stop_type == PositionStopType.STOP_COOLDOWN:
+            logger.info("Stop at {}, {} assumed to be spun already, we got cooldown ({})",
+                        self._worker_state.current_location.lat,
+                        self._worker_state.current_location.lng,
+                        stop_type)
         elif stop_type == PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE:
             logger.info("Stop at {}, {} has been spun before and is to be ignored in the next round.")
             await self._mapping_manager.routemanager_add_coords_to_be_removed(self._area_id,
