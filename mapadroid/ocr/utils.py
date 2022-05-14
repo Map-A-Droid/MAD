@@ -186,39 +186,3 @@ def get_screen_text(screenpath: str, identifier) -> Optional[dict]:
         else:
             logger.warning("Could not read text in image: {}", returning_dict)
             return None
-
-
-def get_inventory_text(temp_dir_path: str, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
-    with logger.contextualize(identifier=identifier):
-        screenshot_read = cv2.imread(filename)
-        temp_path_item = temp_dir_path + "/" + str(identifier) + "_inventory.png"
-        height = x1 - x2
-        width = y1 - y2
-        gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
-        del screenshot_read
-        gray_partial = gray[int(y2):(int(y2) + int(width)), int(x2):(int(x2) + int(height))]
-        del gray
-        scale_percent = 200  # percent of original size
-        scaled_width = int(gray_partial.shape[1] * scale_percent / 100)
-        scaled_height = int(gray_partial.shape[0] * scale_percent / 100)
-        dim = (scaled_width, scaled_height)
-
-        # resize image
-        interpolated_gray = cv2.resize(gray_partial, dim, interpolation=cv2.INTER_AREA)
-        del gray_partial
-        imwrite_status = cv2.imwrite(temp_path_item, interpolated_gray)
-        del interpolated_gray
-        if not imwrite_status:
-            logger.error("Could not save file: {} - check permissions and path", temp_path_item)
-            return None
-        try:
-            with Image.open(temp_path_item) as im:
-                try:
-                    text = pytesseract.image_to_string(im)
-                except Exception as e:
-                    logger.error("Error running tesseract on inventory text: {}", e)
-                    return None
-        except (FileNotFoundError, ValueError) as e:
-            logger.error("Failed opening image {} with exception {}", temp_path_item, e)
-            return None
-        return text

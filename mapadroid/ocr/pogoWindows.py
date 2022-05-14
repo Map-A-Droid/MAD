@@ -9,10 +9,9 @@ import cv2
 import numpy as np
 from loguru import logger
 
-from mapadroid.ocr.matching_trash import trash_image_matching
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.ocr.utils import check_pogo_mainscreen, screendetection_get_type_internal, most_frequent_colour_internal, \
-    get_screen_text, get_inventory_text
+    get_screen_text
 from mapadroid.utils.AsyncioCv2 import AsyncioCv2
 from mapadroid.utils.AsyncioOsUtil import AsyncioOsUtil
 from mapadroid.utils.collections import ScreenCoordinates
@@ -87,14 +86,6 @@ class PogoWindows:
         else:
             logger.debug("__read_circles: Determined screenshot to have 0 Circle")
             return circles_found
-
-    async def get_trash_click_positions(self, filename, full_screen=False) -> List[ScreenCoordinates]:
-        if not await AsyncioOsUtil.isfile(filename):
-            logger.error("get_trash_click_positions: {} does not exist", filename)
-            return []
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(self.__process_executor_pool, trash_image_matching,
-                                          filename, full_screen)
 
     async def look_for_button(self, filename, ratiomin, ratiomax,
                               upper: bool = False) -> Optional[ScreenCoordinates]:
@@ -368,15 +359,6 @@ class PogoWindows:
                 logger.debug("Found close button (X). Ratio: {}", ratio_to_use)
                 return coordinates_of_close_found
         return []
-
-    async def get_inventory_text(self, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
-        if not await AsyncioOsUtil.isfile(filename):
-            logger.error("get_inventory_text: {} does not exist", filename)
-            return None
-
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(self.__process_executor_pool, get_inventory_text,
-                                          self.temp_dir_path, filename, identifier, x1, x2, y1, y2)
 
     async def check_pogo_mainscreen(self, filename, identifier) -> bool:
         if not await AsyncioOsUtil.isfile(filename):
