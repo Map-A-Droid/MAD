@@ -1,12 +1,14 @@
 import dataclasses
 from typing import Optional
 
+from marshmallow_enum import EnumField
+
 from mapadroid.updater import JobType
 
 
 @dataclasses.dataclass
 class SubJob:
-    TYPE: JobType
+    TYPE: EnumField(JobType)
     SYNTAX: str
     FIELDNAME: Optional[str]
     WAITTIME: Optional[int]

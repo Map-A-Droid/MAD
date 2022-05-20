@@ -1,6 +1,8 @@
 import dataclasses
 from typing import Optional, List
 
+from marshmallow_enum import EnumField
+
 from mapadroid.updater.Autocommand import Autocommand
 from mapadroid.updater.JobStatus import JobStatus
 from mapadroid.updater.SubJob import SubJob
@@ -12,8 +14,8 @@ class GlobalJobLogEntry:
     origin: str
     job_name: str
     sub_jobs: List[SubJob]
-    status: JobStatus = JobStatus.PENDING
-    last_status: JobStatus = JobStatus.INIT
+    status: EnumField(JobStatus) = JobStatus.PENDING
+    last_status: EnumField(JobStatus) = JobStatus.INIT
     counter: int = 0
     auto_command_settings: Optional[Autocommand] = None
     # Timestamp of the time the job was last processed
