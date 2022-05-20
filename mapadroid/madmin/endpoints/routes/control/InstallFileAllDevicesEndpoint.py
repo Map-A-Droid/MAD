@@ -24,7 +24,7 @@ class InstallFileAllDevicesEndpoint(AbstractControlEndpoint):
         devices = await self._get_mapping_manager().get_all_devicenames()
         for device in devices:
             job_id: int = int(math.ceil(time.time()))
-            await self._get_device_updater().preadd_job(device, jobname, job_id, job_type_raw)
+            await self._get_device_updater().add_job(device, jobname, job_id, job_type_raw)
             await asyncio.sleep(1)
 
         await self._add_notice_message('Job successfully queued')

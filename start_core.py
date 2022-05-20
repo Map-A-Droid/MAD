@@ -31,7 +31,7 @@ from mapadroid.utils.madGlobals import application_args, terminate_mad
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.rarity import Rarity
-from mapadroid.utils.updater import DeviceUpdater
+from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -137,7 +137,7 @@ async def start():
     await ws_server.start_server()
 
     device_updater = DeviceUpdater(ws_server, application_args, jobstatus, db_wrapper, storage_elem)
-    await device_updater.init_jobs()
+    await device_updater.start_updater()
     if not application_args.config_mode:
         if application_args.webhook:
             rarity = Rarity(application_args, db_wrapper)

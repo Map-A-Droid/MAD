@@ -48,3 +48,4 @@ websockets==10.3
 Werkzeug==2.1.2
 yarl==1.7.2
 beautifulsoup4==4.11.1
+marshmallow-dataclass==8.5.8

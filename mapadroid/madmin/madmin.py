@@ -26,7 +26,7 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.utils.JinjaFilters import base64Filter, mad_json_filter, subapp_url, subapp_static
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.questGen import QuestGen
-from mapadroid.utils.updater import DeviceUpdater
+from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 logger = get_logger(LoggerEnums.madmin)
@@ -34,7 +34,7 @@ logger = get_logger(LoggerEnums.madmin)
 
 class MADmin(object):
     def __init__(self, args, db_wrapper: DbWrapper, ws_server: WebsocketServer, mapping_manager: MappingManager,
-                 device_updater: DeviceUpdater, jobstatus, storage_obj, quest_gen: QuestGen):
+                 device_updater: DeviceUpdater, storage_obj, quest_gen: QuestGen):
         # Determine if there are duplicate MACs
         self._quest_gen: QuestGen = quest_gen
         self._db_wrapper: DbWrapper = db_wrapper
@@ -44,7 +44,6 @@ class MADmin(object):
         self._storage_obj = storage_obj
         self._device_updater: DeviceUpdater = device_updater
         self._ws_server: WebsocketServer = ws_server
-        self._jobstatus = jobstatus
         self._plugin_hotlink: list = []
         self.__init_app()
 

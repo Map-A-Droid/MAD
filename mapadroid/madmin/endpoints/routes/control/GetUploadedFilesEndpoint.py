@@ -14,4 +14,4 @@ class GetUploadedFilesEndpoint(AbstractControlEndpoint):
     async def get(self) -> web.Response:
         # TODO: Async exec?
         return await self._json_response(
-            uploaded_files(self._datetimeformat, self._get_device_updater().return_commands()))
+            uploaded_files(self._datetimeformat, self._get_device_updater().get_available_jobs()))

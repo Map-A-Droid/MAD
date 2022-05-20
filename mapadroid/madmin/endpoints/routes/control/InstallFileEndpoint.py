@@ -7,7 +7,7 @@ import aiohttp_jinja2
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
-from mapadroid.utils.updater import JobType
+from mapadroid.updater.JobType import JobType
 
 
 class InstallFileEndpoint(AbstractControlEndpoint):
@@ -39,11 +39,11 @@ class InstallFileEndpoint(AbstractControlEndpoint):
                 else:
                     await self._add_notice_message('File could not be installed successfully :(')
             else:
-                await self._get_device_updater().preadd_job(origin, jobname, int(time.time()), job_type)
+                await self._get_device_updater().add_job(origin, jobname, int(time.time()), job_type)
                 await self._add_notice_message('Job successfully queued --> See Job Status')
 
         elif int(job_type) != JobType.INSTALLATION.value:
-            await self._get_device_updater().preadd_job(origin, jobname, int(time.time()), job_type)
+            await self._get_device_updater().add_job(origin, jobname, int(time.time()), job_type)
             await self._add_notice_message('Job successfully queued --> See Job Status')
         await self._redirect(self._url_for('uploaded_files'))
 

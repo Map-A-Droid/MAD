@@ -16,7 +16,7 @@ class GetInstallLogEndpoint(AbstractControlEndpoint):
         withautojobs_raw: Optional[str] = self.request.query.get('withautojobs')
         withautojobs: bool = True if withautojobs_raw == "True" else False
         return_log = []
-        log = self._get_device_updater().get_log(withautojobs=withautojobs)
+        log = self._get_device_updater().get_log(including_auto_jobs=withautojobs)
         for entry in log:
             if 'jobname' not in entry:
                 entry['jobname'] = entry.get('file', 'Unknown Name')
