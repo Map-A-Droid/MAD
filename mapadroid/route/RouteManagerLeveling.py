@@ -98,7 +98,7 @@ class RouteManagerLeveling(RouteManagerBase):
         coords: List[Location] = []
         for stop in unvisited_stops:
             coords.append(Location(float(stop.latitude), float(stop.longitude)))
-        new_route: list[Location] = await RoutecalcUtil.calculate_route(self.db_wrapper,
+        new_route: List[Location] = await RoutecalcUtil.calculate_route(self.db_wrapper,
                                                                         self._routecalc.routecalc_id,
                                                                         coords,
                                                                         self.get_max_radius(),
