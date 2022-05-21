@@ -619,7 +619,7 @@ class WebhookWorker:
                             self.__pokemon_types.add(vmtype)
             else:
                 for valid_mon_type in self.__valid_mon_types:
-                    self.__webhook_types.add(valid_mon_type.name)
+                    self.__pokemon_types.add(valid_mon_type)
                 for valid_type in self.__valid_types:
                     self.__webhook_types.add(valid_type)
 
