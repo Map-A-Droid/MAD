@@ -94,7 +94,7 @@ class RouteManagerLeveling(RouteManagerBase):
                     logger.warning("Failed storing last walker positions: {}", e)
                 return routepool
 
-    async def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]) -> list[Location]:
+    async def _local_recalc_subroute(self, unvisited_stops: List[Pokestop]) -> List[Location]:
         coords: List[Location] = []
         for stop in unvisited_stops:
             coords.append(Location(float(stop.latitude), float(stop.longitude)))
