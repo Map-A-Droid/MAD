@@ -10,6 +10,7 @@ from aiohttp.typedefs import LooseHeaders, StrOrURL
 from aiohttp_remotes.exceptions import TooManyHeaders
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
+from yarl import URL
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import Base
@@ -190,4 +191,4 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         prefix = "" if not forwarded_path else forwarded_path
         path_constructed = self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
         logger.info("Constructed path {}", path_constructed)
-        return path_constructed
+        return URL(prefix).join(path_constructed)

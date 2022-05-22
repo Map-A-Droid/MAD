@@ -42,7 +42,7 @@ class XPathForwarded(XForwardedBase):
             host = self.get_forwarded_host(headers)
             if host is not None:
                 overrides['host'] = host
-
+            request_path = None
             prefix = self.get_forwarded_path(headers)
             if prefix is not None:
                 prefix = '/' + prefix.strip('/') + '/'
@@ -50,7 +50,8 @@ class XPathForwarded(XForwardedBase):
                 overrides['rel_url'] = URL(prefix).join(request_path)
 
             request = request.clone(**overrides)
-
+            logger.warning("Handling request to {} ({})", request.path,
+                           request_path)
             return await handler(request)
         except RemoteError as exc:
             exc.log(request)
