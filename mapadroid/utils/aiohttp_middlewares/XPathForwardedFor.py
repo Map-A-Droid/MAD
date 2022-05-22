@@ -24,7 +24,9 @@ class XPathForwarded(XForwardedBase):
 
     @web.middleware
     async def middleware(self, request, handler):
-        logger.warning("Using middleware to read header {}.", X_FORWARDED_PATH)
+        logger.warning("Using middleware to read header {} of request to {}.",
+                       X_FORWARDED_PATH,
+                       request.path)
         try:
             overrides = {}
             headers = request.headers
