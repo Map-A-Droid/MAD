@@ -191,4 +191,6 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         prefix = "" if not forwarded_path else forwarded_path
         path_constructed = self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
         logger.info("Constructed path {}", path_constructed)
-        return URL(prefix).join(path_constructed)
+        prefixed = URL(prefix).join(path_constructed)
+        logger.info("Prefixed: {}", prefixed)
+        return prefixed
