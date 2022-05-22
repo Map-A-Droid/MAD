@@ -11,19 +11,30 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
 from mapadroid.madmin.endpoints.api.apks import register_api_apk_endpoints
-from mapadroid.madmin.endpoints.api.autoconf import register_api_autoconf_endpoints
-from mapadroid.madmin.endpoints.api.resources import register_api_resources_endpoints
+from mapadroid.madmin.endpoints.api.autoconf import \
+    register_api_autoconf_endpoints
+from mapadroid.madmin.endpoints.api.resources import \
+    register_api_resources_endpoints
 from mapadroid.madmin.endpoints.routes import register_routes_root_endpoints
 from mapadroid.madmin.endpoints.routes.apk import register_routes_apk_endpoints
-from mapadroid.madmin.endpoints.routes.autoconfig import register_routes_autoconfig_endpoints
-from mapadroid.madmin.endpoints.routes.control import register_routes_control_endpoints
-from mapadroid.madmin.endpoints.routes.event import register_routes_event_endpoints
+from mapadroid.madmin.endpoints.routes.autoconfig import \
+    register_routes_autoconfig_endpoints
+from mapadroid.madmin.endpoints.routes.control import \
+    register_routes_control_endpoints
+from mapadroid.madmin.endpoints.routes.event import \
+    register_routes_event_endpoints
 from mapadroid.madmin.endpoints.routes.map import register_routes_map_endpoints
-from mapadroid.madmin.endpoints.routes.misc import register_routes_misc_endpoints
-from mapadroid.madmin.endpoints.routes.settings import register_routes_settings_endpoints
-from mapadroid.madmin.endpoints.routes.statistics import register_routes_statistics_endpoints
+from mapadroid.madmin.endpoints.routes.misc import \
+    register_routes_misc_endpoints
+from mapadroid.madmin.endpoints.routes.settings import \
+    register_routes_settings_endpoints
+from mapadroid.madmin.endpoints.routes.statistics import \
+    register_routes_statistics_endpoints
 from mapadroid.mapping_manager import MappingManager
-from mapadroid.utils.JinjaFilters import base64Filter, mad_json_filter, subapp_url, subapp_static
+from mapadroid.utils.aiohttp_middlewares.XPathForwardedFor import \
+    XPathForwarded
+from mapadroid.utils.JinjaFilters import (base64Filter, mad_json_filter,
+                                          subapp_static, subapp_url)
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.updater import DeviceUpdater
@@ -98,6 +109,9 @@ class MADmin(object):
         self._app['device_updater'] = self._device_updater
         self._app['quest_gen'] = self._quest_gen
         self._app['mon_name_cache'] = {}
+
+        reverse_proxied = XPathForwarded()
+        self._app.middlewares.append(reverse_proxied.middleware)
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader([template_folder_path]))
         jinja2_env.filters["base64"] = base64Filter
         jinja2_env.filters["madJson"] = mad_json_filter
