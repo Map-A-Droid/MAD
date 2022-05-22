@@ -7,6 +7,7 @@ from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders, StrOrURL
+from aiohttp_remotes.exceptions import TooManyHeaders
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +16,7 @@ from mapadroid.db.model import Base
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
+from mapadroid.utils.aiohttp_middlewares.XPathForwardedFor import X_FORWARDED_PATH
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.madGlobals import WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException
 from mapadroid.utils.questGen import QuestGen
@@ -173,9 +175,19 @@ class AbstractMadminRootEndpoint(web.View, ABC):
     def __json_dumps_proxy(data):
         return json.dumps(data, indent=None, cls=MADEncoder)
 
+    def get_forwarded_path(self, headers):
+        forwarded_host = headers.getall(X_FORWARDED_PATH, [])
+        if len(forwarded_host) > 1:
+            raise TooManyHeaders(X_FORWARDED_PATH)
+        return forwarded_host[0] if forwarded_host else None
+
     def _url_for(self, path_name: str, query: Optional[Dict] = None, dynamic_path: Optional[Dict] = None):
         if dynamic_path is None:
             dynamic_path = {}
         if query is None:
             query = {}
-        return self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
+        forwarded_path: Optional[str] = self.get_forwarded_path(self.request.headers)
+        prefix = "" if not forwarded_path else forwarded_path
+        path_constructed = self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
+        logger.info("Constructed path {}", path_constructed)
+        return path_constructed
