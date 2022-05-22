@@ -31,10 +31,10 @@ from mapadroid.madmin.endpoints.routes.settings import \
 from mapadroid.madmin.endpoints.routes.statistics import \
     register_routes_statistics_endpoints
 from mapadroid.mapping_manager import MappingManager
-from mapadroid.utils.aiohttp_middlewares.XPathForwardedFor import \
+from mapadroid.utils.aiohttp.XPathForwardedFor import \
     XPathForwarded
 from mapadroid.utils.JinjaFilters import (base64Filter, mad_json_filter,
-                                          subapp_static, subapp_url)
+                                          subapp_static, subapp_url, url_for_forwarded)
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.updater import DeviceUpdater
@@ -98,6 +98,7 @@ class MADmin(object):
         self._app['static_root_url'] = '/static'
         self._app['UPLOAD_FOLDER'] = 'temp'
         self._app['MAX_CONTENT_LENGTH'] = client_max_size
+        # TODO: Randomize once?
         self._app.secret_key = "8bc96865945be733f3973ba21d3c5949"
         self._app['SEND_FILE_MAX_AGE_DEFAULT'] = 0
         self._app['db_wrapper'] = self._db_wrapper
@@ -115,6 +116,7 @@ class MADmin(object):
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader([template_folder_path]))
         jinja2_env.filters["base64"] = base64Filter
         jinja2_env.filters["madJson"] = mad_json_filter
+        jinja2_env.globals['url'] = url_for_forwarded
         jinja2_env.globals['subapp_url'] = subapp_url
         jinja2_env.globals['subapp_static'] = subapp_static
         register_routes_root_endpoints(self._app)
