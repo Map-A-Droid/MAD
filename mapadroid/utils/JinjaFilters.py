@@ -7,6 +7,9 @@ from yarl import URL
 
 from mapadroid.utils.aiohttp import prefix_url_with_forwarded_path_if_applicable
 from mapadroid.utils.json_encoder import MADEncoder
+from mapadroid.utils.logging import LoggerEnums, get_logger
+
+logger = get_logger(LoggerEnums.system)
 
 
 def base64Filter(input: str) -> str:
@@ -64,6 +67,7 @@ def url_for_forwarded(context,
                       **parts: Union[str, int]
                       ) -> URL:
     # TODO: Reduce copypasta by setting subapp default to None?
+    logger.info("vars: {}", context.vars)
     request = context["request"]
     app = context["app"]
 
