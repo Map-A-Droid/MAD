@@ -104,7 +104,7 @@
 
     {% if walkers.items()|length == 0 %}
         <div class="alert alert-warning">Couldn't find any walker configurations. Please <a
-                href="{{ url('settings_walkers', query_={'id': 'new'}) }}">create</a> one first.
+                href="{{ url(request, 'settings_walkers', query_={'id': 'new'}) }}">create</a> one first.
         </div>
     {% else %}
         <div class="row">

@@ -25,12 +25,12 @@ def mad_json_filter(input: object) -> str:
 
 @jinja2.pass_context
 def subapp_url(context,
+               request,
                subapp_name: str,
                __route_name: str,
                query_: Optional[Dict[str, str]] = None,
                **parts: Union[str, int]
                ) -> URL:
-    request = context["request"]
     # allows chaining of subapps...
     subapps = subapp_name.split("/")
     app = context["app"]
@@ -62,13 +62,13 @@ def subapp_url(context,
 
 @jinja2.pass_context
 def url_for_forwarded(context,
+                      request,
                       __route_name: str,
                       query_: Optional[Dict[str, str]] = None,
                       **parts: Union[str, int]
                       ) -> URL:
     # TODO: Reduce copypasta by setting subapp default to None?
     logger.info("vars: {}", context.items)
-    request = context["request"]
     app = context["app"]
 
     parts_clean: Dict[str, str] = {}

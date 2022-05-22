@@ -52,7 +52,7 @@
                     'call': 'recalculate'
                 }
                 $.ajax({
-                    url: '{{ url('api_area') }}/' + $(this).data('area'),
+                    url: '{{ url(request, 'api_area') }}/' + $(this).data('area'),
                     contentType: 'application/json-rpc',
                     data: JSON.stringify(rpc_call),
                     type: 'POST',
@@ -74,7 +74,7 @@
 
         function check_recalc_status() {
             $.ajax({
-                url: '{{ url('recalc_status') }}',
+                url: '{{ url(request, 'recalc_status') }}',
                 type: 'GET',
                 success: function (data, status, xhr) {
                     if (xhr.status === 200) {
@@ -171,22 +171,22 @@
                             </button>
                             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                 <a class="dropdown-item"
-                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'idle'}) }}">Idle <span
+                                   href="{{ url(request, 'settings_areas', query_={'id': 'new', 'mode': 'idle'}) }}">Idle <span
                                         class="badge badge-secondary">idle</span></a>
                                 <a class="dropdown-item"
-                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'iv_mitm'}) }}">Mon IV
+                                   href="{{ url(request, 'settings_areas', query_={'id': 'new', 'mode': 'iv_mitm'}) }}">Mon IV
                                     scanner <span class="badge badge-secondary">iv_mitm</span></a>
                                 <a class="dropdown-item"
-                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'mon_mitm'}) }}">General
+                                   href="{{ url(request, 'settings_areas', query_={'id': 'new', 'mode': 'mon_mitm'}) }}">General
                                     mon scanner <span class="badge badge-secondary">mon_mitm</span></a>
                                 <a class="dropdown-item"
-                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'pokestops'}) }}">Quest
+                                   href="{{ url(request, 'settings_areas', query_={'id': 'new', 'mode': 'pokestops'}) }}">Quest
                                     scanner <span class="badge badge-secondary">pokestops</span></a>
                                 <a class="dropdown-item"
-                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'raids_mitm'}) }}">Raid
+                                   href="{{ url(request, 'settings_areas', query_={'id': 'new', 'mode': 'raids_mitm'}) }}">Raid
                                     scanner <span class="badge badge-secondary">raids_mitm</span></a>
                                 <a class="dropdown-item"
-                                   href="{{ url('settings_areas', query_={'id': 'new', 'mode': 'init'}) }}">Init
+                                   href="{{ url(request, 'settings_areas', query_={'id': 'new', 'mode': 'init'}) }}">Init
                                     scanner<span class="badge badge-secondary">init</span></a>
                                 <a class="dropdown-item" target="_blank"
                                    href="https://mad-docs.readthedocs.io/en/latest/faq/#what-s-the-difference-between-these-scanning-modes"><i
@@ -203,7 +203,7 @@
                     {% for area_id, area in section.items() %}
                         <tr class="area_container" data-area='{{ area_id }}'>
                             <td class="align-middle">
-                                <a href="{{ url('settings_areas', query_={'id': area_id, 'mode': area.mode}) }}">{{ area.name }}</a>
+                                <a href="{{ url(request, 'settings_areas', query_={'id': area_id, 'mode': area.mode}) }}">{{ area.name }}</a>
                             </td>
                             <td><small class="badge badge-secondary">{{ area.mode }}</small></td>
                             <td class="d-none d-lg-table-cell">
@@ -213,14 +213,14 @@
                                             {% if key == "monlist_id" %}
                                                 {% if area.monlist_id in monlist %}
                                                     {{ key }}:
-                                                    <a href="{{ url('settings_ivlists', query_={'id': area.monlist_id}) }}">{{ monlist[area.monlist_id].name }}</a>
+                                                    <a href="{{ url(request, 'settings_ivlists', query_={'id': area.monlist_id}) }}">{{ monlist[area.monlist_id].name }}</a>
                                                     <br>
                                                 {% else %}
                                                     {{ key }}:
                                                     <b><font color="red">ERROR IN IV LIST - CHECK IT</font></b>
                                                 {% endif %}
                                             {% elif key in ["geofence_included", "geofence_excluded"] %}
-                                                {{ key }}: <a href="{{ url('settings_geofence', query_={'id': value}) }}">{{ fences[value | int].name }}</a>
+                                                {{ key }}: <a href="{{ url(request, 'settings_geofence', query_={'id': value}) }}">{{ fences[value | int].name }}</a>
                                                 <br>
                                             {% else %}
                                                 {{ key }}: {{ value }}<br>
@@ -230,7 +230,7 @@
                                 </p>
                             </td>
                             <td class="text-right align-middle">
-                                <a href="{{ url('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}">
+                                <a href="{{ url(request, 'settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}">
                                     <button type="button" class="btn btn-success btn-sm edit" data-toggle="tooltip"
                                             title="Edit calculated route"><i class="fas fa-route"></i></button>
                                 </a>

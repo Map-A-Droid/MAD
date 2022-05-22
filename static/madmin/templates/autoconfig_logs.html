@@ -16,7 +16,7 @@
     var errorCount = 0;
     var dataTable = $("#show-data-status").DataTable({
             "ajax": {
-                "url": "{{ url('autoconfig_root') }}/logs/{{ session_id }}/update",
+                "url": "{{ url(request, 'autoconfig_root') }}/logs/{{ session_id }}/update",
                 "dataSrc": function (data) {
                         errorCount = 0;
                         return data;
@@ -24,7 +24,7 @@
                 "error": function (xhr, error, code) {
                     if(xhr.status == 302) {
                         alert('Session has completed or has been deleted.  Returning to pending page');
-                        location.href = '{{ url('autoconfig_root') }}';
+                        location.href = '{{ url(request, 'autoconfig_root') }}';
                     }
                     console.log(xhr);
                     console.log(error);

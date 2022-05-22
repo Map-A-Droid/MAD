@@ -31,7 +31,7 @@
                     loadingBlockUI("Bulk Updating")
                     var status = $(".bulk_update").val() == 'Accept';
                     $.each($('.bulk_sel:checkbox:checked'), function () {
-                        uri = '{{ url('api_autoconf') }}/' + $(this).data('identifier');
+                        uri = '{{ url(request, 'api_autoconf') }}/' + $(this).data('identifier');
                         bulk_status_update(uri, {'status': status});
                     });
                 }
@@ -42,7 +42,7 @@
                 if (confirm('Are you sure you want to delete this session?')) {
                     loadingBlockUI("Updating registration")
                     $.ajax({
-                        url: '{{ url('api_autoconf') }}/' + session_id,
+                        url: '{{ url(request, 'api_autoconf') }}/' + session_id,
                         type: 'DELETE',
                         success: function (data, status, xhr) {
                             if (xhr.status == 200) {
@@ -59,12 +59,12 @@
             });
 
             $(".download_config").click(function () {
-                window.location.href = "{{ url('autoconfig_download_file') }}";
+                window.location.href = "{{ url(request, 'autoconfig_download_file') }}";
             });
 
             $(".sess_logs").click(function () {
                 var session_id = $(this).data('identifier');
-                window.location.replace('{{ url('autoconfig_root') }}/logs/' + session_id);
+                window.location.replace('{{ url(request, 'autoconfig_root') }}/logs/' + session_id);
             });
 
             $(".reg_status").click(function () {
@@ -80,7 +80,7 @@
                 if (confirm('Are you sure you want to ' + msg + ' this session?  ' + additional)) {
                     loadingBlockUI("Updating registration")
                     $.ajax({
-                        url: '{{ url('api_autoconf') }}/' + session_id,
+                        url: '{{ url(request, 'api_autoconf') }}/' + session_id,
                         contentType: 'application/json',
                         data: JSON.stringify({'status': accepted}),
                         type: 'POST',
@@ -157,14 +157,14 @@
                             </td>
                             <td class="align-middle">
                                 {% if not issues_critical %}
-                                    <a href="{{ url('autoconfig_pending_dev', session_id=autoconf_reg.session_id) }}">{{ autoconf_reg.ip }}</a>
+                                    <a href="{{ url(request, 'autoconfig_pending_dev', session_id=autoconf_reg.session_id) }}">{{ autoconf_reg.ip }}</a>
                                 {% else %}
                                     {{ autoconf_reg.ip }}
                                 {% endif %}
                             </td>
                             <td class="align-middle">
                                 {% if settings_dev is not none %}
-                                    <a href="{{ url('settings_devices', query_={'id': settings_dev.device_id}) }}">{{ settings_dev.name }}</a>
+                                    <a href="{{ url(request, 'settings_devices', query_={'id': settings_dev.device_id}) }}">{{ settings_dev.name }}</a>
                                 {% else %}
                                     {{ '' }}
                                 {% endif %}

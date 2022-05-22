@@ -92,20 +92,20 @@
                         <th class="align-middle">Setting</th>
                         <th class="align-middle">Max devices</th>
                         <th class="align-middle">Event</th>
-                        <th>{% if uri != url('api_walker') %}<a href='{{ url('settings_walker_area', query_={'id': identifier}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
+                        <th>{% if uri != url(request, 'api_walker') %}<a href='{{ url(request, 'settings_walker_area', query_={'id': identifier}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
                     </tr>
                 </tbody>
                 <tbody class="row_position ui-sortable">
                     {% for walkerarea in walkerareas %}
                         <tr id='{{ walkerarea.walkerarea_id }}'>
                             <td><i class="fa fa-fw fa-sort handle ui-sortable-handle"></i></td>
-                            <td class='name' data-save='{{ walkerarea.name }}' data-walkertext='{{ walkerarea.name }}'><a href="{{ url('settings_areas', query_={'id': walkerarea.area_id, 'mode': areas[walkerarea.area_id].mode} ) }}">{{ areas[walkerarea.area_id].name }}</a><br>{% if walkerarea.name %}{{ walkerarea.name }}{% endif %}</td>
+                            <td class='name' data-save='{{ walkerarea.name }}' data-walkertext='{{ walkerarea.name }}'><a href="{{ url(request, 'settings_areas', query_={'id': walkerarea.area_id, 'mode': areas[walkerarea.area_id].mode} ) }}">{{ areas[walkerarea.area_id].name }}</a><br>{% if walkerarea.name %}{{ walkerarea.name }}{% endif %}</td>
                             <td class='algo_type' data-save='{{ walkerarea.algo_type }}'>{{ walkerarea.algo_type }}</td>
                             <td class='algo_value' data-save='{{ walkerarea.algo_value }}'>{{ walkerarea.algo_value }}</td>
                             <td class='max_walkers' data-save='{{ walkerarea.max_walkers }}'>{{ walkerarea.max_walkers if walkerarea.max_walkers else "-" }}</td>
                             <td class='eventid' data-save='{{ walkerarea.eventid }}'>{{ walkerarea.eventid }}</td>
                             <td>
-                                <a href="{{ url('settings_walker_area',query_={'id': element.walker_id, 'walkerarea': walkerarea.walkerarea_id}) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+                                <a href="{{ url(request, 'settings_walker_area',query_={'id': element.walker_id, 'walkerarea': walkerarea.walkerarea_id}) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
                                 <button type="button" class="btn btn-danger btn-sm delete" data-identifier="{{ loop.index }}"><i class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>
