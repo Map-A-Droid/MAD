@@ -67,7 +67,7 @@ def url_for_forwarded(context,
                       **parts: Union[str, int]
                       ) -> URL:
     # TODO: Reduce copypasta by setting subapp default to None?
-    logger.info("vars: {}", context.vars)
+    logger.info("vars: {}", context.items)
     request = context["request"]
     app = context["app"]
 
