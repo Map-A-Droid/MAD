@@ -300,12 +300,12 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
         delay_used = math.floor(delay_used)
         if delay_used <= 0:
-            self._worker_state.current_sleep_time = 0
+            self._worker_state.current_sleep_duration = 0
             logger.info('No need to wait before spinning, continuing...')
         else:
             logger.info("Real sleep time: {} seconds: next action {}", delay_used,
                         DatetimeWrapper.now() + timedelta(seconds=delay_used))
-            self._worker_state.current_sleep_time = delay_used
+            self._worker_state.current_sleep_duration = delay_used
             await self.worker_stats()
 
             await self._mapping_manager.routemanager_set_worker_sleeping(self._area_id,
@@ -315,7 +315,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 if not await self._mapping_manager.routemanager_present(self._area_id) \
                         or self._worker_state.stop_worker_event.is_set():
                     logger.error("Worker was killed while sleeping")
-                    self._worker_state.current_sleep_time = 0
+                    self._worker_state.current_sleep_duration = 0
                     raise InternalStopWorkerException("Worker has been removed from routemanager or is supposed to stop"
                                                       "during the move to a location")
                 await asyncio.sleep(1)
@@ -326,7 +326,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             elif delay_used > 0:
                 cur_time -= delay_used
 
-        self._worker_state.current_sleep_time = 0
+        self._worker_state.current_sleep_duration = 0
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION,
                                             self._worker_state.current_location)
         self._worker_state.last_location = self._worker_state.current_location
