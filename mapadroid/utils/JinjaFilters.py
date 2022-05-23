@@ -93,7 +93,7 @@ def url_for_forwarded(context,
         url = url.with_query(query_)
     forwarded_path: Optional[str] = context.get(FORWARDED_PATH_KEY)
     final_url = add_prefix_to_url(forwarded_path, url)
-    logger.debug("new url: {}", final_url)
+    logger.debug("new url: {}, prefix: {}", final_url, forwarded_path)
     return final_url
 
 
