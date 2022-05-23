@@ -2,7 +2,9 @@ from typing import Optional
 from yarl import URL
 
 from aiohttp_remotes.exceptions import TooManyHeaders
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
+logger = get_logger(LoggerEnums.system)
 X_FORWARDED_PATH = "X-Forwarded-Path"
 
 
@@ -19,7 +21,8 @@ def prefix_url_with_forwarded_path(headers, url: URL) -> URL:
 
 
 def add_prefix_to_url(prefix: Optional[str], url: URL) -> URL:
-    if not prefix:
+    logger.debug("Prefix to be prepended to {}: {}", url, prefix)
+    if prefix is None or len(prefix) == 0:
         return url
     else:
         return URL(prefix).join(url)
