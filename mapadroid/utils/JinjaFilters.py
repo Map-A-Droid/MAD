@@ -56,7 +56,7 @@ def subapp_url(context,
     url = app.router[__route_name].url_for(**parts_clean)
     if query_:
         url = url.with_query(query_)
-    return prefix_url_with_forwarded_path_if_applicable(context['request'].headers, url)
+    return prefix_url_with_forwarded_path_if_applicable(context['request_headers'], url)
 
 
 @jinja2.pass_context
@@ -89,7 +89,7 @@ def url_for_forwarded(context,
     url = app.router[__route_name].url_for(**parts_clean)
     if query_:
         url = url.with_query(query_)
-    return prefix_url_with_forwarded_path_if_applicable(context['request'].headers, url)
+    return prefix_url_with_forwarded_path_if_applicable(context['request_headers'], url)
 
 
 @jinja2.pass_context
