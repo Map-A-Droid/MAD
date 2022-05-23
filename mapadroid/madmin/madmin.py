@@ -94,6 +94,7 @@ class MADmin(object):
         self._app = web.Application(client_max_size=client_max_size)
         static_folder_path = os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static')
         template_folder_path = os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates')
+        # TODO: Static assets need to support the x-forwarded-path
         self._app.router.add_static("/static", static_folder_path, append_version=True)
         self._app['static_root_url'] = '/static'
         self._app['UPLOAD_FOLDER'] = 'temp'

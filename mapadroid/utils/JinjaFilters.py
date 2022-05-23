@@ -67,7 +67,6 @@ def url_for_forwarded(context,
                       **parts: Union[str, int]
                       ) -> URL:
     # TODO: Reduce copypasta by setting subapp default to None?
-    logger.info("vars: {}", context.items)
     app = context["app"]
 
     parts_clean: Dict[str, str] = {}
@@ -85,7 +84,6 @@ def url_for_forwarded(context,
                 "argument value should be str or int, "
                 "got {} -> [{}] {!r}".format(key, type(val), val)
             )
-        logger.debug("Adding part {}", key)
         parts_clean[key] = val
     router = app.router[__route_name]
     url = router.url_for(**parts_clean)
@@ -93,7 +91,6 @@ def url_for_forwarded(context,
         url = url.with_query(query_)
     forwarded_path: Optional[str] = context.get(FORWARDED_PATH_KEY)
     final_url = add_prefix_to_url(forwarded_path, url)
-    logger.debug("new url: {}, prefix: {}", final_url, forwarded_path)
     return final_url
 
 
