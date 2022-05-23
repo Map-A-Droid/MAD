@@ -63,7 +63,7 @@ $(document).ready(function() {
     loadingBlockUI("Loading")
     $.ajax({
         type: "GET",
-        url: "{{ url(request, 'get_quests') }}?fence={{fence}}",
+        url: "{{ url('get_quests') }}?fence={{fence}}",
         success: function (result) {
             setGrid('#show-data', result);
         },
@@ -74,9 +74,9 @@ $(document).ready(function() {
     $('#area').change(function() {
         area = $(this).find("option:selected").attr('value');
         {% if pub %}
-            window.location.href = '{{ url(request, 'quest_pub') }}?fence=' + area
+            window.location.href = '{{ url('quest_pub') }}?fence=' + area
         {% else %}
-            window.location.href = '{{ url(request, 'quest') }}?fence=' + area
+            window.location.href = '{{ url('quest') }}?fence=' + area
         {% endif %}
     });
 });

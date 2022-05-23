@@ -9,8 +9,8 @@
 {% block content %}
 {{ super() }}
 <nav class="nav nav-pills nav-fill mt-3 mb-3 flex-column flex-sm-row">
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_dev" }}" href="{{ url(request, 'autoconfig_pending') }}">Pending Devices</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_pd"}}" href="{{ url(request, 'autoconf_pd') }}">PogoDroid Configuration</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_rgc" }}" href="{{ url(request, 'autoconf_rgc') }}">RemoteGPSController Configuration</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_dev" }}" href="{{ url('autoconfig_pending') }}">Pending Devices</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_pd"}}" href="{{ url('autoconf_pd') }}">PogoDroid Configuration</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "autoconf_rgc" }}" href="{{ url('autoconf_rgc') }}">RemoteGPSController Configuration</a>
 </nav>
 {% endblock %}

@@ -67,7 +67,7 @@ $(document).ready(function () {
         <tr>
           <th style="width: 40%" class="align-middle">Name</th>
           <th style="width: 40%" class="align-middle">Settings</th>
-          <th style="width: 20%" class= "text-right align-middle"><a href='{{ url(request, 'settings_walkers', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 20%" class= "text-right align-middle"><a href='{{ url('settings_walkers', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if walker is none %}
@@ -86,7 +86,7 @@ $(document).ready(function () {
                 {% if loop.index > 1 %}
                     ,
                 {% endif %}
-                <a href="{{ url(request, 'settings_areas', query_={'id': walkerarea.area_id, 'mode': areas[walkerarea.area_id].mode}) }}">
+                <a href="{{ url('settings_areas', query_={'id': walkerarea.area_id, 'mode': areas[walkerarea.area_id].mode}) }}">
                     {{ areas[walkerarea.area_id].name }}
                 </a>
             {% endfor %}

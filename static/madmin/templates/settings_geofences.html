@@ -67,7 +67,7 @@ $(document).ready(function () {
         <tr>
           <th style="width: 70%" class="align-middle">Name <i class="fas fa-info-circle" data-toggle="tooltip" title="GeoFence name"></th>
           <th style="width: 20%" class="align-middle">Type <i class="fas fa-info-circle" data-toggle="tooltip" title="Type of fence"></th>
-          <th style="width: 10%" class="text-right align-middle"><a href='{{ url(request, 'settings_geofence', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 10%" class="text-right align-middle"><a href='{{ url('settings_geofence', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if fence is none %}
@@ -77,7 +77,7 @@ $(document).ready(function () {
         {% for fence_id, fence in section.items() %}
         <tr>
           <td class="align-middle">
-            <a href="{{ url(request, 'settings_geofence', query_={'id': fence_id}) }}">{{ fence.name }}</a>
+            <a href="{{ url('settings_geofence', query_={'id': fence_id}) }}">{{ fence.name }}</a>
           </td>
           <td><small class="badge badge-secondary align-middle">{{ fence.fence_type }}</small></td>
           <td class="text-right align-middle">

@@ -78,7 +78,7 @@ $(document).ready(function () {
           operation = flush_level;
         }
         $.each($('.bulk_sel:checkbox:checked'), function() {
-          uri = '{{ url(request, 'api_device') }}/' + $(this).data('identifier');
+          uri = '{{ url('api_device') }}/' + $(this).data('identifier');
           operation(uri, data);
         });
         $.unblockUI();
@@ -126,7 +126,7 @@ $(document).ready(function () {
               }
             };
             $.ajax({
-                url : '{{ url(request, 'api_device') }}/'+ $(this).data('identifier'),
+                url : '{{ url('api_device') }}/'+ $(this).data('identifier'),
                 contentType : 'application/json-rpc',
                 data: JSON.stringify(rpc_call),
                 type : 'POST',
@@ -175,7 +175,7 @@ $(document).ready(function () {
           <th style="width: 30%" class="align-middle"><input type="checkbox" id="selectAll"> Origin</th>
           <th style="width: 20%" class="align-middle d-none d-lg-table-cell">Settings</th>
           <th style="width: 30%" class="align-middle">Walker <i class="fas fa-info-circle" data-toggle="tooltip" title="Changing a walker for a device is saved automatically"></i></th>
-          <th style="width: 20%" class="text-right align-middle"><a href='{{ url(request, 'settings_devices', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 20%" class="text-right align-middle"><a href='{{ url('settings_devices', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if device is none %}
@@ -186,7 +186,7 @@ $(document).ready(function () {
         <tr>
           <td class="align-middle">
             <input type="checkbox" class="bulk_sel" data-identifier="{{ dev_uri }}">
-            <a href="{{ url(request, 'settings_devices', query_={'id': dev_uri}) }}">{{ device.name }}</a>
+            <a href="{{ url('settings_devices', query_={'id': dev_uri}) }}">{{ device.name }}</a>
           </td>
           <td class="align-middle d-none d-lg-table-cell">
             <p style="font-size: 65%; min-height: 50px; display: inline-box">

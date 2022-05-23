@@ -8,13 +8,13 @@
 
 {% block content %}
 <nav class="nav nav-pills nav-fill mt-3 mb-3 flex-column flex-sm-row">
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "area" }}" href="{{ url(request, 'settings_areas') }}">Areas</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "auth" }}" href="{{ url(request, 'settings_auth') }}">Auth</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "device"}}" href="{{ url(request, 'settings_devices') }}">Devices</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "geofence" }}" href="{{ url(request, 'settings_geofence') }}">Geofences</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "monivlist" }}" href="{{ url(request, 'settings_ivlists') }}">IV lists</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "pogoauth" }}" href="{{ url(request, 'settings_pogoauth') }}">PoGo Auth</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "devicepool" }}" href="{{ url(request, 'settings_pools') }}">Shared settings</a>
-    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "walker" }}" href="{{ url(request, 'settings_walkers') }}">Walkers</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "area" }}" href="{{ url('settings_areas') }}">Areas</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "auth" }}" href="{{ url('settings_auth') }}">Auth</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "device"}}" href="{{ url('settings_devices') }}">Devices</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "geofence" }}" href="{{ url('settings_geofence') }}">Geofences</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "monivlist" }}" href="{{ url('settings_ivlists') }}">IV lists</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "pogoauth" }}" href="{{ url('settings_pogoauth') }}">PoGo Auth</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "devicepool" }}" href="{{ url('settings_pools') }}">Shared settings</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "walker" }}" href="{{ url('settings_walkers') }}">Walkers</a>
 </nav>
 {% endblock %}

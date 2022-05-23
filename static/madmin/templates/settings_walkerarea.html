@@ -91,7 +91,7 @@
 {{ super() }}
 
 {% if areas.items()|length == 0 %}
-<div class="alert alert-warning">Couldn't find any area configurations. Please <a href="{{ url(request, 'settings_areas') }}">create</a> one first.</div>
+<div class="alert alert-warning">Couldn't find any area configurations. Please <a href="{{ url('settings_areas') }}">create</a> one first.</div>
 {% else %}
 {% if element %}
   <h1 class="display-5">Edit {{ walker.name }} ({{ areas[element.area_id].name }}) </h1>
