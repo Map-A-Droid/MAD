@@ -25,7 +25,6 @@ def mad_json_filter(input: object) -> str:
 
 @jinja2.pass_context
 def subapp_url(context,
-               request,
                subapp_name: str,
                __route_name: str,
                query_: Optional[Dict[str, str]] = None,
@@ -57,12 +56,11 @@ def subapp_url(context,
     url = app.router[__route_name].url_for(**parts_clean)
     if query_:
         url = url.with_query(query_)
-    return prefix_url_with_forwarded_path_if_applicable(request.headers, url)
+    return prefix_url_with_forwarded_path_if_applicable(context['request'].headers, url)
 
 
 @jinja2.pass_context
 def url_for_forwarded(context,
-                      request,
                       __route_name: str,
                       query_: Optional[Dict[str, str]] = None,
                       **parts: Union[str, int]
@@ -91,7 +89,7 @@ def url_for_forwarded(context,
     url = app.router[__route_name].url_for(**parts_clean)
     if query_:
         url = url.with_query(query_)
-    return prefix_url_with_forwarded_path_if_applicable(request.headers, url)
+    return prefix_url_with_forwarded_path_if_applicable(context['request'].headers, url)
 
 
 @jinja2.pass_context
