@@ -85,9 +85,10 @@ def url_for_forwarded(context,
                 "argument value should be str or int, "
                 "got {} -> [{}] {!r}".format(key, type(val), val)
             )
+        logger.debug("Adding part {}", key)
         parts_clean[key] = val
-
-    url = app.router[__route_name].url_for(**parts_clean)
+    router = app.router[__route_name]
+    url = router.url_for(**parts_clean)
     if query_:
         url = url.with_query(query_)
     return add_prefix_to_url(context.get(FORWARDED_PATH_KEY), url)
