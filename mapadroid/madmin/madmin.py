@@ -31,10 +31,10 @@ from mapadroid.madmin.endpoints.routes.settings import \
 from mapadroid.madmin.endpoints.routes.statistics import \
     register_routes_statistics_endpoints
 from mapadroid.mapping_manager import MappingManager
-from mapadroid.utils.aiohttp.XPathForwardedFor import \
-    XPathForwarded
+from mapadroid.utils.aiohttp.XPathForwardedFor import XPathForwarded
 from mapadroid.utils.JinjaFilters import (base64Filter, mad_json_filter,
-                                          subapp_static, subapp_url, url_for_forwarded)
+                                          subapp_static, subapp_url,
+                                          url_for_forwarded)
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.updater import DeviceUpdater
@@ -117,6 +117,7 @@ class MADmin(object):
         jinja2_env.filters["base64"] = base64Filter
         jinja2_env.filters["madJson"] = mad_json_filter
         jinja2_env.globals['url_proxied'] = url_for_forwarded
+        jinja2_env.globals['url'] = url_for_forwarded
         jinja2_env.globals['subapp_url'] = subapp_url
         jinja2_env.globals['subapp_static'] = subapp_static
         register_routes_root_endpoints(self._app)
