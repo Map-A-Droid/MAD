@@ -15,7 +15,7 @@ class GeofenceEndpoint(AbstractResourceEndpoint):
         areas_with_geofence: List[SettingsArea] = []
         for area_id, area in areas.items():
             geofence_included = getattr(area, "geofence_included")
-            geofence_excluded = getattr(area, "geofence_excluded")
+            geofence_excluded = getattr(area, "geofence_excluded", None)
             if (geofence_included and geofence_included == db_entry.geofence_id
                     or geofence_excluded and geofence_excluded == db_entry.geofence_id):
                 areas_with_geofence.append(area)
