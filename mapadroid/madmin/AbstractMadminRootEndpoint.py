@@ -25,12 +25,15 @@ from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 
+FORWARDED_PATH_KEY = "forwarded_path"
+
+
 def expand_context() -> Any:
     def wrapper(func):
         @wraps(func)
         async def wrapped(self: AbstractMadminRootEndpoint, *args, **kwargs):
             passed_to_template: Dict = await func(self, *args, **kwargs)
-            passed_to_template["request_headers"] = self.request.headers
+            passed_to_template[FORWARDED_PATH_KEY] = get_forwarded_path(self.request.headers)
             return passed_to_template
         return wrapped
     return wrapper
