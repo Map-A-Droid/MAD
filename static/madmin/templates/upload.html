@@ -9,7 +9,7 @@
 {% block content %}
 <h2>Select an apk file for upload</h2>
 <p>Uploaded APKs you'd like to install on your devices. Each APK becomes an installation job.</p>
-<form method="post" action="{{ url(request, "upload") }}" enctype="multipart/form-data">
+<form method="post" action="{{ url("upload") }}" enctype="multipart/form-data">
   <dl>
     <p>
       <input type="file" name="file" autocomplete="off" required accept=".apk">

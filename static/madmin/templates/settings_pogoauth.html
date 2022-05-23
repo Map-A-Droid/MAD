@@ -68,7 +68,7 @@ $(document).ready(function () {
           <th style="width: 15%" class="align-middle">Type <i class="fas fa-info-circle" data-toggle="tooltip" title="Login Type"></th>
           <th style="width: 35%" class="align-middle">Username <i class="fas fa-info-circle" data-toggle="tooltip" title="Username for the login"></th>
           <th style="width: 35%" class="align-middle">Device <i class="fas fa-info-circle" data-toggle="tooltip" title="Device assigned to this login"></th>
-          <th style="width: 15%" class="text-right align-middle"><a href='{{ url(request, 'settings_pogoauth', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 15%" class="text-right align-middle"><a href='{{ url('settings_pogoauth', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if auth is none %}
@@ -81,11 +81,11 @@ $(document).ready(function () {
             {{ auth.login_type }}
           </td>
           <td class="align-middle">
-            <a href="{{ url(request, 'settings_pogoauth', query_={'id': auth_id}) }}">{{ auth.username }}</a>
+            <a href="{{ url('settings_pogoauth', query_={'id': auth_id}) }}">{{ auth.username }}</a>
           </td>
           <td>
             {% if auth.device_id %}
-             <a href="{{ url(request, 'settings_devices', query_={'id': auth.account_id }) }}">{{ devices[auth.device_id].name }}</a>
+             <a href="{{ url('settings_devices', query_={'id': auth.account_id }) }}">{{ devices[auth.device_id].name }}</a>
             {% endif %}
           <td class="text-right align-middle">
             <a href="{{ redirect }}?id={{ auth_id }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>

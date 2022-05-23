@@ -40,7 +40,7 @@
   {% if not pub %}
   <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg">
     <div class="container">
-      <a class="navbar-brand" href="{{ url(request, 'root') }}">
+      <a class="navbar-brand" href="{{ url('root') }}">
         <img src="{{ static('mad_banner_trans.png') }}" class="brandimg">
       </a><br>
 
@@ -51,27 +51,27 @@
       <div id="navbarNav" class="navbar-collapse collapse">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <a href="{{ url(request, 'map') }}" class="nav-link">Map</a>
+            <a href="{{ url('map') }}" class="nav-link">Map</a>
           </li>
           <li class="nav-item">
-            <a href="{{ url(request, 'quest') }}" class="nav-link">Quests</a>
+            <a href="{{ url('quest') }}" class="nav-link">Quests</a>
           </li>
           <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="settings" id="navbarDropdown" role="button" data-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">Settings</a>
           <div class="dropdown-menu" i aria-labelledby="navbarDropdown">
-            <a href="{{ url(request, 'settings_areas') }}" class="dropdown-item">Areas</a>
-            <a href="{{ url(request, 'settings_auth') }}" class="dropdown-item">Auth</a>
-            <a href="{{ url(request, 'settings_devices') }}" class="dropdown-item">Devices</a>
-            <a href="{{ url(request, 'settings_geofence') }}" class="dropdown-item">Geofence</a>
-            <a href="{{ url(request, 'settings_ivlists') }}" class="dropdown-item">IV Lists</a>
-            <a href="{{ url(request, 'settings_pogoauth') }}" class="dropdown-item">PoGo Auth</a>
-            <a href="{{ url(request, 'settings_pools') }}" class="dropdown-item">Shared settings</a>
-            <a href="{{ url(request, 'settings_walkers') }}" class="dropdown-item">Walkers</a>
+            <a href="{{ url('settings_areas') }}" class="dropdown-item">Areas</a>
+            <a href="{{ url('settings_auth') }}" class="dropdown-item">Auth</a>
+            <a href="{{ url('settings_devices') }}" class="dropdown-item">Devices</a>
+            <a href="{{ url('settings_geofence') }}" class="dropdown-item">Geofence</a>
+            <a href="{{ url('settings_ivlists') }}" class="dropdown-item">IV Lists</a>
+            <a href="{{ url('settings_pogoauth') }}" class="dropdown-item">PoGo Auth</a>
+            <a href="{{ url('settings_pools') }}" class="dropdown-item">Shared settings</a>
+            <a href="{{ url('settings_walkers') }}" class="dropdown-item">Walkers</a>
           </div>
           </li>
           <li class="nav-item">
-            <a href="{{ url(request, 'status') }}" class="nav-link">Status</a>
+            <a href="{{ url('status') }}" class="nav-link">Status</a>
           </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="statistics" id="navbarDropdown" role="button"
@@ -79,15 +79,15 @@
               Statistics
             </a>
             <div class="dropdown-menu" i aria-labelledby="navbarDropdown">
-              <a href="{{ url(request, 'statistics') }}" class="dropdown-item">Global stats</a>
-              <a href="{{ url(request, 'statistics_stop_quest') }}" class="dropdown-item">Quest/Stop stats</a>
-              <a href="{{ url(request, 'statistics_mon') }}" class="dropdown-item">Mon stats</a>
-              <a href="{{ url(request, 'statistics_shiny') }}" class="dropdown-item">Shiny stats</a>
-              <a href="{{ url(request, 'statistics_spawns') }}" class="dropdown-item">Spawnpoint stats</a>
+              <a href="{{ url('statistics') }}" class="dropdown-item">Global stats</a>
+              <a href="{{ url('statistics_stop_quest') }}" class="dropdown-item">Quest/Stop stats</a>
+              <a href="{{ url('statistics_mon') }}" class="dropdown-item">Mon stats</a>
+              <a href="{{ url('statistics_shiny') }}" class="dropdown-item">Shiny stats</a>
+              <a href="{{ url('statistics_spawns') }}" class="dropdown-item">Spawnpoint stats</a>
             </div>
           </li>
           <li class="nav-item">
-            <a href="{{ url(request, 'get_phonescreens') }}" class="nav-link">Device control</a>
+            <a href="{{ url('get_phonescreens') }}" class="nav-link">Device control</a>
           </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="uploaded_files" id="navbarDropdown" role="button"
@@ -95,11 +95,11 @@
               Jobs
             </a>
             <div class="dropdown-menu" i aria-labelledby="navbarDropdown">
-              <a href="{{ url(request, 'uploaded_files') }}" class="dropdown-item">Jobs</a>
-              <a href="{{ url(request, 'install_status') }}" class="dropdown-item">Job status</a>
-              <a href="{{ url(request, 'install_status', query_={'withautojobs': 'true'}) }}" class="dropdown-item">Auto-job status</a>
-              <a href="{{ url(request, 'upload') }}" class="dropdown-item">Create APK install job</a>
-              <a href="{{ url(request, 'reload_jobs') }}" class="dropdown-item">Reload jobs</a>
+              <a href="{{ url('uploaded_files') }}" class="dropdown-item">Jobs</a>
+              <a href="{{ url('install_status') }}" class="dropdown-item">Job status</a>
+              <a href="{{ url('install_status', query_={'withautojobs': 'true'}) }}" class="dropdown-item">Auto-job status</a>
+              <a href="{{ url('upload') }}" class="dropdown-item">Create APK install job</a>
+              <a href="{{ url('reload_jobs') }}" class="dropdown-item">Reload jobs</a>
             </div>
           </li>
           <li class="nav-item dropdown">
@@ -108,10 +108,10 @@
               System
             </a>
             <div class="dropdown-menu" i aria-labelledby="navbarDropdown">
-              <a href="{{ url(request, 'autoconfig_root') }}" class="dropdown-item">Auto-Config</a>
-              <a href="{{ url(request, 'mad_apks') }}" class="dropdown-item">MADmin Packages</a>
-              <a href="{{ url(request, 'events') }}" class="dropdown-item">MAD Events</a>
-              <a href="{{ url(request, 'plugins') }}" class="dropdown-item">MAD Plugins</a>
+              <a href="{{ url('autoconfig_root') }}" class="dropdown-item">Auto-Config</a>
+              <a href="{{ url('mad_apks') }}" class="dropdown-item">MADmin Packages</a>
+              <a href="{{ url('events') }}" class="dropdown-item">MAD Events</a>
+              <a href="{{ url('plugins') }}" class="dropdown-item">MAD Plugins</a>
               <div class="darkmode_check">
                 <input class="darkmode-input" type="checkbox" value="" id="darkSwitch">
                 <label class="darkmode-label" for="darkSwitch">Darkmode</label>
