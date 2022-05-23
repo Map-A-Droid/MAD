@@ -13,9 +13,13 @@ def get_forwarded_path(headers):
     return forwarded_host[0] if forwarded_host else None
 
 
-def prefix_url_with_forwarded_path_if_applicable(headers, url: URL) -> URL:
+def prefix_url_with_forwarded_path(headers, url: URL) -> URL:
     forwarded_prefix: Optional[str] = get_forwarded_path(headers)
-    if not forwarded_prefix:
+    return add_prefix_to_url(forwarded_prefix, url)
+
+
+def add_prefix_to_url(prefix: Optional[str], url: URL) -> URL:
+    if not prefix:
         return url
-    prefix = "" if not forwarded_prefix else forwarded_prefix
-    return URL(prefix).join(url)
+    else:
+        return URL(prefix).join(url)
