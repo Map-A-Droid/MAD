@@ -16,6 +16,7 @@ from mapadroid.mitm_receiver.endpoints.autoconfig import \
     register_autoconfig_endpoints
 from mapadroid.mitm_receiver.endpoints.mad_apk import \
     register_mad_apk_endpoints
+from mapadroid.utils.aiohttp.XPathForwardedFor import XPathForwarded
 from mapadroid.utils.madGlobals import application_args
 
 
@@ -28,7 +29,7 @@ class MITMReceiver:
         self._db_wrapper: DbWrapper = db_wrapper
         self._data_queue: asyncio.Queue = data_queue
         self._storage_obj: AbstractAPKStorage = storage_obj
-        self.app: Optional[web.Application] = None
+        self._app: Optional[web.Application] = None
 
         self.__mitmreceiver_startup_time: float = time.time()
 
@@ -53,7 +54,9 @@ class MITMReceiver:
         self._app["mitmreceiver_startup_time"] = self.__mitmreceiver_startup_time
         self._app["data_queue"] = self._data_queue
         self._app["storage_obj"] = self._storage_obj  # TODO
-
+        if application_args.enable_x_forwarded_path_madmin:
+            reverse_proxied = XPathForwarded()
+            self._app.middlewares.append(reverse_proxied.middleware)
         register_autoconfig_endpoints(self._app)
         register_mitm_receiver_root_endpoints(self._app)
         register_mad_apk_endpoints(self._app)

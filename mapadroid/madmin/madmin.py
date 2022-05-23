@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import aiohttp_jinja2
 import jinja2
@@ -39,18 +39,18 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
+from mapadroid.utils.madGlobals import application_args
 
 logger = get_logger(LoggerEnums.madmin)
 
 
 class MADmin(object):
-    def __init__(self, args, db_wrapper: DbWrapper, ws_server: WebsocketServer, mapping_manager: MappingManager,
+    def __init__(self, db_wrapper: DbWrapper, ws_server: WebsocketServer, mapping_manager: MappingManager,
                  device_updater: DeviceUpdater, jobstatus, storage_obj, quest_gen: QuestGen):
         # Determine if there are duplicate MACs
         self._quest_gen: QuestGen = quest_gen
         self._db_wrapper: DbWrapper = db_wrapper
-        self._args = args
-        self._app = None
+        self._app: Optional[web.Application] = None
         self._mapping_manager: MappingManager = mapping_manager
         self._storage_obj = storage_obj
         self._device_updater: DeviceUpdater = device_updater
@@ -76,13 +76,13 @@ class MADmin(object):
 
         runner: web.AppRunner = web.AppRunner(self._app)
         await runner.setup()
-        if self._args.madmin_unix_socket:
-            site: UnixSite = web.UnixSite(runner, self._args.madmin_unix_socket)
-            logger.info("Madmin starting at {}", self._args.madmin_unix_socket)
+        if application_args.madmin_unix_socket:
+            site: UnixSite = web.UnixSite(runner, application_args.madmin_unix_socket)
+            logger.info("Madmin starting at {}", application_args.madmin_unix_socket)
         else:
 
-            site: TCPSite = web.TCPSite(runner, self._args.madmin_ip, self._args.madmin_port)
-            logger.info('Madmin starting at http://{}:{}', self._args.madmin_ip, self._args.madmin_port)
+            site: TCPSite = web.TCPSite(runner, application_args.madmin_ip, application_args.madmin_port)
+            logger.info('Madmin starting at http://{}:{}', application_args.madmin_ip, application_args.madmin_port)
         await site.start()
         # TODO: Return runner and call     await runner.cleanup()
         logger.info('Finished madmin')
@@ -103,7 +103,7 @@ class MADmin(object):
         self._app.secret_key = "8bc96865945be733f3973ba21d3c5949"
         self._app['SEND_FILE_MAX_AGE_DEFAULT'] = 0
         self._app['db_wrapper'] = self._db_wrapper
-        self._app['mad_args'] = self._args
+        self._app['mad_args'] = application_args
         self._app['mapping_manager'] = self._mapping_manager
         self._app['websocket_server'] = self._ws_server
         self._app["plugin_hotlink"] = self._plugin_hotlink
@@ -112,8 +112,9 @@ class MADmin(object):
         self._app['quest_gen'] = self._quest_gen
         self._app['mon_name_cache'] = {}
 
-        reverse_proxied = XPathForwarded()
-        self._app.middlewares.append(reverse_proxied.middleware)
+        if application_args.enable_x_forwarded_path_madmin:
+            reverse_proxied = XPathForwarded()
+            self._app.middlewares.append(reverse_proxied.middleware)
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader([template_folder_path]))
         jinja2_env.filters["base64"] = base64Filter
         jinja2_env.filters["madJson"] = mad_json_filter
