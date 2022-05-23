@@ -23,6 +23,8 @@ def prefix_url_with_forwarded_path(headers, url: URL) -> URL:
 def add_prefix_to_url(prefix: Optional[str], url: URL) -> URL:
     logger.debug("Prefix to be prepended to {}: {}", url, prefix)
     if prefix is None or len(prefix) == 0:
+        logger.warning("Invalid prefix")
         return url
     else:
+        logger.warning("Prepending...")
         return URL(prefix).join(url)
