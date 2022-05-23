@@ -30,7 +30,7 @@ def expand_context() -> Any:
         @wraps(func)
         async def wrapped(self: AbstractMadminRootEndpoint, *args, **kwargs):
             passed_to_template: Dict = await func(self, *args, **kwargs)
-            passed_to_template["request"] = self.request
+            passed_to_template["request_headers"] = self.request.headers
             return passed_to_template
         return wrapped
     return wrapper
