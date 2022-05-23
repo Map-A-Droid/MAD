@@ -91,7 +91,10 @@ def url_for_forwarded(context,
     url = router.url_for(**parts_clean)
     if query_:
         url = url.with_query(query_)
-    return add_prefix_to_url(context.get(FORWARDED_PATH_KEY), url)
+    forwarded_path: Optional[str] = context.get(FORWARDED_PATH_KEY)
+    final_url = add_prefix_to_url(forwarded_path, url)
+    logger.debug("new url: {}", final_url)
+    return final_url
 
 
 @jinja2.pass_context
