@@ -35,7 +35,7 @@
             {
                 responsivePriority: 1, data: 'name', title: 'Origin',
                 "render": function (data, type, oData) {
-                    return "<a href='{{ url(request, 'settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
+                    return "<a href='{{ url_proxied(request, 'settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
                 }
             },
             {responsivePriority: 2, data: 'lastProtoDateTime', title: 'Last Update'},
@@ -44,7 +44,7 @@
                 responsivePriority: 3, data: 'rmname', title: 'Route',
                 "render": function (data, type, oData) {
                     if (oData.rmname !== 'Idle') {
-                        return "<a href='{{ url(request, 'settings_areas') }}?id=" + oData.area_id + "&mode=" + oData.mode + "'>" + oData.rmname + "</a>";
+                        return "<a href='{{ url_proxied(request, 'settings_areas') }}?id=" + oData.area_id + "&mode=" + oData.mode + "'>" + oData.rmname + "</a>";
                     } else {
                         return 'Idle';
                     }
