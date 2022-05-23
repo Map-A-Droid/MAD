@@ -1,6 +1,6 @@
 from typing import Optional
+from urllib.parse import urljoin
 from yarl import URL
-
 from aiohttp_remotes.exceptions import TooManyHeaders
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -27,4 +27,4 @@ def add_prefix_to_url(prefix: Optional[str], url: URL) -> URL:
         return url
     else:
         logger.warning("Prepending...")
-        return URL(prefix).join(url)
+        return URL(urljoin(prefix, str(url)))
