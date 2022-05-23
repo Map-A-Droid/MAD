@@ -86,6 +86,8 @@ def parse_args():
                         help='Header Authorization password for MITM /status/ page')
     parser.add_argument('-mitmus', '--mitm_unix_socket', required=False, default=None, type=str,
                         help="Path to unix socket file to use if TCP is not to be used for MITMReceiver...")
+    parser.add_argument('-xfwdpmitmr', '--enable_x_forwarded_path_mitm_receiver', default=False, type=bool,
+                        help='Enable X-Fordward-Path allowance for reverse proxy usage for MITMReceiver. Default: False')
 
     # MappingManager gRPC
     parser.add_argument('-mmgrip', '--mappingmanager_ip', required=False, default="[::]", type=str,
@@ -229,6 +231,8 @@ def parse_args():
                         help='Define when a spawnpoint is out of date (in days). Default: 3.')
     parser.add_argument('--quest_stats_fences', default="",
                         help="Comma separated list of geofences for stop/quest statistics (Empty: all)")
+    parser.add_argument('-xfwdpmadmin', '--enable_x_forwarded_path_madmin', default=False, type=bool,
+                        help='Enable X-Fordward-Path allowance for reverse proxy usage for MADmin. Default: False')
 
     # Statistics
     parser.add_argument('-stat', '--statistic', action='store_true', default=False,

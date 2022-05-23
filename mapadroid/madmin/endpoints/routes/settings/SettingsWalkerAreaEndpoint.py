@@ -7,7 +7,7 @@ from aiohttp.abc import Request
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
 from mapadroid.db.model import SettingsWalker, SettingsWalkerarea, SettingsArea
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class SettingsWalkerAreaEndpoint(AbstractMadminRootEndpoint):
@@ -26,8 +26,8 @@ class SettingsWalkerAreaEndpoint(AbstractMadminRootEndpoint):
         else:
             raise web.HTTPFound(self._url_for("settings_walkers"))
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_walkerarea.html')
+    @expand_context()
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         walker: Optional[SettingsWalker] = None

@@ -8,7 +8,7 @@ from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import SettingsAuth
 from mapadroid.db.resource_definitions.Auth import Auth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
@@ -27,8 +27,8 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
         else:
             return await self._render_overview()
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_singleauth.html')
+    @expand_context()
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         auth: Optional[SettingsAuth] = None
@@ -56,6 +56,7 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
         return template_data
 
     @aiohttp_jinja2.template('settings_auth.html')
+    @expand_context()
     async def _render_overview(self):
         template_data: Dict = {
             'base_uri': self._url_for('api_auth'),

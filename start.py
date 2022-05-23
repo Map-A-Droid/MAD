@@ -154,7 +154,7 @@ async def start():
             webhook_task: Task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
-    madmin = MADmin(application_args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem,
+    madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem,
                     quest_gen)
 
     # starting plugin system

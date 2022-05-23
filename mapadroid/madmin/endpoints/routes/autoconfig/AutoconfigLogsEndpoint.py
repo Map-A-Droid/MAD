@@ -6,7 +6,7 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import AutoconfigRegistration
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class AutoconfigLogsEndpoint(AbstractMadminRootEndpoint):
@@ -19,6 +19,7 @@ class AutoconfigLogsEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('autoconfig_logs.html')
+    @expand_context()
     async def get(self):
         session_id: int = int(self.request.match_info['session_id'])
 

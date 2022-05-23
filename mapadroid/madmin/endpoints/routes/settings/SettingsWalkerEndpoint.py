@@ -8,7 +8,7 @@ from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
 from mapadroid.db.model import SettingsWalker, SettingsWalkerarea, SettingsArea
 from mapadroid.db.resource_definitions.Walker import Walker
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class SettingsWalkerEndpoint(AbstractMadminRootEndpoint):
@@ -27,8 +27,8 @@ class SettingsWalkerEndpoint(AbstractMadminRootEndpoint):
         else:
             return await self._render_overview()
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlewalker.html')
+    @expand_context()
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         walker: Optional[SettingsWalker] = None
@@ -64,6 +64,7 @@ class SettingsWalkerEndpoint(AbstractMadminRootEndpoint):
         return template_data
 
     @aiohttp_jinja2.template('settings_walkers.html')
+    @expand_context()
     async def _render_overview(self):
         walkers: Dict[int, SettingsWalker] = await SettingsWalkerHelper.get_all_mapped(self._session,
                                                                                        self._get_instance_id())

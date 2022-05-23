@@ -10,7 +10,7 @@ from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, L
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.model import SettingsDevice
 from mapadroid.db.resource_definitions.Device import Device
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
@@ -29,8 +29,8 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
         else:
             return await self._render_overview()
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_singledevice.html')
+    @expand_context()
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         device: Optional[SettingsDevice] = None
@@ -75,6 +75,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
         return template_data
 
     @aiohttp_jinja2.template('settings_devices.html')
+    @expand_context()
     async def _render_overview(self):
         template_data: Dict = {
             'base_uri': self._url_for('api_device'),

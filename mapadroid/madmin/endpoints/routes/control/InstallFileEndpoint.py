@@ -4,6 +4,7 @@ from typing import Optional
 
 import aiohttp_jinja2
 
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
@@ -17,6 +18,7 @@ class InstallFileEndpoint(AbstractControlEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('uploaded_files.html')
+    @expand_context()
     async def get(self):
         jobname: Optional[str] = self.request.query.get('jobname')
         origin: Optional[str] = self.request.query.get('origin')

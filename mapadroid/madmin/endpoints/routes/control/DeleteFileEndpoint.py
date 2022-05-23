@@ -2,6 +2,7 @@ import os
 
 import aiohttp_jinja2
 
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 
@@ -13,6 +14,7 @@ class DeleteFileEndpoint(AbstractControlEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('uploaded_files.html')
+    @expand_context()
     async def get(self):
         filename = self.request.query.get('filename')
         if not filename:

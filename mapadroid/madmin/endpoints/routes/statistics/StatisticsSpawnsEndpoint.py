@@ -1,6 +1,6 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class StatisticsSpawnsEndpoint(AbstractMadminRootEndpoint):
@@ -10,6 +10,7 @@ class StatisticsSpawnsEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('statistics/spawn_statistics.html')
+    @expand_context()
     async def get(self):
         return {
             "title": "MAD Spawnpoint Statistics",
