@@ -2,6 +2,7 @@ from typing import Optional
 
 import aiohttp_jinja2
 
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
 
 
@@ -12,6 +13,7 @@ class SpawnDetailsEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('statistics/spawn_details.html')
+    @expand_context()
     async def get(self):
         area_id: Optional[int] = self._request.query.get("id")
         if area_id:

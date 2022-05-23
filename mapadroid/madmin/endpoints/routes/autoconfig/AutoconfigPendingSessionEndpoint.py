@@ -8,7 +8,7 @@ from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrat
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
@@ -22,6 +22,7 @@ class AutoconfigPendingSessionEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('autoconfig_pending_dev.html')
+    @expand_context()
     async def get(self):
         session_id: int = int(self.request.match_info['session_id'])
 

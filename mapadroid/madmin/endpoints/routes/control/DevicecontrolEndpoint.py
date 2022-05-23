@@ -4,6 +4,7 @@ from typing import List, Optional, Dict
 import aiohttp_jinja2
 
 import mapadroid
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import generate_device_screenshot_path
@@ -20,6 +21,7 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
     # TODO: Also "post"?
     # TODO: nocache?
     @aiohttp_jinja2.template('phonescreens.html')
+    @expand_context()
     async def get(self):
         # TODO: Async exec?
         if not os.path.exists(os.path.join(mapadroid.MAD_ROOT, self._get_mad_args().temp_path, "madmin")):

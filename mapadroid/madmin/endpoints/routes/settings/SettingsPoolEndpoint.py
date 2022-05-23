@@ -7,7 +7,7 @@ from aiohttp.abc import Request
 from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
 from mapadroid.db.model import SettingsDevicepool
 from mapadroid.db.resource_definitions.Devicepool import Devicepool
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
@@ -26,8 +26,8 @@ class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
         else:
             return await self._render_overview()
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlesharedsetting.html')
+    @expand_context()
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         device_pool: Optional[SettingsDevicepool] = None
@@ -55,6 +55,7 @@ class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
         return template_data
 
     @aiohttp_jinja2.template('settings_sharedsettings.html')
+    @expand_context()
     async def _render_overview(self):
         template_data: Dict = {
             'base_uri': self._url_for('api_devicepool'),

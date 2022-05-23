@@ -5,6 +5,7 @@ from aiofile import async_open
 from aiohttp import MultipartReader, web
 from werkzeug.utils import secure_filename
 
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import allowed_file
@@ -17,6 +18,7 @@ class UploadEndpoint(AbstractControlEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('upload.html')
+    @expand_context()
     async def get(self):
         return {"header": "File Upload", "title": "File Upload"}
 

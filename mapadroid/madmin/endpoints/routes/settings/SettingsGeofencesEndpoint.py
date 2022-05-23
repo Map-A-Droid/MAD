@@ -7,7 +7,7 @@ from aiohttp.abc import Request
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.model import SettingsGeofence
 from mapadroid.db.resource_definitions.Geofence import Geofence
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class SettingsGeofenceEndpoint(AbstractMadminRootEndpoint):
@@ -26,8 +26,8 @@ class SettingsGeofenceEndpoint(AbstractMadminRootEndpoint):
         else:
             return await self._render_overview()
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlegeofence.html')
+    @expand_context()
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         geofence: Optional[SettingsGeofence] = None
@@ -57,6 +57,7 @@ class SettingsGeofenceEndpoint(AbstractMadminRootEndpoint):
         return template_data
 
     @aiohttp_jinja2.template('settings_geofences.html')
+    @expand_context()
     async def _render_overview(self):
         template_data: Dict = {
             'base_uri': self._url_for('api_geofence'),

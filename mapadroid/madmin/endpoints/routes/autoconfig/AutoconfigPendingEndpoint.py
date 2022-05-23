@@ -5,7 +5,7 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
 from mapadroid.db.model import AutoconfigRegistration, SettingsDevice
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
@@ -15,6 +15,7 @@ class AutoconfigPendingEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('autoconfig_pending.html')
+    @expand_context()
     async def get(self):
         ac_issues = AutoConfIssueGenerator()
         await ac_issues.setup(self._session, self._get_instance_id(),

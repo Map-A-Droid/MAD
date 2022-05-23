@@ -2,6 +2,7 @@ from typing import Optional
 
 import aiohttp_jinja2
 
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
 
 
@@ -12,6 +13,7 @@ class StatisticsDetectionWorkerEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('statistics_worker.html')
+    @expand_context()
     async def get(self):
         worker: Optional[str] = self._request.query.get("worker")
         return {

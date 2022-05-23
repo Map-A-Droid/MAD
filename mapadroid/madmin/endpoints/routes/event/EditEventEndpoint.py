@@ -5,6 +5,7 @@ import aiohttp_jinja2
 
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.db.model import TrsEvent
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 
@@ -16,6 +17,7 @@ class EditEventEndpoint(AbstractControlEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('event_edit.html')
+    @expand_context()
     async def get(self):
         # TODO: Async exec?
         event_id: Optional[str] = self._request.query.get("id")

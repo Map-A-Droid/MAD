@@ -5,7 +5,7 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.model import SettingsAuth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 from mapadroid.utils.RGCConfig import RGCConfig
 
 
@@ -19,6 +19,7 @@ class AutoconfigRgcEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('autoconfig_config_editor.html')
+    @expand_context()
     async def get(self):
         config = RGCConfig(self._session, self._get_instance_id(), self._get_mad_args())
         await config.load_config()

@@ -1,6 +1,6 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class StatisticsShinyEndpoint(AbstractMadminRootEndpoint):
@@ -10,6 +10,7 @@ class StatisticsShinyEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('statistics/shiny_statistics.html')
+    @expand_context()
     async def get(self):
         return {
             "title": "MAD Shiny Statistics",
