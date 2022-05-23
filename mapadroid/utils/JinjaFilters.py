@@ -120,4 +120,10 @@ def subapp_static(context, subapp_name: str, static_file_path: str) -> str:
             "with app['static_root_url'] = '<static root>'."
         ) from None
     path = "{}/{}".format(static_url.lstrip("/").rstrip("/"), static_file_path.lstrip("/"))
-    return path
+    forwarded_path: Optional[str] = context.get(FORWARDED_PATH_KEY)
+    final_url = add_prefix_to_url(forwarded_path, URL(path))
+    return str(final_url)
+
+
+def static_forwarded(static_file_path: str) -> str:
+    return subapp_static(None, static_file_path)
