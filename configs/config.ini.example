@@ -135,6 +135,8 @@
 #mitm_status_password:
 # Path to unix socket file to use if TCP is not to be used for MITMReceiver. Disabled TCP (ip/port) listening.
 #mitm_unix_socket:
+# Enable X-Fordward-Path allowance for reverse proxy usage for MITMReceiver. Default: False
+#enable_x_forwarded_path_mitm_receiver:
 
 
 ### Job Processor
@@ -236,6 +238,8 @@
 #outdated_spawnpoints:
 # Comma separated list of geofences names to use for Quest/Stop Stats page (Empty: all)
 #quest_stats_fences:
+# Enable X-Fordward-Path allowance for reverse proxy usage for MADmin. Default: False
+#enable_x_forwarded_path_madmin:
 
 
 ### Statistics
