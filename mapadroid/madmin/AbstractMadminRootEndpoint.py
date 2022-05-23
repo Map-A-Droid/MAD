@@ -1,13 +1,13 @@
 import asyncio
 import json
 from abc import ABC
+from functools import wraps
 from typing import Any, Optional, List, Dict
 
 from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders, StrOrURL
-from aiohttp_remotes.exceptions import TooManyHeaders
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from yarl import URL
@@ -18,12 +18,22 @@ from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.utils.aiohttp import get_forwarded_path
-from mapadroid.utils.aiohttp.XPathForwardedFor import X_FORWARDED_PATH
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.madGlobals import WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
+
+
+def expand_context() -> Any:
+    def wrapper(func):
+        @wraps(func)
+        async def wrapped(self: AbstractMadminRootEndpoint, *args, **kwargs):
+            passed_to_template: Dict = await func(self, *args, **kwargs)
+            passed_to_template["request"] = self.request
+            return passed_to_template
+        return wrapped
+    return wrapper
 
 
 class AbstractMadminRootEndpoint(web.View, ABC):
