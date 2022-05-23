@@ -17,7 +17,7 @@ from mapadroid.db.model import Base
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
-from mapadroid.utils.aiohttp import get_forwarded_path
+from mapadroid.utils.aiohttp import get_forwarded_path, add_prefix_to_url
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.madGlobals import WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException
 from mapadroid.utils.questGen import QuestGen
@@ -196,9 +196,6 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         if query is None:
             query = {}
         forwarded_path: Optional[str] = get_forwarded_path(self.request.headers)
-        prefix = "" if not forwarded_path else forwarded_path
         path_constructed = self.request.app.router[path_name].url_for(**dynamic_path).with_query(query)
-        logger.info("Constructed path {}", path_constructed)
-        prefixed = URL(prefix).join(path_constructed)
-        logger.info("Prefixed: {}", prefixed)
-        return prefixed
+        final_url = add_prefix_to_url(forwarded_path, path_constructed)
+        return final_url
