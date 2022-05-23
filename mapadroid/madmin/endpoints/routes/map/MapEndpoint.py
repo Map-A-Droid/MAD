@@ -2,6 +2,7 @@ from typing import Optional
 
 import aiohttp_jinja2
 
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 
@@ -13,6 +14,7 @@ class MapEndpoint(AbstractControlEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('map.html')
+    @expand_context()
     async def get(self):
         set_lat: Optional[float] = self._request.query.get("lat")
         set_lng: Optional[float] = self._request.query.get("lng")

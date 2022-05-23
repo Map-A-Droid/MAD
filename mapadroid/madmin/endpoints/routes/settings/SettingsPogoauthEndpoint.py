@@ -8,7 +8,7 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
@@ -27,8 +27,8 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
         else:
             return await self._render_overview()
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlepogoauth.html')
+    @expand_context()
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         pogoauth: Optional[SettingsPogoauth] = None
@@ -74,6 +74,7 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
         return template_data
 
     @aiohttp_jinja2.template('settings_pogoauth.html')
+    @expand_context()
     async def _render_overview(self):
         devices: Dict[int, SettingsDevice] = await SettingsDeviceHelper.get_all_mapped(self._session,
                                                                                        self._get_instance_id())

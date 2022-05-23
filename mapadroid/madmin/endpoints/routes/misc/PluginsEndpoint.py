@@ -1,6 +1,6 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class PluginsEndpoint(AbstractMadminRootEndpoint):
@@ -10,6 +10,7 @@ class PluginsEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('plugins.html')
+    @expand_context()
     async def get(self):
         plugins = {}
         plugin_hotlinks = self._get_plugin_hotlinks()

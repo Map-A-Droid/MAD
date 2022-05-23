@@ -1,6 +1,6 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class EventsEndpoint(AbstractMadminRootEndpoint):
@@ -10,6 +10,7 @@ class EventsEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('events.html')
+    @expand_context()
     async def get(self):
         return {
             "title": "MAD Events",

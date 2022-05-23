@@ -6,7 +6,7 @@ import jinja2
 from yarl import URL
 
 from mapadroid.madmin.AbstractMadminRootEndpoint import FORWARDED_PATH_KEY
-from mapadroid.utils.aiohttp import prefix_url_with_forwarded_path, add_prefix_to_url
+from mapadroid.utils.aiohttp import add_prefix_to_url
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.logging import LoggerEnums, get_logger
 

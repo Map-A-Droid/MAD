@@ -1,5 +1,6 @@
 import aiohttp_jinja2
 
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
 
 
@@ -10,6 +11,7 @@ class StatisticsEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('statistics/statistics.html')
+    @expand_context()
     async def get(self):
         minutes_usage = self._get_minutes_usage_query_args()
         return {

@@ -7,7 +7,7 @@ from aiohttp.abc import Request
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.db.resource_definitions.Routecalc import Routecalc
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class SettingsRoutecalcEndpoint(AbstractMadminRootEndpoint):
@@ -19,7 +19,6 @@ class SettingsRoutecalcEndpoint(AbstractMadminRootEndpoint):
         super().__init__(request)
 
     # TODO: Auth
-    @aiohttp_jinja2.template('settings_singleroutecalc.html')
     async def get(self):
         self._identifier: Optional[str] = self.request.query.get("id")
         if self._identifier:
@@ -27,8 +26,8 @@ class SettingsRoutecalcEndpoint(AbstractMadminRootEndpoint):
         else:
             raise web.HTTPFound(self._url_for("settings_areas"))
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_singleroutecalc.html')
+    @expand_context()
     async def _render_single_element(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         routecalc: Optional[SettingsRoutecalc] = None

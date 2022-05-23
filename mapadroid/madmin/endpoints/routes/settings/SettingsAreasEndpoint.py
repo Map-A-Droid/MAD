@@ -14,7 +14,7 @@ from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
 from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
 from mapadroid.db.resource_definitions.AreaRaidsMitm import AreaRaidsMitm
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -48,8 +48,8 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
         else:
             return await self._render_area_overview()
 
-    # TODO: Verify working
     @aiohttp_jinja2.template('settings_singlearea.html')
+    @expand_context()
     async def _render_single_area(self):
         # Parse the mode to send the correct settings-resource definition accordingly
         mode: WorkerType = WorkerType.MON_MITM
@@ -87,6 +87,7 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
         return template_data
 
     @aiohttp_jinja2.template('settings_areas.html')
+    @expand_context()
     async def _render_area_overview(self):
         # TODO: Pass list of boolean settings of all config types?
         all_areas: Dict[int, SettingsArea] = await self._get_db_wrapper().get_all_areas(self._session)

@@ -2,7 +2,7 @@ from typing import Optional
 
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
 
 
 class PickWorkerEndpoint(AbstractMadminRootEndpoint):
@@ -12,6 +12,7 @@ class PickWorkerEndpoint(AbstractMadminRootEndpoint):
 
     # TODO: Auth
     @aiohttp_jinja2.template('workerpicker.html')
+    @expand_context()
     async def get(self):
         jobname: Optional[str] = self._request.query.get("jobname")
         worker_type: Optional[str] = self._request.query.get("type")
