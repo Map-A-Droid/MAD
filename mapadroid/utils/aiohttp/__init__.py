@@ -26,6 +26,8 @@ def add_prefix_to_url(prefix: Optional[str], url: URL) -> URL:
         logger.warning("Invalid prefix")
         return url
     else:
-        joined = urljoin(prefix, str(url))
-        logger.warning("Prepending to {}: ", str(url), joined)
+        # Remove leading slash from url which is to be preprended to prevent urllib from interpreting it as root
+        url_to_use = str(url).lstrip("/")
+        joined = urljoin(prefix, url_to_use)
+        logger.warning("Prepending to {}: {}", str(url_to_use), joined)
         return URL(joined)
