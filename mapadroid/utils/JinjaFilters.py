@@ -95,8 +95,16 @@ def url_for_forwarded(context,
 
 
 @jinja2.pass_context
-def subapp_static(context, subapp_name: str, static_file_path: str) -> str:
-    # TODO: Unused, but also needs prefix...
+def subapp_static(context, subapp_name: Optional[str], static_file_path: str) -> str:
+    return get_static_path(context, subapp_name, static_file_path)
+
+
+@jinja2.pass_context
+def static_forwarded(context, static_file_path: str) -> str:
+    return get_static_path(context, None, static_file_path)
+
+
+def get_static_path(context, subapp_name: Optional[str], static_file_path: str) -> str:
     """Filter for generating urls for static files.
 
     NOTE: you'll need
@@ -105,11 +113,12 @@ def subapp_static(context, subapp_name: str, static_file_path: str) -> str:
     Usage: {{ static('styles.css') }} might become
     "/static/styles.css" or "http://mycdn.example.com/styles.css"
     """
-    # allows chaining of subapps...
-    subapps = subapp_name.split("/")
     app = context["app"]
-    for subapp in subapps:
-        app = app[subapp]
+    if subapp_name:
+        # allows chaining of subapps...
+        subapps = subapp_name.split("/")
+        for subapp in subapps:
+            app = app[subapp]
 
     try:
         static_url = app["static_root_url"]
@@ -123,7 +132,3 @@ def subapp_static(context, subapp_name: str, static_file_path: str) -> str:
     forwarded_path: Optional[str] = context.get(FORWARDED_PATH_KEY)
     final_url = add_prefix_to_url(forwarded_path, URL(path))
     return str(final_url)
-
-
-def static_forwarded(static_file_path: str) -> str:
-    return subapp_static(None, static_file_path)
