@@ -1,4 +1,4 @@
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
@@ -48,10 +48,6 @@ class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
     async def _any_coords_left_after_finishing_route(self) -> bool:
         return True
 
-    async def _recalc_route_workertype(self):
-        await self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                                in_memory=False)
-
     async def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info
         async with self.db_wrapper as session, session:
@@ -73,11 +69,8 @@ class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         # not necessary
-        pass
-
-    def _cluster_priority_queue_criteria(self):
-        # clustering is of no use for now
-        pass
+        middle_of_fence: Tuple[float, float] = self.geofence_helper.get_middle_from_fence()
+        return [Location(middle_of_fence[0], middle_of_fence[1])]
 
     def _delete_coord_after_fetch(self) -> bool:
         return False
