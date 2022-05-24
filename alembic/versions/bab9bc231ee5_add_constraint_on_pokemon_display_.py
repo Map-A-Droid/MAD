@@ -18,9 +18,9 @@ depends_on = None
 
 def upgrade():
     op.execute("""
-    DELETE FROM pokemon_display
-    WHERE encounter_id NOT IN (SELECT p.encounter_id 
-                        FROM pokemon p)
+    DELETE d FROM pokemon_display d 
+    LEFT JOIN pokemon p ON p.encounter_id = d.encounter_id
+    WHERE p.pokemon_id IS NULL
     """)
     op.create_foreign_key(constraint_name="pokemon_encounter_id_casc", source_table="pokemon_display",
                           referent_table="pokemon",
