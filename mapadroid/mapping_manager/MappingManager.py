@@ -557,7 +557,7 @@ class MappingManager(AbstractMappingManager):
 
             # grab coords
             # first check if init is false, if so, grab the coords from DB
-            geofence_helper = GeofenceHelper(geofence_included, geofence_excluded)
+            geofence_helper = GeofenceHelper(geofence_included, geofence_excluded, area.name)
             # build routemanagers
 
             # TODO: Fill with all settings...
@@ -597,7 +597,7 @@ class MappingManager(AbstractMappingManager):
             try:
                 await to_be_checked
             except RoutemanagerShuttingDown as e:
-                logger.warning("Ignoring area {} due to failure to calculate route.", area)
+                logger.warning("Ignoring area {} ({}) due to failure to calculate route.", area, routemanagers[area].name)
                 del routemanagers[area]
         return routemanagers
 

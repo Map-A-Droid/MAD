@@ -19,7 +19,7 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
 
         fence = self._request.query.get("fence")
         if fence not in (None, 'None', 'All'):
-            fence = generate_coords_from_geofence(self._get_mapping_manager(), self._session, self._get_instance_id(),
+            fence = generate_coords_from_geofence(self._get_mapping_manager(),
                                                   fence)
         else:
             fence = None

@@ -36,6 +36,9 @@ class PooledQueryExecutor:
     def get_db_accessor(self) -> DbAccessor:
         return self._db_accessor
 
+    async def shutdown(self) -> None:
+        await self._db_accessor.tear_down()
+
     async def setup(self):
         # TODO: Shutdown...
         with self._pool_mutex:

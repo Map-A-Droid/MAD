@@ -148,7 +148,7 @@ async def generate_coords_from_geofence(mapping_manager: MappingManager,
 
 async def get_quest_areas(mapping_manager: MappingManager):
     stop_fences = ['All']
-    possible_fences = await get_geofences(mapping_manager, worker_type=WorkerType.STOPS)
+    possible_fences: Dict[int, Dict] = await get_geofences(mapping_manager, worker_type=WorkerType.STOPS)
     for possible_fence in possible_fences:
         for subfence in possible_fences[possible_fence]['include']:
             if subfence in stop_fences:
