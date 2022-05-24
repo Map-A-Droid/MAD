@@ -316,7 +316,11 @@ class PokemonHelper:
 
     @staticmethod
     async def delete_older_than_n_hours(session: AsyncSession, hours: int, limit: Optional[int]) -> None:
-        stmt = delete(Pokemon).where(Pokemon.disappear_time < DatetimeWrapper.now() - datetime.timedelta(hours=hours))
+        where_condition = Pokemon.disappear_time < DatetimeWrapper.now() - datetime.timedelta(hours=hours)
+        stmt = delete(Pokemon).where(where_condition)
         if limit:
-            stmt = stmt.limit(limit)
+            encounter_ids_query = select(Pokemon.encounter_id).where(where_condition).limit(limit)
+            result_encounter_ids = await session.execute(encounter_ids_query)
+            encounter_ids = result_encounter_ids.scalars().all()
+            stmt = delete(Pokemon).where(Pokemon.encounter_id.in_(encounter_ids))
         await session.execute(stmt)
