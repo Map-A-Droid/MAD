@@ -42,27 +42,8 @@ class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
         self.starve_route: bool = True
         self.remove_from_queue_backlog: int = area.remove_from_queue_backlog
 
-    def _priority_queue_update_interval(self):
-        return 60
-
     async def _any_coords_left_after_finishing_route(self) -> bool:
         return True
-
-    async def _retrieve_latest_priority_queue(self):
-        # IV is excluded from clustering, check RouteManagerBase for more info
-        async with self.db_wrapper as session, session:
-            latest_priorities = await PokemonHelper.get_to_be_encountered(session,
-                                                                          geofence_helper=self.geofence_helper,
-                                                                          min_time_left_seconds=self._settings.min_time_left_seconds,
-                                                                          eligible_mon_ids=self._mon_ids_iv)
-        # extract the encounterIDs and set them in the routeManager...
-        new_list: Set = set()
-        # TODO: Adjust for new prioQ stuff...
-        for prio in latest_priorities:
-            new_list.add(prio[2])
-        self.encounter_ids_left = list(new_list)
-        # Clear old encounters in the list...
-        return latest_priorities
 
     def get_encounter_ids_left(self) -> List[int]:
         return self.encounter_ids_left
