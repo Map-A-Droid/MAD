@@ -16,14 +16,13 @@ class DeleteUnfencedSpawnsEndpoint(AbstractStatisticsRootEndpoint):
     async def get(self):
         processed_fences = []
         spawns: Set[int] = set()
-        possible_fences = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id())
+        possible_fences = await get_geofences(self._get_mapping_manager(),)
         for possible_fence in possible_fences:
             for subfence in possible_fences[possible_fence]['include']:
                 if subfence in processed_fences:
                     continue
                 processed_fences.append(subfence)
-                fence = await generate_coords_from_geofence(self._get_mapping_manager(), self._session,
-                                                            self._get_instance_id(), subfence)
+                fence = await generate_coords_from_geofence(self._get_mapping_manager(), subfence)
                 spawns_of_fence: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
                     .download_spawns(self._session, fence=fence)
                 for spawn_id in spawns_of_fence.keys():

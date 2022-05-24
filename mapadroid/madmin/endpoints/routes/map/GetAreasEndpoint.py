@@ -15,7 +15,7 @@ class GetAreasEndpoint(AbstractControlEndpoint):
     async def get(self):
         areas: Optional[Dict[int, AreaEntry]] = await self._get_mapping_manager().get_areas()
         areas_sorted = sorted(areas, key=lambda x: areas[x].settings.name)
-        geofences = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id())
+        geofences = await get_geofences(self._get_mapping_manager())
         geofencexport = []
         for area_id in areas_sorted:
             fences = geofences[area_id]

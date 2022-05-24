@@ -16,7 +16,7 @@ class QuestsEndpoint(AbstractMadminRootEndpoint):
     @expand_context()
     async def get(self):
         fence: Optional[str] = self._request.query.get("fence")
-        stop_fences = await get_quest_areas(self._get_mapping_manager(), self._session, self._get_instance_id())
+        stop_fences = await get_quest_areas(self._get_mapping_manager())
 
         return {
             "pub": False,
