@@ -47,6 +47,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         # Check dependencies. If there are any, we need to abort and return a proper response
         unmet_dependencies: Optional[Dict[int, str]] = await self._get_unmet_dependencies(db_entry)
         if unmet_dependencies:
+            logger.warning("Unmet dependencies for {}: {}", db_entry, unmet_dependencies)
             formatted: List[Dict] = [{"uri": elem_id, "name": name} for elem_id, name in unmet_dependencies.items()]
             return await self._json_response(formatted, status=412)
         try:
