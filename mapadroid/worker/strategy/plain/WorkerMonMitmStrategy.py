@@ -56,7 +56,7 @@ class WorkerMonMitmStrategy(AbstractWorkerMitmStrategy):
         type_received, data_gmo, time_received = received
         if data_gmo and await self._gmo_contains_mons_to_be_encountered(
                 data_gmo):
-            type_received, data, time_received = await self._wait_for_data(time_received, ProtoIdentifier.ENCOUNTER, 10)
+            type_received, data, time_received = await self._wait_for_data(time_received, ProtoIdentifier.ENCOUNTER, 5)
             if type_received != ReceivedType.MON:
                 logger.warning("Worker failed to receive encounter data at {}, {}. Worker will continue with "
                                "the next location",
