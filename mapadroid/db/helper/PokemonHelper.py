@@ -87,7 +87,7 @@ class PokemonHelper:
                                               seconds=min_time_left_seconds),
                                                                          DatetimeWrapper.now()
                                                                          + datetime.timedelta(minutes=60)))
-                                     .order_by(Pokemon.disappear_time))
+                                     ).order_by(Pokemon.disappear_time)
         result = await session.execute(stmt)
 
         next_to_encounter = []
