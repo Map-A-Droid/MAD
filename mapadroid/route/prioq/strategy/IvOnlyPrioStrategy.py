@@ -32,7 +32,8 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
                                                                                                 min_time_left_seconds=self._min_time_left_seconds,
                                                                                                 eligible_mon_ids=self._mon_ids_iv)
         new_coords: List[RoutePriorityQueueEntry] = []
-        for (timestamp_due, location) in next_spawns:
+        for spawn in next_spawns:
+            (timestamp_due, location) = spawn
             entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due,
                                                                      location=location)
             new_coords.append(entry)
