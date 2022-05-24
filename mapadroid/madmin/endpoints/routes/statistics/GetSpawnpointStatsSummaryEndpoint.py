@@ -14,7 +14,7 @@ class GetSpawnpointStatsSummaryEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        possible_fences = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id())
+        possible_fences = await get_geofences(self._get_mapping_manager())
         events: List[TrsEvent] = await TrsEventHelper.get_all(self._session)
         spawnpoints_total: int = await TrsSpawnHelper.get_all_spawnpoints_count(self._session)
         stats = {'fences': possible_fences, 'events': events, 'spawnpoints_count': spawnpoints_total}

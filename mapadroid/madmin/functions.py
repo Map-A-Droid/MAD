@@ -1,39 +1,15 @@
 import glob
 import os
-from functools import update_wrapper, wraps
 from math import floor
 from typing import Dict, Optional
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager.MappingManager import (AreaEntry, DeviceMappingsEntry,
                                                       MappingManager)
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.functions import creation_date
-from mapadroid.utils.walkerArgs import parse_args
-
-mapping_args = parse_args()
-
-
-def auth_required(func):
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        username = getattr(mapping_args, 'madmin_user', '')
-        password = getattr(mapping_args, 'madmin_password', '')
-        quests_pub_enabled = getattr(mapping_args, 'quests_public', False)
-
-        if not username:
-            return func(*args, **kwargs)
-        if quests_pub_enabled and func.__name__ in ['get_quests', 'quest_pub', 'pushassets']:
-            return func(*args, **kwargs)
-        if request.authorization:
-            if (request.authorization.username == username) and (
-                    request.authorization.password == password):
-                return func(*args, **kwargs)
-        return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
-
-    return decorated
+from mapadroid.utils.madGlobals import application_args
+from mapadroid.worker.Worker import WorkerType
 
 
 def allowed_file(filename):
@@ -43,7 +19,7 @@ def allowed_file(filename):
 
 def uploaded_files(datetimeformat, jobs):
     files = []
-    for apk_file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
+    for apk_file in glob.glob(str(application_args.upload_path) + "/*.apk"):
         creationdate = DatetimeWrapper.fromtimestamp(
             creation_date(apk_file)).strftime(datetimeformat)
         upfile = {
@@ -57,20 +33,6 @@ def uploaded_files(datetimeformat, jobs):
         files.append({'jobname': command, 'creation': '', 'type': 'JobType.CHAIN'})
 
     return files
-
-
-def nocache(view):
-    @wraps(view)
-    def no_cache(*args, **kwargs):
-        response = make_response(view(*args, **kwargs))
-        response.headers['Last-Modified'] = DatetimeWrapper.now()
-        response.headers[
-            'Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '-1'
-        return response
-
-    return update_wrapper(no_cache, view)
 
 
 def get_bound_params(request):
@@ -132,24 +94,18 @@ def generate_device_logcat_zip_path(origin: str, args):
     return os.path.join(args.temp_path, filename)
 
 
-async def get_geofences(mapping_manager: MappingManager, session: AsyncSession, instance_id: int,
-                        fence_type=None, area_id_req=None) -> Dict[int, Dict]:
+async def get_geofences(mapping_manager: MappingManager,
+                        worker_type: Optional[WorkerType] = None,
+                        area_id_req: Optional[int] = None) -> Dict[int, Dict]:
     # TODO: Request the geofence instances from the MappingManager directly?
     areas: Dict[int, AreaEntry] = await mapping_manager.get_areas()
     geofences = {}
     for area_id, area_entry in areas.items():
-        if area_id_req is not None and int(area_id) is not int(area_id_req):
+        if area_id_req is not None and area_id != area_id_req:
             continue
-        # geofence_included: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
-        #                                                                                 area_entry.geofence_included)
-        # geofence_excluded: Optional[SettingsGeofence] = None
-        # if area_entry.geofence_excluded is not None:
-        #    geofence_excluded: Optional[SettingsGeofence] = await SettingsGeofenceHelper.get(session, instance_id,
-        #                                                                                     area_entry.geofence_excluded)
-        if fence_type is not None and area_entry.settings.mode != fence_type:
+        if worker_type is not None and area_entry.settings.mode != worker_type.value:
             continue
 
-        # area_geofences = GeofenceHelper(geofence_included, geofence_excluded, area_entry.settings.name)
         area_geofences: Optional[GeofenceHelper] = await mapping_manager.routemanager_get_geofence_helper(area_id)
         include = {}
         exclude = {}
@@ -172,10 +128,10 @@ async def get_geofences(mapping_manager: MappingManager, session: AsyncSession, 
     return geofences
 
 
-async def generate_coords_from_geofence(mapping_manager: MappingManager, session: AsyncSession, instance_id: int,
+async def generate_coords_from_geofence(mapping_manager: MappingManager,
                                         fence):
     fence_string = []
-    geofences = await get_geofences(mapping_manager, session=session, instance_id=instance_id)
+    geofences = await get_geofences(mapping_manager)
     coordinates = []
     for fences in geofences.values():
         for fname, coords in fences.get('include').items():
@@ -190,9 +146,9 @@ async def generate_coords_from_geofence(mapping_manager: MappingManager, session
     return ",".join(fence_string)
 
 
-async def get_quest_areas(mapping_manager: MappingManager, session: AsyncSession, instance_id: int):
+async def get_quest_areas(mapping_manager: MappingManager):
     stop_fences = ['All']
-    possible_fences = await get_geofences(mapping_manager, session, instance_id, fence_type='pokestops')
+    possible_fences = await get_geofences(mapping_manager, worker_type=WorkerType.STOPS)
     for possible_fence in possible_fences:
         for subfence in possible_fences[possible_fence]['include']:
             if subfence in stop_fences:

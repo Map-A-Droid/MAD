@@ -93,7 +93,6 @@ class AreaEntry:
         self.routecalc: SettingsRoutecalc = None
         self.geofence_included: int = None
         self.geofence_excluded: int = None
-        self.init: bool = False
 
 
 class MappingManager(AbstractMappingManager):
@@ -673,7 +672,6 @@ class MappingManager(AbstractMappingManager):
             # getattr to avoid checking modes individually...
             area_entry.geofence_included = getattr(area, "geofence_included", None)
             area_entry.geofence_excluded = getattr(area, "geofence_excluded", None)
-            area_entry.init = getattr(area, "init", None)
 
             areas[area_id] = area_entry
         return areas

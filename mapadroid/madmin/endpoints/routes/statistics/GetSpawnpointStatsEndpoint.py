@@ -4,6 +4,7 @@ from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import TrsSpawn, TrsEvent
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
 from mapadroid.madmin.functions import get_geofences, generate_coords_from_geofence
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
@@ -14,9 +15,15 @@ class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
     # TODO: Auth
     async def get(self):
         geofence_type: Optional[str] = self._request.query.get("type", "mon_mitm")
-        if geofence_type not in ['idle', 'iv_mitm', 'mon_mitm', 'pokestops', 'raids_mitm']:
+        if not geofence_type:
             stats = {'spawnpoints': []}
             return await self._json_response(stats)
+        try:
+            area_worker_type: WorkerType = WorkerType(geofence_type)
+        except ValueError:
+            stats = {'spawnpoints': []}
+            return await self._json_response(stats)
+
         geofence_id: Optional[int] = self._request.query.get("fence")
         if not geofence_id:
             geofence_id = -1
@@ -28,11 +35,11 @@ class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
         events = []
         eventidhelper = {}
         if geofence_id != -1:
-            possible_fences = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id(),
+            possible_fences = await get_geofences(self._get_mapping_manager(),
                                                   area_id_req=geofence_id)
         else:
-            possible_fences = await get_geofences(self._get_mapping_manager(), self._session, self._get_instance_id(),
-                                                  fence_type=geofence_type)
+            possible_fences = await get_geofences(self._get_mapping_manager(),
+                                                  worker_type=area_worker_type)
 
         for possible_fence in possible_fences:
             mode = possible_fences[possible_fence]['mode']
@@ -43,8 +50,7 @@ class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
                 if subfence in processed_fences:
                     continue
                 processed_fences.append(subfence)
-                fence = await generate_coords_from_geofence(self._get_mapping_manager(), self._session,
-                                                            self._get_instance_id(), subfence)
+                fence = await generate_coords_from_geofence(self._get_mapping_manager(), subfence)
                 known.clear()
                 unknown.clear()
                 events.clear()
