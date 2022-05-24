@@ -27,13 +27,13 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
 
     async def retrieve_new_coords(self) -> List[RoutePriorityQueueEntry]:
         async with self._db_wrapper as session, session:
-            next_spawns: List[Tuple[int, Location]] = await PokemonHelper.get_to_be_encountered(session,
-                                                                                                geofence_helper=self._geofence_helper,
-                                                                                                min_time_left_seconds=self._min_time_left_seconds,
-                                                                                                eligible_mon_ids=self._mon_ids_iv)
+            next_spawns: List[Tuple[int, Location, int]] = await PokemonHelper.get_to_be_encountered(session,
+                                                                                                     geofence_helper=self._geofence_helper,
+                                                                                                     min_time_left_seconds=self._min_time_left_seconds,
+                                                                                                     eligible_mon_ids=self._mon_ids_iv)
         new_coords: List[RoutePriorityQueueEntry] = []
         for spawn in next_spawns:
-            (timestamp_due, location) = spawn
+            (timestamp_due, location, encounter_id) = spawn
             entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due,
                                                                      location=location)
             new_coords.append(entry)
