@@ -52,7 +52,7 @@ class PlayerData(AbstractWorkerHolder):
                                  timestamp_earliest: Optional[int] = None) -> Optional[LatestMitmDataEntry]:
         latest_entry: Optional[LatestMitmDataEntry] = self._latest_data_holder.get_latest(key)
         if not latest_entry or (timestamp_earliest and latest_entry.timestamp_of_data_retrieval
-                                and timestamp_earliest > latest_entry.timestamp_of_data_retrieval):
+                                and int(timestamp_earliest) >= int(latest_entry.timestamp_of_data_retrieval)):
             return None
         else:
             return latest_entry
