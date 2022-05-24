@@ -10,7 +10,6 @@ from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders, StrOrURL
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
-from yarl import URL
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import Base

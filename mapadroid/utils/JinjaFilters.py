@@ -128,7 +128,9 @@ def get_static_path(context, subapp_name: Optional[str], static_file_path: str) 
             "'static_root_url', you need to set the url root "
             "with app['static_root_url'] = '<static root>'."
         ) from None
-    path = "{}/{}".format(static_url.lstrip("/").rstrip("/"), static_file_path.lstrip("/"))
+    path = "/{}/{}".format(static_url.lstrip("/").rstrip("/"), static_file_path.lstrip("/"))
+    if subapp_name:
+        path = "/{}/{}".format(subapp_name.lstrip("/").rstrip("/"), path.lstrip("/"))
     forwarded_path: Optional[str] = context.get(FORWARDED_PATH_KEY)
     final_url = add_prefix_to_url(forwarded_path, URL(path))
     return str(final_url)
