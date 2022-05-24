@@ -39,7 +39,6 @@ class DbWrapper:
         # self.sanity_check.check_all()
         # self.supports_apks = self.sanity_check.supports_apks
 
-        self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
         self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args)
         self.__instance_id: Optional[int] = None
 
