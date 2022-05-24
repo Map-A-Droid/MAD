@@ -17,10 +17,10 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
     async def get(self):
         quests = []
 
-        fence = self._request.query.get("fence")
-        if fence not in (None, 'None', 'All'):
-            fence = generate_coords_from_geofence(self._get_mapping_manager(),
-                                                  fence)
+        fence_name = self._request.query.get("fence")
+        if fence_name not in (None, 'None', 'All'):
+            fence = await generate_coords_from_geofence(self._get_mapping_manager(),
+                                                  fence_name)
         else:
             fence = None
         ne_lat, ne_lng, sw_lat, sw_lng, o_ne_lat, o_ne_lng, o_sw_lat, o_sw_lng = get_bound_params(self._request)
