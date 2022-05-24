@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 from loguru import logger
 
@@ -16,8 +16,9 @@ from mapadroid.utils.madGlobals import RoutecalculationTypes
 
 class RouteManagerLeveling(RouteManagerBase):
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
-        # TODO
-        return [Location(0, 0)]
+        # not necessary
+        middle_of_fence: Tuple[float, float] = self.geofence_helper.get_middle_from_fence()
+        return [Location(middle_of_fence[0], middle_of_fence[1])]
 
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
                  max_radius: int, max_coords_within_radius: int,
@@ -56,7 +57,7 @@ class RouteManagerLeveling(RouteManagerBase):
                         ignore_spinned=True
                         if self._settings.ignore_spinned_stops or self._settings.ignore_spinned_stops is None
                         else False,
-                        max_distance=5)
+                        max_distance=1)
                     if not unvisited_stops:
                         logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
                         continue
