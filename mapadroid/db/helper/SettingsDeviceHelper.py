@@ -31,7 +31,8 @@ class SettingsDeviceHelper:
         # TODO: This won't work, we need to adjust it.. (group_by, see PokemonHelper::get_all_shiny
         stmt = select(SettingsDevice.mac_address, SettingsDevice) \
             .select_from(SettingsDevice) \
-            .group_by(SettingsDevice.mac_address) \
+            .group_by(SettingsDevice.mac_address,
+                      SettingsDevice.device_id) \
             .having(and_(func.count("*") > 1,
                          SettingsDevice.mac_address != None))
         result = await session.execute(stmt)
