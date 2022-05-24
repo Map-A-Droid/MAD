@@ -41,7 +41,7 @@ from mapadroid.worker.strategy.AbstractMitmBaseStrategy import AbstractMitmBaseS
 
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
 S2_GMO_CELL_LEVEL = 15
-RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN = 35
+RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN = 30
 DISTANCE_TO_STOP_TO_CONSIDER_ON_TOP = 0.00006
 
 

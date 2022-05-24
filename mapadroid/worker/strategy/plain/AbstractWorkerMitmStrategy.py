@@ -147,7 +147,7 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
                                                                               self._worker_state.current_location.lat,
                                                                               self._worker_state.current_location.lng)
                 # TODO: Distance probably incorrect
-                if distance_to_mon > 70:
+                if distance_to_mon > 65:
                     logger.debug("Distance to mon around considered to be too far away to await encounter")
                     continue
                 mon_id = wild_mon["pokemon_data"]["id"]

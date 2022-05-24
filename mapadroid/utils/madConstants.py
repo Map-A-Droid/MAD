@@ -1,6 +1,6 @@
 TIMESTAMP_NEVER = 0
 WALK_AFTER_TELEPORT_SPEED = 11
-FALLBACK_MITM_WAIT_TIMEOUT = 45
+FALLBACK_MITM_WAIT_TIMEOUT = 20
 # Distance in meters that are to be allowed to consider a GMO as within a valid range
 # Some modes calculate with extremely strict distances (0.0001m for example), thus not allowing
 # direct use of routemanager radius as a distance (which would allow long distances for raid scans as well)
