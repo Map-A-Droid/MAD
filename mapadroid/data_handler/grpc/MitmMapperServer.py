@@ -185,12 +185,11 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         quests_held: Optional[List[int]] = None
         if request.HasField("quests_held"):
             quests_held = [quest_id for quest_id in request.quests_held.quest_ids]
-        await self.__mitm_data_handler.set_quests_held(worker=request.worker.name,
-                                                       quests_held=quests_held)
+        await self.set_quests_held(worker=request.worker.name, quests_held=quests_held)
 
     async def GetQuestsHeld(self, request: Worker, context: grpc.aio.ServicerContext) -> GetQuestsHeldResponse:
         response: GetQuestsHeldResponse = GetQuestsHeldResponse()
-        quests_held: Optional[List[int]] = await self.__mitm_data_handler.get_quests_held(request.name)
+        quests_held: Optional[List[int]] = await self.get_quests_held(request.name)
         if quests_held is not None:
             # TODO: Do we need to set the message response.quests_held?
             for quest_id in quests_held:
