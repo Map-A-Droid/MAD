@@ -87,7 +87,7 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION,
                                             self._worker_state.current_location)
         self._worker_state.last_location = self._worker_state.current_location
-        return timestamp_to_use, True
+        return timestamp_to_use
 
     async def post_move_location_routine(self, timestamp) -> Optional[Tuple[ReceivedType,
                                                                             Optional[Union[dict,

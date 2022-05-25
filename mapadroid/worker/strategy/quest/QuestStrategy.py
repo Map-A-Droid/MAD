@@ -330,19 +330,21 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_LOCATION,
                                             self._worker_state.current_location)
         self._worker_state.last_location = self._worker_state.current_location
-        return cur_time, True
+        return cur_time
 
     async def _rotate_account_after_moving_locations_if_applicable(self, delay_used: int) -> int:
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True) and \
                 await self._word_to_screen_matching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
                 and await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION,
-                                                        False) and not await self._mapping_manager.routemanager_is_levelmode(
-            self._area_id):
+                                                        False) and not await self._is_levelmode():
             # Waiting time to long and more then one account - switch! (not level mode!!)
             logger.info('Can use more than 1 account - switch & no cooldown')
             await self.switch_account()
             delay_used = -1
         return delay_used
+
+    async def _is_levelmode(self):
+        return await self._mapping_manager.routemanager_is_levelmode(self._area_id)
 
     async def post_move_location_routine(self, timestamp):
         if self._worker_state.stop_worker_event.is_set():
@@ -354,16 +356,16 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     async def _process_stop_at_location(self, timestamp):
         async with self._work_mutex:
             logger.info("Processing Stop / Quest...")
-            on_main_menu = await self._check_pogo_main_screen(10, False)
-            if not on_main_menu:
-                await self._restart_pogo()
             try:
-                await self._ensure_stop_present(timestamp)
+                if await self._ensure_stop_present(timestamp) != PositionStopType.SPINNABLE_STOP:
+                    logger.warning("No spinnable stop at the current location, aborting.")
+                    return
                 logger.info('Open Stop')
                 await self._handle_stop(timestamp)
             except AbortStopProcessingException as e:
                 # The stop cannot be processed for whatever reason.
                 # Stop processing the location.
+                logger.warning("Failed handling stop(s) at {}: {}", self._worker_state.current_location, e)
                 return
             finally:
                 try:
@@ -387,7 +389,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     async def _switch_account_if_needed(self):
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATE_ON_LVL_30, False) \
                 and await self._mitm_mapper.get_level(self._worker_state.origin) >= 30 \
-                and await self._mapping_manager.routemanager_is_levelmode(self._area_id):
+                and await self._is_levelmode():
             # switch if player lvl >= 30
             await self.switch_account()
 
@@ -521,21 +523,15 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         except asyncio.exceptions.TimeoutError as e:
             return ReceivedType.UNDEFINED, None, 0.0
 
-    async def _ensure_stop_present(self, timestamp: float) -> ReceivedType:
+    async def _ensure_stop_present(self, timestamp: float) -> PositionStopType:
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
-        type_received: ReceivedType = ReceivedType.UNDEFINED
-        recheck_count = 0
-        timestamp_to_use_waiting_for_gmo: float = timestamp
-        while stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
-                            PositionStopType.NO_FORT) and not recheck_count > 2:
-            recheck_count += 1
-            logger.info("Wait for new data to check the stop again ... (attempt {})", recheck_count + 1)
-            type_received, proto_entry, time_received = await self._wait_for_data_after_moving(
-                timestamp_to_use_waiting_for_gmo, ProtoIdentifier.GMO, 20)
-            if type_received != ReceivedType.UNDEFINED:
-                stop_type = await self._current_position_has_spinnable_stop(timestamp_to_use_waiting_for_gmo)
-            timestamp_to_use_waiting_for_gmo = time.time()
+        if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY):
+            # Restart pogo, try again, abort if it fails...
+            if not await self._restart_pogo():
+                raise AbortStopProcessingException("Failed restarting pogo after lacking data in GMOs.")
+            timestamp = int(time.time())
+            stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
 
         if not PositionStopType.type_contains_stop_at_all(stop_type):
             logger.info("Location {}, {} considered to be ignored in the next round due to failed "
@@ -563,7 +559,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                                               self._worker_state.current_location.lat,
                                                                               self._worker_state.current_location.lng)
             raise AbortStopProcessingException("Stop has been spun before but levelmode is active")
-        return type_received
+        return stop_type
 
     async def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
         type_received, data_received, time_received = await self._wait_for_data_after_moving(timestamp,
@@ -613,8 +609,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                         continue
 
                     visited: bool = fort.get("visited", False)
-                    if await self._mapping_manager.routemanager_is_levelmode(
-                            self._area_id) and self._ignore_spinned_stops and visited:
+                    if await self._is_levelmode() and self._ignore_spinned_stops and visited:
                         logger.info("Level mode: Stop already visited - skipping it")
                         self._spinnable_data_failcount = 0
                         stop_types.add(PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE)
@@ -821,9 +816,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                            or data_received == FortSearchResultTypes.COOLDOWN
                            or (
                                    data_received == FortSearchResultTypes.FULL
-                                   and await self._mapping_manager.routemanager_is_levelmode(self._area_id)))):
+                                   and await self._is_levelmode()))):
                     # Levelmode or data has been received...
-                    if await self._mapping_manager.routemanager_is_levelmode(self._area_id):
+                    if await self._is_levelmode():
                         logger.info("Saving visitation info...")
                         self._last_time_quest_received = math.floor(time.time())
                         # This is leveling mode, it's faster to just ignore spin result and continue
@@ -871,8 +866,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                                             self._quest_layer_to_scan):
                         logger.info('Quest is done without us noticing. Getting new Quest...')
                         break
-                    elif to > 2 and await self._mapping_manager.routemanager_is_levelmode(
-                            self._area_id) and await self._mitm_mapper.get_poke_stop_visits(
+                    elif to > 2 and await self._is_levelmode() and await self._mitm_mapper.get_poke_stop_visits(
                         self._worker_state.origin) > 6800:
                         logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))

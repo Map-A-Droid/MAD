@@ -213,9 +213,9 @@ class Worker(AbstractWorker):
                 logger.debug2('Last location: {}, Current location: {}',
                               last_location,
                               self._worker_state.current_location)
-                time_snapshot, process_location = await self._scan_strategy.move_to_location()
+                time_snapshot = await self._scan_strategy.move_to_location()
 
-                if process_location:
+                if time_snapshot:
                     self._worker_state.location_count += 1
                     logger.debug("Setting new 'scannedlocation' in Database")
                     loop = asyncio.get_running_loop()
