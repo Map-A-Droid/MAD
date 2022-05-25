@@ -407,6 +407,7 @@ class RouteManagerBase(ABC):
             try:
                 next_timestamp, next_coord = None, None
                 if not self._has_normal_route():
+                    logger.debug("Waiting for a prioQ event")
                     # "blocking" to wait for a coord
                     while not next_timestamp:
                         try:
@@ -417,7 +418,7 @@ class RouteManagerBase(ABC):
                             # No item available yet, sleep
                             await asyncio.sleep(1)
                 else:
-                    logger.debug2("Popping prioQ")
+                    logger.debug("Popping prioQ if available")
                     prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
                     next_timestamp = prioq_entry.timestamp_due
                     next_coord = prioq_entry.location
@@ -464,7 +465,9 @@ class RouteManagerBase(ABC):
                 # Get next coord "normally"
                 logger.debug("No prioQ location available")
                 pass
-
+        if not self._has_normal_route():
+            logger.warning("No normal route present, aborting.")
+            return None
         logger.debug("Moving on with route")
         routepool_entry.last_position_type = PositionType.NORMAL
         # TODO: this check is likely always true now.............
