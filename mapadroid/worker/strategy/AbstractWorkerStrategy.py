@@ -82,12 +82,12 @@ class AbstractWorkerStrategy(ABC):
         pass
 
     @abstractmethod
-    async def move_to_location(self) -> Tuple[int, Location]:
+    async def move_to_location(self) -> Optional[int]:
         """
         Location has previously been grabbed, the overridden function will be called.
         You may teleport or walk by your choosing
         Any post walk/teleport delays/sleeps have to be run in the derived, override method
-        :return: Tuple consisting of timestamp of arrival and location
+        :return: Timestamp the move was finished (respecting sleep etc.)
         """
         pass
 
