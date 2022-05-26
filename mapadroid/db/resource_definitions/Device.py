@@ -247,8 +247,8 @@ class Device(Resource):
             "extended_permission_toggling": {
                 "settings": {
                     "type": "option",
-                    "require": False,
-                    "values": [None, True, False],
+                    "require": True,
+                    "values": [True, False],
                     "description": "Whether e.g. magisk should be toggled on/off regularly (Default: False)",
                     "expected": bool,
                 }
