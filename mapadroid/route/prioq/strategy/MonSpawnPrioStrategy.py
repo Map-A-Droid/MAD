@@ -1,7 +1,5 @@
 from typing import List, Optional, Tuple
 
-from loguru import logger
-
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -9,6 +7,9 @@ from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import Ab
     RoutePriorityQueueEntry
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+logger = get_logger(LoggerEnums.routemanager)
 
 
 class MonSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
@@ -26,6 +27,7 @@ class MonSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
         self._include_event_id: Optional[int] = include_event_id
 
     async def retrieve_new_coords(self) -> List[RoutePriorityQueueEntry]:
+        logger.debug("Fetching mon spawn coords")
         async with self._db_wrapper as session, session:
             next_spawns: List[Tuple[int, Location]] = await TrsSpawnHelper.get_next_spawns(session,
                                                                                            self._geofence_helper,
@@ -42,6 +44,7 @@ class MonSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
         return queue
 
     def postprocess_coords(self, coords: List[RoutePriorityQueueEntry]) -> List[RoutePriorityQueueEntry]:
+        logger.debug("Post-processing coords")
         try:
             locations_transformed_for_clustering: List[Tuple[int, Location]] = []
             for entry in coords:
