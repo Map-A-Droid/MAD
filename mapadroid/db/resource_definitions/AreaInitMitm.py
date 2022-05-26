@@ -61,6 +61,15 @@ class AreaInitMitm:
                     "expected": float
                 }
             },
+            "speed": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "Speed of player in kmh. This value is used in conjunction with max_distance to "
+                                   "determine if the worker should walk or teleport (Default: 0)",
+                    "expected": float
+                }
+            },
             "init_mode_rounds": {
                 "settings": {
                     "type": "text",
