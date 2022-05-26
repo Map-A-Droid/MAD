@@ -216,7 +216,7 @@ async def start():
                 logger.debug("Calling db_pool_manager shutdown")
                 cache: Redis = await db_wrapper.get_cache()
                 await cache.close()
-                db_exec.shutdown()
+                await db_exec.shutdown()
                 logger.debug("Done shutting down db_pool_manager")
         except Exception:
             logger.opt(exception=True).critical("An unhandled exception occurred during shutdown!")

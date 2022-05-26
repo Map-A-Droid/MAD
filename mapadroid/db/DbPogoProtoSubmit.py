@@ -7,7 +7,6 @@ from typing import Dict, List, Optional, Union, Tuple
 import sqlalchemy
 from aioredis import Redis
 from bitstring import BitArray
-from loguru import logger
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,6 +36,9 @@ from mapadroid.utils.madConstants import (REDIS_CACHETIME_MON_LURE_IV, REDIS_CAC
 from mapadroid.utils.madGlobals import MonSeenTypes, QuestLayer
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+logger = get_logger(LoggerEnums.database)
 
 
 class DbPogoProtoSubmit:
@@ -774,7 +776,7 @@ class DbPogoProtoSubmit:
                     gym_obj.last_scanned = time_receiver
                     gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
                     gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
-                    gym_obj.weather_boosted_condition = weather.gameplay_weather if weather else 0
+                    gym_obj.weather_boosted_condition = weather.gameplay_weather if weather is not None else 0
 
                     gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gymid)
                     if not gym_detail:
