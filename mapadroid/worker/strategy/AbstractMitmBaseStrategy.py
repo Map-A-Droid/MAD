@@ -389,17 +389,16 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         self._worker_state.reboot_count = 0
         self._worker_state.restart_count = 0
         self._worker_state.last_received_data_time = DatetimeWrapper.now()
-        # TODO: Fire and forget async?
         now_ts: int = int(time.time())
         routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
         worker_type: WorkerType = WorkerType(routemanager_settings.mode)
-
-        await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
+        loop = asyncio.get_running_loop()
+        loop.create_task(self._stats_handler.stats_collect_location_data(self._worker_state.origin,
                                                               self._worker_state.current_location, True,
                                                               fix_ts,
                                                               position_type, timestamp_received_raw,
                                                               worker_type, self._worker_state.last_transport_type,
-                                                              now_ts)
+                                                              now_ts))
 
     async def start_pogo(self) -> bool:
         started_pogo: bool = await super().start_pogo()
