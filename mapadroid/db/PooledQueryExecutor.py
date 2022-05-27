@@ -76,7 +76,7 @@ class PooledQueryExecutor:
 
     async def initialize_db(self):
         try:
-            async with self._db_accessor as session:
+            async with self._db_accessor as session, session:
                 # TODO: Probably can be written in a nicer way or master's "sanity checker" adapted?
                 check_table_exists = f"""
                 SELECT COUNT(TABLE_NAME)
