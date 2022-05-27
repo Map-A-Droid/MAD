@@ -1,14 +1,22 @@
-from typing import Optional, Tuple, List
+from enum import Enum
+from typing import List, Optional, Tuple
 
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
+from mapadroid.db.model import SettingsAreaInitMitm
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
-from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.worker.strategy.plain.AbstractWorkerMitmStrategy import AbstractWorkerMitmStrategy
+from mapadroid.worker.strategy.plain.AbstractWorkerMitmStrategy import \
+    AbstractWorkerMitmStrategy
 
 logger = get_logger(LoggerEnums.worker)
+
+
+class InitTypes(Enum):
+    MONS = "mons"
+    FORTS = "forts"
 
 
 class WorkerInitStrategy(AbstractWorkerMitmStrategy):
@@ -20,7 +28,6 @@ class WorkerInitStrategy(AbstractWorkerMitmStrategy):
         if not latest:
             return type_of_data_found, data_found
         # proto has previously been received, let's check the timestamp...
-        mode: WorkerType = await self._mapping_manager.routemanager_get_mode(self._area_id)
         timestamp_of_proto: int = latest.timestamp_of_data_retrieval
         logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
                      DatetimeWrapper.fromtimestamp(timestamp_of_proto), DatetimeWrapper.fromtimestamp(timestamp),
@@ -36,10 +43,12 @@ class WorkerInitStrategy(AbstractWorkerMitmStrategy):
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
         if proto_to_wait_for == ProtoIdentifier.GMO:
-            # TODO: Depends on areasetting
-            if ((mode in [WorkerType.MON_MITM, WorkerType.IV_MITM]
+            area_settings: Optional[SettingsAreaInitMitm] = await self._mapping_manager.routemanager_get_settings(
+                self._area_id)
+            init_type: InitTypes = InitTypes(area_settings.init_type)
+            if ((init_type == InitTypes.MONS
                  and self._gmo_contains_wild_mons_closeby(latest_proto_data))
-                    or (mode not in [WorkerType.MON_MITM, WorkerType.IV_MITM]
+                    or (init_type == InitTypes.FORTS
                         and self._gmo_cells_contain_multiple_of_key(latest_proto_data, "forts"))):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO
