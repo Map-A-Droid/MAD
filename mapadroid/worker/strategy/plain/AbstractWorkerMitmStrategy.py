@@ -15,6 +15,7 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import TransportType, InternalStopWorkerException, FortSearchResultTypes
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import AbstractMitmBaseStrategy
+from aioredis import Redis
 
 logger = get_logger(LoggerEnums.worker)
 
@@ -103,7 +104,7 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
             return None
         return type_received, data_gmo, time_received
 
-    def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
+    async def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
         cells = gmo.get("cells", None)
         if not cells:
             return False
@@ -150,8 +151,18 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
                 if distance_to_mon > 65:
                     logger.debug("Distance to mon around considered to be too far away to await encounter")
                     continue
-                mon_id = wild_mon["pokemon_data"]["id"]
+                # If the mon has been encountered before, continue as it cannot be expected to be encountered again
                 encounter_id = wild_mon["encounter_id"]
+                pokemon_data = wild_mon.get("pokemon_data")
+                mon_id = pokemon_data.get("id")
+                pokemon_display = pokemon_data.get("display", {})
+                weather_boosted = pokemon_display.get('weather_boosted_value', None)
+                if encounter_id < 0:
+                    encounter_id = encounter_id + 2 ** 64
+                cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)
+                cache: Redis = await self._db_wrapper.get_cache()
+                if await cache.exists(cache_key):
+                    continue
                 if encounter_id in self._encounter_ids:
                     # already encountered
                     continue

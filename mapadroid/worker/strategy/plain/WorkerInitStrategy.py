@@ -47,7 +47,7 @@ class WorkerInitStrategy(AbstractWorkerMitmStrategy):
                 self._area_id)
             init_type: InitTypes = InitTypes(area_settings.init_type)
             if ((init_type == InitTypes.MONS
-                 and self._gmo_contains_wild_mons_closeby(latest_proto_data))
+                 and await self._gmo_contains_wild_mons_closeby(latest_proto_data))
                     or (init_type == InitTypes.FORTS
                         and self._gmo_cells_contain_multiple_of_key(latest_proto_data, "forts"))):
                 data_found = latest_proto_data

@@ -35,7 +35,7 @@ class WorkerMonMitmStrategy(AbstractWorkerMitmStrategy):
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
         if proto_to_wait_for == ProtoIdentifier.GMO:
-            if self._gmo_contains_wild_mons_closeby(latest_proto_data):
+            if await self._gmo_contains_wild_mons_closeby(latest_proto_data):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO
             else:
