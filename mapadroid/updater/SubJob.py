@@ -2,7 +2,6 @@ import dataclasses
 from typing import Optional
 
 from marshmallow_enum import EnumField
-
 from mapadroid.updater import JobType
 
 

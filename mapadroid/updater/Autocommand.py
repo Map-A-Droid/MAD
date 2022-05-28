@@ -1,8 +1,6 @@
 import dataclasses
 from typing import Union
-
 from marshmallow_enum import EnumField
-
 from mapadroid.updater.GlobalJobLogAlgoType import GlobalJobLogAlgoType
 
 
