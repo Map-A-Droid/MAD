@@ -214,7 +214,7 @@ async def start():
                 logger.info("Stopping webhook task")
                 webhook_task.cancel()
             if device_updater is not None:
-                device_updater.stop_updater()
+                await device_updater.stop_updater()
             if t_usage:
                 t_usage.cancel()
             if ws_server is not None:

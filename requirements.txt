@@ -51,3 +51,4 @@ yarl==1.7.2
 beautifulsoup4==4.11.1
 marshmallow-dataclass==8.5.8
 marshmallow-enum==1.5.1
+typeguard==2.13.3

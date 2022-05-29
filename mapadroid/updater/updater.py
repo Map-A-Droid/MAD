@@ -110,7 +110,7 @@ class DeviceUpdater(object):
             # TODO: Ensure it's a list...
             if job_name in self._available_jobs:
                 logger.warning("Job {} already exists and is being overwritten by the file {}", job_name, file_path)
-            sub_jobs: List[SubJob] = self._sub_job_schema.load(sub_job_list)
+            sub_jobs: List[SubJob] = self._sub_job_schema.load(sub_job_list, many=True)
             self._available_jobs[job_name] = sub_jobs
 
     def get_available_jobs(self) -> Dict[str, List[SubJob]]:
@@ -301,7 +301,7 @@ class DeviceUpdater(object):
                     continue
 
                 async with self._update_mutex:
-                    if item not in self._log:
+                    if item.id not in self._log:
                         continue
 
                     # TODO: Is this the right way to handle it? It potentially mixes up tasks
@@ -339,16 +339,15 @@ class DeviceUpdater(object):
         if job_name not in self._available_jobs:
             logger.warning("Cannot add job '{}' as it is not loaded.", job_name)
             return
-        logger.info('Adding Job {} for Device {} - File/Job: {}', job_name, origin)
+        logger.info('Adding Job {} for Device {}', job_name, origin)
 
         jobs_to_run: List[SubJob] = self._available_jobs.get(job_name)
         job_id: str = f"{time.time()}_{origin}_{job_name}"
 
-        new_entry: GlobalJobLogEntry = GlobalJobLogEntry(id=job_id,
-                                                         origin=origin,
-                                                         job_name=job_name,
-                                                         sub_jobs=jobs_to_run,
-                                                         auto_command_settings=auto_command)
+        new_entry: GlobalJobLogEntry = GlobalJobLogEntry(job_id, origin, job_name)
+        new_entry.sub_jobs.extend(jobs_to_run)
+        new_entry.auto_command_settings = auto_command
+
         await self._job_queue.put(new_entry)
         await self.__update_log(new_entry)
 
@@ -357,7 +356,10 @@ class DeviceUpdater(object):
             with open('update_log.json', 'w') as outfile:
                 # TODO: Ensure this works, else:
                 # city_dict = city_schema.dump(city)
-                json.dump(self._log, outfile, indent=4)
+                to_dump = {}
+                for job_id, entry in self._log.items():
+                    to_dump[job_id] = self._global_job_log_entry_schema.dump(entry, many=False)
+                json.dump(to_dump, outfile, indent=4)
 
     @logger.catch()
     async def delete_log_id(self, job_id: str):
@@ -375,6 +377,10 @@ class DeviceUpdater(object):
         if including_auto_jobs:
             return [self._log[x] for x in self._log if self._log[x].auto_command_settings is not None]
         return [self._log[x] for x in self._log if self._log[x].auto_command_settings is None]
+
+    def get_log_serialized(self, including_auto_jobs = False) -> List[Dict]:
+        plain_list = self.get_log(including_auto_jobs)
+        return self._global_job_log_entry_schema.dump(plain_list, many=True)
 
     @logger.catch()
     async def __start_job_type(self, job_item: GlobalJobLogEntry, communicator: AbstractCommunicator) -> bool:
@@ -540,7 +546,7 @@ class DeviceUpdater(object):
         with open(autocommandfile) as cmdfile:
             autocommands = json.loads(cmdfile.read())
 
-        autocommands_loaded: List[Autocommand] = self._autocommand_schema.load(autocommands)
+        autocommands_loaded: List[Autocommand] = self._autocommand_schema.load(autocommands, many=True)
         if not autocommands_loaded:
             logger.info('No autocommands loaded from {}', autocommandfile)
             return
@@ -579,7 +585,7 @@ class DeviceUpdater(object):
 
     async def __update_log(self, entry: Optional[GlobalJobLogEntry]):
         async with self._update_mutex:
-            if entry is not None and entry not in self._log:
+            if entry is not None and entry.id not in self._log:
                 self._log[entry.id] = entry
             await self.__write_log()
 

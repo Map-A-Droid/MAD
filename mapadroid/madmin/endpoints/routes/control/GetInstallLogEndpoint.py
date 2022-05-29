@@ -15,10 +15,5 @@ class GetInstallLogEndpoint(AbstractControlEndpoint):
     async def get(self) -> web.Response:
         withautojobs_raw: Optional[str] = self.request.query.get('withautojobs')
         withautojobs: bool = True if withautojobs_raw == "True" else False
-        return_log = []
-        log = self._get_device_updater().get_log(including_auto_jobs=withautojobs)
-        for entry in log:
-            if 'jobname' not in entry:
-                entry['jobname'] = entry.get('file', 'Unknown Name')
-            return_log.append(entry)
-        return await self._json_response(return_log)
+        log = self._get_device_updater().get_log_serialized(including_auto_jobs=withautojobs)
+        return await self._json_response(log)
