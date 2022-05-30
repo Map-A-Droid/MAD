@@ -155,10 +155,11 @@ class DeviceUpdater(object):
 
         """
         if len(job_item.sub_jobs) <= job_item.sub_job_index:
-            logger.warning("Sub job index of {} ({}) is bigger than the length of the subjobs ({})",
-                           job_item.id,
-                           job_item.job_name,
-                           len(job_item.sub_jobs))
+            logger.info("Done with job as sub job index of {} ({}) is bigger ({}) than the length of the subjobs ({})",
+                        job_item.id,
+                        job_item.job_name,
+                        job_item.sub_job_index,
+                        len(job_item.sub_jobs))
             return True
         if job_item.last_status == JobStatus.CANCELLED:
             logger.info("Job {} of device {} has been cancelled and will not be processed anymore.",
@@ -262,10 +263,11 @@ class DeviceUpdater(object):
                 job_item.last_status = JobStatus.SUCCESS
                 job_item.counter = 0  # Reset the counter
             else:
-                logger.error('SubJob of job {} executed successfully - Device {} - SubJob index: {} (SubJobs: {})',
-                             job_item.job_name, job_item.origin,
-                             job_item.sub_job_index,
-                             job_item.sub_jobs)
+                logger.error(
+                    'SubJob of job {} could not be executed successfully - Device {} - SubJob index: {} (SubJobs: {})',
+                    job_item.job_name, job_item.origin,
+                    job_item.sub_job_index,
+                    job_item.sub_jobs)
                 job_item.last_status = JobStatus.FAILING
                 return False
         except Exception as e:
@@ -481,7 +483,7 @@ class DeviceUpdater(object):
                 returning = (await communicator.passthrough(sub_job_to_run.SYNTAX)) \
                     .replace('\r', '').replace('\n', '').replace('  ', '')
                 job_item.returning = returning
-                return returning if 'KO' not in returning else False
+                return not returning.startswith("KO:")
             return False
         except Exception as e:
             logger.error('Error while getting response from device - Reason: {}', e)
