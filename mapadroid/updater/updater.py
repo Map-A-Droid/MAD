@@ -66,7 +66,6 @@ class DeviceUpdater(object):
                         logger.warning("Ignoring entry {} of {} as it's not a dict", issued_job_name, log_file)
                     issued_job: GlobalJobLogEntry = self._global_job_log_entry_schema.load(issued_job_raw)
                     self._log[issued_job_name] = issued_job
-                    # self._log = json.load(logfile)
         except json.decoder.JSONDecodeError:
             logger.error('Corrupted update_log.json file found. Deleting the file. Please check remaining disk space '
                          'or disk health.')
@@ -78,7 +77,6 @@ class DeviceUpdater(object):
             thread.cancel()
 
     async def start_updater(self):
-        # TODO: Async exec
         await self.stop_updater()
         await self._load_jobs()
         await self._load_log()
@@ -105,9 +103,12 @@ class DeviceUpdater(object):
     async def _load_jobs_from_file(self, file_path):
         with open(file_path) as cmdfile:
             commands_raw = json.loads(cmdfile.read())
-        # TODO: Ensure it's a dict, not a list...
+        if not isinstance(commands_raw, dict):
+            return
         for job_name, sub_job_list in commands_raw.items():
-            # TODO: Ensure it's a list...
+            if not isinstance(sub_job_list, list):
+                logger.warning("{} contains invalid value: {}", file_path, sub_job_list)
+                continue
             if job_name in self._available_jobs:
                 logger.warning("Job {} already exists and is being overwritten by the file {}", job_name, file_path)
             sub_jobs: List[SubJob] = self._sub_job_schema.load(sub_job_list, many=True)
@@ -124,7 +125,7 @@ class DeviceUpdater(object):
             job_entry: GlobalJobLogEntry = self._log[job_id]
             job_entry.counter = 0
             job_entry.sub_job_index = 0
-            if job_entry.processing_date < time.time():
+            if job_entry.processing_date is None or job_entry.processing_date < int(time.time()):
                 job_entry.processing_date = None
             job_entry.last_status = JobStatus.PENDING
 
@@ -153,6 +154,12 @@ class DeviceUpdater(object):
         Returns: Boolean indicating if the job has been processed (True) or should be processed again (False)
 
         """
+        if len(job_item.sub_jobs) <= job_item.sub_job_index:
+            logger.warning("Sub job index of {} ({}) is bigger than the length of the subjobs ({})",
+                           job_item.id,
+                           job_item.job_name,
+                           len(job_item.sub_jobs))
+            return True
         if job_item.last_status == JobStatus.CANCELLED:
             logger.info("Job {} of device {} has been cancelled and will not be processed anymore.",
                         job_item.job_name, job_item.origin)
@@ -163,7 +170,6 @@ class DeviceUpdater(object):
                          "(Job index: {}, Sub Jobs: {})", job_item.job_name, job_item.origin, job_item.sub_job_index,
                          job_item.sub_jobs)
             await self.send_webhook(job_item=job_item, status=JobReturn.TERMINATED)
-            # TODO: Send webhook, update log and remove from running jobs in finally outside of this method?
             return True
         elif job_item.counter > 3:
             if job_item.last_status == JobStatus.FAILING:
@@ -173,6 +179,7 @@ class DeviceUpdater(object):
                 if job_item.auto_command_settings is not None and job_item.auto_command_settings.redo_on_error:
                     # Restart the job as the redo_on_error flag is set
                     await self.restart_job(job_id=job_item.id)
+                job_item.last_status = JobStatus.FAILED
             elif job_item.last_status == JobStatus.NOT_CONNECTED \
                     and application_args.job_restart_notconnect > 0:
                 logger.error("Job {} for origin {} failed 3 times in row due to device not being connected - "
@@ -186,11 +193,9 @@ class DeviceUpdater(object):
             else:
                 logger.error("Job {} attempted to be executed for {} more than 3 times in row. Aborting.",
                              job_item.job_name, job_item.origin)
-            job_item.last_status = JobStatus.FAILED
             # Do not process the same entry again
             return True
 
-        # TODO: Check the status for success/invalid states first?
         if job_item.processing_date is None:
             # no processing date has been set, check if one should be set and set it accordingly if needed
             if job_item.auto_command_settings is not None:
@@ -200,7 +205,6 @@ class DeviceUpdater(object):
                     job_item.auto_command_settings.algo_type,
                     job_item.auto_command_settings.algo_value)
                 if minutes_until_next_exec is None:
-                    # TODO: Rather raise?
                     logger.warning("Invalid job algo values found in job {}", job_item.job_name)
                     return True
                 job_item.processing_date = int(time.time()) + 60 * minutes_until_next_exec
@@ -218,9 +222,8 @@ class DeviceUpdater(object):
         # If a processing_date has been set, the job is not to be executed before that date. Thus, add it back to the
         # queue and basically repeat until it is to be executed.
         if job_item.processing_date is not None and job_item.processing_date > time.time():
-            logger.debug('Job {} on device {} - queued for (further) processing in the '
-                         'future.',
-                         job_item.job_name, job_item.origin)
+            logger.debug3('Job {} on device {} - queued for (further) processing in the future.',
+                          job_item.job_name, job_item.origin)
             job_item.last_status = JobStatus.FUTURE
             return False
 
@@ -250,7 +253,6 @@ class DeviceUpdater(object):
         job_item.last_status = JobStatus.STARTING
         await self.__update_log(job_item)
         try:
-            # TODO: Check at the start of handle stops if index out of bounds to stop processing job
             if await self.__start_job_type(job_item, temp_comm):
                 logger.info('SubJob of job {} executed successfully - Device {} - SubJob index: {} (SubJobs: {})',
                             job_item.job_name, job_item.origin,
@@ -261,22 +263,22 @@ class DeviceUpdater(object):
                 job_item.counter = 0  # Reset the counter
             else:
                 logger.error('SubJob of job {} executed successfully - Device {} - SubJob index: {} (SubJobs: {})',
-                            job_item.job_name, job_item.origin,
-                            job_item.sub_job_index,
-                            job_item.sub_jobs)
+                             job_item.job_name, job_item.origin,
+                             job_item.sub_job_index,
+                             job_item.sub_jobs)
                 job_item.last_status = JobStatus.FAILING
                 return False
         except Exception as e:
-            logger.error('Job {} could not be executed successfully (fatal error) - Device {} - SubJob index: {} (SubJobs: {})',
-                            job_item.job_name, job_item.origin,
-                            job_item.sub_job_index,
-                            job_item.sub_jobs)
+            logger.error(
+                'Job {} could not be executed successfully (fatal error) - Device {} - SubJob index: {} (SubJobs: {})',
+                job_item.job_name, job_item.origin,
+                job_item.sub_job_index,
+                job_item.sub_jobs)
             job_item.last_status = JobStatus.INTERRUPTED
             return False
         finally:
             job_item.counter += 1
 
-        # TODO: Only if amongst the success states?
         if job_item.auto_command_settings is not None and job_item.auto_command_settings.redo:
             logger.info('Re-adding the automatic job {} of {} after having executed it in a non-failing state',
                         job_item.job_name,
@@ -298,21 +300,23 @@ class DeviceUpdater(object):
                     continue
                 if item is None:
                     continue
-
-                async with self._update_mutex:
-                    if item.id not in self._log:
-                        continue
-
-                    # TODO: Is this the right way to handle it? It potentially mixes up tasks
-                    if item.origin in self._running_jobs_per_origin:
-                        # Do not run multiple jobs on the same device at once
-                        await self._job_queue.put(item)
-                        continue
-                    self._running_jobs_per_origin[item.origin] = item
-
+                # Boolean to control the release of the running job on the device
+                requeue: bool = False
                 try:
+                    async with self._update_mutex:
+                        if item.id not in self._log:
+                            continue
+
+                        if item.origin in self._running_jobs_per_origin \
+                                and item.id != self._running_jobs_per_origin[item.origin].id:
+                            # Do not run multiple (different) jobs on the same device at once
+                            await self._job_queue.put(item)
+                            continue
+                        self._running_jobs_per_origin[item.origin] = item
+
                     await self._websocket.set_job_activated(item.origin)
-                    if not await self.__handle_job(item):
+                    requeue = not await self.__handle_job(item)
+                    if requeue:
                         await self._job_queue.put(item)
                 except Exception as e:
                     logger.warning("Failed executing job")
@@ -320,9 +324,11 @@ class DeviceUpdater(object):
                 finally:
                     await self._websocket.set_job_deactivated(item.origin)
                     await self.__update_log(item)
-
-                    async with self._update_mutex:
-                        self._running_jobs_per_origin.pop(item.origin)
+                    # While we requeue jobs of autocommands looping, these should not influence jobs to be run
+                    #  at any other time
+                    if not requeue or item.auto_command_settings is not None and item.last_status != JobStatus.FUTURE:
+                        async with self._update_mutex:
+                            self._running_jobs_per_origin.pop(item.origin)
                     self._job_queue.task_done()
 
             except (KeyboardInterrupt, CancelledError):
@@ -353,8 +359,6 @@ class DeviceUpdater(object):
     async def __write_log(self):
         async with self._update_mutex:
             with open('update_log.json', 'w') as outfile:
-                # TODO: Ensure this works, else:
-                # city_dict = city_schema.dump(city)
                 to_dump = {}
                 for job_id, entry in self._log.items():
                     to_dump[job_id] = self._global_job_log_entry_schema.dump(entry, many=False)
@@ -362,7 +366,6 @@ class DeviceUpdater(object):
 
     @logger.catch()
     async def delete_log_id(self, job_id: str):
-        # TODO: Cancel jobs that are running?
         async with self._update_mutex:
             if job_id not in self._log:
                 return True
@@ -377,7 +380,7 @@ class DeviceUpdater(object):
             return [self._log[x] for x in self._log if self._log[x].auto_command_settings is not None]
         return [self._log[x] for x in self._log if self._log[x].auto_command_settings is None]
 
-    def get_log_serialized(self, including_auto_jobs = False) -> List[Dict]:
+    def get_log_serialized(self, including_auto_jobs=False) -> List[Dict]:
         plain_list = self.get_log(including_auto_jobs)
         return self._global_job_log_entry_schema.dump(plain_list, many=True)
 
@@ -393,7 +396,6 @@ class DeviceUpdater(object):
 
         """
         sub_job_to_run: SubJob = job_item.sub_jobs[job_item.sub_job_index]
-        # TODO: Set the last_status for each if/elif/else branch
         try:
             if sub_job_to_run.TYPE == JobType.INSTALLATION:
                 if str(sub_job_to_run.SYNTAX).lower().endswith(".apk"):
@@ -476,7 +478,7 @@ class DeviceUpdater(object):
             elif sub_job_to_run.TYPE == JobType.START:
                 return await communicator.start_app("com.nianticlabs.pokemongo")
             elif sub_job_to_run.TYPE == JobType.PASSTHROUGH:
-                returning = (await communicator.passthrough(sub_job_to_run.SYNTAX))\
+                returning = (await communicator.passthrough(sub_job_to_run.SYNTAX)) \
                     .replace('\r', '').replace('\n', '').replace('  ', '')
                 job_item.returning = returning
                 return returning if 'KO' not in returning else False
@@ -587,4 +589,3 @@ class DeviceUpdater(object):
             if entry is not None and entry.id not in self._log:
                 self._log[entry.id] = entry
             await self.__write_log()
-
