@@ -61,7 +61,7 @@ class DeviceUpdater(object):
                     logger.warning("Unable to ")
                     os.remove(log_file)
                     return
-                for issued_job_name, issued_job_raw in loaded_log:
+                for issued_job_name, issued_job_raw in loaded_log.items():
                     if not isinstance(issued_job_raw, dict):
                         logger.warning("Ignoring entry {} of {} as it's not a dict", issued_job_name, log_file)
                     issued_job: GlobalJobLogEntry = self._global_job_log_entry_schema.load(issued_job_raw)
@@ -81,9 +81,9 @@ class DeviceUpdater(object):
         # TODO: Async exec
         await self.stop_updater()
         await self._load_jobs()
+        await self._load_log()
         await self._kill_old_jobs()
         await self._load_automatic_jobs()
-        await self._load_log()
         self._stop_updater_threads.clear()
         loop = asyncio.get_running_loop()
         for i in range(application_args.job_thread_count):
@@ -162,13 +162,10 @@ class DeviceUpdater(object):
             logger.error("Breakup job {} on device {} - previous job in chain failed "
                          "(Job index: {}, Sub Jobs: {})", job_item.job_name, job_item.origin, job_item.sub_job_index,
                          job_item.sub_jobs)
-            job_item.status = JobStatus.FAILED
             await self.send_webhook(job_item=job_item, status=JobReturn.TERMINATED)
             # TODO: Send webhook, update log and remove from running jobs in finally outside of this method?
             return True
         elif job_item.counter > 3:
-            job_item.last_status = JobStatus.FAILED
-
             if job_item.last_status == JobStatus.FAILING:
                 logger.error("Job {} for origin {} failed 3 times in row - aborting (index: {}, sub jobs: {})",
                              job_item.job_name, job_item.origin, job_item.sub_job_index,
@@ -189,21 +186,22 @@ class DeviceUpdater(object):
             else:
                 logger.error("Job {} attempted to be executed for {} more than 3 times in row. Aborting.",
                              job_item.job_name, job_item.origin)
+            job_item.last_status = JobStatus.FAILED
             # Do not process the same entry again
             return True
-        # TODO: If not_connected and counter >3 => failed
 
         # TODO: Check the status for success/invalid states first?
         if job_item.processing_date is None:
             # no processing date has been set, check if one should be set and set it accordingly if needed
             if job_item.auto_command_settings is not None:
                 # Handle parameters for auto_commands
-                # TODO: If start_with_init is set, skip setting a processing date here
+                # TODO: start_with_init should be run once
                 minutes_until_next_exec: Optional[int] = self.get_job_algo_value(
                     job_item.auto_command_settings.algo_type,
                     job_item.auto_command_settings.algo_value)
-                if not minutes_until_next_exec:
+                if minutes_until_next_exec is None:
                     # TODO: Rather raise?
+                    logger.warning("Invalid job algo values found in job {}", job_item.job_name)
                     return True
                 job_item.processing_date = int(time.time()) + 60 * minutes_until_next_exec
 
@@ -245,6 +243,8 @@ class DeviceUpdater(object):
                          job_item.id)
             job_item.last_status = JobStatus.NOT_CONNECTED
             job_item.counter += 1
+            # Next attempt to execute in 60 seconds
+            job_item.processing_date = int(time.time()) + 60
             return False
 
         job_item.last_status = JobStatus.STARTING
@@ -297,7 +297,6 @@ class DeviceUpdater(object):
                     await asyncio.sleep(1)
                     continue
                 if item is None:
-                    await asyncio.sleep(1)
                     continue
 
                 async with self._update_mutex:
@@ -324,7 +323,7 @@ class DeviceUpdater(object):
 
                     async with self._update_mutex:
                         self._running_jobs_per_origin.pop(item.origin)
-                    await asyncio.sleep(1)
+                    self._job_queue.task_done()
 
             except (KeyboardInterrupt, CancelledError):
                 logger.info("process_update_queue-{} received keyboard interrupt, stopping", threadnumber)
