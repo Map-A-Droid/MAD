@@ -24,7 +24,7 @@
                         if (row.sub_jobs.length > 1) {
                             rendered_data += "At index " + row.sub_job_index + "<br>"
                         }
-                        if (typeof row.returning === "undefined") {
+                        if (typeof row.returning === "undefined" || row.returning === null) {
                             rendered_data += "<p id='info'>-</p>";
                         } else if (row.returning.includes('unknown command')) {
                             rendered_data += "<p id='outdated'>OUTDATED RGC VERSION - PLEASE UPDATE</div>";
