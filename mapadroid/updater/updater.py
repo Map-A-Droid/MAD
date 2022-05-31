@@ -88,6 +88,9 @@ class DeviceUpdater(object):
             updater_task: Task = loop.create_task(self._process_update_queue(i))
             self.t_updater.append(updater_task)
 
+    async def reload_jobs(self):
+        await self._load_jobs()
+
     async def _load_jobs(self):
         async with self._update_mutex:
             self._available_jobs.clear()
@@ -99,6 +102,14 @@ class DeviceUpdater(object):
                     await self._load_jobs_from_file(command_file)
                 except Exception as e:
                     logger.error('Cannot add job {} - Reason: {}', command_file, e)
+
+            # Read all .apk files in the upload dir
+            for apk_file in glob.glob(str(application_args.upload_path) + "/*.apk"):
+                created: int = int(os.path.getmtime(apk_file))
+
+                self._available_jobs[os.path.basename(apk_file)] = [SubJob(TYPE=JobType.INSTALLATION,
+                                                                           SYNTAX=os.path.basename(apk_file),
+                                                                           FIELDNAME=str(created))]
 
     async def _load_jobs_from_file(self, file_path):
         with open(file_path) as cmdfile:
