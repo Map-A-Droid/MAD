@@ -597,7 +597,8 @@ class MappingManager(AbstractMappingManager):
             try:
                 await to_be_checked
             except RoutemanagerShuttingDown as e:
-                logger.warning("Ignoring area {} ({}) due to failure to calculate route.", area, routemanagers[area].name)
+                logger.warning("Ignoring area {} ({}) due to failure to calculate route: {}", area,
+                               routemanagers[area].name, e)
                 del routemanagers[area]
         return routemanagers
 
