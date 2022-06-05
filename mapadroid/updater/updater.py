@@ -4,9 +4,9 @@ import json
 import os
 import re
 import time
-from asyncio import Task, CancelledError
+from asyncio import CancelledError, Task
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Union
+from typing import AsyncGenerator, Dict, List, Optional, Tuple, Union
 
 import asyncio_rlock
 import marshmallow_dataclass
@@ -14,21 +14,22 @@ from marshmallow import Schema
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
-from mapadroid.mad_apk.utils import lookup_arch_enum, supported_pogo_version, is_newer_version, stream_package
+from mapadroid.mad_apk.utils import (is_newer_version, lookup_arch_enum,
+                                     stream_package, supported_pogo_version)
 from mapadroid.updater.Autocommand import Autocommand
 from mapadroid.updater.GlobalJobLogAlgoType import GlobalJobLogAlgoType
 from mapadroid.updater.GlobalJobLogEntry import GlobalJobLogEntry
-from mapadroid.updater.JobStatus import JobStatus
-from mapadroid.updater.SubJob import SubJob
 from mapadroid.updater.JobReturn import JobReturn
+from mapadroid.updater.JobStatus import JobStatus
 from mapadroid.updater.JobType import JobType
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.apk_enums import APKPackage, APKType, APKArch
+from mapadroid.updater.SubJob import SubJob
+from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.custom_types import MADPackages
+from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
-from mapadroid.websocket import WebsocketServer, AbstractCommunicator
-from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.websocket import AbstractCommunicator, WebsocketServer
 
 logger = get_logger(LoggerEnums.utils)
 
@@ -448,7 +449,7 @@ class DeviceUpdater(object):
                 architecture = lookup_arch_enum(architecture_raw)
                 package_all: MADPackages = await self._storage_obj.get_current_package_info(package)
                 if package_all is None:
-                    logger.warning('No MAD APK for {} [{}]', package, architecture.name)
+                    logger.warning('No MAD APK for {} [{}]', package.name, architecture.name)
                     return False
                 try:
                     mad_apk = package_all[architecture]
@@ -472,9 +473,16 @@ class DeviceUpdater(object):
                     logger.info('Smart Update APK Installation for {} to {}',
                                 package.name, job_item.origin)
                     apk_file = bytes()
-                    # TODO: Fix...
                     async with self._db as session, session:
-                        for chunk in await stream_package(session, self._storage_obj, package, architecture):
+                        package_data: Optional[Tuple[AsyncGenerator,
+                                                     str, str, str]] = await stream_package(session, self._storage_obj,
+                                                                                            package, architecture)
+                        if not package_data:
+                            logger.warning("Unable to smart update due to failure to retrieve binary data of the APK "
+                                           "requested.")
+                            return True
+                        gen_func, mimetype, filename, version = package_data
+                        async for chunk in gen_func:
                             apk_file += chunk
                     if mad_apk.mimetype == 'application/zip':
                         returning = await communicator.install_bundle(300, data=apk_file)
@@ -530,6 +538,7 @@ class DeviceUpdater(object):
                 return
 
             from discord_webhook import DiscordEmbed, DiscordWebhook
+
             # TODO: Async
             _webhook = DiscordWebhook(url=application_args.job_dt_wh_url)
 
