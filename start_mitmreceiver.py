@@ -2,7 +2,7 @@ import asyncio
 import os
 import sys
 from asyncio import CancelledError, Task
-from typing import Optional, Union
+from typing import Optional
 
 from aiohttp import web
 from aioredis import Redis
@@ -11,7 +11,8 @@ from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
 from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
     MitmMapperClientConnector
 from mapadroid.data_handler.grpc.StatsHandlerClient import StatsHandlerClient
-from mapadroid.data_handler.grpc.StatsHandlerClientConnector import StatsHandlerClientConnector
+from mapadroid.data_handler.grpc.StatsHandlerClientConnector import \
+    StatsHandlerClientConnector
 from mapadroid.data_handler.mitm_data.MitmMapperType import MitmMapperType
 from mapadroid.data_handler.mitm_data.RedisMitmMapper import RedisMitmMapper
 from mapadroid.db.DbFactory import DbFactory
@@ -20,16 +21,14 @@ from mapadroid.mapping_manager.AbstractMappingManager import \
     AbstractMappingManager
 from mapadroid.mapping_manager.MappingManagerClientConnector import \
     MappingManagerClientConnector
-from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.mitm_receiver.MitmDataProcessorManager import \
     MitmDataProcessorManager
+from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
-from mapadroid.utils.SystemStatsUtil import get_system_infos
-from mapadroid.utils.logging import (LoggerEnums, get_logger,
-                                     init_logging)
+from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
 from mapadroid.utils.madGlobals import application_args, terminate_mad
 from mapadroid.utils.questGen import QuestGen
-
+from mapadroid.utils.SystemStatsUtil import get_system_infos
 
 try:
     import uvloop

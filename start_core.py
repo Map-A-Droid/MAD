@@ -10,11 +10,14 @@ from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
 from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
     MitmMapperClientConnector
 from mapadroid.data_handler.grpc.StatsHandlerClient import StatsHandlerClient
-from mapadroid.data_handler.grpc.StatsHandlerClientConnector import StatsHandlerClientConnector
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.grpc.StatsHandlerClientConnector import \
+    StatsHandlerClientConnector
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.MitmMapperType import MitmMapperType
 from mapadroid.data_handler.mitm_data.RedisMitmMapper import RedisMitmMapper
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.db.DbCleanup import DbCleanup
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import get_storage_obj
@@ -23,15 +26,14 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerServer import MappingManagerServer
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.plugins.pluginBase import PluginCollection
-from mapadroid.utils.EnvironmentUtil import setup_runtime, setup_loggers
-from mapadroid.utils.SystemStatsUtil import get_system_infos
-from mapadroid.utils.logging import (LoggerEnums, get_logger,
-                                     init_logging)
+from mapadroid.updater.updater import DeviceUpdater
+from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
+from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
 from mapadroid.utils.madGlobals import application_args, terminate_mad
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.rarity import Rarity
-from mapadroid.updater.updater import DeviceUpdater
+from mapadroid.utils.SystemStatsUtil import get_system_infos
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -136,7 +138,7 @@ async def start():
     # TODO: module/service?
     await ws_server.start_server()
 
-    device_updater = DeviceUpdater(ws_server, application_args, jobstatus, db_wrapper, storage_elem)
+    device_updater = DeviceUpdater(ws_server, db_wrapper, storage_elem)
     await device_updater.start_updater()
     if not application_args.config_mode:
         if application_args.webhook:
@@ -146,7 +148,7 @@ async def start():
             webhook_task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
-    madmin = MADmin(application_args, db_wrapper, ws_server, mapping_manager, device_updater, jobstatus, storage_elem,
+    madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
                     quest_gen)
 
     # starting plugin system
