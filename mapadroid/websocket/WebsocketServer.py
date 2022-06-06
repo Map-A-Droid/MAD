@@ -7,8 +7,10 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
@@ -16,20 +18,20 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.authHelper import check_auth
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
+from mapadroid.websocket.communicator import Communicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
-from mapadroid.websocket.communicator import Communicator
-from mapadroid.worker.Worker import Worker
-from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
+from mapadroid.worker.Worker import Worker
+from mapadroid.worker.WorkerState import WorkerState
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
@@ -323,15 +325,19 @@ class WebsocketServer(object):
     @staticmethod
     async def __on_message(client_entry: WebsocketConnectedClientEntry, message: MessageTyping) -> None:
         response: Optional[MessageTyping] = None
-        if isinstance(message, str):
-            logger.debug("Receiving message: {}", message.strip())
-            splitup = message.split(";", 1)
-            message_id = int(splitup[0])
-            response = splitup[1]
-        else:
-            logger.debug("Received binary values.")
-            message_id = int.from_bytes(message[:4], byteorder='big', signed=False)
-            response = message[4:]
+        try:
+            if isinstance(message, str):
+                logger.debug("Receiving message: {}", message.strip())
+                splitup = message.split(";", 1)
+                message_id = int(splitup[0])
+                response = splitup[1]
+            else:
+                logger.debug("Received binary values.")
+                message_id = int.from_bytes(message[:4], byteorder='big', signed=False)
+                response = message[4:]
+        except ValueError as e:
+            logger.warning("Failed reading message ID of message received for {}", client_entry.origin)
+            return
         await client_entry.set_message_response(message_id, response)
 
     @staticmethod
