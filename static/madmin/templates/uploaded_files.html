@@ -4,79 +4,99 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-function setGrid(tableGridHtmlId, gridData) {
-  $(tableGridHtmlId).DataTable({
-    "data": gridData,
-    "columns": [
-      { data: 'jobname', title: 'Filename / Process' },
-      { data: 'creation', title: 'Added' },
-      { data: 'type', title: 'Type' },
-      { data: null, title: '', "orderable": false }
-    ],
-    "columnDefs": [
-      {
-        "targets": [2],
-        "render": function (data, type, row) {
-          var jobtype = row.type;
-          return jobtype.split(".")[1];
+    <script>
+        function isPositiveInteger(n) {
+            return n >>> 0 === parseFloat(n);
         }
-      },
-      {
-        "targets": [3],
-        "render": function (data, type, row) {
-          var dellink = "";
-            {% if origin %}
-              var link = "<a href='install_file?jobname=" + row.jobname +
-                "&origin={{origin}}&adb={{adb}}&type=" + row.type +
-                "' class='confirm' title='Do you really want to start this job?'><i class='fas fa-play-circle'></i></a>";
-            {% else %}
-              var link = "<a href='pick_worker?jobname=" + row.jobname + "&type=" + row.type +
-                "' title='Install on selected devices'><i class='fas fa-tasks'></i></a> <a href='install_file_all_devices?jobname=" +
-                row.jobname + "&type=" + row.type +
-                "' class='confirm' title='Do you really want to start this job on all devices?'><i class='fas fa-play-circle'></i></a>";
-              if(row.type == "JobType.INSTALLATION") {
-                dellink = " <a href='delete_file?filename=" + row.jobname +
-                  "' class='confirm' title='Do you really want to delete this file?'><i class='fas fa-trash-alt'></i></a>"
-              }
-            {% endif %}
 
-            return link + ' ' + dellink;
+        function setGrid(tableGridHtmlId, gridData) {
+            $(tableGridHtmlId).DataTable({
+                "data": gridData,
+                "columns": [
+                    {data: 'jobname', title: 'Filename / Process'},
+                    {data: 'creation', title: 'Added'},
+                    {data: 'type', title: 'Type'},
+                    {data: null, title: '', "orderable": false}
+                ],
+                "columnDefs": [
+                    {
+                        "targets": [1],
+                        "render": function (data, type, row) {
+                            if (isPositiveInteger(data)) {
+                                 var date = new Date(data * 1000);
+                                 return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+                            } else {
+                                return data;
+                            }
+                        }
+                    },
+                    {
+                        "targets": [2],
+                        "render": function (data, type, row) {
+                            var jobtype = row.type;
+                            return jobtype.split(".")[1];
+                        }
+                    },
+                    {
+                        "targets": [3],
+                        "render": function (data, type, row) {
+                            var dellink = "";
+                            {% if origin %}
+                                var link = "<a href='install_file?jobname=" + row.jobname +
+                                    "&origin={{origin}}&adb={{adb}}&type=" + row.type +
+                                    "' class='confirm' title='Do you really want to start this job?'><i class='fas fa-play-circle'></i></a>";
+                            {% else %}
+                                var link = "<a href='pick_worker?jobname=" + row.jobname + "&type=" + row.type +
+                                    "' title='Install on selected devices'><i class='fas fa-tasks'></i></a> <a href='install_file_all_devices?jobname=" +
+                                    row.jobname + "&type=" + row.type +
+                                    "' class='confirm' title='Do you really want to start this job on all devices?'><i class='fas fa-play-circle'></i></a>";
+                                if (row.type == "JobType.INSTALLATION") {
+                                    dellink = " <a href='delete_file?filename=" + row.jobname +
+                                        "' class='confirm' title='Do you really want to delete this file?'><i class='fas fa-trash-alt'></i></a>"
+                                }
+                            {% endif %}
+
+                            return link + ' ' + dellink;
+                        }
+                    }
+                ],
+                "order": [[1, "desc"]],
+                "responsive": {{ responsive }},
+                "stateSave": true,
+                "stripeClasses": ['odd', 'even'],
+                "stateSaveCallback": function (settings, data) {
+                    localStorage.setItem('DataTables_' + settings.sInstance, JSON.stringify(data))
+                },
+                "stateLoadCallback": function (settings) {
+                    return JSON.parse(localStorage.getItem('DataTables_' + settings.sInstance))
+                }
+            });
         }
-      }
-    ],
-    "order": [[1, "desc"]],
-    "responsive": {{ responsive }},
-    "stateSave": true,
-    "stripeClasses": [ 'odd', 'even' ],
-    "stateSaveCallback": function(settings, data) {
-      localStorage.setItem('DataTables_' + settings.sInstance, JSON.stringify(data))
-    },
-    "stateLoadCallback": function(settings) {
-      return JSON.parse(localStorage.getItem('DataTables_' + settings.sInstance))
-    }
-  });
-}
 
-$(document).ready(function () {
-  $('body').Aplus();
-  $("#navgyms").addClass("active");
-  $.ajax({
-    type: "GET",
-    url: "get_uploaded_files",
-    success: function (result) {
-      setGrid('#show-data-jobs', result);
-    }
-  });
-});
-</script>
-<style>
-  table.dataTable tr.odd { background-color: #F8F8F8; }
-  table.dataTable tr.even { background-color: white; }
-</style>
+        $(document).ready(function () {
+            $('body').Aplus();
+            $("#navgyms").addClass("active");
+            $.ajax({
+                type: "GET",
+                url: "get_uploaded_files",
+                success: function (result) {
+                    setGrid('#show-data-jobs', result);
+                }
+            });
+        });
+    </script>
+    <style>
+        table.dataTable tr.odd {
+            background-color: #F8F8F8;
+        }
+
+        table.dataTable tr.even {
+            background-color: white;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-<h2>Jobs</h2>
-<table id="show-data-jobs" class="table" style="width:100%;"></table>
+    <h2>Jobs</h2>
+    <table id="show-data-jobs" class="table" style="width:100%;"></table>
 {% endblock %}

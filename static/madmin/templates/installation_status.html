@@ -10,9 +10,9 @@
             "data": gridData,
             "columns": [
                 { data: 'origin', title: 'Device', responsivePriority: 1},
-                { data: 'jobname', title: 'File / Command', responsivePriority: 3 },
-                { data: 'status', title: 'Status', responsivePriority: 2 },
-                { data: null, title: 'Init Date/Time',responsivePriority: 6 },
+                { data: 'job_name', title: 'File / Command', responsivePriority: 3 },
+                { data: 'last_status', title: 'Status', responsivePriority: 2 },
+                { data: null, title: 'Job ID',responsivePriority: 6 },
                 { data: null, title: 'Date/Time', responsivePriority: 5 },
                 { data: null, title: 'Action',responsivePriority: 4 }
             ],
@@ -20,25 +20,18 @@
                 {
                     "targets": [1],
                     "render": function (data, type, row) {
-
-                        if(row.jobtype === 'jobType.PASSTHROUGH') {
-
-                            if(typeof row.returning === "undefined" ) {
-                                var returning = "<p id='info'>-</p>";
-                            } else if (row.returning.includes('unknown command')) {
-                                var returning = "<p id='outdated'>OUTDATED RGC VERSION - PLEASE UPDATE</div>";
-                            } else {
-                                var returning = "<p id='info'>" + row.returning + "</p>";
-                            }
-
-                            return row.jobname +"<br><b>RETURNING:</b>" + returning;
-
-                        } else if (row.file.length === 0) {
-                            return row.jobname;
-                        } else {
-                            return row.file;
+                        let rendered_data = row.job_name + "<br>"
+                        if (row.sub_jobs.length > 1) {
+                            rendered_data += "At index " + row.sub_job_index + "<br>"
                         }
-
+                        if (typeof row.returning === "undefined" || row.returning === null) {
+                            rendered_data += "<p id='info'>-</p>";
+                        } else if (row.returning.includes('unknown command')) {
+                            rendered_data += "<p id='outdated'>OUTDATED RGC VERSION - PLEASE UPDATE</div>";
+                        } else {
+                            rendered_data += "<p id='info'>" + row.returning + "</p>";
+                        }
+                        return rendered_data;
                     }
                 },
                 {
@@ -58,30 +51,20 @@
                 {
                     "targets": [3],
                     "render": function (data, type, row) {
-                        return tstodt(row.id);
+                        return row.id;
                     }
                 },
                 {
                     "targets": [4],
                     "render": function (data, type, row) {
 
-                        var nextdatetime = "-"
-                        var lastdatetime = "-"
-                        var laststatus = "-"
+                        let nextdatetime = "-";
 
-                        if ('lastprocess' in row) {
-                            lastdatetime = tstodt(row.lastprocess);
+                        if ('processing_date' in row) {
+                            nextdatetime = tstodt(row.processing_date);
                         }
 
-                        if ('processingdate' in row) {
-                            nextdatetime = tstodt(row.processingdate);
-                        }
-
-                        if ('laststatus' in row) {
-                            laststatus = row.laststatus;
-                        }
-
-                         return "<b>Processed: </b> " + lastdatetime + "<br><b>Next: </b>" + nextdatetime + "<br><b>Last status: </b>" + laststatus;
+                         return "<b>Processed / Processing at: </b> " + nextdatetime + "<br><b>Attempt: </b> " + row.counter;
                     }
                 }
             ],

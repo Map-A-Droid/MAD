@@ -265,7 +265,7 @@ class PokestopHelper:
             .join(TrsQuest, and_(TrsQuest.GUID == Pokestop.pokestop_id,
                                  TrsQuest.layer == quest_layer.value), isouter=True)
         where_conditions = []
-        # TODO: Verify this works for all timezones...
+        # TODO: Use the timezone of the middle of the geofence_helper
         today_midnight = DatetimeWrapper.now().replace(hour=0, minute=0, second=0, microsecond=0)
         where_conditions.append(or_(TrsQuest.quest_timestamp < today_midnight.timestamp(),
                                     TrsQuest.GUID == None))

@@ -1,7 +1,7 @@
 import io
 import zipfile
 from distutils.version import LooseVersion
-from typing import Tuple, Union, Optional, List, AsyncGenerator, Dict
+from typing import AsyncGenerator, Dict, List, Optional, Tuple, Union
 
 import apkutils
 from aiocache import cached
@@ -13,10 +13,11 @@ from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.custom_types import MADapks, MADPackage, MADPackages
 from mapadroid.utils.global_variables import BACKEND_SUPPORTED_VERSIONS
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from .abstract_apk_storage import AbstractAPKStorage
-from ..utils.RestHelper import RestHelper, RestApiResult
+
 from ..utils.functions import get_version_codes
 from ..utils.madGlobals import NoMaddevApiTokenError
+from ..utils.RestHelper import RestApiResult, RestHelper
+from .abstract_apk_storage import AbstractAPKStorage
 
 logger = get_logger(LoggerEnums.package_mgr)
 
@@ -216,7 +217,7 @@ async def lookup_package_info(storage_obj: AbstractAPKStorage, package: APKType,
                 raise ValueError("Version is not supported anymore.")
             return fileinfo
         except KeyError:
-            logger.warning("Unable to find package {} for arch {}".format(package.value, architecture.value))
+            logger.warning("Unable to find package {} for arch {}".format(package.name, architecture.name))
             return None
 
 

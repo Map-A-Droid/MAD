@@ -12,5 +12,5 @@ class ReloadJobsEndpoint(AbstractControlEndpoint):
     # TODO: Auth
     async def get(self):
         logger.info("Reload existing jobs")
-        await self._get_device_updater().init_jobs()
+        await self._get_device_updater().reload_jobs()
         await self._redirect(self._url_for('uploaded_files'))

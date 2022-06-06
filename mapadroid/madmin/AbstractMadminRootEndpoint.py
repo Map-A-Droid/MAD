@@ -20,7 +20,7 @@ from mapadroid.utils.aiohttp import get_forwarded_path, add_prefix_to_url
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.madGlobals import WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException
 from mapadroid.utils.questGen import QuestGen
-from mapadroid.utils.updater import DeviceUpdater
+from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 

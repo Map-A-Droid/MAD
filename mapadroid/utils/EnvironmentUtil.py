@@ -9,9 +9,11 @@ import pkg_resources
 from grpc.aio import AioRpcError
 from websockets.exceptions import WebSocketException
 
-from mapadroid.utils.logging import get_logger, LoggerEnums, InterceptHandler
-from mapadroid.utils.madGlobals import application_args, WebsocketWorkerConnectionClosedException, \
-    InternalStopWorkerException, WebsocketWorkerTimeoutException, PrioQueueNoDueEntry, RoutemanagerShuttingDown
+from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import (
+    InternalStopWorkerException, NoMaddevApiTokenError, PrioQueueNoDueEntry,
+    RoutemanagerShuttingDown, WebsocketWorkerConnectionClosedException,
+    WebsocketWorkerTimeoutException, application_args)
 
 logger = get_logger(LoggerEnums.system)
 
@@ -79,7 +81,8 @@ def install_task_create_excepthook():
     ) -> None:
         try:
             task.result()
-        except (asyncio.CancelledError, PrioQueueNoDueEntry, asyncio.exceptions.TimeoutError) as e:
+        except (asyncio.CancelledError, PrioQueueNoDueEntry, asyncio.exceptions.TimeoutError,
+                NoMaddevApiTokenError) as e:
             """
             Exceptions that should not be logged at all
             """

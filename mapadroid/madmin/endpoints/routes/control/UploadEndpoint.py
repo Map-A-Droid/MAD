@@ -48,4 +48,5 @@ class UploadEndpoint(AbstractControlEndpoint):
                 await f.write(chunk)
 
         await self._add_notice_message('File uploaded successfully')
+        await self._get_device_updater().reload_jobs()
         raise web.HTTPFound(self._url_for("uploaded_files"))

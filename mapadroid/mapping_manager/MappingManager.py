@@ -15,27 +15,31 @@ from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
-from mapadroid.db.helper.SettingsWalkerareaHelper import \
-    SettingsWalkerareaHelper
 from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
                                 SettingsPogoauth, SettingsRoutecalc,
                                 SettingsWalker, SettingsWalkerarea,
                                 SettingsWalkerToWalkerarea)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.AbstractMappingManager import \
+    AbstractMappingManager
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
+    RoutePriorityQueueEntry
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.route.RouteManagerIV import RouteManagerIV
-from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import RoutePriorityQueueEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import ScreenshotType, PositionType, RoutemanagerShuttingDown
+from mapadroid.utils.madGlobals import (PositionType, RoutemanagerShuttingDown,
+                                        ScreenshotType)
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.utils)
@@ -597,7 +601,8 @@ class MappingManager(AbstractMappingManager):
             try:
                 await to_be_checked
             except RoutemanagerShuttingDown as e:
-                logger.warning("Ignoring area {} ({}) due to failure to calculate route.", area, routemanagers[area].name)
+                logger.warning("Ignoring area {} ({}) due to failure to calculate route: {}", area,
+                               routemanagers[area].name, e)
                 del routemanagers[area]
         return routemanagers
 

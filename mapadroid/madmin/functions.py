@@ -1,11 +1,14 @@
 import glob
 import os
 from math import floor
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.mapping_manager.MappingManager import (AreaEntry, DeviceMappingsEntry,
+from mapadroid.mapping_manager.MappingManager import (AreaEntry,
+                                                      DeviceMappingsEntry,
                                                       MappingManager)
+from mapadroid.updater.JobType import JobType
+from mapadroid.updater.SubJob import SubJob
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.functions import creation_date
 from mapadroid.utils.madGlobals import application_args
@@ -15,24 +18,6 @@ from mapadroid.worker.Worker import WorkerType
 def allowed_file(filename):
     allowed_extensions = {'apk', 'txt'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
-
-
-def uploaded_files(datetimeformat, jobs):
-    files = []
-    for apk_file in glob.glob(str(application_args.upload_path) + "/*.apk"):
-        creationdate = DatetimeWrapper.fromtimestamp(
-            creation_date(apk_file)).strftime(datetimeformat)
-        upfile = {
-            'jobname': os.path.basename(apk_file),
-            'creation': creationdate,
-            'type': 'JobType.INSTALLATION'
-        }
-        files.append((upfile))
-
-    for command in jobs:
-        files.append({'jobname': command, 'creation': '', 'type': 'JobType.CHAIN'})
-
-    return files
 
 
 def get_bound_params(request):
