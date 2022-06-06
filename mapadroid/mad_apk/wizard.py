@@ -308,7 +308,7 @@ class APKWizard(object):
                 async with session.head(url, headers=APK_HEADERS, allow_redirects=True) as resp:
                     mirror_size = int(resp.headers.get('Content-Length'))
 
-        except (ClientConnectionError, asyncio.exceptions.TimeoutError) as e:
+        except (ClientConnectionError, asyncio.TimeoutError) as e:
             logger.warning("Connecting to {} failed: {}", url, str(e))
         except (ClientError, ValueError) as e:
             logger.warning("Request to {} failed: {}", url, e)

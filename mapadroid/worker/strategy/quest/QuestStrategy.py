@@ -520,7 +520,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             return await asyncio.wait_for(self._wait_for_data(timestamp=timestamp,
                                                               proto_to_wait_for=proto_to_wait_for,
                                                               timeout=None), timeout)
-        except asyncio.exceptions.TimeoutError as e:
+        except asyncio.TimeoutError as e:
             return ReceivedType.UNDEFINED, None, 0.0
 
     async def _ensure_stop_present(self, timestamp: float) -> PositionStopType:

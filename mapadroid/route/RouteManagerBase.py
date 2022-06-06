@@ -368,7 +368,7 @@ class RouteManagerBase(ABC):
             logger.info("Another process is already calculating a new route")
             try:
                 await asyncio.wait_for(self._wait_for_calc_end(origin), RECALC_WAIT_DURATION)
-            except (CancelledError, asyncio.exceptions.TimeoutError):
+            except (CancelledError, asyncio.TimeoutError):
                 logger.info("Current recalc took too long, returning None location")
                 return None
         if origin not in self._workers_registered:

@@ -165,7 +165,7 @@ class Worker(AbstractWorker):
                             self._scan_task = None
                         await self.__update_strategy()
             except (CancelledError,
-                    asyncio.exceptions.TimeoutError,
+                    asyncio.TimeoutError,
                     WebsocketWorkerRemovedException) as e:
                 logger.info("Worker task cancelled or websocket worker removed")
             except Exception as e:

@@ -47,7 +47,7 @@ class RestHelper:
                     except Exception as e:
                         logger.warning("Failed converting response of request to '{}' with raw result '{}' to json: {}",
                                        url, result, e)
-        except (ClientConnectionError, asyncio.exceptions.TimeoutError) as e:
+        except (ClientConnectionError, asyncio.TimeoutError) as e:
             logger.warning("Connecting to {} failed: {}", url, str(e))
         except ClientError as e:
             logger.warning("Request to {} failed: {}", url, e)
@@ -91,7 +91,7 @@ class RestHelper:
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.head(url, headers=headers, params=params, allow_redirects=True) as resp:
                     result.status_code = resp.status
-        except (ClientConnectionError, asyncio.exceptions.TimeoutError) as e:
+        except (ClientConnectionError, asyncio.TimeoutError) as e:
             logger.warning("Connecting to {} failed: {}", url, str(e))
         except ClientError as e:
             logger.warning("Request to {} failed: {}", url, e)
