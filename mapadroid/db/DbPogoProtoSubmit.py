@@ -748,8 +748,8 @@ class DbPogoProtoSubmit:
                     longitude = gym["longitude"]
                     s2_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude)
                     weather: Optional[Weather] = await WeatherHelper.get(session, s2_cell_id)
-
-                    cache_key = "gym{}{}{}".format(gymid, last_modified_ts, weather.gameplay_weather)
+                    gameplay_weather: int = weather.gameplay_weather if weather is not None else 0
+                    cache_key = "gym{}{}{}".format(gymid, last_modified_ts, gameplay_weather)
                     if await self._cache.exists(cache_key):
                         continue
                     guard_pokemon_id = gym["gym_details"]["guard_pokemon"]
@@ -776,7 +776,7 @@ class DbPogoProtoSubmit:
                     gym_obj.last_scanned = time_receiver
                     gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
                     gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
-                    gym_obj.weather_boosted_condition = weather.gameplay_weather if weather is not None else 0
+                    gym_obj.weather_boosted_condition = gameplay_weather
 
                     gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gymid)
                     if not gym_detail:
