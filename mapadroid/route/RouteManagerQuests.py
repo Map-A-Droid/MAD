@@ -33,8 +33,7 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         async with self.db_wrapper as session, session:
             if not dynamic:
-                return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper,
-                                                                   QuestLayer(self._settings.layer))
+                return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
             else:
                 stops = await PokestopHelper.get_without_quests(session, self.geofence_helper,
                                                                 QuestLayer(self._settings.layer))

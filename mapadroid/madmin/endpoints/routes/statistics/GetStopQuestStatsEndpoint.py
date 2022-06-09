@@ -1,10 +1,13 @@
-from typing import Tuple, Dict, List
+from typing import Dict, List, Optional, Tuple
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.model import Pokestop, TrsQuest
-from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
-from mapadroid.madmin.functions import get_geofences, generate_coords_from_geofence
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import \
+    AbstractStatisticsRootEndpoint
+from mapadroid.madmin.functions import (generate_coords_from_geofence,
+                                        get_geofences)
 from mapadroid.utils.collections import Location
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -36,7 +39,8 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
                         continue
 
                 processed_fences.append(include_fence_name)
-                fence = await generate_coords_from_geofence(self._get_mapping_manager(), include_fence_name)
+                fence: Tuple[str, Optional[GeofenceHelper]] = await generate_coords_from_geofence(
+                    self._get_mapping_manager(), include_fence_name)
                 # TODO: Just get tuples with Optional[TrsQuest]?
                 stops_in_fence: List[Location] = await PokestopHelper.get_locations_in_fence(self._session,
                                                                                              fence=fence)

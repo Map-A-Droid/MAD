@@ -1,9 +1,12 @@
-from typing import Dict, Tuple, Set
+from typing import Dict, Optional, Set, Tuple
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
-from mapadroid.db.model import TrsSpawn, TrsEvent
-from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
-from mapadroid.madmin.functions import get_geofences, generate_coords_from_geofence
+from mapadroid.db.model import TrsEvent, TrsSpawn
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import \
+    AbstractStatisticsRootEndpoint
+from mapadroid.madmin.functions import (generate_coords_from_geofence,
+                                        get_geofences)
 
 
 class DeleteUnfencedSpawnsEndpoint(AbstractStatisticsRootEndpoint):
@@ -22,9 +25,10 @@ class DeleteUnfencedSpawnsEndpoint(AbstractStatisticsRootEndpoint):
                 if subfence in processed_fences:
                     continue
                 processed_fences.append(subfence)
-                fence = await generate_coords_from_geofence(self._get_mapping_manager(), subfence)
+                fence: Tuple[str, Optional[GeofenceHelper]] = await generate_coords_from_geofence(
+                    self._get_mapping_manager(), subfence)
                 spawns_of_fence: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
-                    .download_spawns(self._session, fence=fence)
+                    .download_spawns(self._session, fence=fence[0])
                 for spawn_id in spawns_of_fence.keys():
                     spawns.add(spawn_id)
 

@@ -3,23 +3,20 @@ import re
 from typing import Optional
 
 import pytz
-from timezonefinder import TimezoneFinder
 
 from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.timezone_util import get_timezone_at
 
 logger = get_logger(LoggerEnums.utils)
-timezone_finder = TimezoneFinder()
 
 
 def check_walker_value_type(value, location: Optional[Location] = None):
-    global timezone_finder
     timezone = pytz.utc
     # If a location has been provided, the timezone that applies for that location will be used
     if location and (location.lat != 0.0 or location.lng != 0.0):
-        timezone_str = timezone_finder.timezone_at(lat=location.lat, lng=location.lng)
-        timezone = pytz.timezone(timezone_str)
+        timezone = get_timezone_at(location)
     match = re.search(
         r'^(\d?\d:\d\d)$|^((\d?\d:\d\d)-(\d?\d:\d\d))$', value.replace(' ', ''))
     if match:

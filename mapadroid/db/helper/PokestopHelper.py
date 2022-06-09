@@ -1,18 +1,18 @@
 from datetime import datetime
 from operator import or_
-from typing import Optional, List, Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import and_, update
-from sqlalchemy import func
+from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokestop, TrsVisited, TrsQuest
+from mapadroid.db.model import Pokestop, TrsQuest, TrsVisited
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import QuestLayer
+from mapadroid.utils.timezone_util import get_timezone_at
 
 logger = get_logger(LoggerEnums.database)
 
@@ -34,7 +34,7 @@ class PokestopHelper:
 
     @staticmethod
     async def get_locations_in_fence(session: AsyncSession, geofence_helper: Optional[GeofenceHelper] = None,
-                                     fence=None) -> List[Location]:
+                                     fence: Optional[Tuple[str, Optional[GeofenceHelper]]] = None) -> List[Location]:
         min_lat, min_lon, max_lat, max_lon = -90, -180, 90, 180
         if geofence_helper:
             min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
@@ -44,7 +44,8 @@ class PokestopHelper:
                              Pokestop.latitude <= max_lat,
                              Pokestop.longitude <= max_lon]
         if fence:
-            polygon = "POLYGON(({}))".format(fence)
+            fence_str, _ = fence
+            polygon = "POLYGON(({}))".format(fence_str)
             where_and_clauses.append(func.ST_Contains(func.ST_GeomFromText(polygon),
                                                       func.POINT(Pokestop.latitude, Pokestop.longitude)))
 
@@ -197,7 +198,8 @@ class PokestopHelper:
                               ne_corner: Optional[Location] = None, sw_corner: Optional[Location] = None,
                               old_ne_corner: Optional[Location] = None, old_sw_corner: Optional[Location] = None,
                               timestamp: Optional[int] = None,
-                              fence: Optional[str] = None) -> Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]]:
+                              fence: Optional[Tuple[str, Optional[GeofenceHelper]]] = None) -> \
+            Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]]:
         """
         quests_from_db
         Args:
@@ -216,9 +218,23 @@ class PokestopHelper:
         stmt = select(Pokestop, TrsQuest) \
             .join(TrsQuest, TrsQuest.GUID == Pokestop.pokestop_id, isouter=True)
         where_conditions = []
-        # TODO: Verify this works for all timezones...
-        today_midnight = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-        where_conditions.append(TrsQuest.quest_timestamp > today_midnight.timestamp())
+        # Fetch the middle of the boundary coords if passed, otherwise just default to local time of MAD
+        applicable_midnight: datetime
+        if fence:
+            fence_str, geofence_helper = fence
+            lat, lon = geofence_helper.get_middle_from_fence()
+            relevant_timezone: datetime.tzinfo = get_timezone_at(Location(lat, lon))
+            applicable_midnight = datetime.now(tz=relevant_timezone)
+        elif ne_corner and sw_corner and ne_corner.lat and ne_corner.lng and sw_corner.lat and sw_corner.lng:
+            # Roughly the middle...
+            lat = (ne_corner.lat + sw_corner.lat) / 2
+            lon = (ne_corner.lng + sw_corner.lng) / 2
+            relevant_timezone: datetime.tzinfo = get_timezone_at(Location(lat, lon))
+            applicable_midnight = datetime.now(tz=relevant_timezone)
+        else:
+            applicable_midnight = datetime.today()
+        applicable_midnight = applicable_midnight.replace(hour=0, minute=0, second=0, microsecond=0)
+        where_conditions.append(TrsQuest.quest_timestamp > applicable_midnight.timestamp())
 
         if ne_corner and sw_corner and ne_corner.lat and ne_corner.lng and sw_corner.lat and sw_corner.lng:
             where_conditions.append(and_(Pokestop.latitude >= sw_corner.lat,
@@ -235,7 +251,8 @@ class PokestopHelper:
             where_conditions.append(TrsQuest.quest_timestamp >= timestamp)
 
         if fence:
-            polygon = "POLYGON(({}))".format(fence)
+            fence_str, geofence_helper = fence
+            polygon = "POLYGON(({}))".format(fence_str)
             where_conditions.append(func.ST_Contains(func.ST_GeomFromText(polygon),
                                                      func.POINT(Pokestop.latitude, Pokestop.longitude)))
         stmt = stmt.where(and_(*where_conditions))
@@ -265,9 +282,12 @@ class PokestopHelper:
             .join(TrsQuest, and_(TrsQuest.GUID == Pokestop.pokestop_id,
                                  TrsQuest.layer == quest_layer.value), isouter=True)
         where_conditions = []
-        # TODO: Use the timezone of the middle of the geofence_helper
-        today_midnight = DatetimeWrapper.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        where_conditions.append(or_(TrsQuest.quest_timestamp < today_midnight.timestamp(),
+
+        lat, lon = geofence_helper.get_middle_from_fence()
+        relevant_timezone: datetime.tzinfo = get_timezone_at(Location(lat, lon))
+        tm_now = datetime.now(tz=relevant_timezone)
+        timezone_midnight = tm_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        where_conditions.append(or_(TrsQuest.quest_timestamp < timezone_midnight.timestamp(),
                                     TrsQuest.GUID == None))
 
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
@@ -280,7 +300,7 @@ class PokestopHelper:
         result = await session.execute(stmt)
         stops_without_quests: Dict[int, Pokestop] = {}
         for (stop, quest) in result.all():
-            if quest and (quest.layer != quest_layer.value or quest.quest_timestamp > today_midnight.timestamp()):
+            if quest and (quest.layer != quest_layer.value or quest.quest_timestamp > timezone_midnight.timestamp()):
                 continue
             if geofence_helper.is_coord_inside_include_geofence(Location(float(stop.latitude), float(stop.longitude))):
                 stops_without_quests[stop.pokestop_id] = stop

@@ -1,9 +1,12 @@
-from typing import Optional, Tuple, Dict
+from typing import Dict, Optional, Tuple
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
-from mapadroid.db.model import TrsSpawn, TrsEvent
-from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
-from mapadroid.madmin.functions import get_geofences, generate_coords_from_geofence
+from mapadroid.db.model import TrsEvent, TrsSpawn
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import \
+    AbstractStatisticsRootEndpoint
+from mapadroid.madmin.functions import (generate_coords_from_geofence,
+                                        get_geofences)
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -50,13 +53,14 @@ class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
                 if subfence in processed_fences:
                     continue
                 processed_fences.append(subfence)
-                fence = await generate_coords_from_geofence(self._get_mapping_manager(), subfence)
+                fence: Tuple[str, Optional[GeofenceHelper]] = await generate_coords_from_geofence(
+                    self._get_mapping_manager(), subfence)
                 known.clear()
                 unknown.clear()
                 events.clear()
 
                 spawns_and_events: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
-                    .download_spawns(self._session, fence=fence)
+                    .download_spawns(self._session, fence=fence[0])
                 for spawn_id, (spawn, event) in spawns_and_events.items():
                     if event.event_name not in known:
                         known[event.event_name] = []

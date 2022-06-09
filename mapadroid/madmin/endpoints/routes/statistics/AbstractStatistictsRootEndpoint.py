@@ -1,12 +1,15 @@
 from abc import ABC
-from typing import Optional, Dict, Tuple, List
+from typing import Dict, List, Optional, Tuple
 
 from aiohttp.abc import Request
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import TrsEvent, TrsSpawn
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
-from mapadroid.madmin.functions import get_geofences, generate_coords_from_geofence
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    AbstractMadminRootEndpoint
+from mapadroid.madmin.functions import (generate_coords_from_geofence,
+                                        get_geofences)
 
 
 class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
@@ -46,14 +49,8 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
     async def _get_spawn_details_helper(self, area_id: int, event_id: int, today_only: bool = False,
                                         older_than_x_days: Optional[int] = None, sum_only: bool = False, index=0):
         active_spawns: list = []
-        possible_fences = await get_geofences(self._get_mapping_manager(),
-                                              area_id_req=area_id)
-        fence: str = await generate_coords_from_geofence(self._get_mapping_manager(),
-                                                         str(list(possible_fences[int(area_id)]['include'].keys())[
-                                                                 int(index)]))
-        spawns_and_events: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
-            .download_spawns(self._session, fence=fence, event_id=event_id, today_only=today_only,
-                             older_than_x_days=older_than_x_days)
+        spawns_and_events = await self._get_spawns_and_events(area_id, event_id, index, older_than_x_days,
+                                                              today_only)
         if sum_only:
             return len(spawns_and_events)
         for spawn_id, spawn_event in spawns_and_events.items():
@@ -64,15 +61,20 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
 
         return active_spawns
 
-    async def _get_spawnpoints_of_event(self, spawn_id: int, event_id: int, today_only: bool = False,
+    async def _get_spawnpoints_of_event(self, area_id: int, event_id: int, today_only: bool = False,
                                         older_than_x_days: Optional[int] = None, index=0) -> List[TrsSpawn]:
-        possible_fences = await get_geofences(self._get_mapping_manager(),
-                                              area_id_req=spawn_id)
-        fence = await generate_coords_from_geofence(self._get_mapping_manager(),
-                                                    str(list(possible_fences[int(spawn_id)]['include'].keys())[
-                                                            int(index)]))
-
-        spawns_and_events: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
-            .download_spawns(self._session, fence=fence, event_id=event_id, today_only=today_only,
-                             older_than_x_days=older_than_x_days)
+        spawns_and_events = await self._get_spawns_and_events(area_id, event_id, index, older_than_x_days, today_only)
         return [spawn_event[0] for spawn_id, spawn_event in spawns_and_events.items()]
+
+    async def _get_spawns_and_events(self, area_id, event_id, index, older_than_x_days, today_only):
+        possible_fences = await get_geofences(self._get_mapping_manager(),
+                                              area_id_req=area_id)
+        fence: Tuple[str, Optional[GeofenceHelper]] = await generate_coords_from_geofence(self._get_mapping_manager(),
+                                                                                          str(list(possible_fences[
+                                                                                                       int(area_id)][
+                                                                                                       'include'].keys())[
+                                                                                                  int(index)]))
+        spawns_and_events: Dict[int, Tuple[TrsSpawn, TrsEvent]] = await TrsSpawnHelper \
+            .download_spawns(self._session, fence=fence[0], event_id=event_id, today_only=today_only,
+                             older_than_x_days=older_than_x_days)
+        return spawns_and_events

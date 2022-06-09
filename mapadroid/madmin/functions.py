@@ -1,17 +1,11 @@
-import glob
 import os
 from math import floor
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager.MappingManager import (AreaEntry,
                                                       DeviceMappingsEntry,
                                                       MappingManager)
-from mapadroid.updater.JobType import JobType
-from mapadroid.updater.SubJob import SubJob
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.functions import creation_date
-from mapadroid.utils.madGlobals import application_args
 from mapadroid.worker.Worker import WorkerType
 
 
@@ -108,27 +102,30 @@ async def get_geofences(mapping_manager: MappingManager,
             'exclude': exclude,
             'mode': area_entry.settings.mode,
             'area_id': area_id,
-            'name': area_entry.settings.name
+            'name': area_entry.settings.name,
+            'geofence_helper': area_geofences
         }
     return geofences
 
 
 async def generate_coords_from_geofence(mapping_manager: MappingManager,
-                                        fence):
+                                        fence) -> Tuple[str, Optional[GeofenceHelper]]:
     fence_string = []
-    geofences = await get_geofences(mapping_manager)
-    coordinates = []
+    geofences: Dict[int, Dict] = await get_geofences(mapping_manager)
+    coordinates: List[List[float]] = []
+    geofence_helper: Optional[GeofenceHelper] = None
     for fences in geofences.values():
         for fname, coords in fences.get('include').items():
             if fname != fence:
                 continue
-            coordinates.append(coords)
+            coordinates.extend(coords)
+            geofence_helper = fences.get('geofence_helper')
 
-    for coord in coordinates[0]:
+    for coord in coordinates:
         fence_string.append(str(coord[0]) + " " + str(coord[1]))
 
     fence_string.append(fence_string[0])
-    return ",".join(fence_string)
+    return ",".join(fence_string), geofence_helper
 
 
 async def get_quest_areas(mapping_manager: MappingManager):

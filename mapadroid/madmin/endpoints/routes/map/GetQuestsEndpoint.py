@@ -1,9 +1,12 @@
-from typing import Optional, Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import Pokestop, TrsQuest
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
-from mapadroid.madmin.functions import get_bound_params, generate_coords_from_geofence
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    AbstractMadminRootEndpoint
+from mapadroid.madmin.functions import (generate_coords_from_geofence,
+                                        get_bound_params)
 from mapadroid.utils.collections import Location
 from mapadroid.utils.questGen import QuestGen
 
@@ -18,11 +21,10 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
         quests = []
 
         fence_name = self._request.query.get("fence")
+        fence: Optional[Tuple[str, Optional[GeofenceHelper]]] = None
         if fence_name not in (None, 'None', 'All'):
-            fence = await generate_coords_from_geofence(self._get_mapping_manager(),
-                                                  fence_name)
-        else:
-            fence = None
+            fence: Tuple[str, Optional[GeofenceHelper]] = await generate_coords_from_geofence(
+                self._get_mapping_manager(), fence_name)
         ne_lat, ne_lng, sw_lat, sw_lng, o_ne_lat, o_ne_lng, o_sw_lat, o_sw_lng = get_bound_params(self._request)
         timestamp: Optional[int] = self._request.query.get("timestamp")
         if timestamp:
