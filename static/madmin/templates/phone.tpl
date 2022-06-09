@@ -3,7 +3,7 @@
     <<phonename>> <<add_text>>
   </div>
 
-  <img src="<<screen>>?cachebuster=<<time>>" class="screenshot" id="<<phonename>>" adb="<<adb_option>>">
+  <img src="<<screen>>&cachebuster=<<time>>" class="screenshot" id="<<phonename>>" adb="<<adb_option>>">
 
   <div class="container-fluid softbar">
     <div class="row">
