@@ -287,7 +287,7 @@
 #webhook:
 # webhook endpoint (multiple seperated by comma)
 #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
-#  possible types are: raid, gym, weather, pokestop, quest
+#  possible types are: raid, gym, weather, pokestop, quest, pokemon
 #  different pokemon types: encounter, wild, nearby_stop, nearby_cell, lure_encounter, lure_wild
 #webhook_url:
 # Send Ex-raids to the webhook if detected
