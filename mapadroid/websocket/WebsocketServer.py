@@ -146,13 +146,20 @@ class WebsocketServer(object):
         try:
             device: Optional[SettingsDevice] = None
             device_paused: bool = self.__enable_configmode
+            device_id: int = -1
             if not self.__enable_configmode:
                 async with self.__db_wrapper as session, session:
                     device = await SettingsDeviceHelper.get_by_origin(session, self.__db_wrapper.get_instance_id(),
                                                                       origin)
-                if not await self.__mapping_manager.is_device_active(device.device_id):
-                    logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
-                    device_paused = True
+                if not device:
+                    logger.warning("Device {} unknown", origin)
+                    return
+                else:
+                    device_id = device.device_id
+                    if not await self.__mapping_manager.is_device_active(device.device_id):
+                        logger.warning('Origin is currently paused. Unpause through MADmin to begin working')
+                        device_paused = True
+
             async with self.__current_users_mutex:
                 logger.debug("Checking if an entry is already present")
                 entry = self.__current_users.get(origin, None)
@@ -164,7 +171,7 @@ class WebsocketServer(object):
                 elif not entry:
                     # Just create a new entry...
                     worker_state: WorkerState = WorkerState(origin=origin,
-                                                            device_id=device.device_id,
+                                                            device_id=device_id,
                                                             stop_worker_event=asyncio.Event(),
                                                             active_event=self.__pogo_event)
                     entry = WebsocketConnectedClientEntry(origin=origin,
