@@ -1,31 +1,43 @@
 import asyncio
-from typing import Optional, Tuple, NamedTuple
+from typing import NamedTuple, Optional, Tuple
 
 from loguru import logger
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.model import SettingsDevicepool, SettingsDevice, SettingsWalkerarea
+from mapadroid.db.model import (SettingsDevice, SettingsDevicepool,
+                                SettingsWalkerarea)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry, MappingManager
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManager import (DeviceMappingsEntry,
+                                                      MappingManager)
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import WrongAreaInWalker, QuestLayer
+from mapadroid.utils.madGlobals import QuestLayer, WrongAreaInWalker
 from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
+from mapadroid.worker.strategy.AbstractWorkerStrategy import \
+    AbstractWorkerStrategy
+from mapadroid.worker.strategy.NopStrategy import NopStrategy
+from mapadroid.worker.strategy.plain.WorkerInitStrategy import \
+    WorkerInitStrategy
+from mapadroid.worker.strategy.plain.WorkerMonIvStrategy import \
+    WorkerMonIvStrategy
+from mapadroid.worker.strategy.plain.WorkerMonMitmStrategy import \
+    WorkerMonMitmStrategy
+from mapadroid.worker.strategy.plain.WorkerRaidsMitmStrategy import \
+    WorkerRaidsStrategy
+from mapadroid.worker.strategy.quest.ARQuestLayerStrategy import \
+    ARQuestLayerStrategy
+from mapadroid.worker.strategy.quest.NonARQuestLayerStrategy import \
+    NonARQuestLayerStrategy
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
-from mapadroid.worker.strategy.NopStrategy import NopStrategy
-from mapadroid.worker.strategy.plain.WorkerInitStrategy import WorkerInitStrategy
-from mapadroid.worker.strategy.plain.WorkerMonIvStrategy import WorkerMonIvStrategy
-from mapadroid.worker.strategy.plain.WorkerMonMitmStrategy import WorkerMonMitmStrategy
-from mapadroid.worker.strategy.plain.WorkerRaidsMitmStrategy import WorkerRaidsStrategy
-from mapadroid.worker.strategy.quest.ARQuestLayerStrategy import ARQuestLayerStrategy
-from mapadroid.worker.strategy.quest.NonARQuestLayerStrategy import NonARQuestLayerStrategy
 
 
 class WalkerConfiguration(NamedTuple):
@@ -188,7 +200,7 @@ class StrategyFactory:
             return None
 
         if walker_configuration.area_id not in await self.__mapping_manager.get_all_routemanager_ids():
-            raise WrongAreaInWalker("Wrong area in walker")
+            raise WrongAreaInWalker("Area {} is not present (i.e., likely not loaded)", walker_configuration.area_id)
 
         logger.info('using walker area {} [{}/{}]',
                     await self.__mapping_manager.routemanager_get_name(walker_configuration.area_id),
