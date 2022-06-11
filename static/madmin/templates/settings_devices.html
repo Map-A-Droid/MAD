@@ -155,6 +155,25 @@ $(document).ready(function () {
         $('#no-configured-elements').hide();
     }
   }
+  // (mostly) Stolen from https://stackoverflow.com/questions/14267781/sorting-html-table-with-javascript
+  function getCellValue(tr, idx) {
+    if (tr.children[idx].children[0] instanceof HTMLSelectElement) {
+      return tr.children[idx].children[0].options[tr.children[idx].children[0].selectedIndex].innerText
+    }
+    return tr.children[idx].innerText || tr.children[idx].textContent;
+  }
+
+  const comparer = (idx, asc) => (a, b) => ((v1, v2) =>
+    v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+  )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+
+  // do the work...
+  document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+    const table = document.querySelector('tbody');
+      Array.from(table.querySelectorAll('tr:nth-child(n)'))
+        .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+        .forEach(tr => table.appendChild(tr) );
+  })));
 </script>
 {% endblock %}
 
