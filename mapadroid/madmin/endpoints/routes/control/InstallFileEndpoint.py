@@ -8,7 +8,6 @@ from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
-from mapadroid.updater.JobType import JobType
 
 
 class InstallFileEndpoint(AbstractControlEndpoint):
@@ -30,23 +29,18 @@ class InstallFileEndpoint(AbstractControlEndpoint):
         if not devicemapping:
             await self._add_notice_message("Unknown device")
             await self._redirect(self._url_for('uploaded_files'))
-        if os.path.exists(os.path.join(self._get_mad_args().upload_path, jobname)):
-            if useadb:
-                if self._adb_connect.push_file(devicemapping.device_settings.adbname, origin,
-                                               os.path.join(self._get_mad_args().upload_path, jobname)) and \
-                        self._adb_connect.send_shell_command(
-                            devicemapping.device_settings.adbname, origin,
-                            "pm install -r /sdcard/Download/" + str(jobname)):
-                    await self._add_notice_message('File installed successfully')
-                else:
-                    await self._add_notice_message('File could not be installed successfully :(')
-            else:
-                await self._get_device_updater().add_job(origin, jobname, job_type)
-                await self._add_notice_message('Job successfully queued --> See Job Status')
-
-        elif int(job_type) != JobType.INSTALLATION.value:
-            await self._get_device_updater().add_job(origin, jobname, job_type)
+        if useadb and os.path.exists(os.path.join(self._get_mad_args().upload_path, jobname)) and \
+                self._adb_connect.push_file(devicemapping.device_settings.adbname, origin,
+                                            os.path.join(self._get_mad_args().upload_path, jobname)) and \
+                self._adb_connect.send_shell_command(
+                    devicemapping.device_settings.adbname, origin,
+                    "pm install -r /sdcard/Download/" + str(jobname)):
+            await self._add_notice_message('File installed successfully')
+        elif await self._get_device_updater().add_job(origin, jobname, job_type):
             await self._add_notice_message('Job successfully queued --> See Job Status')
+        else:
+            await self._add_notice_message('Job could not be set up')
+
         await self._redirect(self._url_for('uploaded_files'))
 
         # return redirect(url_for('uploaded_files', origin=str(origin), adb=useadb), code=302)

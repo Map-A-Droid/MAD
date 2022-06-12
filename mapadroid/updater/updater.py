@@ -354,10 +354,10 @@ class DeviceUpdater(object):
 
     @logger.catch()
     async def add_job(self, origin: str, job_name: str,
-                      auto_command: Optional[Autocommand] = None) -> None:
+                      auto_command: Optional[Autocommand] = None) -> bool:
         if job_name not in self._available_jobs:
             logger.warning("Cannot add job '{}' as it is not loaded.", job_name)
-            return
+            return False
         logger.info('Adding Job {} for Device {}', job_name, origin)
 
         jobs_to_run: List[SubJob] = self._available_jobs.get(job_name)
@@ -369,6 +369,7 @@ class DeviceUpdater(object):
 
         await self._job_queue.put(new_entry)
         await self.__update_log(new_entry)
+        return True
 
     async def __write_log(self):
         async with self._update_mutex:
