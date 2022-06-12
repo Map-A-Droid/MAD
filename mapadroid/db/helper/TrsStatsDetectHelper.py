@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Dict, Optional, Tuple
 
-from sqlalchemy import and_, func, delete
+from sqlalchemy import and_, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -13,8 +13,9 @@ class TrsStatsDetectHelper:
     @staticmethod
     async def get_detection_count_per_worker(session: AsyncSession, include_last_n_minutes: Optional[int] = None,
                                              hourly: bool = True,
-                                             worker: Optional[str] = None) -> Dict[
-        str, Dict[int, Tuple[int, int, int, int]]]:
+                                             worker: Optional[str] = None) -> Dict[str,
+                                                                                   Dict[int,
+                                                                                        Tuple[int, int, int, int]]]:
         """
         Fetches the stats of workers (or only one if specified) with hourly-timestamps in the inner dict as keys
         Args:
@@ -72,6 +73,6 @@ class TrsStatsDetectHelper:
         session.add(stat)
 
     @staticmethod
-    async def cleanup(session: AsyncSession, delete_before_timestap_scan: int) -> None:
-        stmt = delete(TrsStatsDetect).where(TrsStatsDetect.timestamp_scan < delete_before_timestap_scan)
+    async def cleanup(session: AsyncSession, delete_before_timestamp_scan: int) -> None:
+        stmt = delete(TrsStatsDetect).where(TrsStatsDetect.timestamp_scan < delete_before_timestamp_scan)
         await session.execute(stmt)
