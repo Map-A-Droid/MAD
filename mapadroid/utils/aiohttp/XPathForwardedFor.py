@@ -39,7 +39,7 @@ class XPathForwarded(XForwardedBase):
             prefix = get_forwarded_path(headers)
             if prefix is not None:
                 prefix = '/' + prefix.strip('/') + '/'
-                request_path = URL(request.path.lstrip('/'))
+                request_path = URL(request.path_qs.lstrip('/'))
                 overrides['rel_url'] = URL(prefix).join(request_path)
 
             request = request.clone(**overrides)
