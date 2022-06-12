@@ -304,5 +304,5 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
             logger.warning("Missing Origin header in request")
             raise web.HTTPUnauthorized()
         elif origin not in (await self._get_mapping_manager().get_all_loaded_origins()):
-            logger.warning("MITMReceiver request without Origin or disallowed Origin")
+            logger.warning("MITMReceiver request without Origin or disallowed Origin ({})", origin)
             raise web.HTTPUnauthorized()
