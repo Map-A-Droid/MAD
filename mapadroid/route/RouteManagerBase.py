@@ -608,7 +608,7 @@ class RouteManagerBase(ABC):
         return False
 
     # to be called regularly to remove inactive workers that used to be registered
-    async def _check_routepools(self, timeout: int = 300):
+    async def _check_routepools(self, timeout: int = 600):
         while not self._shutdown_route.is_set():
             logger.debug("Checking routepool for idle/dead workers")
             for origin in list(self._routepool):

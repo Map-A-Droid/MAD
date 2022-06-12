@@ -252,6 +252,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         else:
             time_it_takes_to_walk = distance / (area_settings.speed / 3.6)  # speed is in kmph , delay_used need mps
             logger.info("main: Walking {} m, this will take {} seconds", distance, time_it_takes_to_walk)
+            await self._mapping_manager.routemanager_set_worker_sleeping(self._area_id,
+                                                                         self._worker_state.origin,
+                                                                         time_it_takes_to_walk)
             cur_time = await self._walk_to_location(area_settings.speed)
             delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)
 

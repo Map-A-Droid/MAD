@@ -77,6 +77,11 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
                 await self._walk_after_teleport(walk_distance_post_teleport)
         else:
             logger.info("main: Walking...")
+            time_it_takes_to_walk = distance / (speed / 3.6)  # speed is in kmph , delay_used need mps
+            logger.info("Walking {} m, this will take {} seconds", distance, time_it_takes_to_walk)
+            await self._mapping_manager.routemanager_set_worker_sleeping(self._area_id,
+                                                                         self._worker_state.origin,
+                                                                         time_it_takes_to_walk)
             timestamp_to_use = await self._walk_to_location(speed)
 
             delay_used = await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_WALK_DELAY, 0)

@@ -427,6 +427,10 @@ class AbstractWorkerStrategy(ABC):
         return start_result
 
     async def _restart_pogo(self, clear_cache=True):
+        # Avoid kicking devices from routemanagers in case they are being rebooted or pogo is being restarted
+        await self._mapping_manager.routemanager_set_worker_sleeping(self._area_id,
+                                                                     self._worker_state.origin,
+                                                                     240)
         successful_stop: bool = await self.stop_pogo()
         async with self._db_wrapper as session, session:
             try:
