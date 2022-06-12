@@ -24,7 +24,7 @@ class RaidHelper:
         db_time_to_check = DatetimeWrapper.now()
         stmt = select(Raid.start, Gym.latitude, Gym.longitude) \
             .select_from(Raid).join(Gym, Gym.gym_id == Raid.gym_id)
-        where_conditions = [and_(Raid.end > db_time_to_check, Raid.pokemon_id != None)]
+        where_conditions = [and_(Raid.end > db_time_to_check, Raid.pokemon_id == None)]
 
         if only_next_n_seconds:
             where_conditions.append(Raid.start < db_time_to_check + datetime.timedelta(seconds=only_next_n_seconds))
