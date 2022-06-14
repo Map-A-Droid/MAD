@@ -247,7 +247,7 @@ async def stream_package(session: AsyncSession, storage_obj,
         filename = package.filename
         version = package.version
 
-    gen_func: AsyncGenerator = await storage_obj.get_async_generator(session, package_info, apk_type, architecture)
+    gen_func: AsyncGenerator = storage_obj.get_async_generator(session, package_info, apk_type, architecture)
     return gen_func, mimetype, filename, version
 
 
