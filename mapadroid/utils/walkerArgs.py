@@ -37,7 +37,7 @@ def parse_args():
         auto_env_var_prefix='THERAIDMAPPER_')
     parser.add_argument('-cf', '--config',
                         is_config_file=True, help='Set configuration file')
-    parser.add_argument('-asi', '--apk_storage_interface', default='db', help='APK Storage Interface')
+    parser.add_argument('-asi', '--apk_storage_interface', required=True, help='APK Storage Interface')
 
     # MySQL
     parser.add_argument('-dbip', '--dbip', required=False,

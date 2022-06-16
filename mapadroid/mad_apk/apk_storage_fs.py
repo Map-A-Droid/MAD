@@ -3,7 +3,7 @@ import os
 import re
 from copy import copy
 from io import BytesIO
-from typing import Any, ClassVar, Optional, AsyncGenerator, Union
+from typing import Any, AsyncGenerator, ClassVar, Optional, Union
 
 from aiofile import async_open
 from asyncio_rlock import RLock
@@ -13,9 +13,10 @@ from mapadroid.utils.apk_enums import APKArch, APKType
 from mapadroid.utils.custom_types import MADapks, MADPackage, MADPackages
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from ..utils.global_variables import CHUNK_MAX_SIZE
 from .abstract_apk_storage import AbstractAPKStorage
 from .utils import generate_filename, lookup_apk_enum, lookup_arch_enum
-from ..utils.global_variables import CHUNK_MAX_SIZE
 
 logger = get_logger(LoggerEnums.storage)
 
@@ -84,6 +85,9 @@ class APKStorageFilesystem(AbstractAPKStorage):
         else:
             package: MADPackage = package_info.get(architecture)
             filename = package.filename
+        return self.__read_file_gen(filename)
+
+    async def __read_file_gen(self, filename):
         async with async_open(self.get_package_path(filename), 'rb') as fh:
             while True:
                 data = await fh.read(CHUNK_MAX_SIZE)

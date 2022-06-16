@@ -184,8 +184,8 @@
 # The maximum distance for a scan of a location to be considered a valid/correct scan of that location in meters. Default: 5m
 #maximum_valid_distance:
 # The storage type used for APKs. Either APKs are stored in the DB (accessible by, e.g., MitmReceivers as well) or
-# entirely file based (only recommended for small setups running within a single process).
-# Default: db. Possible values: [db, fs].
+# entirely file based (fs -> file storage) (only recommended for small setups running within a single process).
+# Possible values: [db, fs].
 #apk_storage_interface:
 
 ### Filepath Settings
