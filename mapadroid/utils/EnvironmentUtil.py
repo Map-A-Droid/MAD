@@ -30,17 +30,17 @@ def setup_loggers():
     logging.getLogger('asyncio').setLevel(logging.DEBUG)
     logging.getLogger('asyncio').addHandler(InterceptHandler(log_section=LoggerEnums.asyncio))
     logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-    logging.getLogger('sqlalchemy.engine').addHandler(InterceptHandler(log_section=LoggerEnums.database))
+    logging.getLogger('sqlalchemy.engine').addHandler(InterceptHandler(log_section=LoggerEnums.sqlalchemy))
     logging.getLogger('aiohttp.access').setLevel(logging.INFO)
     logging.getLogger('aiohttp.access').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
     logging.getLogger('aiohttp.client').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.client').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+    logging.getLogger('aiohttp.client').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_client))
     logging.getLogger('aiohttp.internal').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.internal').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+    logging.getLogger('aiohttp.internal').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_internal))
     logging.getLogger('aiohttp.server').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.server').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+    logging.getLogger('aiohttp.server').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_server))
     logging.getLogger('aiohttp.web').setLevel(logging.INFO)
-    logging.getLogger('aiohttp.web').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_access))
+    logging.getLogger('aiohttp.web').addHandler(InterceptHandler(log_section=LoggerEnums.aiohttp_web))
 
 
 def create_folder(folder):

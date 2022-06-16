@@ -36,6 +36,15 @@ class LoggerEnums(Enum):
     stats_handler = "stats_handler"
     mapping_manager = "mapping-manager"
     database_cleanup = "database_cleanup"
+    sqlalchemy = "sqlalchemy"
+
+
+logging_to_aiohttp_log = [LoggerEnums.aiohttp_access.value,
+                          LoggerEnums.aiohttp_web.value,
+                          LoggerEnums.aiohttp_internal.value,
+                          LoggerEnums.aiohttp_server.value,
+                          LoggerEnums.aiohttp_client.value]
+logging_to_database_log = [LoggerEnums.sqlalchemy]
 
 
 # ==================================
@@ -98,51 +107,45 @@ def init_logging(args):
         ],
         "extra": {"name": "Unknown", "identifier": ""},
     }
-
-    file_logs = [{
-        "sink": os.path.join(args.log_path, "app" + ".log"),
-        "format": fs_log_format,
-        "level": log_file_level,
-        "backtrace": True,
-        "diagnose": log_file_trace,
-        "enqueue": True,
-        "encoding": "UTF-8",
-        "filter": lambda record: True if record["extra"]["name"] in (LoggerEnums.system.value,
-                                                                     LoggerEnums.unknown.value,
-                                                                     LoggerEnums.asyncio.value,
-                                                                     LoggerEnums.endpoint.value) else False
-    },
-        {
-            "sink": os.path.join(args.log_path, "app" + "_database.log"),
+    if not args.no_file_logs:
+        file_logs = [{
+            "sink": os.path.join(args.log_path, "app" + ".log"),
             "format": fs_log_format,
             "level": log_file_level,
             "backtrace": True,
             "diagnose": log_file_trace,
             "enqueue": True,
             "encoding": "UTF-8",
-            "filter": lambda record: True if record["extra"]["name"] == LoggerEnums.database.value else False
+            "filter": lambda record: False if record["extra"]["name"]
+                                              in logging_to_aiohttp_log + logging_to_database_log else True
         },
-        {
-            "sink": os.path.join(args.log_path, "app" + "_aiohttp.log"),
-            "format": fs_log_format,
-            "level": log_file_level,
-            "backtrace": True,
-            "diagnose": log_file_trace,
-            "enqueue": True,
-            "encoding": "UTF-8",
-            "filter": lambda record: True if record["extra"]["name"] not in (LoggerEnums.system.value,
-                                                                             LoggerEnums.unknown.value,
-                                                                             LoggerEnums.asyncio.value,
-                                                                             LoggerEnums.database.value,
-                                                                             LoggerEnums.endpoint.value) else False
-        }
-    ]
-    log_file_retention = str(args.log_file_retention) + " days"
-    for log in file_logs:
-        log["retention"] = log_file_retention
-        log["rotation"] = str(args.log_file_rotation)
-        log["compression"] = "zip"
-    logconfig["handlers"].extend(file_logs)
+            {
+                "sink": os.path.join(args.log_path, "app" + "_database.log"),
+                "format": fs_log_format,
+                "level": log_file_level,
+                "backtrace": True,
+                "diagnose": log_file_trace,
+                "enqueue": True,
+                "encoding": "UTF-8",
+                "filter": lambda record: True if record["extra"]["name"] in logging_to_database_log else False
+            },
+            {
+                "sink": os.path.join(args.log_path, "app" + "_aiohttp.log"),
+                "format": fs_log_format,
+                "level": log_file_level,
+                "backtrace": True,
+                "diagnose": log_file_trace,
+                "enqueue": True,
+                "encoding": "UTF-8",
+                "filter": lambda record: True if record["extra"]["name"] in logging_to_aiohttp_log else False
+            }
+        ]
+        log_file_retention = str(args.log_file_retention) + " days"
+        for log in file_logs:
+            log["retention"] = log_file_retention
+            log["rotation"] = str(args.log_file_rotation)
+            log["compression"] = "zip"
+        logconfig["handlers"].extend(file_logs)
     try:
         print("Logging will go to " + str(os.path.join(args.log_path, "app" + ".log")))
         logger.configure(**logconfig)
