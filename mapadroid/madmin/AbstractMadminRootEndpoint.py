@@ -2,7 +2,7 @@ import asyncio
 import json
 from abc import ABC
 from functools import wraps
-from typing import Any, Optional, List, Dict
+from typing import Any, Dict, List, Optional
 
 from aiohttp import web
 from aiohttp.abc import Request
@@ -16,13 +16,13 @@ from mapadroid.db.model import Base
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
-from mapadroid.utils.aiohttp import get_forwarded_path, add_prefix_to_url
-from mapadroid.utils.json_encoder import MADEncoder
-from mapadroid.utils.madGlobals import WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException
-from mapadroid.utils.questGen import QuestGen
 from mapadroid.updater.updater import DeviceUpdater
+from mapadroid.utils.aiohttp import add_prefix_to_url, get_forwarded_path
+from mapadroid.utils.json_encoder import MADEncoder
+from mapadroid.utils.madGlobals import (
+    WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException)
+from mapadroid.utils.questGen import QuestGen
 from mapadroid.websocket.WebsocketServer import WebsocketServer
-
 
 FORWARDED_PATH_KEY = "forwarded_path"
 
@@ -73,7 +73,7 @@ class AbstractMadminRootEndpoint(web.View, ABC):
         except (WebsocketWorkerTimeoutException, WebsocketWorkerConnectionClosedException) as e:
             logger.warning("Worker was removed or timeout issuing command, unable to process request. {}", e)
             raise web.HTTPInternalServerError
-        except web.HTTPFound as e:
+        except (web.HTTPFound, web.HTTPAccepted, web.HTTPNotFound) as e:
             raise e
         except Exception as e:
             logger.warning("Exception occurred in request!. Details: " + str(e))
