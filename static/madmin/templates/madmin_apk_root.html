@@ -20,7 +20,7 @@
             url: url,
             type: 'GET',
             success:function(data, status, xhr){
-                if(xhr.status == 200) {
+                if(xhr.status === 200) {
                     $.unblockUI();
                     alert('Wizard re-caching complete');
                     location.reload();
@@ -45,7 +45,7 @@
             type: 'POST',
             data: fd,
             success:function(data, status, xhr){
-                if(xhr.status == 201) {
+                if(xhr.status === 201) {
                     $.unblockUI();
                     alert('Successfully uploaded the file');
                     location.reload();
@@ -76,7 +76,7 @@
                 data: JSON.stringify(rpc_call),
                 type : 'POST',
                 success: function(data, status, xhr) {
-                    if(xhr.status == 204) {
+                    if(xhr.status === 204) {
                       alert('Searching for new APK successfully started');
                     }
                     $.unblockUI();
@@ -103,7 +103,7 @@
                 data: JSON.stringify(rpc_call),
                 type : 'POST',
                 success: function(data, status, xhr) {
-                    if(xhr.status == 204) {
+                    if(xhr.status === 204) {
                         location.reload();
                     }
                     $.unblockUI();
@@ -128,7 +128,7 @@
                 url : '{{ url('api_madapk') }}/'+ apk_type +'/'+ apk_arch,
                 type : 'DELETE',
                 success: function(data, status, xhr) {
-                    if(xhr.status == 202) {
+                    if(xhr.status === 202) {
                         location.reload();
                     }
                     $.unblockUI();
@@ -148,7 +148,7 @@
         url : '{{ url('apk_update_status') }}',
         type : 'GET',
         success: function(data, status, xhr) {
-            if(xhr.status == 200) {
+            if(xhr.status === 200) {
               var apk_status = xhr.responseJSON;
               $.each($(".update_status"), function () {
                 var apk_type = $(this).data('apk_type');
@@ -183,7 +183,7 @@
                     }).bind('click', download_apk).append(fa_img);
                   }
                 } else {
-                    if($(this).find('img').data('status') == 2) {
+                    if($(this).find('img').data('status') === 2) {
                         location.reload();
                     } else {
                         $(this).empty();
