@@ -144,6 +144,7 @@ class WebhookWorker:
 
     def __construct_quest_payload(self, transformed_quest: Dict) -> Dict:
         if self.__args.quest_webhook_flavor == "default":
+            # used by PokeAlarm
             return {
                 "pokestop_id": transformed_quest["pokestop_id"],
                 "latitude": transformed_quest["latitude"],
@@ -301,6 +302,25 @@ class WebhookWorker:
             "target": transformed_quest["quest_target"],
             "updated": transformed_quest["timestamp"],
             "quest_task": transformed_quest["quest_task"],
+            "quest_type": transformed_quest["quest_type"],
+            "quest_type_raw": transformed_quest["quest_type_raw"],
+            "item_type": transformed_quest["item_type"],
+            "name": transformed_quest["name"].replace('"', '\\"').replace("\n", "\\n") if transformed_quest.get(
+                "name") else None,
+            "url": transformed_quest["url"],
+            "timestamp": transformed_quest["timestamp"],
+            "quest_reward_type": transformed_quest["quest_reward_type"],
+            "quest_reward_type_raw": transformed_quest["quest_reward_type_raw"],
+            "quest_reward_raw": transformed_quest['quest_reward_raw'].replace("'", '"').lower(),
+            "quest_target": transformed_quest["quest_target"],
+            "pokemon_id": int(transformed_quest["pokemon_id"]),
+            "pokemon_form": int(transformed_quest.get("pokemon_form", '0')),
+            "pokemon_costume": int(transformed_quest.get("pokemon_costume", '0')),
+            "item_amount": transformed_quest["item_amount"],
+            "item_id": transformed_quest["item_id"],
+            "quest_condition": transformed_quest["quest_condition"].replace("'", '"').lower(),
+            "quest_template": transformed_quest["quest_template"],
+            "is_ar_scan_eligible": transformed_quest["is_ar_scan_eligible"],
             "with_ar": bool(transformed_quest["quest_layer"])
         }
 
@@ -497,10 +517,7 @@ class WebhookWorker:
 
             if mon["weather_boosted_condition"] is not None \
                     and mon["weather_boosted_condition"] > 0:
-                if self.__args.quest_webhook_flavor == "default":
-                    mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
-                if self.__args.quest_webhook_flavor == "poracle":
-                    mon_payload["weather"] = mon["weather_boosted_condition"]
+                mon_payload["weather"] = mon["weather_boosted_condition"]
 
             if mon["seen_type"] in (MonSeenTypes.nearby_stop.name, MonSeenTypes.lure_wild.name,
                                     MonSeenTypes.lure_encounter.name):
