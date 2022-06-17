@@ -1,15 +1,16 @@
-from typing import List, Optional, Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
+from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
+                                SettingsRoutecalc)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RoutePoolEntry import RoutePoolEntry
-from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import RoutecalculationTypes
 
@@ -156,3 +157,6 @@ class RouteManagerLeveling(RouteManagerBase):
 
     def is_level_mode(self) -> bool:
         return True
+
+    def get_quest_layer_to_scan(self) -> Optional[int]:
+        return self._settings.layer

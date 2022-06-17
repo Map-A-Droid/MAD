@@ -111,6 +111,7 @@ class FortSearchResultTypes(Enum):
 
 
 class QuestLayer(Enum):
+    UNKNOWN = -1
     AR = 0
     NON_AR = 1
 

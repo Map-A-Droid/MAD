@@ -1,5 +1,7 @@
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.mapping_manager.MappingManager import MappingManager
@@ -7,8 +9,8 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.madGlobals import QuestLayer
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.quest.QuestStrategy import QuestStrategy
+from mapadroid.worker.WorkerState import WorkerState
 
 
 class ARQuestLayerStrategy(QuestStrategy):
@@ -33,7 +35,8 @@ class ARQuestLayerStrategy(QuestStrategy):
             pass
         if current_layer != QuestLayer.AR:
             # Trigger the deletion of quests
-            await self._clear_quests(vps_delay, openmenu=True)
+            # await self._clear_quests(vps_delay, openmenu=True)
+            pass
         # Nothing else to do given the deletion of quests leaves us on the AR layer
         self._ready_for_scan.set()
 

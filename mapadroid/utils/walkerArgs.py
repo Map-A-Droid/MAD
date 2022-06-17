@@ -346,7 +346,7 @@ def parse_args():
                         dest='autoconfig_no_auth')
 
     # Redis cache
-    parser.add_argument('-ch', '--cache_host', default='localhost',
+    parser.add_argument('-ch', '--cache_host', default='127.0.0.1',
                         help=('Redis host used by caching'))
     parser.add_argument('-cp', '--cache_port', default=6379,
                         help=('Redis port used by caching'))

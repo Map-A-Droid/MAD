@@ -5,39 +5,46 @@ import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from enum import Enum
-from typing import Dict, Tuple, Optional, List, Set, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from loguru import logger
 from s2sphere import CellId
 from sqlalchemy import exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
-from mapadroid.db.model import SettingsAreaPokestop, Pokestop, SettingsWalkerarea, TrsStatus
+from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
+                                SettingsWalkerarea, TrsStatus)
 from mapadroid.mapping_manager.MappingManager import MappingManager
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
+from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
-from mapadroid.utils.collections import ScreenCoordinates, Location
-from mapadroid.utils.gamemechanicutil import calculate_cooldown, determine_current_quest_layer
+from mapadroid.utils.gamemechanicutil import (calculate_cooldown,
+                                              determine_current_quest_layer)
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.madConstants import TIMESTAMP_NEVER, STOP_SPIN_DISTANCE
-from mapadroid.utils.madGlobals import InternalStopWorkerException, \
-    TransportType, FortSearchResultTypes
-from mapadroid.utils.madGlobals import QuestLayer
+from mapadroid.utils.madConstants import STOP_SPIN_DISTANCE, TIMESTAMP_NEVER
+from mapadroid.utils.madGlobals import (FortSearchResultTypes,
+                                        InternalStopWorkerException,
+                                        QuestLayer, TransportType)
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
+from mapadroid.worker.strategy.AbstractMitmBaseStrategy import \
+    AbstractMitmBaseStrategy
 from mapadroid.worker.WorkerState import WorkerState
-from mapadroid.worker.strategy.AbstractMitmBaseStrategy import AbstractMitmBaseStrategy
 
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
 S2_GMO_CELL_LEVEL = 15
@@ -175,20 +182,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 logger.error('Something happened during account rotation')
                 raise InternalStopWorkerException("Worker was supposed to switch accounts")
             else:
-                reached_main_menu = await self._check_pogo_main_screen(10, True)
-                if not reached_main_menu:
-                    if not await self._restart_pogo():
-                        # TODO: put in loop, count up for a reboot ;)
-                        raise InternalStopWorkerException("Failed to reach pogo main screen")
-
                 await self.set_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, True)
             await asyncio.sleep(10)
-        else:
-            reached_main_menu = await self._check_pogo_main_screen(10, True)
-            if not reached_main_menu:
-                if not await self._restart_pogo():
-                    # TODO: put in loop, count up for a reboot ;)
-                    raise InternalStopWorkerException("Failed to reach pogo main screen")
 
         await self.pre_work_loop_layer_preparation()
 
@@ -474,27 +469,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         logger.debug("checkPogoClose: done")
         return False
 
-    async def _clear_quests(self, delayadd, openmenu=True) -> None:
-        reached_main_menu = await self._check_pogo_main_screen(10, True)
-        if not reached_main_menu:
-            if not await self._restart_pogo():
-                raise InternalStopWorkerException("Failed restarting pogo after attempting to "
-                                                  "reach the main menu")
-        logger.debug('{_clear_quests} called')
-        if openmenu:
-            x, y = self._worker_state.resolution_calculator.get_coords_quest_menu()
-            await self._communicator.click(int(x), int(y))
-            logger.debug("_clear_quests Open menu: {}, {}", int(x), int(y))
-            await asyncio.sleep(6 + int(delayadd))
-
-        x, y = self._worker_state.resolution_calculator.get_close_main_button_coords()
-        await self._communicator.click(int(x), int(y))
-        await asyncio.sleep(1.5)
-        logger.debug('{_clear_quests} finished')
-
     async def switch_account(self):
         if not self._switch_user():
-            logger.error('Something happend while account switching :(')
+            logger.error('Something happened while account switching :(')
             raise InternalStopWorkerException("Failed switching accounts")
         else:
             await asyncio.sleep(10)
@@ -846,20 +823,11 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                       and (data_received == FortSearchResultTypes.TIME
                            or data_received == FortSearchResultTypes.OUT_OF_RANGE)):
                     logger.warning('Softban - return to main screen and wait for the stop to be spun again...')
-                    on_main_menu = await self._check_pogo_main_screen(10, False)
-                    if not on_main_menu:
-                        await self._restart_pogo()
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and data_received == FortSearchResultTypes.FULL):
                     logger.warning(
                         "Failed getting quest but got items - quest box is probably full. Starting cleanup "
                         "routine.")
-                    reached_main_menu = await self._check_pogo_main_screen(10, True)
-                    if not reached_main_menu:
-                        if not await self._restart_pogo():
-                            # TODO: put in loop, count up for a reboot ;)
-                            raise InternalStopWorkerException("Failed restarting pogo after attempting to "
-                                                              "reach the main menu")
                     break
                 else:
                     logger.info("Failed retrieving stop spin...")
@@ -875,7 +843,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
                     else:
                         vps_delay: int = await self._get_vps_delay()
-                        await self._clear_quests(vps_delay)
+                        # await self._clear_quests(vps_delay)
 
                     await asyncio.sleep(1)
                 to += 1
