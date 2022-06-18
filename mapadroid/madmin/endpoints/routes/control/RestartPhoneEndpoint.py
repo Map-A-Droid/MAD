@@ -6,6 +6,10 @@ from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.websocket import AbstractCommunicator
+
+logger = get_logger(LoggerEnums.madmin)
 
 
 class RestartPhoneEndpoint(AbstractControlEndpoint):
@@ -32,7 +36,11 @@ class RestartPhoneEndpoint(AbstractControlEndpoint):
             # origin_logger.info('MADmin: ADB shell command successfully')
             pass
         else:
-            temp_comm = self._get_ws_server().get_origin_communicator(origin)
-            await temp_comm.reboot()
+            temp_comm: Optional[AbstractCommunicator] = self._get_ws_server().get_origin_communicator(origin)
+            if temp_comm:
+                await temp_comm.reboot()
+            else:
+                logger.warning("Unable to reboot {} as it's not connected", origin)
+                raise web.HTTPNotFound()
         await self._get_ws_server().force_cancel_worker(origin)
         raise web.HTTPFound(self._url_for("get_phonescreens"))

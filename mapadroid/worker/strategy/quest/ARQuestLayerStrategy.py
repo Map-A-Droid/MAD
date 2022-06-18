@@ -46,6 +46,6 @@ class ARQuestLayerStrategy(QuestStrategy):
                 self._ready_for_scan.set()
             else:
                 vps_delay: int = await self._get_vps_delay()
-                await self._clear_quests(vps_delay, openmenu=True)
+                # await self._clear_quests(vps_delay, openmenu=True)
         except ValueError as e:
             pass
