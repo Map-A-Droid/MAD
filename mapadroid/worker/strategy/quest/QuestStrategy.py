@@ -257,25 +257,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         #  since walking above a given speed may result in softbans as well
         delay_to_avoid_softban: int = 0
         speed = 16.67  # Speed can be 60 km/h up to distances of 3km
-        async with self._db_wrapper as session, session:
-            status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
-            if status and status.last_softban_action and status.last_softban_action_location:
-                logger.debug("Checking DB for last softban action")
-                last_action_location: Location = Location(status.last_softban_action_location[0],
-                                                          status.last_softban_action_location[1])
-                distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
-                                                                            last_action_location.lng,
-                                                                            self._worker_state.current_location.lat,
-                                                                            self._worker_state.current_location.lng)
-                delay_to_last_action = calculate_cooldown(distance_last_action, speed)
-                logger.debug("Last registered softban was at {} at {}", status.last_softban_action,
-                             status.last_softban_action_location)
-                if status.last_softban_action.timestamp() + delay_to_last_action > cur_time:
-                    logger.debug("Last registered softban requires further cooldown")
-                    delay_to_avoid_softban = cur_time - status.last_softban_action.timestamp() + delay_to_last_action
-                    distance = distance_last_action
-                else:
-                    logger.debug("Last registered softban action long enough in the past")
+        delay_to_avoid_softban, distance = await self._calculate_remaining_softban_avoidance_duration(cur_time,
+                                                                                                      delay_to_avoid_softban,
+                                                                                                      distance, speed)
         if delay_to_avoid_softban == 0:
             last_action_time: Optional[int] = await self.get_devicesettings_value(MappingManagerDevicemappingKey
                                                                                   .LAST_ACTION_TIME, None)
@@ -329,6 +313,28 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                             self._worker_state.current_location)
         self._worker_state.last_location = self._worker_state.current_location
         return cur_time
+
+    async def _calculate_remaining_softban_avoidance_duration(self, cur_time, delay_to_avoid_softban, distance, speed):
+        async with self._db_wrapper as session, session:
+            status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
+            if status and status.last_softban_action and status.last_softban_action_location:
+                logger.debug("Checking DB for last softban action")
+                last_action_location: Location = Location(status.last_softban_action_location[0],
+                                                          status.last_softban_action_location[1])
+                distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
+                                                                            last_action_location.lng,
+                                                                            self._worker_state.current_location.lat,
+                                                                            self._worker_state.current_location.lng)
+                delay_to_last_action = calculate_cooldown(distance_last_action, speed)
+                logger.debug("Last registered softban was at {} at {}", status.last_softban_action,
+                             status.last_softban_action_location)
+                if status.last_softban_action.timestamp() + delay_to_last_action > cur_time:
+                    logger.debug("Last registered softban requires further cooldown")
+                    delay_to_avoid_softban = cur_time - status.last_softban_action.timestamp() + delay_to_last_action
+                    distance = distance_last_action
+                else:
+                    logger.debug("Last registered softban action long enough in the past")
+        return delay_to_avoid_softban, distance
 
     async def _rotate_account_after_moving_locations_if_applicable(self, delay_used: int) -> int:
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True) and \
@@ -506,12 +512,22 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     async def _ensure_stop_present(self, timestamp: float) -> PositionStopType:
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
-        if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY):
-            # Restart pogo, try again, abort if it fails...
-            if not await self._restart_pogo():
-                raise AbortStopProcessingException("Failed restarting pogo after lacking data in GMOs.")
-            timestamp = int(time.time())
-            stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
+        if await self._is_levelmode():
+            logger.info("Wait for new data to check stop present")
+            type_received, proto_entry, time_received = await self._wait_for_data_after_moving(
+                timestamp, ProtoIdentifier.GMO, 20)
+            if type_received != ReceivedType.UNDEFINED:
+                stop_type = await self._current_position_has_spinnable_stop(timestamp)
+            if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
+                             PositionStopType.NO_FORT):
+                raise AbortStopProcessingException("No fort present or GMO empty, continuing in levelmode.")
+        else:
+            if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY):
+                # Restart pogo, try again, abort if it fails...
+                if not await self._restart_pogo():
+                    raise AbortStopProcessingException("Failed restarting pogo after lacking data in GMOs.")
+                timestamp = int(time.time())
+                stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
 
         if not PositionStopType.type_contains_stop_at_all(stop_type):
             logger.info("Location {}, {} considered to be ignored in the next round due to failed "
@@ -822,7 +838,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and (data_received == FortSearchResultTypes.TIME
                            or data_received == FortSearchResultTypes.OUT_OF_RANGE)):
-                    logger.warning('Softban - return to main screen and wait for the stop to be spun again...')
+                    logger.warning('Softban - continuing......')
+                    # TODO: Read last action and sleep for needed duration?
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and data_received == FortSearchResultTypes.FULL):
                     logger.warning(
