@@ -129,6 +129,6 @@ class StatsHandler(AbstractStatsHandler):
         # TODO: Cleanup seen stuff...
         await TrsStatsDetectHelper.cleanup(session, delete_before_timestamp)
         await TrsStatsDetectWildMonRawHelper.cleanup(session, DatetimeWrapper.fromtimestamp(delete_before_timestamp),
-                                                     raw_delete_shiny_days=application_args.raw_delete_shiny)
+                                                     raw_delete_shiny_days=int(application_args.raw_delete_shiny))
         await TrsStatsLocationHelper.cleanup(session, delete_before_timestamp)
         await TrsStatsLocationRawHelper.cleanup(session, delete_before_timestamp)

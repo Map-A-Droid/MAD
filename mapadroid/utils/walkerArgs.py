@@ -254,7 +254,7 @@ def parse_args():
                         help='Generate mon seen stats (only with --game_stats)')
     parser.add_argument('-gsst', '--game_stats_save_time', default=300, type=int,
                         help='Number of seconds until worker information is saved to database')
-    parser.add_argument('-rds', '--raw_delete_shiny', default=0,
+    parser.add_argument('-rds', '--raw_delete_shiny', default=0, type=int,
                         help='Delete shiny mon in raw stats older then x days (0 =  Disable (Default))')
 
     # ADB
