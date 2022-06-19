@@ -49,7 +49,8 @@ class TrsStatsDetectHelper:
         if hourly:
             stmt = stmt.group_by(TrsStatsDetect.worker, func.day(func.FROM_UNIXTIME(TrsStatsDetect.timestamp_scan)),
                                  func.hour(func.FROM_UNIXTIME(TrsStatsDetect.timestamp_scan)))
-            stmt = stmt.order_by(func.hour(func.FROM_UNIXTIME(TrsStatsDetect.timestamp_scan)))
+            stmt = stmt.order_by(func.day(func.FROM_UNIXTIME(TrsStatsDetect.timestamp_scan)),
+                                 func.hour(func.FROM_UNIXTIME(TrsStatsDetect.timestamp_scan)))
         else:
             stmt = stmt.group_by(TrsStatsDetect.worker)
             #stmt = stmt.order_by(TrsStatsDetect.timestamp_scan)
