@@ -1,15 +1,15 @@
 from datetime import timedelta
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import and_, asc, case, desc, func, or_, delete
+from sqlalchemy import and_, asc, case, delete, desc, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased
 
 from mapadroid.db.model import TrsStatsLocationRaw
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import TransportType, PositionType
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.madGlobals import PositionType, TransportType
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -48,7 +48,7 @@ class TrsStatsLocationRawHelper:
         if include_last_n_minutes:
             minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
+            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.timestamp()))
         stmt = stmt.where(and_(*where_conditions))
         # Group_by needed to not cut off other workers using min function
         if hourly:
@@ -104,7 +104,7 @@ class TrsStatsLocationRawHelper:
         if include_last_n_minutes:
             minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
+            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.timestamp()))
         stmt = stmt.where(and_(*where_conditions))
         # Group_by needed to not cut off other workers using min function
         if grouped:
@@ -214,7 +214,7 @@ class TrsStatsLocationRawHelper:
         if include_last_n_minutes:
             minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.now().timestamp()))
+            where_conditions.append(TrsStatsLocationRaw.period >= int(minutes.timestamp()))
         stmt = stmt.where(and_(*where_conditions))
         stmt = stmt.order_by(asc(TrsStatsLocationRaw.id))
         result = await session.execute(stmt)

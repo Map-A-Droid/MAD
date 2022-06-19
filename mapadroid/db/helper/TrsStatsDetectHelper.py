@@ -41,7 +41,7 @@ class TrsStatsDetectHelper:
         if include_last_n_minutes:
             minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsDetect.timestamp_scan >= int(minutes.now().timestamp()))
+            where_conditions.append(TrsStatsDetect.timestamp_scan >= int(minutes.timestamp()))
         if where_conditions:
             # Avoid empty where
             stmt = stmt.where(and_(*where_conditions))
@@ -52,7 +52,7 @@ class TrsStatsDetectHelper:
             stmt = stmt.order_by(func.hour(func.FROM_UNIXTIME(TrsStatsDetect.timestamp_scan)))
         else:
             stmt = stmt.group_by(TrsStatsDetect.worker)
-            stmt = stmt.order_by(TrsStatsDetect.timestamp_scan)
+            #stmt = stmt.order_by(TrsStatsDetect.timestamp_scan)
 
         # Only order by if there are records of more than one device - for whatever reason?
         result = await session.execute(stmt)

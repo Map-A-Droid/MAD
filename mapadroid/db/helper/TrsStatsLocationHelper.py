@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Dict, Optional, Tuple
 
-from sqlalchemy import and_, func, delete
+from sqlalchemy import and_, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -38,7 +38,7 @@ class TrsStatsLocationHelper:
         if include_last_n_minutes:
             minutes = DatetimeWrapper.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=include_last_n_minutes)
-            where_conditions.append(TrsStatsLocation.timestamp_scan >= int(minutes.now().timestamp()))
+            where_conditions.append(TrsStatsLocation.timestamp_scan >= int(minutes.timestamp()))
         if where_conditions:
             stmt = stmt.where(and_(*where_conditions))
         # Group_by needed to not cut off other workers using min function
