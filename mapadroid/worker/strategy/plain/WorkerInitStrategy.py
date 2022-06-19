@@ -19,6 +19,10 @@ class InitTypes(Enum):
     FORTS = "forts"
 
 
+# Rural areas may not be populated with forts but wild or nearby mons...
+keys_to_check_fort: List[str] = ["forts", "wild_pokemon", "nearby_pokemon"]
+
+
 class WorkerInitStrategy(AbstractWorkerMitmStrategy):
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
@@ -49,7 +53,7 @@ class WorkerInitStrategy(AbstractWorkerMitmStrategy):
             if ((init_type == InitTypes.MONS
                  and await self._gmo_contains_wild_mons_closeby(latest_proto_data))
                     or (init_type == InitTypes.FORTS
-                        and self._gmo_cells_contain_multiple_of_key(latest_proto_data, "forts"))):
+                        and self._gmo_cells_contain_multiple_of_key(latest_proto_data, keys_to_check_fort))):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO
             else:

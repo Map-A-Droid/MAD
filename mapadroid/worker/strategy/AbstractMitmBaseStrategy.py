@@ -1,8 +1,9 @@
 import asyncio
+import collections
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union, Dict
+from typing import Optional, Tuple, Union, Dict, List
 
 from loguru import logger
 
@@ -437,18 +438,23 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         return True
 
     @staticmethod
-    def _gmo_cells_contain_multiple_of_key(gmo: dict, key_in_cell: str) -> bool:
-        if not gmo or not key_in_cell or "cells" not in gmo:
+    def _gmo_cells_contain_multiple_of_key(gmo: dict, keys_in_cell: Union[str, collections.Collection[str]]) -> bool:
+        if not gmo or not keys_in_cell or "cells" not in gmo:
             return False
+        keys: List[str] = []
+        if isinstance(keys_in_cell, str):
+            keys.append(keys_in_cell)
+        else:
+            keys.extend(keys_in_cell)
         cells = gmo.get("cells", [])
         if not cells or not isinstance(cells, list):
             return False
-        amount_of_key: int = 0
         for cell in cells:
-            value_of_key = cell.get(key_in_cell, None)
-            if value_of_key and isinstance(value_of_key, list):
-                amount_of_key += len(value_of_key)
-        return amount_of_key > 0
+            for key in keys_in_cell:
+                value_of_key = cell.get(key, None)
+                if value_of_key and isinstance(value_of_key, list) and len(value_of_key) > 0:
+                    return True
+        return False
 
     async def _additional_health_check(self) -> None:
         # Ensure PogoDroid was started...
