@@ -24,7 +24,7 @@ class TrsS2CellHelper:
             cell_id = cell_id + 2 ** 64
         lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
         insert_stmt = insert(TrsS2Cell).values(
-            id=cell_id,
+            id=str(cell_id),
             level=15,
             center_latitude=lat,
             center_longitude=lng,

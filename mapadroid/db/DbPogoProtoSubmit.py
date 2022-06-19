@@ -747,7 +747,7 @@ class DbPogoProtoSubmit:
                     latitude = gym["latitude"]
                     longitude = gym["longitude"]
                     s2_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude)
-                    weather: Optional[Weather] = await WeatherHelper.get(session, s2_cell_id)
+                    weather: Optional[Weather] = await WeatherHelper.get(session, str(s2_cell_id))
                     gameplay_weather: int = weather.gameplay_weather if weather is not None else 0
                     cache_key = "gym{}{}{}".format(gymid, last_modified_ts, gameplay_weather)
                     if await self._cache.exists(cache_key):
@@ -1092,7 +1092,7 @@ class DbPogoProtoSubmit:
                 weather: Optional[Weather] = await WeatherHelper.get(session, str(cell_id))
                 if not weather:
                     weather: Weather = Weather()
-                    weather.s2_cell_id = cell_id
+                    weather.s2_cell_id = str(cell_id)
                     weather.latitude = real_lat
                     weather.longitude = real_lng
                 weather.cloud_level = display_weather_data.get("cloud_level", 0)
