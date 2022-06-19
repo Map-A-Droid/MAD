@@ -54,7 +54,7 @@ class TrsStatsLocationRawHelper:
         if hourly:
             stmt = stmt.group_by(TrsStatsLocationRaw.worker, func.day(func.FROM_UNIXTIME(TrsStatsLocationRaw.period)),
                                  func.hour(func.FROM_UNIXTIME(TrsStatsLocationRaw.period)),
-                                 TrsStatsLocationRaw.transporttype)
+                                 TrsStatsLocationRaw.transporttype, TrsStatsLocationRaw.walker)
         else:
             stmt = stmt.group_by(TrsStatsLocationRaw.worker)
         result = await session.execute(stmt)
