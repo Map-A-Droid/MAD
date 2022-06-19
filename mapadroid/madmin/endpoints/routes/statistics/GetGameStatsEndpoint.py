@@ -18,7 +18,7 @@ class GetGameStatsEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        minutes_usage: Optional[int] = int(self._request.query.get("minutes_usage", "10"))
+        minutes_usage: Optional[int] = self._get_minutes_usage_query_args()
 
         # statistics_get_detection_count
         stats_detect: Dict[

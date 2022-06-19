@@ -16,9 +16,7 @@ class StatisticsDetectionWorkerDataEndpoint(AbstractStatisticsRootEndpoint):
 
     # TODO: Auth
     async def get(self):
-        minutes: Optional[int] = self._request.query.get("minutes")
-        if minutes:
-            minutes = 10
+        minutes: Optional[int] = self._get_minutes_usage_query_args()
         worker: Optional[str] = self._request.query.get("worker")
 
         # spawns

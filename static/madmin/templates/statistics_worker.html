@@ -102,7 +102,7 @@
         loadingBlockUI("Loading");
 
         $.ajax({
-            "url": "statistics_detection_worker_data?worker={{ worker }}&minutes={{ minutes }}",
+            "url": "statistics_detection_worker_data?worker={{ worker }}&minutes_usage={{ minutes_usage }}",
             "type": "GET",
             "cache": false,
             "dataType": "json",
@@ -394,13 +394,13 @@
 <hr>
 <h2>Workerdetails</h2>
 <div id="selector">
-    View {{ minutes }} minutes <br>Set:
-    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=60">60</a>
-    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=120">120</a>
-    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=240">240</a>
-    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=480">480</a>
-    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=1440">1440</a>
-    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=10080">One Week</a>
+    View {{ minutes_usage }} minutes <br>Set:
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes_usage=60">60</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes_usage=120">120</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes_usage=240">240</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes_usage=480">480</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes_usage=1440">1440</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes_usage=10080">One Week</a>
     </div>
 <h2>Worker Detection</h2>
 <div id="legendContainer_usage"></div>
