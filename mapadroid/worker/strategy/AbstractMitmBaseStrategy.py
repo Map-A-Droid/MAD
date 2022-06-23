@@ -450,7 +450,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         if not cells or not isinstance(cells, list):
             return False
         for cell in cells:
-            for key in keys_in_cell:
+            for key in keys:
                 value_of_key = cell.get(key, None)
                 if value_of_key and isinstance(value_of_key, list) and len(value_of_key) > 0:
                     return True
