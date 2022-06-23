@@ -4,7 +4,8 @@ from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import SettingsDevice, AutoconfigRegistration, SettingsWalker, SettingsDevicepool
+from mapadroid.db.model import (AutoconfigRegistration, SettingsDevice,
+                                SettingsDevicepool, SettingsWalker)
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
@@ -94,3 +95,9 @@ class SettingsDeviceHelper:
         stmt = select(SettingsDevice).where(SettingsDevice.pool_id == pool.pool_id)
         result = await session.execute(stmt)
         return result.scalars().all()
+
+    @staticmethod
+    async def get_by_google_login(session: AsyncSession, username: str) -> Optional[SettingsDevice]:
+        stmt = select(SettingsDevice).where(SettingsDevice.ggl_login_mail == username)
+        result = await session.execute(stmt)
+        return result.scalars().first()

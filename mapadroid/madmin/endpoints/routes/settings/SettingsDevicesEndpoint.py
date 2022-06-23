@@ -1,16 +1,19 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
-from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
+from mapadroid.db.helper.SettingsDevicepoolHelper import \
+    SettingsDevicepoolHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
+                                                        SettingsPogoauthHelper)
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
-from mapadroid.db.model import SettingsDevice
+from mapadroid.db.model import SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Device import Device
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, expand_context)
 
 
 class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
@@ -52,6 +55,13 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
         for assigned in ptc_accounts_assigned:
             ptc_accounts_assigned_or_not_assigned[assigned.account_id] = assigned
 
+        available_ggl_accounts: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(
+            self._session, self._get_instance_id(), LoginType.GOOGLE)
+        if device and device.ggl_login_mail:
+            assigned_ggl_login: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_google_auth_by_username(
+                self._session, self._get_instance_id(), device.ggl_login_mail)
+            if assigned_ggl_login:
+                available_ggl_accounts[assigned_ggl_login.account_id] = assigned_ggl_login
         template_data: Dict = {
             'identifier': self._identifier,
             'base_uri': self._url_for('api_device'),
@@ -64,8 +74,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
             'uri': self._url_for('api_device') if not device else '%s/%s' % (
                 self._url_for('api_device'), self._identifier),
             # TODO: Above is pretty generic in theory...
-            'ggl_accounts': await SettingsPogoauthHelper.get_avail_accounts(self._session, self._get_instance_id(),
-                                                                            LoginType.GOOGLE),
+            'ggl_accounts': available_ggl_accounts,
             'ptc_accounts': ptc_accounts_assigned_or_not_assigned,
             'ptc_assigned': ptc_accounts_assigned,
             'requires_auth': not self._get_mad_args().autoconfig_no_auth,
