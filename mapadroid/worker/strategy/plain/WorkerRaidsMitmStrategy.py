@@ -9,7 +9,8 @@ from mapadroid.worker.strategy.plain.AbstractWorkerMitmStrategy import AbstractW
 
 logger = get_logger(LoggerEnums.worker)
 
-
+keys_to_check_forts_only: List[str] = ["forts"]
+    
 class WorkerRaidsStrategy(AbstractWorkerMitmStrategy):
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
@@ -34,7 +35,7 @@ class WorkerRaidsStrategy(AbstractWorkerMitmStrategy):
         if latest_proto_data is None:
             return ReceivedType.UNDEFINED, data_found
         if proto_to_wait_for == ProtoIdentifier.GMO:
-            if self._gmo_cells_contain_multiple_of_key(latest_proto_data, "forts"):
+            if self._gmo_cells_contain_multiple_of_key(latest_proto_data, keys_to_check_forts_only):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO
             else:
