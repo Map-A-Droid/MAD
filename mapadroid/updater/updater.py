@@ -167,11 +167,11 @@ class DeviceUpdater(object):
 
         """
         if len(job_item.sub_jobs) <= job_item.sub_job_index:
-            logger.info("Done with job as sub job index of {} ({}) is bigger ({}) than the length of the subjobs ({})",
-                        job_item.id,
-                        job_item.job_name,
-                        job_item.sub_job_index,
-                        len(job_item.sub_jobs))
+            logger.success("Successfully executed job {} ({}, index {}) with {} subjobs",
+                           job_item.id,
+                           job_item.job_name,
+                           job_item.sub_job_index,
+                           len(job_item.sub_jobs))
             return True
         if job_item.last_status == JobStatus.CANCELLED:
             logger.info("Job {} of device {} has been cancelled and will not be processed anymore.",
