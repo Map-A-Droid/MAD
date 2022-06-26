@@ -514,10 +514,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
         if await self._is_levelmode():
             logger.info("Wait for new data to check stop present")
-            type_received, proto_entry, time_received = await self._wait_for_data_after_moving(
-                timestamp, ProtoIdentifier.GMO, 20)
-            if type_received != ReceivedType.UNDEFINED:
-                stop_type = await self._current_position_has_spinnable_stop(timestamp)
             if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY,
                              PositionStopType.NO_FORT):
                 raise AbortStopProcessingException("No fort present or GMO empty, continuing in levelmode.")
