@@ -302,10 +302,11 @@ class MITMReceiver(Process):
         safe_items = self.__mitm_mapper.get_safe_items(origin)
         level_mode = self.__mitm_mapper.get_levelmode(origin)
 
-        ids_encountered = self.__mitm_mapper.request_latest(
-            origin, "ids_encountered")
-        if ids_encountered is not None:
-            ids_encountered = ids_encountered.get("values", None)
+        ids_encountered = None
+        #ids_encountered = self.__mitm_mapper.request_latest(
+        #    origin, "ids_encountered")
+        #if ids_encountered is not None:
+        #    ids_encountered = ids_encountered.get("values", None)
 
         unquest_stops = self.__mitm_mapper.request_latest(
             origin, "unquest_stops")
