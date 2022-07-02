@@ -1,16 +1,18 @@
 import time
-from typing import Optional, List, Dict, Union
+from typing import Dict, List, Optional, Union
 
 import ujson
 from aiocache import cached
 from aioredis import Redis
 from loguru import logger
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 
 
 class RedisMitmMapper(AbstractMitmMapper):
@@ -91,7 +93,7 @@ class RedisMitmMapper(AbstractMitmMapper):
             return None
         latest_entry: Optional[LatestMitmDataEntry] = await LatestMitmDataEntry.from_json(latest_data)
         if not latest_entry or (timestamp_earliest and latest_entry.timestamp_of_data_retrieval
-                                and timestamp_earliest > latest_entry.timestamp_of_data_retrieval):
+                                and int(timestamp_earliest) >= int(latest_entry.timestamp_of_data_retrieval)):
             return None
         else:
             return latest_entry
