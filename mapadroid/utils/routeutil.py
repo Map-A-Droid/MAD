@@ -43,7 +43,7 @@ def check_time_period(period, relevant_timezone: datetime.tzinfo):
     tm_now = datetime.datetime.now(tz=relevant_timezone).replace(second=0, microsecond=0)
     tm_from = tm_now.replace(hour=int(sts1[0]), minute=int(sts1[1]))
     tm_til = tm_now.replace(hour=int(sts2[0]), minute=int(sts2[1]))
-
+    logger.debug2("Time now: {}, period to check against: {} to {}", tm_now, tm_from, tm_til)
     if tm_from > tm_til:
         if tm_now < tm_from:
             tm_from = tm_from - datetime.timedelta(days=+1)

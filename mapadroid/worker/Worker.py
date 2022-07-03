@@ -1,8 +1,8 @@
 import asyncio
 import math
 import time
-from asyncio import Task, CancelledError
-from typing import Optional, Any
+from asyncio import CancelledError, Task
+from typing import Any, Optional
 
 from loguru import logger
 
@@ -11,19 +11,21 @@ from mapadroid.db.helper.ScannedLocationHelper import ScannedLocationHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import (
-    InternalStopWorkerException,
+    InternalStopWorkerException, RoutemanagerShuttingDown,
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException, application_args, RoutemanagerShuttingDown)
+    WebsocketWorkerTimeoutException, application_args)
 from mapadroid.utils.resolution import ResolutionCalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.worker.AbstractWorker import AbstractWorker
+from mapadroid.worker.strategy.AbstractWorkerStrategy import \
+    AbstractWorkerStrategy
+from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
-from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
 
 
 class Worker(AbstractWorker):
@@ -194,16 +196,19 @@ class Worker(AbstractWorker):
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 walkercheck = await self.check_walker()
                 if not walkercheck:
+                    logger.info("Switching strategy (e.g., because of walker settings")
                     break
 
                 async with self._work_mutex:
                     if not await self._scan_strategy.health_check():
+                        logger.warning("Scan strategy health check turned out to be negative")
                         break
 
                 await self._scan_strategy.grab_next_location()
 
                 logger.debug('Checking if new location is valid')
                 if not await self._scan_strategy.check_location_is_valid():
+                    logger.warning("Location is invalid")
                     break
 
                 await self._scan_strategy.pre_location_update()
