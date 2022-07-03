@@ -7,3 +7,4 @@ flake8-logging-format
 flake8-eradicate
 pep8-naming
 tox-pyenv
+freezegun
