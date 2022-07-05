@@ -237,7 +237,7 @@ class Worker(AbstractWorker):
                     # TODO: Re-add encounter_all setting PROPERLY, not in WorkerBase
                     await self._scan_strategy.post_move_location_routine(time_snapshot)
 
-                    logger.info("Worker finished iteration, continuing work")
+                    logger.debug("Worker finished one iteration")
 
     async def __get_current_strategy_to_use(self, set_finished=False) -> Optional[AbstractWorkerStrategy]:
         if set_finished:

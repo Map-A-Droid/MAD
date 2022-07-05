@@ -176,7 +176,7 @@ class SerializedMitmDataProcessor:
         await self.__stats_handler.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny)
 
     async def __process_gmo(self, data, origin, received_date: datetime, received_timestamp: int, start_time):
-        logger.info("Processing GMO. Received at {}", received_date)
+        logger.debug("Processing GMO. Received at {}", received_date)
         loop = asyncio.get_running_loop()
         weather_task = loop.create_task(self.__process_weather(data, received_timestamp))
         stops_task = loop.create_task(self.__process_stops(data))

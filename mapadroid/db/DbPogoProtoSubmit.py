@@ -325,7 +325,7 @@ class DbPogoProtoSubmit:
         if cache_time > 0:
             await self._cache.set(cache_key, 1, ex=cache_time)
         time_done = time.time() - time_start_submit
-        logger.success("Done updating mon IV in DB in {} seconds", time_done)
+        logger.debug("Done updating mon IV in DB in {} seconds", time_done)
 
         return encounter_id, is_shiny
 
@@ -413,7 +413,7 @@ class DbPogoProtoSubmit:
             await nested_transaction.commit()
             await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_MON_LURE_IV)
             time_done = time.time() - time_start_submit
-            logger.success("Done updating mon lure IV in DB in {} seconds", time_done)
+            logger.debug("Done updating mon lure IV in DB in {} seconds", time_done)
         return encounter_id, now
 
     async def mon_lure_noiv(self, session: AsyncSession, timestamp: float, gmo: dict) -> List[int]:

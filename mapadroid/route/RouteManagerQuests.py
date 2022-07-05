@@ -142,7 +142,7 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         if stop in self._coords_to_be_ignored or not self._is_coord_within_range_of_stoplist(stop):
             logger.info('Already got this stop or stop is out of range of stops to be scanned')
             return False
-        logger.info('Getting new Stop')
+        logger.debug('Got new Stop')
         return True
 
     def _should_get_new_coords_after_finishing_route(self) -> bool:
