@@ -3,14 +3,16 @@ import collections
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union, Dict, List
+from typing import Dict, List, Optional, Tuple, Union
 
 from loguru import logger
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsArea, SettingsWalkerarea, TrsStatus
@@ -19,9 +21,8 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madConstants import (
     FALLBACK_MITM_WAIT_TIMEOUT, MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO,
@@ -31,12 +32,13 @@ from mapadroid.utils.madGlobals import (FortSearchResultTypes,
                                         PositionType, TransportType,
                                         WebsocketWorkerRemovedException,
                                         application_args)
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
-from mapadroid.worker.WorkerState import WorkerState
-from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
+from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
@@ -117,11 +119,6 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
         logger.info("Worker starting actual work")
         try:
-            # register worker  in routemanager
-            logger.info("Try to register in Routemanager {}",
-                        await self._mapping_manager.routemanager_get_name(self._area_id))
-            await self._mapping_manager.register_worker_to_routemanager(self._area_id,
-                                                                        self._worker_state.origin)
             await self.turn_screen_on_and_start_pogo()
 
             await self._update_screen_size()

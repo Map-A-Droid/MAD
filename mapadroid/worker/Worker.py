@@ -73,12 +73,17 @@ class Worker(AbstractWorker):
         return value if value is not None else default_value
 
     async def check_max_walkers_reached(self):
+        """
+
+        Returns: False if the worker is supposed to switch strategies in order to comply with the max walkers value
+
+        """
         if not self._scan_strategy.walker:
             return True
         reg_workers = await self._mapping_manager.routemanager_get_registered_workers(
             self._scan_strategy.area_id)
         if self._scan_strategy.walker.max_walkers and len(reg_workers) > int(
-                self._scan_strategy.walker.max_walkers):  # TODO: What if 0?
+                self._scan_strategy.walker.max_walkers):
             return False
         return True
 
