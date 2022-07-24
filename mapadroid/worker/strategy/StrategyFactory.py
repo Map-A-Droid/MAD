@@ -44,7 +44,7 @@ class WalkerConfiguration(NamedTuple):
     walker_settings: SettingsWalkerarea
     walker_index: int
     area_id: int
-    total_walkers_allowed_for_assigned_area: int
+    total_areas_in_walker: int
 
 
 class StrategyFactory:
@@ -207,7 +207,7 @@ class StrategyFactory:
         logger.info('using walker area {} [{}/{}]',
                     await self.__mapping_manager.routemanager_get_name(walker_configuration.area_id),
                     walker_configuration.walker_index + 1,
-                    walker_configuration.total_walkers_allowed_for_assigned_area)
+                    walker_configuration.total_areas_in_walker)
         await self.__mapping_manager.register_worker_to_routemanager(walker_configuration.area_id, origin)
         return walker_configuration
 
@@ -236,6 +236,7 @@ class StrategyFactory:
 
         """
         registered: Set[str] = await self.__mapping_manager.routemanager_get_registered_workers(walker_settings.area_id)
+        logger.debug2("Registered workers: {}", registered)
         registered_excluding = [worker for worker in registered if worker != origin]
         return len(registered_excluding)
 
@@ -287,7 +288,7 @@ class StrategyFactory:
         walker_configuration = WalkerConfiguration(area_id=walker_settings.area_id,
                                                    walker_index=client_mapping.walker_area_index,
                                                    walker_settings=walker_settings,
-                                                   total_walkers_allowed_for_assigned_area=len(
+                                                   total_areas_in_walker=len(
                                                        client_mapping.walker_areas))
         return walker_configuration
 
@@ -324,7 +325,7 @@ class StrategyFactory:
                                                                 MappingManagerDevicemappingKey.WALKER_AREA_INDEX,
                                                                 walker_configuration.walker_index + 1)
         await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.FINISHED, False)
-        if walker_configuration.walker_index >= walker_configuration.total_walkers_allowed_for_assigned_area - 1:
+        if walker_configuration.walker_index >= walker_configuration.total_areas_in_walker - 1:
             await self.__mapping_manager.set_devicesetting_value_of(origin,
                                                                     MappingManagerDevicemappingKey.WALKER_AREA_INDEX, 0)
 
