@@ -117,6 +117,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 lat=float(startcoords[0]),
                 lon=float(startcoords[1]))
 
+        await self.worker_stats()
         logger.info("Worker starting actual work")
         try:
             await self.turn_screen_on_and_start_pogo()
