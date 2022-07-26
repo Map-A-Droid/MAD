@@ -266,7 +266,7 @@ async def supported_pogo_version(architecture: APKArch, version: str, token: Opt
     # Use the MADdev endpoint for supported
     try:
         supported_versions: Dict[str, List[str]] = await get_backend_versions(token)
-    except NoMaddevApiTokenError as e:
+    except NoMaddevApiTokenError:
         logger.warning("Maddev API token is not set, assuming a supported version being used.")
         return True
     if version in supported_versions.get(bits, []):
@@ -278,6 +278,57 @@ async def supported_pogo_version(architecture: APKArch, version: str, token: Opt
         return version in supported_versions[bits]
     except KeyError:
         return False
+
+
+async def get_supported_pogo(architecture: APKArch, token: Optional[str]) -> Dict[APKArch, List[str]]:
+    """ Gather all supported versions of MAD
+
+    Args:
+        token: maddev token to be used for querying supported versions
+        architecture (APKArch): Architecture of the package to lookup
+    """
+    if architecture == APKArch.armeabi_v7a:
+        bits = '32'
+    else:
+        bits = '64'
+    supported_versions: Dict[str, List[str]] = await get_local_versions()
+    if supported_versions:
+        try:
+            supported_versions[bits]
+        except KeyError:
+            pass
+        else:
+            logger.info(
+                (
+                    "Using local versions for support. If this is incorrect, please delete"
+                    "configs/version_codes.json"
+                )
+            )
+            return await translate_pogo_versions(supported_versions)
+    # Use the MADdev endpoint for supported
+    try:
+        supported_versions: Dict[str, List[str]] = await get_backend_versions(token)
+    except NoMaddevApiTokenError:
+        logger.warning("Maddev API token is not set and no local version_codes.json defined.")
+        raise
+    return await translate_pogo_versions(supported_versions)
+
+
+async def translate_pogo_versions(supported_versions: Dict[str, List[str]]) -> Dict[APKArch, List[str]]:
+    """Translate and sort pogo versions
+
+    :param supported_versions: MAD supported versions from the backend
+    """
+    processed = {}
+    for arch_str, supported in supported_versions.items():
+        if arch_str == "32":
+            arch = APKArch.armeabi_v7a
+        else:
+            arch = APKArch.arm64_v8a
+        # A hacky way to ensure the latest "text-based" version is highest
+        processed[arch] = sorted(supported, reverse=True)
+    return processed
+
 
 
 async def get_local_versions() -> Dict[str, List[str]]:
@@ -301,9 +352,19 @@ async def get_local_versions() -> Dict[str, List[str]]:
 @cached(ttl=10 * 60)
 async def get_backend_versions(token: Optional[str]) -> Dict[str, List[str]]:
     """Lookup the supported backend versions
+
+    The backend returns a JSON formatted string that contains arch with supported
+    versions.
+
+    .. code-block:: python
+
+        {"32": ["0.241.1", "0.243.0"], "64": ["0.241.1", "0.243.0"]}
+
+
     :param str token: Token used for querying the MADdev backend
+
     :return: Currently supported versions from the backend
-    :rtype: list
+    :rtype: dict
     """
     if not token:
         msg = (
