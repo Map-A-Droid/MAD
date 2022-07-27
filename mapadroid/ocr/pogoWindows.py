@@ -585,7 +585,7 @@ class PogoWindows:
 
                 texts = [frame_org]
                 for thresh in [200, 175, 150]:
-                    fn = lambda x: 255 if x > thresh else 0  # noqa: E731
+                    fn = lambda x: 255 if x > thresh else 0  # noqa
                     frame = frame_org.convert('L').point(fn, mode='1')
                     texts.append(frame)
                 for text in texts:
