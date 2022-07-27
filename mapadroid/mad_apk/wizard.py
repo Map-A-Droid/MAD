@@ -2,14 +2,14 @@ import asyncio
 import io
 import zipfile
 from asyncio import Task
-from typing import Dict, NoReturn, Optional, Tuple, List
+from typing import Dict, List, NoReturn, Optional, Tuple
 
 import aiohttp
 import apkutils
 import urllib3
 from aiocache import cached
 from aiohttp import ClientConnectionError, ClientError
-from apksearch import package_search_async
+from apksearch import generate_download_url, package_search_match
 from apksearch.entities import PackageBase, PackageVariant
 from apksearch.search import HEADERS
 from apkutils.apkfile import BadZipFile, LargeZipFile
@@ -18,14 +18,15 @@ from loguru import logger
 from mapadroid.utils import global_variables
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.functions import get_version_codes
-from .abstract_apk_storage import AbstractAPKStorage
-from .utils import (get_apk_info, lookup_arch_enum,
-                    lookup_package_info, supported_pogo_version)
+
 from ..db.DbWrapper import DbWrapper
 from ..db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from ..db.model import MadApkAutosearch
-from ..utils.RestHelper import RestHelper
 from ..utils.madGlobals import NoMaddevApiTokenError
+from ..utils.RestHelper import RestHelper
+from .abstract_apk_storage import AbstractAPKStorage
+from .utils import (get_apk_info, get_supported_pogo, lookup_arch_enum,
+                    lookup_package_info)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 APK_HEADERS = {
@@ -47,6 +48,10 @@ class InvalidDownload(WizardError):
 
 
 class InvalidFile(WizardError):
+    pass
+
+
+class FoundVaraint(WizardError):
     pass
 
 
@@ -146,20 +151,21 @@ class APKWizard(object):
             )
             raise NoMaddevApiTokenError()
         try:
-            latest_pogo_info = await self.find_latest_pogo(architecture)
+            latest_pogo_info, version_str = await self.find_latest_pogo(architecture)
         except SearchError:
             # The error has already been logged as a warning
             return None
-        if latest_pogo_info[0] is None:
+        if latest_pogo_info is None:
             logger.warning('Unable to find latest data for PoGo. Try again later')
             return None
         try:
             current_version = await self.storage.get_current_version(APKType.pogo, architecture)
         except FileNotFoundError:
             current_version = None
-        if current_version and current_version == latest_pogo_info[0]:
+        if current_version and current_version == version_str:
             logger.info("Latest version of PoGO is already installed")
             return None
+        logger.info("Starting download of PoGo [{}] {}", version_str, architecture.name)
         update_data = {
             'download_status': 1
         }
@@ -173,7 +179,7 @@ class APKWizard(object):
 
         data: bytearray = bytearray()
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=2400)) as session:
-            async with session.get(latest_pogo_info[1].download_url, headers=HEADERS, allow_redirects=True) as resp:
+            async with session.get(latest_pogo_info.download_url, headers=HEADERS, allow_redirects=True) as resp:
                 while True:
                     chunk = await resp.content.read(4096)
                     if not chunk:
@@ -185,7 +191,7 @@ class APKWizard(object):
             package_importer: PackageImporter = PackageImporter(APKType.pogo, architecture, self.storage,
                                                                 io.BytesIO(data),
                                                                 'application/vnd.android.package-archive',
-                                                                version=latest_pogo_info[0])
+                                                                version=version_str)
             await package_importer.import_configured()
         except Exception as err:
             logger.warning("Unable to import the APK. {}", err)
@@ -252,8 +258,9 @@ class APKWizard(object):
                         downloaded_file = io.BytesIO(response.result_body)
                         if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
                             package_importer: PackageImporter = PackageImporter(package, architecture, self.storage,
-                                                                                downloaded_file,
-                                                                                'application/vnd.android.package-archive')
+                                downloaded_file,
+                                'application/vnd.android.package-archive'
+                            )
                             successful = await package_importer.import_configured()
                     if not successful:
                         logger.info("Issue downloading apk")
@@ -330,15 +337,41 @@ class APKWizard(object):
         logger.info('Searching for a new version of PD [{}]', architecture.name)
         return await self.__find_latest_head(APKType.pd, architecture, global_variables.URL_PD_APK)
 
-    async def find_latest_pogo(self, architecture: APKArch):
+    async def find_latest_pogo(self, architecture: APKArch) -> Tuple[PackageVariant, str]:
         """ Determine if the package com.nianticlabs.pokemongo has an update
 
         Args:
             architecture (APKArch): Architecture of the package to check
         """
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
-        available_versions = await get_available_versions()
-        latest_supported = await APKWizard.get_latest_supported(architecture, available_versions, self.storage.token)
+        mad_supported_pogo = await get_supported_pogo(architecture, self.storage.token)
+        available_apks = await get_available_versions(mad_supported_pogo[architecture])
+        apk_variant = None
+        version_str = None
+        # This is large enough to be its own function and UT'd
+        try:
+            for version in mad_supported_pogo[architecture]:
+                if version not in available_apks.versions:
+                    logger.info("Unable to find Pogo version {} [{}]", version, architecture)
+                    continue
+                version_data = available_apks.versions[version]
+                arch_name = "armeabi-v7a" if architecture == APKArch.armeabi_v7a else "arm64-v8a"
+                if arch_name not in version_data.arch:
+                    logger.info("Pogo {} [{}] does not exist", version, arch_name)
+                    continue
+                for variant in version_data.arch[arch_name]:
+                    if variant.apk_type != "APK":
+                        logger.info("Skipping {} as its not an APK", variant)
+                        continue
+                    apk_variant = variant
+                    version_str = version
+                    logger.info("Using Pogo {} [{}]", version, arch_name)
+                    raise FoundVaraint
+        except FoundVaraint:
+            pass
+        if not apk_variant:
+            logger.warning("Unable to find a suitable download for Pokemon GO [{}]", architecture)
+            raise WizardError("Unable to find an APKMirror download for Pokemon GO [{}]", architecture)
         try:
             current_version_str = await self.storage.get_current_version(APKType.pogo, architecture)
         except FileNotFoundError:
@@ -347,20 +380,29 @@ class APKWizard(object):
             current_version_code = await self.lookup_version_code(current_version_str, architecture)
             if current_version_code is None:
                 current_version_code = 0
-            latest_vc = latest_supported[1].version_code
+            latest_vc = apk_variant.version_code
             if latest_vc > current_version_code:
                 logger.info("Newer version found: {}", latest_vc)
+                await generate_download_url(apk_variant)
                 await self.set_last_searched(
                     APKType.pogo,
                     architecture,
-                    version=latest_supported[0],
-                    url=latest_supported[1].download_url
+                    version=version_str,
+                    url=apk_variant.download_url
                 )
             elif current_version_code == latest_vc:
                 logger.info("Already have the latest version {}", latest_vc)
             else:
                 logger.warning("Unable to find a supported version")
-        return latest_supported
+        else:
+            await generate_download_url(apk_variant)
+            await self.set_last_searched(
+                APKType.pogo,
+                architecture,
+                version=version_str,
+                url=apk_variant.download_url
+            )
+        return (apk_variant, version_str)
 
     async def find_latest_rgc(self, architecture: APKArch) -> Optional[bool]:
         """ Determine if the package de.grennith.rgc.remotegpscontroller has an update
@@ -383,35 +425,6 @@ class APKWizard(object):
         """
         async with self._db_wrapper as session, session:
             return await MadApkAutosearchHelper.get(session, package, architecture)
-
-    @staticmethod
-    async def get_latest_supported(architecture: APKArch,
-                                   available_versions: Dict[str, PackageBase],
-                                   token: Optional[str],
-                                   ) -> Tuple[str, PackageVariant]:
-        latest_supported: Dict[APKArch, Tuple[Optional[str], Optional[PackageVariant]]] = {
-            APKArch.armeabi_v7a: (None, None),
-            APKArch.arm64_v8a: (None, None)
-        }
-        for package_title, package in available_versions.items():
-            if "samsung" in package_title.lower():
-                # avoid Samsung Galaxy Store versions
-                continue
-            for version, package_version in package.versions.items():
-                for arch, variants in package_version.arch.items():
-                    named_arch = APKArch.armeabi_v7a if arch == 'armeabi-v7a' else APKArch.arm64_v8a
-                    for variant in variants:
-                        if variant.apk_type != "APK":
-                            continue
-                        if not await supported_pogo_version(architecture, version, token):
-                            logger.debug("Version {} [{}] is not supported", version, named_arch)
-                            continue
-                        logger.debug("Version {} [{}] is supported", version, named_arch)
-                        if latest_supported[named_arch][1] is None:
-                            latest_supported[named_arch] = (version, variant)
-                        elif variant.version_code > latest_supported[named_arch][1].version_code:
-                            latest_supported[named_arch] = (version, variant)
-        return latest_supported[architecture]
 
     def parse_version_codes(self, supported_codes: Dict[APKArch, Dict[str, int]]):
         versions: Dict[APKArch, Dict] = {
@@ -549,11 +562,14 @@ class PackageImporter(object):
 
 
 @cached(ttl=10 * 60)
-async def get_available_versions() -> Dict[str, PackageBase]:
+async def get_available_versions(versions: List[str]) -> PackageBase:
     """Query apkmirror for the available packages"""
     logger.info("Querying APKMirror for the latest releases")
     try:
-        available: Dict[str, PackageBase] = await package_search_async(["com.nianticlabs.pokemongo"])
+        available: Dict[str, PackageBase] = await package_search_match(
+            "https://www.apkmirror.com/apk/niantic-inc/pokemon-go/",
+            versions=versions
+        )
     except IndexError:
         logger.warning(
             "Unable to query APKMirror. There is probably a recaptcha that needs to be solved and that "

@@ -77,6 +77,6 @@ async def get_version_codes():
     try:
         async with async_open('configs/version_codes.json', "r") as fh:
             return ujson.loads(await fh.read())
-    except (IOError, json.decoder.JSONDecodeError):
-        logger.exception("Unable to parse the JSON when getting local version codes")
+    except (IOError, json.decoder.JSONDecodeError, FileNotFoundError):
+        logger.info("Unable to parse the JSON when getting local version codes")
         return {}
