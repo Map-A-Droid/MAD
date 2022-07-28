@@ -4,7 +4,8 @@ from typing import Dict
 from aiofile import async_open
 from loguru import logger
 
-from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
+from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import \
+    AbstractMitmReceiverRootEndpoint
 
 
 class GetAddressesEndpoint(AbstractMitmReceiverRootEndpoint):
@@ -29,11 +30,14 @@ class GetAddressesEndpoint(AbstractMitmReceiverRootEndpoint):
     @staticmethod
     async def get_addresses_read(path) -> Dict:
         supported: Dict[str, Dict] = {}
-        async with async_open(path, 'rb') as fh:
-            data = json.loads(await fh.read())
-            for key, value in data.items():
-                if type(value) is dict:
-                    supported[key] = value
-                else:
-                    supported[key] = {}
-        return supported
+        try:
+            async with async_open(path, 'rb') as fh:
+                data = json.loads(await fh.read())
+                for key, value in data.items():
+                    if type(value) is dict:
+                        supported[key] = value
+                    else:
+                        supported[key] = {}
+            return supported
+        except Exception:
+            return {}
