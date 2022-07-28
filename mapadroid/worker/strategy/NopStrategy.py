@@ -5,7 +5,8 @@ from loguru import logger
 
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.utils.collections import Location
-from mapadroid.worker.strategy.AbstractWorkerStrategy import AbstractWorkerStrategy
+from mapadroid.worker.strategy.AbstractWorkerStrategy import \
+    AbstractWorkerStrategy
 
 
 class NopStrategy(AbstractWorkerStrategy):
@@ -15,9 +16,7 @@ class NopStrategy(AbstractWorkerStrategy):
     async def pre_work_loop(self):
         logger.warning("Worker started in nop-mode! Do not expect"
                        " scans or avatar moving. If you have started MAD in configmode, this is normal behaviour. After you are done with initial configuration remove -cm flag")
-        await self._mapping_manager.register_worker_to_routemanager(self._area_id,
-                                                                    self._worker_state.origin)
-        logger.debug("Setting device to idle for routemanager")
+
         async with self._db_wrapper as session, session:
             await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
                                                    self._worker_state.device_id, 0)

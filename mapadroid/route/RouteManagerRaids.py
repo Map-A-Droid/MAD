@@ -7,9 +7,10 @@ from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsAreaRaidsMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import \
+    RaidSpawnPrioStrategy
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
-from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 
 
@@ -26,7 +27,7 @@ class RouteManagerRaids(SubrouteReplacingMixin, RouteManagerBase):
         if self.delay_after_timestamp_prio is not None:
             strategy: RaidSpawnPrioStrategy = RaidSpawnPrioStrategy(clustering_timedelta=clustering_timedelta,
                                                                     clustering_count_per_circle=max_coords_within_radius,
-                                                                    clustering_distance=max_radius,
+                                                                    clustering_distance=int(max_radius),
                                                                     db_wrapper=db_wrapper,
                                                                     max_backlog_duration=self.remove_from_queue_backlog,
                                                                     geofence_helper=geofence_helper,

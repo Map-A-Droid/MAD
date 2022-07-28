@@ -6,9 +6,10 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import SettingsAreaMonMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.route.prioq.strategy.MonSpawnPrioStrategy import \
+    MonSpawnPrioStrategy
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
-from mapadroid.route.prioq.strategy.MonSpawnPrioStrategy import MonSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 
 
@@ -39,6 +40,7 @@ class RouteManagerMon(SubrouteReplacingMixin, RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=mon_spawn_strategy)
         self._settings: SettingsAreaMonMitm = area
+        self.starve_route: bool = area.starve_route if area.starve_route is not None else False
         self.coords_spawns_known: bool = True if area.coords_spawns_known == 1 else False
         self.include_event_id: Optional[int] = area.include_event_id
 
@@ -73,4 +75,3 @@ class RouteManagerMon(SubrouteReplacingMixin, RouteManagerBase):
 
     def _check_coords_before_returning(self, lat, lng, origin):
         return True
-

@@ -30,6 +30,7 @@ class RouteManagerLeveling(RouteManagerBase):
                                   geofence_helper=geofence_helper, routecalc=routecalc,
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=None)
+        self.remove_from_queue_backlog = None
 
     async def _worker_changed_update_routepools(self, routepool: Dict[str, RoutePoolEntry]) \
             -> Optional[Dict[str, RoutePoolEntry]]:

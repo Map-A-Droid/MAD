@@ -3,7 +3,7 @@ from typing import List, Optional
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.model import SettingsRoutecalc, SettingsAreaIdle
+from mapadroid.db.model import SettingsAreaIdle, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
@@ -22,6 +22,7 @@ class RouteManagerIdle(SubrouteReplacingMixin, RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaIdle = area
+        self.remove_from_queue_backlog = None
 
     async def _any_coords_left_after_finishing_route(self):
         self._init_route_queue()

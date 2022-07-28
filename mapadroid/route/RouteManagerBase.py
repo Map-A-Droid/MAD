@@ -2,7 +2,7 @@ import asyncio
 import collections
 import time
 from abc import ABC, abstractmethod
-from asyncio import Task, CancelledError
+from asyncio import CancelledError, Task
 from typing import Dict, List, Optional, Set, Tuple
 
 from asyncio_rlock import RLock
@@ -10,17 +10,18 @@ from asyncio_rlock import RLock
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.route.prioq.RoutePriorityQueue import RoutePriorityQueue
-from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
-    RoutePriorityQueueEntry
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import (
+    AbstractRoutePriorityQueueStrategy, RoutePriorityQueueEntry)
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import PositionType, PrioQueueNoDueEntry, RoutecalculationTypes, \
-    RoutemanagerShuttingDown
+from mapadroid.utils.madGlobals import (PositionType, PrioQueueNoDueEntry,
+                                        RoutecalculationTypes,
+                                        RoutemanagerShuttingDown)
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.routemanager)
@@ -32,6 +33,9 @@ Relation = collections.namedtuple(
 
 
 class RouteManagerBase(ABC):
+    delay_after_timestamp_prio: int
+    remove_from_queue_backlog: Optional[int]
+
     def __init__(self, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
                  max_radius: float,
                  max_coords_within_radius: int,
@@ -91,9 +95,8 @@ class RouteManagerBase(ABC):
         #     for coord in new_coords:
         #         self._route.append(Location(coord["lat"], coord["lng"]))
         self._max_clustering: int = self._max_coords_within_radius
-        self.delay_after_timestamp_prio: int = 0
+
         self.starve_route: bool = False
-        self.remove_from_queue_backlog: Optional[int] = 0
         self._mon_ids_iv: List[int] = mon_ids_iv
         # initialize priority queue variables
         if initial_prioq_strategy:
@@ -234,12 +237,6 @@ class RouteManagerBase(ABC):
             new_routepool = await self._worker_changed_update_routepools(self._routepool)
             if new_routepool:
                 self._routepool = new_routepool
-                workers_removed: List[str] = []
-                for origin in self._workers_registered:
-                    if origin not in self._routepool:
-                        workers_removed.append(origin)
-                for origin in workers_removed:
-                    await self.unregister_worker(origin)
         return new_routepool is not None
 
     def date_diff_in_seconds(self, dt2, dt1):
@@ -356,6 +353,9 @@ class RouteManagerBase(ABC):
 
     async def get_next_location(self, origin: str) -> Optional[Location]:
         logger.debug4("get_next_location called")
+        if origin not in self._workers_registered:
+            logger.warning("Worker is not registered to this area, returning invalid location")
+            return None
         if self._shutdown_route.is_set():
             raise RoutemanagerShuttingDown("Routemanager is shutting down, not requesting a new location")
         if not self._is_started.is_set():
@@ -371,8 +371,6 @@ class RouteManagerBase(ABC):
             except (CancelledError, asyncio.TimeoutError):
                 logger.info("Current recalc took too long, returning None location")
                 return None
-        if origin not in self._workers_registered:
-            await self.register_worker(origin)
 
         routepool_entry: RoutePoolEntry = self._routepool.get(origin, None)
         if not routepool_entry:
@@ -571,7 +569,7 @@ class RouteManagerBase(ABC):
     def _other_worker_closer_to_prioq(self, prioqcoord, origin):
         logger.debug('Check distances from worker to PrioQ coord')
         closer_worker = None
-        if len(self._workers_registered) == 1:
+        if len(self._routepool) == 1:
             logger.debug('Route has only one worker - no distance check')
             return False
         elif origin not in self._routepool:
