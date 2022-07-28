@@ -3,7 +3,7 @@ from typing import List, Optional
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.model import SettingsRoutecalc, SettingsAreaInitMitm
+from mapadroid.db.model import SettingsAreaInitMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
@@ -24,6 +24,7 @@ class RouteManagerInit(SubrouteReplacingMixin, RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaInitMitm = area
+        self.remove_from_queue_backlog = None
 
     def _delete_coord_after_fetch(self) -> bool:
         return False

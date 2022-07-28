@@ -33,6 +33,9 @@ Relation = collections.namedtuple(
 
 
 class RouteManagerBase(ABC):
+    delay_after_timestamp_prio: int
+    remove_from_queue_backlog: Optional[int]
+
     def __init__(self, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
                  max_radius: float,
                  max_coords_within_radius: int,
@@ -92,9 +95,8 @@ class RouteManagerBase(ABC):
         #     for coord in new_coords:
         #         self._route.append(Location(coord["lat"], coord["lng"]))
         self._max_clustering: int = self._max_coords_within_radius
-        self.delay_after_timestamp_prio: int = 0
+
         self.starve_route: bool = False
-        self.remove_from_queue_backlog: Optional[int] = 0
         self._mon_ids_iv: List[int] = mon_ids_iv
         # initialize priority queue variables
         if initial_prioq_strategy:

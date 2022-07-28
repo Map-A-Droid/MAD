@@ -29,6 +29,7 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         self._stoplist: List[Location] = []
         self._routecopy: List[Location] = []
         self._tempinit: bool = False
+        self.remove_from_queue_backlog = None
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         async with self.db_wrapper as session, session:
