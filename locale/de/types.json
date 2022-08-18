@@ -166,5 +166,9 @@
   "57": {
     "prototext": "QUEST_TAKE_WILD_SNAPSHOT",
     "text": "Mache {0} Schnappschüsse von wilden Pokémon"
+  },
+  "59": {
+    "prototext": "QUEST_OPEN_GIFT",
+    "text": "Öffne {0} Geschenke"
   }
 }

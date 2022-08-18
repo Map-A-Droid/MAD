@@ -147,6 +147,10 @@
     "prototext": "QUEST_USE_INCENSE",
     "text": "Utilise un Encens"
   },
+  "42": {
+    "prototext": "QUEST_WALK_BUDDY",
+    "text": "Marche {0} km avec ton copain"
+  },
   "43": {
     "prototext": "QUEST_MEGA_EVOLVE",
     "text": "Fais Mega évoluer {0} Pokémon"
@@ -160,7 +164,11 @@
     "text": "Combattant {0} challengers"
   },
   "57": {
-    "prototext": "QUEST_TAKE_WILD_SNAPSHOT ",
-    "text": "Prends {0} photos de Pokémon sauvages"
+    "prototext": "QUEST_TAKE_WILD_SNAPSHOT",
+    "text": "Prends {0} photos de Pokémon sauvages"
+  },
+  "59": {
+    "prototext": "QUEST_OPEN_GIFT",
+    "text": "Ouvre {0} Cadeaux"
   }
 }
