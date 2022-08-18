@@ -489,6 +489,10 @@ class QuestGen:
                 if con.get('type', 0) == 10:
                     # Super effective
                     arr['type'] = _('supereffective')
+        elif typeid == 55:
+            # type 55 is to battle a challenger, which is a special type of pokestop invasion
+            if int(target) == int(1):
+                text = _('Battle a Challenger')
 
         quest_templates = await open_json_file('quest_templates')
         if quest_template is not None and quest_template in quest_templates:
@@ -506,6 +510,7 @@ class QuestGen:
             text = text.replace(_(' {0} times'), '')
             text = text.replace(_('{0} hearts'), _('a heart'))
             text = text.replace(_('PVP Battle(s)'), _('PVP Battle'))
+
             arr['0'] = _("a")
 
         for key, val in arr.items():

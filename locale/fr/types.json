@@ -155,6 +155,10 @@
     "protoext": "GEOTARGETED_AR_SCAN",
     "text": "Scanner le Pok\u00e9Stop"
   },
+  "55": {
+    "prototext": "QUEST_BATTLE_EVENT_NPC",
+    "text": "Combattant {0} challengers"
+  },
   "57": {
     "prototext": "QUEST_TAKE_WILD_SNAPSHOT ",
     "text": "Prends {0} photos de Pokémon sauvages"
