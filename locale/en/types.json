@@ -159,6 +159,10 @@
     "prototext": "GEOTARGETED_AR_SCAN",
     "text": "Scan pokestop"
   },
+  "55": {
+    "prototext": "QUEST_BATTLE_EVENT_NPC",
+    "text": "Battle {0} Challengers"
+  },
   "56": {
     "prototext": "QUEST_EARN_FORT_POWER_UP_POINTS",
     "text": "Earn {0} points powering up a Pokéstop or Gym"
