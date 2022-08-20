@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-18 23:47-0300\n"
-"PO-Revision-Date: 2021-08-19 00:51-0300\n"
+"POT-Creation-Date: 2022-08-19 21:59-0300\n"
+"PO-Revision-Date: 2022-08-19 22:11-0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: pt_BR\n"
@@ -354,96 +354,100 @@ msgstr "Usar {0} ataques carregados {type}"
 msgid "supereffective"
 msgstr "supereficaz"
 
-#: mapadroid/utils/questGen.py:490
+#: mapadroid/utils/questGen.py:488
+msgid "Battle a Challenger"
+msgstr "Batalhar contra um Desafiante"
+
+#: mapadroid/utils/questGen.py:494
 msgid " Eggs"
 msgstr " Ovos"
 
-#: mapadroid/utils/questGen.py:490
+#: mapadroid/utils/questGen.py:494
 msgid "n Egg"
 msgstr " Ovo"
 
-#: mapadroid/utils/questGen.py:491
+#: mapadroid/utils/questGen.py:495
 msgid " Raids"
 msgstr " Reides"
 
-#: mapadroid/utils/questGen.py:491
+#: mapadroid/utils/questGen.py:495
 msgid " Raid"
 msgstr "a Reide"
 
-#: mapadroid/utils/questGen.py:492
+#: mapadroid/utils/questGen.py:496
 msgid " Battles"
 msgstr " Batalhas"
 
-#: mapadroid/utils/questGen.py:492
+#: mapadroid/utils/questGen.py:496
 msgid " Battle"
 msgstr "a batalha"
 
-#: mapadroid/utils/questGen.py:493
+#: mapadroid/utils/questGen.py:497
 msgid " candies"
 msgstr " doces"
 
-#: mapadroid/utils/questGen.py:493
+#: mapadroid/utils/questGen.py:497
 msgid " candy"
 msgstr " doce"
 
-#: mapadroid/utils/questGen.py:494
+#: mapadroid/utils/questGen.py:498
 msgid " gifts"
 msgstr " presentes"
 
-#: mapadroid/utils/questGen.py:494
+#: mapadroid/utils/questGen.py:498
 msgid " gift"
 msgstr " presente"
 
-#: mapadroid/utils/questGen.py:495
+#: mapadroid/utils/questGen.py:499
 msgid " Pokestops"
 msgstr " Poképaradas"
 
-#: mapadroid/utils/questGen.py:495
+#: mapadroid/utils/questGen.py:499
 msgid " Pokestop"
 msgstr " Poképarada"
 
-#: mapadroid/utils/questGen.py:496
+#: mapadroid/utils/questGen.py:500
 #, python-brace-format
 msgid " {0} snapshots"
 msgstr " {0} fotos"
 
-#: mapadroid/utils/questGen.py:496
+#: mapadroid/utils/questGen.py:500
 msgid " a snapshot"
 msgstr " uma foto"
 
-#: mapadroid/utils/questGen.py:497
+#: mapadroid/utils/questGen.py:501
 #, python-brace-format
 msgid "Make {0} {type}{curve}Throws"
 msgstr "Fazer {0} {type}{curve}jogadas"
 
-#: mapadroid/utils/questGen.py:497
+#: mapadroid/utils/questGen.py:501
 #, python-brace-format
 msgid "Make a {type}{curve}Throw"
 msgstr "Fazer uma {type}{curve}jogada"
 
-#: mapadroid/utils/questGen.py:498
+#: mapadroid/utils/questGen.py:502
 #, python-brace-format
 msgid " {0} times"
 msgstr " {0} vezes"
 
-#: mapadroid/utils/questGen.py:499
+#: mapadroid/utils/questGen.py:503
 #, python-brace-format
 msgid "{0} hearts"
 msgstr "{0} corações"
 
-#: mapadroid/utils/questGen.py:499
+#: mapadroid/utils/questGen.py:503
 msgid "a heart"
 msgstr "um coração"
 
-#: mapadroid/utils/questGen.py:500
+#: mapadroid/utils/questGen.py:504
 msgid "PVP Battle(s)"
 msgstr " Batalhas PVP"
 
-#: mapadroid/utils/questGen.py:500
+#: mapadroid/utils/questGen.py:504
 msgid "PVP Battle"
 msgstr "Batalha PVP"
 
-#: mapadroid/utils/questGen.py:501
+#: mapadroid/utils/questGen.py:505
 msgid "a"
 msgstr "um"
 

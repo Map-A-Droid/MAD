@@ -159,6 +159,10 @@
     "prototext": "GEOTARGETED_AR_SCAN",
     "text": "Escanear Poképarada"
   },
+  "55": {
+    "prototext": "QUEST_BATTLE_EVENT_NPC",
+    "text": "Batalhar contra {0} Desafiante"
+  },
   "56": {
     "prototext": "QUEST_EARN_FORT_POWER_UP_POINTS",
     "text": "Ganhar {0} pontos energizando um Pokéstop or Ginásio"
