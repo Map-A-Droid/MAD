@@ -483,6 +483,10 @@ class QuestGen:
                 if con.get('type', 0) == 10:
                     # Super effective
                     arr['type'] = _('supereffective')
+        elif typeid == 55:
+            # type 55 is to battle a challenger, which is a special type of pokestop invasion
+            if int(target) == int(1):
+                text = _('Battle a Challenger')
 
         if quest_template is not None and quest_template in self.quest_templates:
             text = _(self.quest_templates[quest_template])

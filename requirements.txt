@@ -10,7 +10,7 @@ aiosignal==1.2.0
     # via aiohttp
 anytree==2.8.0
     # via apkutils
-apkmirror-search==0.0.3
+apkmirror-search==1.0.0
     # via -r requirements.in
 apkutils==0.8.3
     # via -r requirements.in
