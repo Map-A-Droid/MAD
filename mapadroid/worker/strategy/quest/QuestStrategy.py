@@ -620,7 +620,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
                     cooldown: int = fort.get("cooldown_complete_ms", 0)
                     if not cooldown == 0:
-                        logger.info("Can't spin the stop - it has cooldown")
+                        logger.info("Can't spin the stop - it has cooldown, it has been spun already!?")
                         # TODO: sleep for cooldown * 1000 ?
                         stop_types.add(PositionStopType.STOP_COOLDOWN)
                         continue

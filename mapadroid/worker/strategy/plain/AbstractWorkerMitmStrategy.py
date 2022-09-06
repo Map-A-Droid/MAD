@@ -76,9 +76,9 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
             if 0 < walk_distance_post_teleport < distance:
                 await self._walk_after_teleport(walk_distance_post_teleport)
         else:
-            logger.info("main: Walking...")
+            logger.debug("main: Walking...")
             time_it_takes_to_walk = distance / (speed / 3.6)  # speed is in kmph , delay_used need mps
-            logger.info("Walking {} m, this will take {} seconds", distance, time_it_takes_to_walk)
+            logger.debug2("Walking {} m, this will take {} seconds", distance, time_it_takes_to_walk)
             await self._mapping_manager.routemanager_set_worker_sleeping(self._area_id,
                                                                          self._worker_state.origin,
                                                                          time_it_takes_to_walk)
@@ -102,8 +102,7 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
         # TODO: pass the appropriate proto number if IV?
         type_received, data_gmo, time_received = await self._wait_for_data(timestamp)
         if type_received != ReceivedType.GMO or not data_gmo:
-            logger.warning("Worker failed to retrieve proper data at {}, {}. Worker will continue with "
-                           "the next location",
+            logger.warning("Worker failed getting data at {:.5f}, {:.5f}. Trying next location...",
                            self._worker_state.current_location.lat,
                            self._worker_state.current_location.lng)
             return None
@@ -125,7 +124,7 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
                     logger.debug("Distance to mon around considered to be too far away to await encounter")
                     continue
                 else:
-                    logger.debug2("Mon at {}, {} at distance {}", lat, lon, distance_to_mon)
+                    logger.debug2("Mon at {:.5f}, {:.5f} at distance {}", lat, lon, distance_to_mon)
                     return True
         return False
 

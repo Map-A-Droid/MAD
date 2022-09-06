@@ -138,11 +138,11 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
 
     def _check_coords_before_returning(self, lat: float, lng: float, origin):
         stop = Location(lat, lng)
-        logger.info('Checking Stop with ID {}', stop)
+        logger.info('Checking Stop at {:.5f}, {:.5f}', lat, lng)
         if stop in self._coords_to_be_ignored or not self._is_coord_within_range_of_stoplist(stop):
             logger.info('Already got this stop or stop is out of range of stops to be scanned')
             return False
-        logger.info('Getting new Stop')
+        logger.debug('Got new Stop')
         return True
 
     def _should_get_new_coords_after_finishing_route(self) -> bool:
