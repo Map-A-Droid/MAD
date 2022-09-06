@@ -11,7 +11,8 @@ from loguru import logger
 
 from mapadroid.db.model import SettingsPogoauth
 from mapadroid.mapping_manager import MappingManager
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Login_GGL, Login_PTC, ScreenCoordinates
 from mapadroid.utils.madGlobals import ScreenshotType, application_args
@@ -454,7 +455,7 @@ class WordToScreenMatching(object):
         if self._width == 0 and self._height == 0:
             logger.warning("Screen width and height are zero - try to get real values from new screenshot ...")
             # this updates self._width, self._height
-            result = self._take_and_analyze_screenshot()
+            result = await self._take_and_analyze_screenshot()
             if not result:
                 logger.error("Failed getting/analyzing screenshot")
                 return ScreenType.ERROR
