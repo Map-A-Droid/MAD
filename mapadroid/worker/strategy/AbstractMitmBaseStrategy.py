@@ -362,9 +362,9 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                 status.device_id = self._worker_state.device_id
                 status.instance_id = self._db_wrapper.get_instance_id()
             if self._worker_state.current_location:
-                status.currentPos = (self._worker_state.current_location.lat, self._worker_state.current_location.lng)
+                status.currentPos = (self._worker_state.current_location.lng, self._worker_state.current_location.lat)
             if self._worker_state.last_location:
-                status.lastPos = (self._worker_state.last_location.lat, self._worker_state.last_location.lng)
+                status.lastPos = (self._worker_state.last_location.lng, self._worker_state.last_location.lat)
             status.routePos = routemanager_status[0]
             status.routeMax = routemanager_status[1]
             status.area_id = self._area_id
