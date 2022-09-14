@@ -1,3 +1,5 @@
+from typing import Optional
+
 import grpc
 from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
@@ -5,10 +7,10 @@ from mapadroid.data_handler.stats.StatsHandler import StatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
 from mapadroid.grpc.compiled.stats_handler.stats_handler_pb2 import Stats
-from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import StatsHandlerServicer, \
-    add_StatsHandlerServicer_to_server
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import (
+    StatsHandlerServicer, add_StatsHandlerServicer_to_server)
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (MonSeenTypes, PositionType,
                                         TransportType, application_args)
@@ -83,11 +85,10 @@ class StatsHandlerServer(StatsHandlerServicer, StatsHandler):
                 time_scanned=DatetimeWrapper.fromtimestamp(request.timestamp),
                 amount_raids=request.raid.amount)
         elif request.HasField("location_data"):
-            if not request.location_data.HasField("location"):
-                # TODO: Ack failure indicator?
-                return Ack()
-            location = Location(request.location_data.location.latitude,
-                                request.location_data.location.longitude)
+            location: Optional[Location] = None
+            if request.location_data.HasField("location"):
+                location = Location(request.location_data.location.latitude,
+                                    request.location_data.location.longitude)
             await self.stats_collect_location_data(
                 request.worker.name,
                 location=location,

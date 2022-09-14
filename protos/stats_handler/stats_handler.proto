@@ -42,7 +42,7 @@ message StatsRaid {
 }
 
 message StatsLocationData {
-  mapadroid.shared.Location location = 1;
+  optional mapadroid.shared.Location location = 1;
   bool success = 2;
   uint64 fix_timestamp = 3;
   uint64 data_timestamp = 4;
@@ -55,5 +55,3 @@ message StatsSeenType {
   repeated uint64 encounter_ids = 1;
   mapadroid.shared.MonSeenTypes type_of_detection = 2;
 }
-
-

@@ -1,14 +1,17 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from grpc.aio import AioRpcError
 from loguru import logger
 
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.grpc.compiled.stats_handler.stats_handler_pb2 import Stats
-from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import StatsHandlerStub
+from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import \
+    StatsHandlerStub
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import MonSeenTypes, PositionType, TransportType
+from mapadroid.utils.madGlobals import (MonSeenTypes, PositionType,
+                                        TransportType)
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -58,14 +61,15 @@ class StatsHandlerClient(StatsHandlerStub, AbstractStatsHandler):
         except AioRpcError as e:
             logger.warning("Failed submitting raid stats {}", e)
 
-    async def stats_collect_location_data(self, worker: str, location: Location, success: bool, fix_timestamp: int,
+    async def stats_collect_location_data(self, worker: str, location: Optional[Location], success: bool, fix_timestamp: int,
                                           position_type: PositionType, data_timestamp: int, walker: WorkerType,
                                           transport_type: TransportType, timestamp_of_record: int) -> None:
         request: Stats = Stats()
         request.worker.name = worker
         request.timestamp = timestamp_of_record
-        request.location_data.location.latitude = location.lat
-        request.location_data.location.longitude = location.lng
+        if location is not None:
+            request.location_data.location.latitude = location.lat
+            request.location_data.location.longitude = location.lng
         request.location_data.success = success
         request.location_data.fix_timestamp = fix_timestamp
         request.location_data.data_timestamp = data_timestamp

@@ -13,7 +13,7 @@ service MappingManager {
 
 message GetQuestLayerToScanOfOriginRequest {
   mapadroid.shared.Worker worker = 1;
-}`
+}
 
 message GetQuestLayerToScanOfOriginResponse {
   optional int32 layer = 1;

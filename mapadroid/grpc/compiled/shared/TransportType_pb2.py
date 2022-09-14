@@ -3,6 +3,9 @@
 # source: shared/TransportType.proto
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
+from google.protobuf import descriptor_pool as _descriptor_pool
+from google.protobuf import message as _message
+from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import enum_type_wrapper
 
@@ -13,47 +16,17 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor.FileDescriptor(
-  name='shared/TransportType.proto',
-  package='mapadroid.shared',
-  syntax='proto3',
-  serialized_options=None,
-  create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1ashared/TransportType.proto\x12\x10mapadroid.shared*\'\n\rTransportType\x12\x0c\n\x08TELEPORT\x10\x00\x12\x08\n\x04WALK\x10\x01\x62\x06proto3'
-)
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1ashared/TransportType.proto\x12\x10mapadroid.shared*\'\n\rTransportType\x12\x0c\n\x08TELEPORT\x10\x00\x12\x08\n\x04WALK\x10\x01\x62\x06proto3')
 
-_TRANSPORTTYPE = _descriptor.EnumDescriptor(
-  name='TransportType',
-  full_name='mapadroid.shared.TransportType',
-  filename=None,
-  file=DESCRIPTOR,
-  create_key=_descriptor._internal_create_key,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='TELEPORT', index=0, number=0,
-      serialized_options=None,
-      type=None,
-      create_key=_descriptor._internal_create_key),
-    _descriptor.EnumValueDescriptor(
-      name='WALK', index=1, number=1,
-      serialized_options=None,
-      type=None,
-      create_key=_descriptor._internal_create_key),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=48,
-  serialized_end=87,
-)
-_sym_db.RegisterEnumDescriptor(_TRANSPORTTYPE)
-
+_TRANSPORTTYPE = DESCRIPTOR.enum_types_by_name['TransportType']
 TransportType = enum_type_wrapper.EnumTypeWrapper(_TRANSPORTTYPE)
 TELEPORT = 0
 WALK = 1
 
 
-DESCRIPTOR.enum_types_by_name['TransportType'] = _TRANSPORTTYPE
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
+if _descriptor._USE_C_DESCRIPTORS == False:
 
-
+  DESCRIPTOR._options = None
+  _TRANSPORTTYPE._serialized_start=48
+  _TRANSPORTTYPE._serialized_end=87
 # @@protoc_insertion_point(module_scope)
