@@ -235,6 +235,8 @@ async def start():
                 await cache.close()
                 await db_exec.shutdown()
                 logger.debug("Done shutting down db_pool_manager")
+            if pogo_win_manager:
+                await pogo_win_manager.shutdown()
         except Exception:
             logger.opt(exception=True).critical("An unhandled exception occurred during shutdown!")
         logger.info("Done shutting down")

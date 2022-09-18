@@ -10,8 +10,9 @@ import numpy as np
 from loguru import logger
 
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.ocr.utils import check_pogo_mainscreen, screendetection_get_type_internal, most_frequent_colour_internal, \
-    get_screen_text
+from mapadroid.ocr.utils import (check_pogo_mainscreen, get_screen_text,
+                                 most_frequent_colour_internal,
+                                 screendetection_get_type_internal)
 from mapadroid.utils.AsyncioCv2 import AsyncioCv2
 from mapadroid.utils.AsyncioOsUtil import AsyncioOsUtil
 from mapadroid.utils.collections import ScreenCoordinates
@@ -24,16 +25,18 @@ class PogoWindows:
             os.makedirs(temp_dir_path)
             logger.info('PogoWindows: Temp directory created')
         self.temp_dir_path = temp_dir_path
-        self.__process_executor_pool: concurrent.futures.ThreadPoolExecutor = concurrent.futures.ThreadPoolExecutor(
+        self.__process_executor_pool: concurrent.futures.ProcessPoolExecutor = concurrent.futures.ProcessPoolExecutor(
             thread_count)
-        # TODO: SHutdown pool...
+
+    async def shutdown(self):
+        self.__process_executor_pool.shutdown()
 
     async def __read_circles(self, filename, ratio, xcord=False, crop=False,
                              canny=False, secondratio=False) -> List[ScreenCoordinates]:
         logger.debug2("__read_circles: Reading circles")
         circles_found: List[ScreenCoordinates] = []
         try:
-            screenshot_read = await AsyncioCv2.imread(filename)
+            screenshot_read = await AsyncioCv2.imread(filename, executor=self.__process_executor_pool)
         except Exception:
             logger.error("Screenshot corrupted")
             return circles_found
@@ -50,7 +53,7 @@ class PogoWindows:
                                   int(width) / 8)]
 
         logger.debug("__read_circles: Determined screenshot scale: {} x {}", height, width)
-        gray = await AsyncioCv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
+        gray = await AsyncioCv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY, executor=self.__process_executor_pool)
         # detect circles in the image
 
         if not secondratio:
@@ -60,14 +63,14 @@ class PogoWindows:
             radius_min = int((width / float(ratio) - 3) / 2)
             radius_max = int((width / float(secondratio) + 3) / 2)
         if canny:
-            gaussian = await AsyncioCv2.GaussianBlur(gray, (3, 3), 0)
+            gaussian = await AsyncioCv2.GaussianBlur(gray, (3, 3), 0, executor=self.__process_executor_pool)
             del gray
-            gray = await AsyncioCv2.Canny(gaussian, 100, 50, apertureSize=3)
+            gray = await AsyncioCv2.Canny(gaussian, 100, 50, apertureSize=3, executor=self.__process_executor_pool)
 
         logger.debug("__read_circles: Detect radius of circle: Min {} / Max {}", radius_min, radius_max)
         circles = await AsyncioCv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15,
                                                 minRadius=radius_min,
-                                                maxRadius=radius_max)
+                                                maxRadius=radius_max, executor=self.__process_executor_pool)
         # ensure at least some circles were found
         if circles is not None:
             # convert the (x, y) coordinates and radius of the circles to integers
@@ -101,8 +104,8 @@ class PogoWindows:
         min_distance_to_middle = None
         screenshot_read = None
         try:
-            screenshot_read = await AsyncioCv2.imread(filename)
-            gray = await AsyncioCv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
+            screenshot_read = await AsyncioCv2.imread(filename, executor=self.__process_executor_pool)
+            gray = await AsyncioCv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY, executor=self.__process_executor_pool)
         except cv2.error:
             if screenshot_read is not None:
                 del screenshot_read
@@ -121,9 +124,9 @@ class PogoWindows:
         height, width = gray.shape
         factor = width / _widthold
 
-        gaussian = await AsyncioCv2.GaussianBlur(gray, (3, 3), 0)
+        gaussian = await AsyncioCv2.GaussianBlur(gray, (3, 3), 0, executor=self.__process_executor_pool)
         del gray
-        edges = await AsyncioCv2.Canny(gaussian, 50, 200, apertureSize=3)
+        edges = await AsyncioCv2.Canny(gaussian, 50, 200, apertureSize=3, executor=self.__process_executor_pool)
         del gaussian
 
         # checking for all possible button lines
@@ -227,7 +230,7 @@ class PogoWindows:
         if left_side:
             logger.debug("__check_raid_line: Check nearby open ")
         try:
-            screenshot_read = await AsyncioCv2.imread(filename)
+            screenshot_read = await AsyncioCv2.imread(filename, executor=self.__process_executor_pool)
         except Exception:
             logger.error("Screenshot corrupted")
             return None
@@ -247,12 +250,12 @@ class PogoWindows:
         screenshot_partial = screenshot_read[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
                              int(0):int(width)]
         del screenshot_read
-        gray = await AsyncioCv2.cvtColor(screenshot_partial, cv2.COLOR_BGR2GRAY)
+        gray = await AsyncioCv2.cvtColor(screenshot_partial, cv2.COLOR_BGR2GRAY, executor=self.__process_executor_pool)
         del screenshot_partial
-        gaussian = await AsyncioCv2.GaussianBlur(gray, (5, 5), 0)
+        gaussian = await AsyncioCv2.GaussianBlur(gray, (5, 5), 0, executor=self.__process_executor_pool)
         del gray
         logger.debug("__check_raid_line: Determined screenshot scale: {} x {}", height, width)
-        edges = await AsyncioCv2.Canny(gaussian, 50, 150, apertureSize=3)
+        edges = await AsyncioCv2.Canny(gaussian, 50, 150, apertureSize=3, executor=self.__process_executor_pool)
         del gaussian
         max_line_length = width / 3.30 + width * 0.03
         logger.debug("__check_raid_line: MaxLineLength: {}", max_line_length)
@@ -296,14 +299,14 @@ class PogoWindows:
             return []
 
         try:
-            image = await AsyncioCv2.imread(filename)
+            image = await AsyncioCv2.imread(filename, executor=self.__process_executor_pool)
             height, width, _ = image.shape
         except Exception as e:
             logger.error("Screenshot corrupted: {}", e)
             return []
         tmp_file_path = os.path.join(self.temp_dir_path,
                                      str(identifier) + '_exitcircle.jpg')
-        imwrite_status = await AsyncioCv2.imwrite(tmp_file_path, image)
+        imwrite_status = await AsyncioCv2.imwrite(tmp_file_path, image, executor=self.__process_executor_pool)
         if not imwrite_status:
             logger.error("Could not save file: {} - check permissions and path",
                          tmp_file_path)
@@ -328,7 +331,7 @@ class PogoWindows:
             logger.error("Screenshot not available")
             return []
         try:
-            screenshot_read = await AsyncioCv2.imread(filename)
+            screenshot_read = await AsyncioCv2.imread(filename, executor=self.__process_executor_pool)
         except cv2.error:
             logger.error("Screenshot corrupted")
             logger.debug("__internal_check_close_except_nearby_button: Screenshot corrupted...")
