@@ -28,7 +28,7 @@ async def hello(websocket, path):
 
         if message is not None:
             if isinstance(message, str):
-                print("Receiving message: {}", str(message.strip()))
+                print("Receiving message: {}".format(str(message.strip())))
                 splitup = message.split(";")
                 message_id = int(splitup[0])
                 response = splitup[1]
