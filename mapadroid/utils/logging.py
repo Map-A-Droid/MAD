@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 from enum import Enum
-from functools import wraps, partialmethod
+from functools import partialmethod, wraps
 from typing import Optional
 
 from loguru import logger
@@ -107,8 +107,8 @@ def init_logging(args):
         ],
         "extra": {"name": "Unknown", "identifier": ""},
     }
+    base_name: str = args.status_name + "_app"
     if not args.no_file_logs:
-        base_name: str = args.status_name + "_app"
         file_logs = [{
             "sink": os.path.join(args.log_path, base_name + ".log"),
             "format": fs_log_format,
