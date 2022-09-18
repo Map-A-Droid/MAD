@@ -108,8 +108,9 @@ def init_logging(args):
         "extra": {"name": "Unknown", "identifier": ""},
     }
     if not args.no_file_logs:
+        base_name: str = args.status_name + "_app"
         file_logs = [{
-            "sink": os.path.join(args.log_path, "app" + ".log"),
+            "sink": os.path.join(args.log_path, base_name + ".log"),
             "format": fs_log_format,
             "level": log_file_level,
             "backtrace": True,
@@ -120,7 +121,7 @@ def init_logging(args):
                                               in logging_to_aiohttp_log + logging_to_database_log else True
         },
             {
-                "sink": os.path.join(args.log_path, "app" + "_database.log"),
+                "sink": os.path.join(args.log_path, base_name + "_database.log"),
                 "format": fs_log_format,
                 "level": log_file_level,
                 "backtrace": True,
@@ -130,7 +131,7 @@ def init_logging(args):
                 "filter": lambda record: True if record["extra"]["name"] in logging_to_database_log else False
             },
             {
-                "sink": os.path.join(args.log_path, "app" + "_aiohttp.log"),
+                "sink": os.path.join(args.log_path, base_name + "_aiohttp.log"),
                 "format": fs_log_format,
                 "level": log_file_level,
                 "backtrace": True,
@@ -147,7 +148,7 @@ def init_logging(args):
             log["compression"] = "zip"
         logconfig["handlers"].extend(file_logs)
     try:
-        print("Logging will go to " + str(os.path.join(args.log_path, "app" + ".log")))
+        print("Logging will go to " + str(os.path.join(args.log_path, base_name + ".log")))
         logger.configure(**logconfig)
     except ValueError:
         logger.critical("Logging parameters/configuration is invalid.")
