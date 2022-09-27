@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from loguru import logger
 
@@ -32,6 +32,7 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         self.remove_from_queue_backlog = None
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
+        logger.info("Fetching coords for quests with dynamic flag {}", dynamic)
         async with self.db_wrapper as session, session:
             if not dynamic:
                 return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
@@ -79,8 +80,10 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         else:
             # we only want to add stops that we haven't spun yet
             # This routine's result is evaluated below
+            unprocessed: Set[Location] = self._get_unprocessed_coords_from_worker()
             for stop in self._stoplist:
-                if stop not in self._stops_not_processed and stop not in self._get_unprocessed_coords_from_worker():
+                if stop not in self._stops_not_processed and stop not in unprocessed:
+                    logger.debug2("Stop not checked for having been processed before: {}", stop)
                     self._stops_not_processed[stop] = 1
                 else:
                     self._stops_not_processed[stop] += 1

@@ -560,10 +560,11 @@ class RouteManagerBase(ABC):
 
         return 0 if len(temp_worker_round_list) == 0 else min(temp_worker_round_list)
 
-    def _get_unprocessed_coords_from_worker(self) -> list:
-        unprocessed_coords: list = []
+    def _get_unprocessed_coords_from_worker(self) -> Set[Location]:
+        unprocessed_coords: Set[Location] = set()
         for _origin, entry in self._routepool.items():
-            unprocessed_coords.append(entry.queue)
+            for loc in entry.queue:
+                unprocessed_coords.add(loc)
 
         return unprocessed_coords
 
