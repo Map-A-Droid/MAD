@@ -93,6 +93,9 @@ function build_name(row) {
 
 function build_reward_text(quest_reward_type, quest_item_amount, monname, quest_item_name) {
     switch (quest_reward_type) {
+        case 1:
+            var rewardtext = 'Experience<br>Amount: ' + quest_item_amount;
+            break;
         case 2:
             var rewardtext = quest_item_name + '<br>Pieces: ' + quest_item_amount;
             break;
