@@ -687,6 +687,8 @@ class DbPogoProtoSubmit:
         elif reward_type == 12:
             item_amount = reward.get('mega_resource', {}).get('amount', 0)
             pokemon_id = reward.get('mega_resource', {}).get('pokemon_id', 0)
+        elif reward_type == 1:
+            item_amount = reward.get('exp', 0)
 
         stardust = reward.get("stardust", None)
         form_id = encounter.get("pokemon_display", {}).get("form_value", 0)

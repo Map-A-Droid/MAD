@@ -1261,6 +1261,11 @@ new Vue({
         },
         build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id, quest_pokemon_form_id, quest_pokemon_asset_bundle_id, quest_pokemon_costume_id) {
             switch (quest_reward_type_raw) {
+                case 1:
+                    var image = `static/quest/reward_experience.png`;
+                    var size = [30, 30]
+                    var anchor = [30, 30]
+                    break;
                 case 2:
                     var image = `${iconBasePath}/rewards/reward_${quest_item_id}_1.png`;
                     var size = [30, 30]
@@ -1308,6 +1313,10 @@ new Vue({
             var size = "100%";
 
             switch (quest_reward_type_raw) {
+                case 1:
+                    var image = `static/quest/reward_experience.png`;
+                    var rewardtext = `${quest_item_amount} Experience`;
+                    break;
                 case 2:
                     var image = `${iconBasePath}/rewards/reward_${quest_item_id}_1.png`;
                     var rewardtext = `${quest_item_amount}x ${quest_item_type}`;
