@@ -120,9 +120,6 @@ class QuestGen:
             item_type = quest_reward_type
             pokemon_id = quest.quest_pokemon_id
             pokemon_name = await i8ln(await self.pokemonname(str(pokemon_id)))
-        elif quest_reward_type == _('Experience'):
-            item_type = quest_reward_type
-            item_amount = quest.quest_stardust
 
         if not quest.quest_task:
             quest_task = await self.questtask(
