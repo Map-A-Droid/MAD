@@ -1,4 +1,4 @@
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Dict
 
 from loguru import logger
 
@@ -11,9 +11,15 @@ from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import QuestLayer
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
+    """
+    The locations of single pokestops and the amount of rounds in which they have not been processed
+    """
+    _stops_not_processed: Dict[Location, int]
+
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
@@ -26,10 +32,11 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaPokestop = area
+        """
+        List of stops last fetched in _get_coords_fresh containing only those without quests on the layer to be scanned
+        """
         self._stoplist: List[Location] = []
-        self._routecopy: List[Location] = []
-        self._tempinit: bool = False
-        self.remove_from_queue_backlog = None
+        self._stops_not_processed: Dict[Location, int] = {}
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         logger.info("Fetching coords for quests with dynamic flag {}", dynamic)
@@ -37,14 +44,18 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
             if not dynamic:
                 return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
             else:
-                stops = await PokestopHelper.get_without_quests(session, self.geofence_helper,
-                                                                QuestLayer(self._settings.layer))
-                locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for
-                                                      stop_id, stop in
-                                                      stops.items()]
+                locations_of_stops: List[Location] = await self._get_stops_without_quests_on_layer(session)
                 # also store the latest set in _stoplist
                 self._stoplist = locations_of_stops
                 return locations_of_stops
+
+    async def _get_stops_without_quests_on_layer(self, session: AsyncSession) -> List[Location]:
+        stops = await PokestopHelper.get_without_quests(session, self.geofence_helper,
+                                                        QuestLayer(self._settings.layer))
+        locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for
+                                              stop_id, stop in
+                                              stops.items()]
+        return locations_of_stops
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
         async with self._manager_mutex:
@@ -59,11 +70,11 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
                 logger.info("No new stops - leaving now.")
                 await self.stop_routemanager()
                 return False
-            coords: List[Location] = self._check_unprocessed_stops()
+            async with self.db_wrapper as session, session:
+                locations_of_stops: List[Location] = await self._get_stops_without_quests_on_layer(session)
             # remove coords to be ignored from coords
-            coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
-            # TODO: Move all the calculation stuff out of a simple checking routine
-            if len(coords) > 0:
+            locations_of_stops = [coord for coord in locations_of_stops if coord not in self._coords_to_be_ignored]
+            if len(locations_of_stops) > 0:
                 logger.info("Getting new coords - recalculating route")
                 await self.calculate_route(True)
             else:
@@ -71,37 +82,6 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
                 await self.stop_routemanager()
                 return False
             return True
-
-    def _check_unprocessed_stops(self):
-        list_of_stops_to_return: List[Location] = []
-
-        if len(self._stoplist) == 0:
-            return list_of_stops_to_return
-        else:
-            # we only want to add stops that we haven't spun yet
-            # This routine's result is evaluated below
-            unprocessed: Set[Location] = self._get_unprocessed_coords_from_worker()
-            for stop in self._stoplist:
-                if stop not in self._stops_not_processed and stop not in unprocessed:
-                    logger.debug2("Stop not checked for having been processed before: {}", stop)
-                    self._stops_not_processed[stop] = 1
-                else:
-                    self._stops_not_processed[stop] += 1
-
-        for stop, error_count in self._stops_not_processed.items():
-            if stop not in self._stoplist:
-                logger.info("Location {} is no longer in our stoplist and will be ignored", stop)
-                self._coords_to_be_ignored.add(stop)
-            elif error_count < 4:
-                logger.info("Found stop not processed yet: {}", stop)
-                list_of_stops_to_return.append(stop)
-            else:
-                logger.warning("Stop {} has not been processed thrice in a row, please check your DB", stop)
-                self._coords_to_be_ignored.add(stop)
-
-        if len(list_of_stops_to_return) > 0:
-            logger.info("Found stops not yet processed, retrying those in the next round")
-        return list_of_stops_to_return
 
     async def start_routemanager(self):
         if self._shutdown_route.is_set():
@@ -117,7 +97,6 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
 
             await self.calculate_route(dynamic=True, overwrite_persisted_route=False)
             await self._start_check_routepools()
-            self._init_route_queue()
 
             logger.info('Getting {} positions in route', len(self._route))
             return True
