@@ -34,7 +34,10 @@ Relation = collections.namedtuple(
 
 class RouteManagerBase(ABC):
     delay_after_timestamp_prio: int
-    remove_from_queue_backlog: Optional[int]
+    """
+    The list of 
+    """
+    _route: List[Location]
 
     def __init__(self, db_wrapper: DbWrapper, area: SettingsArea, coords: Optional[List[Location]],
                  max_radius: float,
@@ -69,7 +72,6 @@ class RouteManagerBase(ABC):
         self._coords_to_be_ignored = set()
         # self._level = area.level if area.mode == "pokestop" else False
         self._overwrite_calculation: bool = False
-        self._stops_not_processed: Dict[Location, int] = {}
         self._routepool: Dict[str, RoutePoolEntry] = {}
         self._roundcount: int = 0
         self._joinqueue = joinqueue
@@ -226,7 +228,8 @@ class RouteManagerBase(ABC):
         finally:
             self._start_calc.clear()
         async with self._manager_mutex:
-            self._route = new_route
+            self._route.clear()
+            self._route.extend(new_route)
             self._current_route_round_coords = self._route.copy()
             # TODO: Also reset the subroutes of the workers?
             self._init_route_queue()
@@ -425,24 +428,6 @@ class RouteManagerBase(ABC):
                 now = time.time()
                 if next_timestamp > now:
                     raise PrioQueueNoDueEntry("Next event at {} has not taken place yet", next_readable_time)
-                if self._remove_deprecated_prio_events():
-                    if self.remove_from_queue_backlog not in [None, 0]:
-                        delete_before = now - self.remove_from_queue_backlog
-                    else:
-                        delete_before = 0
-
-                    while next_timestamp < delete_before:
-                        # TODO: Move task_done elsewhere?
-                        logger.debug("Popping prio Q")
-                        prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
-                        next_timestamp = prioq_entry.timestamp_due
-                        next_coord = prioq_entry.location
-                        next_readable_time = DatetimeWrapper.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
-                        if next_timestamp < delete_before:
-                            logger.warning(
-                                "Prio event surpassed the maximum backlog time and will be skipped. Make "
-                                "sure you run enough workers or reduce the size of the area! (event was "
-                                "scheduled for {})", next_readable_time)
                 if self._can_pass_prioq_coords():
                     while (not self._check_coord_and_remove_from_route_if_applicable(next_coord, origin)
                            or self._other_worker_closer_to_prioq(next_coord, origin)):
@@ -549,6 +534,7 @@ class RouteManagerBase(ABC):
         """
         if self._check_coords_before_returning(next_coord.lat, next_coord.lng, origin):
             if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
+                logger.debug("Removing coord {} from _current_route_round_coords", next_coord)
                 self._current_route_round_coords.remove(next_coord)
             return True
         return False
@@ -559,14 +545,6 @@ class RouteManagerBase(ABC):
             temp_worker_round_list.append(entry.rounds)
 
         return 0 if len(temp_worker_round_list) == 0 else min(temp_worker_round_list)
-
-    def _get_unprocessed_coords_from_worker(self) -> Set[Location]:
-        unprocessed_coords: Set[Location] = set()
-        for _origin, entry in self._routepool.items():
-            for loc in entry.queue:
-                unprocessed_coords.add(loc)
-
-        return unprocessed_coords
 
     def _other_worker_closer_to_prioq(self, prioqcoord, origin):
         logger.debug('Check distances from worker to PrioQ coord')
