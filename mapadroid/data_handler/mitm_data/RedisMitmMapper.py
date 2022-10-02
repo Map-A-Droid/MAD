@@ -132,11 +132,10 @@ class RedisMitmMapper(AbstractMitmMapper):
     async def set_pokestop_visits(self, worker: str, pokestop_visits: int) -> None:
         await self.__cache.set(RedisMitmMapper.POKESTOPS_VISITED_KEY.format(worker), pokestop_visits)
 
-    @cached(ttl=30)
     async def set_quests_held(self, worker: str, quests_held: Optional[List[int]]) -> None:
         await self.__cache.set(RedisMitmMapper.QUESTS_HELD_KEY.format(worker), ujson.dumps(quests_held))
 
-    @cached(ttl=10)
+    @cached(ttl=1)
     async def get_quests_held(self, worker: str) -> Optional[List[int]]:
         value = await self.__cache.get(RedisMitmMapper.QUESTS_HELD_KEY.format(worker))
         if not value:
