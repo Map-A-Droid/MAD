@@ -1,5 +1,10 @@
 import asyncio
-import collections
+import sys
+if sys.version_info.major == 3 and sys.version_info.minor >= 10:
+    from collections.abc import Collection
+else:
+    from collections import Collection
+
 import math
 import time
 from abc import ABC, abstractmethod
@@ -436,7 +441,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         return True
 
     @staticmethod
-    def _gmo_cells_contain_multiple_of_key(gmo: dict, keys_in_cell: Union[str, collections.Collection[str]]) -> bool:
+    def _gmo_cells_contain_multiple_of_key(gmo: dict, keys_in_cell: Union[str, Collection[str]]) -> bool:
         if not gmo or not keys_in_cell or "cells" not in gmo:
             return False
         keys: List[str] = []

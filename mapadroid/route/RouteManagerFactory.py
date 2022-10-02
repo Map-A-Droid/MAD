@@ -13,7 +13,7 @@ from mapadroid.route.RouteManagerMon import RouteManagerMon
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.route.RouteManagerRaids import RouteManagerRaids
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import InitTypes
+from mapadroid.utils.madGlobals import InitTypes, QuestLayer
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -52,9 +52,9 @@ class RouteManagerFactory:
                                              )
         elif area.mode == WorkerType.STOPS.value:
             area: SettingsAreaPokestop = area
-            max_coords_within_radius = 9999 if area.level else max_coords_within_radius
 
             if area.level:
+                max_coords_within_radius = 9999 if area.level else max_coords_within_radius
                 route_manager = RouteManagerLeveling(db_wrapper=db_wrapper, area=area, coords=coords,
                                                      max_radius=max_radius,
                                                      max_coords_within_radius=max_coords_within_radius,
@@ -62,6 +62,8 @@ class RouteManagerFactory:
                                                      mon_ids_iv=mon_ids_iv
                                                      )
             else:
+                max_coords_within_radius = 1 if QuestLayer(area.layer) == QuestLayer.AR \
+                    else max_coords_within_radius
                 route_manager = RouteManagerQuests(db_wrapper=db_wrapper, area=area, coords=coords,
                                                    max_radius=max_radius,
                                                    max_coords_within_radius=max_coords_within_radius,
