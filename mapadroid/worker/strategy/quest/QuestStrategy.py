@@ -539,6 +539,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                         self._worker_state.current_location.lat,
                         self._worker_state.current_location.lng,
                         stop_type)
+            # TODO: Count up to a certain threshold to remove
+            await self._mapping_manager.routemanager_add_coords_to_be_removed(self._area_id,
+                                                                              self._worker_state.current_location.lat,
+                                                                              self._worker_state.current_location.lng)
             raise AbortStopProcessingException("Stop cannot be spun at the moment")
         elif stop_type == PositionStopType.STOP_COOLDOWN:
             logger.info("Stop at {}, {} assumed to be spun already, we got cooldown ({})",
