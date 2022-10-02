@@ -28,6 +28,7 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
             wanted_fences = [item.lower().replace(" ", "") for item in
                              self._get_mad_args().quest_stats_fences.split(",")]
         for area_id, fence_data in possible_fences.items():
+            area_settings: Optional[SettingsAreaPokestop] = await self._get_mapping_manager().routemanager_get_settings(area_id)
             subfenceindex: int = 0
 
             for include_fence_name, list_of_coords in fence_data["include"].items():
@@ -46,9 +47,10 @@ class GetStopQuestStatsEndpoint(AbstractStatisticsRootEndpoint):
                                                                                              fence=fence)
                 quests_in_fence: Dict[int, Tuple[Pokestop, Dict[int, TrsQuest]]] = await PokestopHelper \
                     .get_with_quests(self._session, fence=fence)
+                layer_quests_in_fence = {k: v for k, v in quests_in_fence.items() if area_settings.layer in v[1]}
                 stops = len(stops_in_fence)
                 # TODO: Consider the different layers having been scanned
-                quests = len(quests_in_fence)
+                quests = len(layer_quests_in_fence)
 
                 processed: int = 0
                 if int(stops) > 0:
