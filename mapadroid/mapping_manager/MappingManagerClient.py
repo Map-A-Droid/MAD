@@ -39,7 +39,7 @@ class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
             auths[username] = response.allowed_credentials[username]
         return auths if auths else None
 
-    @cached(ttl=60)
+    @cached(ttl=10)
     async def routemanager_of_origin_is_levelmode(self, origin: str) -> bool:
         request = IsRoutemanagerOfOriginLevelmodeRequest()
         request.worker.name = origin

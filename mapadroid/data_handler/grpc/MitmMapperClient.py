@@ -25,7 +25,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         self._pokestop_visits_cache: Dict[str, int] = {}
 
     # Cache the update parameters to not spam it...
-    @cached(ttl=300)
+    @cached(ttl=30)
     async def set_level(self, worker: str, level: int) -> None:
         if self._level_cache.get(worker, 0) == level:
             return
@@ -191,7 +191,6 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         else:
             return None
 
-    @cached(ttl=30)
     async def set_quests_held(self, worker: str, quests_held: Optional[List[int]]) -> None:
         request: SetQuestsHeldRequest = SetQuestsHeldRequest()
         request.worker.name = worker
@@ -202,7 +201,7 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         except AioRpcError as e:
             logger.warning("Failed requesting setting quests held of {}: {}", worker, e)
 
-    @cached(ttl=10)
+    @cached(ttl=1)
     async def get_quests_held(self, worker: str) -> Optional[List[int]]:
         request: Worker = Worker()
         request.name = worker
