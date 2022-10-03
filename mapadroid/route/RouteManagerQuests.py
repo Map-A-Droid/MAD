@@ -1,7 +1,6 @@
 from typing import Dict, List, Optional, Set
 
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
@@ -12,6 +11,7 @@ from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import QuestLayer
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
