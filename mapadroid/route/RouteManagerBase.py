@@ -271,6 +271,7 @@ class RouteManagerBase(ABC):
         async with self._manager_mutex:
             if not self._is_started.is_set():
                 self._is_started.set()
+                self._coords_to_be_ignored.clear()
                 logger.info("Starting routemanager {}", self.name)
                 await self.calculate_route(dynamic=False, overwrite_persisted_route=False)
                 await self._start_priority_queue()
@@ -693,3 +694,12 @@ class RouteManagerBase(ABC):
 
         """
         return None
+
+    async def get_amount_of_coords_scannable(self) -> int:
+        """
+        Returns: Number of locations potentially scannable (without clustering) minus those to be ignored.
+        E.g., in quest mode this returns the amount of stops without quests for the configured layer.
+        """
+        coords: List[Location] = await self._get_coords_fresh(True)
+        coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
+        return len(coords)

@@ -240,6 +240,11 @@ class StrategyFactory:
         registered_excluding = [worker for worker in registered if worker != origin]
         return len(registered_excluding)
 
+    async def _get_amount_of_coords_scannable(self, walker_settings: SettingsWalkerarea) -> int:
+        amount_coords: Optional[int] = await self.__mapping_manager.routemanager_get_amount_of_coords_scannable(
+            walker_settings.area_id)
+        return amount_coords if amount_coords is not None else 0
+
     async def _get_amount_valid_locations_scannable(self, walker_settings_area: SettingsWalkerarea) -> int:
         await self.__mapping_manager.routemanager_get
 
@@ -265,7 +270,8 @@ class StrategyFactory:
         loop_exit = False
 
         while not pre_check_value(walker_settings, self.__event.get_current_event_id(), location,
-                                  await self._get_amount_of_registered_workers(origin, walker_settings)) \
+                                  await self._get_amount_of_registered_workers(origin, walker_settings),
+                                  await self._get_amount_of_coords_scannable(walker_settings)) \
                 and client_mapping.walker_area_index < len(client_mapping.walker_areas):
             logger.info('not using area {} - Walkervalue out of range',
                         await self.__mapping_manager.routemanager_get_name(walker_settings.area_id))
