@@ -1,6 +1,7 @@
-from typing import List, Optional, Set, Dict
+from typing import Dict, List, Optional, Set
 
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
@@ -11,7 +12,6 @@ from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import QuestLayer
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
@@ -45,9 +45,15 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
                 return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
             else:
                 locations_of_stops: List[Location] = await self._get_stops_without_quests_on_layer(session)
-                # also store the latest set in _stoplist
-                self._stoplist = locations_of_stops
                 return locations_of_stops
+
+    async def calculate_route(self, dynamic: bool, overwrite_persisted_route: bool = False) -> None:
+        if dynamic:
+            # also store the latest set in _stoplist
+            async with self.db_wrapper as session, session:
+                locations_of_stops: List[Location] = await self._get_stops_without_quests_on_layer(session)
+            self._stoplist = locations_of_stops
+        await super().calculate_route(dynamic, overwrite_persisted_route)
 
     async def _get_stops_without_quests_on_layer(self, session: AsyncSession) -> List[Location]:
         stops = await PokestopHelper.get_without_quests(session, self.geofence_helper,

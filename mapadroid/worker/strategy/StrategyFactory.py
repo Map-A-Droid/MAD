@@ -240,6 +240,9 @@ class StrategyFactory:
         registered_excluding = [worker for worker in registered if worker != origin]
         return len(registered_excluding)
 
+    async def _get_amount_valid_locations_scannable(self, walker_settings_area: SettingsWalkerarea) -> int:
+        await self.__mapping_manager.routemanager_get
+
     async def __get_walker_settings(self, origin: str) \
             -> Optional[WalkerConfiguration]:
         client_mapping: Optional[DeviceMappingsEntry] = await self.__mapping_manager.get_devicemappings_of(origin)
