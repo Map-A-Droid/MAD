@@ -67,4 +67,7 @@ def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Opti
         if walkervalue is None and walker_settings.algo_type == 'coords' or len(walkervalue) == 0:
             return True
         return check_walker_value_type(walkervalue, location)
+    # Time checks out, max workers etc... but we also need to check if there actually are locations to be scanned
+    # Check the amount of coords left at this time (vs amount of workers already registered
+    # TODO
     return True
