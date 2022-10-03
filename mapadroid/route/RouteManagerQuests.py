@@ -39,16 +39,14 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         self._stops_not_processed: Dict[Location, int] = {}
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
-        logger.info("Fetching coords for quests with dynamic flag {}", dynamic)
+        logger.info("Fetching coords for stops without quests")
         async with self.db_wrapper as session, session:
-            if not dynamic:
-                return await PokestopHelper.get_locations_in_fence(session, self.geofence_helper)
-            else:
-                locations_of_stops: List[Location] = await self._get_stops_without_quests_on_layer(session)
-                return locations_of_stops
+            # Always treat quest routes to be dynamic in case another instance has already scanned for stops or the
+            # MAD instance was restarted
+            return await self._get_stops_without_quests_on_layer(session)
 
     async def calculate_route(self, dynamic: bool, overwrite_persisted_route: bool = False) -> None:
-        if dynamic:
+        if not overwrite_persisted_route:
             # also store the latest set in _stoplist
             async with self.db_wrapper as session, session:
                 locations_of_stops: List[Location] = await self._get_stops_without_quests_on_layer(session)

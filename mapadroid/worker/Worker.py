@@ -152,7 +152,6 @@ class Worker(AbstractWorker):
                         logger.debug2("No active connection present...")
                         await asyncio.sleep(1)
                     async with self._work_mutex:
-                        await self._start_of_new_strategy()
                         self._scan_task = loop.create_task(self._run_scan())
                     try:
                         await self._scan_task
@@ -187,6 +186,7 @@ class Worker(AbstractWorker):
 
     async def _run_scan(self):
         with logger.contextualize(identifier=self._worker_state.origin, name="worker"):
+            await self._start_of_new_strategy()
             await self._scan_strategy.pre_work_loop()
 
             if not await self.check_max_walkers_reached():
