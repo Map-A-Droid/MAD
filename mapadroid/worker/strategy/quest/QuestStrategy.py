@@ -45,6 +45,7 @@ from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import \
     AbstractMitmBaseStrategy
 from mapadroid.worker.WorkerState import WorkerState
+from asyncio_rlock import RLock
 
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
 S2_GMO_CELL_LEVEL = 15
@@ -99,7 +100,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         self._spinnable_data_failcount = 0
         self._always_cleanup: bool = False
         self._rotation_waittime: int = 0
-        self._work_mutex = None
         self._clustering_enabled: bool = False
         self._ignore_spinned_stops: bool = False
         self._last_time_quest_received: int = TIMESTAMP_NEVER
@@ -168,8 +168,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def pre_work_loop(self):
         await super().pre_work_loop()
-        if not self._work_mutex:
-            self._work_mutex = asyncio.Lock()
         if self._worker_state.stop_worker_event.is_set() or not await self._wait_for_injection():
             raise InternalStopWorkerException("Worker is supposed to be stopped while working waiting for injection")
 
@@ -358,30 +356,29 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         await self._process_stop_at_location(timestamp)
 
     async def _process_stop_at_location(self, timestamp):
-        async with self._work_mutex:
-            logger.info("Processing Stop / Quest...")
-            try:
-                if await self._ensure_stop_present(timestamp) != PositionStopType.SPINNABLE_STOP:
-                    logger.warning("No spinnable stop at the current location, aborting.")
-                    return
-                logger.info('Open Stop')
-                await self._handle_stop(timestamp)
-            except AbortStopProcessingException as e:
-                # The stop cannot be processed for whatever reason.
-                # Stop processing the location.
-                logger.warning("Failed handling stop(s) at {}: {}", self._worker_state.current_location, e)
+        logger.info("Processing Stop / Quest...")
+        try:
+            if await self._ensure_stop_present(timestamp) != PositionStopType.SPINNABLE_STOP:
+                logger.warning("No spinnable stop at the current location, aborting.")
                 return
-            finally:
-                try:
-                    await self._check_layer()
-                except ValueError as e:
-                    pass
-                if not self._ready_for_scan.is_set():
-                    # Return location to the routemanager to be considered for a scan later on
-                    # TODO: What if the route is too small to fetch any useful data needed to scan the layer?...
-                    await self._mapping_manager.routemanager_redo_stop_at_end(self.area_id,
-                                                                              self._worker_state.origin,
-                                                                              self._worker_state.current_location)
+            logger.info('Open Stop')
+            await self._handle_stop(timestamp)
+        except AbortStopProcessingException as e:
+            # The stop cannot be processed for whatever reason.
+            # Stop processing the location.
+            logger.warning("Failed handling stop(s) at {}: {}", self._worker_state.current_location, e)
+            return
+        finally:
+            try:
+                await self._check_layer()
+            except ValueError as e:
+                pass
+            if not self._ready_for_scan.is_set():
+                # Return location to the routemanager to be considered for a scan later on
+                # TODO: What if the route is too small to fetch any useful data needed to scan the layer?...
+                await self._mapping_manager.routemanager_redo_stop_at_end(self.area_id,
+                                                                          self._worker_state.origin,
+                                                                          self._worker_state.current_location)
 
     async def _check_position_type(self):
         position_type = await self._mapping_manager.routemanager_get_position_type(self._area_id,
@@ -398,8 +395,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             await self.switch_account()
 
     async def worker_specific_setup_start(self):
-        if not self._work_mutex:
-            self._work_mutex: asyncio.Lock = asyncio.Lock()
         area_settings: Optional[SettingsAreaPokestop] = await self._mapping_manager.routemanager_get_settings(
             self._area_id)
         self._rotation_waittime = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ROTATION_WAITTIME,
