@@ -613,7 +613,7 @@ class RouteManagerBase(ABC):
         if self._route and origin in self._routepool:
             entry: RoutePoolEntry = self._routepool[origin]
             return len(entry.subroute) - len(entry.queue), len(entry.subroute)
-        return 1, 1
+        return -1, -1
 
     def get_rounds(self, origin: str) -> int:
         return self._get_worker_rounds_run_through()
