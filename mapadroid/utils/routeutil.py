@@ -54,7 +54,7 @@ def check_time_period(period, relevant_timezone: datetime.tzinfo):
 
 
 def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Optional[Location] = None,
-                    workers_registered_to_route: int = 0):
+                    workers_registered_to_route: int = 0, coords_scannable: int = 0):
     if walker_settings.max_walkers is not None and 0 < walker_settings.max_walkers <= workers_registered_to_route:
         logger.warning("Max workers reached for routemanager {} of walker area {}, moving on", walker_settings.area_id,
                        walker_settings.name)
@@ -69,5 +69,7 @@ def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Opti
         return check_walker_value_type(walkervalue, location)
     # Time checks out, max workers etc... but we also need to check if there actually are locations to be scanned
     # Check the amount of coords left at this time (vs amount of workers already registered
-    # TODO
+    if workers_registered_to_route == 0 and coords_scannable == 0:
+        logger.warning("Area is not being scanned right now and no coords are left to be scanned")
+        return False
     return True

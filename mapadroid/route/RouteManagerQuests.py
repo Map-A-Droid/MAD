@@ -15,11 +15,6 @@ from mapadroid.utils.madGlobals import QuestLayer
 
 
 class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
-    """
-    The locations of single pokestops and the amount of rounds in which they have not been processed
-    """
-    _stops_not_processed: Dict[Location, int]
-
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
@@ -36,7 +31,6 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         List of stops last fetched in _get_coords_fresh containing only those without quests on the layer to be scanned
         """
         self._stoplist: List[Location] = []
-        self._stops_not_processed: Dict[Location, int] = {}
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         logger.info("Fetching coords for stops without quests")
@@ -115,12 +109,6 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
                 self._shutdown_route.set()
                 self._is_started.clear()
                 self._round_started_time = None
-
-        # clear not processed stops
-        # TODO: Does this even make sense? Maybe all devices just disconnected and are going to come back
-        #  However, the next round (next day) could have some leftovers here...
-        self._stops_not_processed.clear()
-        self._coords_to_be_ignored.clear()
 
     def _check_coords_before_returning(self, lat: float, lng: float, origin):
         stop = Location(lat, lng)
