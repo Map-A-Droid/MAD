@@ -806,3 +806,7 @@ class MappingManager(AbstractMappingManager):
     async def routemanager_redo_stop_at_end(self, routemanager_id: int, worker_name: str, location: Location) -> None:
         routemanager = self.__fetch_routemanager(routemanager_id)
         routemanager.redo_stop_at_end(worker_name, location)
+
+    async def routemanager_get_amount_of_coords_scannable(self, routemanager_id: int) -> Optional[int]:
+        routemanager = self.__fetch_routemanager(routemanager_id)
+        return await routemanager.get_amount_of_coords_scannable() if routemanager is not None else None

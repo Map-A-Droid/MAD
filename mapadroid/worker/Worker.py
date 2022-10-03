@@ -175,6 +175,7 @@ class Worker(AbstractWorker):
                     WebsocketWorkerRemovedException) as e:
                 logger.info("Worker task cancelled or websocket worker removed")
             except Exception as e:
+                logger.error("Unhandled exception in scan task: {}", e)
                 logger.exception(e)
             finally:
                 logger.info("Stopping worker task")
