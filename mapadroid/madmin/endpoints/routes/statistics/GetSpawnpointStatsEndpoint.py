@@ -30,6 +30,8 @@ class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
         geofence_id: Optional[int] = self._request.query.get("fence")
         if not geofence_id:
             geofence_id = -1
+        else:
+            geofence_id = int(geofence_id)
 
         coords = []
         known = {}
