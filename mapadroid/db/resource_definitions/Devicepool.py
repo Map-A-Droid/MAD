@@ -202,10 +202,10 @@ class Devicepool(Resource):
                 "settings": {
                     "type": "select",
                     "require": False,
-                    "description": "Items not to be deleted in quest mode (Default: 1301, 1401,1402, "
+                    "description": "Items not to be deleted in quest mode (Default: 1401, 1402, "
                                    "1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301)",
                     "expected": str,
-                    "default": "1301, 1401, 1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
+                    "default": "1401, 1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
                 }
             }
         }
