@@ -35,7 +35,7 @@ Relation = collections.namedtuple(
 class RouteManagerBase(ABC):
     delay_after_timestamp_prio: int
     """
-    The list of 
+    The list of
     """
     _route: List[Location]
 
@@ -205,8 +205,8 @@ class RouteManagerBase(ABC):
         coords: List[Location] = await self._get_coords_fresh(dynamic)
         if dynamic:
             coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
-        if not coords:
-            # Empty route, return immediately after shutdown
+        if not coords and dynamic:
+            # Empty route and no route is to be loaded, return immediately after shutdown
             await self.stop_routemanager()
             raise RoutemanagerShuttingDown("No coords to calculate a route")
         try:
