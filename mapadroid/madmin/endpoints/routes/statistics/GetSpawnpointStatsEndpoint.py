@@ -27,10 +27,7 @@ class GetSpawnpointStatsEndpoint(AbstractStatisticsRootEndpoint):
             stats = {'spawnpoints': []}
             return await self._json_response(stats)
 
-        geofence_id: Optional[int] = self._request.query.get("fence")
-        if not geofence_id:
-            geofence_id = -1
-
+        geofence_id: Optional[int] = int(self._request.query.get("fence", -1))
         coords = []
         known = {}
         unknown = {}
