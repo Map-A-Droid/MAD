@@ -204,6 +204,10 @@ def parse_args():
     parser.add_argument('-wfdsd', '--wait_for_data_sleep_duration', default='1.0', type=float,
                         help=('Time in seconds (floating point) to sleep inbetween checks of data in workers. '
                               'Default: 1.0'))
+    parser.add_argument('-rrqk', '--redis_report_queue_key', default=None,
+                        help='Redis key used to store MITMReceiver queue value')
+    parser.add_argument('-rrqi', '--redis_report_queue_interval', default=30, type=int,
+                        help='Report queue size from MITMReceiver to redis every N seconds (Default: 30)')
 
     # MADmin
     parser.add_argument('-dm', '--disable_madmin', action='store_true', default=False,
