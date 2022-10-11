@@ -49,6 +49,7 @@ class PokestopHelper:
             where_and_clauses.append(func.ST_Contains(func.ST_GeomFromText(polygon),
                                                       func.POINT(Pokestop.latitude, Pokestop.longitude)))
 
+        stmt = stmt.where(and_(*where_and_clauses))
         result = await session.execute(stmt)
         list_of_coords: List[Location] = []
         for pokestop in result.scalars().all():
