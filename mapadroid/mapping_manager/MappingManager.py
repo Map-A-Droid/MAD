@@ -178,7 +178,7 @@ class MappingManager(AbstractMappingManager):
         else:
             values = devicesettings[0].enhanced_mode_quest_safe_items
         if not values:
-            values = "1301, 1401,1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
+            values = "1401, 1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
         return list(map(int, values.split(",")))
 
     async def __set_devicesetting(self, device_name: str, key: MappingManagerDevicemappingKey, value: Any) -> None:
