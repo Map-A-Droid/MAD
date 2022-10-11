@@ -1,7 +1,6 @@
-from typing import Dict, List, Optional, Set
+from typing import List, Optional
 
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
