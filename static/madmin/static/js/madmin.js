@@ -910,7 +910,7 @@ new Vue({
                 res.data.forEach(function (cell) {
                     const id = cell["id"];
 
-                    iif (this.cellupdates[id]) {
+                    if (this.cellupdates[id]) {
                         if (this.cellupdates[id]["updated"] === cell["updated"]) {
                             return;
                         }
