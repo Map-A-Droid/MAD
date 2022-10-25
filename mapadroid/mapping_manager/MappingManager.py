@@ -785,6 +785,7 @@ class MappingManager(AbstractMappingManager):
                                                                                    self.__db_wrapper.get_instance_id())
             for device in all_devices:
                 devices.append(device.name)
+            devices.sort()
             return devices
 
     def get_jobstatus(self) -> Dict:
