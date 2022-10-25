@@ -384,7 +384,7 @@ class DeviceUpdater(object):
         async with self._update_mutex:
             if job_id not in self._log:
                 return True
-            for origin, job_entry in self._running_jobs_per_origin:
+            for origin, job_entry in self._running_jobs_per_origin.items():
                 if job_entry.id == job_id:
                     return False
             self._log.pop(job_id)
