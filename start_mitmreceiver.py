@@ -21,8 +21,8 @@ from mapadroid.mapping_manager.AbstractMappingManager import \
     AbstractMappingManager
 from mapadroid.mapping_manager.MappingManagerClientConnector import \
     MappingManagerClientConnector
-from mapadroid.mitm_receiver.MitmDataProcessorManager import \
-    MitmDataProcessorManager
+from mapadroid.mitm_receiver.data_processing.InProcessMitmDataProcessorManager import \
+    InProcessMitmDataProcessorManager
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
@@ -79,7 +79,7 @@ async def start():
 
     quest_gen: QuestGen = QuestGen()
     await quest_gen.setup()
-    mitm_data_processor_manager = MitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen)
+    mitm_data_processor_manager = InProcessMitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen)
     await mitm_data_processor_manager.launch_processors()
 
     mapping_manager_connector = MappingManagerClientConnector()
