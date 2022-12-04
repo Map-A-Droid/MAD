@@ -1,21 +1,24 @@
 import asyncio
 import time
 from datetime import datetime
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import sqlalchemy
 from aioredis import Redis
 from loguru import logger
 from sqlalchemy.exc import IntegrityError
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import determine_current_quest_layer
-from mapadroid.utils.madGlobals import MitmReceiverRetry, MonSeenTypes, application_args, QuestLayer
+from mapadroid.utils.madGlobals import (MitmReceiverRetry, MonSeenTypes,
+                                        QuestLayer, application_args)
 from mapadroid.utils.questGen import QuestGen
 
 
