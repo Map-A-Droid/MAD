@@ -11,6 +11,8 @@ class MadApkDownloadEndpoint(AbstractMitmReceiverRootEndpoint):
     "/mad_apk/<string:apk_type>/download"
     "/mad_apk/<string:apk_type>/<string:apk_arch>/download"
     """
+    # Increase timeout to 5minutes to send APK...
+    timeout = 300
 
     # TODO: Auth/preprocessing for autoconfig?
     async def head(self):

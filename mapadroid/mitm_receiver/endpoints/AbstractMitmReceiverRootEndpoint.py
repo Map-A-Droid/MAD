@@ -51,6 +51,12 @@ def validate_accepted(func) -> Any:
 class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     # TODO: Add security etc in here (abstract) to enforce security true/false
     # If we really need more methods, we can just define them abstract...
+
+    """
+    timeout in seconds after which processing of a request is cancelled
+    """
+    timeout: int = 5
+
     def __init__(self, request: Request):
         super().__init__(request)
         self._commit_trigger: bool = False
@@ -62,6 +68,13 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         self._identifier = None
 
     async def _iter(self):
+        try:
+            await asyncio.wait_for(self._process_request(), timeout=self.timeout)
+        except TimeoutError:
+            logger.warning("Failed processing request in time.")
+            raise web.HTTPInternalServerError()
+
+    async def _process_request(self):
         with logger.contextualize(identifier=self._get_request_address(), name="mitm-receiver-endpoint"):
             await self._check_mitm_device_auth()
 

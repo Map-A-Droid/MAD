@@ -14,6 +14,8 @@ class MadApkInfoEndpoint(AbstractMitmReceiverRootEndpoint):
     "/mad_apk/<string:apk_type>"
     "/mad_apk/<string:apk_type>/<string:apk_arch>"
     """
+    # Increase timeout to 5minutes to send APK info...
+    timeout = 300
 
     # TODO: Auth/preprocessing for autoconfig?
     async def get(self):
