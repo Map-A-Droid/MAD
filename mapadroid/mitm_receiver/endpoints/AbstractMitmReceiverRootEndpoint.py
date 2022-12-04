@@ -69,7 +69,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
     async def _iter(self):
         try:
-            await asyncio.wait_for(self._process_request(), timeout=self.timeout)
+            return await asyncio.wait_for(self._process_request(), timeout=self.timeout)
         except TimeoutError:
             logger.warning("Failed processing request in time.")
             raise web.HTTPInternalServerError()
