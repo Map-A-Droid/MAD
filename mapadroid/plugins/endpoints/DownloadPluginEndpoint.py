@@ -10,7 +10,8 @@ from aiohttp import web
 from aiohttp.abc import Request
 from loguru import logger
 
-from mapadroid.plugins.endpoints.AbstractPluginEndpoint import AbstractPluginEndpoint
+from mapadroid.plugins.endpoints.AbstractPluginEndpoint import \
+    AbstractPluginEndpoint
 from mapadroid.utils.functions import generate_path
 
 
@@ -28,7 +29,8 @@ class DownloadPluginEndpoint(AbstractPluginEndpoint):
         if plugin is None:
             raise web.HTTPFound(self._url_for("plugins"))
 
-        mad_plugin = next((item for item in self._get_plugins() if item["name"] == plugin), None)
+        plugins = self._get_plugins()
+        mad_plugin = next((item for item in plugins if item["name"] == plugin), None)
         if mad_plugin is None:
             raise web.HTTPFound(self._url_for("plugins"))
 
@@ -55,7 +57,7 @@ class DownloadPluginEndpoint(AbstractPluginEndpoint):
         loop = asyncio.get_running_loop()
         # with ThreadPoolExecutor() as pool:
         await loop.run_in_executor(
-            None, self.__zip, (folder, plugin_file_temp))
+            None, self.__zip, folder, plugin_file_temp)
 
         async with async_open(plugin_file_temp, mode='rb') as plugin_zip:
             plugin_contents = await plugin_zip.read()

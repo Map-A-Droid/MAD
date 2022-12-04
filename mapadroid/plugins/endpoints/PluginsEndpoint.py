@@ -1,11 +1,12 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, expand_context)
 
 
 class PluginsEndpoint(AbstractMadminRootEndpoint):
     """
-    "/plugins"
+    "/plugins/"
     """
 
     # TODO: Auth

@@ -4,7 +4,7 @@ import os
 import pkgutil
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Dict
+from typing import Dict, List
 
 import aiohttp_jinja2
 import jinja2
@@ -93,7 +93,7 @@ class PluginCollection(object):
         """Constructor that initiates the reading of all available plugins
         when an instance of the PluginCollection object is created
         """
-        self.plugins = []
+        self._plugins_loaded = []
         self.seen_paths = []
 
         self.plugin_package = plugin_package
@@ -101,33 +101,37 @@ class PluginCollection(object):
         self._logger = self._mad_parts['logger']
         self._plugins_subapp = web.Application()
         self._plugins_subapp["plugin_package"] = plugin_package
-        self._plugins_subapp["plugins"] = self.plugins
+        self._plugins_subapp["plugins"] = self._plugins_loaded
         self._plugins_subapp['db_wrapper'] = self._mad_parts["db_wrapper"]
         self._plugins_subapp['mad_args'] = self._mad_parts["args"]
         self._plugins_subapp['mapping_manager'] = self._mad_parts["mapping_manager"]
         self._plugins_subapp['websocket_server'] = self._mad_parts["ws_server"]
-        self._plugins_subapp["plugin_hotlink"] = self._mad_parts['madmin'].get_plugin_hotlink()
         self._plugins_subapp["storage_obj"] = self._mad_parts["storage_elem"]
         self._plugins_subapp['device_updater'] = self._mad_parts["device_updater"]
         register_plugin_endpoints(self._plugins_subapp)
 
-        self.__load_plugins()
+    def get_plugins(self) -> List[Dict]:
+        return self._plugins_loaded
 
     async def finish_init(self):
+        if 'madmin' not in self._mad_parts:
+            raise RuntimeError("Missing madmin instance")
+        self.__load_plugins()
         await self.__apply_all_plugins_on_value()
         self.__register_to_madmin()
 
     def __register_to_madmin(self):
-        for plugin in self.plugins:
+        for plugin in self._plugins_loaded:
             plugin["plugin"].register_app()
+        self._plugins_subapp["plugin_hotlink"] = self._mad_parts['madmin'].get_plugin_hotlink()
         self._mad_parts['madmin'].register_plugin("custom_plugins", self._plugins_subapp)
 
     def __load_plugins(self):
         """Reset the list of all plugins and initiate the walk over the main
         provided plugin package to load all available plugins
         """
-        self.plugins = []
-        self.seen_paths = []
+        self._plugins_loaded.clear()
+        self.seen_paths.clear()
 
         self._logger.info(f'Looking for plugins under package {self.plugin_package}')
         self.__walk_package(self.plugin_package)
@@ -135,7 +139,7 @@ class PluginCollection(object):
     async def __apply_all_plugins_on_value(self):
         """Apply all of the plugins on the argument supplied to this function
         """
-        for plugin in self.plugins:
+        for plugin in self._plugins_loaded:
             self._logger.info(f'Applying {plugin["plugin"].pluginname}: '
                               f'{await plugin["plugin"].run()}')
             plugin["name"] = plugin["plugin"].pluginname
@@ -155,7 +159,7 @@ class PluginCollection(object):
                         # Only add classes that are a sub class of Plugin, but NOT Plugin itself
                         if issubclass(plugin, Plugin) & (plugin is not Plugin):
                             self._logger.info(f'Found plugin class: {plugin.__name__}')
-                            self.plugins.append({"plugin": plugin(self._plugins_subapp, self._mad_parts),
+                            self._plugins_loaded.append({"plugin": plugin(self._plugins_subapp, self._mad_parts),
                                                  "path": [package for package in imported_package.__path__][0]})
 
             # Now that we have looked at all the modules in the current package, start looking

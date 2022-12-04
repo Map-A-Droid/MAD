@@ -148,8 +148,6 @@ async def start():
             webhook_task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
-    madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
-                    quest_gen)
 
     # starting plugin system
     plugin_parts = {
@@ -159,7 +157,6 @@ async def start():
         'event': event,
         'jobstatus': jobstatus,
         'logger': get_logger(LoggerEnums.plugin),
-        'madmin': madmin,
         'mapping_manager': mapping_manager,
         'mitm_mapper': mitm_mapper,
         'storage_elem': storage_elem,
@@ -168,6 +165,9 @@ async def start():
     }
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
+    madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
+                    quest_gen)
+    plugin_parts["madmin"] = madmin
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added
 

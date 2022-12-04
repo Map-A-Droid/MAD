@@ -10,7 +10,8 @@ from aiohttp.abc import Request
 from loguru import logger
 from werkzeug.utils import secure_filename
 
-from mapadroid.plugins.endpoints.AbstractPluginEndpoint import AbstractPluginEndpoint
+from mapadroid.plugins.endpoints.AbstractPluginEndpoint import \
+    AbstractPluginEndpoint
 
 
 class UploadPluginEndpoint(AbstractPluginEndpoint):
@@ -61,8 +62,8 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
         try:
             async with async_open(mpl_file, "r") as plugin_file:
                 data = json.loads(await plugin_file.read())
-        except (TypeError, ValueError):
-            logger.error("Old or wrong plugin format - abort")
+        except (TypeError, ValueError) as e:
+            logger.error("Old or wrong plugin format - abort: {}", e)
             return False
         else:
             pass
@@ -91,7 +92,7 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
             loop = asyncio.get_running_loop()
             # with ThreadPoolExecutor() as pool:
             await loop.run_in_executor(
-                None, self.__unzip, (extractpath, plugin_tmp_zip))
+                None, self.__unzip, extractpath, plugin_tmp_zip)
 
             os.remove(plugin_tmp_zip)
 

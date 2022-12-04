@@ -23,8 +23,8 @@ from mapadroid.mad_apk import get_storage_obj
 from mapadroid.madmin.madmin import MADmin
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerServer import MappingManagerServer
-from mapadroid.mitm_receiver.MitmDataProcessorManager import \
-    MitmDataProcessorManager
+from mapadroid.mitm_receiver.data_processing.InProcessMitmDataProcessorManager import \
+    InProcessMitmDataProcessorManager
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.plugins.pluginBase import PluginCollection
@@ -126,7 +126,7 @@ async def start():
     stats_handler: StatsHandlerServer = StatsHandlerServer(db_wrapper)
     await stats_handler.start()
 
-    mitm_data_processor_manager = MitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen)
+    mitm_data_processor_manager = InProcessMitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen)
     await mitm_data_processor_manager.launch_processors()
 
     mitm_receiver = MITMReceiver(mitm_mapper, mapping_manager, db_wrapper,
@@ -156,8 +156,7 @@ async def start():
             webhook_task: Task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
-    madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
-                    quest_gen)
+
 
     # starting plugin system
     plugin_parts = {
@@ -167,7 +166,6 @@ async def start():
         'event': event,
         'jobstatus': jobstatus,
         'logger': get_logger(LoggerEnums.plugin),
-        'madmin': madmin,
         'mapping_manager': mapping_manager,
         'mitm_mapper': mitm_mapper,
         'mitm_receiver': mitm_receiver,
@@ -178,6 +176,9 @@ async def start():
     }
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
+    madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
+                    quest_gen)
+    plugin_parts["madmin"] = madmin
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added
 
