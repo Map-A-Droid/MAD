@@ -73,7 +73,7 @@ class UploadPluginEndpoint(AbstractPluginEndpoint):
         plugin_version = data['plugin_version']
 
         async with async_open(plugin_tmp_zip, "wb") as tmp_plugin:
-            await tmp_plugin.write(bytearray(plugin_content))
+            await tmp_plugin.write(plugin_content)
 
         extractpath = os.path.join(self._get_plugin_package(), plugin_meta_name)
         logger.debug("Plugin base path: " + str(base))
