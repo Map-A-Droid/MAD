@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import Dict, List, Optional, Tuple
+from loguru import logger
 
 from aiohttp.abc import Request
 
@@ -49,8 +50,11 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
     async def _get_spawn_details_helper(self, area_id: int, event_id: int, today_only: bool = False,
                                         older_than_x_days: Optional[int] = None, sum_only: bool = False, index=0):
         active_spawns: list = []
-        spawns_and_events = await self._get_spawns_and_events(area_id, event_id, index, older_than_x_days,
-                                                              today_only)
+        spawns_and_events: Optional[Dict[int, Tuple[TrsSpawn, TrsEvent]]] = await self._get_spawns_and_events(
+            area_id, event_id, index, older_than_x_days, today_only)
+        if not spawns_and_events:
+            logger.warning("Failed retrieving spawn details as no spawns could be filtered")
+            return 0
         if sum_only:
             return len(spawns_and_events)
         for spawn_id, spawn_event in spawns_and_events.items():
@@ -63,12 +67,18 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
 
     async def _get_spawnpoints_of_event(self, area_id: int, event_id: int, today_only: bool = False,
                                         older_than_x_days: Optional[int] = None, index=0) -> List[TrsSpawn]:
-        spawns_and_events = await self._get_spawns_and_events(area_id, event_id, index, older_than_x_days, today_only)
+        spawns_and_events: Optional[Dict[int, Tuple[TrsSpawn, TrsEvent]]] = await self._get_spawns_and_events(
+            area_id, event_id, index, older_than_x_days, today_only)
+        if not spawns_and_events:
+            logger.warning("Failed to retrieve spawnpoints to filter for event")
+            return []
         return [spawn_event[0] for spawn_id, spawn_event in spawns_and_events.items()]
 
-    async def _get_spawns_and_events(self, area_id, event_id, index, older_than_x_days, today_only):
-        possible_fences = await get_geofences(self._get_mapping_manager(),
-                                              area_id_req=area_id)
+    async def _get_spawns_and_events(self, area_id, event_id, index, older_than_x_days, today_only) \
+            -> Optional[Dict[int, Tuple[TrsSpawn, TrsEvent]]]:
+        possible_fences: Dict[int, Dict] = await get_geofences(self._get_mapping_manager(), area_id_req=area_id)
+        if int(area_id) not in possible_fences:
+            return None
         fence: Tuple[str, Optional[GeofenceHelper]] = await generate_coords_from_geofence(self._get_mapping_manager(),
                                                                                           str(list(possible_fences[
                                                                                                        int(area_id)][
