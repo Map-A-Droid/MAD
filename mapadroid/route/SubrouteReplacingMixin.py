@@ -25,9 +25,11 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
         elif not routepool:
             logger.info("Routepool passed is empty")
             return None
+        coords_to_use: List[Location] = [location for location in self._current_route_round_coords
+                                         if location not in self._coords_to_be_ignored]
         logger.info("Calculating routepool for current route of length {} for {} routepool entries",
-                    len(self._current_route_round_coords), len(routepool))
-        new_subroute_length = math.floor(len(self._current_route_round_coords) /
+                    len(coords_to_use), len(routepool))
+        new_subroute_length = math.floor(len(coords_to_use) /
                                          len(routepool))
         reduced_routepools = [(origin, routepool[origin].time_added) for origin in
                               routepool]
@@ -37,9 +39,9 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
             reduced_routepool_to_process = {origin: routepool[origin] for origin, time_added in sorted_routepools[:-1]}
             return await self._worker_changed_update_routepools(reduced_routepool_to_process)
 
-        extra_length_workers = len(self._current_route_round_coords) % len(routepool)
+        extra_length_workers = len(coords_to_use) % len(routepool)
         i: int = 0
-        temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
+        temp_total_round: collections.deque = collections.deque(coords_to_use)
 
         if extra_length_workers > 0:
             logger.debug("New subroute length: {}-{}", new_subroute_length, new_subroute_length + 1)

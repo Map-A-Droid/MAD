@@ -472,7 +472,7 @@ class RouteManagerBase(ABC):
             routepool_entry.rounds += 1
         if len(self._current_route_round_coords) >= 0 and len(routepool_entry.queue) == 0:
             # only quest could hit this else!
-            logger.info("finished subroute, updating all subroutes if necessary")
+            logger.info("Finished subroute, updating all subroutes if necessary")
 
             if self._should_get_new_coords_after_finishing_route():
                 # check for coords not in other workers to get a real open coord list
@@ -535,8 +535,11 @@ class RouteManagerBase(ABC):
         """
         if self._check_coords_before_returning(next_coord.lat, next_coord.lng, origin):
             if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
-                logger.debug("Removing coord {} from _current_route_round_coords", next_coord)
-                self._current_route_round_coords.remove(next_coord)
+                logger.debug("Removing coord {} from _current_route_round_coords "
+                             "(occurrences: {})", next_coord, self._current_route_round_coords.count(next_coord))
+                while next_coord in self._current_route_round_coords:
+                    self._current_route_round_coords.remove(next_coord)
+                logger.debug("Done removing coord from current round coords")
             return True
         return False
 
