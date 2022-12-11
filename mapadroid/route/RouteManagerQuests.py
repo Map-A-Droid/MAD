@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
@@ -11,7 +12,6 @@ from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madGlobals import QuestLayer
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
@@ -53,6 +53,7 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for
                                               stop_id, stop in
                                               stops.items()]
+        logger.info("Quest area got {} locations to scan.", len(locations_of_stops))
         return locations_of_stops
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
@@ -62,7 +63,7 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
                 return False
 
             if self._start_calc.is_set():
-                logger.info("Another process already calculate the new route")
+                logger.info("Another process is already calculating the new route")
                 return True
             if len(self._stoplist) == 0:
                 logger.info("No new stops - leaving now.")
@@ -73,10 +74,9 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
             # remove coords to be ignored from coords
             locations_of_stops = [coord for coord in locations_of_stops if coord not in self._coords_to_be_ignored]
             if len(locations_of_stops) > 0:
-                logger.info("Getting new coords - recalculating route")
-                await self.calculate_route(True)
+                logger.info("Got {} coords left to scan", len(locations_of_stops))
             else:
-                logger.info("Dont getting new stops - leaving now.")
+                logger.info("No new stops - leaving area now.")
                 await self.stop_routemanager()
                 return False
             return True
