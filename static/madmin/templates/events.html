@@ -35,7 +35,7 @@
                     "targets": [2, 3],
                     "render": function (value) {
                         if (value === null) return "";
-                        return moment(value * 1000).format('YYYY-MM-DD HH:mm:ss');
+                        return moment.utc(value * 1000).format('YYYY-MM-DD HH:mm:ss');
                     }
                 }
             ],
