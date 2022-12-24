@@ -495,7 +495,7 @@ class MappingManager(AbstractMappingManager):
             try:
                 await routemanager.start_routemanager()
             except RoutemanagerShuttingDown as e:
-                logger.warning("Unable to start routemanager for recalc")
+                logger.warning("Unable to start routemanager for recalc: {}", e)
                 return False
             args = (False, True)
             kwargs = {
