@@ -596,8 +596,8 @@ class MappingManager(AbstractMappingManager):
                                                                  mon_ids_iv=self.get_monlist(area_id)
                                                                  )
             logger.info("Initializing area {}", area.name)
-            task = loop.create_task(route_manager.calculate_route(True))
-            areas_procs[area_id] = task
+            # task = loop.create_task(route_manager.calculate_route(False))
+            # areas_procs[area_id] = task
 
             routemanagers[area.area_id] = route_manager
         for area in areas_procs.keys():
