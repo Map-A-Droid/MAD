@@ -40,11 +40,14 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
             return await self._get_stops_without_quests_on_layer(session)
 
     async def calculate_route(self, dynamic: bool, overwrite_persisted_route: bool = False) -> None:
-        if not overwrite_persisted_route:
-            # also store the latest set in _stoplist
-            async with self.db_wrapper as session, session:
+        async with self.db_wrapper as session, session:
+            if dynamic:
+                # also store the latest set in _stoplist
                 locations_of_stops: List[Location] = await self._get_stops_without_quests_on_layer(session)
-            self._stoplist = locations_of_stops
+            else:
+                locations_of_stops: List[Location] = await PokestopHelper.get_locations_in_fence(session,
+                                                                                                 self.geofence_helper)
+        self._stoplist = locations_of_stops
         await super().calculate_route(dynamic, overwrite_persisted_route)
 
     async def _get_stops_without_quests_on_layer(self, session: AsyncSession) -> List[Location]:

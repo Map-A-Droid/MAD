@@ -237,7 +237,7 @@ new Vue({
             routes: {
                 coordinateRadius: {
                     raids: 490,
-                    quests: 40,
+                    quests: 67,
                     mons: 67
                 }
             },
@@ -1729,7 +1729,7 @@ if (route.mode === "mon_mitm" && typeof route.editableId === "number") {
                     <span class="map-popup-group-edit"></span>
                     <input type="text" class="map-popup-group-save hidden" />
                   </strong>
-                </div>              
+                </div>
               </div>`
             );
 
@@ -2156,7 +2156,7 @@ if (route.mode === "mon_mitm" && typeof route.editableId === "number") {
             this.settings.cleanup = this.getStoredSetting("settings-cleanup", true);
             this.settings.maptiles = this.getStoredSetting("settings-maptiles", "cartodblight");
             this.settings.routes.coordinateRadius.raids = this.getStoredSetting("settings-coordinateRadius-raids", 490);
-            this.settings.routes.coordinateRadius.quests = this.getStoredSetting("settings-coordinateRadius-quests", 40);
+            this.settings.routes.coordinateRadius.quests = this.getStoredSetting("settings-coordinateRadius-quests", 67);
             this.settings.routes.coordinateRadius.mons = this.getStoredSetting("settings-coordinateRadius-mons", 67);
             this.settings.cellUpdateTimeout = this.getStoredSetting('settings-cellUpdateTimeout', 0);
             for (const index of Object.keys(this.layers.stat)) {

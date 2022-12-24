@@ -484,6 +484,7 @@ class MappingManager(AbstractMappingManager):
 
     async def routemanager_recalculate(self, routemanager_id: int) -> bool:
         """
+        Recalculates the route with dynamic flag set to False
         :returns: Whether the recalculation was started or not
         """
         routemanager = self.__fetch_routemanager(routemanager_id)
@@ -491,7 +492,11 @@ class MappingManager(AbstractMappingManager):
             logger.error("Routemanager {} is not loaded to recalculate a route.", routemanager_id)
             return False
         try:
-            await routemanager.start_routemanager()
+            try:
+                await routemanager.start_routemanager()
+            except RoutemanagerShuttingDown as e:
+                logger.warning("Unable to start routemanager for recalc")
+                return False
             args = (False, True)
             kwargs = {
             }
