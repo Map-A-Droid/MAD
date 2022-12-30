@@ -1,11 +1,13 @@
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataHolder import LatestMitmDataHolder
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataHolder import \
+    LatestMitmDataHolder
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 
 logger = get_logger(LoggerEnums.mitm_mapper)
 
@@ -60,7 +62,8 @@ class PlayerData(AbstractWorkerHolder):
     def get_full_latest_data(self) -> Dict[Union[int, str], LatestMitmDataEntry]:
         return self._latest_data_holder.get_all()
 
-    def update_latest(self, key: str, value: Any, timestamp_received: Optional[int] = None,
+    def update_latest(self, key: str, value: Optional[Union[List, Dict]],
+                      timestamp_received: Optional[int] = None,
                       timestamp_of_data_retrieval: Optional[int] = None,
                       location: Optional[Location] = None) -> None:
         self._latest_data_holder.update(key, value, timestamp_received, timestamp_of_data_retrieval, location)

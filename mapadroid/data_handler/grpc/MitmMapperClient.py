@@ -1,20 +1,24 @@
 import asyncio
-from typing import Optional, Dict, Union, List
+from typing import Dict, List, Optional, Union
 
 from aiocache import cached
 from google.protobuf import json_format
 from grpc.aio import AioRpcError
 from loguru import logger
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
-from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import LastMoved, LatestMitmDataEntryResponse, \
-    LatestMitmDataEntryRequest, PokestopVisitsResponse, \
-    LevelResponse, InjectionStatus, InjectedRequest, LastKnownLocationResponse, SetLevelRequest, \
-    SetPokestopVisitsRequest, SetQuestsHeldRequest, GetQuestsHeldResponse
+from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import (
+    GetQuestsHeldResponse, InjectedRequest, InjectionStatus,
+    LastKnownLocationResponse, LastMoved, LatestMitmDataEntryRequest,
+    LatestMitmDataEntryResponse, LevelResponse, PokestopVisitsResponse,
+    SetLevelRequest, SetPokestopVisitsRequest, SetQuestsHeldRequest)
 from mapadroid.grpc.compiled.shared.Worker_pb2 import Worker
-from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import MitmMapperStub
+from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import \
+    MitmMapperStub
 from mapadroid.utils.collections import Location
 
 
@@ -64,7 +68,8 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             # TODO: Return time.time() to continue scans or throw a custom exception that needs to be handled?
             return 0
 
-    async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
+    async def update_latest(self, worker: str, key: str, value: Union[List, Dict],
+                            timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         request: mitm_mapper_pb2.LatestMitmDataEntryUpdateRequest = mitm_mapper_pb2.LatestMitmDataEntryUpdateRequest()
         # TODO: Threaded transformation?
@@ -215,4 +220,3 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
             return None
         else:
             return [quest_id for quest_id in response.quests_held.quest_ids]
-

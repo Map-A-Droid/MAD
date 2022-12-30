@@ -1,10 +1,11 @@
 import time
-from typing import Dict, Any, Optional, Union, List
+from typing import Any, Dict, List, Optional, Union
 
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.mitm_mapper)
 
@@ -56,7 +57,8 @@ class MitmDataHandler:
         logger.debug2("Request full latest called")
         return player_data.get_full_latest_data()
 
-    def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
+    def update_latest(self, worker: str, key: str, value: Optional[Union[List, Dict]],
+                      timestamp_received_raw: float = None,
                       timestamp_received_receiver: float = None, location: Location = None) -> None:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         if timestamp_received_raw is None:
@@ -82,4 +84,3 @@ class MitmDataHandler:
     async def get_quests_held(self, worker: str) -> Optional[List[int]]:
         player_data: PlayerData = self.__ensure_worker_data(worker)
         return await player_data.get_quests_held()
-

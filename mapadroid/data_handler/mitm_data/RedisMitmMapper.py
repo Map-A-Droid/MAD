@@ -46,7 +46,8 @@ class RedisMitmMapper(AbstractMitmMapper):
         last_moved: Optional[int] = await self.__cache.get(RedisMitmMapper.LAST_POSSIBLY_MOVED_KEY.format(worker))
         return int(last_moved) if last_moved else 0
 
-    async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
+    async def update_latest(self, worker: str, key: str, value: Union[List, Dict],
+                            timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         if timestamp_received_raw is None:
             timestamp_received_raw = int(time.time())

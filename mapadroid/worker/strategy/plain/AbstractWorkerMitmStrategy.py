@@ -1,21 +1,27 @@
 import asyncio
 import math
 import time
-from abc import abstractmethod, ABC
-from typing import Dict, Tuple, Optional, List, Set, Union
+from abc import ABC, abstractmethod
+from typing import Dict, List, Optional, Set, Tuple, Union
 
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from aioredis import Redis
+
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import TransportType, InternalStopWorkerException, FortSearchResultTypes
+from mapadroid.utils.madGlobals import (FortSearchResultTypes,
+                                        InternalStopWorkerException,
+                                        TransportType)
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
-from mapadroid.worker.strategy.AbstractMitmBaseStrategy import AbstractMitmBaseStrategy
-from aioredis import Redis
+from mapadroid.worker.strategy.AbstractMitmBaseStrategy import \
+    AbstractMitmBaseStrategy
 
 logger = get_logger(LoggerEnums.worker)
 
@@ -229,10 +235,11 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.
+        unquest_stops: Union[List, Dict] = list(await self._get_unquest_stops())
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_encountered",
                                               value=self._encounter_ids)
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_iv", value=ids_iv)
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="unquest_stops",
-                                              value=await self._get_unquest_stops())
+                                              value=unquest_stops)
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="injected_settings",
                                               value=injected_settings)

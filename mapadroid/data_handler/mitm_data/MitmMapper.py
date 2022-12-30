@@ -1,9 +1,11 @@
 import asyncio
-from typing import Optional, Union, List
+from typing import Dict, List, Optional, Union
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.utils.collections import Location
 
 
@@ -17,7 +19,8 @@ class MitmMapper(AbstractMitmMapper):
     async def get_last_possibly_moved(self, worker: str) -> int:
         return await self._mitm_data_handler.get_last_possibly_moved(worker)
 
-    async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
+    async def update_latest(self, worker: str, key: str, value: Union[List, Dict],
+                            timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         loop = asyncio.get_running_loop()
         loop.run_in_executor(None, self._mitm_data_handler.update_latest, worker, key, value, timestamp_received_raw,

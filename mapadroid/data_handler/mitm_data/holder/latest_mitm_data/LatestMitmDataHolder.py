@@ -1,7 +1,8 @@
-from typing import Dict, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.utils.collections import Location
 
 
@@ -11,7 +12,7 @@ class LatestMitmDataHolder(AbstractWorkerHolder):
         AbstractWorkerHolder.__init__(self, worker)
         self.__entries: Dict[Union[int, str], LatestMitmDataEntry] = {}
 
-    def update(self, key: Union[int, str], value: Any, timestamp_received: Optional[int] = None,
+    def update(self, key: Union[int, str], value: Union[List, Dict], timestamp_received: Optional[int] = None,
                timestamp_of_data_retrieval: Optional[int] = None,
                location: Optional[Location] = None) -> None:
         latest_entry: Optional[LatestMitmDataEntry] = self.__entries.get(key)

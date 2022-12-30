@@ -1,9 +1,11 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from loguru import logger
 
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
-from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
+from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import \
+    AbstractMitmReceiverRootEndpoint
 
 
 class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
@@ -43,13 +45,11 @@ class GetLatestEndpoint(AbstractMitmReceiverRootEndpoint):
         if ids_encountered_entry is not None:
             ids_encountered = ids_encountered_entry.data
 
-        unquest_stops_res: List = []
+        unquest_stops_res: List[str] = []
         unquest_stops: Optional[LatestMitmDataEntry] = await self._get_mitm_mapper().request_latest(
             origin, "unquest_stops")
-        if unquest_stops is not None:
-            unquest_stops_res: List = unquest_stops.data
-            if not unquest_stops:
-                unquest_stops_res: List = []
+        if unquest_stops and unquest_stops.data:
+            unquest_stops_res: List[str] = unquest_stops.data
 
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings_dict,
                     "ids_encountered": ids_encountered, "safe_items": safe_items,

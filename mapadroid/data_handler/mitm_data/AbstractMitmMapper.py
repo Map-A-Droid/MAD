@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any, List
+from typing import Any, Dict, List, Optional, Union
 
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.utils.collections import Location
 
 
@@ -14,7 +15,8 @@ class AbstractMitmMapper(ABC):
         pass
 
     @abstractmethod
-    async def update_latest(self, worker: str, key: str, value: Any, timestamp_received_raw: float = None,
+    async def update_latest(self, worker: str, key: str, value: Union[List, Dict],
+                            timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         pass
 
