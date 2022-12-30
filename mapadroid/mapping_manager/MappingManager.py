@@ -402,7 +402,7 @@ class MappingManager(AbstractMappingManager):
 
     async def routemanager_get_stops_with_quests(self, routemanager_id: int) -> Set[str]:
         routemanager = self.__fetch_routemanager(routemanager_id=routemanager_id)
-        return await routemanager.get_stops_with_quests()
+        return await routemanager.get_stop_ids_with_quests()
 
     async def routemanager_get_route_stats(self, routemanager_id: int, origin: str) -> Optional[Tuple[int, int]]:
         routemanager = self.__fetch_routemanager(routemanager_id)

@@ -216,9 +216,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         """
         pass
 
-    async def pre_location_update(self):
-        await self._update_injection_settings()
-
     async def move_to_location(self):
         distance, area_settings = await self._get_route_manager_settings_and_distance_to_current_location()
         area_settings: SettingsAreaPokestop = area_settings
@@ -481,18 +478,13 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException("Failed reaching the pogo main screen after switching accounts")
 
-    async def _update_injection_settings(self):
+    async def _get_ids_iv_and_scanmode(self) -> Tuple[List[int], str]:
         injected_settings = {}
         scanmode = "quests"
         injected_settings["scanmode"] = scanmode
         ids_iv: List[int] = []
         self._encounter_ids = {}
-        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_encountered",
-                                              value=self._encounter_ids)
-        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_iv", value=ids_iv)
-
-        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="injected_settings",
-                                              value=injected_settings)
+        return ids_iv, scanmode
 
     async def _wait_for_data_after_moving(self, timestamp: float, proto_to_wait_for: ProtoIdentifier, timeout) \
             -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]], float]:

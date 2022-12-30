@@ -2,25 +2,31 @@ import asyncio
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Optional, Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 from loguru import logger
 
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsWalkerarea
 from mapadroid.mapping_manager.MappingManager import MappingManager
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.collections import Location, ScreenCoordinates
-from mapadroid.utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
+from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
+                                 get_lat_lng_offsets_by_distance)
 from mapadroid.utils.madConstants import WALK_AFTER_TELEPORT_SPEED
-from mapadroid.utils.madGlobals import InternalStopWorkerException, application_args, PositionType, \
-    WebsocketWorkerRemovedException, TransportType, ScreenshotType
+from mapadroid.utils.madGlobals import (InternalStopWorkerException,
+                                        PositionType, ScreenshotType,
+                                        TransportType,
+                                        WebsocketWorkerRemovedException,
+                                        application_args)
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
@@ -383,6 +389,7 @@ class AbstractWorkerStrategy(ABC):
         return True
 
     async def stop_pogo(self) -> bool:
+        logger.info("Stopping pogo")
         attempts = 0
         stop_result = await self._communicator.stop_app("com.nianticlabs.pokemongo")
         pogo_topmost = await self._communicator.is_pogo_topmost()

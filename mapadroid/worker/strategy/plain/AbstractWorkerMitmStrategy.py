@@ -36,7 +36,7 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
     async def pre_work_loop(self):
         await super().pre_work_loop()
         logger.info("MITM worker starting")
-        await self.__update_injection_settings()
+        await self._update_injection_settings()
 
         if not await self._wait_for_injection() or self._worker_state.stop_worker_event.is_set():
             raise InternalStopWorkerException("Worker stopped in pre work loop")
@@ -46,9 +46,6 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
             if not await self._restart_pogo():
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException("Worker stopped in pre work loop")
-
-    async def pre_location_update(self):
-        await self.__update_injection_settings()
 
     async def move_to_location(self):
         distance, routemanager_settings = await self._get_route_manager_settings_and_distance_to_current_location()
@@ -189,57 +186,3 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def worker_specific_setup_stop(self):
         pass
-
-    @abstractmethod
-    async def _get_ids_iv_and_scanmode(self) -> Tuple[List[int], str]:
-        pass
-
-    async def _get_unquest_stops(self) -> Set[str]:
-        """
-        Populate with stop IDs which already hold quests for the given area to be scanned
-        Returns: Set of pokestop IDs which already hold a quest
-        """
-        return set()
-
-    async def __update_injection_settings(self):
-        injected_settings = {}
-
-        ids_iv, scanmode = await self._get_ids_iv_and_scanmode()
-        injected_settings["scanmode"] = scanmode
-
-        # if iv ids are specified we will sync the workers encountered ids to newest time.
-        if ids_iv:
-            async with self._db_wrapper as session, session:
-                (self._latest_encounter_update, encounter_ids) = await PokemonHelper.get_encountered(
-                    session,
-                    await self._mapping_manager.routemanager_get_geofence_helper(self._area_id),
-                    self._latest_encounter_update)
-            if encounter_ids:
-                logger.debug("Found {} new encounter_ids", len(encounter_ids))
-            # str keys since protobuf requires string keys for json...
-            encounter_ids_prepared: Dict[str, int] = {str(encounter_id): timestamp for encounter_id, timestamp in
-                                                      encounter_ids.items()}
-            self._encounter_ids: Dict[str, int] = {**encounter_ids_prepared, **self._encounter_ids}
-            # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
-            # apears but it is a fact.
-            max_age_ = DatetimeWrapper.now().timestamp()
-            remove: List[str] = []
-            for key, value in self._encounter_ids.items():
-                if int(value) < max_age_:
-                    remove.append(key)
-
-            for key in remove:
-                del self._encounter_ids[key]
-
-            logger.debug("Encounter list len: {}", len(self._encounter_ids))
-            # TODO: here we have the latest update of encountered mons.
-            # self._encounter_ids contains the complete dict.
-            # encounter_ids only contains the newest update.
-        unquest_stops: Union[List, Dict] = list(await self._get_unquest_stops())
-        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_encountered",
-                                              value=self._encounter_ids)
-        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_iv", value=ids_iv)
-        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="unquest_stops",
-                                              value=unquest_stops)
-        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="injected_settings",
-                                              value=injected_settings)

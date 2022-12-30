@@ -1,11 +1,12 @@
-from typing import List, Optional, Set, Dict
+from typing import Dict, List, Optional, Set
 
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
-from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
+from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
+                                SettingsRoutecalc)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
@@ -68,7 +69,7 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
                                                             QuestLayer(self._settings.layer),
                                                             without_quests=False)
         stop_ids: Set[str] = set()
-        for stop_id, stop in stops:
+        for stop_id, stop in stops.items():
             stop_ids.add(stop_id)
         return stop_ids
 

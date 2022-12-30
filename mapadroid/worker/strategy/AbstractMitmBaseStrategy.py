@@ -1,5 +1,8 @@
 import asyncio
 import sys
+
+from mapadroid.db.helper.PokemonHelper import PokemonHelper
+
 if sys.version_info.major == 3 and sys.version_info.minor >= 10:
     from collections.abc import Collection
 else:
@@ -8,7 +11,7 @@ else:
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from loguru import logger
 
@@ -186,6 +189,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                                                                   last_time_received,
                                                                   position_type)
             else:
+                logger.info("Handling proto timeout")
                 await self._handle_proto_timeout(timestamp, position_type)
 
         if type_of_data_returned == ReceivedType.UNDEFINED:
@@ -398,11 +402,12 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         worker_type: WorkerType = WorkerType(routemanager_settings.mode)
         loop = asyncio.get_running_loop()
         loop.create_task(self._stats_handler.stats_collect_location_data(self._worker_state.origin,
-                                                              self._worker_state.current_location, True,
-                                                              fix_ts,
-                                                              position_type, timestamp_received_raw,
-                                                              worker_type, self._worker_state.last_transport_type,
-                                                              now_ts))
+                                                                         self._worker_state.current_location, True,
+                                                                         fix_ts,
+                                                                         position_type, timestamp_received_raw,
+                                                                         worker_type,
+                                                                         self._worker_state.last_transport_type,
+                                                                         now_ts))
 
     async def start_pogo(self) -> bool:
         started_pogo: bool = await super().start_pogo()
@@ -465,3 +470,60 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             return
         await self._communicator.passthrough(
             "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
+
+    async def _get_unquest_stops(self) -> Set[str]:
+        """
+        Populate with stop IDs which already hold quests for the given area to be scanned
+        Returns: Set of pokestop IDs which already hold a quest
+        """
+        return set()
+
+    @abstractmethod
+    async def _get_ids_iv_and_scanmode(self) -> Tuple[List[int], str]:
+        pass
+
+    async def pre_location_update(self):
+        await self._update_injection_settings()
+
+    async def _update_injection_settings(self):
+        injected_settings = {}
+
+        ids_iv, scanmode = await self._get_ids_iv_and_scanmode()
+        injected_settings["scanmode"] = scanmode
+
+        # if iv ids are specified we will sync the workers encountered ids to newest time.
+        if ids_iv:
+            async with self._db_wrapper as session, session:
+                (self._latest_encounter_update, encounter_ids) = await PokemonHelper.get_encountered(
+                    session,
+                    await self._mapping_manager.routemanager_get_geofence_helper(self._area_id),
+                    self._latest_encounter_update)
+            if encounter_ids:
+                logger.debug("Found {} new encounter_ids", len(encounter_ids))
+            # str keys since protobuf requires string keys for json...
+            encounter_ids_prepared: Dict[str, int] = {str(encounter_id): timestamp for encounter_id, timestamp in
+                                                      encounter_ids.items()}
+            self._encounter_ids: Dict[str, int] = {**encounter_ids_prepared, **self._encounter_ids}
+            # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
+            # apears but it is a fact.
+            max_age_ = DatetimeWrapper.now().timestamp()
+            remove: List[str] = []
+            for key, value in self._encounter_ids.items():
+                if int(value) < max_age_:
+                    remove.append(key)
+
+            for key in remove:
+                del self._encounter_ids[key]
+
+            logger.debug("Encounter list len: {}", len(self._encounter_ids))
+            # TODO: here we have the latest update of encountered mons.
+            # self._encounter_ids contains the complete dict.
+            # encounter_ids only contains the newest update.
+        unquest_stops: Union[List, Dict] = list(await self._get_unquest_stops())
+        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_encountered",
+                                              value=self._encounter_ids)
+        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_iv", value=ids_iv)
+        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="unquest_stops",
+                                              value=unquest_stops)
+        await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="injected_settings",
+                                              value=injected_settings)
