@@ -849,7 +849,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                         logger.info('Quest is done without us noticing. Getting new Quest...')
                         break
                     elif to > 2 and await self._is_levelmode() and await self._mitm_mapper.get_poke_stop_visits(
-                        self._worker_state.origin) > 6800:
+                            self._worker_state.origin) > 6800:
                         logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
                     else:
@@ -864,3 +864,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     pass
 
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
+
+    async def _get_unquest_stops(self) -> Set[str]:
+        return await self._mapping_manager.routemanager_get_stops_with_quests(
+            self._area_id)

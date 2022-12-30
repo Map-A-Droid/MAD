@@ -1,11 +1,11 @@
-from typing import List, Optional
+from typing import List, Optional, Set, Dict
 
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
-from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc
+from mapadroid.db.model import SettingsAreaPokestop, SettingsRoutecalc, Pokestop
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
@@ -52,13 +52,25 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         await super().calculate_route(dynamic, overwrite_persisted_route)
 
     async def _get_stops_without_quests_on_layer(self, session: AsyncSession) -> List[Location]:
-        stops = await PokestopHelper.get_without_quests(session, self.geofence_helper,
-                                                        QuestLayer(self._settings.layer))
+        stops = await PokestopHelper.get_stops_with_or_without_quests_exclusive(session, self.geofence_helper,
+                                                                                QuestLayer(self._settings.layer),
+                                                                                without_quests=True)
         locations_of_stops: List[Location] = [Location(float(stop.latitude), float(stop.longitude)) for
                                               stop_id, stop in
                                               stops.items()]
         logger.info("Quest area got {} locations to scan.", len(locations_of_stops))
         return locations_of_stops
+
+    async def get_stop_ids_with_quests(self) -> Set[str]:
+        async with self.db_wrapper as session, session:
+            stops: Dict[str, Pokestop] = await PokestopHelper\
+                .get_stops_with_or_without_quests_exclusive(session, self.geofence_helper,
+                                                            QuestLayer(self._settings.layer),
+                                                            without_quests=False)
+        stop_ids: Set[str] = set()
+        for stop_id, stop in stops:
+            stop_ids.add(stop_id)
+        return stop_ids
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
         async with self._manager_mutex:

@@ -188,14 +188,18 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
     async def _get_ids_iv_and_scanmode(self) -> Tuple[List[int], str]:
         pass
 
+    async def _get_unquest_stops(self) -> Set[str]:
+        """
+        Populate with stop IDs which already hold quests for the given area to be scanned
+        Returns: Set of pokestop IDs which already hold a quest
+        """
+        return set()
+
     async def __update_injection_settings(self):
         injected_settings = {}
 
         ids_iv, scanmode = await self._get_ids_iv_and_scanmode()
         injected_settings["scanmode"] = scanmode
-
-        # getting unprocessed stops (without quest)
-        self.unquestStops = []
 
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv:
@@ -229,6 +233,6 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
                                               value=self._encounter_ids)
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_iv", value=ids_iv)
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="unquest_stops",
-                                              value=self.unquestStops)
+                                              value=await self._get_unquest_stops())
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="injected_settings",
                                               value=injected_settings)

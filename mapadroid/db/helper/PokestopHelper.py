@@ -266,9 +266,10 @@ class PokestopHelper:
         return stop_with_quest
 
     @staticmethod
-    async def get_without_quests(session: AsyncSession,
-                                 geofence_helper: GeofenceHelper,
-                                 quest_layer: QuestLayer) -> Dict[int, Pokestop]:
+    async def get_stops_with_or_without_quests_exclusive(session: AsyncSession,
+                                                         geofence_helper: GeofenceHelper,
+                                                         quest_layer: QuestLayer,
+                                                         without_quests: bool) -> Dict[str, Pokestop]:
         """
         stop_from_db_without_quests
         Args:
@@ -281,15 +282,19 @@ class PokestopHelper:
         """
         stmt = select(Pokestop, TrsQuest) \
             .join(TrsQuest, and_(TrsQuest.GUID == Pokestop.pokestop_id,
-                                 TrsQuest.layer == quest_layer.value), isouter=True)
+                                 TrsQuest.layer == quest_layer.value), isouter=without_quests)
         where_conditions = []
 
         lat, lon = geofence_helper.get_middle_from_fence()
         relevant_timezone: datetime.tzinfo = get_timezone_at(Location(lat, lon))
         tm_now = datetime.now(tz=relevant_timezone)
         timezone_midnight = tm_now.replace(hour=0, minute=0, second=0, microsecond=0)
-        where_conditions.append(or_(TrsQuest.quest_timestamp < timezone_midnight.timestamp(),
-                                    TrsQuest.GUID == None))
+        if without_quests:
+            where_conditions.append(or_(TrsQuest.quest_timestamp < timezone_midnight.timestamp(),
+                                        TrsQuest.GUID == None))
+        else:
+            where_conditions.append(or_(TrsQuest.quest_timestamp >= timezone_midnight.timestamp(),
+                                        TrsQuest.GUID != None))
 
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
         where_conditions.append(and_(Pokestop.latitude >= min_lat,
@@ -299,9 +304,11 @@ class PokestopHelper:
 
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)
-        stops_without_quests: Dict[int, Pokestop] = {}
+        stops_without_quests: Dict[str, Pokestop] = {}
         for (stop, quest) in result.all():
-            if quest and (quest.layer != quest_layer.value or quest.quest_timestamp > timezone_midnight.timestamp()):
+            if quest and (quest.layer != quest_layer.value
+                          or (without_quests and quest.quest_timestamp >= timezone_midnight.timestamp())
+                          or (not without_quests and quest.quest_timestamp < timezone_midnight.timestamp())):
                 continue
             if geofence_helper.is_coord_inside_include_geofence(Location(float(stop.latitude), float(stop.longitude))):
                 stops_without_quests[stop.pokestop_id] = stop

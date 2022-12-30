@@ -698,6 +698,14 @@ class RouteManagerBase(ABC):
         """
         return None
 
+    async def get_stop_ids_with_quests(self) -> Set[str]:
+        """
+        Method to request all stop IDs of the current area being scanned (only used during questing really)
+        Returns:
+
+        """
+        return set()
+
     async def get_amount_of_coords_scannable(self) -> int:
         """
         Returns: Number of locations potentially scannable (without clustering) minus those to be ignored.
