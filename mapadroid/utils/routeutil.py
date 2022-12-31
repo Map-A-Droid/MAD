@@ -62,14 +62,14 @@ def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Opti
     if walker_settings.eventid is not None and walker_settings.eventid != eventid:
         logger.warning("Area is used for another event - leaving now")
         return False
+    # Time, max workers etc may check out... but we also need to check if there actually are locations to be scanned
+    # Check the amount of coords left at this time (vs amount of workers already registered
+    if workers_registered_to_route == 0 and coords_scannable == 0:
+        logger.warning("Area is not being scanned right now and no coords are left to be scanned")
+        return False
     if walker_settings.algo_type in ('timer', 'period', 'coords', 'idle'):
         walkervalue = walker_settings.algo_value
         if walkervalue is None and walker_settings.algo_type == 'coords' or len(walkervalue) == 0:
             return True
         return check_walker_value_type(walkervalue, location)
-    # Time checks out, max workers etc... but we also need to check if there actually are locations to be scanned
-    # Check the amount of coords left at this time (vs amount of workers already registered
-    if workers_registered_to_route == 0 and coords_scannable == 0:
-        logger.warning("Area is not being scanned right now and no coords are left to be scanned")
-        return False
     return True
