@@ -2,23 +2,21 @@ import asyncio
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Set, Tuple, Union
 
 from aioredis import Redis
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
-from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
                                         InternalStopWorkerException,
                                         TransportType)
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import \
     AbstractMitmBaseStrategy

@@ -18,20 +18,20 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.websocket.communicator import Communicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
+from mapadroid.websocket.communicator import Communicator
+from mapadroid.worker.Worker import Worker
+from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
-from mapadroid.worker.Worker import Worker
-from mapadroid.worker.WorkerState import WorkerState
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)

@@ -9,8 +9,8 @@ from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
 from mapadroid.grpc.compiled.stats_handler.stats_handler_pb2 import Stats
 from mapadroid.grpc.stubs.stats_handler.stats_handler_pb2_grpc import (
     StatsHandlerServicer, add_StatsHandlerServicer_to_server)
-from mapadroid.utils.collections import Location
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (MonSeenTypes, PositionType,
                                         TransportType, application_args)

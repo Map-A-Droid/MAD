@@ -11,8 +11,8 @@ from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.utils.collections import Location
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
+from mapadroid.utils.collections import Location
 
 
 class RedisMitmMapper(AbstractMitmMapper):

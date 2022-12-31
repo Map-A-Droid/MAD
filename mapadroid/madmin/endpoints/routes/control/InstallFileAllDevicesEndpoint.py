@@ -1,6 +1,3 @@
-import asyncio
-import math
-import time
 from typing import Optional
 
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \

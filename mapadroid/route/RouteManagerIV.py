@@ -1,7 +1,6 @@
-from typing import List, Optional, Set, Tuple
+from typing import List, Optional, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.model import SettingsAreaIvMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase

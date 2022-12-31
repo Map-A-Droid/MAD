@@ -1,8 +1,8 @@
 from abc import ABC
 from typing import Dict, List, Optional, Tuple
-from loguru import logger
 
 from aiohttp.abc import Request
+from loguru import logger
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import TrsEvent, TrsSpawn

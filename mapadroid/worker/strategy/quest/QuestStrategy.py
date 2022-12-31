@@ -29,8 +29,9 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
-from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
+from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.gamemechanicutil import (calculate_cooldown,
                                               determine_current_quest_layer)
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
@@ -38,13 +39,12 @@ from mapadroid.utils.madConstants import STOP_SPIN_DISTANCE, TIMESTAMP_NEVER
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
                                         InternalStopWorkerException,
                                         QuestLayer, TransportType)
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
+from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import \
     AbstractMitmBaseStrategy
-from mapadroid.worker.WorkerState import WorkerState
 
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
 S2_GMO_CELL_LEVEL = 15

@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
-from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.MadminInstanceHelper import MadminInstanceHelper
 from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper

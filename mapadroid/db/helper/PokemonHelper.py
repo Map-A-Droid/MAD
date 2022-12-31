@@ -10,8 +10,8 @@ from sqlalchemy.future import select
 from mapadroid.db.model import (Pokemon, PokemonDisplay, Pokestop, TrsSpawn,
                                 TrsStatsDetectWildMonRaw)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.utils.collections import Location
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import MonSeenTypes
 

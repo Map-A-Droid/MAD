@@ -7,8 +7,8 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import aliased
 
 from mapadroid.db.model import TrsStatsLocationRaw
-from mapadroid.utils.collections import Location
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import PositionType, TransportType
 from mapadroid.worker.WorkerType import WorkerType
 

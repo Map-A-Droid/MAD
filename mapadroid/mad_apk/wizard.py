@@ -18,15 +18,14 @@ from loguru import logger
 from mapadroid.utils import global_variables
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.functions import get_version_codes
-
-from ..db.DbWrapper import DbWrapper
-from ..db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
-from ..db.model import MadApkAutosearch
-from ..utils.madGlobals import NoMaddevApiTokenError
-from ..utils.RestHelper import RestHelper
 from .abstract_apk_storage import AbstractAPKStorage
 from .utils import (get_apk_info, get_supported_pogo, lookup_arch_enum,
                     lookup_package_info)
+from ..db.DbWrapper import DbWrapper
+from ..db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
+from ..db.model import MadApkAutosearch
+from ..utils.RestHelper import RestHelper
+from ..utils.madGlobals import NoMaddevApiTokenError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 APK_HEADERS = {

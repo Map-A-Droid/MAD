@@ -15,11 +15,11 @@ from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
-from mapadroid.db.helper.SettingsWalkerareaHelper import \
-    SettingsWalkerareaHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
 from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
                                 SettingsPogoauth, SettingsRoutecalc,
@@ -30,11 +30,11 @@ from mapadroid.mapping_manager.AbstractMappingManager import \
     AbstractMappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
-from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
-    RoutePriorityQueueEntry
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.route.RouteManagerIV import RouteManagerIV
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
+    RoutePriorityQueueEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger

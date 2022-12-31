@@ -10,13 +10,13 @@ from asyncio_rlock import RLock
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.route.prioq.RoutePriorityQueue import RoutePriorityQueue
 from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import (
     AbstractRoutePriorityQueueStrategy, RoutePriorityQueueEntry)
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
-from mapadroid.route.RoutePoolEntry import RoutePoolEntry
-from mapadroid.utils.collections import Location
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (PositionType, PrioQueueNoDueEntry,

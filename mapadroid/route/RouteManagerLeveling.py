@@ -8,9 +8,9 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
                                 SettingsRoutecalc)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RoutePoolEntry import RoutePoolEntry
+from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import RoutecalculationTypes
 

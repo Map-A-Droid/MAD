@@ -7,10 +7,10 @@ from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import SettingsAreaRaidsMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import \
-    RaidSpawnPrioStrategy
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
+from mapadroid.route.prioq.strategy.RaidSpawnPrioStrategy import \
+    RaidSpawnPrioStrategy
 from mapadroid.utils.collections import Location
 
 

@@ -1,9 +1,9 @@
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
+from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
-from mapadroid.data_handler.mitm_data.PlayerData import PlayerData
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 

@@ -32,10 +32,10 @@ from mapadroid.madmin.endpoints.routes.statistics import \
     register_routes_statistics_endpoints
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.updater.updater import DeviceUpdater
-from mapadroid.utils.aiohttp.XPathForwardedFor import XPathForwarded
 from mapadroid.utils.JinjaFilters import (base64Filter, mad_json_filter,
                                           static_forwarded, subapp_static,
                                           subapp_url, url_for_forwarded)
+from mapadroid.utils.aiohttp.XPathForwardedFor import XPathForwarded
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
 from mapadroid.utils.questGen import QuestGen

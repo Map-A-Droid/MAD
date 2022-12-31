@@ -23,10 +23,10 @@ from mapadroid.updater.JobReturn import JobReturn
 from mapadroid.updater.JobStatus import JobStatus
 from mapadroid.updater.JobType import JobType
 from mapadroid.updater.SubJob import SubJob
-from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
-from mapadroid.utils.custom_types import MADPackages
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
+from mapadroid.utils.custom_types import MADPackages
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
 from mapadroid.websocket import AbstractCommunicator, WebsocketServer

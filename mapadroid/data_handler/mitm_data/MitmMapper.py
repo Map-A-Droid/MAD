@@ -3,9 +3,9 @@ from typing import Dict, List, Optional, Union
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
     AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
-from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
 from mapadroid.utils.collections import Location
 
 

@@ -21,11 +21,11 @@ from mapadroid.utils.madGlobals import (
 from mapadroid.utils.resolution import ResolutionCalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.worker.AbstractWorker import AbstractWorker
+from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
-from mapadroid.worker.WorkerState import WorkerState
-from mapadroid.worker.WorkerType import WorkerType
 
 
 class Worker(AbstractWorker):

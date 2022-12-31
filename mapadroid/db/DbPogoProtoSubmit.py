@@ -29,6 +29,7 @@ from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
+from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madConstants import (REDIS_CACHETIME_MON_LURE_IV, REDIS_CACHETIME_STOP_DETAILS,
                                           REDIS_CACHETIME_GYMS,
                                           REDIS_CACHETIME_RAIDS, REDIS_CACHETIME_CELLS,
@@ -36,7 +37,6 @@ from mapadroid.utils.madConstants import (REDIS_CACHETIME_MON_LURE_IV, REDIS_CAC
 from mapadroid.utils.madGlobals import MonSeenTypes, QuestLayer
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import get_logger, LoggerEnums
 
 logger = get_logger(LoggerEnums.database)
 

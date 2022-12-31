@@ -9,8 +9,8 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.madGlobals import QuestLayer
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.strategy.quest.QuestStrategy import QuestStrategy
 from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.strategy.quest.QuestStrategy import QuestStrategy
 
 
 class NonARQuestLayerStrategy(QuestStrategy):

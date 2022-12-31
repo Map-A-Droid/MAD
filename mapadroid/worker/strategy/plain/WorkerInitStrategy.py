@@ -5,8 +5,8 @@ from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntr
     LatestMitmDataEntry
 from mapadroid.db.model import SettingsAreaInitMitm
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.strategy.plain.AbstractWorkerMitmStrategy import \
     AbstractWorkerMitmStrategy

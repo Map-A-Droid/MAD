@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import aiohttp_jinja2
 from aiohttp import web

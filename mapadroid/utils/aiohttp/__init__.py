@@ -1,7 +1,9 @@
 from typing import Optional
 from urllib.parse import urljoin
-from yarl import URL
+
 from aiohttp_remotes.exceptions import TooManyHeaders
+from yarl import URL
+
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
 

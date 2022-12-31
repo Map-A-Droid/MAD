@@ -1,13 +1,13 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from mapadroid.data_handler.AbstractWorkerHolder import AbstractWorkerHolder
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataHolder import \
     LatestMitmDataHolder
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 
 logger = get_logger(LoggerEnums.mitm_mapper)
 

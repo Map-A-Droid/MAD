@@ -21,6 +21,8 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import QuestLayer, WrongAreaInWalker
 from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
+from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.strategy.NopStrategy import NopStrategy
@@ -36,8 +38,6 @@ from mapadroid.worker.strategy.quest.ARQuestLayerStrategy import \
     ARQuestLayerStrategy
 from mapadroid.worker.strategy.quest.NonARQuestLayerStrategy import \
     NonARQuestLayerStrategy
-from mapadroid.worker.WorkerState import WorkerState
-from mapadroid.worker.WorkerType import WorkerType
 
 
 class WalkerConfiguration(NamedTuple):
