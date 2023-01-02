@@ -20,14 +20,18 @@ class TrsQuestHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def check_stop_has_quest(session: AsyncSession, location: Location, layer: QuestLayer) -> bool:
+    async def get_quest_of_stop(session: AsyncSession, location: Location, layer: QuestLayer) -> Optional[TrsQuest]:
         stmt = select(TrsQuest) \
             .select_from(TrsQuest).join(Pokestop, Pokestop.pokestop_id == TrsQuest.GUID) \
             .where(and_(Pokestop.latitude == location.lat,
                         Pokestop.longitude == location.lng,
                         TrsQuest.layer == layer.value))
         result = await session.execute(stmt)
-        quest: Optional[TrsQuest] = result.scalars().first()
+        return result.scalars().first()
+
+    @staticmethod
+    async def check_stop_has_quest(session: AsyncSession, location: Location, layer: QuestLayer) -> bool:
+        quest: Optional[TrsQuest] = await TrsQuestHelper.get_quest_of_stop(session, location, layer)
         # Likely only one stop/quest anyway... this method should be removed because it just hurts to lookup a quest
         # using lat,lng
         if not quest:
