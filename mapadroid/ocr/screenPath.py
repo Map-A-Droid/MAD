@@ -459,13 +459,20 @@ class WordToScreenMatching(object):
             if not result:
                 logger.error("Failed getting/analyzing screenshot")
                 return ScreenType.ERROR
-        if self._width != 720 and self._height != 1280:
-            logger.warning("The google consent screen can only be handled on 720x1280 screens "
+        if (self._width != 720 and self._height != 1280) and (self._width != 1080 and self._height != 1920) and (self._width != 1440 and self._height != 2560):
+            logger.warning("The google consent screen can only be handled on 720x1280, 1080x1920 and 1440x2560 screens "
                            f"(width is {self._width}, height is {self._height})")
             return ScreenType.ERROR
         logger.info("Click accept button")
-        await self._communicator.touch_and_hold(int(360), int(1080), int(360), int(500))
-        await self._communicator.click(480, 1080)
+        if self._width == 720 and self._height == 1280:
+           await self._communicator.touch_and_hold(int(360), int(1080), int(360), int(500))
+           await self._communicator.click(480, 1080)
+        if self._width == 1080 and self._height == 1920:
+           await self._communicator.touch_and_hold(int(360), int(1800), int(360), int(400))
+           await self._communicator.click(830, 1638) 
+        if self._width == 1440 and self._height == 2560:
+           await self._communicator.touch_and_hold(int(360), int(2100), int(360), int(400))
+           await self._communicator.click(976, 2180)
         await asyncio.sleep(10)
         return ScreenType.UNDEFINED
 
