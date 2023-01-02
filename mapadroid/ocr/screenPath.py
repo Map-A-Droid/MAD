@@ -463,6 +463,7 @@ class WordToScreenMatching(object):
             logger.warning("The google consent screen can only be handled on 720x1280, 1080x1920 and 1440x2560 screens "
                            f"(width is {self._width}, height is {self._height})")
             return ScreenType.ERROR
+        logger.info("Click accept button")
         if self._width == 720 and self._height == 1280:
            await self._communicator.touch_and_hold(int(360), int(1080), int(360), int(500))
            await self._communicator.click(480, 1080)
