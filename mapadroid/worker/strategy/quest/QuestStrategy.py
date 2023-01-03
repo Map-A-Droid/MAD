@@ -354,11 +354,18 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     async def _process_stop_at_location(self, timestamp):
         logger.info("Processing Stop / Quest...")
         try:
-            if await self._ensure_stop_present(timestamp) != PositionStopType.SPINNABLE_STOP:
+            stop_type_present: PositionStopType = await self._ensure_stop_present(timestamp)
+            if stop_type_present == PositionStopType.STOP_COOLDOWN:
+                logger.warning("Stops at current position are on cooldown, move on")
+                # TODO: Get all stops surrounding the current position, fetch quests, get latest timestamp which
+                #  most likely is the one we need to use for cooldown calculations
+            elif stop_type_present == PositionStopType.SPINNABLE_STOP:
+                logger.info('Open Stop')
+                await self._handle_stop(timestamp)
+            else:
                 logger.warning("No spinnable stop at the current location, aborting.")
                 return
-            logger.info('Open Stop')
-            await self._handle_stop(timestamp)
+            await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
         except AbortStopProcessingException as e:
             # The stop cannot be processed for whatever reason.
             # Stop processing the location.
@@ -610,9 +617,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
                     cooldown: int = fort.get("cooldown_complete_ms", 0)
                     if not cooldown == 0:
-                        logger.info("Can't spin the stop - it has cooldown, it has been spun already!?")
-                        # TODO: sleep for cooldown * 1000 ?
+                        logger.info("Can't spin the stop - it has cooldown, it has been spun already.")
                         stop_types.add(PositionStopType.STOP_COOLDOWN)
+                        self._spinnable_data_failcount = 0
                         continue
                     self._spinnable_data_failcount = 0
                     stop_types.add(PositionStopType.SPINNABLE_STOP)
