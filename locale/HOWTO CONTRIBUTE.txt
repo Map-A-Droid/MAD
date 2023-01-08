@@ -5,7 +5,7 @@ Translate task texts from questGen.py:
 From the MAD base folder:
 > xgettext -d base -o locale/quest.pot mapadroid/utils/questGen.py
 
-Go into the locale folder and update the translation files for german and french:
+Go into the locale folder and update the translation files for german, french and portuguese:
 
 > msgmerge --update de/LC_MESSAGES/quest.po quest.pot
 > msgmerge --update fr/LC_MESSAGES/quest.po quest.pot
