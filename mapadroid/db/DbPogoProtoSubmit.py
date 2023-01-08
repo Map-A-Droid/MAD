@@ -1038,6 +1038,19 @@ class DbPogoProtoSubmit:
 
         if "pokestop_displays" in stop_data \
                 and len(stop_data["pokestop_displays"]) > 0 \
+                and stop_data["pokestop_displays"][-1]["incident_display_type"] == 8:
+            start_ms = stop_data["pokestop_displays"][-1]["incident_start_ms"]
+            expiration_ms = stop_data["pokestop_displays"][-1]["incident_expiration_ms"]
+            incident_grunt_type = 352
+
+            if start_ms > 0:
+                incident_start = datetime.utcfromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+
+            if expiration_ms > 0:
+                incident_expiration = datetime.utcfromtimestamp(expiration_ms / 1000).strftime(
+                    "%Y-%m-%d %H:%M:%S")
+        elif "pokestop_displays" in stop_data \
+                and len(stop_data["pokestop_displays"]) > 0 \
                 and stop_data["pokestop_displays"][0]["character_display"] is not None \
                 and stop_data["pokestop_displays"][0]["character_display"]["character"] > 1:
             start_ms = stop_data["pokestop_displays"][0]["incident_start_ms"]
