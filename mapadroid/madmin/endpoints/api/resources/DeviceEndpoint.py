@@ -97,7 +97,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
                                                                               int(identifier))
             try:
                 if not device:
-                    return await self._json_response(status=404)
+                    return await self._json_response(dict(), status=404)
                 call = api_request_data['call']
                 args = api_request_data.get('args', {})
                 if call == 'device_state':
@@ -106,11 +106,11 @@ class DeviceEndpoint(AbstractResourceEndpoint):
                     # TODO:..
                     # self._get_mapping_manager().device_set_disabled(device.name)
                     await self._get_ws_server().force_cancel_worker(device.name)
-                    return await self._json_response(status=200)
+                    return await self._json_response(dict(), status=200)
                 elif call == 'flush_level':
                     await TrsVisitedHelper.flush_all_of_origin(self._session, device.name)
                     self._commit_trigger = True
-                    return await self._json_response(status=204)
+                    return await self._json_response(dict(), status=204)
                 else:
                     return await self._json_response(call, status=501)
             except KeyError:
