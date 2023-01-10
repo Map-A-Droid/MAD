@@ -706,7 +706,8 @@ class WebhookWorker:
                     full_payload += gyms
 
                 # stops
-                if 'pokestop' in self.__webhook_types:
+                # TODO: remove False once the incidents are sorted
+                if False and 'pokestop' in self.__webhook_types:
                     pokestops = self.__prepare_stops_data(
                         await DbWebhookReader.get_stops_changed_since(session, self.__last_check)
                     )

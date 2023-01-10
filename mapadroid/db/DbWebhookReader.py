@@ -126,10 +126,11 @@ class DbWebhookReader:
                 'active_fort_modifier': stop.active_fort_modifier,
                 "last_modified": int(stop.last_modified.timestamp()) if stop.last_modified is not None else None,
                 "last_updated": int(stop.last_updated.timestamp()) if stop.last_updated is not None else None,
-                "incident_start": int(stop.incident_start.timestamp()) if stop.incident_start is not None else None,
-                "incident_expiration": int(
-                    stop.incident_expiration.timestamp()) if stop.incident_expiration is not None else None,
-                "incident_grunt_type": stop.incident_grunt_type
+              # TODO: Incident list
+              #  "incident_start": int(stop.incident_start.timestamp()) if stop.incident_start is not None else None,
+              #  "incident_expiration": int(
+            #        stop.incident_expiration.timestamp()) if stop.incident_expiration is not None else None,
+            #    "incident_grunt_type": stop.incident_grunt_type
             })
         return ret
 

@@ -169,8 +169,8 @@ class PokestopIncident(Base):
     pokestop_id = Column(ForeignKey('pokestop.pokestop_id', ondelete='CASCADE'), primary_key=True,
                          nullable=False)
     incident_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, unique=True)
-    incident_start = Column(TZDateTime, nullable=False)
-    incident_expiration = Column(TZDateTime, nullable=False, index=True)
+    incident_start = Column(TZDateTime, nullable=True)
+    incident_expiration = Column(TZDateTime, nullable=True, index=True)
     hide_incident = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
     incident_display_type = Column(SMALLINT(3))
     incident_display_order_priority = Column(INTEGER(11))

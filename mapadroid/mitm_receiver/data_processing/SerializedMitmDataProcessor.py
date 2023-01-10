@@ -353,6 +353,7 @@ class SerializedMitmDataProcessor:
                 await self.__db_submit.stops(session, data["payload"])
             except Exception as e:
                 logger.warning("Failed submitting stops: {}", e)
+                logger.exception(e)
         stops_time = self.get_time_ms() - stops_time_start
         return stops_time
 
