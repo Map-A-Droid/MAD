@@ -355,6 +355,12 @@ def parse_args():
     parser.add_argument('-cdb', '--cache_database', default=0,
                         help=('Redis database. Use different numbers (0-15) if you are running multiple instances'))
 
+    parser.add_argument('-rrqk', '--redis_report_queue_key', default=None,
+                        help='Redis key used to store reported value')
+    parser.add_argument('-rrqi', '--redis_report_queue_interval', default=30, type=int,
+                        help='Report queue size from mitmreciver to redis every every N seconds (Default: 30)')
+
+
     if "MODE" in os.environ and os.environ["MODE"] == "DEV":
         args = parser.parse_known_args()[0]
     else:
