@@ -317,6 +317,7 @@ class DbPogoProtoSubmit:
         mon.costume = pokemon_display.get("costume_value", None)
         mon.form = form
         mon.last_modified = now
+        mon.size = pokemon_data.get("size", None)
         logger.debug("Submitting IV {} scanned at {}", encounter_id, timestamp)
         session.add(mon)
         await self.maybe_save_ditto(session, pokemon_display, encounter_id, mon_id, pokemon_data)

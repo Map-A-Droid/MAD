@@ -181,5 +181,6 @@ class DbWebhookReader:
                 "display_form": mon_display.form if mon_display else None,
                 "display_costume": mon_display.costume if mon_display else None,
                 "display_gender": mon_display.gender if mon_display else None,
+                "size": mon.size
             })
         return ret
