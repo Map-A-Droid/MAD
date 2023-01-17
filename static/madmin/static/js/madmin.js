@@ -2212,6 +2212,11 @@ if (route.mode === "mon_mitm" && typeof route.editableId === "number") {
                 ++zIndex;
             }
 
+	    // add scale indicator
+            L.control.scale({
+                position: "bottomright"
+            }).addTo(map);
+		
             // add custom button
             locInjectBtn.addTo(map);
 
