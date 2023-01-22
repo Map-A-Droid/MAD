@@ -129,6 +129,7 @@ class Pokemon(Base):
     cell_id = Column(BIGINT(20), default=None)
     seen_type = Column(ENUM('wild', 'encounter', 'nearby_stop', 'nearby_cell', 'lure_wild',
                             'lure_encounter'), nullable=False)
+    size = Column(SMALLINT(6), default=None)
 
 
 class PokemonDisplay(Base):

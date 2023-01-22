@@ -76,7 +76,7 @@
         table.rows().deselect();
         selected = false;
       } else {
-        table.rows().select();
+        table.rows({search: 'applied'}).select();
         selected = true;
       }
     });
