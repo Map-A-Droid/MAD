@@ -13,7 +13,7 @@ from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
 
 # revision identifiers, used by Alembic.
 revision = '830757363f4b'
-down_revision = '6664dd764a11'
+down_revision = '0451db7421d4'
 branch_labels = None
 depends_on = None
 
