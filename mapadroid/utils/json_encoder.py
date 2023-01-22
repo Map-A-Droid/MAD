@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from mapadroid.db.model import Base
+from mapadroid.db.model import Base, PokestopIncident
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.apk_enums import APKArch, APKType
 from mapadroid.utils.collections import Location
@@ -57,7 +57,11 @@ class MADEncoder(json.JSONEncoder):
             return [obj.lat, obj.lng]
         elif isinstance(obj, Base):
             # Dumb serialization of a model class to json... excluding private/protected attributes
-            return {var: val for var, val in vars(obj).items() if not var.startswith("_")}
+            return {var: self.default(val) for var, val in vars(obj).items() if not var.startswith("_")}
         elif isinstance(obj, GeofenceHelper):
+            return None
+        elif isinstance(obj, str) or isinstance(obj, int) or isinstance(obj, float):
+            return obj
+        elif obj is None:
             return None
         return json.JSONEncoder.default(self, obj)

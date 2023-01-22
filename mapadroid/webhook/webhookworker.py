@@ -606,6 +606,8 @@ class WebhookWorker:
             if pokestop["incident_grunt_type"]:
                 pokestop_payload["incident_grunt_type"] = pokestop["incident_grunt_type"]
 
+            pokestop_payload["incidents"] = pokestop["incidents"]
+
             entire_payload = {"type": "pokestop", "message": pokestop_payload}
             ret.append(entire_payload)
 
@@ -706,8 +708,7 @@ class WebhookWorker:
                     full_payload += gyms
 
                 # stops
-                # TODO: remove False once the incidents are sorted
-                if False and 'pokestop' in self.__webhook_types:
+                if 'pokestop' in self.__webhook_types:
                     pokestops = self.__prepare_stops_data(
                         await DbWebhookReader.get_stops_changed_since(session, self.__last_check)
                     )

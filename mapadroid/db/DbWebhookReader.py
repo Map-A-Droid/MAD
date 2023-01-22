@@ -1,4 +1,5 @@
-from typing import Tuple, List, Dict, Optional, Set
+import json
+from typing import Tuple, List, Dict, Optional, Set, Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,7 +8,9 @@ from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
-from mapadroid.db.model import Raid, Gym, GymDetail, Weather, TrsQuest, Pokestop, Pokemon, TrsSpawn, PokemonDisplay
+from mapadroid.db.model import Raid, Gym, GymDetail, Weather, TrsQuest, Pokestop, Pokemon, TrsSpawn, PokemonDisplay, \
+    PokestopIncident
+from mapadroid.utils.WebhookJsonEncoder import WebhookJsonEncoder
 from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.utils.madGlobals import MonSeenTypes
 
@@ -111,12 +114,13 @@ class DbWebhookReader:
         return ret
 
     @staticmethod
-    async def get_stops_changed_since(session: AsyncSession, _timestamp: int):
+    async def get_stops_changed_since(session: AsyncSession, _timestamp: int) -> List[Dict[str, Any]]:
         logger.debug2("DbWebhookReader::get_stops_changed_since called")
-        stops_with_changes: List[Pokestop] = await PokestopHelper.get_changed_since_or_incident(session, _timestamp)
-        ret = []
-        for stop in stops_with_changes:
-            ret.append({
+        stops_with_changes: Dict[Pokestop, List[PokestopIncident]] = await PokestopHelper\
+            .get_changed_since_or_incidents(session, _timestamp)
+        ret: List[Dict[str, Any]] = []
+        for stop, incidents in stops_with_changes.items():
+            stop_entry: Dict[str, Any] = {
                 'pokestop_id': stop.pokestop_id,
                 'latitude': stop.latitude,
                 'longitude': stop.longitude,
@@ -126,12 +130,19 @@ class DbWebhookReader:
                 'active_fort_modifier': stop.active_fort_modifier,
                 "last_modified": int(stop.last_modified.timestamp()) if stop.last_modified is not None else None,
                 "last_updated": int(stop.last_updated.timestamp()) if stop.last_updated is not None else None,
-              # TODO: Incident list
-              #  "incident_start": int(stop.incident_start.timestamp()) if stop.incident_start is not None else None,
-              #  "incident_expiration": int(
-            #        stop.incident_expiration.timestamp()) if stop.incident_expiration is not None else None,
-            #    "incident_grunt_type": stop.incident_grunt_type
-            })
+            }
+
+            if incidents:
+                # backwards compatibility...
+                first_incident = incidents[0]
+                stop_entry["incident_start"] = int(first_incident.incident_start.timestamp()) \
+                    if first_incident.incident_start is not None else None
+                stop_entry["incident_expiration"] = int(first_incident.incident_expiration.timestamp()) \
+                    if first_incident.incident_expiration is not None else None
+                stop_entry["incident_grunt_type"] = first_incident.incident_display_type
+            stop_entry["incidents"] = incidents
+
+            ret.append(stop_entry)
         return ret
 
     @staticmethod
