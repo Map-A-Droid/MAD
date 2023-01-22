@@ -158,10 +158,26 @@ class Pokestop(Base):
     last_updated = Column(TZDateTime, index=True)
     name = Column(String(128, 'utf8mb4_unicode_ci'))
     image = Column(String(255, 'utf8mb4_unicode_ci'))
-    incident_start = Column(TZDateTime)
-    incident_expiration = Column(TZDateTime)
-    incident_grunt_type = Column(SMALLINT(1))
     is_ar_scan_eligible = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
+
+
+class PokestopIncident(Base):
+    __tablename__ = 'pokestop_incident'
+    __table_args__ = (
+        Index('pokestop_incident_stop_expiration', 'pokestop_id', 'incident_expiration'),
+        Index('pokestop_incident_expiration', 'incident_expiration'),
+    )
+    pokestop_id = Column(ForeignKey('pokestop.pokestop_id', ondelete='CASCADE'), primary_key=True,
+                         nullable=False)
+    incident_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, unique=True)
+    incident_start = Column(TZDateTime, nullable=True)
+    incident_expiration = Column(TZDateTime, nullable=True, index=True)
+    hide_incident = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
+    incident_display_type = Column(SMALLINT(3))
+    incident_display_order_priority = Column(INTEGER(11))
+    custom_display = Column(String(50))
+    is_cross_stop_incident = Column(BOOLEAN, nullable=False, server_default=text("'0'"))
+    character_display = Column(SMALLINT(4), server_default=None, nullable=True)
 
 
 class Raid(Base):

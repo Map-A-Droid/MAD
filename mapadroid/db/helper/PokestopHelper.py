@@ -6,7 +6,7 @@ from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokestop, TrsQuest, TrsVisited
+from mapadroid.db.model import Pokestop, TrsQuest, TrsVisited, PokestopIncident
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
@@ -368,6 +368,28 @@ class PokestopHelper:
         stmt = update(Pokestop).where(and_(Pokestop.latitude == location.lat,
                                            Pokestop.longitude == location.lng)).values(Pokestop.vi)
         await session.execute(stmt)
+
+    @staticmethod
+    async def get_changed_since_or_incidents(session: AsyncSession, timestamp: int) \
+            -> Dict[Pokestop, List[PokestopIncident]]:
+        stmt = select(Pokestop, PokestopIncident) \
+            .join(PokestopIncident, Pokestop.pokestop_id == PokestopIncident.pokestop_id,
+                  isouter=True)
+        stmt = stmt.where(and_(
+            Pokestop.last_updated > DatetimeWrapper.fromtimestamp(timestamp),
+            or_(
+                Pokestop.lure_expiration > DatetimeWrapper.fromtimestamp(0),
+                PokestopIncident.incident_start != None
+                )
+            )
+        )
+        result = await session.execute(stmt)
+        stops_and_incidents: Dict[Pokestop, List[PokestopIncident]] = {}
+        for pokestop, incident in result.all():
+            if pokestop not in stops_and_incidents:
+                stops_and_incidents[pokestop] = []
+            stops_and_incidents[pokestop].append(incident)
+        return stops_and_incidents
 
     @staticmethod
     async def get_changed_since_or_incident(session: AsyncSession, _timestamp: int) -> List[Pokestop]:
