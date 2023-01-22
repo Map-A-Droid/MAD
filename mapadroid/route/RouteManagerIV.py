@@ -70,5 +70,8 @@ class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
         # Override the base class. No need to pass prioq coords.
         return False
 
+    def _has_normal_route(self) -> bool:
+        return False
+
     def _may_update_routepool(self):
         return False

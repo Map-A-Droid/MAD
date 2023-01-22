@@ -14,7 +14,7 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
                  max_backlog_duration: int, db_wrapper: DbWrapper, geofence_helper: GeofenceHelper,
                  min_time_left_seconds: int, mon_ids_to_scan: Optional[List[int]],
                  delay_after_event: int):
-        super().__init__(update_interval=600, full_replace_queue=False,
+        super().__init__(update_interval=30, full_replace_queue=False,
                          max_backlog_duration=max_backlog_duration,
                          delay_after_event=delay_after_event)
         self._clustering_helper = ClusteringHelper(clustering_distance,

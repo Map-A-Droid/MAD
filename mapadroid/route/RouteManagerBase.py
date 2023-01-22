@@ -410,7 +410,7 @@ class RouteManagerBase(ABC):
                 next_timestamp, next_coord = None, None
                 if not self._has_normal_route():
                     logger.debug("Waiting for a prioQ event")
-                    # "blocking" to wait for a coord
+                    # "blocking" to wait for a coord. TODO: Update timestamps somewhere to abort unregistering from routemanagers?
                     while not next_timestamp:
                         try:
                             prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
@@ -418,6 +418,7 @@ class RouteManagerBase(ABC):
                             next_coord = prioq_entry.location
                         except (PrioQueueNoDueEntry, asyncio.TimeoutError):
                             # No item available yet, sleep
+                            routepool_entry.last_access = time.time()
                             await asyncio.sleep(1)
                 else:
                     logger.debug("Popping prioQ if available")
