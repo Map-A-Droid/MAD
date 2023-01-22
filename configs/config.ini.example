@@ -348,3 +348,12 @@
 ######################
 # MAD PoGo auth is not required during autoconfiguration
 #autoconfig_no_auth:
+
+# Report MITMReceiver queue value to Redis
+# This is only useful for split/multi start_mitmreceiver.py approach and if you have anything that going to monitor your queue value.
+# Remember to set a unique key for each start_mitmreceiver you are running. You most likely want to override it in command line rather via config.ini
+######################
+# Redis key used to store MITMReceiver queue value
+#redis_report_queue_key: MITMReceiver_queue_len_mitm1
+# Interval of reporting value - every 30 seconds by default
+#redis_report_queue_interval: 30
