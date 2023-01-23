@@ -388,6 +388,8 @@ class PokestopHelper:
         for pokestop, incident in result.all():
             if pokestop not in stops_and_incidents:
                 stops_and_incidents[pokestop] = []
+            if not incident:
+                continue
             stops_and_incidents[pokestop].append(incident)
         return stops_and_incidents
 
