@@ -997,12 +997,7 @@ class DbPogoProtoSubmit:
         incident.is_cross_stop_incident = incident_data.get("is_cross_stop_incident", False)
 
         character_display = incident_data.get("character_display")
-        if character_display:
-            # Handling the different types of hacked together incident types (looking at you, Kecleon)
-            incident.character_display = character_display.get("character")
-        elif incident.incident_display_type == 8:
-            # In case Kecleon is "present", the character_display field is not set apparently
-            incident.character_display = 352
+        incident.character_display = character_display.get("character") if character_display is not None else 0
 
         async with session.begin_nested() as nested_transaction:
             try:
