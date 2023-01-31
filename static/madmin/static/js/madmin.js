@@ -1287,7 +1287,7 @@ new Vue({
                     if (quest_pokemon_costume_id != '00') {
                         costume = '_' + quest_pokemon_costume_id;
                     }
-                    var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${quest_pokemon_form_id}${costume}.png`;
+                    var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${String.prototype.padStart.call(quest_pokemon_form_id, 2, 0)}${costume}.png`;
                     var size = [30, 30]
                     var anchor = [30, 30]
                     break;
@@ -1335,7 +1335,7 @@ new Vue({
                     if (quest_pokemon_costume_id != '00') {
                         costume = '_' + quest_pokemon_costume_id;
                     }
-                    var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${quest_pokemon_form_id}${costume}.png`;
+                    var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${String.prototype.padStart.call(quest_pokemon_form_id, 2, 0)}${costume}.png`;
                     var rewardtext = quest_pokemon_name;
                     var size = "150%";
                     break;
