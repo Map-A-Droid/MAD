@@ -18,7 +18,7 @@ dataclasses==0.6
 geopy==2.3.0
 gevent==21.12.0
 gpxdata==1.2.1
-greenlet==1.1.2
+greenlet==2.0.2
 grpcio==1.51.1
 ImageHash==4.3.1
 imutils==0.5.4
