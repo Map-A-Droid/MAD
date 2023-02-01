@@ -1008,6 +1008,22 @@ class DbPogoProtoSubmit:
                                incident_id, stop_id, str(e))
                 await nested_transaction.rollback()
 
+    async def _read_incident_ids(self, stop_data: Dict) -> List[str]:
+        incident_ids: List[str] = []
+        # Somehow there are 2 fields which may hold an incident or multiple incidents...
+        single_incident: Optional[str] = stop_data.get("pokestop_display", {}).get("incident_id")
+        if single_incident:
+            incident_ids.append(single_incident)
+
+        incident_displays: Optional[List[Dict]] = stop_data.get("pokestop_displays")
+        if incident_displays:
+            for incident in incident_displays:
+                incident_in_list: Optional[str] = incident.get("incident_id")
+                if incident_in_list:
+                    incident_ids.append(incident_in_list)
+
+        return incident_ids
+
     async def _handle_pokestop_incident_data(self, session: AsyncSession,
                                              stop_id: str,
                                              stop_data: Dict):

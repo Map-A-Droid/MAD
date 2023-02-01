@@ -379,7 +379,10 @@ class PokestopHelper:
             Pokestop.last_updated > DatetimeWrapper.fromtimestamp(timestamp),
             or_(
                 Pokestop.lure_expiration > DatetimeWrapper.fromtimestamp(0),
-                PokestopIncident.incident_start != None
+                and_(
+                    PokestopIncident.incident_expiration != None,
+                    PokestopIncident.incident_expiration > DatetimeWrapper.fromtimestamp(timestamp)
+                    )
                 )
             )
         )
