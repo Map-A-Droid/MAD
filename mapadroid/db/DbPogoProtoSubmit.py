@@ -2,7 +2,7 @@ import json
 import math
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import sqlalchemy
 from aioredis import Redis
@@ -10,7 +10,6 @@ from bitstring import BitArray
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.GymDetailHelper import GymDetailHelper
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokemonDisplayHelper import PokemonDisplayHelper
@@ -22,19 +21,24 @@ from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.helper.TrsS2CellHelper import TrsS2CellHelper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
-from mapadroid.db.helper.TrsStatsDetectSeenTypeHelper import TrsStatsDetectSeenTypeHelper
+from mapadroid.db.helper.TrsStatsDetectSeenTypeHelper import \
+    TrsStatsDetectSeenTypeHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
-from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
-                                TrsEvent, TrsQuest, TrsSpawn,
-                                Weather, TrsStatsDetectSeenType, PokestopIncident)
+from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop,
+                                PokestopIncident, Raid, TrsEvent, TrsQuest,
+                                TrsSpawn, TrsStatsDetectSeenType, Weather)
+from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madConstants import (REDIS_CACHETIME_MON_LURE_IV, REDIS_CACHETIME_STOP_DETAILS,
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madConstants import (REDIS_CACHETIME_CELLS,
                                           REDIS_CACHETIME_GYMS,
-                                          REDIS_CACHETIME_RAIDS, REDIS_CACHETIME_CELLS,
-                                          REDIS_CACHETIME_WEATHER, REDIS_CACHETIME_POKESTOP_DATA)
+                                          REDIS_CACHETIME_MON_LURE_IV,
+                                          REDIS_CACHETIME_POKESTOP_DATA,
+                                          REDIS_CACHETIME_RAIDS,
+                                          REDIS_CACHETIME_STOP_DETAILS,
+                                          REDIS_CACHETIME_WEATHER)
 from mapadroid.utils.madGlobals import MonSeenTypes, QuestLayer
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
@@ -1008,7 +1012,7 @@ class DbPogoProtoSubmit:
                                incident_id, stop_id, str(e))
                 await nested_transaction.rollback()
 
-    async def _read_incident_ids(self, stop_data: Dict) -> List[str]:
+    def _read_incident_ids(self, stop_data: Dict) -> List[str]:
         incident_ids: List[str] = []
         # Somehow there are 2 fields which may hold an incident or multiple incidents...
         single_incident: Optional[str] = stop_data.get("pokestop_display", {}).get("incident_id")
@@ -1021,7 +1025,8 @@ class DbPogoProtoSubmit:
                 incident_in_list: Optional[str] = incident.get("incident_id")
                 if incident_in_list:
                     incident_ids.append(incident_in_list)
-
+        # sort the list to always have the same order or a changed order to detect changed properly given we are using it for cache key
+        incident_ids.sort()
         return incident_ids
 
     async def _handle_pokestop_incident_data(self, session: AsyncSession,
@@ -1040,7 +1045,10 @@ class DbPogoProtoSubmit:
             logger.info("{} is not a pokestop", stop_data)
             return
         alt_modified_time = int(math.ceil(DatetimeWrapper.now().timestamp() / 1000)) * 1000
-        cache_key = "stop{}{}".format(stop_data["id"], stop_data.get("last_modified_timestamp_ms", alt_modified_time))
+        # We can detect changes of the incidents by simply appending all incident IDs sent in the proto I guess...
+        incident_ids: List[str] = self._read_incident_ids(stop_data)
+        cache_key = "stop{}{}{}".format(stop_data["id"], stop_data.get("last_modified_timestamp_ms", alt_modified_time),
+                                        incident_ids)
         if await self._cache.exists(cache_key):
             return
 
