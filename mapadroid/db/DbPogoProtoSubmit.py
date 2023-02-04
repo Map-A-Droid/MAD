@@ -975,9 +975,11 @@ class DbPogoProtoSubmit:
                                       stop_id: str,
                                       incident_data: Optional[Dict]):
         if not incident_data:
+            logger.warning("Incident data is empty")
             return
         incident_id: str = incident_data["incident_id"]
         if not incident_id:
+            logger.warning("No incident ID")
             return
         incident: Optional[PokestopIncident] = await PokestopIncidentHelper.get(session,
                                                                                 stop_id,
@@ -1005,6 +1007,7 @@ class DbPogoProtoSubmit:
 
         async with session.begin_nested() as nested_transaction:
             try:
+                logger.debug("Adding or updating incident {}", incident_id)
                 session.add(incident)
                 await nested_transaction.commit()
             except sqlalchemy.exc.IntegrityError as e:
