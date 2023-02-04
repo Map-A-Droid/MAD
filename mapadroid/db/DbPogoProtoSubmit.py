@@ -1050,7 +1050,7 @@ class DbPogoProtoSubmit:
         stop_id: str = stop_data["id"]
         last_modified_timestamp: int = stop_data.get("last_modified_timestamp_ms", alt_modified_time)
         incident_ids: List[str] = self._read_incident_ids(stop_data)
-        logger.debug("Incident IDs at {} last modified {}: {}", stop_id, )
+        logger.debug("Incident IDs at {} last modified {}: {}", stop_id, last_modified_timestamp, incident_ids)
         cache_key = "stop{}{}{}".format(stop_id, last_modified_timestamp, incident_ids)
         if await self._cache.exists(cache_key):
             return
