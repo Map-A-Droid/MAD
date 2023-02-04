@@ -252,7 +252,7 @@ def init_custom(log_out: logger):
 
 
 def filter_errors(record):
-    return record["level"] != "ERROR" and record["extra"]["name"] not in (LoggerEnums.database.value)
+    return record["level"] != "ERROR"
 
 
 # ==================================
@@ -312,7 +312,7 @@ class InterceptHandler(logging.Handler):
             depth += 1
         with logger.contextualize(name=self.log_identifier):
             lvl: str = "DEBUG2"
-            if self.log_section == LoggerEnums.database:
+            if self.log_section == LoggerEnums.sqlalchemy:
                 lvl = "DEBUG"
             elif self.log_section == LoggerEnums.aiohttp_access:
                 lvl = "DEBUG2"

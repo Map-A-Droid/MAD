@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 from asyncio import Task
-from typing import Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.DbWrapper import DbWrapper
@@ -577,7 +577,7 @@ class WebhookWorker:
 
         return ret
 
-    def __prepare_stops_data(self, pokestop_data):
+    def __prepare_stops_data(self, pokestop_data: List[Dict[str, Any]]):
         ret = []
 
         for pokestop in pokestop_data:

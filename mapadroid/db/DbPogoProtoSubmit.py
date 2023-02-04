@@ -1025,7 +1025,8 @@ class DbPogoProtoSubmit:
                 incident_in_list: Optional[str] = incident.get("incident_id")
                 if incident_in_list:
                     incident_ids.append(incident_in_list)
-        # sort the list to always have the same order or a changed order to detect changed properly given we are using it for cache key
+        # sort the list to always have the same order or a changed order to detect changed properly given we are
+        # using it for cache key
         incident_ids.sort()
         return incident_ids
 
@@ -1046,14 +1047,16 @@ class DbPogoProtoSubmit:
             return
         alt_modified_time = int(math.ceil(DatetimeWrapper.now().timestamp() / 1000)) * 1000
         # We can detect changes of the incidents by simply appending all incident IDs sent in the proto I guess...
+        stop_id: str = stop_data["id"]
+        last_modified_timestamp: int = stop_data.get("last_modified_timestamp_ms", alt_modified_time)
         incident_ids: List[str] = self._read_incident_ids(stop_data)
-        cache_key = "stop{}{}{}".format(stop_data["id"], stop_data.get("last_modified_timestamp_ms", alt_modified_time),
-                                        incident_ids)
+        logger.debug("Incident IDs at {} last modified {}: {}", stop_id, )
+        cache_key = "stop{}{}{}".format(stop_id, last_modified_timestamp, incident_ids)
         if await self._cache.exists(cache_key):
             return
 
         now = DatetimeWrapper.fromtimestamp(time.time())
-        last_modified = DatetimeWrapper.fromtimestamp(
+        last_modified: datetime = DatetimeWrapper.fromtimestamp(
             stop_data["last_modified_timestamp_ms"] / 1000
         )
         lure = DatetimeWrapper.fromtimestamp(0)
