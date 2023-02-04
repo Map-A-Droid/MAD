@@ -313,7 +313,7 @@ class InterceptHandler(logging.Handler):
         with logger.contextualize(name=self.log_identifier):
             lvl: str = "DEBUG2"
             if self.log_section == LoggerEnums.sqlalchemy:
-                lvl = "DEBUG"
+                lvl = "DEBUG3"
             elif self.log_section == LoggerEnums.aiohttp_access:
                 lvl = "DEBUG2"
             else:
