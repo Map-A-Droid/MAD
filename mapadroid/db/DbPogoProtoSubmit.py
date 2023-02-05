@@ -1010,6 +1010,7 @@ class DbPogoProtoSubmit:
                 logger.debug("Adding or updating incident {}", incident_id)
                 session.add(incident)
                 await nested_transaction.commit()
+                logger.info("Called commit of {}", incident_id)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing incident {} for pokestop {} ({})",
                                incident_id, stop_id, str(e))
