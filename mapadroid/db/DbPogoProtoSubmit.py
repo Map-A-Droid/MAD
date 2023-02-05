@@ -137,7 +137,7 @@ class DbPogoProtoSubmit:
                     mon.last_modified = now
                     try:
                         session.add(mon)
-                        await nested_transaction.commit()
+                        await session.commit()
                         cache_time = int(despawn_time_unix - int(DatetimeWrapper.now().timestamp()))
                         if cache_time > 0:
                             await self._cache.set(cache_key, 1, ex=cache_time)
@@ -235,7 +235,7 @@ class DbPogoProtoSubmit:
                     mon.last_modified = now
                     try:
                         session.add(mon)
-                        await nested_transaction.commit()
+                        await session.commit()
                         await self._cache.set(cache_key, 1, ex=self._args.default_nearby_timeleft * 60)
                     except sqlalchemy.exc.IntegrityError as e:
                         logger.debug("Failed committing nearby mon {} ({}). Safe to ignore.", encounter_id, str(e))
@@ -416,7 +416,7 @@ class DbPogoProtoSubmit:
             logger.debug("Submitting IV {}", encounter_id)
             session.add(mon)
             await self.maybe_save_ditto(session, display, encounter_id, mon_id, pokemon_data)
-            await nested_transaction.commit()
+            await session.commit()
             await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_MON_LURE_IV)
             time_done = time.time() - time_start_submit
             logger.debug("Done updating mon lure IV in DB in {} seconds", time_done)
@@ -480,7 +480,7 @@ class DbPogoProtoSubmit:
                         try:
                             logger.debug("Submitting lured non-IV mon {}", encounter_id)
                             session.add(mon)
-                            await nested_transaction.commit()
+                            await session.commit()
                             await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_MON_LURE_IV)
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.debug("Failed committing lured non-IV mon {} ({}). Safe to ignore.", encounter_id,
@@ -529,7 +529,7 @@ class DbPogoProtoSubmit:
                 logger.debug("Submitting mon seen stat {}", encounter_id)
                 session.add(stat_seen_type)
                 try:
-                    await nested_transaction.commit()
+                    await session.commit()
                 except sqlalchemy.exc.IntegrityError as e:
                     await nested_transaction.rollback()
                     logger.debug("Failed submitting stat...")
@@ -642,7 +642,7 @@ class DbPogoProtoSubmit:
             async with session.begin_nested() as nested_transaction:
                 try:
                     session.add(stop)
-                    await nested_transaction.commit()
+                    await session.commit()
                     await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_STOP_DETAILS)
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed committing stop details of {} ({})", stop.pokestop_id, str(e))
@@ -731,7 +731,7 @@ class DbPogoProtoSubmit:
         async with session.begin_nested() as nested_transaction:
             try:
                 session.add(quest)
-                await nested_transaction.commit()
+                await session.commit()
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing quest of stop {}, ({})", fort_id, str(e))
                 await nested_transaction.rollback()
@@ -801,7 +801,7 @@ class DbPogoProtoSubmit:
                         try:
                             session.add(gym_obj)
                             session.add(gym_detail)
-                            await nested_transaction.commit()
+                            await session.commit()
                             await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_GYMS)
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.warning("Failed committing gym data of {} ({})", gymid, str(e))
@@ -843,7 +843,7 @@ class DbPogoProtoSubmit:
             async with session.begin_nested() as nested_transaction:
                 try:
                     session.add(gym_detail)
-                    await nested_transaction.commit()
+                    await session.commit()
                 except sqlalchemy.exc.IntegrityError as e:
                     logger.warning("Failed committing gym info {} ({})", gym_id, str(e))
                     await nested_transaction.rollback()
@@ -930,7 +930,7 @@ class DbPogoProtoSubmit:
                     async with session.begin_nested() as nested_transaction:
                         try:
                             session.add(raid)
-                            await nested_transaction.commit()
+                            await session.commit()
                             await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_RAIDS)
                         except sqlalchemy.exc.IntegrityError as e:
                             logger.warning("Failed committing raid for gym {} ({})", gymid, str(e))
@@ -1009,7 +1009,7 @@ class DbPogoProtoSubmit:
             try:
                 logger.debug("Adding or updating incident {}", incident_id)
                 session.add(incident)
-                await nested_transaction.commit()
+                await session.commit()
                 logger.info("Called commit of {}", incident_id)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing incident {} for pokestop {} ({})",
@@ -1096,7 +1096,7 @@ class DbPogoProtoSubmit:
         async with session.begin_nested() as nested_transaction:
             try:
                 session.add(pokestop)
-                await nested_transaction.commit()
+                await session.commit()
                 await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_POKESTOP_DATA)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing stop {} ({})", stop_id, str(e))
@@ -1171,8 +1171,8 @@ class DbPogoProtoSubmit:
                     return
 
                 session.add(weather)
+                await session.commit()
                 await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_WEATHER)
-                await nested_transaction.commit()
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing weather of cell {} ({})", cell_id, str(e))
                 await nested_transaction.rollback()
