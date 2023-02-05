@@ -1092,15 +1092,15 @@ class DbPogoProtoSubmit:
         pokestop.last_updated = now
         pokestop.active_fort_modifier = active_fort_modifier
         pokestop.is_ar_scan_eligible = is_ar_scan_eligible
-        try:
-            session.add(pokestop)
-            await session.commit()
-
-            await self._handle_pokestop_incident_data(session, stop_id, stop_data)
-            await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_POKESTOP_DATA)
-        except sqlalchemy.exc.IntegrityError as e:
-            logger.warning("Failed committing stop {} ({})", stop_id, str(e))
-            await session.rollback()
+        async with session.begin_nested() as nested_transaction:
+            try:
+                session.add(pokestop)
+                await nested_transaction.commit()
+                await self._handle_pokestop_incident_data(session, stop_id, stop_data)
+                await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_POKESTOP_DATA)
+            except sqlalchemy.exc.IntegrityError as e:
+                logger.warning("Failed committing stop {} ({})", stop_id, str(e))
+                await nested_transaction.rollback()
 
     async def _extract_args_single_stop_details(self, session: AsyncSession, stop_data) -> Optional[Pokestop]:
         if stop_data.get("type", 999) != 1:
