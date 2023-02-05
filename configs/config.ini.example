@@ -104,6 +104,8 @@
 #delete_mons_n_hours:
 # Limit the number of mon records to be deleted in each run. Default: 5000. 0 represents infinity - may cause long locks on tables.
 #delete_mons_limit:
+# Delete records of incidents which disappeared more then the specified amount of hours ago (integer). If not specified, no cleanup is run due to default: None.
+#delete_incidents_n_hours:
 
 ### Websocket Settings
 ######################

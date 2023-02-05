@@ -1,18 +1,13 @@
-from datetime import datetime
-from operator import or_
-from typing import Dict, List, Optional, Tuple
+import datetime
+from typing import Optional
 
-from sqlalchemy import and_, func, update
+from sqlalchemy import and_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokestop, TrsQuest, TrsVisited, PokestopIncident
-from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.db.model import PokestopIncident
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import QuestLayer
-from mapadroid.utils.timezone_util import get_timezone_at
 
 logger = get_logger(LoggerEnums.database)
 
@@ -24,3 +19,9 @@ class PokestopIncidentHelper:
                                                    PokestopIncident.incident_id == incident_id))
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def delete_older_than_n_hours(session: AsyncSession, hours: int) -> None:
+        where_condition = PokestopIncident.incident_expiration < DatetimeWrapper.now() - datetime.timedelta(hours=hours)
+        stmt = delete(PokestopIncident).where(where_condition)
+        await session.execute(stmt)
