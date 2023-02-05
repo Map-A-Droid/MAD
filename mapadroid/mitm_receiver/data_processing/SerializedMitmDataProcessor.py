@@ -350,6 +350,7 @@ class SerializedMitmDataProcessor:
         async with self.__db_wrapper as session, session:
             try:
                 await self.__db_submit.stops(session, data["payload"])
+                await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting stops: {}", e)
                 logger.exception(e)
