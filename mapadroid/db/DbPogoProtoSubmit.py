@@ -977,7 +977,8 @@ class DbPogoProtoSubmit:
         if not incident_data:
             logger.warning("Incident data is empty")
             return
-        incident_id: str = incident_data["incident_id"]
+        incident_id: Optional[str] = incident_data.get("incident_id")
+        logger.debug("Handling incident '{}': {}", incident_id, incident_data)
         if not incident_id:
             logger.warning("No incident ID")
             return
