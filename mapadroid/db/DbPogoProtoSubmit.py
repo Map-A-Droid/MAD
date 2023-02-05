@@ -978,10 +978,9 @@ class DbPogoProtoSubmit:
             logger.warning("Incident data is empty")
             return
         incident_id: Optional[str] = incident_data.get("incident_id")
-        logger.debug("Handling incident '{}': {}", incident_id, incident_data)
         if incident_id is None or len(incident_id.strip()) == 0:
-            logger.warning("No incident ID")
             return
+        logger.debug("Handling incident '{}': {}", incident_id, incident_data)
         incident: Optional[PokestopIncident] = await PokestopIncidentHelper.get(session,
                                                                                 stop_id,
                                                                                 incident_id)
