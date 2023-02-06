@@ -29,7 +29,7 @@ msgpack==1.0.4
 multidict==6.0.3
 mysql-connector==2.2.9
 mysqlclient==2.1.1
-numpy==1.23.5
+numpy==1.24.2
 opencv-python==4.6.0.66
 orjson==3.8.3
 Pillow==9.3.0
