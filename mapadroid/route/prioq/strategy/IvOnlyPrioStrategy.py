@@ -14,7 +14,7 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
                  max_backlog_duration: int, db_wrapper: DbWrapper, geofence_helper: GeofenceHelper,
                  min_time_left_seconds: int, mon_ids_to_scan: Optional[List[int]],
                  delay_after_event: int):
-        super().__init__(update_interval=600, full_replace_queue=False,
+        super().__init__(update_interval=30, full_replace_queue=False,
                          max_backlog_duration=max_backlog_duration,
                          delay_after_event=delay_after_event)
         self._clustering_helper = ClusteringHelper(clustering_distance,
@@ -24,6 +24,10 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
         self._geofence_helper: GeofenceHelper = geofence_helper
         self._min_time_left_seconds: int = min_time_left_seconds
         self._mon_ids_iv: Optional[List[int]] = mon_ids_to_scan
+        self._encounter_ids_left: List[int] = []
+
+    def get_encounter_ids_left(self) -> List[int]:
+        return self._encounter_ids_left
 
     async def retrieve_new_coords(self) -> List[RoutePriorityQueueEntry]:
         async with self._db_wrapper as session, session:
@@ -32,8 +36,10 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
                                                                                                      min_time_left_seconds=self._min_time_left_seconds,
                                                                                                      eligible_mon_ids=self._mon_ids_iv)
         new_coords: List[RoutePriorityQueueEntry] = []
+        self._encounter_ids_left.clear()
         for spawn in next_spawns:
             (timestamp_due, location, encounter_id) = spawn
+            self._encounter_ids_left.append(encounter_id)
             entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(timestamp_due=timestamp_due,
                                                                      location=location)
             new_coords.append(entry)

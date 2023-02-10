@@ -56,6 +56,9 @@ class RoutePriorityQueue:
         if strategy:
             await self.start()
 
+    def get_strategy(self) -> AbstractRoutePriorityQueueStrategy:
+        return self._strategy
+
     async def pop_event(self) -> RoutePriorityQueueEntry:
         """
         Pops a coord off the queue if applicable, else None

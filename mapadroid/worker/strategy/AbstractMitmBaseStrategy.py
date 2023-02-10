@@ -132,7 +132,6 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
             await self._update_screen_size()
         except WebsocketWorkerRemovedException:
-            logger.error("Timeout during init of worker")
             raise InternalStopWorkerException("Timeout during init of worker")
 
     async def _wait_for_data(self, timestamp: float = None,

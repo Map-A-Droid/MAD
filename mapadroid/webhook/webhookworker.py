@@ -2,19 +2,19 @@ import asyncio
 import json
 import time
 from asyncio import Task
-from typing import List, Dict, Tuple, Set
+from typing import Any, Dict, List, Set, Tuple
 
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.model import TrsQuest, Pokestop
+from mapadroid.db.model import Pokestop, TrsQuest
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
-from mapadroid.utils.RestHelper import RestHelper, RestApiResult
 from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.json_encoder import mad_json_dumps
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madGlobals import terminate_mad, MonSeenTypes
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import MonSeenTypes, terminate_mad
 from mapadroid.utils.questGen import QuestGen
+from mapadroid.utils.RestHelper import RestApiResult, RestHelper
 from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.webhook)
@@ -507,6 +507,9 @@ class WebhookWorker:
             if mon["display_gender"] is not None:
                 mon_payload["display_gender"] = mon["display_gender"]
 
+            if mon.get("size", None) is not None:
+                mon_payload["size"] = mon.get("size")
+
             if pokemon_rarity is not None:
                 mon_payload["rarity"] = pokemon_rarity
 
@@ -574,7 +577,7 @@ class WebhookWorker:
 
         return ret
 
-    def __prepare_stops_data(self, pokestop_data):
+    def __prepare_stops_data(self, pokestop_data: List[Dict[str, Any]]):
         ret = []
 
         for pokestop in pokestop_data:
@@ -597,14 +600,16 @@ class WebhookWorker:
             if pokestop["image"]:
                 pokestop_payload["url"] = pokestop["image"]
 
-            if pokestop["incident_start"]:
+            if pokestop.get("incident_start"):
                 pokestop_payload["incident_start"] = pokestop["incident_start"]
 
-            if pokestop["incident_expiration"]:
+            if pokestop.get("incident_expiration"):
                 pokestop_payload["incident_expiration"] = pokestop["incident_expiration"]
 
-            if pokestop["incident_grunt_type"]:
+            if pokestop.get("incident_grunt_type"):
                 pokestop_payload["incident_grunt_type"] = pokestop["incident_grunt_type"]
+
+            pokestop_payload["incidents"] = pokestop["incidents"]
 
             entire_payload = {"type": "pokestop", "message": pokestop_payload}
             ret.append(entire_payload)

@@ -27,7 +27,6 @@ class SerializedMitmDataProcessor:
                  mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper, quest_gen: QuestGen, name=None):
         self.__queue: asyncio.Queue = data_queue
         self.__db_wrapper: DbWrapper = db_wrapper
-        # TODO: Init DbPogoProtoSubmit per processing passing session to constructor
         self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
         self.__stats_handler: AbstractStatsHandler = stats_handler
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
@@ -351,8 +350,10 @@ class SerializedMitmDataProcessor:
         async with self.__db_wrapper as session, session:
             try:
                 await self.__db_submit.stops(session, data["payload"])
+                await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting stops: {}", e)
+                logger.exception(e)
         stops_time = self.get_time_ms() - stops_time_start
         return stops_time
 

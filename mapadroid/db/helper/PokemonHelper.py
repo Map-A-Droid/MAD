@@ -70,7 +70,7 @@ class PokemonHelper:
     @staticmethod
     async def get_to_be_encountered(session: AsyncSession, geofence_helper: Optional[GeofenceHelper],
                                     min_time_left_seconds: int, eligible_mon_ids: Optional[List[int]]) -> List[Tuple[int, Location, int]]:
-        if min_time_left_seconds is None or eligible_mon_ids is None:
+        if min_time_left_seconds is None or not eligible_mon_ids:
             logger.warning(
                 "DbWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
                 "eligible mon IDs specified. Make sure both settings are set in area options: "

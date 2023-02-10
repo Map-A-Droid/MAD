@@ -2,7 +2,7 @@ import json
 import math
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import sqlalchemy
 from aioredis import Redis
@@ -10,30 +10,35 @@ from bitstring import BitArray
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.GymDetailHelper import GymDetailHelper
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokemonDisplayHelper import PokemonDisplayHelper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
+from mapadroid.db.helper.PokestopIncidentHelper import PokestopIncidentHelper
 from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.helper.TrsS2CellHelper import TrsS2CellHelper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
-from mapadroid.db.helper.TrsStatsDetectSeenTypeHelper import TrsStatsDetectSeenTypeHelper
+from mapadroid.db.helper.TrsStatsDetectSeenTypeHelper import \
+    TrsStatsDetectSeenTypeHelper
 from mapadroid.db.helper.WeatherHelper import WeatherHelper
-from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop, Raid,
-                                TrsEvent, TrsQuest, TrsSpawn,
-                                Weather, TrsStatsDetectSeenType)
+from mapadroid.db.model import (Gym, GymDetail, Pokemon, Pokestop,
+                                PokestopIncident, Raid, TrsEvent, TrsQuest,
+                                TrsSpawn, TrsStatsDetectSeenType, Weather)
+from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (gen_despawn_timestamp,
                                               is_mon_ditto)
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madConstants import (REDIS_CACHETIME_MON_LURE_IV, REDIS_CACHETIME_STOP_DETAILS,
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madConstants import (REDIS_CACHETIME_CELLS,
                                           REDIS_CACHETIME_GYMS,
-                                          REDIS_CACHETIME_RAIDS, REDIS_CACHETIME_CELLS,
-                                          REDIS_CACHETIME_WEATHER, REDIS_CACHETIME_POKESTOP_DATA)
+                                          REDIS_CACHETIME_MON_LURE_IV,
+                                          REDIS_CACHETIME_POKESTOP_DATA,
+                                          REDIS_CACHETIME_RAIDS,
+                                          REDIS_CACHETIME_STOP_DETAILS,
+                                          REDIS_CACHETIME_WEATHER)
 from mapadroid.utils.madGlobals import MonSeenTypes, QuestLayer
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
@@ -317,6 +322,7 @@ class DbPogoProtoSubmit:
         mon.costume = pokemon_display.get("costume_value", None)
         mon.form = form
         mon.last_modified = now
+        mon.size = pokemon_data.get("size", None)
         logger.debug("Submitting IV {} scanned at {}", encounter_id, timestamp)
         session.add(mon)
         await self.maybe_save_ditto(session, pokemon_display, encounter_id, mon_id, pokemon_data)
@@ -965,25 +971,100 @@ class DbPogoProtoSubmit:
                 logger.debug("Failed committing cell {} ({})", cell_id, str(e))
                 await self._cache.set(cache_key, 1, ex=1)
 
+    async def _handle_single_incident(self, session: AsyncSession,
+                                      stop_id: str,
+                                      incident_data: Optional[Dict]):
+        if not incident_data:
+            logger.warning("Incident data is empty")
+            return
+        incident_id: Optional[str] = incident_data.get("incident_id")
+        if incident_id is None or len(incident_id.strip()) == 0:
+            return
+        logger.debug("Handling incident '{}': {}", incident_id, incident_data)
+        incident: Optional[PokestopIncident] = await PokestopIncidentHelper.get(session,
+                                                                                stop_id,
+                                                                                incident_id)
+        if not incident:
+            incident = PokestopIncident()
+            incident.pokestop_id = stop_id
+            incident.incident_id = incident_id
+        incident_start = incident_data.get("incident_start_ms", 0) / 1000
+        if incident_start > 0:
+            incident.incident_start = DatetimeWrapper.fromtimestamp(incident_start)
+
+        incident_expiration = incident_data.get("incident_expiration_ms", 0) / 1000
+        if incident_expiration > 0:
+            incident.incident_expiration = DatetimeWrapper.fromtimestamp(incident_expiration)
+
+        incident.hide_incident = incident_data.get("hide_incident", False)
+        incident.incident_display_type = incident_data.get("incident_display_type")
+        incident.incident_display_order_priority = incident_data.get("incident_display_order_priority")
+        incident.custom_display = incident_data.get("custom_display", {}).get("style_config_address")
+        incident.is_cross_stop_incident = incident_data.get("is_cross_stop_incident", False)
+
+        character_display = incident_data.get("character_display")
+        incident.character_display = character_display.get("character") if character_display is not None else 0
+
+        async with session.begin_nested() as nested_transaction:
+            try:
+                logger.debug("Adding or updating incident {}", incident_id)
+                session.add(incident)
+                await nested_transaction.commit()
+                logger.info("Called commit of {}", incident_id)
+            except sqlalchemy.exc.IntegrityError as e:
+                logger.warning("Failed committing incident {} for pokestop {} ({})",
+                               incident_id, stop_id, str(e))
+                await nested_transaction.rollback()
+
+    def _read_incident_ids(self, stop_data: Dict) -> List[str]:
+        incident_ids: List[str] = []
+        # Somehow there are 2 fields which may hold an incident or multiple incidents...
+        single_incident: Optional[str] = stop_data.get("pokestop_display", {}).get("incident_id")
+        if single_incident:
+            incident_ids.append(single_incident)
+
+        incident_displays: Optional[List[Dict]] = stop_data.get("pokestop_displays")
+        if incident_displays:
+            for incident in incident_displays:
+                incident_in_list: Optional[str] = incident.get("incident_id")
+                if incident_in_list:
+                    incident_ids.append(incident_in_list)
+        # sort the list to always have the same order or a changed order to detect changed properly given we are
+        # using it for cache key
+        incident_ids.sort()
+        return incident_ids
+
+    async def _handle_pokestop_incident_data(self, session: AsyncSession,
+                                             stop_id: str,
+                                             stop_data: Dict):
+        if "pokestop_display" in stop_data:
+            await self._handle_single_incident(session, stop_id, stop_data.get("pokestop_display"))
+        incident_displays: Optional[List[Dict]] = stop_data.get("pokestop_displays")
+        if incident_displays:
+            for incident in incident_displays:
+                await self._handle_single_incident(session, stop_id, incident)
+
     async def _handle_pokestop_data(self, session: AsyncSession,
                                     stop_data: Dict) -> Optional[Pokestop]:
         if stop_data["type"] != 1:
             logger.info("{} is not a pokestop", stop_data)
             return
         alt_modified_time = int(math.ceil(DatetimeWrapper.now().timestamp() / 1000)) * 1000
-        cache_key = "stop{}{}".format(stop_data["id"], stop_data.get("last_modified_timestamp_ms", alt_modified_time))
+        # We can detect changes of the incidents by simply appending all incident IDs sent in the proto I guess...
+        stop_id: str = stop_data["id"]
+        last_modified_timestamp: int = stop_data.get("last_modified_timestamp_ms", alt_modified_time)
+        incident_ids: List[str] = self._read_incident_ids(stop_data)
+        logger.debug3("Incident IDs at {} last modified {}: {}", stop_id, last_modified_timestamp, incident_ids)
+        cache_key = "stop{}{}{}".format(stop_id, last_modified_timestamp, incident_ids)
         if await self._cache.exists(cache_key):
             return
 
         now = DatetimeWrapper.fromtimestamp(time.time())
-        last_modified = DatetimeWrapper.fromtimestamp(
+        last_modified: datetime = DatetimeWrapper.fromtimestamp(
             stop_data["last_modified_timestamp_ms"] / 1000
         )
         lure = DatetimeWrapper.fromtimestamp(0)
         active_fort_modifier = None
-        incident_start = None
-        incident_expiration = None
-        incident_grunt_type = None
         is_ar_scan_eligible = stop_data["is_ar_scan_eligible"]
 
         if len(stop_data["active_fort_modifier"]) > 0:
@@ -998,42 +1079,6 @@ class DbPogoProtoSubmit:
             lure = DatetimeWrapper.fromtimestamp(
                 lure_duration * 60 + (stop_data["last_modified_timestamp_ms"] / 1000)
             )
-
-        if "pokestop_displays" in stop_data \
-                and len(stop_data["pokestop_displays"]) > 0 \
-                and stop_data["pokestop_displays"][-1]["incident_display_type"] == 8:
-            start_ms = stop_data["pokestop_displays"][-1]["incident_start_ms"]
-            expiration_ms = stop_data["pokestop_displays"][-1]["incident_expiration_ms"]
-            incident_grunt_type = 352
-
-            if start_ms > 0:
-                incident_start = DatetimeWrapper.fromtimestamp(start_ms / 1000)
-
-            if expiration_ms > 0:
-                incident_expiration = DatetimeWrapper.fromtimestamp(expiration_ms / 1000)
-        elif "pokestop_displays" in stop_data \
-                and len(stop_data["pokestop_displays"]) > 0 \
-                and stop_data["pokestop_displays"][0]["character_display"] is not None \
-                and stop_data["pokestop_displays"][0]["character_display"]["character"] > 1:
-            start_ms = stop_data["pokestop_displays"][0]["incident_start_ms"]
-            expiration_ms = stop_data["pokestop_displays"][0]["incident_expiration_ms"]
-            incident_grunt_type = stop_data["pokestop_displays"][0]["character_display"]["character"]
-
-            if start_ms > 0:
-                incident_start = DatetimeWrapper.fromtimestamp(start_ms / 1000)
-
-            if expiration_ms > 0:
-                incident_expiration = DatetimeWrapper.fromtimestamp(expiration_ms / 1000)
-        elif "pokestop_display" in stop_data:
-            start_ms = stop_data["pokestop_display"]["incident_start_ms"]
-            expiration_ms = stop_data["pokestop_display"]["incident_expiration_ms"]
-            incident_grunt_type = stop_data["pokestop_display"]["character_display"]["character"]
-
-            if start_ms > 0:
-                incident_start = DatetimeWrapper.fromtimestamp(start_ms / 1000)
-
-            if expiration_ms > 0:
-                incident_expiration = DatetimeWrapper.fromtimestamp(expiration_ms / 1000)
         stop_id = stop_data["id"]
 
         pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_id)
@@ -1047,17 +1092,16 @@ class DbPogoProtoSubmit:
         pokestop.lure_expiration = lure
         pokestop.last_updated = now
         pokestop.active_fort_modifier = active_fort_modifier
-        pokestop.incident_start = incident_start
-        pokestop.incident_expiration = incident_expiration
-        pokestop.incident_grunt_type = incident_grunt_type
         pokestop.is_ar_scan_eligible = is_ar_scan_eligible
-        try:
-            session.add(pokestop)
-            await session.commit()
-            await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_POKESTOP_DATA)
-        except sqlalchemy.exc.IntegrityError as e:
-            logger.warning("Failed committing stop {} ({})", stop_id, str(e))
-            await session.rollback()
+        async with session.begin_nested() as nested_transaction:
+            try:
+                session.add(pokestop)
+                await nested_transaction.commit()
+                await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_POKESTOP_DATA)
+            except sqlalchemy.exc.IntegrityError as e:
+                logger.warning("Failed committing stop {} ({})", stop_id, str(e))
+                await nested_transaction.rollback()
+        await self._handle_pokestop_incident_data(session, stop_id, stop_data)
 
     async def _extract_args_single_stop_details(self, session: AsyncSession, stop_data) -> Optional[Pokestop]:
         if stop_data.get("type", 999) != 1:

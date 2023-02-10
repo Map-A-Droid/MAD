@@ -8,10 +8,11 @@ from typing import Optional
 import aioredis as aioredis
 from aiofile import async_open
 from aioredis import Redis
+from loguru import logger
+from sqlalchemy import text
+
 from alembic import command
 from alembic.config import Config
-from loguru import logger
-
 from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
@@ -80,14 +81,14 @@ class PooledQueryExecutor:
                 # TODO: Probably can be written in a nicer way or master's "sanity checker" adapted?
                 check_table_exists = f"""
                 SELECT COUNT(TABLE_NAME)
-                FROM 
-                   information_schema.TABLES 
-                WHERE 
-                   TABLE_SCHEMA LIKE '{self.database}' AND 
+                FROM
+                   information_schema.TABLES
+                WHERE
+                   TABLE_SCHEMA LIKE '{self.database}' AND
                     TABLE_TYPE LIKE 'BASE TABLE' AND
                     TABLE_NAME = 'pokemon';
                 """
-                table_exists_result = await session.execute(check_table_exists)
+                table_exists_result = await session.execute(text(check_table_exists))
                 table_exists = table_exists_result.first()[0]
                 if table_exists == 1:
                     return
@@ -98,7 +99,7 @@ class PooledQueryExecutor:
                     for table in tables:
                         install_cmd = '%s;%s;%s'
                         args = ('SET FOREIGN_KEY_CHECKS=0', 'SET NAMES utf8mb4', table)
-                        await session.execute(install_cmd % args)
+                        await session.execute(text(install_cmd % args))
                         await session.commit()
             logger.success('Successfully initialized database')
             await self.__add_default_event()

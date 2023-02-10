@@ -28,6 +28,7 @@ from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
 from mapadroid.utils.madGlobals import application_args, terminate_mad
 from mapadroid.utils.questGen import QuestGen
+from mapadroid.utils.redisReport import report_queue_size
 from mapadroid.utils.SystemStatsUtil import get_system_infos
 
 try:
@@ -48,6 +49,7 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 9):
 
 async def start():
     t_usage: Optional[Task] = None
+    t_reporting: Optional[Task] = None
     mitm_mapper_connector: Optional[MitmMapperClientConnector] = None
     setup_runtime()
     if application_args.config_mode and application_args.only_routes:
@@ -99,6 +101,10 @@ async def start():
         logger.info("Starting statistics collector")
         loop = asyncio.get_running_loop()
         t_usage = loop.create_task(get_system_infos(db_wrapper))
+    if application_args.redis_report_queue_key:
+        logger.info("Starting report queue size to Redis via key: {}", application_args.redis_report_queue_key)
+        loop = asyncio.get_running_loop()
+        t_reporting = loop.create_task(report_queue_size(db_wrapper, mitm_data_processor_manager.get_queue()))
     logger.info("MAD is now running.....")
     exit_code = 0
     try:
@@ -116,6 +122,8 @@ async def start():
             # now cleanup all threads...
             if t_usage:
                 t_usage.cancel()
+            if t_reporting:
+                t_reporting.cancel()
             if mitm_mapper_connector:
                 await mitm_mapper_connector.close()
             if db_exec is not None:

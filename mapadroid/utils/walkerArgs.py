@@ -60,7 +60,11 @@ def parse_args():
                         help='Remove mons from DB N hours after despawn. Only use positive values. '
                              'None if no cleanup is to be run. Default: None')
     parser.add_argument('-delmonslimit', '--delete_mons_limit', type=int, default=5000,
-                        help='Limit the number of mon records to be deleted in each run. Default: 5000. 0 represents infinity - may cause long locks on tables.')
+                        help='Limit the number of mon records to be deleted in each run. '
+                             'Default: 5000. 0 represents infinity - may cause long locks on tables.')
+    parser.add_argument('--delete_incidents_n_hours', type=int, default=None,
+                        help='Remove incidents from DB N hours after expiration. Only use positive values. '
+                             'None if no cleanup is to be run. Default: None')
 
     # Websocket Settings (RGC receiver)
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,
@@ -354,6 +358,12 @@ def parse_args():
                         help=('Redis password'))
     parser.add_argument('-cdb', '--cache_database', default=0,
                         help=('Redis database. Use different numbers (0-15) if you are running multiple instances'))
+
+    parser.add_argument('-rrqk', '--redis_report_queue_key', default=None,
+                        help='Redis key used to store reported value')
+    parser.add_argument('-rrqi', '--redis_report_queue_interval', default=30, type=int,
+                        help='Report queue size from mitmreciver to redis every every N seconds (Default: 30)')
+
 
     if "MODE" in os.environ and os.environ["MODE"] == "DEV":
         args = parser.parse_known_args()[0]

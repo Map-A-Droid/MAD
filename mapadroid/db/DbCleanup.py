@@ -4,6 +4,7 @@ from typing import Optional
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
+from mapadroid.db.helper.PokestopIncidentHelper import PokestopIncidentHelper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
 
@@ -39,6 +40,9 @@ class DbCleanup(object):
                         else application_args.delete_mons_limit
                     await PokemonHelper.delete_older_than_n_hours(session, application_args.delete_mons_n_hours,
                                                                   mon_limit)
+                if application_args.delete_incidents_n_hours:
+                    await PokestopIncidentHelper.delete_older_than_n_hours(session,
+                                                                           application_args.delete_incidents_n_hours)
 
                 await session.commit()
             await asyncio.sleep(application_args.cleanup_interval)

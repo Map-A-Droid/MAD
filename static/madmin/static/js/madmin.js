@@ -240,8 +240,7 @@ new Vue({
                     quests: 67,
                     mons: 67
                 }
-            },
-            cellUpdateTimeout: 50000
+            }
         }
     },
     computed: {
@@ -342,9 +341,6 @@ new Vue({
             } else {
                 clearInterval(cleanupInterval);
             }
-        },
-        'settings.cellUpdateTimeout': function (newVal) {
-        	this.updateStoredSetting('settings-cellUpdateTimeout', newVal);
         },
         'settings.routes.coordinateRadius': {
             deep: true,
@@ -908,42 +904,32 @@ new Vue({
                 return;
             }
 
-            var $this = this;
-
             this.mapGuardedFetch("cellupdates", "get_cells" + urlFilter, function (res) {
                 const now = Math.round((new Date()).getTime() / 1000);
 
                 res.data.forEach(function (cell) {
                     const id = cell["id"];
 
-					var noSkip = true;
-                    var notTooOld = true;
                     if (this.cellupdates[id]) {
                         if (this.cellupdates[id]["updated"] === cell["updated"]) {
-                            noSkip = false;
-                        } else {
-                        	map.removeLayer(leaflet_data.cellupdates[id]);
-                        	delete leaflet_data.cellupdates[id];
+                            return;
                         }
-                    }
-                    if($this.settings.cellUpdateTimeout > 0 && now - cell.updated > $this.settings.cellUpdateTimeout) {
-                        notTooOld = false;
-                    }
 
-                    if (noSkip && notTooOld) {
-                        $this.cellupdates[id] = cell;
-
-                    	leaflet_data.cellupdates[id] = L.polygon(cell["polygon"], {
-                            id: id,
-                            pane: layerOrders.cells.pane,
-                            pmIgnore: true
-                        })
-                        .setStyle(this.getCellStyle(now, cell["updated"]))
-                        .bindPopup(this.build_cell_popup, { className: "cellpopup" });
-
-                    	this.mapAddLayer(leaflet_data.cellupdates[id], layerOrders.cells.bringTo);
+                        map.removeLayer(leaflet_data.cellupdates[id]);
+                        delete leaflet_data.cellupdates[id];
                     }
 
+                    this.cellupdates[id] = cell;
+
+                    leaflet_data.cellupdates[id] = L.polygon(cell["polygon"], {
+                        id: id,
+                        pane: layerOrders.cells.pane,
+                        pmIgnore: true
+                    })
+                    .setStyle(this.getCellStyle(now, cell["updated"]))
+                    .bindPopup(this.build_cell_popup, { className: "cellpopup" });
+
+                    this.mapAddLayer(leaflet_data.cellupdates[id], layerOrders.cells.bringTo);
                 }, this);
             });
         },
@@ -2158,7 +2144,6 @@ if (route.mode === "mon_mitm" && typeof route.editableId === "number") {
             this.settings.routes.coordinateRadius.raids = this.getStoredSetting("settings-coordinateRadius-raids", 490);
             this.settings.routes.coordinateRadius.quests = this.getStoredSetting("settings-coordinateRadius-quests", 67);
             this.settings.routes.coordinateRadius.mons = this.getStoredSetting("settings-coordinateRadius-mons", 67);
-            this.settings.cellUpdateTimeout = this.getStoredSetting('settings-cellUpdateTimeout', 0);
             for (const index of Object.keys(this.layers.stat)) {
                 this.layers.stat[index] = this.getStoredSetting("layer-stat-" + index, false);
             }
@@ -2212,6 +2197,11 @@ if (route.mode === "mon_mitm" && typeof route.editableId === "number") {
                 ++zIndex;
             }
 
+	    // add scale indicator
+            L.control.scale({
+                position: "bottomright"
+            }).addTo(map);
+		
             // add custom button
             locInjectBtn.addTo(map);
 

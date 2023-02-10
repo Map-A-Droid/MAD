@@ -42,10 +42,11 @@ class GetStopsEndpoint(AbstractMadminRootEndpoint):
                 stop.lure_expiration.timestamp()) if stop.lure_expiration else 0
             stop_serialized["last_updated"] = int(
                 stop.last_updated.timestamp()) if stop.last_updated else 0
-            stop_serialized["incident_start"] = int(
-                stop.incident_start.timestamp()) if stop.incident_start else 0
-            stop_serialized["incident_expiration"] = int(
-                stop.incident_expiration.timestamp()) if stop.incident_expiration else 0
+            # TODO: Add incidents list
+            #stop_serialized["incident_start"] = int(
+            #    stop.incident_start.timestamp()) if stop.incident_start else 0
+            #stop_serialized["incident_expiration"] = int(
+            #    stop.incident_expiration.timestamp()) if stop.incident_expiration else 0
             stop_serialized["has_quest"] = stop.pokestop_id in stops_with_quests
             prepared_for_serialization.append(stop_serialized)
         del data

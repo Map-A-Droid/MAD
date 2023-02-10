@@ -5,6 +5,7 @@ from mapadroid.db.model import SettingsAreaIvMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.SubrouteReplacingMixin import SubrouteReplacingMixin
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy
 from mapadroid.route.prioq.strategy.IvOnlyPrioStrategy import IvOnlyPrioStrategy
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -37,7 +38,6 @@ class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
                                   routecalc=routecalc, mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=iv_strategy)
         self._settings: SettingsAreaIvMitm = area
-        self.encounter_ids_left: List[int] = []
         self.starve_route: bool = True
         self.remove_from_queue_backlog: int = area.remove_from_queue_backlog
 
@@ -45,7 +45,11 @@ class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
         return True
 
     def get_encounter_ids_left(self) -> List[int]:
-        return self.encounter_ids_left
+        strategy_used: AbstractRoutePriorityQueueStrategy = self._prio_queue.get_strategy()
+        if isinstance(strategy_used, IvOnlyPrioStrategy):
+            return strategy_used.get_encounter_ids_left()
+        else:
+            return []
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         # not necessary
@@ -68,6 +72,9 @@ class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
 
     def _can_pass_prioq_coords(self) -> bool:
         # Override the base class. No need to pass prioq coords.
+        return False
+
+    def _has_normal_route(self) -> bool:
         return False
 
     def _may_update_routepool(self):
