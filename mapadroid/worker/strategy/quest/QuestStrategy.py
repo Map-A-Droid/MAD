@@ -29,9 +29,8 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location, ScreenCoordinates
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (calculate_cooldown,
                                               determine_current_quest_layer)
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
@@ -39,12 +38,13 @@ from mapadroid.utils.madConstants import STOP_SPIN_DISTANCE, TIMESTAMP_NEVER
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
                                         InternalStopWorkerException,
                                         QuestLayer, TransportType)
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
-from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import \
     AbstractMitmBaseStrategy
+from mapadroid.worker.WorkerState import WorkerState
 
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
 S2_GMO_CELL_LEVEL = 15
@@ -504,6 +504,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def _ensure_stop_present(self, timestamp: float) -> PositionStopType:
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
+        logger.debug("Checking whether a stop is found in a GMO after {}", timestamp)
         stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
         if await self._is_levelmode():
             logger.info("Wait for new data to check stop present")
@@ -513,6 +514,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         else:
             if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY):
                 # Restart pogo, try again, abort if it fails...
+                logger.info("GMO invalid for current position, trying to restart pogo")
                 if not await self._restart_pogo():
                     raise AbortStopProcessingException("Failed restarting pogo after lacking data in GMOs.")
                 timestamp = int(time.time())
@@ -552,7 +554,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
         type_received, data_received, time_received = await self._wait_for_data_after_moving(timestamp,
-                                                                                             ProtoIdentifier.GMO, 20)
+                                                                                             ProtoIdentifier.GMO, 35)
         if type_received != ReceivedType.GMO or data_received is None:
             await self._spinnable_data_failure()
             return PositionStopType.GMO_NOT_AVAILABLE
@@ -831,7 +833,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and (data_received == FortSearchResultTypes.TIME
                            or data_received == FortSearchResultTypes.OUT_OF_RANGE)):
-                    logger.warning('Softban - continuing......')
+                    logger.warning('Softban (type received: {}, data received: {}) - continuing......',
+                                   type_received, data_received)
                     # TODO: Read last action and sleep for needed duration?
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and data_received == FortSearchResultTypes.FULL):
