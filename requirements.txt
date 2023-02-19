@@ -7,7 +7,7 @@ aiohttp-session==2.12.0
 aiomysql==0.1.1
 aioredis==2.0.1
 aiounittest==1.4.2
-alembic==1.8.1
+alembic==1.9.4
 APKMirror-Search==1.0.0
 apkutils==1.2.2
 asyncio-rlock==0.1.0
