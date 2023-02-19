@@ -43,7 +43,7 @@ s2sphere==0.2.5
 SQLAlchemy==2.0.3
 timezonefinder==6.1.9
 ujson==5.6.0
-urllib3==1.26.13
+urllib3==1.26.14
 uvloop==0.17.0
 websockets==10.4
 Werkzeug==2.2.2
