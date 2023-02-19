@@ -2,7 +2,7 @@ aiocache==0.11.1
 aiofile==3.8.1
 aiohttp==3.8.4
 aiohttp-remotes==1.2.0
-aiohttp-jinja2==1.5
+aiohttp-jinja2==1.5.1
 aiohttp-session==2.12.0
 aiomysql==0.1.1
 aioredis==2.0.1
