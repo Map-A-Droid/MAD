@@ -34,7 +34,8 @@ from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (calculate_cooldown,
                                               determine_current_quest_layer)
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.madConstants import STOP_SPIN_DISTANCE, TIMESTAMP_NEVER
+from mapadroid.utils.madConstants import (FALLBACK_MITM_WAIT_TIMEOUT,
+                                          STOP_SPIN_DISTANCE, TIMESTAMP_NEVER)
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
                                         InternalStopWorkerException,
                                         QuestLayer, TransportType)
@@ -101,7 +102,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         self._rotation_waittime: int = 0
         self._clustering_enabled: bool = False
         self._ignore_spinned_stops: bool = False
-        self._last_time_quest_received: int = TIMESTAMP_NEVER
         # TODO: Move to worker_state?
         self._delay_add: int = 0
         self._stop_process_time: int = TIMESTAMP_NEVER
@@ -496,10 +496,15 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     async def _wait_for_data_after_moving(self, timestamp: float, proto_to_wait_for: ProtoIdentifier, timeout) \
             -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]], float]:
         try:
+            timeout_default: int = await self.get_devicesettings_value(MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT,
+                                                                       FALLBACK_MITM_WAIT_TIMEOUT)
+            if timeout_default > timeout:
+                timeout = timeout_default
             return await asyncio.wait_for(self._wait_for_data(timestamp=timestamp,
                                                               proto_to_wait_for=proto_to_wait_for,
-                                                              timeout=None), timeout)
+                                                              timeout=timeout), timeout)
         except asyncio.TimeoutError as e:
+            logger.warning("Failed fetching data {} in {} seconds", proto_to_wait_for, timeout)
             return ReceivedType.UNDEFINED, None, 0.0
 
     async def _ensure_stop_present(self, timestamp: float) -> PositionStopType:
@@ -770,7 +775,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 async with session.begin_nested() as nested_session:
                     await PokestopHelper.delete(session, stop_location)
                     try:
-                        nested_session.commit()
+                        await nested_session.commit()
                     except exc.InternalError as e:
                         logger.warning("Failed deleting stop")
                         logger.exception(e)
@@ -795,8 +800,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     self._stop_process_time, ProtoIdentifier.FORT_SEARCH, timeout)
                 if (type_received == ReceivedType.FORT_SEARCH_RESULT
                         and data_received == FortSearchResultTypes.INVENTORY):
-                    logger.info('Box is full... clear out items!')
-                    await asyncio.sleep(5)
+                    logger.warning('Box is full... clear out items!')
+                    await asyncio.sleep(1)
                     if not await self._mapping_manager.routemanager_redo_stop_at_end(self._area_id,
                                                                                      self._worker_state.origin,
                                                                                      self._worker_state.current_location):
@@ -811,7 +816,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     # Levelmode or data has been received...
                     if await self._is_levelmode():
                         logger.info("Saving visitation info...")
-                        self._last_time_quest_received = math.floor(time.time())
                         # This is leveling mode, it's faster to just ignore spin result and continue
                         break
 
@@ -828,7 +832,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                         break
                     elif data_received == FortSearchResultTypes.QUEST:
                         logger.info('Received new Quest')
-                        self._last_time_quest_received = math.floor(time.time())
 
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and (data_received == FortSearchResultTypes.TIME
@@ -864,8 +867,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 if data_received != FortSearchResultTypes.QUEST:
                     # TODO
                     pass
-
-        await self.set_devicesettings_value(MappingManagerDevicemappingKey.LAST_ACTION_TIME, time.time())
 
     async def _get_unquest_stops(self) -> Set[str]:
         return await self._mapping_manager.routemanager_get_stops_with_quests(

@@ -1,6 +1,6 @@
 import asyncio
 import time
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 
 from aiohttp import web
 from loguru import logger
@@ -9,9 +9,10 @@ from orjson import orjson
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsDevice
-from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import AbstractMitmReceiverRootEndpoint
-from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
+from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import \
+    AbstractMitmReceiverRootEndpoint
 from mapadroid.utils.collections import Location
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 
 
 class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
@@ -74,6 +75,15 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         elif proto_type == 102 and not data["payload"].get("status", None) == 1:
             logger.warning("Encounter with status {} being ignored", data["payload"].get("status", None))
             return
+        elif proto_type == 101:
+            # FORT_SEARCH
+            # check if it is out of range. If so, ignore it
+            fort_search = data["payload"]
+            result: int = fort_search.get("result", 0)
+            if result == 2:
+                # Fort search out of range, abort
+                logger.debug("Received out of range fort search")
+                return
 
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
