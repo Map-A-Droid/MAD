@@ -18,14 +18,15 @@ from loguru import logger
 from mapadroid.utils import global_variables
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.functions import get_version_codes
-from .abstract_apk_storage import AbstractAPKStorage
-from .utils import (get_apk_info, get_supported_pogo, lookup_arch_enum,
-                    lookup_package_info)
+
 from ..db.DbWrapper import DbWrapper
 from ..db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
 from ..db.model import MadApkAutosearch
-from ..utils.RestHelper import RestHelper
 from ..utils.madGlobals import NoMaddevApiTokenError
+from ..utils.RestHelper import RestHelper
+from .abstract_apk_storage import AbstractAPKStorage
+from .utils import (get_apk_info, get_supported_pogo, lookup_arch_enum,
+                    lookup_package_info)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 APK_HEADERS = {
@@ -344,7 +345,9 @@ class APKWizard(object):
         """
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
         mad_supported_pogo = await get_supported_pogo(architecture, self.storage.token)
-        available_apks = await get_available_versions(mad_supported_pogo[architecture])
+        available_apks: Optional[PackageBase] = await get_available_versions(mad_supported_pogo[architecture])
+        if not available_apks:
+            raise WizardError("Unable to query APKMirror download for Pokemon")
         apk_variant = None
         version_str = None
         # This is large enough to be its own function and UT'd
@@ -401,7 +404,7 @@ class APKWizard(object):
                 version=version_str,
                 url=apk_variant.download_url
             )
-        return (apk_variant, version_str)
+        return apk_variant, version_str
 
     async def find_latest_rgc(self, architecture: APKArch) -> Optional[bool]:
         """ Determine if the package de.grennith.rgc.remotegpscontroller has an update
@@ -561,11 +564,11 @@ class PackageImporter(object):
 
 
 @cached(ttl=10 * 60)
-async def get_available_versions(versions: List[str]) -> PackageBase:
+async def get_available_versions(versions: List[str]) -> Optional[PackageBase]:
     """Query apkmirror for the available packages"""
     logger.info("Querying APKMirror for the latest releases")
     try:
-        available: Dict[str, PackageBase] = await package_search_match(
+        available: PackageBase = await package_search_match(
             "https://www.apkmirror.com/apk/niantic-inc/pokemon-go/",
             versions=versions
         )
@@ -575,6 +578,9 @@ async def get_available_versions(versions: List[str]) -> PackageBase:
             "functionality is not currently implemented. Please manually download and upload to the wizard"
         )
         raise SearchError("Unable to query APKMirror")
+    except Exception as e:
+        logger.warning("Failed querying apkmirror: {}", e)
+        return None
     else:
         logger.info("Successfully queried APKMirror to get the latest releases")
         return available
