@@ -12,7 +12,7 @@ APKMirror-Search==1.0.0
 apkutils==1.2.2
 asyncio-rlock==0.1.0
 bitstring==4.0.1
-cachetools==5.2.0
+cachetools==5.3.0
 ConfigArgParse==1.5.3
 dataclasses==0.6
 geopy==2.3.0
