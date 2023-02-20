@@ -633,15 +633,16 @@ class DbPogoProtoSubmit:
 
         Args:
             session:
-            session:
+            stop_proto:
         """
         logger.debug3("DbPogoProtoSubmit::pokestops_details called")
 
         stop: Optional[Pokestop] = await self._extract_args_single_stop_details(session, stop_proto)
         if stop:
-            alt_modified_time = int(math.ceil(DatetimeWrapper.now().timestamp() / 1000)) * 1000
-            cache_key = "stopdetail{}{}".format(stop.pokestop_id,
-                                                stop_proto.get("last_modified_timestamp_ms", alt_modified_time))
+            last_modified = stop_proto.get("last_modified_timestamp_ms")
+            if not last_modified:
+                last_modified = int(math.ceil(DatetimeWrapper.now().timestamp() / 1000)) * 1000
+            cache_key = "stopdetail{}{}".format(stop.pokestop_id, last_modified)
             if await self._cache.exists(cache_key):
                 return True
             async with session.begin_nested() as nested_transaction:
