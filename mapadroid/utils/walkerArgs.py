@@ -42,6 +42,8 @@ def parse_args():
     # MySQL
     parser.add_argument('-dbip', '--dbip', required=False,
                         help='IP or hostname of MySql Server')
+    parser.add_argument('-dbsock', '--dbsocket', required=False,
+                        help='Unix socket of MySQL Server - replaces dbip')
     parser.add_argument('-dbport', '--dbport', type=int, default=3306,
                         help='Port for MySQL Server')
     parser.add_argument('-dbuser', '--dbusername', required=False,
@@ -352,8 +354,12 @@ def parse_args():
     # Redis cache
     parser.add_argument('-ch', '--cache_host', default='127.0.0.1',
                         help=('Redis host used by caching'))
+    parser.add_argument('-csock', '--cache_socket', required=False,
+                        help=('Unix Socket to connect to redis - replaces cache_host'))
     parser.add_argument('-cp', '--cache_port', default=6379,
                         help=('Redis port used by caching'))
+    parser.add_argument('-cu', '--cache_username', default=None,
+                        help=('Redis username'))
     parser.add_argument('-cpwd', '--cache_password', default=None,
                         help=('Redis password'))
     parser.add_argument('-cdb', '--cache_database', default=0,
