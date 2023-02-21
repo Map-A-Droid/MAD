@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Union
 
 import ujson
 from aiocache import cached
-from aioredis import Redis
+from redis import Redis
 from loguru import logger
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
