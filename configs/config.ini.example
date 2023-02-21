@@ -13,6 +13,8 @@
 
 # IP or hostname of MySql Server
 #dbip:
+# unix socket of MySQL server - replaces dbip. Example (MariaDB default): /run/mysqld/mysqld.sock
+#dbsocket:
 # Port of the database (Default: 3306)
 #dbport:
 # Username for MySQL login
@@ -32,10 +34,14 @@
 ######################
 # Redis cache host (Default: localhost)
 #cache_host:
+# Redis cache unix socket - replaces cache_host. Example (disabled in redis by default!): /var/run/redis/redis-server.sock
+#cache_socket:
 # Redis cache port (Default: 6379)
 #cache_port:
 # Redis database. Use different numbers (0-15) if you are running multiple instances.
 #cache_database:
+# Redis username
+#cache_username:
 # Redis password
 #cache_password:
 
