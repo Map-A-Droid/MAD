@@ -5,9 +5,9 @@ from datetime import datetime
 from threading import Lock
 from typing import Optional
 
-import aioredis as aioredis
+import redis as Redis
+from redis import asyncio as aioredis
 from aiofile import async_open
-from aioredis import Redis
 from loguru import logger
 from sqlalchemy import text
 
