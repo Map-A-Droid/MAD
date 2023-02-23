@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 import sqlalchemy
-from aioredis import Redis
+from redis import Redis
 from loguru import logger
 from sqlalchemy.exc import IntegrityError
 
