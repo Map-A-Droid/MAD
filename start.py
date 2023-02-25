@@ -5,7 +5,7 @@ from asyncio import CancelledError, Task
 from typing import Optional
 
 from aiohttp import web
-from aioredis import Redis
+from redis import Redis
 
 from mapadroid.data_handler.grpc.MitmMapperServer import MitmMapperServer
 from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer

@@ -1,13 +1,13 @@
 import asyncio
 import os
 import sys
+import redis as Redis
 from datetime import datetime
 from threading import Lock
 from typing import Optional
 
-import aioredis as aioredis
+from redis import asyncio as aioredis
 from aiofile import async_open
-from aioredis import Redis
 from loguru import logger
 from sqlalchemy import text
 

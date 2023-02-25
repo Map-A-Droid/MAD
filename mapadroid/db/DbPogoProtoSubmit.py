@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Union
 
 import sqlalchemy
-from aioredis import Redis
+from redis import Redis
 from bitstring import BitArray
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession

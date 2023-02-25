@@ -4,7 +4,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Optional, Set, Tuple, Union
 
-from aioredis import Redis
+from redis import Redis
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry

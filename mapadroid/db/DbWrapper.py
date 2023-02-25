@@ -2,7 +2,7 @@ import re
 import time
 from typing import Dict, Optional
 
-from aioredis import Redis
+from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbAccessor import DbAccessor
