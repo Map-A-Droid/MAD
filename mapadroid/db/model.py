@@ -1,9 +1,7 @@
 # coding: utf-8
-from sqlalchemy import (Column, Float, ForeignKey, Index,
-                        String, text)
-from sqlalchemy.dialects.mysql import (BIGINT, ENUM, INTEGER, LONGBLOB,
-                                       LONGTEXT, SMALLINT, TINYINT,
-                                       BOOLEAN)
+from sqlalchemy import Column, Float, ForeignKey, Index, String, text
+from sqlalchemy.dialects.mysql import (BIGINT, BOOLEAN, ENUM, INTEGER,
+                                       LONGBLOB, LONGTEXT, SMALLINT, TINYINT)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -289,7 +287,7 @@ class TrsQuest(Base):
     quest_item_id = Column(SMALLINT(3), nullable=False)
     quest_item_amount = Column(TINYINT(2), nullable=False)
     quest_target = Column(TINYINT(3), nullable=False)
-    quest_condition = Column(String(500, 'utf8mb4_unicode_ci'))
+    quest_condition = Column(String(2500, 'utf8mb4_unicode_ci'))
     quest_reward = Column(String(2560, 'utf8mb4_unicode_ci'))
     quest_template = Column(String(100, 'utf8mb4_unicode_ci'))
     quest_task = Column(String(150, 'utf8mb4_unicode_ci'))
