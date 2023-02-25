@@ -44,7 +44,12 @@ class PooledQueryExecutor:
         # TODO: Shutdown...
         with self._pool_mutex:
             await self._init_pool()
-            redis_credentials = {"host": self.args.cache_host, "port": self.args.cache_port}
+            if self.args.cache_socket:
+                redis_credentials = {"unix_socket_path": self.args.cache_socket}
+            else:
+                redis_credentials = {"host": self.args.cache_host, "port": self.args.cache_port}
+            if self.args.cache_username:
+                redis_credentials["username"] = self.args.cache_username
             if self.args.cache_password:
                 redis_credentials["password"] = self.args.cache_password
             if self.args.cache_database:
@@ -65,7 +70,12 @@ class PooledQueryExecutor:
 
     async def _init_pool(self):
         # Run Alembic DB migrations
-        db_uri: str = f"mysql+aiomysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+        if self.args.dbsocket:
+            db_uri: str = (f"mysql+aiomysql://{self.user}:{self.password}@/{self.database}"
+                           f"?unix_socket={self.args.dbsocket}")
+        else:
+            db_uri: str = f"mysql+aiomysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+
 
         logger.info("Connecting to DB")
         self._db_accessor: DbAccessor = DbAccessor(db_uri, self._poolsize)
