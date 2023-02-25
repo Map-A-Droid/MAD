@@ -44,28 +44,17 @@ class PooledQueryExecutor:
         # TODO: Shutdown...
         with self._pool_mutex:
             await self._init_pool()
-            if not self.args.cache_socket or (self.args.cache_socket and self.args.cache_password
-                                              and not self.args.cache_username):
-                redis_credentials = {"host": self.args.cache_host, "port": self.args.cache_port}
-                if self.args.cache_username:
-                    redis_credentials["username"] = self.args.cache_username
-                if self.args.cache_password:
-                    redis_credentials["password"] = self.args.cache_password
-                    if self.args.cache_socket:
-                        logger.warning("Password-only authentication not supported on unix socket connection. Falling "
-                                       "back to IP connection")
-                if self.args.cache_database:
-                    redis_credentials["db"] = self.args.cache_database
-                self._redis_cache: Redis = await aioredis.Redis(**redis_credentials)
+            if self.args.cache_socket:
+                redis_credentials = {"unix_socket_path": self.args.cache_socket}
             else:
-                if not self.args.cache_username or not self.args.cache_password:
-                    self._redis_cache: Redis = await aioredis.from_url(f"unix://{self.args.cache_socket}",
-                                                                       db=self.args.cache_database)
-                else:
-                    self._redis_cache: Redis = await aioredis.from_url(f"unix://{self.args.cache_username}:"
-                                                                       f"{self.args.cache_password}@"
-                                                                       f"{self.args.cache_socket}",
-                                                                       db=self.args.cache_database)
+                redis_credentials = {"host": self.args.cache_host, "port": self.args.cache_port}
+            if self.args.cache_username:
+                redis_credentials["username"] = self.args.cache_username
+            if self.args.cache_password:
+                redis_credentials["password"] = self.args.cache_password
+            if self.args.cache_database:
+                redis_credentials["db"] = self.args.cache_database
+            self._redis_cache: Redis = await aioredis.Redis(**redis_credentials)
 
     async def get_cache(self) -> Redis:
         if self._redis_cache is None:
