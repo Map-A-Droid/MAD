@@ -32,7 +32,7 @@ numpy==1.24.2
 opencv-python==4.6.0.66
 orjson==3.8.6
 Pillow==9.3.0
-protobuf==3.20.1
+protobuf==3.20.2
 psutil==5.9.4
 PyMySQL==1.0.2
 pytesseract==0.3.10
