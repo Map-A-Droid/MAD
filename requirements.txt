@@ -45,7 +45,7 @@ ujson==5.7.0
 urllib3==1.26.14
 uvloop==0.17.0
 websockets==10.4
-Werkzeug==2.2.2
+Werkzeug==2.2.3
 yarl==1.8.2
 beautifulsoup4==4.11.1
 marshmallow-dataclass==8.5.10
