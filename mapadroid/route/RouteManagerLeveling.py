@@ -8,9 +8,9 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
                                 SettingsRoutecalc)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RoutePoolEntry import RoutePoolEntry
-from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import RoutecalculationTypes
 
@@ -42,11 +42,13 @@ class RouteManagerLeveling(RouteManagerBase):
 
             any_at_all = False
             async with self.db_wrapper as session, session:
-                for origin in routepool:
+                for origin in routepool.keys():
                     origin_local_list = []
-                    entry: RoutePoolEntry = routepool[origin]
-
-                    if len(entry.queue) > 0:
+                    entry: Optional[RoutePoolEntry] = routepool.get(origin)
+                    if not entry:
+                        logger.debug("{} was removed during updating of routepools", origin)
+                        continue
+                    elif len(entry.queue) > 0:
                         logger.debug("origin {} already has a queue, do not touch...", origin)
                         continue
                     current_worker_pos = entry.current_pos

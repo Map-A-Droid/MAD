@@ -10,13 +10,13 @@ from asyncio_rlock import RLock
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.route.prioq.RoutePriorityQueue import RoutePriorityQueue
 from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import (
     AbstractRoutePriorityQueueStrategy, RoutePriorityQueueEntry)
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (PositionType, PrioQueueNoDueEntry,
@@ -184,7 +184,7 @@ class RouteManagerBase(ABC):
                 logger.info("failed unregistering from routemanager since subscription was previously lifted")
             if remove_routepool_entry and worker_name in self._routepool:
                 logger.info("Deleting old routepool of {}", worker_name)
-                del self._routepool[worker_name]
+                self._routepool.pop(worker_name)
                 await self._update_routepool()
             if len(self._workers_registered) == 0 and self._is_started.is_set():
                 logger.info("Routemanager does not have any subscribing workers anymore, calling stop", self.name)
