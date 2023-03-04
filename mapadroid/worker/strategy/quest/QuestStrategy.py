@@ -474,7 +474,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         return False
 
     async def switch_account(self):
-        if not self._switch_user():
+        if not await self._switch_user():
             logger.error('Something happened while account switching :(')
             raise InternalStopWorkerException("Failed switching accounts")
         else:
