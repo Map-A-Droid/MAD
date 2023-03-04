@@ -382,7 +382,7 @@ class AbstractWorkerStrategy(ABC):
         await asyncio.sleep(5)
         await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
         await self.turn_screen_on_and_start_pogo()
-        if not self._ensure_pogo_topmost():
+        if not await self._ensure_pogo_topmost():
             logger.error('Kill Worker...')
             raise InternalStopWorkerException("Pogo not topmost app during switching of users")
         logger.info('Switching finished ...')
