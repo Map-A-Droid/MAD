@@ -1,14 +1,18 @@
-from typing import List, Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from aiohttp import web
 
-from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.helper.AutoconfigRegistrationHelper import \
+    AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
-from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
-from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
+from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
+                                                        SettingsPogoauthHelper)
+from mapadroid.db.model import (AutoconfigRegistration, SettingsDevice,
+                                SettingsPogoauth)
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    AbstractMadminRootEndpoint
 from mapadroid.utils.autoconfig import origin_generator
+from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
 class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
@@ -63,6 +67,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                 .get_assigned_to_device(self._session, self._get_instance_id(), device_entry.device_id)
             if not self._get_mad_args().autoconfig_no_auth and (not assigned_to_device):
                 try:
+                    # TODO auth: Remove logintype selection by device entry
                     auth_type = LoginType(device_entry.logintype)
                 except (KeyError, ValueError):
                     auth_type = LoginType.GOOGLE

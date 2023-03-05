@@ -5,9 +5,11 @@ from sqlalchemy import and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from mapadroid.account_handler.AbstractAccountHandler import BurnType
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import (AutoconfigRegistration, SettingsDevice,
                                 SettingsPogoauth)
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -32,14 +34,11 @@ class SettingsPogoauthHelper:
 
     @staticmethod
     async def get_assigned_to_device(session: AsyncSession, instance_id: int,
-                                     device_id: int,
-                                     type_of_login: Optional[LoginType] = None) -> List[SettingsPogoauth]:
+                                     device_id: int) -> Optional[SettingsPogoauth]:
         stmt = select(SettingsPogoauth).where(and_(SettingsPogoauth.instance_id == instance_id,
                                                    SettingsPogoauth.device_id == device_id))
-        if type_of_login:
-            stmt = stmt.where(SettingsPogoauth.login_type == type_of_login.value)
         result = await session.execute(stmt)
-        return result.scalars().all()
+        return result.scalars().first()
 
     @staticmethod
     async def get(session: AsyncSession, instance_id: int, identifier: int) -> Optional[SettingsPogoauth]:
@@ -118,7 +117,9 @@ class SettingsPogoauthHelper:
             identifier = None
         # Find all unassigned accounts
         for pogoauth in result.scalars().all():
-            if pogoauth.device_id is not None or identifier is not None and pogoauth.device_id != identifier:
+            if (identifier is not None and (pogoauth.device_id != identifier
+                                            or pogoauth.device_id is not None)) \
+                    or identifier is None and pogoauth.device_id is not None:
                 continue
             accounts[pogoauth.account_id] = pogoauth
         return accounts
@@ -144,3 +145,19 @@ class SettingsPogoauthHelper:
                                                    SettingsPogoauth.username == ggl_login_mail))
         result = await session.execute(stmt)
         return result.scalars().first()
+
+    @staticmethod
+    async def mark_burnt(session: AsyncSession, instance_id: int, account_id: int,
+                         burn_type: Optional[BurnType]) -> None:
+        auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get(session, instance_id, account_id)
+        if not auth:
+            return
+        if burn_type is None:
+            auth.last_burn = None
+            auth.last_burn_type = None
+        else:
+            auth.last_burn = DatetimeWrapper.now()
+            auth.last_burn_type = burn_type.value
+        async with session.begin_nested() as nested:
+            session.add(auth)
+            await nested.commit()

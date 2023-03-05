@@ -1,7 +1,8 @@
 # coding: utf-8
 from sqlalchemy import Column, Float, ForeignKey, Index, String, text
 from sqlalchemy.dialects.mysql import (BIGINT, BOOLEAN, ENUM, INTEGER,
-                                       LONGBLOB, LONGTEXT, SMALLINT, TINYINT)
+                                       LONGBLOB, LONGTEXT, MEDIUMBLOB,
+                                       SMALLINT, TINYINT)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -693,7 +694,8 @@ class SettingsDevice(Base):
     screenshot_quality = Column(INTEGER(11))
     startcoords_of_walker = Column(String(256, 'utf8mb4_unicode_ci'))
     screendetection = Column(BOOLEAN)
-    logintype = Column(ENUM('google', 'ptc'))
+    # Google login mail set in device to be used with prio (optional).
+    # Accountswitching will attempt google login first. If it fails, fallback to any free PTC
     ggl_login_mail = Column(String(256, 'utf8mb4_unicode_ci'))
     clear_game_data = Column(BOOLEAN)
     account_rotation = Column(BOOLEAN)
@@ -788,10 +790,16 @@ class SettingsPogoauth(Base):
 
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     account_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
-    device_id = Column(ForeignKey('settings_device.device_id', ondelete='CASCADE'), index=True)
+    device_id = Column(ForeignKey('settings_device.device_id', ondelete='CASCADE'), index=True, nullable=True)
     login_type = Column(ENUM('google', 'ptc'), nullable=False)
     username = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
     password = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
+    key_blob = Column(MEDIUMBLOB, nullable=True)
+    level = Column(SMALLINT(2))
+    last_burn = Column(TZDateTime, nullable=True)
+    last_burn_type = Column(ENUM('ban', 'maintenance'), nullable=True)
+    last_softban_action = Column(TZDateTime, nullable=True)
+    last_softban_action_location = Column(GeometryColumnType, nullable=True)
 
     device = relationship('SettingsDevice')
     instance = relationship('MadminInstance')

@@ -46,8 +46,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
                 # TODO: Get rid of spaghetti by deleting the column
                 # First check for an existing assignment, if one is present, set it accordingly
                 existing_pogo_auth_assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper\
-                    .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id,
-                                            LoginType.GOOGLE)
+                    .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
                 if existing_pogo_auth_assigned_to_device \
                         and existing_pogo_auth_assigned_to_device[0].username != db_entry.ggl_login_mail:
                     # Device is assigned to another pogoauth google login

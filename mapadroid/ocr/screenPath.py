@@ -17,6 +17,7 @@ from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Login_GGL, Login_PTC, ScreenCoordinates
 from mapadroid.utils.madGlobals import ScreenshotType, application_args
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
+from mapadroid.worker.WorkerState import WorkerState
 
 
 class LoginType(Enum):
@@ -26,33 +27,28 @@ class LoginType(Enum):
 
 
 class WordToScreenMatching(object):
-    def __init__(self, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
+    def __init__(self, communicator: AbstractCommunicator, worker_state: WorkerState,
                  mapping_mananger: MappingManager):
         # TODO: Somehow prevent call from elsewhere? Raise exception and only init in WordToScreenMatching.create?
-        self.origin = origin
+        self._worker_state: WorkerState = worker_state
         self._mapping_manager = mapping_mananger
         self._ratio: float = 0.0
 
         self._logintype: LoginType = LoginType.UNKNOWN
-        self._PTC_accounts: List[Login_PTC] = []
-        self._GGL_accounts: List[Login_GGL] = []
         self._accountcount: int = 0
         self._accountindex: int = 0
         self._screenshot_y_offset: int = 0
         self._nextscreen: ScreenType = ScreenType.UNDEFINED
 
-        self._pogoWindowManager = pogo_win_manager
         self._communicator: AbstractCommunicator = communicator
-        self._resocalc = resocalc
         logger.info("Starting Screendetector")
         self._width: int = 0
         self._height: int = 0
 
     @classmethod
-    async def create(cls, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
+    async def create(cls, communicator: AbstractCommunicator, worker_state: WorkerState,
                      mapping_mananger: MappingManager):
-        self = WordToScreenMatching(communicator=communicator, pogo_win_manager=pogo_win_manager,
-                                    origin=origin, resocalc=resocalc, mapping_mananger=mapping_mananger)
+        self = WordToScreenMatching(communicator=communicator, worker_state=worker_state, mapping_mananger=mapping_mananger)
         self._accountindex = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_INDEX, 0)
         self._screenshot_y_offset = await self.get_devicesettings_value(
             MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
@@ -60,6 +56,8 @@ class WordToScreenMatching(object):
         return self
 
     async def get_login_accounts(self) -> None:
+        # TODO auth: remove logintype usage but only rely on ggl_login_mail if available to prioritize google login,
+        #  then fallback to PTC
         self._logintype = LoginType[
             await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google')]
         logger.info("Set logintype: {}", self._logintype)
@@ -100,6 +98,7 @@ class WordToScreenMatching(object):
 
         await self.set_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_INDEX, self._accountindex)
 
+        # TODO auth: Remove and handle better
         if self._logintype == LoginType.ptc:
             logger.info('Using PTC Account: {}',
                         self.censor_account(self._PTC_accounts[self._accountindex - 1].username, is_ptc=True))
@@ -200,6 +199,7 @@ class WordToScreenMatching(object):
             if 'Google' in (global_dict['text'][i]):
                 temp_dict['Google'] = global_dict['top'][i] / diff
 
+            # TODO auth: Remove logintype selection by device entry but autoselect
             if await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google') == 'ptc':
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
@@ -384,6 +384,7 @@ class WordToScreenMatching(object):
 
     async def __handle_google_login(self, screentype) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
+        # TODO auth: Remove this check and handle it better
         if self._logintype == LoginType.ptc:
             logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
             username = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, '@gmail.com')
@@ -469,7 +470,7 @@ class WordToScreenMatching(object):
            await self._communicator.click(480, 1080)
         if self._width == 1080 and self._height == 1920:
            await self._communicator.touch_and_hold(int(360), int(1800), int(360), int(400))
-           await self._communicator.click(830, 1638) 
+           await self._communicator.click(830, 1638)
         if self._width == 1440 and self._height == 2560:
            await self._communicator.touch_and_hold(int(360), int(2100), int(360), int(400))
            await self._communicator.click(976, 2180)

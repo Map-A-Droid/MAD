@@ -15,11 +15,11 @@ from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
-from mapadroid.db.helper.SettingsWalkerareaHelper import \
-    SettingsWalkerareaHelper
 from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
                                 SettingsPogoauth, SettingsRoutecalc,
@@ -30,11 +30,11 @@ from mapadroid.mapping_manager.AbstractMappingManager import \
     AbstractMappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
+    RoutePriorityQueueEntry
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.route.RouteManagerIV import RouteManagerIV
-from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
-    RoutePriorityQueueEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -245,8 +245,6 @@ class MappingManager(AbstractMappingManager):
             return devicemapping_entry.pool_settings.screenshot_y_offset if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_y_offset else devicemapping_entry.device_settings.screenshot_y_offset
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET:
             return devicemapping_entry.pool_settings.screenshot_x_offset if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_x_offset else devicemapping_entry.device_settings.screenshot_x_offset
-        elif key == MappingManagerDevicemappingKey.LOGINTYPE:
-            return devicemapping_entry.device_settings.logintype
         elif key == MappingManagerDevicemappingKey.GGL_LOGIN_MAIL:
             return devicemapping_entry.device_settings.ggl_login_mail
         elif key == MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER:

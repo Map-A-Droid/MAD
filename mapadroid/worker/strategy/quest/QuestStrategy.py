@@ -34,6 +34,7 @@ from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (calculate_cooldown,
                                               determine_current_quest_layer)
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.global_variables import QUEST_WALK_SPEED_CALCULATED
 from mapadroid.utils.madConstants import (FALLBACK_MITM_WAIT_TIMEOUT,
                                           STOP_SPIN_DISTANCE, TIMESTAMP_NEVER)
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
@@ -250,10 +251,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         # Calculate distance to the previous location and wait for the time needed. This also applies to "walking"
         #  since walking above a given speed may result in softbans as well
         delay_to_avoid_softban: int = 0
-        speed = 16.67  # Speed can be 60 km/h up to distances of 3km
         delay_to_avoid_softban, distance = await self._calculate_remaining_softban_avoidance_duration(cur_time,
                                                                                                       delay_to_avoid_softban,
-                                                                                                      distance, speed)
+                                                                                                      distance,
+                                                                                                      QUEST_WALK_SPEED_CALCULATED)
         if delay_to_avoid_softban == 0:
             last_action_time: Optional[int] = await self.get_devicesettings_value(MappingManagerDevicemappingKey
                                                                                   .LAST_ACTION_TIME, None)
@@ -265,7 +266,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 logger.info('Starting fresh round - using lower delay')
                 # Take into account trs_status possible softban
             else:
-                delay_to_avoid_softban = calculate_cooldown(distance, speed)
+                delay_to_avoid_softban = calculate_cooldown(distance, QUEST_WALK_SPEED_CALCULATED)
         if delay_to_avoid_softban > 0 and delay_to_avoid_softban > delay_used:
             delay_used = delay_to_avoid_softban
 

@@ -21,8 +21,6 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import QuestLayer, WrongAreaInWalker
 from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.WorkerState import WorkerState
-from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.strategy.NopStrategy import NopStrategy
@@ -38,6 +36,8 @@ from mapadroid.worker.strategy.quest.ARQuestLayerStrategy import \
     ARQuestLayerStrategy
 from mapadroid.worker.strategy.quest.NonARQuestLayerStrategy import \
     NonARQuestLayerStrategy
+from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class WalkerConfiguration(NamedTuple):
@@ -109,9 +109,7 @@ class StrategyFactory:
                            worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
         strategy: Optional[AbstractWorkerStrategy] = None
         word_to_screen_matching: WordToScreenMatching = await WordToScreenMatching.create(communicator=communicator,
-                                                                                          pogo_win_manager=self.__pogo_windows,
-                                                                                          origin=worker_state.origin,
-                                                                                          resocalc=worker_state.resolution_calculator,
+                                                                                          worker_state=worker_state,
                                                                                           mapping_mananger=self.__mapping_manager)
         if not worker_type or worker_type in [WorkerType.UNDEFINED, WorkerType.CONFIGMODE, WorkerType.IDLE]:
             logger.info("Either no valid worker type or idle was passed, creating idle strategy.")
