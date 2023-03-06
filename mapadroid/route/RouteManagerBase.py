@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from asyncio_rlock import RLock
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -107,6 +108,10 @@ class RouteManagerBase(ABC):
             self._prio_queue: Optional[RoutePriorityQueue] = None
         self._check_routepools_thread: Optional[Task] = None
         self._shutdown_route: asyncio.Event = asyncio.Event()
+
+    @abstractmethod
+    def purpose(self) -> AccountPurpose:
+        pass
 
     def get_ids_iv(self) -> List[int]:
         return self._mon_ids_iv

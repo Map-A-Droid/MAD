@@ -36,7 +36,8 @@ def upgrade():
     op.add_column('settings_pogoauth', sa.Column('level', sa.SMALLINT(), server_default=text("'0'"),
                                                  nullable=True))
     op.add_column('settings_pogoauth', sa.Column('last_burn', sa.DateTime(), nullable=True))
-    op.add_column('settings_pogoauth', sa.Column('last_burn_type', sa.Enum("ban", "maintenance"), server_default=None,
+    op.add_column('settings_pogoauth', sa.Column('last_burn_type', sa.Enum("ban", "suspended", "maintenance"),
+                                                 server_default=None,
                                                  nullable=True))
     op.add_column('settings_pogoauth', sa.Column('last_softban_action', sa.DateTime(), nullable=True))
     op.add_column('settings_pogoauth', sa.Column('last_softban_action_location', GeometryColumnType(), nullable=True))

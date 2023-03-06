@@ -2,6 +2,7 @@ from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
@@ -16,6 +17,9 @@ from mapadroid.utils.madGlobals import RoutecalculationTypes
 
 
 class RouteManagerLeveling(RouteManagerBase):
+    def purpose(self) -> AccountPurpose:
+        return AccountPurpose.LEVEL
+
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         # not necessary
         middle_of_fence: Tuple[float, float] = self.geofence_helper.get_middle_from_fence()

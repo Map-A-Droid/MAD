@@ -13,7 +13,8 @@ from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.model import SettingsDevice
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
+from mapadroid.db.model import SettingsDevice, SettingsPogoauth
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
@@ -173,11 +174,15 @@ class WebsocketServer(object):
                         await self.__handle_existing_connection(entry, origin)
                         entry.websocket_client_connection = websocket_client_connection
                     elif not entry:
+                        current_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
+                            session, self.__db_wrapper.get_instance_id(), device_id)
                         # Just create a new entry...
                         worker_state: WorkerState = WorkerState(origin=origin,
                                                                 device_id=device_id,
                                                                 stop_worker_event=asyncio.Event(),
-                                                                active_event=self.__pogo_event)
+                                                                pogo_windows=self.__pogo_window_manager,
+                                                                active_event=self.__pogo_event,
+                                                                current_auth=current_auth)
                         entry = WebsocketConnectedClientEntry(origin=origin,
                                                               websocket_client_connection=websocket_client_connection,
                                                               worker_instance=None,

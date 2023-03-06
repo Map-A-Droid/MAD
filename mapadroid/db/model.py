@@ -797,7 +797,7 @@ class SettingsPogoauth(Base):
     key_blob = Column(MEDIUMBLOB, nullable=True)
     level = Column(SMALLINT(2))
     last_burn = Column(TZDateTime, nullable=True)
-    last_burn_type = Column(ENUM('ban', 'maintenance'), nullable=True)
+    last_burn_type = Column(ENUM('ban', 'suspended', 'maintenance'), nullable=True)
     last_softban_action = Column(TZDateTime, nullable=True)
     last_softban_action_location = Column(GeometryColumnType, nullable=True)
 

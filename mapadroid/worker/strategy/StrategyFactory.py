@@ -107,6 +107,7 @@ class StrategyFactory:
                            communicator: AbstractCommunicator,
                            walker_settings: Optional[SettingsWalkerarea],
                            worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
+        worker_state.area_id = area_id
         strategy: Optional[AbstractWorkerStrategy] = None
         word_to_screen_matching: WordToScreenMatching = await WordToScreenMatching.create(communicator=communicator,
                                                                                           worker_state=worker_state,

@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
@@ -32,6 +33,9 @@ class RouteManagerQuests(SubrouteReplacingMixin, RouteManagerBase):
         List of stops last fetched in _get_coords_fresh containing only those without quests on the layer to be scanned
         """
         self._stoplist: List[Location] = []
+
+    def purpose(self) -> AccountPurpose:
+        return AccountPurpose.IV_QUEST if self._mon_ids_iv else AccountPurpose.QUEST
 
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         logger.info("Fetching coords for stops without quests")

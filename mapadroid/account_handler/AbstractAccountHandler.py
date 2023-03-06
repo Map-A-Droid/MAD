@@ -8,6 +8,7 @@ from mapadroid.utils.collections import Location
 
 
 class AccountPurpose(Enum):
+    IV_QUEST = "quest_iv"
     LEVEL = "level"
     QUEST = "quest"
     IV = "iv"
@@ -16,12 +17,13 @@ class AccountPurpose(Enum):
 
 class BurnType(Enum):
     BAN = "ban"
+    SUSPENDED = "suspended"
     MAINTENANCE = "maintenance"
 
 
 class AbstractAccountHandler(ABC):
     @abstractmethod
-    def get_account(self, device_id: int, purpose: AccountPurpose,
+    async def get_account(self, device_id: int, purpose: AccountPurpose,
                     location_to_scan: Location, including_google: bool = True) -> Optional[SettingsPogoauth]:
         """
         Searches for an available (i.e., known to not be cooling down) account in the settings_pogoauth table
@@ -30,7 +32,7 @@ class AbstractAccountHandler(ABC):
         """
 
     @abstractmethod
-    def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:
+    async def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:
         """
         Marks the account to which the device identified by the device_id is bound to as burnt with the time of calling
         Returns:
@@ -38,7 +40,7 @@ class AbstractAccountHandler(ABC):
         """
 
     @abstractmethod
-    def set_last_softban_action(self, device_id: int, time_of_action: datetime.datetime,
+    async def set_last_softban_action(self, device_id: int, time_of_action: datetime.datetime,
                                 location_of_action: Location) -> None:
         """
         Stores the information on when the last softban action for the account currently associated to device was

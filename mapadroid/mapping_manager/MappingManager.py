@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
@@ -459,6 +460,10 @@ class MappingManager(AbstractMappingManager):
     async def routemanager_get_settings(self, routemanager_id: int) -> Optional[SettingsArea]:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_settings() if routemanager is not None else None
+
+    async def routemanager_get_purpose_of_device(self, routemanager_id: int) -> Optional[AccountPurpose]:
+        routemanager: Optional[RouteManagerBase] = self.__fetch_routemanager(routemanager_id)
+        return None if not routemanager else routemanager.purpose()
 
     async def routemanager_set_worker_sleeping(self, routemanager_id: int, worker_name: str,
                                                sleep_duration: float):

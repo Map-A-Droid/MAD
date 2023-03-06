@@ -1,8 +1,7 @@
 import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.account_handler.AbstractAccountHandler import (
     AbstractAccountHandler, AccountPurpose, BurnType)
@@ -26,8 +25,8 @@ class AccountHandler(AbstractAccountHandler):
     def __init__(self, db_wrapper: DbWrapper):
         self._db_wrapper = db_wrapper
 
-    def get_account(self, device_id: int, purpose: AccountPurpose,
-                    location_to_scan: Location, including_google: bool = True) -> Optional[SettingsPogoauth]:
+    async def get_account(self, device_id: int, purpose: AccountPurpose,
+                          location_to_scan: Location, including_google: bool = True) -> Optional[SettingsPogoauth]:
         # First, fetch all pogoauth accounts
         async with self._db_wrapper as session, session:
             device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get(session,
@@ -71,19 +70,22 @@ class AccountHandler(AbstractAccountHandler):
             await session.commit()
             # TODO: try/except
 
-    def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:
+    async def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:
         async with self._db_wrapper as session, session:
             existing_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
                 session, instance_id=self._db_wrapper.get_instance_id(), device_id=device_id)
             if not existing_auth:
                 # TODO: Raise?
                 return
-            SettingsPogoauthHelper.mark_burnt(session, instance_id=self._db_wrapper.get_instance_id(),
-                                              account_id=existing_auth.account_id,
-                                              burn_type=burn_type)
+            logger.warning("Marking account {} (ID {}) assigned to {} as {}",
+                           existing_auth.username, existing_auth.account_id,
+                           device_id, burn_type)
+            await SettingsPogoauthHelper.mark_burnt(session, instance_id=self._db_wrapper.get_instance_id(),
+                                                    account_id=existing_auth.account_id,
+                                                    burn_type=burn_type)
 
-    def set_last_softban_action(self, device_id: int, time_of_action: datetime.datetime,
-                                location_of_action: Location) -> None:
+    async def set_last_softban_action(self, device_id: int, time_of_action: datetime.datetime,
+                                      location_of_action: Location) -> None:
         pass
 
     def _is_burnt(self, auth: SettingsPogoauth) -> bool:
@@ -116,9 +118,11 @@ class AccountHandler(AbstractAccountHandler):
             # Check how many mons were encountered before as this could indicate a maintenance screen popping up
             # TODO
             return auth.level >= MIN_LEVEL_IV
-        elif purpose in [AccountPurpose.LEVEL, AccountPurpose.QUEST]:
+        elif purpose in [AccountPurpose.LEVEL, AccountPurpose.QUEST, AccountPurpose.IV_QUEST]:
             # Depending on last softban action and distance to the location thereof
-            if not auth.last_softban_action_location:
+            if purpose == AccountPurpose.IV_QUEST and auth.level < MIN_LEVEL_IV:
+                return False
+            elif not auth.last_softban_action_location:
                 return True
             last_action_location: Location = Location(auth.last_softban_action_location[0],
                                                       auth.last_softban_action_location[1])

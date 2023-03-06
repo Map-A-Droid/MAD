@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
 from mapadroid.db.model import SettingsAreaMonMitm, SettingsRoutecalc
@@ -46,6 +47,9 @@ class RouteManagerMon(SubrouteReplacingMixin, RouteManagerBase):
 
         if area.max_clustering:
             self._max_clustering: int = area.max_clustering
+
+    def purpose(self) -> AccountPurpose:
+        return AccountPurpose.IV if self._mon_ids_iv else AccountPurpose.MON_RAID
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
         self._init_route_queue()

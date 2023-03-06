@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
@@ -42,6 +43,9 @@ class RouteManagerRaids(SubrouteReplacingMixin, RouteManagerBase):
         self._settings: SettingsAreaRaidsMitm = area
 
         self.starve_route: bool = area.starve_route if area.starve_route is not None else False
+
+    def purpose(self) -> AccountPurpose:
+        return AccountPurpose.IV if self._mon_ids_iv else AccountPurpose.MON_RAID
 
     async def _any_coords_left_after_finishing_route(self):
         self._init_route_queue()
