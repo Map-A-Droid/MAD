@@ -210,6 +210,28 @@ class AbstractWorkerStrategy(ABC):
             await asyncio.sleep(
                 await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 7))
 
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google') == 'ptc' and application_args.enable_login_tracking:
+            logger.debug("start_pogo: Login tracking enabled")
+            if not await self._word_to_screen_matching.track_ptc_login():
+                # sleeping close to or longer than 5 minutes may cause a problem with a 5-minute timeout
+                # in the RGC websocket connection? Only sleep 60s and then do some nonsense ...
+                logger.warning("start_pogo: No permission for PTC login. Kill pogo data and wait for 4 minutes...")
+                await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+                await self._communicator.stop_app("com.nianticlabs.pokemongo")
+                c=0
+                await self._communicator.passthrough("true")
+                while c < 4:
+                    logger.warning(f"start_pogo: sleep 60 more seconds ... c = {c}")
+                    c+=1
+                    await asyncio.sleep(60)
+                    await self._communicator.passthrough("true")
+                logger.warning("start_pogo: reboot after waiting ...")
+                await self._reboot()
+                return False
+            logger.success("start_pogo: Received permission for (potential) PTC login")
+
+        logger.info(f"logintype is {await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'default')}")
+
         await self._grant_permissions_to_pogo()
         cur_time = time.time()
         start_result = False

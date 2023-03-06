@@ -1,4 +1,6 @@
 import asyncio
+from ipaddress import IPv4Address, ip_address
+from threading import Lock
 from typing import Optional
 
 import websockets
@@ -105,6 +107,34 @@ class Communicator(AbstractCommunicator):
 
     async def turn_screen_on(self) -> bool:
         return await self.__run_and_ok("more screen on\r\n", self.__command_timeout)
+
+    async def get_external_ip(self) -> Optional[str]:
+        try:
+            res = await self.passthrough("echo \"$(curl -k -s https://ifconfig.me)\"")
+        except Exception as e:
+            logger.error(f"Failed getting external IP address from device: {e}")
+            return None
+
+        # parse RGC return expression
+        try:
+            res = " ".join(res.replace("[", "").replace("]", "").splitlines())
+        except Exception as e:
+            logger.error(f"Failed parsing external IP: {e}")
+            return None
+
+        if type(ip_address(res)) is IPv4Address:
+            return res
+        else:
+            logger.error(f"{res} is not a valid IPv4 address")
+            return None
+
+    async def get_ptc_status(self) -> int:
+        try:
+            code = await self.passthrough("curl -s -k -I https://sso.pokemon.com/sso/login -o /dev/null -w '%{http_code}'")
+            code = code.replace("[", "").replace("]", "")
+            return int(code)
+        except Exception:
+            return 500
 
     async def click(self, click_x: int, click_y: int) -> bool:
         logger.debug('Click {} / {}', click_x, click_y)

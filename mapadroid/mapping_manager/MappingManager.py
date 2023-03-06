@@ -1,9 +1,13 @@
 import asyncio
 import copy
 from asyncio import Task
-from threading import Event
+from datetime import datetime
+from threading import Event, Lock
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+from redis import asyncio as aioredis
+from redis import WatchError
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbWrapper import DbWrapper
@@ -37,7 +41,7 @@ from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
     RoutePriorityQueueEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
-from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.logging import LoggerEnums, get_logger, get_origin_logger
 from mapadroid.utils.madGlobals import (PositionType, RoutemanagerShuttingDown,
                                         ScreenshotType)
 from mapadroid.worker.WorkerType import WorkerType
@@ -119,13 +123,34 @@ class MappingManager(AbstractMappingManager):
         self.__paused_devices: List[int] = []
         self.__mappings_mutex = None
 
+        self.__ptc_mutex: Lock = Lock()
+        self._redis_cache: Optional[Redis] = None
+
     async def setup(self):
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
+
+        if self.__args.enable_login_tracking:
+            try:
+                await self.setup_login_tracking()
+            except Exception as e:
+                logger.error(f"Failed getting custom cache for PTC redis tracking: {e} - fallback to local mode")
 
         await self.update(full_lock=True)
 
     def shutdown(self):
         logger.info("MappingManager exiting")
+
+    async def setup_login_tracking(self):
+        with self.__ptc_mutex:
+            redis_credentials = {"host": self.__args.login_tracking_host, "port": self.__args.login_tracking_port}
+            if self.__args.login_tracking_username:
+                redis_credentials["username"] = self.__args.login_tracking_username
+            if self.__args.login_tracking_password:
+                redis_credentials["password"] = self.__args.login_tracking_password
+            if self.__args.login_tracking_database:
+                redis_credentials["db"] = self.__args.login_tracking_database
+            self._redis_cache = await aioredis.Redis(**redis_credentials)
+            await self._redis_cache.ping()
 
     async def get_auths(self) -> Optional[Dict[str, str]]:
         return self._auths
@@ -820,3 +845,39 @@ class MappingManager(AbstractMappingManager):
     async def routemanager_get_amount_of_coords_scannable(self, routemanager_id: int) -> Optional[int]:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return await routemanager.get_amount_of_coords_scannable() if routemanager is not None else None
+
+    async def ip_handle_login_request(self, ip, origin, limit_seconds=None, limit_count=None):
+        if not limit_seconds:
+            limit_seconds = int(self.__args.login_tracking_timeout)
+        if not limit_count:
+            limit_count = int(self.__args.login_tracking_limit)
+        origin_logger = get_origin_logger(logger, origin=origin)
+        now = int(datetime.timestamp(datetime.now()))
+
+        origin_logger.warning(f"Handle PTC login request on {ip}")
+        async with self._redis_cache.pipeline() as pipe:
+            while True:
+                try:
+                    await pipe.watch(ip)
+                    try:
+                        ct = await self._redis_cache.zcount(ip, now - limit_seconds, "+inf")
+                        # origin_logger.warning(f"got count {ct} for {ip} from redis")
+                    except Exception as e:
+                        origin_logger.warning(f"Failed getting count for {ip} from redis! Deny this attempt ... "
+                                              f"({e})")
+                        return False
+                    if ct >= limit_count:
+                        origin_logger.warning(f"Reached threshold of {limit_count} attempts per {limit_seconds} "
+                                              f"seconds for {ip}! Deny this login attempt")
+                        return False
+                    else:
+                        origin_logger.info(f"Got count {ct} for {ip}. Allow this login attempt, register {now}.")
+                        pipe.multi()
+                        await pipe.zadd(ip, {f"{origin}:{now}": now})
+                        await pipe.expire(ip, 60 * 60 * 24)
+                        await pipe.execute()
+                        return True
+
+                except WatchError as e:
+                    origin_logger.warning(f"Redis count changed for {ip}, retry ... ({e})")
+                    await asyncio.sleep(1)

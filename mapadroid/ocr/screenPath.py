@@ -15,6 +15,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Login_GGL, Login_PTC, ScreenCoordinates
+from mapadroid.utils.logging import get_origin_logger
 from mapadroid.utils.madGlobals import ScreenshotType, application_args
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 
@@ -26,11 +27,11 @@ class LoginType(Enum):
 
 
 class WordToScreenMatching(object):
-    def __init__(self, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
-                 mapping_mananger: MappingManager):
+    def __init__(self, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc, mapping_manager: MappingManager):
         # TODO: Somehow prevent call from elsewhere? Raise exception and only init in WordToScreenMatching.create?
         self.origin = origin
-        self._mapping_manager = mapping_mananger
+        self._logger = get_origin_logger(logger, origin=origin)
+        self._mapping_manager = mapping_manager
         self._ratio: float = 0.0
 
         self._logintype: LoginType = LoginType.UNKNOWN
@@ -50,9 +51,9 @@ class WordToScreenMatching(object):
 
     @classmethod
     async def create(cls, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
-                     mapping_mananger: MappingManager):
+                     mapping_manager: MappingManager):
         self = WordToScreenMatching(communicator=communicator, pogo_win_manager=pogo_win_manager,
-                                    origin=origin, resocalc=resocalc, mapping_mananger=mapping_mananger)
+                                    origin=origin, resocalc=resocalc, mapping_manager=mapping_manager)
         self._accountindex = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_INDEX, 0)
         self._screenshot_y_offset = await self.get_devicesettings_value(
             MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
@@ -190,15 +191,23 @@ class WordToScreenMatching(object):
         n_boxes = len(global_dict['text'])
         logger.debug("Selecting login with: {}", global_dict)
         for i in range(n_boxes):
+            can_click = False
             if 'Facebook' in (global_dict['text'][i]):
                 temp_dict['Facebook'] = global_dict['top'][i] / diff
+                can_click = True
             if 'CLUB' in (global_dict['text'][i]):
                 temp_dict['CLUB'] = global_dict['top'][i] / diff
+                can_click = True
             # french ...
             if 'DRESSEURS' in (global_dict['text'][i]):
                 temp_dict['CLUB'] = global_dict['top'][i] / diff
+                can_click = True
             if 'Google' in (global_dict['text'][i]):
                 temp_dict['Google'] = global_dict['top'][i] / diff
+                can_click = True
+
+            if not can_click:
+                continue
 
             if await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google') == 'ptc':
                 self._nextscreen = ScreenType.PTC
@@ -699,3 +708,24 @@ class WordToScreenMatching(object):
         else:
             returntype, global_dict, self._width, self._height, diff = result
             return returntype, global_dict, diff
+
+    async def track_ptc_login(self):
+        """
+        Checks whether a PTC login is currently permissible.
+        :return: True, if PTC login can be executed. False, otherwise.
+        """
+        self._logger.debug(f"Checking for PTC login permission")
+        ip = await self._communicator.get_external_ip()
+        if not ip:
+            self._logger.warning("Unable to get IP from device. Deny PTC login request")
+            return False
+        code = await self._communicator.get_ptc_status() or 500
+        if code == 200:
+            self._logger.debug(f"OK - PTC returned {code} on {ip}")
+            return await self._mapping_manager.ip_handle_login_request(ip, self.origin)
+        elif code == 403:
+            self._logger.warning(f"PTC ban is active ({code}) on {ip} - still allow trying to start app")
+            return True
+        else:
+            self._logger.info(f"PTC login server returned {code} on {ip} - do not log in!")
+            return False

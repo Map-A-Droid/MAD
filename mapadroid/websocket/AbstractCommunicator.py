@@ -184,3 +184,12 @@ class AbstractCommunicator(ABC):
         Returns:
 
         """
+
+    @abstractmethod
+    async def get_external_ip(self) -> str:
+        pass
+
+
+    @abstractmethod
+    async def get_ptc_status(self) -> Optional[int]:
+        pass

@@ -45,6 +45,22 @@
 # Redis password
 #cache_password:
 
+# Enable login tracking (backed by Redis) to prevent ip bans
+#enable_login_tracking
+# Redis cache host (Default: localhost)
+#login_tracking_host
+# Redis cache port (Default: 6379)
+#login_tracking_port
+# Redis database. Ideally use the same database (0-15) when tracking multiple running instances.
+#login_tracking_database
+# Redis username for login tracking
+#login_tracking_username:
+# Redis password for login tracking
+#login_tracking_password:
+# Max number of login attempts during 'login_tracking_timeout'.
+#login_tracking_limit
+# Duration in seconds during which a login attempt is counting towards 'login_tracking_limit'.
+#login_tracking_timeout
 
 ### MappingManager gRPC
 ######################

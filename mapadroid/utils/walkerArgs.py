@@ -370,6 +370,23 @@ def parse_args():
     parser.add_argument('-rrqi', '--redis_report_queue_interval', default=30, type=int,
                         help='Report queue size from mitmreciver to redis every every N seconds (Default: 30)')
 
+    # PTC Login tracking
+    parser.add_argument('-elt', '--enable_login_tracking', action='store_true', default=False,
+                        help=('Enable tracking of login attempts to PTC'))
+    parser.add_argument('-lth', '--login_tracking_host', default='localhost',
+                        help=('Redis host used by login tracking'))
+    parser.add_argument('-ltp', '--login_tracking_port', default=6379,
+                        help=('Redis port used by login tracking'))
+    parser.add_argument('-ltu', '--login_tracking_username', default='',
+                        help=('Redis username for login tracking'))
+    parser.add_argument('-ltpwd', '--login_tracking_password', default='',
+                        help=('Redis password for login tracking'))
+    parser.add_argument('-ltdb', '--login_tracking_database', default=0,
+                        help=('Redis database used by login tracking. Use different numbers (0-15) if you are running multiple instances'))
+    parser.add_argument('-ltt', '--login_tracking_timeout', default=360,
+                        help=('Duration in seconds during which a login attempt is counting towards \'login_tracking_limit\'.'))
+    parser.add_argument('-ltl', '--login_tracking_limit', default=15,
+                        help=('Max number of login attempts during \'login_tracking_timeout\'.'))
 
     if "MODE" in os.environ and os.environ["MODE"] == "DEV":
         args = parser.parse_known_args()[0]
