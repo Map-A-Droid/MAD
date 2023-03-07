@@ -81,7 +81,7 @@ class PokemonHelper:
                                           Pokemon.individual_defense == None,
                                           Pokemon.individual_stamina == None,
                                           Pokemon.encounter_id != 0,
-                                          Pokemon.seen_type != MonSeenTypes.nearby_cell.value,
+                                          Pokemon.seen_type != MonSeenTypes.nearby_cell.name,
                                           Pokemon.disappear_time.between(DatetimeWrapper.now()
                                                                          + datetime.timedelta(
                                               seconds=min_time_left_seconds),
