@@ -10,6 +10,7 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import (AutoconfigRegistration, SettingsDevice,
                                 SettingsPogoauth)
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -161,3 +162,19 @@ class SettingsPogoauthHelper:
         async with session.begin_nested() as nested:
             session.add(auth)
             await nested.commit()
+
+    @staticmethod
+    async def set_last_softban_action(session: AsyncSession, instance_id: int, device_id: int,
+                                      location: Location,
+                                      timestamp: Optional[int] = None) -> None:
+        auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(session,
+                                                                                               instance_id=instance_id,
+                                                                                               device_id=device_id)
+        if not auth:
+            raise ValueError("No auth assigned to device.")
+        if timestamp:
+            auth.last_softban_action = DatetimeWrapper.fromtimestamp(timestamp)
+        else:
+            auth.last_softban_action = DatetimeWrapper.now()
+        auth.last_softban_action_location = (location.lat, location.lng)
+        session.add(auth)

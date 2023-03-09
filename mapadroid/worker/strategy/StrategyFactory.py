@@ -3,6 +3,7 @@ from typing import NamedTuple, Optional, Set, Tuple
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import AbstractAccountHandler
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
     AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
@@ -49,7 +50,8 @@ class WalkerConfiguration(NamedTuple):
 
 class StrategyFactory:
     def __init__(self, args, mapping_manager: MappingManager, mitm_mapper: AbstractMitmMapper,
-                 stats_handler: AbstractStatsHandler, db_wrapper: DbWrapper, pogo_windows: PogoWindows, event):
+                 stats_handler: AbstractStatsHandler, db_wrapper: DbWrapper, pogo_windows: PogoWindows, event,
+                 account_handler: AbstractAccountHandler):
         self.__args = args
         self.__mapping_manager: MappingManager = mapping_manager
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
@@ -58,6 +60,7 @@ class StrategyFactory:
         self.__pogo_windows: PogoWindows = pogo_windows
         self.__event = event
         self.__register_lock: asyncio.Lock = asyncio.Lock()
+        self.__account_handler: AbstractAccountHandler = account_handler
 
     async def get_strategy_using_settings(self, origin: str, enable_configmode: bool,
                                           communicator: AbstractCommunicator,
@@ -109,9 +112,9 @@ class StrategyFactory:
                            worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
         worker_state.area_id = area_id
         strategy: Optional[AbstractWorkerStrategy] = None
-        word_to_screen_matching: WordToScreenMatching = await WordToScreenMatching.create(communicator=communicator,
-                                                                                          worker_state=worker_state,
-                                                                                          mapping_mananger=self.__mapping_manager)
+        word_to_screen_matching: WordToScreenMatching = await WordToScreenMatching.create(
+            communicator=communicator, worker_state=worker_state, mapping_mananger=self.__mapping_manager,
+            account_handler=self.__account_handler)
         if not worker_type or worker_type in [WorkerType.UNDEFINED, WorkerType.CONFIGMODE, WorkerType.IDLE]:
             logger.info("Either no valid worker type or idle was passed, creating idle strategy.")
             strategy = NopStrategy(area_id=area_id,

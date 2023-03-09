@@ -55,31 +55,6 @@ class WordToScreenMatching(object):
             MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
         return self
 
-    # TODO: unused?
-    def check_lines(self, lines, height):
-        temp_lines = []
-        sort_lines = []
-        old_y1 = 0
-        index = 0
-
-        for line in lines:
-            for x1, y1, x2, y2 in line:
-                temp_lines.append([y1, y2, x1, x2])
-
-        temp_lines = np.array(temp_lines)
-        sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
-
-        button_value = height / 40
-
-        for line in sort_arr:
-            if int(old_y1 + int(button_value)) < int(line[0]):
-                if int(line[0]) == int(line[1]):
-                    sort_lines.append([line[2], line[0], line[3], line[1]])
-                    old_y1 = line[0]
-            index += 1
-
-        return np.asarray(sort_lines, dtype=np.int32)
-
     async def __evaluate_topmost_app(self, topmost_app: str) -> Tuple[ScreenType, dict, int]:
         returntype: ScreenType = ScreenType.UNDEFINED
         global_dict: dict = {}

@@ -20,10 +20,10 @@ from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
-from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
-                                SettingsWalkerarea, TrsStatus)
+                                SettingsWalkerarea, SettingsPogoauth)
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
@@ -311,32 +311,36 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def _calculate_remaining_softban_avoidance_duration(self, cur_time, delay_to_avoid_softban, distance, speed):
         async with self._db_wrapper as session, session:
-            status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
-            if status and status.last_softban_action and status.last_softban_action_location:
+            auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
+                session, self._db_wrapper.get_instance_id(), self._worker_state.device_id)
+            if auth and auth.last_softban_action and auth.last_softban_action_location:
                 logger.debug("Checking DB for last softban action")
-                last_action_location: Location = Location(status.last_softban_action_location[0],
-                                                          status.last_softban_action_location[1])
+                last_action_location: Location = Location(auth.last_softban_action_location[0],
+                                                          auth.last_softban_action_location[1])
                 distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
                                                                             last_action_location.lng,
                                                                             self._worker_state.current_location.lat,
                                                                             self._worker_state.current_location.lng)
                 delay_to_last_action = calculate_cooldown(distance_last_action, speed)
-                logger.debug("Last registered softban was at {} at {}", status.last_softban_action,
-                             status.last_softban_action_location)
-                if status.last_softban_action.timestamp() + delay_to_last_action > cur_time:
+                logger.debug("Last registered softban was at {} at {}", auth.last_softban_action,
+                             auth.last_softban_action_location)
+                if auth.last_softban_action.timestamp() + delay_to_last_action > cur_time:
                     logger.debug("Last registered softban requires further cooldown")
-                    delay_to_avoid_softban = cur_time - status.last_softban_action.timestamp() + delay_to_last_action
+                    delay_to_avoid_softban = cur_time - auth.last_softban_action.timestamp() + delay_to_last_action
                     distance = distance_last_action
                 else:
                     logger.debug("Last registered softban action long enough in the past")
+            else:
+                logger.warning("Missing assignment of pogoauth to device {} ({})",
+                               self._worker_state.origin, self._worker_state.device_id)
         return delay_to_avoid_softban, distance
 
     async def _rotate_account_after_moving_locations_if_applicable(self, delay_used: int) -> int:
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True) and \
-                await self._word_to_screen_matching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
+                delay_used >= self._rotation_waittime \
                 and await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION,
                                                         False) and not await self._is_levelmode():
-            # Waiting time to long and more then one account - switch! (not level mode!!)
+            # Waiting time too long and more than one account - switch! (not level mode!!)
             logger.info('Can use more than 1 account - switch & no cooldown')
             await self.switch_account()
             delay_used = -1

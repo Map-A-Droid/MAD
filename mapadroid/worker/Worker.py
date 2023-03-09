@@ -320,6 +320,7 @@ class Worker(AbstractWorker):
             processed_rounds = await self._mapping_manager.routemanager_get_rounds(
                 self._scan_strategy.area_id,
                 self._worker_state.origin)
+            # TODO: use mod or reset rounds?
             if int(processed_rounds) >= int(rounds):
                 return False
             return True

@@ -7,6 +7,7 @@ from loguru import logger
 from orjson import orjson
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import SettingsDevice
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import \
@@ -124,9 +125,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             if not rewards:
                 logger.debug("No quest rewards in fort search")
                 return
-            await TrsStatusHelper.set_last_softban_action(self._session,
-                                                          self._get_db_wrapper().get_instance_id(),
-                                                          device.device_id, location_of_data, timestamp)
+            await SettingsPogoauthHelper.set_last_softban_action(self._session,
+                                                                 self._get_db_wrapper().get_instance_id(),
+                                                                 device.device_id, location_of_data, timestamp)
             self._commit_trigger = True
         else:
             logger.debug("Device not found")

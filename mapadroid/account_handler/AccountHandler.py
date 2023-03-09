@@ -41,6 +41,7 @@ class AccountHandler(AbstractAccountHandler):
             # Filter all burnt and all which do not match the purpose. E.g., if the purpose is mon scanning,
             logins_filtered = [auth_entry for auth_id, auth_entry in logins.items() if not self._is_burnt(auth_entry)
                                and self._is_usable_for_purpose(auth_entry, purpose, location_to_scan)]
+            logins_filtered.sort(key=lambda x: x.last_burn)
             login_to_use: Optional[SettingsPogoauth] = None
             # Check if there is a google login assigned to the device which is still in the list
             # If that is the case, try to login - if there is a keyblob, that's ok. If not, we will thus renew it

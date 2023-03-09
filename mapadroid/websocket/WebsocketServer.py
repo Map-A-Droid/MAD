@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
 
+from mapadroid.account_handler.AbstractAccountHandler import AbstractAccountHandler
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
     AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
@@ -44,7 +45,10 @@ logger = get_logger(LoggerEnums.websocket)
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper: AbstractMitmMapper, stats_handler: AbstractStatsHandler,
                  db_wrapper: DbWrapper, mapping_manager: MappingManager,
-                 pogo_window_manager: PogoWindows, event, enable_configmode: bool = False):
+                 pogo_window_manager: PogoWindows, event,
+                 account_handler: AbstractAccountHandler,
+                 enable_configmode: bool = False,
+                 ):
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__mapping_manager: MappingManager = mapping_manager
@@ -66,7 +70,8 @@ class WebsocketServer(object):
         self.__strategy_factory: StrategyFactory = StrategyFactory(self.__args, self.__mapping_manager,
                                                                    self.__mitm_mapper, self.__stats_handler,
                                                                    self.__db_wrapper, self.__pogo_window_manager,
-                                                                   event)
+                                                                   event,
+                                                                   account_handler=account_handler)
         self.__pogo_event: PogoEvent = event
 
         # asyncio loop for the entire server

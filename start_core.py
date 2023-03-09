@@ -6,6 +6,8 @@ from typing import Optional
 
 from redis import Redis
 
+from mapadroid.account_handler.AbstractAccountHandler import AbstractAccountHandler
+from mapadroid.account_handler.AccountHandler import AccountHandler
 from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
 from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
     MitmMapperClientConnector
@@ -127,6 +129,7 @@ async def start():
     quest_gen: QuestGen = QuestGen()
     await quest_gen.setup()
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
+    account_handler: AbstractAccountHandler = AccountHandler(db_wrapper)
     ws_server = WebsocketServer(args=application_args,
                                 mitm_mapper=mitm_mapper,
                                 stats_handler=stats_handler,
@@ -134,6 +137,7 @@ async def start():
                                 mapping_manager=mapping_manager,
                                 pogo_window_manager=pogo_win_manager,
                                 event=event,
+                                account_handler=account_handler,
                                 enable_configmode=application_args.config_mode)
     # TODO: module/service?
     await ws_server.start_server()

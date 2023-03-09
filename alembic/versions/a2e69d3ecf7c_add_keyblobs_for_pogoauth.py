@@ -44,6 +44,10 @@ def upgrade():
 
     # Drop logintype from settings_device since we want to avoid this spaghetti
     op.drop_column('settings_device', 'logintype')
+    # Drop trs_status last_softban_action and location since we only want to track it per account which is more
+    # fine-grained compared to device-level
+    op.drop_column('trs_status', 'last_softban_action')
+    op.drop_column('trs_status', 'last_softban_action_location')
 
 
 def downgrade():
@@ -58,3 +62,5 @@ def downgrade():
     # TODO: migrate by reading content of settings_pogoauth for device_id and cross check to insert values
     #  for enum/ggl user
     op.add_column('settings_device', sa.Column('logintype', ENUM('google', 'ptc')))
+    op.add_column('trs_status', sa.Column('last_softban_action', sa.DateTime(), nullable=True))
+    op.add_column('trs_status', sa.Column('last_softban_action_location', GeometryColumnType(), nullable=True))
