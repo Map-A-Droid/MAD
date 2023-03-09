@@ -3,7 +3,8 @@ from typing import NamedTuple, Optional, Set, Tuple
 
 from loguru import logger
 
-from mapadroid.account_handler.AbstractAccountHandler import AbstractAccountHandler
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
     AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
@@ -306,6 +307,7 @@ class StrategyFactory:
         await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.FINISHED,
                                                                 False)
         client_mapping.walker_area_index = 0
+        # TODO: Reset rounds of routemanagers or handle it differently somehow?
 
     async def __area_middle_of_fence(self, walker_settings: SettingsWalkerarea):
         geofence_helper: Optional[GeofenceHelper] = await self.__mapping_manager.routemanager_get_geofence_helper(

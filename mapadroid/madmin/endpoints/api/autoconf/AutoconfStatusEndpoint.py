@@ -63,7 +63,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                         device_entry = hopper_response
                         is_hopper = True
                         await nested_transaction.commit()
-            assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
+            assigned_to_device: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
                 .get_assigned_to_device(self._session, self._get_instance_id(), device_entry.device_id)
             if not self._get_mad_args().autoconfig_no_auth and (not assigned_to_device):
                 try:

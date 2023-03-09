@@ -17,24 +17,23 @@ class DeviceEndpoint(AbstractResourceEndpoint):
         pass
 
     async def _delete_connected_prior(self, db_entry):
-        assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
+        assigned_to_device: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
             .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
-        for assigned in assigned_to_device:
-            assigned.device_id = None
+        if assigned_to_device:
+            assigned_to_device.device_id = None
 
     async def _handle_additional_keys(self, db_entry: SettingsDevice, key: str, value) -> bool:
         # ptc_login is an array of IDs that are to be used. We need to set the IDs accordingly
         if key == "ptc_login":
             pogoauth_ids_to_use: Set[int] = set([int(x) for x in value])
-            assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
+            assigned_to_device: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
                 .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
             all_pogoauth_mapped: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper \
                 .get_all_mapped(self._session, self._get_instance_id())
 
             # First remove any that are not in the set to use
-            for assigned in assigned_to_device:
-                if assigned.account_id not in pogoauth_ids_to_use:
-                    assigned.device_id = None
+            if assigned_to_device and assigned_to_device.account_id not in pogoauth_ids_to_use:
+                    assigned_to_device.device_id = None
             # Now check if any of those to be used are really available and assign them..
             for auth_id_to_use in pogoauth_ids_to_use:
                 pogoauth_to_use: Optional[SettingsPogoauth] = all_pogoauth_mapped.get(auth_id_to_use, None)
