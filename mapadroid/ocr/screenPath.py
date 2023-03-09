@@ -318,6 +318,9 @@ class WordToScreenMatching(object):
             self._nextscreen = ScreenType.UNDEFINED
             logger.error('Account permabanned!')
             screentype = ScreenType.ERROR
+        elif screentype == ScreenType.MAINTENANCE:
+            self._nextscreen = ScreenType.UNDEFINED
+            logger.warning('Account saw maintenance warning!')
         elif screentype == ScreenType.POGO:
             screentype = await self.__check_pogo_screen_ban_or_loading(screentype, y_offset=y_offset)
         elif screentype == ScreenType.QUEST:

@@ -336,6 +336,9 @@ class AbstractWorkerStrategy(ABC):
                     'Found update pogo screen - sleeping 5 minutes for another check of the screen')
                 # update pogo - later with new rgc version
                 await asyncio.sleep(300)
+            elif screen_type == ScreenType.MAINTENANCE:
+                logger.warning("Maintenance screen - switch account ...")
+                await self._switch_user()
             elif screen_type in [ScreenType.ERROR, ScreenType.FAILURE]:
                 logger.warning('Something wrong with screendetection or pogo failure screen')
                 self._worker_state.login_error_count += 1
