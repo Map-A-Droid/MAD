@@ -44,7 +44,6 @@ def upgrade():
 
     # Drop logintype from settings_device since we want to avoid this spaghetti
     op.drop_column('settings_device', 'logintype')
-    op.drop_column('settings_device', 'ggl_login_mail')
 
 
 def downgrade():
@@ -59,4 +58,3 @@ def downgrade():
     # TODO: migrate by reading content of settings_pogoauth for device_id and cross check to insert values
     #  for enum/ggl user
     op.add_column('settings_device', sa.Column('logintype', ENUM('google', 'ptc')))
-    op.add_column('settings_device', sa.Column('ggl_login_mail', sa.String(256, 'utf8mb4_unicode_ci')))
