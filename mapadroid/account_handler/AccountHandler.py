@@ -167,6 +167,13 @@ class AccountHandler(AbstractAccountHandler):
                 session, device_entry.device_id)
             return None if not currently_assigned else currently_assigned.username
 
+    async def get_assignment(self, device_id: int) -> Optional[SettingsPogoauth]:
+        async with self._db_wrapper as session, session:
+            current_auth = await SettingsPogoauthHelper.get_assigned_to_device(session, device_id)
+            if current_auth:
+                session.expunge(current_auth)
+            return current_auth
+
     def _is_burnt(self, auth: SettingsPogoauth) -> bool:
         """
         Evaluates whether a login is considered not usable based on the last known burning

@@ -105,3 +105,7 @@ class AbstractAccountHandler(ABC):
 
         """
         pass
+
+    @abstractmethod
+    async def get_assignment(self, device_id: int) -> Optional[SettingsPogoauth]:
+        pass

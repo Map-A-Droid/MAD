@@ -6,6 +6,7 @@ from typing import Any, List, Optional
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import BurnType
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
@@ -365,7 +366,7 @@ class AbstractWorkerStrategy(ABC):
                 await asyncio.sleep(300)
             elif screen_type == ScreenType.MAINTENANCE:
                 logger.warning("Maintenance screen - switch account ...")
-                await self._switch_user()
+                await self._switch_user(BurnType.MAINTENANCE.value)
             elif screen_type in [ScreenType.ERROR, ScreenType.FAILURE]:
                 logger.warning('Something wrong with screendetection or pogo failure screen')
                 self._worker_state.login_error_count += 1
@@ -410,7 +411,7 @@ class AbstractWorkerStrategy(ABC):
         await asyncio.sleep(1)
         return await self.start_pogo()
 
-    async def _switch_user(self):
+    async def _switch_user(self, reason=None):
         logger.info('Switching User - please wait ...')
         await self.stop_pogo()
         await asyncio.sleep(5)

@@ -300,8 +300,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def _calculate_remaining_softban_avoidance_duration(self, cur_time, delay_to_avoid_softban, distance, speed):
         async with self._db_wrapper as session, session:
-            active_account: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
-                session, self._worker_state.device_id)
+            active_account: Optional[SettingsPogoauth] = await self._word_to_screen_matching._account_handler.get_assignment(self._worker_state.device_id)
             if active_account:
                 logger.debug("Checking DB for last softban action")
                 if active_account.last_softban_action \
@@ -340,13 +339,13 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                         False) and not await self._is_levelmode():
             # Waiting time too long and more than one account - switch! (not level mode!!)
             logger.info('Can use more than 1 account - switch & no cooldown')
-            await self.switch_account()
+            await self.switch_account(reason="teleport")
             delay_used = -1
         elif await self._is_levelmode() and await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV:
             logger.info('Levelmode: Account of {} is level {}, i.e., >= {}, switching to next to level',
                         self._worker_state.origin,
                         await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV, MIN_LEVEL_IV)
-            await self.switch_account()
+            await self.switch_account(reason="level")
             delay_used = -1
         return delay_used
 
@@ -404,7 +403,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 and await self._mitm_mapper.get_level(self._worker_state.origin) >= 30 \
                 and await self._is_levelmode():
             # switch if player lvl >= 30
-            await self.switch_account()
+            await self.switch_account(reason="level")
 
     async def worker_specific_setup_start(self):
         area_settings: Optional[SettingsAreaPokestop] = await self._mapping_manager.routemanager_get_settings(
@@ -482,8 +481,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         logger.debug("checkPogoClose: done")
         return False
 
-    async def switch_account(self):
-        if not await self._switch_user():
+    async def switch_account(self, reason=None):
+        if not await self._switch_user(reason):
             logger.error('Something happened while account switching :(')
             raise InternalStopWorkerException("Failed switching accounts")
         else:
