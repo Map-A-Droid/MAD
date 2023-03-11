@@ -4,8 +4,8 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 import sqlalchemy
-from redis import Redis
 from loguru import logger
+from redis.asyncio import Redis
 from sqlalchemy.exc import IntegrityError
 
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
@@ -14,7 +14,10 @@ from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
+from mapadroid.db.model import SettingsDevice
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import determine_current_quest_layer
 from mapadroid.utils.madGlobals import (MitmReceiverRetry, MonSeenTypes,
@@ -381,14 +384,25 @@ class SerializedMitmDataProcessor:
         if await cache.exists(cache_key):
             return
         stats = data['inventory_delta'].get("inventory_items", None)
-        if len(stats) > 0:
-            for data_inventory in stats:
-                player_stats = data_inventory['inventory_item_data']['player_stats']
-                player_level = player_stats['level']
-                if int(player_level) > 0:
-                    logger.debug2('{{gen_player_stats}} saving new playerstats')
-                    await self.__mitm_mapper.set_level(origin, int(player_level))
-                    await self.__mitm_mapper.set_pokestop_visits(origin,
-                                                                 int(player_stats['poke_stop_visits']))
-                    await cache.set(cache_key, int(time.time()), ex=60)
-                    return
+        if not stats:
+            return
+        for data_inventory in stats:
+            player_stats = data_inventory['inventory_item_data']['player_stats']
+            player_level = player_stats['level']
+            if int(player_level) > 0:
+                logger.debug2('{{gen_player_stats}} saving new playerstats')
+                if await self.__mitm_mapper.get_level(origin) != player_level:
+                    # Update the player level in DB...
+                    async with self.__db_wrapper as session, session:
+                        device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(
+                            session, self.__db_wrapper.get_instance_id(), origin)
+                        if device_entry:
+                            await SettingsPogoauthHelper.set_level(session,
+                                                                   instance_id=self.__db_wrapper.get_instance_id(),
+                                                                   device_id=device_entry.device_id,
+                                                                   level=player_level)
+                await self.__mitm_mapper.set_level(origin, int(player_level))
+                await self.__mitm_mapper.set_pokestop_visits(origin,
+                                                             int(player_stats['poke_stop_visits']))
+                await cache.set(cache_key, int(time.time()), ex=60)
+                return

@@ -178,3 +178,15 @@ class SettingsPogoauthHelper:
             auth.last_softban_action = DatetimeWrapper.now()
         auth.last_softban_action_location = (location.lat, location.lng)
         session.add(auth)
+
+    @staticmethod
+    async def set_level(session: AsyncSession, instance_id: int, device_id: int, level: int) -> None:
+        auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(session,
+                                                                                               instance_id=instance_id,
+                                                                                               device_id=device_id)
+        if not auth:
+            logger.warning("No auth assigned to device {} to update level.")
+            return
+        auth.level = level
+        session.add(auth)
+        await session.commit()
