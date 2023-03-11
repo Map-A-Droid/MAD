@@ -361,9 +361,9 @@ class WordToScreenMatching(object):
             logger.error('No PTC Username and Password is set')
             return ScreenType.ERROR
         if float(self._ratio) >= 2:
-            username_y = self._height / 2.0 + self._screenshot_y_offset
-            password_y = self._height / 1.6 + self._screenshot_y_offset
-            button_y = self._height / 1.35 + self._screenshot_y_offset
+            username_y = self._height / 2.25 + self._screenshot_y_offset
+            password_y = self._height / 1.75 + self._screenshot_y_offset
+            button_y = self._height / 1.45 + self._screenshot_y_offset
         elif float(self._ratio) >= 1.7:
             username_y = self._height / 1.98 + self._screenshot_y_offset
             password_y = self._height / 1.51 + self._screenshot_y_offset
