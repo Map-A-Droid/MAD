@@ -15,7 +15,6 @@
     <script>
         var table;
         var selected = false;
-        var ptc_accounts = [{% for auth_id, pogoauth_entry in ptc_accounts|dictsort %}{"id": {{ auth_id }}, "text": "{{ pogoauth_entry.username }}"},{% endfor %}];
 
         $(document).ready(function () {
             $("#clearLevelup").click(function () {
@@ -66,40 +65,12 @@
                 $('.enhanced_mode_quest_safe_items').trigger('change');
 
             }
-
-
-            $(".ptc_login").select2({
-                data: ptc_accounts,
-                escapeMarkup: function (m) {
-                    return m;
-                }
-            });
-            let ptc_account_selector = $(".ptc_login").data('default');
-            if (ptc_account_selector.length > 0) {
-                $('.ptc_login').val(ptc_account_selector);
-                $('.ptc_login').trigger('change');
-
-            }
         });
-
-        function translate_ptc() {
-            var ptc = [];
-            $.each($(".ptc_login").val(), function () {
-                ptc.push(this);
-            });
-            return ptc;
-        }
     </script>
 {% endblock %}
 
 {% block content %}
     {{ super() }}
-    {% if requires_auth and element.origin and (not element.ptc_login and not element.ggl_login) %}
-        <div class="alert alert-warning">No Pogo Auth (Google or PTC) selected for the device. During auto-configuration
-            the device will not be able to automatically sign-in.
-        </div>
-    {% endif %}
-
     <h1 class="display-5">{{ element.origin }}</h1>
 
     {% if walkers.items()|length == 0 %}
@@ -116,7 +87,7 @@
                     <small class="form-text text-muted">origin is the unique name of your device</small>
                 </div>
                 {% for key, field in settings_vars.fields|dictsort %}
-                    {% if key not in ["origin", "pool", "walker", "mac_address", "ggl_login", "ptc_login", "interface_type", "ggl_login_mail"] %}
+                    {% if key not in ["origin", "pool", "walker", "mac_address", "ggl_login", "interface_type", "ggl_login_mail"] %}
                         <div class="form-group">
                             <label for="{{ key }}">{{ key }}</label>
                             {% if field.settings.type == "option" %}
@@ -175,13 +146,6 @@
                         {% endfor %}
                     </select>
                     <small class="form-text text-muted">Aligned email for auto-configuration</small>
-                </div>
-                <div class="form-group">
-                    <label for="ptc_login">Assigned PTC Account(s)</label>
-                    <select class="form-control ptc_login" name="ptc_login"
-                            data-default="[{% for assigned_ptc in ptc_assigned %}{{ assigned_ptc.account_id }}{% if ptc_assigned[-1] != assigned_ptc %},{% endif %}{% endfor %}]" data-callback='translate_ptc'
-                            multiple="multiple"></select>
-                    <small class="form-text text-muted">Aligned PTC accounts to be used on the device</small>
                 </div>
                 <div class="form-group">
                     <label for="interface_type">Active Interface</label>

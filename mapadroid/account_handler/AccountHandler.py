@@ -41,8 +41,11 @@ class AccountHandler(AbstractAccountHandler):
             # Filter all burnt and all which do not match the purpose. E.g., if the purpose is mon scanning,
             logins_filtered = [auth_entry for auth_id, auth_entry in logins.items() if not self._is_burnt(auth_entry)
                                and self._is_usable_for_purpose(auth_entry, purpose, location_to_scan)]
-            logins_filtered.sort(key=lambda x: x.last_burn)
+            logins_filtered.sort(key=lambda x: DatetimeWrapper.fromtimestamp(0) if x.last_burn is None else x.last_burn)
             login_to_use: Optional[SettingsPogoauth] = None
+            if not logins_filtered:
+                logger.warning("No auth found for {}", device_id)
+                return None
             # Check if there is a google login assigned to the device which is still in the list
             # If that is the case, try to login - if there is a keyblob, that's ok. If not, we will thus renew it
             for login in logins_filtered:
@@ -68,7 +71,10 @@ class AccountHandler(AbstractAccountHandler):
             # Mark login to be used with the device ID to indicate the now unavailable account
             login_to_use.device_id = device_id
             session.add(login_to_use)
+            # Expunge is needed to not automatically have attempts to refresh values outside a DB session
+            session.expunge(login_to_use)
             await session.commit()
+            return login_to_use
             # TODO: try/except
 
     async def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:

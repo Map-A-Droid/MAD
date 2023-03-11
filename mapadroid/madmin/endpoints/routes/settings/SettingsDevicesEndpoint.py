@@ -38,7 +38,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
         # Parse the mode to send the correct settings-resource definition accordingly
         device: Optional[SettingsDevice] = None
         if self._identifier == "new":
-            account_associated = []
+            account_associated = None
             # device = SettingsDevice()
         else:
             device: SettingsDevice = await SettingsDeviceHelper.get(self._session, self._get_instance_id(),

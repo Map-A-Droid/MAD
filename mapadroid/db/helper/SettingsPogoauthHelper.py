@@ -9,8 +9,8 @@ from mapadroid.account_handler.AbstractAccountHandler import BurnType
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import (AutoconfigRegistration, SettingsDevice,
                                 SettingsPogoauth)
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -119,7 +119,7 @@ class SettingsPogoauthHelper:
         # Find all unassigned accounts
         for pogoauth in result.scalars().all():
             if (identifier is not None and (pogoauth.device_id != identifier
-                                            or pogoauth.device_id is not None)) \
+                                            and pogoauth.device_id is not None)) \
                     or identifier is None and pogoauth.device_id is not None:
                 continue
             accounts[pogoauth.account_id] = pogoauth
