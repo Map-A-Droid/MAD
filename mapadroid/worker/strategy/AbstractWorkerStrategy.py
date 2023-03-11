@@ -15,10 +15,10 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.collections import Location, ScreenCoordinates
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_lat_lng_offsets_by_distance)
 from mapadroid.utils.madConstants import WALK_AFTER_TELEPORT_SPEED
@@ -610,8 +610,6 @@ class AbstractWorkerStrategy(ABC):
         # self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, x_offset, y_offset)
 
     async def _grant_permissions_to_pogo(self) -> None:
-        if not await self.get_devicesettings_value(MappingManagerDevicemappingKey.EXTENDED_PERMISSION_TOGGLING, False):
-            return
         command: str = "su -c 'magiskhide --add com.nianticlabs.pokemongo " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_FINE_LOCATION " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_COARSE_LOCATION " \

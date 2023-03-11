@@ -185,7 +185,7 @@ class SettingsPogoauthHelper:
                                                                                                instance_id=instance_id,
                                                                                                device_id=device_id)
         if not auth:
-            logger.warning("No auth assigned to device {} to update level.")
+            logger.warning("No auth assigned to device {} to update level.", device_id)
             return
         auth.level = level
         session.add(auth)
