@@ -20,6 +20,7 @@ class ScreenType(Enum):
     STRIKE = 16  # Strike / red warning modal (pogo)
     SUSPENDED = 17  # account suspended modal / temporarily banned (pogo)
     TERMINATED = 18  # account terminated modal (pogo)
+    MAINTENANCE = 19  # blue maintenance screen (pogo)
     QUEST = 20  # research menu / quest listing (pogo)
     GPS = 21  # GPS signal not found error message (pogo)
     CREDENTIALS = 22  # new GrantCredentials dialog

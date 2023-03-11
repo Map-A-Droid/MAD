@@ -616,13 +616,13 @@ class DbPogoProtoSubmit:
 
         for cell in cells:
             cell_id = cell["id"]
-            cache_key: str = f"stops_{cell_id}"
-            if await self._cache.exists(cache_key):
+            cell_cache_key: str = f"stops_{cell_id}"
+            if await self._cache.exists(cell_cache_key):
                 continue
             for fort in cell["forts"]:
                 if fort["type"] == 1:
                     await self._handle_pokestop_data(session, fort)
-            await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_CELLS)
+            await self._cache.set(cell_cache_key, 1, ex=REDIS_CACHETIME_CELLS)
         return True
 
     async def stop_details(self, session: AsyncSession, stop_proto: dict):
@@ -754,8 +754,8 @@ class DbPogoProtoSubmit:
         time_receiver: datetime = DatetimeWrapper.fromtimestamp(received_timestamp)
         for cell in cells:
             cell_id = cell["id"]
-            cache_key: str = f"gyms_{cell_id}"
-            if await self._cache.exists(cache_key):
+            cell_cache_key: str = f"gyms_{cell_id}"
+            if await self._cache.exists(cell_cache_key):
                 continue
             for gym in cell["forts"]:
                 if gym["type"] == 0:
@@ -817,7 +817,7 @@ class DbPogoProtoSubmit:
                             logger.warning("Failed committing gym data of {} ({})", gymid, str(e))
                             await nested_transaction.rollback()
             # done processing cell
-            await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_CELLS)
+            await self._cache.set(cell_cache_key, 1, ex=REDIS_CACHETIME_CELLS)
         return True
 
     async def gym(self, session: AsyncSession, map_proto: dict):
@@ -972,10 +972,10 @@ class DbPogoProtoSubmit:
 
             if cell_id < 0:
                 cell_id = cell_id + 2 ** 64
-            cache_key = "s2cell{}".format(cell_id)
-            if await self._cache.exists(cache_key):
+            cell_cache_key = "s2cell{}".format(cell_id)
+            if await self._cache.exists(cell_cache_key):
                 continue
-            await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_CELLS)
+            await self._cache.set(cell_cache_key, 1, ex=REDIS_CACHETIME_CELLS)
             logger.debug3("Updating s2cell {}", cell_id)
             try:
                 await TrsS2CellHelper.insert_update_cell(session, cell)

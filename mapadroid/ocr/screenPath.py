@@ -4,12 +4,13 @@ import re
 import time
 import xml.etree.ElementTree as ET  # noqa: N817
 from enum import Enum
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 from loguru import logger
 
-from mapadroid.account_handler.AbstractAccountHandler import AbstractAccountHandler, BurnType
+from mapadroid.account_handler.AbstractAccountHandler import (
+    AbstractAccountHandler, BurnType)
 from mapadroid.db.model import SettingsPogoauth
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
@@ -134,7 +135,7 @@ class WordToScreenMatching(object):
                 temp_dict['Google'] = global_dict['top'][i] / diff
 
             if self._worker_state.active_account \
-                    and self._worker_state.active_account.login_type == LoginType.ptc.value:
+                    and self._worker_state.active_account.login_type == LoginType.ptc.name:
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
                     logger.info("ScreenType.LOGINSELECT (c) using PTC (logintype in Device Settings)")
@@ -256,7 +257,11 @@ class WordToScreenMatching(object):
             await self._account_handler.mark_burnt(self._worker_state.device_id,
                                                    BurnType.BAN)
             screentype = ScreenType.ERROR
-        # TODO auth: Detect maintenance screen
+        elif screentype == ScreenType.MAINTENANCE:
+            self._nextscreen = ScreenType.UNDEFINED
+            logger.warning('Account saw maintenance warning!')
+            await self._account_handler.mark_burnt(self._worker_state.device_id,
+                                                   BurnType.MAINTENANCE)
         elif screentype == ScreenType.POGO:
             screentype = await self.__check_pogo_screen_ban_or_loading(screentype, y_offset=y_offset)
         elif screentype == ScreenType.QUEST:

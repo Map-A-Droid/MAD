@@ -521,7 +521,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         unquest_stops: Union[List, Dict] = list(await self._get_unquest_stops())
         # Do not send ids_encountered as it's high traffic load
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_encountered",
-                                              value={})
+                                              value=self._encounter_ids)
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="ids_iv", value=ids_iv)
         await self._mitm_mapper.update_latest(worker=self._worker_state.origin, key="unquest_stops",
                                               value=unquest_stops)

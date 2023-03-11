@@ -23,7 +23,7 @@ from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
 from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
-                                SettingsWalkerarea, SettingsPogoauth)
+                                SettingsPogoauth, SettingsWalkerarea)
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
@@ -34,7 +34,8 @@ from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (calculate_cooldown,
                                               determine_current_quest_layer)
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.global_variables import QUEST_WALK_SPEED_CALCULATED
+from mapadroid.utils.global_variables import (MIN_LEVEL_IV,
+                                              QUEST_WALK_SPEED_CALCULATED)
 from mapadroid.utils.madConstants import (FALLBACK_MITM_WAIT_TIMEOUT,
                                           STOP_SPIN_DISTANCE, TIMESTAMP_NEVER)
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
@@ -342,6 +343,11 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                                         False) and not await self._is_levelmode():
             # Waiting time too long and more than one account - switch! (not level mode!!)
             logger.info('Can use more than 1 account - switch & no cooldown')
+            await self.switch_account()
+            delay_used = -1
+        elif await self._is_levelmode() and await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV:
+            logger.info('Levelmode: Account of {} is >= {}, switching to next to level',
+                        self._worker_state.origin, MIN_LEVEL_IV)
             await self.switch_account()
             delay_used = -1
         return delay_used
