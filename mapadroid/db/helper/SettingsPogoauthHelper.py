@@ -171,7 +171,7 @@ class SettingsPogoauthHelper:
                                                                                                instance_id=instance_id,
                                                                                                device_id=device_id)
         if not auth:
-            raise ValueError("No auth assigned to device.")
+            return
         if timestamp:
             auth.last_softban_action = DatetimeWrapper.fromtimestamp(timestamp)
         else:

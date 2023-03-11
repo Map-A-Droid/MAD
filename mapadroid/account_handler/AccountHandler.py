@@ -70,7 +70,9 @@ class AccountHandler(AbstractAccountHandler):
             # TODO: Ensure login_to_use is not the same as currently_assigned
             # Mark login to be used with the device ID to indicate the now unavailable account
             login_to_use.device_id = device_id
-            session.add(login_to_use)
+            async with session.begin_nested() as nested:
+                session.add(login_to_use)
+                await nested.commit()
             # Expunge is needed to not automatically have attempts to refresh values outside a DB session
             session.expunge(login_to_use)
             await session.commit()

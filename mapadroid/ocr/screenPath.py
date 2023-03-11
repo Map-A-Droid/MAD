@@ -487,24 +487,30 @@ class WordToScreenMatching(object):
         if xml is None:
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
-        click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER', 'OK')
+        click_text = ('ZUGRIFF NUR', 'ZULASSEN', 'ALLOW', 'AUTORISER', 'OK')
         try:
             parser = ET.XMLParser(encoding="utf-8")
             xmlroot = ET.fromstring(xml, parser=parser)
             bounds: str = ""
+            found_nodes: List = []
             for item in xmlroot.iter('node'):
-                if str(item.attrib['text']).upper() in click_text:
-                    logger.debug("Found text {}", item.attrib['text'])
-                    bounds = item.attrib['bounds']
-                    logger.debug("Bounds {}", item.attrib['bounds'])
+                text_upper: str = str(item.attrib['text']).upper()
+                res = [ele for ele in click_text if (ele in text_upper)]
+                if res:
+                    found_nodes.append(item)
+            found_nodes.reverse()
+            for node in found_nodes:
+                logger.debug("Found text {}", node.attrib['text'])
+                bounds = node.attrib['bounds']
+                logger.debug("Bounds {}", node.attrib['bounds'])
 
-                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
 
-                    click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
-                    click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
-                    await self._communicator.click(int(click_x), int(click_y))
-                    await asyncio.sleep(2)
-                    return True
+                click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
+                await self._communicator.click(int(click_x), int(click_y))
+                await asyncio.sleep(2)
+                return True
         except Exception as e:
             logger.error('Something wrong while parsing xml: {}', e)
             logger.exception(e)
