@@ -61,7 +61,7 @@ class RouteManagerLeveling(RouteManagerBase):
                         geofence_helper=self.geofence_helper,
                         origin=origin,
                         location=current_worker_pos,
-                        limit=30,
+                        limit=150,
                         ignore_spinned=True
                         if self._settings.ignore_spinned_stops or self._settings.ignore_spinned_stops is None
                         else False,
