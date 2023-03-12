@@ -7,9 +7,9 @@ from typing import Optional
 from aiohttp import web
 from redis import Redis
 
+from mapadroid.account_handler import setup_account_handler
 from mapadroid.account_handler.AbstractAccountHandler import \
     AbstractAccountHandler
-from mapadroid.account_handler.AccountHandler import AccountHandler
 from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
 from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
     MitmMapperClientConnector
@@ -84,7 +84,7 @@ async def start():
 
     quest_gen: QuestGen = QuestGen()
     await quest_gen.setup()
-    account_handler: AbstractAccountHandler = AccountHandler(db_wrapper)
+    account_handler: AbstractAccountHandler = await setup_account_handler(db_wrapper)
 
     mitm_data_processor_manager = InProcessMitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen,
                                                                     account_handler=account_handler)

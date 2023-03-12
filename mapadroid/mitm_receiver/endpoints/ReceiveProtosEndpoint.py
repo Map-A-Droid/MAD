@@ -11,6 +11,7 @@ from mapadroid.db.model import SettingsDevice
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import \
     AbstractMitmReceiverRootEndpoint
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 
 
@@ -124,7 +125,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
                 logger.debug("No quest rewards in fort search")
                 return
 
-            await self._get_account_handler().set_last_softban_action(device.device_id, location_of_data, timestamp)
+            await self._get_account_handler().set_last_softban_action(
+                device.device_id, location_of_action=location_of_data,
+                time_of_action=DatetimeWrapper.fromtimestamp(timestamp))
             self._commit_trigger = True
         else:
             logger.debug("Device not found")
