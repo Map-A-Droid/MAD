@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET  # noqa: N817
 from enum import Enum
 from typing import List, Optional, Tuple
 
-import numpy as np
 from loguru import logger
 
 from mapadroid.account_handler.AbstractAccountHandler import (
@@ -652,3 +651,7 @@ class WordToScreenMatching(object):
         else:
             returntype, global_dict, self._width, self._height, diff = result
             return returntype, global_dict, diff
+
+    async def clear_game_data(self):
+        await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+        await self._account_handler.notify_logout(self._worker_state.device_id)

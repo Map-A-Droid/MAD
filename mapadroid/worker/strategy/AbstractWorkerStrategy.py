@@ -287,8 +287,7 @@ class AbstractWorkerStrategy(ABC):
                 await self.stop_pogo()
                 await self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
                 if await self.get_devicesettings_value(MappingManagerDevicemappingKey.CLEAR_GAME_DATA, False):
-                    logger.info('Clearing game data')
-                    await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+                    await self._clear_game_data()
                 self._worker_state.login_error_count = 0
                 await self._reboot()
                 break
@@ -361,6 +360,10 @@ class AbstractWorkerStrategy(ABC):
             self._worker_state.last_screen_type = screen_type
         return screen_type
 
+    async def _clear_game_data(self):
+        logger.info('Clearing game data')
+        await self._word_to_screen_matching.clear_game_data()
+
     async def _restart_pogo_safe(self):
         logger.info("WorkerBase::_restart_pogo_safe restarting pogo the long way")
         await self.stop_pogo()
@@ -383,7 +386,7 @@ class AbstractWorkerStrategy(ABC):
         logger.info('Switching User - please wait ...')
         await self.stop_pogo()
         await asyncio.sleep(5)
-        await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+        await self._clear_game_data()
         await self.turn_screen_on_and_start_pogo()
         if not await self._ensure_pogo_topmost():
             logger.error('Kill Worker...')

@@ -24,10 +24,22 @@ class BurnType(Enum):
 class AbstractAccountHandler(ABC):
     @abstractmethod
     async def get_account(self, device_id: int, purpose: AccountPurpose,
-                    location_to_scan: Location, including_google: bool = True) -> Optional[SettingsPogoauth]:
+                          location_to_scan: Location, including_google: bool = True) -> Optional[SettingsPogoauth]:
         """
         Searches for an available (i.e., known to not be cooling down) account in the settings_pogoauth table
         Returns: a pogoauth entry to be used to which the worker can try to log in
+
+        """
+        pass
+
+    @abstractmethod
+    async def notify_logout(self, device_id: int) -> None:
+        """
+        Upon clearing game data, a logout can be notified. E.g., to release a device_id mapping to an account
+        Args:
+            device_id:
+
+        Returns:
 
         """
         pass

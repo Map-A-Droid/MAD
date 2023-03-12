@@ -79,6 +79,15 @@ class AccountHandler(AbstractAccountHandler):
             return login_to_use
             # TODO: try/except
 
+    async def notify_logout(self, device_id: int) -> None:
+        async with self._db_wrapper as session, session:
+            currently_assigned: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
+                session, device_id)
+            if currently_assigned:
+                currently_assigned.device_id = None
+                session.add(currently_assigned)
+                await session.commit()
+
     async def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:
         async with self._db_wrapper as session, session:
             existing_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
