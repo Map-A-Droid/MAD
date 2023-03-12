@@ -124,7 +124,8 @@ class WordToScreenMatching(object):
                 self._worker_state.active_account = account_to_use
                 self._worker_state.active_account_last_set = int(time.time())
         if not self._worker_state.active_account:
-            logger.error("No account set for device.")
+            logger.error("No account set for device, sleeping 30s")
+            await asyncio.sleep(30)
             return
         for i in range(n_boxes):
             if 'Facebook' in (global_dict['text'][i]):
