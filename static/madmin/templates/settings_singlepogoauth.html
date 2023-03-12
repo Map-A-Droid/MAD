@@ -80,7 +80,7 @@ $(document).ready(function () {
     </div>
     <div class="form-group">
       <label for="level">level</label>
-      <input type="input" class="form-control" id="level" name="level" value="{{ element.level }}" data-default="{{ element.level }}">
+      <input type="input" class="form-control" id="level" name="level" value="{{ element.level if element.level else 0 }}" data-default="{{ element.level }}">
       <small class="form-text text-muted">Level</small>
     </div>
     <div class="form-group">
