@@ -5,7 +5,7 @@ import json
 import socket
 from abc import ABC
 from functools import wraps
-from typing import Any, Optional, Dict, Union, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 from aiohttp import web
 from aiohttp.abc import Request
@@ -14,16 +14,20 @@ from aiohttp.typedefs import LooseHeaders, StrOrURL
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
-from mapadroid.db.model import Base, AutoconfigRegistration, AutoconfigLog
+from mapadroid.db.helper.AutoconfigRegistrationHelper import \
+    AutoconfigRegistrationHelper
+from mapadroid.db.model import AutoconfigLog, AutoconfigRegistration, Base
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.updater.updater import DeviceUpdater
-from mapadroid.utils.apk_enums import APKArch, APKType, APKPackage
+from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.json_encoder import MADEncoder
 
@@ -169,6 +173,9 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
     def _get_mapping_manager(self) -> MappingManager:
         return self.request.app['mapping_manager']
+
+    def _get_account_handler(self) -> AbstractAccountHandler:
+        return self.request.app['account_handler']
 
     def _get_mitm_mapper(self) -> AbstractMitmMapper:
         return self.request.app['mitm_mapper']

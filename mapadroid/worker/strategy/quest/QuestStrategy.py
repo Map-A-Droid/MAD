@@ -313,7 +313,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     async def _calculate_remaining_softban_avoidance_duration(self, cur_time, delay_to_avoid_softban, distance, speed):
         async with self._db_wrapper as session, session:
             auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
-                session, self._db_wrapper.get_instance_id(), self._worker_state.device_id)
+                session, self._worker_state.device_id)
             if auth and auth.last_softban_action and auth.last_softban_action_location:
                 logger.debug("Checking DB for last softban action")
                 last_action_location: Location = Location(auth.last_softban_action_location[0],

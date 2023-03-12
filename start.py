@@ -7,7 +7,8 @@ from typing import Optional
 from aiohttp import web
 from redis import Redis
 
-from mapadroid.account_handler.AbstractAccountHandler import AbstractAccountHandler
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
 from mapadroid.account_handler.AccountHandler import AccountHandler
 from mapadroid.data_handler.grpc.MitmMapperServer import MitmMapperServer
 from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer
@@ -127,17 +128,18 @@ async def start():
     await quest_gen.setup()
     stats_handler: StatsHandlerServer = StatsHandlerServer(db_wrapper)
     await stats_handler.start()
+    account_handler: AbstractAccountHandler = AccountHandler(db_wrapper)
 
-    mitm_data_processor_manager = InProcessMitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen)
+    mitm_data_processor_manager = InProcessMitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen,
+                                                                    account_handler=account_handler)
     await mitm_data_processor_manager.launch_processors()
 
     mitm_receiver = MITMReceiver(mitm_mapper, mapping_manager, db_wrapper,
                                  storage_elem,
                                  mitm_data_processor_manager.get_queue(),
-                                 enable_configmode=application_args.config_mode)
+                                 account_handler=account_handler)
     mitm_receiver_task: web.AppRunner = await mitm_receiver.start()
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
-    account_handler: AbstractAccountHandler = AccountHandler(db_wrapper)
     ws_server = WebsocketServer(args=application_args,
                                 mitm_mapper=mitm_mapper,
                                 stats_handler=stats_handler,

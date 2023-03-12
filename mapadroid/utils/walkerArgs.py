@@ -54,6 +54,9 @@ def parse_args():
                         help='Name of MySQL Database')
     parser.add_argument('-dbps', '--db_poolsize', type=int, default=5,
                         help='Size of MySQL pool (open connections to DB). Default: 5')
+    parser.add_argument('-rati', '--restrict_accounts_to_instance', default=True, type=bool,
+                        help='Configure whether the settings_pogoauth entries (PTC or google accounts) should be '
+                             'fetched only for the active instance or globally. Default: true')
 
     # DB Cleanup
     parser.add_argument('-ci', '--cleanup_interval', type=int, default=300,

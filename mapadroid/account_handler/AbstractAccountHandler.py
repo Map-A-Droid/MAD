@@ -41,7 +41,7 @@ class AbstractAccountHandler(ABC):
 
     @abstractmethod
     async def set_last_softban_action(self, device_id: int, time_of_action: datetime.datetime,
-                                location_of_action: Location) -> None:
+                                      location_of_action: Location) -> None:
         """
         Stores the information on when the last softban action for the account currently associated to device was
         performed.
@@ -49,6 +49,18 @@ class AbstractAccountHandler(ABC):
             device_id:
             time_of_action:
             location_of_action:
+
+        Returns:
+
+        """
+
+    @abstractmethod
+    async def set_level(self, device_id: int, level: int) -> None:
+        """
+        Sets the level associated to the device ID
+        Args:
+            device_id: settings_device.device_id to which the settings_pogoauth is linked with
+            level: level to be stored in the database
 
         Returns:
 

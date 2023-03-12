@@ -18,7 +18,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
 
     async def _delete_connected_prior(self, db_entry):
         assigned_to_device: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
-            .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
+            .get_assigned_to_device(self._session, db_entry.device_id)
         if assigned_to_device:
             assigned_to_device.device_id = None
 
@@ -27,7 +27,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
         if key == "ptc_login":
             pogoauth_ids_to_use: Set[int] = set([int(x) for x in value])
             assigned_to_device: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
-                .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
+                .get_assigned_to_device(self._session, db_entry.device_id)
             all_pogoauth_mapped: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper \
                 .get_all_mapped(self._session, self._get_instance_id())
 
@@ -45,7 +45,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
                 # TODO: Get rid of spaghetti by deleting the column
                 # First check for an existing assignment, if one is present, set it accordingly
                 existing_pogo_auth_assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper\
-                    .get_assigned_to_device(self._session, self._get_instance_id(), db_entry.device_id)
+                    .get_assigned_to_device(self._session, db_entry.device_id)
                 if existing_pogo_auth_assigned_to_device \
                         and existing_pogo_auth_assigned_to_device[0].username != db_entry.ggl_login_mail:
                     # Device is assigned to another pogoauth google login

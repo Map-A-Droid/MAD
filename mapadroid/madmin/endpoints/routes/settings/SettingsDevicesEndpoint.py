@@ -47,7 +47,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
                 raise web.HTTPFound(self._url_for("settings_devices"))
             # TODO auth: cleanup
             account_associated: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
-                .get_assigned_to_device(self._session, self._get_instance_id(), device.device_id)
+                .get_assigned_to_device(self._session, device.device_id)
 
         settings_vars: Optional[Dict] = self._get_settings_vars()
         ptc_accounts_assigned_or_not_assigned = await SettingsPogoauthHelper.get_avail_accounts(

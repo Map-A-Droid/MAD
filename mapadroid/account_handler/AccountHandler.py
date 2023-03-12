@@ -63,7 +63,7 @@ class AccountHandler(AbstractAccountHandler):
                 # TODO: prefer keyblob accounts once keyblobs can be used (RGC support needed)
             # Remove marking of current SettingsPogoauth holding the deviceID
             currently_assigned: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
-                session, self._db_wrapper.get_instance_id(), device_id)
+                session, device_id)
             if currently_assigned:
                 currently_assigned.device_id = None
                 session.add(currently_assigned)
@@ -82,7 +82,7 @@ class AccountHandler(AbstractAccountHandler):
     async def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:
         async with self._db_wrapper as session, session:
             existing_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
-                session, instance_id=self._db_wrapper.get_instance_id(), device_id=device_id)
+                session, device_id=device_id)
             if not existing_auth:
                 # TODO: Raise?
                 return
@@ -95,7 +95,18 @@ class AccountHandler(AbstractAccountHandler):
 
     async def set_last_softban_action(self, device_id: int, time_of_action: datetime.datetime,
                                       location_of_action: Location) -> None:
-        pass
+        async with self._db_wrapper as session, session:
+            await SettingsPogoauthHelper.set_last_softban_action(session,
+                                                                 device_id, location_of_action,
+                                                                 int(time_of_action.timestamp()))
+            await session.commit()
+
+    async def set_level(self, device_id: int, level: int) -> None:
+        async with self._db_wrapper as session, session:
+            await SettingsPogoauthHelper.set_level(session,
+                                                   device_id=device_id,
+                                                   level=level)
+            await session.commit()
 
     def _is_burnt(self, auth: SettingsPogoauth) -> bool:
         """

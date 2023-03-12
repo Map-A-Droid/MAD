@@ -7,7 +7,8 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
 
-from mapadroid.account_handler.AbstractAccountHandler import AbstractAccountHandler
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
     AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
@@ -20,20 +21,20 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.authHelper import check_auth
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
+from mapadroid.websocket.communicator import Communicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
-from mapadroid.websocket.communicator import Communicator
-from mapadroid.worker.Worker import Worker
-from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
+from mapadroid.worker.Worker import Worker
+from mapadroid.worker.WorkerState import WorkerState
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
@@ -180,7 +181,7 @@ class WebsocketServer(object):
                         entry.websocket_client_connection = websocket_client_connection
                     elif not entry:
                         current_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
-                            session, self.__db_wrapper.get_instance_id(), device_id)
+                            session, device_id)
                         # Just create a new entry...
                         worker_state: WorkerState = WorkerState(origin=origin,
                                                                 device_id=device_id,
