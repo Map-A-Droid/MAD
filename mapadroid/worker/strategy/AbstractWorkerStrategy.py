@@ -617,8 +617,8 @@ class AbstractWorkerStrategy(ABC):
         command: str = "su -c 'pm grant com.nianticlabs.pokemongo android.permission.ACCESS_FINE_LOCATION " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_COARSE_LOCATION " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.CAMERA " \
-                       "&& pm grant com.nianticlabs.pokemongo android.permission.GET_ACCOUNTS" \
-                       "&& magiskhide --add com.nianticlabs.pokemongo' 
+                       "&& pm grant com.nianticlabs.pokemongo android.permission.GET_ACCOUNTS " \
+                       "&& magiskhide --add com.nianticlabs.pokemongo'"
         await self._communicator.passthrough(command)
 
     @abstractmethod
