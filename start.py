@@ -90,9 +90,9 @@ async def start():
     await event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
     await asyncio.sleep(.1)
-
+    account_handler: AbstractAccountHandler = await setup_account_handler(db_wrapper)
     mapping_manager: MappingManager = MappingManager(db_wrapper,
-                                                     application_args,
+                                                     account_handler=account_handler,
                                                      configmode=application_args.config_mode)
     await mapping_manager.setup()
     # Start MappingManagerServer in order to attach more mitmreceivers (minor scalability)
@@ -128,7 +128,6 @@ async def start():
     await quest_gen.setup()
     stats_handler: StatsHandlerServer = StatsHandlerServer(db_wrapper)
     await stats_handler.start()
-    account_handler: AbstractAccountHandler = await setup_account_handler(db_wrapper)
 
     mitm_data_processor_manager = InProcessMitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen,
                                                                     account_handler=account_handler)
@@ -183,7 +182,7 @@ async def start():
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
     madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
-                    quest_gen)
+                    quest_gen, account_handler)
     plugin_parts["madmin"] = madmin
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added

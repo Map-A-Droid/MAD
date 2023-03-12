@@ -6,7 +6,9 @@ from typing import Optional
 
 from redis import Redis
 
-from mapadroid.account_handler.AbstractAccountHandler import AbstractAccountHandler
+from mapadroid.account_handler import setup_account_handler
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
 from mapadroid.account_handler.AccountHandler import AccountHandler
 from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
 from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
@@ -89,8 +91,9 @@ async def start():
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
     await asyncio.sleep(.1)
     # TODO: Externalize MappingManager as a service
+    account_handler: AbstractAccountHandler = await setup_account_handler(db_wrapper)
     mapping_manager: MappingManager = MappingManager(db_wrapper,
-                                                     application_args,
+                                                     account_handler=account_handler,
                                                      configmode=application_args.config_mode)
     await mapping_manager.setup()
     mapping_manager_grpc_server = MappingManagerServer(mapping_manager)
@@ -129,7 +132,6 @@ async def start():
     quest_gen: QuestGen = QuestGen()
     await quest_gen.setup()
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
-    account_handler: AbstractAccountHandler = AccountHandler(db_wrapper)
     ws_server = WebsocketServer(args=application_args,
                                 mitm_mapper=mitm_mapper,
                                 stats_handler=stats_handler,
@@ -170,7 +172,7 @@ async def start():
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
     madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
-                    quest_gen)
+                    quest_gen, account_handler)
     plugin_parts["madmin"] = madmin
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added

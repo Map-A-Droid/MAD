@@ -6,10 +6,10 @@ from sqlalchemy import and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import Pokestop, TrsQuest, TrsVisited, PokestopIncident
+from mapadroid.db.model import Pokestop, PokestopIncident, TrsQuest, TrsVisited
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import QuestLayer
 from mapadroid.utils.timezone_util import get_timezone_at
@@ -64,13 +64,13 @@ class PokestopHelper:
         return len(await PokestopHelper.stops_not_visited(session, geofence_helper, origin)) > 0
 
     @staticmethod
-    async def stops_not_visited(session: AsyncSession, geofence_helper: GeofenceHelper, origin: str) -> List[Pokestop]:
+    async def stops_not_visited(session: AsyncSession, geofence_helper: GeofenceHelper, username: str) -> List[Pokestop]:
         """
         stops_from_db_unvisited
         Args:
             session:
             geofence_helper:
-            origin:
+            username:
 
         Returns:
 
@@ -79,7 +79,7 @@ class PokestopHelper:
         min_lat, min_lon, max_lat, max_lon = geofence_helper.get_polygon_from_fence()
         stmt = select(Pokestop) \
             .join(TrsVisited, and_(Pokestop.pokestop_id == TrsVisited.pokestop_id,
-                                   TrsVisited.origin == origin), isouter=True) \
+                                   TrsVisited.username == username), isouter=True) \
             .where(and_(Pokestop.latitude >= min_lat, Pokestop.longitude >= min_lon,
                         Pokestop.latitude <= max_lat, Pokestop.longitude <= max_lon,
                         TrsVisited.origin == None))
@@ -132,18 +132,18 @@ class PokestopHelper:
 
     @staticmethod
     async def get_nearby_increasing_range_within_area(session: AsyncSession,
-                                                      geofence_helper: GeofenceHelper, origin: str, location: Location,
-                                                      limit: int = 20, ignore_spinned: bool = True,
+                                                      geofence_helper: GeofenceHelper, username: str, location: Location,
+                                                      limit: int = 20, ignore_spun: bool = True,
                                                       max_distance: int = 1) -> List[Pokestop]:
         """
         DbWrapper::get_nearest_stops_from_position
         Args:
             session:
             geofence_helper:
-            origin:
+            username: the username of the account in use
             location: Location to be used for the search of nearby stops
             limit: Limiting amount of stops returned
-            ignore_spinned: Ignore stops that have been spun by the origin
+            ignore_spun: Ignore stops that have been spun by the origin
             max_distance:
 
         Returns:
@@ -163,15 +163,15 @@ class PokestopHelper:
                                    func.sqrt(func.pow(69.1 * (Pokestop.latitude - location.lat), 2)
                                              + func.pow(69.1 * (location.lng - Pokestop.longitude), 2)) <= max_distance
                                    )
-            if ignore_spinned:
-                where_condition = and_(TrsVisited.origin == None, where_condition)
+            if ignore_spun:
+                where_condition = and_(TrsVisited.username == None, where_condition)
 
             stmt = select(Pokestop,
                           func.sqrt(func.pow(69.1 * (Pokestop.latitude - location.lat), 2)
                                     + func.pow(69.1 * (location.lng - Pokestop.longitude), 2)).label("distance")) \
                 .select_from(Pokestop) \
                 .join(TrsVisited, and_(Pokestop.pokestop_id == TrsVisited.pokestop_id,
-                                       TrsVisited.origin == origin), isouter=True) \
+                                       TrsVisited.username == username), isouter=True) \
                 .where(where_condition).order_by("distance")
             if limit > 0:
                 stmt = stmt.limit(limit)

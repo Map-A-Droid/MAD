@@ -118,11 +118,14 @@ class WordToScreenMatching(object):
             )
             if not account_to_use:
                 logger.error("No account to use found, are there too few accounts in DB or did MAD screw up here?")
+                self._worker_state.active_account = None
+                self._worker_state.active_account_last_set = 0
             else:
                 self._worker_state.active_account = account_to_use
                 self._worker_state.active_account_last_set = int(time.time())
         if not self._worker_state.active_account:
             logger.error("No account set for device.")
+            return
         for i in range(n_boxes):
             if 'Facebook' in (global_dict['text'][i]):
                 temp_dict['Facebook'] = global_dict['top'][i] / diff

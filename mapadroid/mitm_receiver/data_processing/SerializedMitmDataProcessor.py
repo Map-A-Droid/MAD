@@ -102,7 +102,6 @@ class SerializedMitmDataProcessor:
                         if data["payload"]["result"] == 1:
                             async with session.begin_nested() as nested_transaction:
                                 fort_id = data["payload"].get("fort_id", None)
-                                await TrsVisitedHelper.mark_visited(session, origin, fort_id)
                                 try:
                                     await nested_transaction.commit()
                                 except sqlalchemy.exc.IntegrityError as e:

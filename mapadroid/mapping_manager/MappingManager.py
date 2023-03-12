@@ -6,7 +6,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
+from mapadroid.account_handler.AbstractAccountHandler import (
+    AbstractAccountHandler, AccountPurpose)
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
@@ -14,7 +15,6 @@ from mapadroid.db.helper.SettingsDevicepoolHelper import \
     SettingsDevicepoolHelper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
 from mapadroid.db.helper.SettingsWalkerareaHelper import \
     SettingsWalkerareaHelper
@@ -23,9 +23,8 @@ from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
 from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
-                                SettingsPogoauth, SettingsRoutecalc,
-                                SettingsWalker, SettingsWalkerarea,
-                                SettingsWalkerToWalkerarea)
+                                SettingsRoutecalc, SettingsWalker,
+                                SettingsWalkerarea, SettingsWalkerToWalkerarea)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager.AbstractMappingManager import \
     AbstractMappingManager
@@ -100,10 +99,10 @@ class AreaEntry:
 
 
 class MappingManager(AbstractMappingManager):
-    def __init__(self, db_wrapper: DbWrapper, args, configmode: bool = False):
+    def __init__(self, db_wrapper: DbWrapper, account_handler: AbstractAccountHandler, configmode: bool = False):
         self.__jobstatus: Dict = {}
         self.__db_wrapper: DbWrapper = db_wrapper
-        self.__args = args
+        self.__account_handler: AbstractAccountHandler = account_handler
         self.__configmode: bool = configmode
 
         self._devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = None
@@ -596,7 +595,8 @@ class MappingManager(AbstractMappingManager):
                                                                  routecalc=routecalc,
                                                                  s2_level=mode_mapping.get(area.mode, {}).get(
                                                                      "s2_cell_level", 30),
-                                                                 mon_ids_iv=self.get_monlist(area_id)
+                                                                 mon_ids_iv=self.get_monlist(area_id),
+                                                                 account_handler=self.__account_handler
                                                                  )
             logger.info("Initializing area {}", area.name)
             # task = loop.create_task(route_manager.calculate_route(False))

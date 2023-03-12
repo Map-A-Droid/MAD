@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Set
 
 from aiohttp import web
+from loguru import logger
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
@@ -106,9 +107,16 @@ class DeviceEndpoint(AbstractResourceEndpoint):
                     await self._get_ws_server().force_cancel_worker(device.name)
                     return await self._json_response(dict(), status=200)
                 elif call == 'flush_level':
-                    await TrsVisitedHelper.flush_all_of_origin(self._session, device.name)
-                    self._commit_trigger = True
-                    return await self._json_response(dict(), status=204)
+                    username: Optional[str] = await self._get_account_handler().get_assigned_username(
+                        device_id=device.device_id)
+                    if username:
+                        await TrsVisitedHelper.flush_all_of_username(self._session, username)
+                        self._commit_trigger = True
+                        return await self._json_response(dict(), status=204)
+                    else:
+                        logger.warning("Failed to retrieve username to clear trs_visited")
+                        return await self._json_response("Failed to retrieve username assigned to device to clear "
+                                                         "trs_visited.", status=501)
                 else:
                     return await self._json_response(call, status=501)
             except KeyError:

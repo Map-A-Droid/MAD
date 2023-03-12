@@ -405,7 +405,7 @@ class TrsVisited(Base):
     __tablename__ = 'trs_visited'
 
     pokestop_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
-    origin = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
+    username = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
 
 
 class Version(Base):

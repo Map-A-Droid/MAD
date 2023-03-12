@@ -11,6 +11,7 @@ from aiohttp.typedefs import LooseHeaders, StrOrURL
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.account_handler import AbstractAccountHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import Base
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
@@ -146,6 +147,9 @@ class AbstractMadminRootEndpoint(web.View, ABC):
 
     def _get_quest_gen(self) -> QuestGen:
         return self.request.app["quest_gen"]
+
+    def _get_account_handler(self) -> AbstractAccountHandler:
+        return self.request.app["account_handler"]
 
     @staticmethod
     def _convert_to_json_string(content) -> str:

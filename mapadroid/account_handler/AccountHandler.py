@@ -108,6 +108,17 @@ class AccountHandler(AbstractAccountHandler):
                                                    level=level)
             await session.commit()
 
+    async def get_assigned_username(self, device_id: int) -> Optional[str]:
+        async with self._db_wrapper as session, session:
+            device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get(
+                session, self._db_wrapper.get_instance_id(), device_id)
+            if not device_entry:
+                logger.warning("Device ID {} not found in device table", device_id)
+                return None
+            currently_assigned: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
+                session, device_entry.device_id)
+            return None if not currently_assigned else currently_assigned.username
+
     def _is_burnt(self, auth: SettingsPogoauth) -> bool:
         """
         Evaluates whether a login is considered not usable based on the last known burning

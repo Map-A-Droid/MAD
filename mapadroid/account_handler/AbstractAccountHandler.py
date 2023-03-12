@@ -30,6 +30,7 @@ class AbstractAccountHandler(ABC):
         Returns: a pogoauth entry to be used to which the worker can try to log in
 
         """
+        pass
 
     @abstractmethod
     async def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:
@@ -38,6 +39,7 @@ class AbstractAccountHandler(ABC):
         Returns:
 
         """
+        pass
 
     @abstractmethod
     async def set_last_softban_action(self, device_id: int, time_of_action: datetime.datetime,
@@ -53,6 +55,7 @@ class AbstractAccountHandler(ABC):
         Returns:
 
         """
+        pass
 
     @abstractmethod
     async def set_level(self, device_id: int, level: int) -> None:
@@ -65,3 +68,15 @@ class AbstractAccountHandler(ABC):
         Returns:
 
         """
+        pass
+
+    @abstractmethod
+    async def get_assigned_username(self, device_id: int) -> Optional[str]:
+        """
+        Args:
+            device_id:
+
+        Returns: the username to which the origin (i.e., device) last received credentials to log in with
+
+        """
+        pass

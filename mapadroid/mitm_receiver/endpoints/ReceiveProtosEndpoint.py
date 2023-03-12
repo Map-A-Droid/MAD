@@ -7,6 +7,7 @@ from loguru import logger
 from orjson import orjson
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
+from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
 from mapadroid.db.model import SettingsDevice
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import \
     AbstractMitmReceiverRootEndpoint
@@ -111,23 +112,28 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
                                                                                     self._get_db_wrapper().get_instance_id(),
                                                                                     origin)
 
-        if device:
-            fort_id = quest_proto.get("fort_id", None)
-            if fort_id is None:
-                logger.debug("No fort id in fort search")
-                return
-            if "challenge_quest" not in quest_proto:
-                logger.debug("No challenge quest in fort search")
-                return
-            protoquest = quest_proto["challenge_quest"]["quest"]
-            rewards = protoquest.get("quest_rewards", None)
-            if not rewards:
-                logger.debug("No quest rewards in fort search")
-                return
-
-            await self._get_account_handler().set_last_softban_action(
-                device.device_id, location_of_action=location_of_data,
-                time_of_action=DatetimeWrapper.fromtimestamp(timestamp))
-            self._commit_trigger = True
-        else:
+        if not device:
             logger.debug("Device not found")
+        await self._get_account_handler().set_last_softban_action(
+            device.device_id, location_of_action=location_of_data,
+            time_of_action=DatetimeWrapper.fromtimestamp(timestamp))
+        self._commit_trigger = True
+
+        fort_id = quest_proto.get("fort_id", None)
+        if fort_id is None:
+            logger.debug("No fort id in fort search")
+            return
+        username: Optional[str] = await self._get_account_handler().get_assigned_username(device_id=device.device_id)
+        if username:
+            await TrsVisitedHelper.mark_visited(self._session, username, fort_id)
+        else:
+            logger.warning("Unable to retrieve username last assigned to {} to mark stop as visited", origin)
+
+        if "challenge_quest" not in quest_proto:
+            logger.debug("No challenge quest in fort search")
+            return
+        protoquest = quest_proto["challenge_quest"]["quest"]
+        rewards = protoquest.get("quest_rewards", None)
+        if not rewards:
+            logger.debug("No quest rewards in fort search")
+            return
