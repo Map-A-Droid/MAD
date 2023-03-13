@@ -120,6 +120,7 @@ class WordToScreenMatching(object):
                 self._worker_state.active_account = None
                 self._worker_state.active_account_last_set = 0
             else:
+                logger.info("Account for {}: {}", self._worker_state.origin, account_to_use.username)
                 self._worker_state.active_account = account_to_use
                 self._worker_state.active_account_last_set = int(time.time())
         if not self._worker_state.active_account:

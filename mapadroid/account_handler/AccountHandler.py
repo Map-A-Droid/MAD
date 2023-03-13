@@ -112,6 +112,7 @@ class AccountHandler(AbstractAccountHandler):
 
     async def set_level(self, device_id: int, level: int) -> None:
         async with self._db_wrapper as session, session:
+            logger.info("Setting level of {} to {}", device_id, level)
             await SettingsPogoauthHelper.set_level(session,
                                                    device_id=device_id,
                                                    level=level)
