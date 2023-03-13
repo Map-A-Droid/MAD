@@ -160,11 +160,10 @@ class AccountHandler(AbstractAccountHandler):
             return auth.level >= MIN_LEVEL_IV
         elif purpose in [AccountPurpose.LEVEL, AccountPurpose.QUEST, AccountPurpose.IV_QUEST]:
             # Depending on last softban action and distance to the location thereof
-            if auth.level is not None:
-                if purpose == AccountPurpose.IV_QUEST and auth.level < MIN_LEVEL_IV:
-                    return False
-                elif purpose == AccountPurpose.LEVEL and auth.level >= MIN_LEVEL_IV:
-                    return False
+            if purpose == AccountPurpose.IV_QUEST and auth.level < MIN_LEVEL_IV:
+                return False
+            elif purpose == AccountPurpose.LEVEL and auth.level >= MIN_LEVEL_IV:
+                return False
 
             if not auth.last_softban_action_location:
                 return True

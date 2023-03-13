@@ -792,7 +792,7 @@ class SettingsPogoauth(Base):
     username = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
     password = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
     key_blob = Column(MEDIUMBLOB, nullable=True)
-    level = Column(SMALLINT(2))
+    level = Column(SMALLINT(2), nullable=False, server_default=str(0))
     last_burn = Column(TZDateTime, nullable=True)
     last_burn_type = Column(ENUM('ban', 'suspended', 'maintenance'), nullable=True)
     last_softban_action = Column(TZDateTime, nullable=True)
