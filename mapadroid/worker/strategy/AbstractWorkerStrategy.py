@@ -387,6 +387,7 @@ class AbstractWorkerStrategy(ABC):
         await self.stop_pogo()
         await asyncio.sleep(5)
         await self._clear_game_data()
+        await asyncio.sleep(5)
         await self.turn_screen_on_and_start_pogo()
         if not await self._ensure_pogo_topmost():
             logger.error('Kill Worker...')
@@ -613,11 +614,11 @@ class AbstractWorkerStrategy(ABC):
         # self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, x_offset, y_offset)
 
     async def _grant_permissions_to_pogo(self) -> None:
-        command: str = "su -c 'magiskhide --add com.nianticlabs.pokemongo " \
-                       "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_FINE_LOCATION " \
+        command: str = "su -c 'pm grant com.nianticlabs.pokemongo android.permission.ACCESS_FINE_LOCATION " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_COARSE_LOCATION " \
-                       "&&  pm grant com.nianticlabs.pokemongo android.permission.CAMERA " \
-                       "&& pm grant com.nianticlabs.pokemongo android.permission.GET_ACCOUNTS'"
+                       "&& pm grant com.nianticlabs.pokemongo android.permission.CAMERA " \
+                       "&& pm grant com.nianticlabs.pokemongo android.permission.GET_ACCOUNTS " \
+                       "&& magiskhide --add com.nianticlabs.pokemongo'"
         await self._communicator.passthrough(command)
 
     @abstractmethod
