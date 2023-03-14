@@ -101,7 +101,8 @@ class AccountHandler(AbstractAccountHandler):
             await SettingsPogoauthHelper.mark_burnt(session, instance_id=self._db_wrapper.get_instance_id(),
                                                     account_id=existing_auth.account_id,
                                                     burn_type=burn_type)
-
+            await session.commit()
+   
     async def set_last_softban_action(self, device_id: int, time_of_action: datetime.datetime,
                                       location_of_action: Location) -> None:
         async with self._db_wrapper as session, session:
