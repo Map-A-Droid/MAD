@@ -346,8 +346,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             await self.switch_account()
             delay_used = -1
         elif await self._is_levelmode() and await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV:
-            logger.info('Levelmode: Account of {} is >= {}, switching to next to level',
-                        self._worker_state.origin, MIN_LEVEL_IV)
+            logger.info('Levelmode: Account of {} is level {}, i.e., >= {}, switching to next to level',
+                        self._worker_state.origin,
+                        await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV, MIN_LEVEL_IV)
             await self.switch_account()
             delay_used = -1
         return delay_used
