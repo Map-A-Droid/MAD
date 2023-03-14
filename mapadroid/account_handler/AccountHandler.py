@@ -148,7 +148,7 @@ class AccountHandler(AbstractAccountHandler):
         elif auth.last_burn_type == BurnType.MAINTENANCE.value:
             logger.debug("{} had maintenance at {}", auth.username, auth.last_burn)
             # Account had the maintenance screen, check whether the set duration of MAINTENANCE_COOLDOWN_HOURS passed
-            return auth.last_burn + datetime.timedelta(hours=MAINTENANCE_COOLDOWN_HOURS) < DatetimeWrapper.now()
+            return auth.last_burn + datetime.timedelta(hours=MAINTENANCE_COOLDOWN_HOURS) > DatetimeWrapper.now()
 
         return False
 
