@@ -26,7 +26,8 @@ class AccountHandler(AbstractAccountHandler):
         self._db_wrapper = db_wrapper
 
     async def get_account(self, device_id: int, purpose: AccountPurpose,
-                          location_to_scan: Location, including_google: bool = True) -> Optional[SettingsPogoauth]:
+                          location_to_scan: Optional[Location],
+                          including_google: bool = True) -> Optional[SettingsPogoauth]:
         # First, fetch all pogoauth accounts
         async with self._db_wrapper as session, session:
             device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get(session,
@@ -143,16 +144,16 @@ class AccountHandler(AbstractAccountHandler):
             return False
         # Account has a burn type, evaluate the cooldown duration
         elif auth.last_burn_type == BurnType.BAN.value:
-            # TODO: Differentiate different ban types?
             return True
         elif auth.last_burn_type == BurnType.MAINTENANCE.value:
+            logger.debug("{} had maintenance at {}", auth.username, auth.last_burn)
             # Account had the maintenance screen, check whether the set duration of MAINTENANCE_COOLDOWN_HOURS passed
             return auth.last_burn + datetime.timedelta(hours=MAINTENANCE_COOLDOWN_HOURS) < DatetimeWrapper.now()
 
         return False
 
     def _is_usable_for_purpose(self, auth: SettingsPogoauth, purpose: AccountPurpose,
-                               location_to_scan: Location) -> bool:
+                               location_to_scan: Optional[Location]) -> bool:
         if purpose == AccountPurpose.MON_RAID:
             # No IV scanning or just raids
             return auth.level >= MIN_LEVEL_RAID
@@ -169,6 +170,8 @@ class AccountHandler(AbstractAccountHandler):
 
             if not auth.last_softban_action_location:
                 return True
+            elif location_to_scan is None:
+                return False
             last_action_location: Location = Location(auth.last_softban_action_location[0],
                                                       auth.last_softban_action_location[1])
             distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
