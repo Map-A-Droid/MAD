@@ -65,9 +65,12 @@ class AccountHandler(AbstractAccountHandler):
             # Remove marking of current SettingsPogoauth holding the deviceID
             currently_assigned: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
                 session, device_id)
-            if currently_assigned:
+            if currently_assigned is not None:
+                logger.debug("Removing binding of {} from {}", device_id, currently_assigned.username)
                 currently_assigned.device_id = None
-                session.add(currently_assigned)
+                async with session.begin_nested() as nested:
+                    session.add(currently_assigned)
+                    await nested.commit()
             # TODO: Ensure login_to_use is not the same as currently_assigned
             # Mark login to be used with the device ID to indicate the now unavailable account
             login_to_use.device_id = device_id
