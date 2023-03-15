@@ -125,9 +125,10 @@ class AbstractWorkerStrategy(ABC):
         # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
         # the workers up...
         if int(self._worker_state.current_sleep_duration) > 0:
-            logger.info('Sleeping for {} seconds', self._worker_state.current_sleep_duration)
-            await asyncio.sleep(int(self._worker_state.current_sleep_duration))
+            sleeptime = self._worker_state.current_sleep_duration
             self._worker_state.current_sleep_duration = 0
+            logger.info('Sleeping for {} seconds', sleeptime)
+            await asyncio.sleep(int(sleeptime))
 
         await self._check_for_mad_job()
 
