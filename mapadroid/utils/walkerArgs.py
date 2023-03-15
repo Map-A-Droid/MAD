@@ -97,6 +97,8 @@ def parse_args():
                         help="Path to unix socket file to use if TCP is not to be used for MITMReceiver...")
     parser.add_argument('-xfwdpmitmr', '--enable_x_forwarded_path_mitm_receiver', default=False, type=bool,
                         help='Enable X-Fordward-Path allowance for reverse proxy usage for MITMReceiver. Default: False')
+    parser.add_argument('-insecure', '--insecure_auth', default=False, type=bool,
+                        help='Remove enforcing of auth for, e.g., MITMReceiver. Default: False')
 
     # MappingManager gRPC
     parser.add_argument('-mmgrip', '--mappingmanager_ip', required=False, default="[::]", type=str,

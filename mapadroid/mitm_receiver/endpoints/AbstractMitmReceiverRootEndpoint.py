@@ -30,6 +30,7 @@ from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.json_encoder import MADEncoder
+from mapadroid.utils.madGlobals import application_args
 
 
 def validate_accepted(func) -> Any:
@@ -80,7 +81,8 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
     async def _process_request(self):
         with logger.contextualize(identifier=self._get_request_address(), name="mitm-receiver-endpoint"):
-            await self._check_mitm_device_auth()
+            if not application_args.insecure_auth:
+                await self._check_mitm_device_auth()
 
             db_wrapper: DbWrapper = self._get_db_wrapper()
             async with db_wrapper as session, session:
