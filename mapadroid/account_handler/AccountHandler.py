@@ -52,7 +52,7 @@ class AccountHandler(AbstractAccountHandler):
             for login in logins_filtered:
                 if login.login_type == LoginType.PTC.value:
                     continue
-                elif login.username in device_entry.ggl_login_mail:
+                elif device_entry.ggl_login_mail and login.username in device_entry.ggl_login_mail:
                     logger.info("Shortcut auth selection to google login {} set for device {}",
                                 login.username, device_entry.name)
                     login_to_use = login
