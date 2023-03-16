@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from typing import Dict, Optional
 
@@ -21,9 +22,11 @@ from mapadroid.utils.global_variables import (MAINTENANCE_COOLDOWN_HOURS,
 
 class AccountHandler(AbstractAccountHandler):
     _db_wrapper: DbWrapper
+    _assignment_lock: asyncio.Lock
 
     def __init__(self, db_wrapper: DbWrapper):
         self._db_wrapper = db_wrapper
+        self._assignment_lock = asyncio.Lock()
 
     async def get_account(self, device_id: int, purpose: AccountPurpose,
                           location_to_scan: Optional[Location],
@@ -36,51 +39,52 @@ class AccountHandler(AbstractAccountHandler):
             if not device_entry:
                 logger.warning("Invalid device ID {} passed to fetch an account for it", device_id)
                 return None
-            # TODO: Filter only unassigned or assigned to same device first
-            logins: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(
-                session, self._db_wrapper.get_instance_id(), auth_type=None, device_id=device_id)
-            # Filter all burnt and all which do not match the purpose. E.g., if the purpose is mon scanning,
-            logins_filtered = [auth_entry for auth_id, auth_entry in logins.items() if not self._is_burnt(auth_entry)
-                               and self._is_usable_for_purpose(auth_entry, purpose, location_to_scan)]
-            logins_filtered.sort(key=lambda x: DatetimeWrapper.fromtimestamp(0) if x.last_burn is None else x.last_burn)
-            login_to_use: Optional[SettingsPogoauth] = None
-            if not logins_filtered:
-                logger.warning("No auth found for {}", device_id)
-                return None
-            # Check if there is a google login assigned to the device which is still in the list
-            # If that is the case, try to login - if there is a keyblob, that's ok. If not, we will thus renew it
-            for login in logins_filtered:
-                if login.login_type == LoginType.PTC.value:
-                    continue
-                elif device_entry.ggl_login_mail and login.username in device_entry.ggl_login_mail:
-                    logger.info("Shortcut auth selection to google login {} set for device {}",
-                                login.username, device_entry.name)
-                    login_to_use = login
-                    break
-            else:
-                # No google login was found for the device but we only have accounts which should be fine for
-                # the purpose by now. Simply pop one
-                login_to_use = logins_filtered.pop(0)
-                # TODO: prefer keyblob accounts once keyblobs can be used (RGC support needed)
-            # Remove marking of current SettingsPogoauth holding the deviceID
-            currently_assigned: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
-                session, device_id)
-            if currently_assigned is not None:
-                logger.debug("Removing binding of {} from {}", device_id, currently_assigned.username)
-                currently_assigned.device_id = None
+            async with self._assignment_lock:
+                # TODO: Filter only unassigned or assigned to same device first
+                logins: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(
+                    session, self._db_wrapper.get_instance_id(), auth_type=None, device_id=device_id)
+                # Filter all burnt and all which do not match the purpose. E.g., if the purpose is mon scanning,
+                logins_filtered = [auth_entry for auth_id, auth_entry in logins.items() if not self._is_burnt(auth_entry)
+                                   and self._is_usable_for_purpose(auth_entry, purpose, location_to_scan)]
+                logins_filtered.sort(key=lambda x: DatetimeWrapper.fromtimestamp(0) if x.last_burn is None else x.last_burn)
+                login_to_use: Optional[SettingsPogoauth] = None
+                if not logins_filtered:
+                    logger.warning("No auth found for {}", device_id)
+                    return None
+                # Check if there is a google login assigned to the device which is still in the list
+                # If that is the case, try to login - if there is a keyblob, that's ok. If not, we will thus renew it
+                for login in logins_filtered:
+                    if login.login_type == LoginType.PTC.value:
+                        continue
+                    elif device_entry.ggl_login_mail and login.username in device_entry.ggl_login_mail:
+                        logger.info("Shortcut auth selection to google login {} set for device {}",
+                                    login.username, device_entry.name)
+                        login_to_use = login
+                        break
+                else:
+                    # No google login was found for the device but we only have accounts which should be fine for
+                    # the purpose by now. Simply pop one
+                    login_to_use = logins_filtered.pop(0)
+                    # TODO: prefer keyblob accounts once keyblobs can be used (RGC support needed)
+                # Remove marking of current SettingsPogoauth holding the deviceID
+                currently_assigned: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
+                    session, device_id)
+                if currently_assigned is not None:
+                    logger.debug("Removing binding of {} from {}", device_id, currently_assigned.username)
+                    currently_assigned.device_id = None
+                    async with session.begin_nested() as nested:
+                        session.add(currently_assigned)
+                        await nested.commit()
+                # TODO: Ensure login_to_use is not the same as currently_assigned
+                # Mark login to be used with the device ID to indicate the now unavailable account
+                login_to_use.device_id = device_id
                 async with session.begin_nested() as nested:
-                    session.add(currently_assigned)
+                    session.add(login_to_use)
                     await nested.commit()
-            # TODO: Ensure login_to_use is not the same as currently_assigned
-            # Mark login to be used with the device ID to indicate the now unavailable account
-            login_to_use.device_id = device_id
-            async with session.begin_nested() as nested:
-                session.add(login_to_use)
-                await nested.commit()
-            # Expunge is needed to not automatically have attempts to refresh values outside a DB session
-            session.expunge(login_to_use)
-            await session.commit()
-            return login_to_use
+                # Expunge is needed to not automatically have attempts to refresh values outside a DB session
+                session.expunge(login_to_use)
+                await session.commit()
+                return login_to_use
             # TODO: try/except
 
     async def notify_logout(self, device_id: int) -> None:
