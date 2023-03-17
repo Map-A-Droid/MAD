@@ -14,7 +14,7 @@ class MonIvListEndpoint(AbstractResourceEndpoint):
         areas: Dict[int, SettingsArea] = await db_wrapper.get_all_areas(self._session)
         areas_with_mon_iv_list: List[SettingsArea] = []
         for area_id, area in areas.items():
-            monlist_id: Optional[int] = getattr(area, "monlist_id")
+            monlist_id: Optional[int] = getattr(area, "monlist_id", None)
             if monlist_id and monlist_id == db_entry.monlist_id:
                 areas_with_mon_iv_list.append(area)
 
