@@ -14,7 +14,7 @@ class RoutecalcEndpoint(AbstractResourceEndpoint):
         areas: Dict[int, SettingsArea] = await db_wrapper.get_all_areas(self._session)
         areas_with_routecalc: List[SettingsArea] = []
         for area_id, area in areas.items():
-            routecalc_id: Optional[int] = getattr(area, "routecalc")
+            routecalc_id: Optional[int] = getattr(area, "routecalc", None)
             if routecalc_id and routecalc_id == db_entry.routecalc_id:
                 areas_with_routecalc.append(area)
 
