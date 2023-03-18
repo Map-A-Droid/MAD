@@ -161,6 +161,7 @@ class AccountHandler(AbstractAccountHandler):
 
     def _is_usable_for_purpose(self, auth: SettingsPogoauth, purpose: AccountPurpose,
                                location_to_scan: Optional[Location]) -> bool:
+        logger.debug("Filtering potential account for: {}. username: {}, last_burn: {}, level: {}", purpose, auth.username, auth.last_burn, auth.level)
         if purpose == AccountPurpose.MON_RAID:
             # No IV scanning or just raids
             return auth.level >= MIN_LEVEL_RAID
@@ -170,7 +171,7 @@ class AccountHandler(AbstractAccountHandler):
             return auth.level >= MIN_LEVEL_IV
         elif purpose in [AccountPurpose.LEVEL, AccountPurpose.QUEST, AccountPurpose.IV_QUEST]:
             # Depending on last softban action and distance to the location thereof
-            if purpose == AccountPurpose.IV_QUEST and auth.level < MIN_LEVEL_IV:
+            if purpose in [AccountPurpose.IV_QUEST, AccountPurpose.QUEST] and auth.level < MIN_LEVEL_IV:
                 return False
             elif purpose == AccountPurpose.LEVEL and auth.level >= MIN_LEVEL_IV:
                 return False
