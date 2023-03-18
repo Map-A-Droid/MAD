@@ -83,13 +83,13 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
         pogoauth: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_all_mapped(self._session,
                                                                                             self._get_instance_id())
             
-         ban_times_icon = {}
-         for key in pogoauth:
-              if pogoauth[key].last_burn is not None:
-                  if pogoauth[key].last_burn + datetime.timedelta(hours=MAINTENANCE_COOLDOWN_HOURS) < DatetimeWrapper.now():
-                      ban_times_icon[key] = "fa-exclamation-triangle"
-                  else:
-                      ban_times_icon[key] = "fa-exclamation-circle"
+        ban_times_icon = {}
+        for key in pogoauth:
+            if pogoauth[key].last_burn is not None:
+                if pogoauth[key].last_burn + datetime.timedelta(hours=MAINTENANCE_COOLDOWN_HOURS) < DatetimeWrapper.now():
+                    ban_times_icon[key] = "fa-exclamation-triangle"
+                else:
+                    ban_times_icon[key] = "fa-exclamation-circle"
 
         template_data: Dict = {
             'base_uri': self._url_for('api_pogoauth'),
