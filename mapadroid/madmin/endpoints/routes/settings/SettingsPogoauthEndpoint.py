@@ -84,7 +84,6 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
                                                                                             self._get_instance_id())
             
          ban_times_icon = {}
-         _now = DatetimeWrapper.now()
          for key in pogoauth:
               if pogoauth[key].last_burn is not None:
                   if pogoauth[key].last_burn + datetime.timedelta(hours=MAINTENANCE_COOLDOWN_HOURS) < DatetimeWrapper.now():
