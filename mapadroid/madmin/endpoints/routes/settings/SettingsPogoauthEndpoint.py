@@ -1,6 +1,7 @@
 from typing import Dict, Optional, List, Tuple
 
 import aiohttp_jinja2
+import datetime
 from aiohttp import web
 from aiohttp.abc import Request
 
@@ -9,7 +10,8 @@ from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
 from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
-
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.global_variables import MAINTENANCE_COOLDOWN_HOURS
 
 class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
     """
@@ -80,12 +82,23 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
                                                                                        self._get_instance_id())
         pogoauth: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_all_mapped(self._session,
                                                                                             self._get_instance_id())
+            
+         ban_times_icon = {}
+         _now = DatetimeWrapper.now()
+         for key in pogoauth:
+              if pogoauth[key].last_burn is not None:
+                  if pogoauth[key].last_burn + datetime.timedelta(hours=MAINTENANCE_COOLDOWN_HOURS) < DatetimeWrapper.now():
+                      ban_times_icon[key] = "fa-exclamation-triangle"
+                  else:
+                      ban_times_icon[key] = "fa-exclamation-circle"
+
         template_data: Dict = {
             'base_uri': self._url_for('api_pogoauth'),
             'redirect': self._url_for('settings_pogoauth'),
             'subtab': 'pogoauth',
             'devices': devices,
             'section': pogoauth,
+            'ban_times_icon': ban_times_icon,
         }
         return template_data
 
