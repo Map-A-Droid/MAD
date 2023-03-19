@@ -206,5 +206,5 @@ class AccountHandler(AbstractAccountHandler):
             logger.debug2("Calculated cooldown: {}, thus usable: {}", cooldown_seconds, usable)
             return usable
         else:
-            logger.warning("Unmapped purpose in AccountHandler")
+            logger.warning("Unmapped purpose in AccountHandler: {}", purpose)
             return False

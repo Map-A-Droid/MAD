@@ -467,6 +467,7 @@ class AbstractWorkerStrategy(ABC):
                 routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
                 worker_type: WorkerType = WorkerType(routemanager_settings.mode)
                 if not self._worker_state.current_location:
+                    logger.debug2("Setting location to 0, 0")
                     self._worker_state.current_location = Location(0, 0)
                 await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
                                                                       self._worker_state.current_location, True, now_ts,

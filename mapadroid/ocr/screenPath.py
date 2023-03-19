@@ -11,11 +11,12 @@ from loguru import logger
 from mapadroid.account_handler.AbstractAccountHandler import (
     AbstractAccountHandler, BurnType)
 from mapadroid.db.model import SettingsPogoauth
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.collections import ScreenCoordinates
+from mapadroid.utils.collections import ScreenCoordinates, Location
 from mapadroid.utils.madGlobals import ScreenshotType, application_args
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
@@ -110,10 +111,20 @@ class WordToScreenMatching(object):
         if self._worker_state.active_account_last_set + 300 < time.time():
             logger.info("Detected login screen, fetching new account to use since last account was assigned more "
                         "than 5minutes ago")
+            location_to_scan: Optional[Location] = None
+            if self._worker_state.current_location.lat == 0 and self._worker_state.current_location.lng == 0:
+                # Default location, use the middle of the geofence...
+                geofence_helper: Optional[GeofenceHelper] = await self._mapping_manager\
+                    .routemanager_get_geofence_helper(self._worker_state.area_id)
+                if geofence_helper:
+                    lat, lon = geofence_helper.get_middle_from_fence()
+                    location_to_scan = Location(lat, lon)
+            else:
+                location_to_scan = self._worker_state.current_location
             account_to_use: Optional[SettingsPogoauth] = await self._account_handler.get_account(
                 self._worker_state.device_id,
                 await self._mapping_manager.routemanager_get_purpose_of_device(self._worker_state.area_id),
-                self._worker_state.current_location
+                location_to_scan
             )
             if not account_to_use:
                 logger.error("No account to use found, are there too few accounts in DB or did MAD screw up here?")
