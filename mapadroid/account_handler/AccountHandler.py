@@ -150,6 +150,8 @@ class AccountHandler(AbstractAccountHandler):
         Returns:
 
         """
+        logger.debug2("{]: last burn type {}, last burn {}", auth.username,
+                      auth.last_burn_type, auth.last_burn)
         if auth.last_burn_type is None:
             logger.debug2("{} was never marked burnt.", auth.username)
             return False
