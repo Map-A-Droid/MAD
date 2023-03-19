@@ -40,8 +40,14 @@ class Communicator(AbstractCommunicator):
         logger.info("Communicator calling exit to cleanup worker in websocket")
         try:
             await self.terminate_connection()
-        except (WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException):
-            logger.info("Communicator-cleanup resulted in timeout or connection has already been closed")
+        except (WebsocketWorkerConnectionClosedException):
+            logger.info("Communicator-cleanup: connection has already been closed")
+        except WebsocketWorkerTimeoutException:
+            logger.info("Timeout trying to close the connection gracefully. Force closing")
+            try:
+                await self.websocket_client_entry.websocket_client_connection.close()
+            except Exception as e:
+                logger.info("Failed closing connection forcefully: {}", e)
 
     async def __run_and_ok(self, command, timeout) -> bool:
         return await self.__run_and_ok_bytes(command, timeout)
