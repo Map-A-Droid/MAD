@@ -43,6 +43,7 @@ class AccountHandler(AbstractAccountHandler):
                 # TODO: Filter only unassigned or assigned to same device first
                 logins: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(
                     session, self._db_wrapper.get_instance_id(), auth_type=None, device_id=device_id)
+                logger.info("Got {} before filtering for burnt or not fitting the usage.", len(logins))
                 # Filter all burnt and all which do not match the purpose. E.g., if the purpose is mon scanning,
                 logins_filtered = [auth_entry for auth_id, auth_entry in logins.items() if not self._is_burnt(auth_entry)
                                    and self._is_usable_for_purpose(auth_entry, purpose, location_to_scan)]
@@ -88,6 +89,7 @@ class AccountHandler(AbstractAccountHandler):
             # TODO: try/except
 
     async def notify_logout(self, device_id: int) -> None:
+        logger.info("Saving logout of {}", device_id)
         async with self._db_wrapper as session, session:
             currently_assigned: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
                 session, device_id)
@@ -97,6 +99,7 @@ class AccountHandler(AbstractAccountHandler):
                 await session.commit()
 
     async def mark_burnt(self, device_id: int, burn_type: Optional[BurnType]) -> None:
+        logger.info("Trying to mark account of {} as burnt by {}", device_id, burn_type)
         async with self._db_wrapper as session, session:
             existing_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
                 session, device_id=device_id)
@@ -148,10 +151,16 @@ class AccountHandler(AbstractAccountHandler):
 
         """
         if auth.last_burn_type is None:
+            logger.debug2("{} was never marked burnt.", auth.username)
             return False
         # Account has a burn type, evaluate the cooldown duration
         elif auth.last_burn_type == BurnType.BAN.value:
+            logger.debug2("{} was marked banned.", auth.username)
             return True
+        elif auth.last_burn_type == BurnType.SUSPENDED.value:
+            logger.debug("{} had suspension at {}", auth.username, auth.last_burn)
+            # Account had the suspension screen, wait for 7 days for now
+            return auth.last_burn + datetime.timedelta(days=7) > DatetimeWrapper.now()
         elif auth.last_burn_type == BurnType.MAINTENANCE.value:
             logger.debug("{} had maintenance at {}", auth.username, auth.last_burn)
             # Account had the maintenance screen, check whether the set duration of MAINTENANCE_COOLDOWN_HOURS passed
@@ -161,7 +170,8 @@ class AccountHandler(AbstractAccountHandler):
 
     def _is_usable_for_purpose(self, auth: SettingsPogoauth, purpose: AccountPurpose,
                                location_to_scan: Optional[Location]) -> bool:
-        logger.debug("Filtering potential account for: {}. username: {}, last_burn: {}, level: {}", purpose, auth.username, auth.last_burn, auth.level)
+        logger.debug("Filtering potential account for: {}. username: {}, last_burn: {}, level: {}",
+                     purpose, auth.username, auth.last_burn, auth.level)
         if purpose == AccountPurpose.MON_RAID:
             # No IV scanning or just raids
             return auth.level >= MIN_LEVEL_RAID
