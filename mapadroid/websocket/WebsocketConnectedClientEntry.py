@@ -84,6 +84,7 @@ class WebsocketConnectedClientEntry:
                 self.fail_counter += 1
                 if self.fail_counter > 5:
                     logger.error("5 consecutive timeouts or origin is no longer connected, cleanup")
+                    self.websocket_client_connection.close()
                     raise WebsocketWorkerTimeoutException("Multiple consecutive timeouts detected")
 
             logger.debug("Done sending command")
