@@ -172,8 +172,10 @@ class AccountHandler(AbstractAccountHandler):
 
     def _is_usable_for_purpose(self, auth: SettingsPogoauth, purpose: AccountPurpose,
                                location_to_scan: Optional[Location]) -> bool:
-        logger.debug("Filtering potential account for: {}. username: {}, last_burn: {}, level: {}",
-                     purpose, auth.username, auth.last_burn, auth.level)
+        logger.debug("Filtering potential account for: {} to scan at {}. username: {}, last_burn: {}, level: {},"
+                     "last_softban at {} ({})",
+                     purpose, location_to_scan, auth.username, auth.last_burn, auth.level,
+                     auth.last_softban_action, auth.last_softban_action_location)
         if purpose == AccountPurpose.MON_RAID:
             # No IV scanning or just raids
             return auth.level >= MIN_LEVEL_RAID
@@ -199,4 +201,10 @@ class AccountHandler(AbstractAccountHandler):
                                                                         location_to_scan.lat,
                                                                         location_to_scan.lng)
             cooldown_seconds = calculate_cooldown(distance_last_action, QUEST_WALK_SPEED_CALCULATED)
-            return DatetimeWrapper.now() > auth.last_softban_action + datetime.timedelta(seconds=cooldown_seconds)
+            usable: bool = DatetimeWrapper.now() > auth.last_softban_action \
+                            + datetime.timedelta(seconds=cooldown_seconds)
+            logger.debug2("Calculated cooldown: {}, thus usable: {}", cooldown_seconds, usable)
+            return usable
+        else:
+            logger.warning("Unmapped purpose in AccountHandler")
+            return False
