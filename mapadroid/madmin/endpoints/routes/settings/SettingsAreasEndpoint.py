@@ -28,7 +28,7 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
         # check if we can use ortools and if it's installed
-        self._ortools_info = is_or_tools_available()
+        self._ortools_info = not is_or_tools_available()
 
     # TODO: Auth
     async def get(self):

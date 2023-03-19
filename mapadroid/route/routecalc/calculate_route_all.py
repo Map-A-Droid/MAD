@@ -25,6 +25,8 @@ def is_or_tools_available() -> bool:
             pass
         else:
             or_tools_available = True
+    else:
+        logger.info("OR Tools not available since the system is running {}", platform.architecture()[0])
     return or_tools_available
 
 
