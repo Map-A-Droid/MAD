@@ -47,7 +47,21 @@ $(document).ready(function () {
     } else {
         $('#no-configured-elements').hide();
     }
-}
+  }
+  $(".genTooltip").each(function() {
+        _burntime =  $(this).data("burntime");
+        _burntype = $(this).data("burntype");
+        _human_ago = moment.utc(_burntime).fromNow();
+        var _title = "Type: " + _burntype + "<br/>" + "Timestamp: " + _burntime + " (" + _human_ago + ")";
+        if ( $(this).hasClass("fa-exclamation-triangle") ) {
+            _title += "<br />Status: Ready to use"
+        } else if ( $(this).hasClass("fa-exclamation-circle") ) {
+           _title += "<br />Status: Cooldown"
+        } else {
+            // nothing for now, probably handle BAN if ever happens (-:
+        }
+        $(this).tooltip({placement: "bottom", title: _title, html: true});
+   });
 </script>
 {% endblock %}
 
@@ -95,7 +109,7 @@ $(document).ready(function () {
           </td>
           <td class="text-center align-middle">
               {% if auth.last_burn_type is not none %}
-                  <i class="fa {{ ban_times_icon[auth_id] }}" title="{{ auth.last_burn }}" aria-hidden="true"></i>
+                  <i class="fa {{ ban_times_icon[auth_id] }} genTooltip" data-burntype="{{ auth.last_burn_type }}" data-burntime="{{ auth.last_burn }}" aria-hidden="true"></i>
               {% endif %}
           </td>
           <td class="text-right align-middle">
