@@ -981,7 +981,7 @@ class DbPogoProtoSubmit:
                 await TrsS2CellHelper.insert_update_cell(session, cell)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.debug("Failed committing cell {} ({})", cell_id, str(e))
-                await self._cache.set(cache_key, 1, ex=1)
+                await self._cache.set(cell_cache_key, 1, ex=1)
 
     async def _handle_single_incident(self, session: AsyncSession,
                                       stop_id: str,
