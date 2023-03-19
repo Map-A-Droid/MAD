@@ -37,6 +37,7 @@ class LoggerEnums(Enum):
     mapping_manager = "mapping-manager"
     database_cleanup = "database_cleanup"
     sqlalchemy = "sqlalchemy"
+    routecalc = "routecalc"
 
 
 logging_to_aiohttp_log = [LoggerEnums.aiohttp_access.value,
@@ -51,7 +52,7 @@ logging_to_database_log = [LoggerEnums.sqlalchemy]
 # ========== Core Logging ==========
 # ==================================
 
-def init_logging(args):
+def init_logging(args, print_info: bool = True):
     log_level_label, log_level_val = log_level(args.log_level, args.verbose)
     _, log_file_level = log_level(args.log_file_level, args.verbose)
     log_trace = log_level_val <= 20
@@ -148,7 +149,8 @@ def init_logging(args):
             log["compression"] = "zip"
         logconfig["handlers"].extend(file_logs)
     try:
-        print("Logging will go to " + str(os.path.join(args.log_path, base_name + ".log")))
+        if print_info:
+            print("Logging will go to " + str(os.path.join(args.log_path, base_name + ".log")))
         logger.configure(**logconfig)
     except ValueError:
         logger.critical("Logging parameters/configuration is invalid.")
@@ -157,7 +159,8 @@ def init_logging(args):
         init_custom(logger)
     except Exception as e:
         pass
-    logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
+    if print_info:
+        logger.info("Setting log level to {} ({}).", str(log_level_val), log_level_label)
 
 
 def log_level(arg_log_level, arg_debug_level):

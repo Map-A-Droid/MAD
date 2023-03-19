@@ -14,7 +14,9 @@ from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
 from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
 from mapadroid.db.resource_definitions.AreaRaidsMitm import AreaRaidsMitm
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, expand_context)
+from mapadroid.route.routecalc.calculate_route_all import is_or_tools_available
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -26,19 +28,7 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
         # check if we can use ortools and if it's installed
-        self._ortools_info = False
-        try:
-            from ortools.constraint_solver import pywrapcp, routing_enums_pb2
-        except Exception:
-            pass
-        import platform
-
-        if platform.architecture()[0] == "64bit":
-            try:
-                pywrapcp
-                routing_enums_pb2
-            except Exception:
-                self._ortools_info = True
+        self._ortools_info = is_or_tools_available()
 
     # TODO: Auth
     async def get(self):
