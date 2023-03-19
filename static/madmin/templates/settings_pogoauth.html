@@ -69,7 +69,8 @@ $(document).ready(function () {
           <th style="width: 30%" class="align-middle">Username <i class="fas fa-info-circle" data-toggle="tooltip" title="Username for the login"></th>
           <th style="width: 30%" class="align-middle">Device <i class="fas fa-info-circle" data-toggle="tooltip" title="Device assigned to this login"></th>
           <th style="width: 10%" class="text-center align-middle">Level <i class="fas fa-info-circle" data-toggle="tooltip" title="Account in-game level, 8 for raids, 30 for mons/quests"></th>
-          <th style="width: 15%" class="text-right align-middle"><a href='{{ url('settings_pogoauth', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 5%" class="text-center align-middle"></th>
+          <th style="width: 10%" class="text-right align-middle"><a href='{{ url('settings_pogoauth', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if auth is none %}
@@ -91,6 +92,11 @@ $(document).ready(function () {
           </td>
           <td class="text-center align-middle">
             {{ auth.level }}
+          </td>
+          <td class="text-center align-middle">
+              {% if auth.last_burn_type is not none %}
+                  <i class="fa {{ ban_times_icon[auth_id] }}" aria-hidden="true"></i>
+              {% endif %}
           </td>
           <td class="text-right align-middle">
             <a href="{{ redirect }}?id={{ auth_id }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
