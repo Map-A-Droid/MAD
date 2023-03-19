@@ -112,7 +112,8 @@ class WordToScreenMatching(object):
             logger.info("Detected login screen, fetching new account to use since last account was assigned more "
                         "than 5minutes ago")
             location_to_scan: Optional[Location] = None
-            if self._worker_state.current_location.lat == 0 and self._worker_state.current_location.lng == 0:
+            if not location_to_scan \
+                    or self._worker_state.current_location.lat == 0 and self._worker_state.current_location.lng == 0:
                 # Default location, use the middle of the geofence...
                 geofence_helper: Optional[GeofenceHelper] = await self._mapping_manager\
                     .routemanager_get_geofence_helper(self._worker_state.area_id)
