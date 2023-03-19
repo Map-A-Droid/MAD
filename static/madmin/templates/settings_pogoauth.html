@@ -95,7 +95,7 @@ $(document).ready(function () {
           </td>
           <td class="text-center align-middle">
               {% if auth.last_burn_type is not none %}
-                  <i class="fa {{ ban_times_icon[auth_id] }}" aria-hidden="true"></i>
+                  <i class="fa {{ ban_times_icon[auth_id] }}" title="{{ auth.last_burn }}" aria-hidden="true"></i>
               {% endif %}
           </td>
           <td class="text-right align-middle">
