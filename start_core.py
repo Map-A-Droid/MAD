@@ -236,6 +236,8 @@ async def start():
 if __name__ == "__main__":
     global application_args
     os.environ['LANGUAGE'] = application_args.language
+    if application_args.omp_thread_limit:
+        os.environ['OMP_THREAD_LIMIT'] = f'{application_args.omp_thread_limit}'
     init_logging(application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)

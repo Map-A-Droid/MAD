@@ -165,6 +165,9 @@ def parse_args():
                         help='Use this instance only for scanning')
     parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
                         help='Amount of threads/processes to be used for screenshot-analysis. Default: 2')
+    parser.add_argument('-otl', '--omp_thread_limit', type=int, default=None,
+                        help='Set the environment variable OMP_THREAD_LIMIT. This does not default, i.e., '
+                             'it is not set at all. Some environments apparently require limitation to 1')
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
     parser.add_argument('-cm', '--config_mode', action='store_true', default=False,
