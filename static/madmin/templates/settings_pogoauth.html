@@ -49,18 +49,25 @@ $(document).ready(function () {
     }
   }
   $(".genTooltip").each(function() {
-        _burntime =  $(this).data("burntime");
-        _burntype = $(this).data("burntype");
-        _human_ago = moment.utc(_burntime).fromNow();
-        var _title = "Type: " + _burntype + "<br/>" + "Timestamp: " + _burntime + " (" + _human_ago + ")";
-        if ( $(this).hasClass("fa-exclamation-triangle") ) {
-            _title += "<br />Status: Ready to use"
-        } else if ( $(this).hasClass("fa-exclamation-circle") ) {
-           _title += "<br />Status: Cooldown"
-        } else {
-            // nothing for now, probably handle BAN if ever happens (-:
-        }
-        $(this).tooltip({placement: "bottom", title: _title, html: true});
+    var _burntype = $(this).data("burntype");
+    if (_burntype == "maintenance") {
+      var _MAIN_TIME = $(this).data("burnsleep");
+      var _burntime_str = $(this).data("burntime");
+      var _burntime = moment.utc(_burntime_str);
+      var _past_main = _burntime.clone().add(_MAIN_TIME, "hours");
+
+      var _title = "Type: " + _burntype + "<br/>" + "Timestamp: " + _burntime_str + " (" + _burntime.fromNow() + ")";
+      if (moment.utc().isAfter(_past_main)) {
+        $(this).removeClass("genTooltip").addClass("fas fa-flag");
+        _title += "<br />Status: Ready to use"
+      } else {
+        $(this).removeClass("genTooltip").addClass("fas fa-hourglass-half");
+        _title += "<br />Status: Cooldown"
+     }
+     $(this).tooltip({placement: "bottom", title: _title, html: true});
+    } else {
+       // nothing for now, probably handle BAN if ever happens (-:
+    }
    });
 </script>
 {% endblock %}
@@ -109,7 +116,7 @@ $(document).ready(function () {
           </td>
           <td class="text-center align-middle">
               {% if auth.last_burn_type is not none %}
-                  <i class="fa {{ ban_times_icon[auth_id] }} genTooltip" data-burntype="{{ auth.last_burn_type }}" data-burntime="{{ auth.last_burn }}" aria-hidden="true"></i>
+                  <i class="genTooltip" data-burnsleep="{{ MAINTENANCE_COOLDOWN_HOURS }}" data-burntype="{{ auth.last_burn_type }}" data-burntime="{{ auth.last_burn }}" aria-hidden="true"></i>
               {% endif %}
           </td>
           <td class="text-right align-middle">
