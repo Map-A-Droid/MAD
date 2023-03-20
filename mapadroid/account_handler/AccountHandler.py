@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from loguru import logger
 
@@ -44,9 +44,11 @@ class AccountHandler(AbstractAccountHandler):
                 logins: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(
                     session, self._db_wrapper.get_instance_id(), auth_type=None, device_id=device_id)
                 logger.info("Got {} before filtering for burnt or not fitting the usage.", len(logins))
-                # Filter all burnt and all which do not match the purpose. E.g., if the purpose is mon scanning,
-                logins_filtered = [auth_entry for auth_id, auth_entry in logins.items() if not self._is_burnt(auth_entry)
-                                   and self._is_usable_for_purpose(auth_entry, purpose, location_to_scan)]
+                # Filter all burnt and all which do not match the purpose. E.g., if the purpose is mon scanning.
+                logins_filtered: List[SettingsPogoauth] = [auth_entry for auth_id, auth_entry in logins.items()
+                                                           if not self._is_burnt(auth_entry)
+                                                           and self._is_usable_for_purpose(auth_entry,
+                                                                                           purpose, location_to_scan)]
                 logins_filtered.sort(key=lambda x: DatetimeWrapper.fromtimestamp(0) if x.last_burn is None else x.last_burn)
                 login_to_use: Optional[SettingsPogoauth] = None
                 if not logins_filtered:
@@ -64,7 +66,13 @@ class AccountHandler(AbstractAccountHandler):
                         break
                 else:
                     # No google login was found for the device but we only have accounts which should be fine for
-                    # the purpose by now. Simply pop one
+                    # the purpose by now. Simply pop one of the PTC accounts or a google account of the device
+                    # (which should have been caught by the break above)
+                    logins_filtered = [auth for auth in logins_filtered
+                                       if self._is_ptc_or_ggl_of_device(auth, device_entry)]
+                    if not logins_filtered:
+                        logger.warning("No auth found for {} after filtering Google accounts from the list", device_id)
+                        return None
                     login_to_use = logins_filtered.pop(0)
                     # TODO: prefer keyblob accounts once keyblobs can be used (RGC support needed)
                 # Remove marking of current SettingsPogoauth holding the deviceID
@@ -202,9 +210,18 @@ class AccountHandler(AbstractAccountHandler):
                                                                         location_to_scan.lng)
             cooldown_seconds = calculate_cooldown(distance_last_action, QUEST_WALK_SPEED_CALCULATED)
             usable: bool = DatetimeWrapper.now() > auth.last_softban_action \
-                            + datetime.timedelta(seconds=cooldown_seconds)
+                           + datetime.timedelta(seconds=cooldown_seconds)
             logger.debug2("Calculated cooldown: {}, thus usable: {}", cooldown_seconds, usable)
             return usable
         else:
             logger.warning("Unmapped purpose in AccountHandler: {}", purpose)
+            return False
+
+    def _is_ptc_or_ggl_of_device(self, auth_entry: SettingsPogoauth, device_entry: SettingsDevice) -> bool:
+        if auth_entry.login_type == LoginType.PTC.value:
+            return True
+        elif auth_entry.login_type == LoginType.GOOGLE.value:
+            return device_entry.ggl_login_mail and auth_entry.username in device_entry.ggl_login_mail
+        else:
+            logger.error("Unexpected login type {} of auth {}", auth_entry.login_type, auth_entry.account_id)
             return False
