@@ -67,18 +67,6 @@ class Device(Resource):
                     "uri_source": "api_pogoauth"
                 }
             },
-            "ptc_login": {
-                "settings": {
-                    "type": "ptcselector",
-                    "require": False,
-                    "empty": None,
-                    "description": "PTC accounts assigned to the device",
-                    "expected": list,
-                    "uri": True,
-                    "data_source": "pogoauth",
-                    "uri_source": "api_pogoauth"
-                }
-            },
             "interface_type": {
                 "settings": {
                     "type": "option",
