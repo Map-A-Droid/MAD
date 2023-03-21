@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import re
 from typing import Dict, List, Optional
 
 from loguru import logger
@@ -59,7 +60,8 @@ class AccountHandler(AbstractAccountHandler):
                 for login in logins_filtered:
                     if login.login_type == LoginType.PTC.value:
                         continue
-                    elif device_entry.ggl_login_mail and login.username in device_entry.ggl_login_mail:
+                    elif device_entry.ggl_login_mail and re.search(login.username,
+                                                                   device_entry.ggl_login_mail, re.IGNORECASE):
                         logger.info("Shortcut auth selection to google login {} set for device {}",
                                     login.username, device_entry.name)
                         login_to_use = login
@@ -68,6 +70,7 @@ class AccountHandler(AbstractAccountHandler):
                     # No google login was found for the device but we only have accounts which should be fine for
                     # the purpose by now. Simply pop one of the PTC accounts or a google account of the device
                     # (which should have been caught by the break above)
+                    # TODO: Really re-consider this loop...
                     logins_filtered = [auth for auth in logins_filtered
                                        if self._is_ptc_or_ggl_of_device(auth, device_entry)]
                     if not logins_filtered:
@@ -221,7 +224,8 @@ class AccountHandler(AbstractAccountHandler):
         if auth_entry.login_type == LoginType.PTC.value:
             return True
         elif auth_entry.login_type == LoginType.GOOGLE.value:
-            return device_entry.ggl_login_mail and auth_entry.username in device_entry.ggl_login_mail
+            return device_entry.ggl_login_mail and re.search(auth_entry.username,
+                                                             device_entry.ggl_login_mail, re.IGNORECASE)
         else:
             logger.error("Unexpected login type {} of auth {}", auth_entry.login_type, auth_entry.account_id)
             return False
