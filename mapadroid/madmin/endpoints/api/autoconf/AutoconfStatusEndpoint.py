@@ -61,25 +61,16 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                         return hopper_response
                     else:
                         device_entry = hopper_response
-                        is_hopper = True
                         await nested_transaction.commit()
             assigned_to_device: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
                 .get_assigned_to_device(self._session, device_entry.device_id)
             if not self._get_mad_args().autoconfig_no_auth and (not assigned_to_device):
-                try:
-                    # TODO auth: Remove logintype selection by device entry
-                    auth_type = LoginType(device_entry.logintype)
-                except (KeyError, ValueError):
-                    auth_type = LoginType.GOOGLE
-                # Find one that matches authtype
                 unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper \
-                    .get_unassigned(self._session, self._get_instance_id(), auth_type)
+                    .get_unassigned(self._session, self._get_instance_id(), auth_type=None)
                 if not unassigned_accounts:
                     return await self._json_response(text="No configured emails", status=400)
                 auth: SettingsPogoauth = unassigned_accounts.pop()
                 auth.device_id = device_entry.device_id
-                if is_hopper and auth_type != LoginType.GOOGLE:
-                    auth.login_type = auth_type.value
                 self._save(auth)
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']

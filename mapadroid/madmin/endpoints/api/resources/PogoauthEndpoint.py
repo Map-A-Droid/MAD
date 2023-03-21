@@ -23,6 +23,7 @@ class PogoauthEndpoint(AbstractResourceEndpoint):
             # Column: settings_device.ggl_login_mail
             # This relation needs to be updated accordingly by releasing the value from a device if the assigned device
             # changes or a device needs to have it assigned.
+            # TODO: Accept list of devices?
             existing_device_assignment: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_google_login(
                 self._session, db_entry.username)
             if existing_device_assignment is not None and existing_device_assignment.device_id != value:

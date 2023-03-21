@@ -276,16 +276,6 @@ class Device(Resource):
                     "expected": bool
                 }
             },
-            "logintype": {
-                "settings": {
-                    "type": "option",
-                    "values": [None, "google", "ptc"],
-                    "require": False,
-                    "description": "Select login type for automatic login. If using Google make sure that account "
-                                   "already exists on device (Default: google)",
-                    "expected": str
-                }
-            },
             "ggl_login_mail": {
                 "settings": {
                     "type": "text",
