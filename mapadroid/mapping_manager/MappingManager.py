@@ -402,9 +402,9 @@ class MappingManager(AbstractMappingManager):
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_route_status(origin) if routemanager is not None else None
 
-    async def routemanager_get_rounds(self, routemanager_id: int, worker_name: str) -> Optional[int]:
+    async def routemanager_get_rounds(self, routemanager_id: int) -> Optional[int]:
         routemanager = self.__fetch_routemanager(routemanager_id)
-        return routemanager.get_rounds(worker_name) if routemanager is not None else None
+        return routemanager.get_rounds() if routemanager is not None else None
 
     async def routemanager_redo_stop_immediately(self, routemanager_id: int, worker_name: str, lat: float,
                                                  lon: float) -> bool:

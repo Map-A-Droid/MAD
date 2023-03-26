@@ -54,7 +54,8 @@ def check_time_period(period, relevant_timezone: datetime.tzinfo):
 
 
 def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Optional[Location] = None,
-                    workers_registered_to_route: int = 0, coords_scannable: int = 0):
+                    workers_registered_to_route: int = 0, coords_scannable: int = 0,
+                    rounds_processed: int = 0):
     if walker_settings.max_walkers is not None and 0 < walker_settings.max_walkers <= workers_registered_to_route:
         logger.warning("Max workers reached for routemanager {} of walker area {}, moving on", walker_settings.area_id,
                        walker_settings.name)
@@ -72,4 +73,9 @@ def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Opti
         if walkervalue is None and walker_settings.algo_type == 'coords' or len(walkervalue) == 0:
             return True
         return check_walker_value_type(walkervalue, location)
+    elif walker_settings.algo_type == "round" and (walker_settings.algo_value is None
+                                                   or walker_settings.algo_value >= rounds_processed):
+        logger.warning("Area {} was scanned for {} rounds with max rounds set to {}",
+                       walker_settings.area_id, rounds_processed, walker_settings.algo_value)
+        return False
     return True

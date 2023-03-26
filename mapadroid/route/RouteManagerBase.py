@@ -550,7 +550,7 @@ class RouteManagerBase(ABC):
         return False
 
     def _get_worker_rounds_run_through(self) -> int:
-        temp_worker_round_list: list = []
+        temp_worker_round_list: List[int] = []
         for _origin, entry in self._routepool.items():
             temp_worker_round_list.append(entry.rounds)
 
@@ -625,7 +625,7 @@ class RouteManagerBase(ABC):
             return len(entry.subroute) - len(entry.queue), len(entry.subroute)
         return -1, -1
 
-    def get_rounds(self, origin: str) -> int:
+    def get_rounds(self) -> int:
         return self._get_worker_rounds_run_through()
 
     def get_registered_workers(self) -> Set[str]:
