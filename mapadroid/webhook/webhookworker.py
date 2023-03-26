@@ -609,6 +609,9 @@ class WebhookWorker:
             if pokestop.get("incident_grunt_type"):
                 pokestop_payload["incident_grunt_type"] = pokestop["incident_grunt_type"]
 
+            if pokestop.get("incident_display_type"):
+                pokestop_payload["incident_display_type"] = pokestop["incident_display_type"]
+
             pokestop_payload["incidents"] = pokestop["incidents"]
 
             entire_payload = {"type": "pokestop", "message": pokestop_payload}
