@@ -271,7 +271,8 @@ class StrategyFactory:
 
         while not pre_check_value(walker_settings, self.__event.get_current_event_id(), location,
                                   await self._get_amount_of_registered_workers(origin, walker_settings),
-                                  await self._get_amount_of_coords_scannable(walker_settings)) \
+                                  await self._get_amount_of_coords_scannable(walker_settings),
+                                  await self._get_worker_rounds_run_through(walker_settings)) \
                 and client_mapping.walker_area_index < len(client_mapping.walker_areas):
             logger.info('not using area {} - Walkervalue out of range',
                         await self.__mapping_manager.routemanager_get_name(walker_settings.area_id))
@@ -344,3 +345,8 @@ class StrategyFactory:
             await self.__mapping_manager.set_devicesetting_value_of(origin,
                                                                     MappingManagerDevicemappingKey.LAST_LOCATION,
                                                                     Location(0.0, 0.0))
+
+    async def _get_worker_rounds_run_through(self, walker_settings: SettingsWalkerarea) -> int:
+        rounds: Optional[int] = await self.__mapping_manager.routemanager_get_rounds(
+            walker_settings.area_id)
+        return rounds if rounds is not None else 0
