@@ -51,7 +51,7 @@
 ## The following settings enable the communication to the mapping manager using gRPC. This is needed if MAD is split
 ## across multiple processes/hosts (e.g., multiple mitm receivers)
 ######################
-# IP of MappingManager gRPC server to connect to OR - if serving - to listen on. Default: all interfaces (0.0.0.0)
+# IP of MappingManager gRPC server to connect to OR - if serving - to listen on. Default: 127.0.0.1
 #mappingmanager_ip:
 # Port to listen on for the MappingManager gRPC API (main MAD component) or connect to. Default: 50052
 #mappingmanager_port:
@@ -71,7 +71,7 @@
 # mitmmapper_type:
 
 ## MitmMapper gRPC related settings
-# IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: [::]
+# IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 127.0.0.1
 #mitmmapper_ip:
 # Port to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 50051
 #mitmmapper_port:
@@ -88,7 +88,7 @@
 ## the connection information to the core stats handler need to be inserted. Optionally, the stats handler itself can
 ## run as its own process (on another host as well) due to the use of gRPC.
 ######################
-# IP to listen on for the StatsHandler gRPC API or connect to (separate MAD component. Default: [::]
+# IP to listen on for the StatsHandler gRPC API or connect to (separate MAD component. Default: 127.0.0.1
 #statshandler_ip:
 # Port to listen on for the StatsHandler gRPC API or connect to (separate MAD component). Default: 50053
 #statshandler_port:
