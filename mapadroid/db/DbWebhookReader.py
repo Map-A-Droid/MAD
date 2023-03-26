@@ -140,6 +140,7 @@ class DbWebhookReader:
                 stop_entry["incident_expiration"] = int(first_incident.incident_expiration.timestamp()) \
                     if first_incident.incident_expiration is not None else None
                 stop_entry["incident_grunt_type"] = first_incident.character_display
+                stop_entry["incident_display_type"] = first_incident.incident_display_type
             stop_entry["incidents"] = incidents
 
             ret.append(stop_entry)
