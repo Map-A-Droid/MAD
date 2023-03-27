@@ -54,7 +54,7 @@ class MITMReceiver:
         self._app["mitmreceiver_startup_time"] = self.__mitmreceiver_startup_time
         self._app["data_queue"] = self._data_queue
         self._app["storage_obj"] = self._storage_obj  # TODO
-        if application_args.enable_x_forwarded_path_madmin:
+        if application_args.enable_x_forwarded_path_mitm_receiver:
             reverse_proxied = XPathForwarded()
             self._app.middlewares.append(reverse_proxied.middleware)
         register_autoconfig_endpoints(self._app)
