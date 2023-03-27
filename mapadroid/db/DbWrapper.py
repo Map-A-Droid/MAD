@@ -89,7 +89,7 @@ class DbWrapper:
         areas.update(await SettingsAreaPokestopHelper.get_all(session, self.__instance_id))
         areas.update(await SettingsAreaRaidsMitmHelper.get_all(session, self.__instance_id))
         areas.update(await SettingsAreaInitMitmHelper.get_all(session, self.__instance_id))
-        return areas
+        return dict(sorted(areas.items(), key=lambda item: item[1].name))
 
     async def get_area(self, session: AsyncSession, area_id: int) -> Optional[SettingsArea]:
         """
