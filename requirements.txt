@@ -51,5 +51,5 @@ beautifulsoup4==4.11.1
 marshmallow-dataclass==8.5.10
 marshmallow-enum==1.5.1
 typeguard==2.13.3
-redis==4.5.1
+redis==4.5.3
 hiredis==1.1.0
