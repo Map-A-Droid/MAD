@@ -96,8 +96,8 @@ def parse_args():
                         help='Enable X-Fordward-Path allowance for reverse proxy usage for MITMReceiver. Default: False')
 
     # MappingManager gRPC
-    parser.add_argument('-mmgrip', '--mappingmanager_ip', required=False, default="[::]", type=str,
-                        help='IP to listen on for the MappingManager gRPC API or connect to (main MAD component. Default: [::]')
+    parser.add_argument('-mmgrip', '--mappingmanager_ip', required=False, default="127.0.0.1", type=str,
+                        help='IP to listen on for the MappingManager gRPC API or connect to (main MAD component. Default: 127.0.0.1')
     parser.add_argument('-mmgrport', '--mappingmanager_port', required=False, default=50052, type=int,
                         help='Port to listen on for the MappingManager gRPC API or connect to (main MAD component). Default: 50052')
     parser.add_argument('-mmgrtlspriv', '--mappingmanager_tls_private_key_file', required=False, default=None, type=str,
@@ -110,8 +110,8 @@ def parse_args():
     parser.add_argument('-mitmtype', '--mitmmapper_type', type=MitmMapperType, choices=list(MitmMapperType),
                         help='Pick the MitmMapper implementation to be used. gRPC or Redis are intended for bigger setups (multi process/tenant)')
     # MitmMapper gRPC
-    parser.add_argument('-mitmmip', '--mitmmapper_ip', required=False, default="[::]", type=str,
-                        help='IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component. Default: [::]')
+    parser.add_argument('-mitmmip', '--mitmmapper_ip', required=False, default="127.0.0.1", type=str,
+                        help='IP to listen on for the MitmMapper gRPC API or connect to (separate MAD component. Default: 127.0.0.1')
     parser.add_argument('-mitmmport', '--mitmmapper_port', required=False, default=50051, type=int,
                         help='Port to listen on for the MitmMapper gRPC API or connect to (separate MAD component). Default: 50051')
     parser.add_argument('-mitmtlspriv', '--mitmmapper_tls_private_key_file', required=False, default=None, type=str,
@@ -122,8 +122,8 @@ def parse_args():
                         help='Enable compression of data of the MitmMapper gRPC communication. Default: False')
 
     # StatsHandler gRPC
-    parser.add_argument('-statship', '--statshandler_ip', required=False, default="[::]", type=str,
-                        help='IP to listen on for the StatsHandler gRPC API or connect to (separate MAD component. Default: [::]')
+    parser.add_argument('-statship', '--statshandler_ip', required=False, default="127.0.0.1", type=str,
+                        help='IP to listen on for the StatsHandler gRPC API or connect to (separate MAD component. Default: 127.0.0.1')
     parser.add_argument('-statshport', '--statshandler_port', required=False, default=50053, type=int,
                         help='Port to listen on for the StatsHandler gRPC API or connect to (separate MAD component). Default: 50053')
     parser.add_argument('-statshtlspriv', '--statshandler_tls_private_key_file', required=False, default=None, type=str,
