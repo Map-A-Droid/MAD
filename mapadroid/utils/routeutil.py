@@ -75,7 +75,7 @@ def pre_check_value(walker_settings: SettingsWalkerarea, eventid, location: Opti
                 return True
             return check_walker_value_type(walkervalue, location)
         elif walker_settings.algo_type == "round" and (walker_settings.algo_value is None
-                                                       or int(walker_settings.algo_value) >= rounds_processed):
+                                                       or int(walker_settings.algo_value) <= rounds_processed):
             logger.warning("Area {} was scanned for {} rounds with max rounds set to {}",
                            walker_settings.area_id, rounds_processed, walker_settings.algo_value)
             return False
