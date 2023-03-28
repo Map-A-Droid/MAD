@@ -18,7 +18,9 @@ class SettingsGeofenceHelper:
     @staticmethod
     async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsGeofence]:
         mapped: Dict[int, SettingsGeofence] = {}
-        stmt = select(SettingsGeofence).where(SettingsGeofence.instance_id == instance_id)
+        stmt = select(SettingsGeofence) \
+          .where(SettingsGeofence.instance_id == instance_id) \
+          .order_by(SettingsGeofence.name)
         result = await session.execute(stmt)
         for fence in result.scalars().all():
             mapped[fence.geofence_id] = fence
