@@ -21,11 +21,11 @@ from mapadroid.utils.madGlobals import (
 from mapadroid.utils.resolution import ResolutionCalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.worker.AbstractWorker import AbstractWorker
-from mapadroid.worker.WorkerState import WorkerState
-from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.strategy.StrategyFactory import StrategyFactory
+from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class Worker(AbstractWorker):
@@ -318,8 +318,7 @@ class Worker(AbstractWorker):
                 logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
             processed_rounds = await self._mapping_manager.routemanager_get_rounds(
-                self._scan_strategy.area_id,
-                self._worker_state.origin)
+                self._scan_strategy.area_id)
             # TODO: use mod or reset rounds?
             if int(processed_rounds) >= int(rounds):
                 return False
