@@ -5,7 +5,9 @@ from datetime import datetime
 from threading import Event
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from aioredis import Redis, WatchError
+from redis import WatchError
+from redis import asyncio as aioredis
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.account_handler.AbstractAccountHandler import (
@@ -141,7 +143,7 @@ class MappingManager(AbstractMappingManager):
                 redis_credentials["password"] = application_args.login_tracking_password
             if application_args.login_tracking_database:
                 redis_credentials["db"] = application_args.login_tracking_database
-            self._redis_cache = await Redis(**redis_credentials)
+            self._redis_cache = await aioredis.Redis(**redis_credentials)
             await self._redis_cache.ping()
         else:
             self._redis_cache = await self.__db_wrapper.get_cache()
