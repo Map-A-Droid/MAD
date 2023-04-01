@@ -271,13 +271,13 @@ class Communicator(AbstractCommunicator):
             # https://stackoverflow.com/questions/5284147/validating-ipv4-addresses-with-regexp
             found = re.match('((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}', res)
             if found:
-                ip_address_found = found.group(0)
+                ip_address_found = found.group(1)
         except Exception as e:
             logger.error(f"Failed parsing external IP: {e}")
             return None
 
         if ip_address_found and type(ip_address(ip_address_found)) is IPv4Address:
-            return res
+            return ip_address_found
         else:
-            logger.error(f"{res} is not a valid IPv4 address")
+            logger.error(f"{ip_address_found} is not a valid IPv4 address")
             return None
