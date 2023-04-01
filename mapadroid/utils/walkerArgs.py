@@ -365,9 +365,9 @@ def parse_args():
                               'MAD will search for the first IPv4 address via regex.'))
     parser.add_argument('-elt', '--enable_login_tracking', action='store_true', default=False,
                         help='Enable tracking of login attempts to PTC')
-    parser.add_argument('-lth', '--login_tracking_host', default='127.0.0.1',
+    parser.add_argument('-lth', '--login_tracking_host', type=str, default=None,
                         help='Redis cache host for login tracking. If not specified, it will use the cache_host set '
-                             'for general redis caching. (Default: 127.0.0.1).')
+                             'for general redis caching. (Default: None).')
     parser.add_argument('-ltp', '--login_tracking_port', default=6379,
                         help='Redis cache port. If not specified along with login_tracking_host, it will use the cache_'
                              'port and cache_host set for general redis caching. (Default: 6379).')

@@ -50,7 +50,7 @@
 
 # Enable login tracking (backed by Redis) to prevent ip bans
 #enable_login_tracking
-# Redis cache host for login tracking. If not specified, it will use the cache_host set for general redis caching. (Default: 127.0.0.1).
+# Redis cache host for login tracking. If not specified, it will use the cache_host set for general redis caching. (Default: None).
 #login_tracking_host
 # Redis cache port. If not specified along with login_tracking_host, it will use the cache_port and cache_host set for general redis caching. (Default: 6379)
 #login_tracking_port
