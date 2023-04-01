@@ -32,15 +32,17 @@ class AccountHandler(AbstractAccountHandler):
     async def get_account(self, device_id: int, purpose: AccountPurpose,
                           location_to_scan: Optional[Location],
                           including_google: bool = True) -> Optional[SettingsPogoauth]:
-        # First, fetch all pogoauth accounts
-        async with self._db_wrapper as session, session:
-            device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get(session,
-                                                                                    self._db_wrapper.get_instance_id(),
-                                                                                    device_id)
-            if not device_entry:
-                logger.warning("Invalid device ID {} passed to fetch an account for it", device_id)
-                return None
-            async with self._assignment_lock:
+        async with self._assignment_lock:
+            # First, fetch all pogoauth accounts
+            async with self._db_wrapper as session, session:
+                device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get(session,
+                                                                                        self._db_wrapper.get_instance_id(),
+                                                                                        device_id)
+                if not device_entry:
+                    logger.warning("Invalid device ID {} passed to fetch an account for it", device_id)
+                    return None
+                # First check if there is a login rate limit to apply right now
+
                 # TODO: Filter only unassigned or assigned to same device first
                 logins: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(
                     session, self._db_wrapper.get_instance_id(), auth_type=None, device_id=device_id)

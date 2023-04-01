@@ -359,19 +359,44 @@ def parse_args():
                         help='MAD PoGo auth is not required during autoconfiguration',
                         dest='autoconfig_no_auth')
 
+    # PTC Login tracking
+    parser.add_argument('-ips', '--ip_service', default='https://ifconfig.me',
+                        help=('Host to use to request the external IPv4 address of the device. '
+                              'MAD will search for the first IPv4 address via regex.'))
+    parser.add_argument('-elt', '--enable_login_tracking', action='store_true', default=False,
+                        help='Enable tracking of login attempts to PTC')
+    parser.add_argument('-lth', '--login_tracking_host', default='127.0.0.1',
+                        help='Redis cache host for login tracking. If not specified, it will use the cache_host set '
+                             'for general redis caching. (Default: 127.0.0.1).')
+    parser.add_argument('-ltp', '--login_tracking_port', default=6379,
+                        help='Redis cache port. If not specified along with login_tracking_host, it will use the cache_'
+                             'port and cache_host set for general redis caching. (Default: 6379).')
+    parser.add_argument('-ltu', '--login_tracking_username', default='',
+                        help='Redis username for login tracking')
+    parser.add_argument('-ltpwd', '--login_tracking_password', default='',
+                        help='Redis password for login tracking')
+    parser.add_argument('-ltdb', '--login_tracking_database', default=0,
+                        help=('Redis database used by login tracking. Use different numbers (0-15) '
+                              'if you are running multiple instances'))
+    parser.add_argument('-ltt', '--login_tracking_timeout', default=360,
+                        help=('Duration in seconds during which a login attempt is counting towards '
+                              '\'login_tracking_limit\'.'))
+    parser.add_argument('-ltl', '--login_tracking_limit', default=15,
+                        help='Max number of login attempts during \'login_tracking_timeout\'.')
+
     # Redis cache
     parser.add_argument('-ch', '--cache_host', default='127.0.0.1',
-                        help=('Redis host used by caching'))
+                        help='Redis host used by caching')
     parser.add_argument('-csock', '--cache_socket', required=False,
-                        help=('Unix Socket to connect to redis - replaces cache_host'))
+                        help='Unix Socket to connect to redis - replaces cache_host')
     parser.add_argument('-cp', '--cache_port', default=6379,
-                        help=('Redis port used by caching'))
+                        help='Redis port used by caching')
     parser.add_argument('-cu', '--cache_username', default=None,
-                        help=('Redis username'))
+                        help='Redis username')
     parser.add_argument('-cpwd', '--cache_password', default=None,
-                        help=('Redis password'))
+                        help='Redis password')
     parser.add_argument('-cdb', '--cache_database', default=0,
-                        help=('Redis database. Use different numbers (0-15) if you are running multiple instances'))
+                        help='Redis database. Use different numbers (0-15) if you are running multiple instances')
 
     parser.add_argument('-rrqk', '--redis_report_queue_key', default=None,
                         help='Redis key used to store reported value')

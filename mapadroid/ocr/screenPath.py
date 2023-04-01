@@ -16,7 +16,7 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.collections import ScreenCoordinates, Location
+from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.madGlobals import ScreenshotType, application_args
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
@@ -122,6 +122,7 @@ class WordToScreenMatching(object):
                     location_to_scan = Location(lat, lon)
             else:
                 location_to_scan = self._worker_state.current_location
+
             account_to_use: Optional[SettingsPogoauth] = await self._account_handler.get_account(
                 self._worker_state.device_id,
                 await self._mapping_manager.routemanager_get_purpose_of_device(self._worker_state.area_id),
@@ -139,6 +140,16 @@ class WordToScreenMatching(object):
             logger.error("No account set for device, sleeping 30s")
             await asyncio.sleep(30)
             return
+        elif application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
+            # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
+            # just as a plain startup of already logged in account/device
+            logger.debug("Login tracking enabled")
+            if not await self.check_ptc_login_ban():
+                logger.warning("Potential PTC ban, aborting login for now. Sleeping 30s")
+                await asyncio.sleep(30)
+                return
+            logger.success("Received permission for (potential) PTC login")
+
         for i in range(n_boxes):
             if 'Facebook' in (global_dict['text'][i]):
                 temp_dict['Facebook'] = global_dict['top'][i] / diff
@@ -211,6 +222,27 @@ class WordToScreenMatching(object):
                     await self._communicator.click(int(click_x), int(click_y))
                     await asyncio.sleep(5)
                     return
+
+    async def check_ptc_login_ban(self) -> bool:
+        """
+        Checks whether a PTC login is currently permissible.
+        :return: True, if PTC login can be run through. False, otherwise.
+        """
+        logger.debug(f"Checking for PTC login permission")
+        ip = await self._communicator.get_external_ip()
+        if not ip:
+            logger.warning("Unable to get IP from device. Deny PTC login request")
+            return False
+        code = await self._communicator.get_ptc_status() or 500
+        if code == 200:
+            logger.debug(f"OK - PTC returned {code} on {ip}")
+            return await self._mapping_manager.ip_handle_login_request(ip, self._worker_state.origin)
+        elif code == 403:
+            logger.warning(f"PTC ban is active ({code}) on {ip}")
+            return False
+        else:
+            logger.info(f"PTC login server returned {code} on {ip} - do not log in!")
+            return False
 
     async def _click_center_button(self, diff, global_dict, i) -> None:
         (x, y, w, h) = (global_dict['left'][i], global_dict['top'][i],
@@ -344,7 +376,7 @@ class WordToScreenMatching(object):
 
     async def __handle_google_login(self, screentype) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
-        if self._worker_state.active_account and self._worker_state.active_account.login_type == LoginType.ptc.value:
+        if self._worker_state.active_account and self._worker_state.active_account.login_type == LoginType.ptc.name:
             logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
             username = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, '@gmail.com')
         elif self._worker_state.active_account:

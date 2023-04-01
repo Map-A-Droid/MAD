@@ -1,9 +1,11 @@
 import asyncio
 import copy
 from asyncio import Task
+from datetime import datetime
 from threading import Event
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+from aioredis import Redis, WatchError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.account_handler.AbstractAccountHandler import (
@@ -39,7 +41,7 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (PositionType, RoutemanagerShuttingDown,
-                                        ScreenshotType)
+                                        ScreenshotType, application_args)
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.utils)
@@ -116,12 +118,33 @@ class MappingManager(AbstractMappingManager):
 
         # TODO: Move to init or call __init__ differently...
         self.__paused_devices: List[int] = []
-        self.__mappings_mutex = None
+        self.__mappings_mutex: Optional[asyncio.Lock] = None
+        self.__ptc_mutex: Optional[asyncio.Lock] = None
+        self._redis_cache: Optional[Redis] = None
 
     async def setup(self):
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
-
+        await self.setup_login_tracking()
         await self.update(full_lock=True)
+
+    async def setup_login_tracking(self):
+        if not application_args.enable_login_tracking:
+            return
+        self.__ptc_mutex: asyncio.Lock = asyncio.Lock()
+        # Check if special credentials have been passed, if not, just use the existing redis...
+        if application_args.login_tracking_host and application_args.login_tracking_port:
+            redis_credentials = {"host": application_args.login_tracking_host,
+                                 "port": application_args.login_tracking_port}
+            if application_args.login_tracking_username:
+                redis_credentials["username"] = application_args.login_tracking_username
+            if application_args.login_tracking_password:
+                redis_credentials["password"] = application_args.login_tracking_password
+            if application_args.login_tracking_database:
+                redis_credentials["db"] = application_args.login_tracking_database
+            self._redis_cache = await Redis(**redis_credentials)
+            await self._redis_cache.ping()
+        else:
+            self._redis_cache = await self.__db_wrapper.get_cache()
 
     def shutdown(self):
         logger.info("MappingManager exiting")
@@ -335,6 +358,43 @@ class MappingManager(AbstractMappingManager):
     async def get_all_routemanager_ids(self) -> List[int]:
         return list(self._routemanagers.keys())
 
+    async def ip_handle_login_request(self, ip, origin, limit_seconds=None, limit_count=None):
+        if not limit_seconds:
+            limit_seconds = int(application_args.login_tracking_timeout)
+        if not limit_count:
+            limit_count = int(application_args.login_tracking_limit)
+        now = int(datetime.timestamp(datetime.now()))
+
+        logger.warning(f"Handle PTC login request on {ip}")
+        async with self._redis_cache.pipeline() as pipe:
+            while True:
+                try:
+                    await pipe.watch(ip)
+                    try:
+                        ct = await self._redis_cache.zcount(ip, now - limit_seconds, "+inf")
+                        # origin_logger.warning(f"got count {ct} for {ip} from redis")
+                    except Exception as e:
+                        logger.warning("Failed getting count for {} from redis! Deny this attempt ... "
+                                       "({})", ip, e)
+                        return False
+                    if ct >= limit_count:
+                        logger.warning("Reached threshold of {} attempts per {} "
+                                       "seconds for {}! Deny this login attempt",
+                                       limit_count, limit_seconds, ip)
+                        return False
+                    else:
+                        logger.info("Got count {} for {}. Allow this login attempt, register {}.",
+                                    ct, ip, now)
+                        pipe.multi()
+                        await pipe.zadd(ip, {f"{origin}:{now}": now})
+                        await pipe.expire(ip, 60 * 60 * 24)
+                        await pipe.execute()
+                        return True
+
+                except WatchError as e:
+                    logger.warning(f"Redis count changed for {ip}, retry ... ({e})")
+                    await asyncio.sleep(1)
+
     def __fetch_routemanager(self, routemanager_id: int) -> Optional[RouteManagerBase]:
         routemanager: RouteManagerBase = self._routemanagers.get(routemanager_id, None)
         if not routemanager:
@@ -443,8 +503,8 @@ class MappingManager(AbstractMappingManager):
             return None
 
     async def routemanager_get_current_route(self, routemanager_id: int) -> Optional[Tuple[List[Location],
-                                                                                           Dict[
-                                                                                               str, List[Location]]]]:
+    Dict[
+        str, List[Location]]]]:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_current_route() if routemanager is not None else None
 

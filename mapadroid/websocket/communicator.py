@@ -1,16 +1,18 @@
 import asyncio
+import re
+from ipaddress import IPv4Address, ip_address
 from typing import Optional
 
 import websockets
 from aiofile import async_open
 
-from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.collections import Location
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (
     ScreenshotType, WebsocketWorkerConnectionClosedException,
-    WebsocketWorkerTimeoutException)
+    WebsocketWorkerTimeoutException, application_args)
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
@@ -244,3 +246,38 @@ class Communicator(AbstractCommunicator):
                 await fh.write(encoded)
             logger.debug("Done storing logcat, returning")
             return True
+
+    async def get_ptc_status(self) -> int:
+        try:
+            code: MessageTyping = await self.passthrough(
+                "curl -s -k -I https://sso.pokemon.com/sso/login -o /dev/null -w '%{http_code}'")
+            code = code.replace("[", "").replace("]", "")
+            return int(code)
+        except Exception as e:
+            logger.warning("Failed retrieving SSO status of PTC: {}", e)
+            return 500
+
+    async def get_external_ip(self) -> Optional[str]:
+        try:
+            res = await self.passthrough(f"echo \"$(curl -k -s {application_args.ip_service})\"")
+        except Exception as e:
+            logger.error(f"Failed getting external IP address from device: {e}")
+            return None
+
+        # parse RGC return expression
+        ip_address_found: Optional[str] = None
+        try:
+            # Regex ^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$ from
+            # https://stackoverflow.com/questions/5284147/validating-ipv4-addresses-with-regexp
+            found = re.match('((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}', res)
+            if found:
+                ip_address_found = found.group(0)
+        except Exception as e:
+            logger.error(f"Failed parsing external IP: {e}")
+            return None
+
+        if ip_address_found and type(ip_address(ip_address_found)) is IPv4Address:
+            return res
+        else:
+            logger.error(f"{res} is not a valid IPv4 address")
+            return None
