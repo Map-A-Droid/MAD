@@ -108,9 +108,11 @@ class WordToScreenMatching(object):
         temp_dict: dict = {}
         n_boxes = len(global_dict['text'])
         logger.debug("Selecting login with: {}", global_dict)
-        if self._worker_state.active_account_last_set + 300 < time.time():
+        if (self._worker_state.active_account_last_set + 300 < time.time()
+                or (self._worker_state.active_account
+                    and self._account_handler.is_burnt(self._worker_state.device_id))):
             logger.info("Detected login screen, fetching new account to use since last account was assigned more "
-                        "than 5minutes ago")
+                        "than 5 minutes ago OR current account was marked burnt")
             location_to_scan: Optional[Location] = None
             if not location_to_scan \
                     or self._worker_state.current_location.lat == 0 and self._worker_state.current_location.lng == 0:
