@@ -269,6 +269,8 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.FAILURE:
             await self.__handle_failure_screen()
         elif screentype == ScreenType.RETRY:
+            if self._worker_state.early_maintenance_detection:
+                await self._account_handler.mark_burnt(self._worker_state.device_id, BurnType.MAINTENANCE)
             await self.__handle_retry_screen(diff, global_dict)
         elif screentype == ScreenType.WRONG:
             await self.__handle_returning_player_or_wrong_credentials()
