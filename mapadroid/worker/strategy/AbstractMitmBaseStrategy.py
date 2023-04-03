@@ -336,6 +336,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
             # self._mitm_mapper.
             self._worker_state.restart_count = 0
+            self._worker_state.early_maintenance_detection = True
             logger.warning("Too many timeouts - Restarting game")
             await self._restart_pogo(True)
 
