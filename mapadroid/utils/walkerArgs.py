@@ -398,6 +398,8 @@ def parse_args():
     parser.add_argument('-cdb', '--cache_database', default=0,
                         help='Redis database. Use different numbers (0-15) if you are running multiple instances')
 
+    parser.add_argument('-eemd', '--enable_early_maintenance_detection', action='store_true', default=False,
+                        help='Enable early maintenance screen detection - could be inaccurate, but will save on login time')
     parser.add_argument('-rrqk', '--redis_report_queue_key', default=None,
                         help='Redis key used to store reported value')
     parser.add_argument('-rrqi', '--redis_report_queue_interval', default=30, type=int,
