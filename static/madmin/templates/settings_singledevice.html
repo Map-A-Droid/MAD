@@ -15,6 +15,11 @@
     <script>
         var table;
         var selected = false;
+        var ggl_accounts = [
+            {% for account_id, account in ggl_accounts.items() %}
+                "{{ account.username }}",
+            {% endfor %}
+        ]
 
         $(document).ready(function () {
             $("#clearLevelup").click(function () {
@@ -65,6 +70,21 @@
                 $('.enhanced_mode_quest_safe_items').trigger('change');
 
             }
+
+            $(".ggl_login_mail").select2({
+                data: ggl_accounts,
+                escapeMarkup: function (m) {
+                    return m;
+                }
+            });
+
+            var googleLogins = $(".ggl_login_mail").data('default');
+            if (googleLogins != "") {
+                googleLogins = googleLogins.toString().replace(/\s/g, "").split(",")
+                $('.ggl_login_mail').val(googleLogins);
+                $('.ggl_login_mail').trigger('change');
+
+            }
         });
     </script>
 {% endblock %}
@@ -87,7 +107,7 @@
                     <small class="form-text text-muted">origin is the unique name of your device</small>
                 </div>
                 {% for key, field in settings_vars.fields|dictsort %}
-                    {% if key not in ["origin", "pool", "walker", "mac_address", "ggl_login", "interface_type", "ggl_login_mail"] %}
+                    {% if key not in ["origin", "pool", "walker", "mac_address", "interface_type"] %}
                         <div class="form-group">
                             <label for="{{ key }}">{{ key }}</label>
                             {% if field.settings.type == "option" %}
@@ -135,17 +155,6 @@
                         {% endif %}
                     </select>
                     <small class="form-text text-muted">Configuration pool used by this device</small>
-                </div>
-                <div class="form-group">
-                    <label for="ggl_login_mail">Assigned Google address</label>
-                    <select class="form-control" name="ggl_login_mail"
-                            data-default="{{ element.ggl_login_mail if element.ggl_login_mail else 'None' }}">
-                        <option value='None'>None</option>
-                        {% for account_id, account in ggl_accounts.items() %}
-                            <option value="{{ account.username }}" {{ 'selected="selected"' if element.ggl_login_mail == account.username }}>{{ account.username }}</option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-text text-muted">Aligned email for auto-configuration</small>
                 </div>
                 <div class="form-group">
                     <label for="interface_type">Active Interface</label>

@@ -19,21 +19,7 @@ class PogoauthEndpoint(AbstractResourceEndpoint):
 
     async def _handle_additional_keys(self, db_entry: SettingsPogoauth, key: str, value) -> bool:
         if key == "device_id" and db_entry.login_type == LoginType.GOOGLE.value:
-            # The settings_device table contains a column simply referring to settings_pogoauth by string without a FK
-            # Column: settings_device.ggl_login_mail
-            # This relation needs to be updated accordingly by releasing the value from a device if the assigned device
-            # changes or a device needs to have it assigned.
-            # TODO: Accept list of devices?
-            existing_device_assignment: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_google_login(
-                self._session, db_entry.username)
-            if existing_device_assignment is not None and existing_device_assignment.device_id != value:
-                # The device ID of the entry has been updated.
-                existing_device_assignment.ggl_login_mail = None
-            if value:
-                # device_id is set in db_entry, simply write the ggl login username anyway
-                device_to_assign_to: Optional[SettingsDevice] = await SettingsDeviceHelper.get(
-                    self._session, self._get_instance_id(), value)
-                device_to_assign_to.ggl_login_mail = db_entry.username
+            # Device ID is a one-way assignment
             db_entry.device_id = value
             return True
         return False

@@ -55,18 +55,6 @@ class Device(Resource):
                     "expected": str
                 }
             },
-            "ggl_login": {
-                "settings": {
-                    "type": "emailselect_google",
-                    "require": False,
-                    "empty": None,
-                    "description": "Assigned Google address",
-                    "expected": int,
-                    "uri": True,
-                    "data_source": "pogoauth",
-                    "uri_source": "api_pogoauth"
-                }
-            },
             "interface_type": {
                 "settings": {
                     "type": "option",
@@ -278,10 +266,10 @@ class Device(Resource):
             },
             "ggl_login_mail": {
                 "settings": {
-                    "type": "text",
+                    "type": "select",
                     "require": False,
                     "description": "Declare a login address or domain from device (Empty = first @gmail.com entry).  "
-                                   "Use | to set more the one account (address|address)",
+                                   "Use ',' to set more the one account (address|address)",
                     "expected": str
                 }
             },

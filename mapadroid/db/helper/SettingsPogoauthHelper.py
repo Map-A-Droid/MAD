@@ -120,7 +120,20 @@ class SettingsPogoauthHelper:
 
     @staticmethod
     async def get_avail_accounts(session: AsyncSession, instance_id: int, auth_type: Optional[LoginType],
-                                 device_id: Optional[int] = None) -> Dict[int, SettingsPogoauth]:
+                                 device_id: Optional[int] = None,
+                                 return_all_accounts: bool = False) -> Dict[int, SettingsPogoauth]:
+        """
+
+        Args:
+            session:
+            instance_id:
+            auth_type:
+            device_id:
+            return_all_accounts: Whether all accounts should be returned ignoring existing assignments
+
+        Returns:
+
+        """
         accounts: Dict[int, SettingsPogoauth] = {}
         stmt = select(SettingsPogoauth)
         if application_args.restrict_accounts_to_instance:
@@ -135,9 +148,9 @@ class SettingsPogoauthHelper:
             identifier = None
         # Find all unassigned accounts
         for pogoauth in result.scalars().all():
-            if (identifier is not None and (pogoauth.device_id != identifier
-                                            and pogoauth.device_id is not None)) \
-                    or identifier is None and pogoauth.device_id is not None:
+            if not return_all_accounts and ((identifier is not None and (pogoauth.device_id != identifier
+                                            and pogoauth.device_id is not None))
+                                            or identifier is None and pogoauth.device_id is not None):
                 continue
             accounts[pogoauth.account_id] = pogoauth
         return accounts

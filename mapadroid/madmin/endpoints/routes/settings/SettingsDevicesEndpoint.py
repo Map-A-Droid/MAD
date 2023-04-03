@@ -56,12 +56,8 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
             ptc_accounts_assigned_or_not_assigned[account_associated.account_id] = account_associated
 
         available_ggl_accounts: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_avail_accounts(
-            self._session, self._get_instance_id(), LoginType.GOOGLE)
-        if device and device.ggl_login_mail:
-            assigned_ggl_login: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_google_auth_by_username(
-                self._session, self._get_instance_id(), device.ggl_login_mail)
-            if assigned_ggl_login:
-                available_ggl_accounts[assigned_ggl_login.account_id] = assigned_ggl_login
+            self._session, self._get_instance_id(), LoginType.GOOGLE, return_all_accounts=True)
+
         template_data: Dict = {
             'identifier': self._identifier,
             'base_uri': self._url_for('api_device'),

@@ -25,31 +25,8 @@ class DeviceEndpoint(AbstractResourceEndpoint):
 
     async def _handle_additional_keys(self, db_entry: SettingsDevice, key: str, value) -> bool:
         if key == "ggl_login_mail":
-            if db_entry.ggl_login_mail:
-                # TODO: Get rid of spaghetti by deleting the column
-                # First check for an existing assignment, if one is present, set it accordingly
-                existing_pogo_auth_assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper\
-                    .get_assigned_to_device(self._session, db_entry.device_id)
-                if existing_pogo_auth_assigned_to_device \
-                        and existing_pogo_auth_assigned_to_device[0].username != db_entry.ggl_login_mail:
-                    # Device is assigned to another pogoauth google login
-                    existing_pogo_auth_assigned_to_device[0].device_id = None
-
-                existing_pogo_auth_with_google_mail: Optional[SettingsPogoauth] = await SettingsPogoauthHelper\
-                    .get_google_auth_by_username(self._session, self._get_instance_id(), db_entry.ggl_login_mail)
-                if existing_pogo_auth_with_google_mail:
-                    # There already is an assignment to this email, this case should not be executed during normal
-                    # MADmin usage
-                    existing_pogo_auth_with_google_mail.device_id = None
+            # just store the value with comma separation
             db_entry.ggl_login_mail = value
-            if value:
-                # ggl_login_mail is to be set (None is also possible...)
-                pogoauth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
-                    .get_google_auth_by_username(self._session, self._get_instance_id(), value)
-                if not pogoauth:
-                    # Inconsistency as the pogoauth does not exist
-                    return False
-                pogoauth.device_id = db_entry.device_id
             return True
         elif key == "walker":
             db_entry.walker_id = int(value)
