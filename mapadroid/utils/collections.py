@@ -1,14 +1,17 @@
 import collections
-import dataclasses
-from typing import Union
+from typing import Any, Union
 
 from orjson import orjson
 
 
-@dataclasses.dataclass(frozen=True, eq=True)
 class Location:
+    __slots__ = 'lat', 'lng'
     lat: float
     lng: float
+
+    def __init__(self, lat: float, lng: float):
+        self.lat = lat
+        self.lng = lng
 
     def __getitem__(self, index):
         return self.lat if index == 0 else self.lng
@@ -32,8 +35,26 @@ class Location:
             return None
 
 
-Relation = collections.namedtuple(
-    'Relation', ['other_event', 'distance', 'timedelta'])
+class Relation:
+    __slots__ = 'other_event', 'distance', 'timedelta'
+    other_event: Any
+    distance: float
+    timedelta: int
+
+    def __init__(self, other_event: Any, distance: float, timedelta: int):
+        self.other_event = other_event
+        self.distance = distance
+        self.timedelta = timedelta
+
+    def __getitem__(self, index):
+        if index == 0:
+            return self.other_event
+        elif index == 1:
+            return self.distance
+        else:
+            return self.timedelta
+
+
 ScreenCoordinates = collections.namedtuple('ScreenCoordinates', ['x', 'y'])
 Login_PTC = collections.namedtuple('PTC', ['username', 'password'])
 Login_GGL = collections.namedtuple('GGL', ['username'])

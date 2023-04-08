@@ -17,7 +17,6 @@ dataclasses==0.6
 geopy==2.3.0
 gpxdata==1.2.1
 grpcio==1.53.0
-ImageHash==4.3.1
 imutils==0.5.4
 Jinja2==3.1.2
 loguru==0.6.0

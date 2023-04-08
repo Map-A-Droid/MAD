@@ -1,11 +1,12 @@
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
-    RoutePriorityQueueEntry
-from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import (
+    AbstractRoutePriorityQueueStrategy, RoutePriorityQueueEntry)
+from mapadroid.route.routecalc.ClusteringHelper import (ClusteringHelper,
+                                                        TimedLocation)
 from mapadroid.utils.collections import Location
 
 
@@ -52,15 +53,15 @@ class IvOnlyPrioStrategy(AbstractRoutePriorityQueueStrategy):
         return True
 
     def postprocess_coords(self, coords: List[RoutePriorityQueueEntry]) -> List[RoutePriorityQueueEntry]:
-        locations_transformed_for_clustering: List[Tuple[int, Location]] = []
+        locations_transformed_for_clustering: List[TimedLocation] = []
         for entry in coords:
-            locations_transformed_for_clustering.append((entry.timestamp_due, entry.location))
-        clustered = self._clustering_helper.get_clustered(locations_transformed_for_clustering)
+            locations_transformed_for_clustering.append(TimedLocation(entry.timestamp_due, entry.location))
+        clustered: List[TimedLocation] = self._clustering_helper.get_clustered(locations_transformed_for_clustering)
         del locations_transformed_for_clustering
         new_coords: List[RoutePriorityQueueEntry] = []
-        for (timestamp_due, location) in clustered:
+        for clustered_loc in clustered:
             entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(
-                timestamp_due=timestamp_due + self.get_delay_after_event(),
-                location=location)
+                timestamp_due=clustered_loc.relevant_time + self.get_delay_after_event(),
+                location=clustered_loc.location)
             new_coords.append(entry)
         return new_coords
