@@ -1,16 +1,22 @@
-from typing import Optional, Dict, Set, List
+from typing import Dict, List, Optional, Set
 
 import grpc
 from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
-from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import GetAllowedAuthenticationCredentialsRequest, \
-    GetAllowedAuthenticationCredentialsResponse, GetAllLoadedOriginsRequest, GetAllLoadedOriginsResponse, \
-    GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse, IsRoutemanagerOfOriginLevelmodeRequest, \
-    IsRoutemanagerOfOriginLevelmodeResponse, GetQuestLayerToScanOfOriginRequest, GetQuestLayerToScanOfOriginResponse
-from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import MappingManagerServicer, \
-    add_MappingManagerServicer_to_server
-from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.db.model import SettingsAuth
+from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import (
+    AuthCredentialEntry, GetAllLoadedOriginsRequest,
+    GetAllLoadedOriginsResponse, GetAllowedAuthenticationCredentialsRequest,
+    GetAllowedAuthenticationCredentialsResponse,
+    GetQuestLayerToScanOfOriginRequest, GetQuestLayerToScanOfOriginResponse,
+    GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse,
+    IsRoutemanagerOfOriginLevelmodeRequest,
+    IsRoutemanagerOfOriginLevelmodeResponse)
+from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import (
+    MappingManagerServicer, add_MappingManagerServicer_to_server)
+from mapadroid.mapping_manager.AbstractMappingManager import \
+    AbstractMappingManager
+from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
 
 logger = get_logger(LoggerEnums.mapping_manager)
@@ -57,13 +63,18 @@ class MappingManagerServer(MappingManagerServicer):
         if self.__server:
             await self.__server.stop(0)
 
-    async def GetAllowedAuthenticationCredentials(self, request: GetAllowedAuthenticationCredentialsRequest,
-                                                  context: grpc.aio.ServicerContext) -> GetAllowedAuthenticationCredentialsResponse:
+    async def GetAllowedAuthenticationCredentials(
+            self, request: GetAllowedAuthenticationCredentialsRequest,
+            context: grpc.aio.ServicerContext) -> GetAllowedAuthenticationCredentialsResponse:
         response: GetAllowedAuthenticationCredentialsResponse = GetAllowedAuthenticationCredentialsResponse()
-        auths_allowed: Optional[Dict[str, str]] = await self.__mapping_manager_impl.get_auths()
+        auths_allowed: Optional[Dict[str, SettingsAuth]] = await self.__mapping_manager_impl.get_auths()
         if auths_allowed:
-            for username, password in auths_allowed.items():
-                response.allowed_credentials[username] = password
+            for username, auth_entry in auths_allowed.items():
+                auth_entry_message: AuthCredentialEntry = AuthCredentialEntry()
+                auth_entry_message.username = username
+                auth_entry_message.password = auth_entry.password
+                auth_entry_message.auth_level = auth_entry.auth_level
+                response.allowed_credentials[username] = auth_entry_message
         return response
 
     async def GetAllLoadedOrigins(self, request: GetAllLoadedOriginsRequest,

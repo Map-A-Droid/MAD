@@ -38,11 +38,18 @@ message GetSafeItemsNotToDeleteResponse {
 
 
 message GetAllowedAuthenticationCredentialsRequest {
+  int32 auth_level = 1;
+}
+
+message AuthCredentialEntry {
+  string username = 1;
+  string password = 2;
+  int32 auth_level = 3;
 }
 
 message GetAllowedAuthenticationCredentialsResponse {
-  // Map where username is the key, password is the value
-  map<string, string> allowed_credentials = 1;
+  // Map where username is the key, value is
+  map<string, AuthCredentialEntry> allowed_credentials = 1;
 }
 
 message GetAllLoadedOriginsRequest {

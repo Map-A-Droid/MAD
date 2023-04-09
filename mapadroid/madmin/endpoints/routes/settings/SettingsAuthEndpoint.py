@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -6,9 +6,10 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.model import SettingsAuth
+from mapadroid.db.model import AuthLevel, SettingsAuth
 from mapadroid.db.resource_definitions.Auth import Auth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, expand_context)
 
 
 class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
@@ -39,9 +40,10 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
                                                               int(self._identifier))
             if not auth:
                 raise web.HTTPFound(self._url_for("settings_auth"))
-
+        auth_level_stringified: str = ""
+        if auth:
+            auth_level_stringified = self._stringify_auth_level(auth)
         settings_vars: Optional[Dict] = self._get_settings_vars()
-
         template_data: Dict = {
             'identifier': self._identifier,
             'base_uri': self._url_for('api_auth'),
@@ -49,20 +51,35 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
             'subtab': 'auth',
             'element': auth,
             'section': auth,
+            'auth_levels': AuthLevel,
+            'auth_level_set': auth_level_stringified,
             'settings_vars': settings_vars,
             'method': 'POST' if not auth else 'PATCH',
             'uri': self._url_for('api_auth') if not auth else '%s/%s' % (self._url_for('api_auth'), self._identifier),
         }
         return template_data
 
+    def _stringify_auth_level(self, auth: SettingsAuth):
+        current_auth_levels: List[str] = []
+        for auth_level in AuthLevel:
+            if auth.auth_level & auth_level.value:
+                current_auth_levels.append(auth_level.name)
+        auth_level_stringified = ','.join(current_auth_levels)
+        return auth_level_stringified
+
     @aiohttp_jinja2.template('settings_auth.html')
     @expand_context()
     async def _render_overview(self):
+        auths: Dict[int, SettingsAuth] = await SettingsAuthHelper.get_all_mapped(self._session, self._get_instance_id())
+        auth_levels_stringified: Dict[int, str] = {}
+        for auth_id, auth_entry in auths.items():
+            auth_levels_stringified[auth_id] = self._stringify_auth_level(auth_entry)
         template_data: Dict = {
             'base_uri': self._url_for('api_auth'),
             'monlist': await SettingsMonivlistHelper.get_entries_mapped(self._session, self._get_instance_id()),
             'subtab': 'auth',
-            'section': await SettingsAuthHelper.get_all_mapped(self._session, self._get_instance_id()),
+            'section': auths,
+            'auth_levels': auth_levels_stringified,
             'redirect': self._url_for('settings_auth'),
         }
         return template_data

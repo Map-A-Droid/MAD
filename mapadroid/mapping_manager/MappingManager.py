@@ -113,7 +113,7 @@ class MappingManager(AbstractMappingManager):
         self._geofence_helpers: Optional[Dict[int, GeofenceHelper]] = None
         self._areas: Optional[Dict[int, AreaEntry]] = None
         self._routemanagers: Optional[Dict[int, RouteManagerBase]] = None
-        self._auths: Optional[Dict[str, str]] = None
+        self._auths: Optional[Dict[str, SettingsAuth]] = None
         self.__areamons: Optional[Dict[int, List[int]]] = {}
         self._monlists: Optional[Dict[int, List[int]]] = None
         self.__shutdown_event: Event = Event()
@@ -151,7 +151,7 @@ class MappingManager(AbstractMappingManager):
     def shutdown(self):
         logger.info("MappingManager exiting")
 
-    async def get_auths(self) -> Optional[Dict[str, str]]:
+    async def get_auths(self) -> Optional[Dict[str, SettingsAuth]]:
         return self._auths
 
     def set_device_state(self, device_id: int, active: int) -> None:
@@ -711,7 +711,7 @@ class MappingManager(AbstractMappingManager):
             devices[device.name] = device_entry
         return devices
 
-    async def __get_latest_auths(self, session: AsyncSession) -> Dict[str, str]:
+    async def __get_latest_auths(self, session: AsyncSession) -> Dict[str, SettingsAuth]:
         """
         Reads current self.__raw_json mappings dict and checks if auth directive is present.
         :return: Dict of username : password
@@ -720,9 +720,9 @@ class MappingManager(AbstractMappingManager):
         if all_auths is None or len(all_auths) == 0:
             return {}
 
-        auths = {}
+        auths: Dict[str, SettingsAuth] = {}
         for auth in all_auths:
-            auths[auth.username] = auth.password
+            auths[auth.username] = auth
         return auths
 
     async def __get_latest_areas(self, session: AsyncSession) -> Dict[int, AreaEntry]:

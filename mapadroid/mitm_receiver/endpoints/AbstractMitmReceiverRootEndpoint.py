@@ -21,7 +21,9 @@ from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import \
     AutoconfigRegistrationHelper
-from mapadroid.db.model import AutoconfigLog, AutoconfigRegistration, Base
+from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
+from mapadroid.db.model import (AuthLevel, AutoconfigLog,
+                                AutoconfigRegistration, Base, SettingsAuth)
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin import apiException
@@ -309,9 +311,11 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
         Returns:
 
         """
-        auth = self._request.headers.get('Authorization')
-        auths_allowed: Optional[Dict[str, str]] = await self._get_mapping_manager().get_auths()
-        if not check_auth(logger, auth, self._get_mad_args(), auths_allowed):
+        auth: Optional[str] = self._request.headers.get('Authorization')
+        auths_allowed: Dict[str, SettingsAuth] = await SettingsAuthHelper.get_auths_for_auth_level(
+            self._session, self._get_db_wrapper().get_instance_id(),
+            AuthLevel.MITM_DATA)
+        if not check_auth(logger, auth, auths_allowed):
             logger.warning("Unauthorized attempt to connect from {}", self._get_request_address())
             raise web.HTTPUnauthorized()
 

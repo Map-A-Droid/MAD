@@ -14,9 +14,11 @@ from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
-from mapadroid.db.model import SettingsDevice, SettingsPogoauth
+from mapadroid.db.model import (AuthLevel, SettingsAuth, SettingsDevice,
+                                SettingsPogoauth)
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
@@ -142,8 +144,6 @@ class WebsocketServer(object):
             return
         with logger.contextualize(identifier=origin, name="websocket"):
             logger.info("New connection from {}", websocket_client_connection.remote_address)
-            # if self.__enable_configmode:
-            #    logger.warning('Connected in ConfigMode.  No mapping will occur in the current mode')
             async with self.__users_connecting_mutex:
                 if origin in self.__users_connecting:
                     # TODO: Limit the timeframe within a device has to be connected...
@@ -202,7 +202,7 @@ class WebsocketServer(object):
                     raise WebsocketAbortRegistrationException("Failed starting worker")
                 else:
                     logger.info("Worker added/started successfully for {}", origin)
-            except WebsocketAbortRegistrationException as e:
+            except WebsocketAbortRegistrationException:
                 await asyncio.sleep(rand.uniform(3, 15))
                 return
             except Exception as e:
@@ -214,9 +214,10 @@ class WebsocketServer(object):
             if entry:
                 try:
                     await self.__client_message_receiver(origin, entry)
-                except CancelledError as e:
+                except CancelledError:
                     logger.info("Connection to {} has been cancelled", origin)
-                # also check if thread is already running to not start it again. If it is not alive, we need to create it..
+                # also check if thread is already running to not start it again. If it is not alive,
+                # we need to create it..
                 finally:
                     logger.info("Awaiting unregister")
                     # TODO: Only remove after some time to keep a worker state
@@ -307,18 +308,22 @@ class WebsocketServer(object):
                                " click 'APPLY SETTINGS'", origin)
             return origin, False
 
-        valid_auths = await self.__mapping_manager.get_auths()
-        auth_base64 = None
-        if valid_auths:
-            try:
-                auth_base64 = str(
-                    websocket_client_connection.request_headers.get_all("Authorization")[0])
-            except IndexError:
-                logger.warning("Client tried to connect without auth header")
+        async with self.__db_wrapper as session, session:
+            valid_auths: Dict[str, SettingsAuth] = await SettingsAuthHelper.get_auths_for_auth_level(
+                session, self.__db_wrapper.get_instance_id(),
+                AuthLevel.MITM_DATA
+            )
+            auth_base64 = None
+            if valid_auths:
+                try:
+                    auth_base64 = str(
+                        websocket_client_connection.request_headers.get_all("Authorization")[0])
+                except IndexError:
+                    logger.warning("Client tried to connect without auth header")
+                    return origin, False
+            if valid_auths and not check_auth(logger, auth_base64, valid_auths):
                 return origin, False
-        if valid_auths and not check_auth(logger, auth_base64, self.__args, valid_auths):
-            return origin, False
-        return origin, True
+            return origin, True
 
     async def __client_message_receiver(self, origin: str, client_entry: WebsocketConnectedClientEntry) -> None:
         if client_entry is None:
@@ -358,7 +363,7 @@ class WebsocketServer(object):
                 message_id = int.from_bytes(message[:4], byteorder='big', signed=False)
                 response = message[4:]
         except ValueError as e:
-            logger.warning("Failed reading message ID of message received for {}", client_entry.origin)
+            logger.warning("Failed reading message ID of message received for {} ({})", client_entry.origin, e)
             return
         await client_entry.set_message_response(message_id, response)
 

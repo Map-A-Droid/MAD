@@ -1,4 +1,6 @@
 # coding: utf-8
+import enum
+
 from sqlalchemy import Column, Float, ForeignKey, Index, String, text
 from sqlalchemy.dialects.mysql import (BIGINT, BOOLEAN, ENUM, INTEGER,
                                        LONGBLOB, LONGTEXT, MEDIUMBLOB,
@@ -11,6 +13,12 @@ from mapadroid.db.TZDateTime import TZDateTime
 
 Base = declarative_base()
 metadata = Base.metadata
+
+
+class AuthLevel(enum.Enum):
+    MADMIN_PUBLIC_PAGE = 1
+    MITM_DATA = 2
+    MADMIN_ADMIN = 4
 
 
 class FilestoreMeta(Base):
@@ -599,6 +607,7 @@ class SettingsAuth(Base):
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     username = Column(String(32, 'utf8mb4_unicode_ci'), nullable=False)
     password = Column(String(32, 'utf8mb4_unicode_ci'), nullable=False)
+    auth_level = Column(INTEGER(10), nullable=False, server_default=text("'0'"))
 
     instance = relationship('MadminInstance')
 

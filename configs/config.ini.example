@@ -243,10 +243,8 @@
 ######################
 ## MADmin is used to see the overall status of all devices connected, control devices manually, and display statistics.
 ######################
-# SET IT VIA REVERSE PROXY/Apache2(AuthType Basic)/nginx(auth_basic). THIS IS NOT WORKING. check configs/examples/nginx/foo.conf
-#madmin_user:
-# SET IT VIA REVERSE PROXY/Apache2(AuthType Basic)/nginx(auth_basic). THIS IS NOT WORKING. check configs/examples/nginx/foo.conf
-#madmin_password:
+# Whether credentials from settings_auth table should be requested for
+#madmin_enable_auth:
 # Disable Madmin on the instance
 #disable_madmin:
 # Base path for madmin
