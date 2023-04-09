@@ -1,14 +1,15 @@
 import os
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 
 import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.model import SettingsMonivlist
+from mapadroid.db.model import AuthLevel, SettingsMonivlist
 from mapadroid.db.resource_definitions.MonIvList import MonIvList
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 from mapadroid.utils.language import i8ln, open_json_file
 
 
@@ -20,7 +21,7 @@ class SettingsIvlistsEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         self._identifier: Optional[str] = self.request.query.get("id")
         if self._identifier:

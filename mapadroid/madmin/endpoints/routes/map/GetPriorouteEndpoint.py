@@ -1,9 +1,13 @@
 from typing import List, Optional
 
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    check_authorization_header
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import get_coord_float
-from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import RoutePriorityQueueEntry
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
+    RoutePriorityQueueEntry
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -12,7 +16,7 @@ class GetPriorouteEndpoint(AbstractControlEndpoint):
     "/get_prioroute"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         routeexport = []
         routemanager_ids: List[int] = await self._get_mapping_manager().get_all_routemanager_ids()

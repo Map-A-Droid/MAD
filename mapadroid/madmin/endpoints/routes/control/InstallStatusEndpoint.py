@@ -12,9 +12,6 @@ class InstallStatusEndpoint(AbstractControlEndpoint):
     "/install_status"
     """
 
-    # TODO: Auth
-    # TODO: Also "post"?
-    # TODO: nocache?
     @aiohttp_jinja2.template('installation_status.html')
     @expand_context()
     async def get(self):

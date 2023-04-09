@@ -5,9 +5,10 @@ from aiohttp import web
 from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
-from mapadroid.db.model import SettingsArea, SettingsRoutecalc
+from mapadroid.db.model import AuthLevel, SettingsArea, SettingsRoutecalc
 from mapadroid.db.resource_definitions.Routecalc import Routecalc
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 
 
 class SettingsRoutecalcEndpoint(AbstractMadminRootEndpoint):
@@ -18,7 +19,7 @@ class SettingsRoutecalcEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         self._identifier: Optional[str] = self.request.query.get("id")
         if self._identifier:

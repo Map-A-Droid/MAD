@@ -10,10 +10,10 @@ from mapadroid.db.helper.SettingsDevicepoolHelper import \
 from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
                                                         SettingsPogoauthHelper)
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
-from mapadroid.db.model import SettingsDevice, SettingsPogoauth
+from mapadroid.db.model import AuthLevel, SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Device import Device
 from mapadroid.madmin.AbstractMadminRootEndpoint import (
-    AbstractMadminRootEndpoint, expand_context)
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 
 
 class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
@@ -24,7 +24,7 @@ class SettingsDevicesEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         self._identifier: Optional[str] = self.request.query.get("id")
         if self._identifier:

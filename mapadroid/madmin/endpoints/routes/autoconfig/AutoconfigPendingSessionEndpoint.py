@@ -4,11 +4,14 @@ import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
 
-from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.helper.AutoconfigRegistrationHelper import \
+    AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
-from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.db.model import (AuthLevel, AutoconfigRegistration,
+                                SettingsDevice, SettingsPogoauth)
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
@@ -20,7 +23,7 @@ class AutoconfigPendingSessionEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     @aiohttp_jinja2.template('autoconfig_pending_dev.html')
     @expand_context()
     async def get(self):

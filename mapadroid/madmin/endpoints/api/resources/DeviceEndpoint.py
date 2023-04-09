@@ -7,8 +7,11 @@ from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
                                                         SettingsPogoauthHelper)
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
-from mapadroid.db.model import Base, SettingsDevice, SettingsPogoauth
+from mapadroid.db.model import (AuthLevel, Base, SettingsDevice,
+                                SettingsPogoauth)
 from mapadroid.db.resource_definitions.Device import Device
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    check_authorization_header
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint
 
@@ -45,6 +48,7 @@ class DeviceEndpoint(AbstractResourceEndpoint):
     # TODO: '%s/<string:identifier>' optionally at the end of the route
     # TODO: ResourceEndpoint class that loads the identifier accordingly before patch/post etc are called (populate_mode)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def post(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
         api_request_data = await self.request.json()

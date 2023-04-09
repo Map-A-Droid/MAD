@@ -4,8 +4,9 @@ from typing import Optional
 import aiohttp_jinja2
 
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
-from mapadroid.db.model import TrsEvent
-from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
+from mapadroid.db.model import AuthLevel, TrsEvent
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    check_authorization_header, expand_context)
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 
@@ -15,7 +16,7 @@ class EditEventEndpoint(AbstractControlEndpoint):
     "/edit_event"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     @aiohttp_jinja2.template('event_edit.html')
     @expand_context()
     async def get(self):

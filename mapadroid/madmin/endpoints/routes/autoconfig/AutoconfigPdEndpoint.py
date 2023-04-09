@@ -4,8 +4,9 @@ import aiohttp_jinja2
 from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
-from mapadroid.db.model import SettingsAuth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.db.model import AuthLevel, SettingsAuth
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 from mapadroid.utils.PDConfig import PDConfig
 
 
@@ -17,7 +18,7 @@ class AutoconfigPdEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     @aiohttp_jinja2.template('autoconfig_config_editor.html')
     @expand_context()
     async def get(self):

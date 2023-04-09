@@ -7,7 +7,7 @@ from loguru import logger
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.model import SettingsArea
+from mapadroid.db.model import AuthLevel, SettingsArea
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
 from mapadroid.db.resource_definitions.AreaInitMitm import AreaInitMitm
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
@@ -15,7 +15,7 @@ from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
 from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
 from mapadroid.db.resource_definitions.AreaRaidsMitm import AreaRaidsMitm
 from mapadroid.madmin.AbstractMadminRootEndpoint import (
-    AbstractMadminRootEndpoint, expand_context)
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 from mapadroid.route.routecalc.calculate_route_all import is_or_tools_available
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -30,7 +30,7 @@ class SettingsAreasEndpoint(AbstractMadminRootEndpoint):
         # check if we can use ortools and if it's installed
         self._ortools_info = not is_or_tools_available()
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         self._identifier: Optional[str] = self.request.query.get("id")
         if self._identifier:

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, Optional, Set, List
+from typing import Dict, List, Optional, Set
 
 import pymysql as pymysql
 from aiohttp import web
@@ -10,8 +10,9 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.orm.properties import ColumnProperty
 from yarl import URL
 
-from mapadroid.db.model import Base
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.model import AuthLevel, Base
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 
 
 class DataHandlingMethodology(Enum):
@@ -24,11 +25,13 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
     # TODO: '%s/<string:identifier>' optionally at the end of the route
     # TODO: ResourceEndpoint class that loads the identifier accordingly before patch/post etc are called (populate_mode)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def post(self) -> web.Response:
         api_request_data = await self.request.json()
         return await self._update_or_create_object(None, api_request_data,
                                                    methodology=DataHandlingMethodology.CREATE)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def patch(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
         if not identifier:
@@ -37,6 +40,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         return await self._update_or_create_object(identifier, api_request_data,
                                                    methodology=DataHandlingMethodology.UPDATE)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def delete(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
         if not identifier:
@@ -64,6 +68,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
         }
         return await self._json_response(None, status=202, headers=headers)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self) -> web.Response:
         result: Dict = {}
         identifier = self.request.match_info.get('identifier', None)
@@ -98,6 +103,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
             result["resource"] = self._resource_info()
         return await self._json_response(data=result)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def put(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
         if not identifier:

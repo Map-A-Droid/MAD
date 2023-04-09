@@ -9,7 +9,7 @@ from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
 from mapadroid.db.model import AuthLevel, SettingsAuth
 from mapadroid.db.resource_definitions.Auth import Auth
 from mapadroid.madmin.AbstractMadminRootEndpoint import (
-    AbstractMadminRootEndpoint, expand_context)
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 
 
 class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
@@ -20,7 +20,7 @@ class SettingsAuthEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         self._identifier: Optional[str] = self.request.query.get("id")
         if self._identifier:

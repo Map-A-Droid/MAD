@@ -2,9 +2,9 @@ import asyncio
 import json
 from abc import ABC
 from functools import wraps
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from aiohttp import web
+from aiohttp import hdrs, web
 from aiohttp.abc import Request
 from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders, StrOrURL
@@ -13,15 +13,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.account_handler import AbstractAccountHandler
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.model import Base
+from mapadroid.db.model import AuthLevel, Base, SettingsAuth
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.utils.aiohttp import add_prefix_to_url, get_forwarded_path
+from mapadroid.utils.authHelper import check_auth, get_auths_for_levl
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.madGlobals import (
-    WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException)
+    WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException,
+    application_args)
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -35,6 +37,36 @@ def expand_context() -> Any:
             passed_to_template: Dict = await func(self, *args, **kwargs)
             passed_to_template[FORWARDED_PATH_KEY] = get_forwarded_path(self.request.headers)
             return passed_to_template
+        return wrapped
+    return wrapper
+
+
+def check_authorization_header(auth_levels: Union[List[AuthLevel], AuthLevel]):
+    def wrapper(func):
+        @wraps(func)
+        async def wrapped(self: AbstractMadminRootEndpoint, *args, **kwargs):
+            if application_args.madmin_enable_auth:
+                auth: Optional[str] = self._request.headers.get('Authorization')
+                auths_allowed: Dict[str, SettingsAuth] = {}
+                if isinstance(auth_levels, list):
+                    for auth_level in auth_levels:
+                        auths_allowed.update(await get_auths_for_levl(self._get_db_wrapper(), auth_level))
+                else:
+                    auths_allowed: Dict[str, SettingsAuth] = await get_auths_for_levl(self._get_db_wrapper(),
+                                                                                      auth_levels)
+                if not check_auth(logger, auth, auths_allowed):
+                    logger.warning("Unauthorized attempt to connect from {}", self._get_request_address())
+                    return web.Response(
+                        body=b'',
+                        status=401,
+                        reason='UNAUTHORIZED',
+                        headers={
+                            hdrs.WWW_AUTHENTICATE: 'Basic realm="madmin"',
+                            hdrs.CONTENT_TYPE: 'text/html; charset=utf-8',
+                            hdrs.CONNECTION: 'keep-alive',
+                        },
+                    )
+                return await func(self, *args, **kwargs)
         return wrapped
     return wrapper
 

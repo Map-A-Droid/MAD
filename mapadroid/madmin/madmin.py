@@ -58,7 +58,7 @@ class MADmin(object):
         self._device_updater: DeviceUpdater = device_updater
         self._ws_server: WebsocketServer = ws_server
         self._account_handler: AbstractAccountHandler = account_handler
-        self._plugin_hotlink: list = []
+        self._plugin_hotlink: List[Dict] = []
         self.__init_app()
 
     # @logger.catch()

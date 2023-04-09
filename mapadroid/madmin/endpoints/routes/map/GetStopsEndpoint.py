@@ -1,8 +1,9 @@
-from typing import List, Optional, Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
-from mapadroid.db.model import Pokestop, TrsQuest
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.model import AuthLevel, Pokestop, TrsQuest
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.madmin.functions import get_bound_params
 from mapadroid.utils.collections import Location
 
@@ -12,7 +13,7 @@ class GetStopsEndpoint(AbstractMadminRootEndpoint):
     "/get_stops"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         ne_lat, ne_lng, sw_lat, sw_lng, o_ne_lat, o_ne_lng, o_sw_lat, o_sw_lng = get_bound_params(self._request)
         timestamp: Optional[int] = self._request.query.get("timestamp")

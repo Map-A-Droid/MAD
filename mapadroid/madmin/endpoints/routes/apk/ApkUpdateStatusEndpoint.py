@@ -1,12 +1,14 @@
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
 from aiohttp.abc import Request
 
 from mapadroid.db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
-from mapadroid.db.model import MadApkAutosearch
-from mapadroid.mad_apk.utils import get_apk_status, lookup_arch_enum, is_newer_version, lookup_apk_enum
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
-from mapadroid.utils.apk_enums import APKType, APKArch
+from mapadroid.db.model import AuthLevel, MadApkAutosearch
+from mapadroid.mad_apk.utils import (get_apk_status, is_newer_version,
+                                     lookup_apk_enum, lookup_arch_enum)
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
+from mapadroid.utils.apk_enums import APKArch, APKType
 from mapadroid.utils.custom_types import MADapks
 
 
@@ -14,6 +16,7 @@ class ApkUpdateStatusEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         update_info: Dict[str, Dict] = {}
         autosearch_data: List[MadApkAutosearch] = await MadApkAutosearchHelper.get_all(self._session)

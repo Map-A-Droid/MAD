@@ -9,7 +9,6 @@ class JobForWorkerEndpoint(AbstractControlEndpoint):
     "/job_for_worker"
     """
 
-    # TODO: Auth
     async def get(self):
 
         jobname: Optional[str] = self.request.query.get('jobname')

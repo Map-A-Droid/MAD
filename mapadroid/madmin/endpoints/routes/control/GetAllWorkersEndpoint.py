@@ -9,7 +9,6 @@ class GetAllWorkersEndpoint(AbstractControlEndpoint):
     "/get_all_workers"
     """
 
-    # TODO: Auth
     async def get(self) -> web.Response:
         devices = await self._get_mapping_manager().get_all_devicenames()
         devicesreturn = []

@@ -2,7 +2,11 @@ import base64
 import re
 from typing import Dict, Optional
 
-from mapadroid.db.model import SettingsAuth
+from aiocache import cached
+
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
+from mapadroid.db.model import AuthLevel, SettingsAuth
 
 
 def check_auth(logger, auth_header: Optional[str], auths: Dict[str, SettingsAuth]):
@@ -30,3 +34,19 @@ def check_auth(logger, auth_header: Optional[str], auths: Dict[str, SettingsAuth
     except Exception as e:
         logger.error("Auth attempt failed: {}", e)
     return False
+
+
+@cached(ttl=300)
+async def get_auths_for_levl(db_wrapper: DbWrapper, auth_level: AuthLevel) -> Dict[str, SettingsAuth]:
+    """
+    Cached for 5 minutes
+    Args:
+        auth_level:
+        db_wrapper:
+
+    Returns: Dict mapping username to the auth entry
+
+    """
+    async with db_wrapper as session, session:
+        return await SettingsAuthHelper.get_auths_for_auth_level(
+            session, db_wrapper.get_instance_id(), auth_level)

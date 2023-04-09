@@ -7,6 +7,7 @@ from abc import ABC
 from functools import wraps
 from typing import Any, Dict, Optional, Tuple, Union
 
+from aiocache import cached
 from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp.helpers import sentinel
@@ -30,7 +31,7 @@ from mapadroid.madmin import apiException
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
-from mapadroid.utils.authHelper import check_auth
+from mapadroid.utils.authHelper import check_auth, get_auths_for_levl
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.madGlobals import application_args
 
@@ -312,9 +313,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
         """
         auth: Optional[str] = self._request.headers.get('Authorization')
-        auths_allowed: Dict[str, SettingsAuth] = await SettingsAuthHelper.get_auths_for_auth_level(
-            self._session, self._get_db_wrapper().get_instance_id(),
-            AuthLevel.MITM_DATA)
+        auths_allowed: Dict[str, SettingsAuth] = await get_auths_for_levl(self._get_db_wrapper(), AuthLevel.MITM_DATA)
         if not check_auth(logger, auth, auths_allowed):
             logger.warning("Unauthorized attempt to connect from {}", self._get_request_address())
             raise web.HTTPUnauthorized()

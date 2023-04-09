@@ -5,6 +5,9 @@ from aiohttp.web_request import FileField
 from multidict._multidict import MultiDictProxy
 
 from mapadroid.db.helper.TrsEventHelper import TrsEventHelper
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    check_authorization_header
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 
@@ -14,8 +17,7 @@ class SaveEventEndpoint(AbstractControlEndpoint):
     "/save_event"
     """
 
-    # TODO: Auth
-    # TODO: get or post?
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def post(self):
         # TODO: Verify str or int?
         form_data: MultiDictProxy[Union[str, bytes, FileField]] = await self.request.post()

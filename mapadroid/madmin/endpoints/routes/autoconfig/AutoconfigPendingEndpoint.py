@@ -3,9 +3,12 @@ from typing import List, Tuple
 import aiohttp_jinja2
 from aiohttp.abc import Request
 
-from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
-from mapadroid.db.model import AutoconfigRegistration, SettingsDevice
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.db.helper.AutoconfigRegistrationHelper import \
+    AutoconfigRegistrationHelper
+from mapadroid.db.model import (AuthLevel, AutoconfigRegistration,
+                                SettingsDevice)
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
@@ -13,7 +16,7 @@ class AutoconfigPendingEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     @aiohttp_jinja2.template('autoconfig_pending.html')
     @expand_context()
     async def get(self):

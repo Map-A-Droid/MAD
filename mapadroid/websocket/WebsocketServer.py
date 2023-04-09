@@ -14,7 +14,6 @@ from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import (AuthLevel, SettingsAuth, SettingsDevice,
@@ -23,7 +22,7 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.utils.authHelper import check_auth
+from mapadroid.utils.authHelper import check_auth, get_auths_for_levl
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import WebsocketAbortRegistrationException
@@ -309,10 +308,8 @@ class WebsocketServer(object):
             return origin, False
 
         async with self.__db_wrapper as session, session:
-            valid_auths: Dict[str, SettingsAuth] = await SettingsAuthHelper.get_auths_for_auth_level(
-                session, self.__db_wrapper.get_instance_id(),
-                AuthLevel.MITM_DATA
-            )
+            valid_auths: Dict[str, SettingsAuth] = await get_auths_for_levl(self.__db_wrapper,
+                                                                              AuthLevel.MITM_DATA)
             auth_base64 = None
             if valid_auths:
                 try:

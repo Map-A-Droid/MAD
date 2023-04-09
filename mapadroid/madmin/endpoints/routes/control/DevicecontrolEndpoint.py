@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
 import aiohttp_jinja2
 
@@ -17,9 +17,6 @@ class DevicecontrolEndpoint(AbstractControlEndpoint):
     "/devicecontrol"
     """
 
-    # TODO: Auth
-    # TODO: Also "post"?
-    # TODO: nocache?
     @aiohttp_jinja2.template('phonescreens.html')
     @expand_context()
     async def get(self):

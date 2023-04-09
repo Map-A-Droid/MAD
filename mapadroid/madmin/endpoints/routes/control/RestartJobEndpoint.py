@@ -9,9 +9,6 @@ class RestartJobEndpoint(AbstractControlEndpoint):
     "/restart_job"
     """
 
-    # TODO: Auth
-    # TODO: Also "post"?
-    # TODO: nocache?
     async def get(self):
         job_id_raw: Optional[str] = self.request.query.get('id')
         if not job_id_raw:

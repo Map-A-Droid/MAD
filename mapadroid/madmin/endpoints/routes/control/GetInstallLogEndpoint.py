@@ -11,7 +11,6 @@ class GetInstallLogEndpoint(AbstractControlEndpoint):
     "/get_install_log"
     """
 
-    # TODO: Auth
     async def get(self) -> web.Response:
         withautojobs_raw: Optional[str] = self.request.query.get('withautojobs')
         withautojobs: bool = True if withautojobs_raw == "True" else False

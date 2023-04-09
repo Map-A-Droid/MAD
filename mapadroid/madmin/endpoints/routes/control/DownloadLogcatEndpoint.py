@@ -13,7 +13,6 @@ class DownloadLogcatEndpoint(AbstractControlEndpoint):
     "/download_logcat"
     """
 
-    # TODO: Auth
     async def get(self):
         origin: Optional[str] = self.request.query.get("origin")
         # origin_logger = get_origin_logger(self._logger, origin=origin)

@@ -1,13 +1,15 @@
 import asyncio
-from typing import List, Dict
+from typing import Dict, List
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
-from mapadroid.db.model import SettingsRoutecalc
+from mapadroid.db.model import AuthLevel, SettingsRoutecalc
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    check_authorization_header
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import get_coord_float
-from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
+from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.utils.collections import Location
 from mapadroid.worker.WorkerType import WorkerType
 
@@ -17,7 +19,7 @@ class GetRouteEndpoint(AbstractControlEndpoint):
     "/get_route"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         routeinfo_by_id = {}
 

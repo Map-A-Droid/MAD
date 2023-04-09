@@ -1,9 +1,8 @@
 from typing import Dict, Optional, Set
 
-from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
                                                         SettingsPogoauthHelper)
-from mapadroid.db.model import Base, SettingsDevice, SettingsPogoauth
+from mapadroid.db.model import Base, SettingsPogoauth
 from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint

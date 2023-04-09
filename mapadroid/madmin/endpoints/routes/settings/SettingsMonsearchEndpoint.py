@@ -4,8 +4,10 @@ from typing import Optional
 
 from aiohttp.abc import Request
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
-from mapadroid.utils.language import open_json_file, i8ln
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
+from mapadroid.utils.language import i8ln, open_json_file
 
 
 class SettingsMonsearchEndpoint(AbstractMadminRootEndpoint):
@@ -16,7 +18,7 @@ class SettingsMonsearchEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         search: Optional[str] = self.request.query.get("search")
         pokemon = []

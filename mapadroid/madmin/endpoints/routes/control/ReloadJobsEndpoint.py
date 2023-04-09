@@ -9,7 +9,6 @@ class ReloadJobsEndpoint(AbstractControlEndpoint):
     "/reload_jobs"
     """
 
-    # TODO: Auth
     async def get(self):
         logger.info("Reload existing jobs")
         await self._get_device_updater().reload_jobs()

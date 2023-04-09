@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -6,10 +6,12 @@ from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
-from mapadroid.db.model import SettingsDevice, SettingsPogoauth
+from mapadroid.db.model import AuthLevel, SettingsDevice, SettingsPogoauth
 from mapadroid.db.resource_definitions.Pogoauth import Pogoauth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 from mapadroid.utils.global_variables import MAINTENANCE_COOLDOWN_HOURS
+
 
 class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
     """
@@ -19,7 +21,7 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         self._identifier: Optional[str] = self.request.query.get("id")
         if self._identifier:

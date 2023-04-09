@@ -3,7 +3,8 @@ import os
 from aiofile import async_open
 from aiohttp import streamer, web
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    AbstractMadminRootEndpoint
 from mapadroid.utils.functions import generate_path
 
 
@@ -12,7 +13,7 @@ class RobotsTxtEndpoint(AbstractMadminRootEndpoint):
     "/robots.txt"
     """
 
-    # TODO: Auth
+    # TODO: Auth? Should be public?
     async def get(self):
         # TODO: Validate screenshot, otherwise we might be sending whatever....
         file_name = "robots.txt"

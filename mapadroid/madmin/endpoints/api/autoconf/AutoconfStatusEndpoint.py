@@ -7,15 +7,16 @@ from mapadroid.db.helper.AutoconfigRegistrationHelper import \
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
                                                         SettingsPogoauthHelper)
-from mapadroid.db.model import (AutoconfigRegistration, SettingsDevice,
-                                SettingsPogoauth)
-from mapadroid.madmin.AbstractMadminRootEndpoint import \
-    AbstractMadminRootEndpoint
+from mapadroid.db.model import (AuthLevel, AutoconfigRegistration,
+                                SettingsDevice, SettingsPogoauth)
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.utils.autoconfig import origin_generator
 from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
 class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self) -> web.Response:
         # TODO: Ensure int
         session_id: int = self.request.match_info.get('session_id')
@@ -26,6 +27,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
         else:
             raise web.HTTPNotFound()
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def post(self) -> web.Response:
         request_body: Dict = await self.request.json()
         status = 2
@@ -82,6 +84,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
         self._commit_trigger = True
         return await self._json_response(autoconf_reg)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def delete(self) -> web.Response:
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']

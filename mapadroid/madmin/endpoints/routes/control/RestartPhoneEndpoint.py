@@ -17,7 +17,6 @@ class RestartPhoneEndpoint(AbstractControlEndpoint):
     "/restart_phone"
     """
 
-    # TODO: Auth
     async def get(self):
         origin: Optional[str] = self.request.query.get("origin")
         useadb_raw: Optional[str] = self.request.query.get("adb")

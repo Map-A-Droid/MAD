@@ -1,23 +1,25 @@
 import asyncio
 import io
 from typing import Optional
-from zipfile import LargeZipFile, BadZipFile
+from zipfile import BadZipFile, LargeZipFile
 
 from aiohttp import MultipartReader, web
 from loguru import logger
 from werkzeug.utils import secure_filename
 
 from mapadroid.db.helper.MadApkAutosearchHelper import MadApkAutosearchHelper
+from mapadroid.db.model import AuthLevel
 from mapadroid.mad_apk.utils import convert_to_backend, get_apk_status
-from mapadroid.mad_apk.wizard import APKWizard, WizardError, PackageImporter
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.mad_apk.wizard import APKWizard, PackageImporter, WizardError
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.madmin.functions import allowed_file
 from mapadroid.utils.apk_enums import APKArch, APKType
 from mapadroid.utils.custom_types import MADapks
 
 
 class MadApkEndpoint(AbstractMadminRootEndpoint):
-    # TODO: Require auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         apk_type_raw: str = self.request.match_info.get('apk_type')
         apk_arch_raw: str = self.request.match_info.get('apk_arch')
