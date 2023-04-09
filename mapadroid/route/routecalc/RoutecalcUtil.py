@@ -1,7 +1,7 @@
 import asyncio
 import concurrent.futures
 from timeit import default_timer as timer
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from loguru import logger
 
@@ -9,8 +9,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.model import SettingsRoutecalc
 from mapadroid.route.routecalc.calculate_route_all import route_calc_all
-from mapadroid.route.routecalc.ClusteringHelper import (ClusteringHelper,
-                                                        TimedLocation)
+from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.madGlobals import RoutecalculationTypes
@@ -49,62 +48,54 @@ class RoutecalcUtil:
             except Exception as e:
                 logger.exception(e)
                 await session.rollback()
-        try:
-            calculated_route: List[Location] = []
-            if use_s2:
-                logger.debug("Using S2 method for calculation with S2 level: {}", s2_level)
 
-            if len(coords) > 0 and max_radius and max_radius >= 1 and max_coords_within_radius:
-                logger.info("Calculating route for {}", route_name)
-                loop = asyncio.get_running_loop()
-                with concurrent.futures.ProcessPoolExecutor() as pool:
-                    calculated_route = await loop.run_in_executor(
-                        pool, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
-                        s2_level)
+        calculated_route: List[Location] = []
+        if use_s2:
+            logger.debug("Using S2 method for calculation with S2 level: {}", s2_level)
 
-                logger.debug("Coords summed up to {} coords", len(calculated_route))
-            logger.debug("Got {} coordinates", len(calculated_route))
-            if len(calculated_route) < 3:
-                logger.debug("less than 3 coordinates... not gonna take a shortest route on that")
-            else:
-                logger.info("Calculating a short route through all those coords. Might take a while")
-                start = timer()
+        if len(coords) > 0 and max_radius and max_radius >= 1 and max_coords_within_radius:
+            logger.info("Calculating route for {}", route_name)
+            loop = asyncio.get_running_loop()
+            with concurrent.futures.ProcessPoolExecutor() as pool:
+                calculated_route = await loop.run_in_executor(
+                    pool, RoutecalcUtil.get_less_coords, coords, max_radius, max_coords_within_radius, use_s2,
+                    s2_level)
 
-                sol_best = await route_calc_all(calculated_route, route_name, algorithm)
-                end = timer()
+            logger.debug("Coords summed up to {} coords", len(calculated_route))
+        logger.debug("Got {} coordinates", len(calculated_route))
+        if len(calculated_route) < 3:
+            logger.debug("less than 3 coordinates... not gonna take a shortest route on that")
+        else:
+            logger.info("Calculating a short route through all those coords. Might take a while")
+            start = timer()
 
-                calc_dur = (end - start) / 60
-                time_unit = 'minutes'
-                if calc_dur < 1:
-                    calc_dur = int(calc_dur * 60)
-                    time_unit = 'seconds'
+            sol_best = await route_calc_all(calculated_route, route_name, algorithm)
+            end = timer()
 
-                logger.info("Calculated route for {} in {} {}", route_name, calc_dur, time_unit)
-                calculated_route_old = calculated_route
-                calculated_route = []
-                for i in range(len(sol_best)):
-                    calculated_route.append(calculated_route_old[int(sol_best[i])])
-            async with db_wrapper as session, session:
-                routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
-                if overwrite_persisted_route:
-                    await RoutecalcUtil._write_route_to_db_entry(routecalc_entry, calculated_route)
-                    routecalc_entry.last_updated = DatetimeWrapper.now()
-                try:
-                    await session.commit()
-                except Exception as e:
-                    logger.exception(e)
-                    await session.rollback()
-        finally:
-            async with db_wrapper as session, session:
-                routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
-                routecalc_entry.recalc_status = 0
+            calc_dur = (end - start) / 60
+            time_unit = 'minutes'
+            if calc_dur < 1:
+                calc_dur = int(calc_dur * 60)
+                time_unit = 'seconds'
 
-                session.add(routecalc_entry)
-                try:
-                    await session.commit()
-                except Exception as e:
-                    logger.exception(e)
-                    await session.rollback()
+            logger.info("Calculated route for {} in {} {}", route_name, calc_dur, time_unit)
+            calculated_route_old = calculated_route
+            calculated_route = []
+            for i in range(len(sol_best)):
+                calculated_route.append(calculated_route_old[int(sol_best[i])])
+        async with db_wrapper as session, session:
+            routecalc_entry: Optional[SettingsRoutecalc] = await SettingsRoutecalcHelper.get(session, routecalc_id)
+            if overwrite_persisted_route:
+                await RoutecalcUtil._write_route_to_db_entry(routecalc_entry, calculated_route)
+                routecalc_entry.last_updated = DatetimeWrapper.now()
+            routecalc_entry.recalc_status = 0
+
+            session.add(routecalc_entry)
+            try:
+                await session.commit()
+            except Exception as e:
+                logger.exception(e)
+                await session.rollback()
         return calculated_route
 
     @staticmethod
@@ -137,16 +128,16 @@ class RoutecalcUtil:
         coords_cleaned_up: List[Location] = []
         if max_radius > 1 and max_coords_within_radius > 1:
             # Hardly feasible to cluster a distance of less than 1m...
-            coordinates: List[TimedLocation] = []
+            coordinates: List[Tuple[int, Location]] = []
             for coord in coords:
                 coordinates.append(
-                    TimedLocation(0, coord)
+                    (0, coord)
                 )
             clustering_helper = ClusteringHelper(max_radius=max_radius, max_count_per_circle=max_coords_within_radius,
                                                  max_timedelta_seconds=0, use_s2=use_s2, s2_level=s2_level)
-            clustered_events: List[TimedLocation] = clustering_helper.get_clustered(coordinates)
-            for loc in clustered_events:
-                coords_cleaned_up.append(loc.location)
+            clustered_events = clustering_helper.get_clustered(coordinates)
+            for event in clustered_events:
+                coords_cleaned_up.append(event[1])
         else:
             coords_cleaned_up = coords
         return coords_cleaned_up

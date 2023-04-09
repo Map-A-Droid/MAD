@@ -1,37 +1,24 @@
-from typing import Dict, List
+from typing import Tuple, List
 
 import s2sphere
+from loguru import logger
 
-from mapadroid.utils.collections import Location, Relation
+from mapadroid.utils.collections import Relation, Location
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_middle_of_coord_list)
 from mapadroid.utils.s2Helper import S2Helper
 
 
-class TimedLocation:
-    __slots__ = "relevant_time", "location"
-    relevant_time: int
-    location: Location
-
-    def __init__(self, relevant_time: int, location: Location):
-        self.relevant_time = relevant_time
-        self.location = location
-
-    def __getitem__(self, index):
-        return self.relevant_time if index == 0 else self.location
-
-
 class ClusteringHelper:
-    def __init__(self, max_radius: float, max_count_per_circle: int, max_timedelta_seconds: int, use_s2: bool = False,
+    def __init__(self, max_radius, max_count_per_circle: int, max_timedelta_seconds, use_s2: bool = False,
                  s2_level: int = 30):
-        self.max_radius: float = max_radius
-        self.max_count_per_circle: int = max_count_per_circle
-        self.max_timedelta_seconds: int = max_timedelta_seconds
-        self.useS2: bool = use_s2
-        self.S2level: int = s2_level
+        self.max_radius = max_radius
+        self.max_count_per_circle = max_count_per_circle
+        self.max_timedelta_seconds = max_timedelta_seconds
+        self.useS2 = use_s2
+        self.S2level = s2_level
 
-    def _get_relations_in_range_within_time(self, queue: List[TimedLocation],
-                                            max_radius: float) -> Dict[TimedLocation, List[Relation]]:
+    def _get_relations_in_range_within_time(self, queue: List[Tuple[int, Location]], max_radius):
         relations = {}
         for event in queue:
             for other_event in queue:
@@ -187,8 +174,7 @@ class ClusteringHelper:
             return middle_event, events_in_circle
 
     @staticmethod
-    def _remove_coords_from_relations(relations: Dict[TimedLocation, List[Relation]],
-                                      events_to_be_removed) -> Dict[TimedLocation, List[Relation]]:
+    def _remove_coords_from_relations(relations, events_to_be_removed):
         for source_event, relations_to_source in list(relations.items()):
             # iterate relations, remove anything matching events_to_be_removed
             for event in events_to_be_removed:
@@ -201,25 +187,23 @@ class ClusteringHelper:
                         relations[source_event].remove(relation)
         return relations
 
-    def _sum_up_relations(self, relations: Dict[TimedLocation, List[Relation]]) -> List[TimedLocation]:
-        final_set: List[TimedLocation] = []
+    def _sum_up_relations(self, relations) -> List[Tuple[int, Location]]:
+        final_set: List[Tuple[int, Location]] = []
 
         while len(relations) > 0:
             west_next = self._get_most_west_amongst_relations(relations)
             try:
                 middle_event, events_to_be_removed = self._get_circle(west_next, relations[west_next], relations,
                                                                       self.max_radius)
-                time: int = middle_event[0]
-                loc: Location = middle_event[1]
-                final_set.append(TimedLocation(time, loc))
+                final_set.append((middle_event[0], middle_event[1]))
                 relations = self._remove_coords_from_relations(
                     relations, events_to_be_removed)
             except Exception as e:
-                print(str(e))
+                logger.exception(e)
         return final_set
 
-    def get_clustered(self, queue: List[TimedLocation]) -> List[TimedLocation]:
-        relations: Dict[TimedLocation, List[Relation]] = self._get_relations_in_range_within_time(
+    def get_clustered(self, queue: List[Tuple[int, Location]]) -> List[Tuple[int, Location]]:
+        relations = self._get_relations_in_range_within_time(
             queue, max_radius=self.max_radius)
-        summed_up: List[TimedLocation] = self._sum_up_relations(relations)
+        summed_up = self._sum_up_relations(relations)
         return summed_up

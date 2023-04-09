@@ -3,10 +3,9 @@ from typing import List, Tuple
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.RaidHelper import RaidHelper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import (
-    AbstractRoutePriorityQueueStrategy, RoutePriorityQueueEntry)
-from mapadroid.route.routecalc.ClusteringHelper import (ClusteringHelper,
-                                                        TimedLocation)
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import AbstractRoutePriorityQueueStrategy, \
+    RoutePriorityQueueEntry
+from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
 
 
@@ -40,15 +39,15 @@ class RaidSpawnPrioStrategy(AbstractRoutePriorityQueueStrategy):
         return queue
 
     def postprocess_coords(self, coords: List[RoutePriorityQueueEntry]) -> List[RoutePriorityQueueEntry]:
-        locations_transformed_for_clustering: List[TimedLocation] = []
+        locations_transformed_for_clustering: List[Tuple[int, Location]] = []
         for entry in coords:
-            locations_transformed_for_clustering.append(TimedLocation(entry.timestamp_due, entry.location))
-        clustered: List[TimedLocation] = self._clustering_helper.get_clustered(locations_transformed_for_clustering)
+            locations_transformed_for_clustering.append((entry.timestamp_due, entry.location))
+        clustered = self._clustering_helper.get_clustered(locations_transformed_for_clustering)
         del locations_transformed_for_clustering
         new_coords: List[RoutePriorityQueueEntry] = []
-        for loc in clustered:
+        for (timestamp_due, location) in clustered:
             entry: RoutePriorityQueueEntry = RoutePriorityQueueEntry(
-                timestamp_due=loc.relevant_time + self.get_delay_after_event(),
-                location=loc.location)
+                timestamp_due=timestamp_due + self.get_delay_after_event(),
+                location=location)
             new_coords.append(entry)
         return new_coords
