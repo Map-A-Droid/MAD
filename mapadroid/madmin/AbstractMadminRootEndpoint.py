@@ -66,7 +66,7 @@ def check_authorization_header(auth_levels: Union[List[AuthLevel], AuthLevel]):
                             hdrs.CONNECTION: 'keep-alive',
                         },
                     )
-                return await func(self, *args, **kwargs)
+            return await func(self, *args, **kwargs)
         return wrapped
     return wrapper
 
