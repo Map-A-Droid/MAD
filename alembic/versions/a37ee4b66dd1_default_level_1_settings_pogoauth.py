@@ -17,16 +17,16 @@ depends_on = None
 
 
 def upgrade():
-    conn = op.get_bind()
-    conn.execute(
-        sa.text(
-            """
-                UPDATE settings_pogoauth
-                SET level = 0
-                WHERE level is null
-            """
-        ),
-    )
+    with op.get_bind() as conn:
+        conn.execute(
+            sa.text(
+                """
+                    UPDATE settings_pogoauth
+                    SET level = 0
+                    WHERE level is null
+                """
+            ),
+        )
     op.alter_column('settings_pogoauth', 'level',
                     existing_type=sa.SMALLINT(),
                     server_default=str(0),
