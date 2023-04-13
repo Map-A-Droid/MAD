@@ -1,9 +1,11 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
+from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import \
+    AbstractStatisticsRootEndpoint
 
 
-class StatisticsShinyEndpoint(AbstractMadminRootEndpoint):
+class StatisticsShinyEndpoint(AbstractStatisticsRootEndpoint):
     """
     "/statistics_shiny"
     """

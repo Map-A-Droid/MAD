@@ -1,14 +1,14 @@
 import asyncio
 import os
 import sys
-import redis as Redis
 from datetime import datetime
 from threading import Lock
 from typing import Optional
 
-from redis import asyncio as aioredis
+import redis as Redis
 from aiofile import async_open
 from loguru import logger
+from redis import asyncio as aioredis
 from sqlalchemy import text
 
 from alembic import command
@@ -55,6 +55,7 @@ class PooledQueryExecutor:
             if self.args.cache_database:
                 redis_credentials["db"] = self.args.cache_database
             self._redis_cache: Redis = await aioredis.Redis(**redis_credentials)
+            await self._redis_cache.ping()
 
     async def get_cache(self) -> Redis:
         if self._redis_cache is None:

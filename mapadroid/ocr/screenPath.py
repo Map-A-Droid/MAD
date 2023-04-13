@@ -6,17 +6,20 @@ import xml.etree.ElementTree as ET  # noqa: N817
 from enum import Enum
 from typing import List, Optional, Tuple
 
-import numpy as np
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import (
+    AbstractAccountHandler, BurnType)
 from mapadroid.db.model import SettingsPogoauth
+from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.collections import Login_GGL, Login_PTC, ScreenCoordinates
+from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.madGlobals import ScreenshotType, application_args
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
+from mapadroid.worker.WorkerState import WorkerState
 
 
 class LoginType(Enum):
@@ -26,116 +29,32 @@ class LoginType(Enum):
 
 
 class WordToScreenMatching(object):
-    def __init__(self, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
-                 mapping_mananger: MappingManager):
+    def __init__(self, communicator: AbstractCommunicator, worker_state: WorkerState,
+                 mapping_mananger: MappingManager, account_handler: AbstractAccountHandler):
         # TODO: Somehow prevent call from elsewhere? Raise exception and only init in WordToScreenMatching.create?
-        self.origin = origin
-        self._mapping_manager = mapping_mananger
+        self._worker_state: WorkerState = worker_state
+        self._mapping_manager: MappingManager = mapping_mananger
+        self._account_handler: AbstractAccountHandler = account_handler
         self._ratio: float = 0.0
 
-        self._logintype: LoginType = LoginType.UNKNOWN
-        self._PTC_accounts: List[Login_PTC] = []
-        self._GGL_accounts: List[Login_GGL] = []
-        self._accountcount: int = 0
-        self._accountindex: int = 0
         self._screenshot_y_offset: int = 0
         self._nextscreen: ScreenType = ScreenType.UNDEFINED
 
-        self._pogoWindowManager = pogo_win_manager
         self._communicator: AbstractCommunicator = communicator
-        self._resocalc = resocalc
         logger.info("Starting Screendetector")
         self._width: int = 0
         self._height: int = 0
 
     @classmethod
-    async def create(cls, communicator: AbstractCommunicator, pogo_win_manager, origin, resocalc,
-                     mapping_mananger: MappingManager):
-        self = WordToScreenMatching(communicator=communicator, pogo_win_manager=pogo_win_manager,
-                                    origin=origin, resocalc=resocalc, mapping_mananger=mapping_mananger)
+    async def create(cls, communicator: AbstractCommunicator, worker_state: WorkerState,
+                     mapping_mananger: MappingManager, account_handler: AbstractAccountHandler):
+        self = WordToScreenMatching(communicator=communicator, worker_state=worker_state,
+                                    mapping_mananger=mapping_mananger,
+                                    account_handler=account_handler)
         self._accountindex = await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_INDEX, 0)
         self._screenshot_y_offset = await self.get_devicesettings_value(
             MappingManagerDevicemappingKey.SCREENSHOT_Y_OFFSET, 0)
-        await self.get_login_accounts()
         return self
-
-    async def get_login_accounts(self) -> None:
-        self._logintype = LoginType[
-            await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google')]
-        logger.info("Set logintype: {}", self._logintype)
-        if self._logintype == LoginType.ptc:
-            temp_accounts: List[SettingsPogoauth] = await self.get_devicesettings_value(
-                MappingManagerDevicemappingKey.PTC_LOGIN, [])
-            if not temp_accounts:
-                logger.warning('No PTC Accounts are set - hope we are logged in and never logout!')
-                self._accountcount = 0
-                return
-            for auth in temp_accounts:
-                self._PTC_accounts.append(Login_PTC(auth.username, auth.password))
-            self._accountcount = len(self._PTC_accounts)
-        else:
-            google_login_mail: Optional[str] = await self.get_devicesettings_value(
-                MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, None)
-            if not google_login_mail:
-                # TODO: logger.warning('No GGL Accounts are set - using first @gmail.com Account')
-                return
-            google_accounts = google_login_mail.replace(' ', '').split('|')
-
-            for account in google_accounts:
-                self._GGL_accounts.append(Login_GGL(account))
-            self._accountcount = len(self._GGL_accounts)
-
-        logger.info('Added {} account(s) to memory', self._accountcount)
-
-    async def get_next_account(self):
-        if self._accountcount == 0:
-            logger.info('Cannot return new account - no one is set')
-            return None
-        if self._accountindex <= self._accountcount - 1:
-            logger.info('Request next Account - Using Nr. {}', self._accountindex + 1)
-            self._accountindex += 1
-        elif self._accountindex > self._accountcount - 1:
-            logger.info('Request next Account - Restarting with Nr. 1')
-            self._accountindex = 0
-
-        await self.set_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_INDEX, self._accountindex)
-
-        if self._logintype == LoginType.ptc:
-            logger.info('Using PTC Account: {}',
-                        self.censor_account(self._PTC_accounts[self._accountindex - 1].username, is_ptc=True))
-            return self._PTC_accounts[self._accountindex - 1]
-        else:
-            logger.info('Using GGL Account: {}',
-                        self.censor_account(self._GGL_accounts[self._accountindex - 1].username))
-            return self._GGL_accounts[self._accountindex - 1]
-
-    async def return_memory_account_count(self):
-        return self._accountcount
-
-    # TODO: unused?
-    def check_lines(self, lines, height):
-        temp_lines = []
-        sort_lines = []
-        old_y1 = 0
-        index = 0
-
-        for line in lines:
-            for x1, y1, x2, y2 in line:
-                temp_lines.append([y1, y2, x1, x2])
-
-        temp_lines = np.array(temp_lines)
-        sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
-
-        button_value = height / 40
-
-        for line in sort_arr:
-            if int(old_y1 + int(button_value)) < int(line[0]):
-                if int(line[0]) == int(line[1]):
-                    sort_lines.append([line[2], line[0], line[3], line[1]])
-                    old_y1 = line[0]
-            index += 1
-
-        return np.asarray(sort_lines, dtype=np.int32)
 
     async def __evaluate_topmost_app(self, topmost_app: str) -> Tuple[ScreenType, dict, int]:
         returntype: ScreenType = ScreenType.UNDEFINED
@@ -189,6 +108,50 @@ class WordToScreenMatching(object):
         temp_dict: dict = {}
         n_boxes = len(global_dict['text'])
         logger.debug("Selecting login with: {}", global_dict)
+        if (self._worker_state.active_account_last_set + 300 < time.time()
+                or (self._worker_state.active_account
+                    and await self._account_handler.is_burnt(self._worker_state.device_id))):
+            logger.info("Detected login screen, fetching new account to use since last account was assigned more "
+                        "than 5 minutes ago OR current account was marked burnt")
+            location_to_scan: Optional[Location] = None
+            if not location_to_scan \
+                    or self._worker_state.current_location.lat == 0 and self._worker_state.current_location.lng == 0:
+                # Default location, use the middle of the geofence...
+                geofence_helper: Optional[GeofenceHelper] = await self._mapping_manager\
+                    .routemanager_get_geofence_helper(self._worker_state.area_id)
+                if geofence_helper:
+                    lat, lon = geofence_helper.get_middle_from_fence()
+                    location_to_scan = Location(lat, lon)
+            else:
+                location_to_scan = self._worker_state.current_location
+
+            account_to_use: Optional[SettingsPogoauth] = await self._account_handler.get_account(
+                self._worker_state.device_id,
+                await self._mapping_manager.routemanager_get_purpose_of_device(self._worker_state.area_id),
+                location_to_scan
+            )
+            if not account_to_use:
+                logger.error("No account to use found, are there too few accounts in DB or did MAD screw up here?")
+                self._worker_state.active_account = None
+                self._worker_state.active_account_last_set = 0
+            else:
+                logger.info("Account for {}: {}", self._worker_state.origin, account_to_use.username)
+                self._worker_state.active_account = account_to_use
+                self._worker_state.active_account_last_set = int(time.time())
+        if not self._worker_state.active_account:
+            logger.error("No account set for device, sleeping 30s")
+            await asyncio.sleep(30)
+            return
+        elif application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
+            # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
+            # just as a plain startup of already logged in account/device
+            logger.debug("Login tracking enabled")
+            if not await self.check_ptc_login_ban():
+                logger.warning("Potential PTC ban, aborting login for now. Sleeping 30s")
+                await asyncio.sleep(30)
+                return
+            logger.success("Received permission for (potential) PTC login")
+
         for i in range(n_boxes):
             if 'Facebook' in (global_dict['text'][i]):
                 temp_dict['Facebook'] = global_dict['top'][i] / diff
@@ -200,7 +163,8 @@ class WordToScreenMatching(object):
             if 'Google' in (global_dict['text'][i]):
                 temp_dict['Google'] = global_dict['top'][i] / diff
 
-            if await self.get_devicesettings_value(MappingManagerDevicemappingKey.LOGINTYPE, 'google') == 'ptc':
+            if self._worker_state.active_account \
+                    and self._worker_state.active_account.login_type == LoginType.ptc.name:
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
                     logger.info("ScreenType.LOGINSELECT (c) using PTC (logintype in Device Settings)")
@@ -261,6 +225,27 @@ class WordToScreenMatching(object):
                     await asyncio.sleep(5)
                     return
 
+    async def check_ptc_login_ban(self) -> bool:
+        """
+        Checks whether a PTC login is currently permissible.
+        :return: True, if PTC login can be run through. False, otherwise.
+        """
+        logger.debug(f"Checking for PTC login permission")
+        ip = await self._communicator.get_external_ip()
+        if not ip:
+            logger.warning("Unable to get IP from device. Deny PTC login request")
+            return False
+        code = await self._communicator.get_ptc_status() or 500
+        if code == 200:
+            logger.debug(f"OK - PTC returned {code} on {ip}")
+            return await self._mapping_manager.ip_handle_login_request(ip, self._worker_state.origin)
+        elif code == 403:
+            logger.warning(f"PTC ban is active ({code}) on {ip}")
+            return False
+        else:
+            logger.info(f"PTC login server returned {code} on {ip} - do not log in!")
+            return False
+
     async def _click_center_button(self, diff, global_dict, i) -> None:
         (x, y, w, h) = (global_dict['left'][i], global_dict['top'][i],
                         global_dict['width'][i], global_dict['height'][i])
@@ -313,14 +298,20 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.SUSPENDED:
             self._nextscreen = ScreenType.UNDEFINED
             logger.warning('Account temporarily banned!')
+            await self._account_handler.mark_burnt(self._worker_state.device_id,
+                                                   BurnType.SUSPENDED)
             screentype = ScreenType.ERROR
         elif screentype == ScreenType.TERMINATED:
             self._nextscreen = ScreenType.UNDEFINED
             logger.error('Account permabanned!')
+            await self._account_handler.mark_burnt(self._worker_state.device_id,
+                                                   BurnType.BAN)
             screentype = ScreenType.ERROR
         elif screentype == ScreenType.MAINTENANCE:
             self._nextscreen = ScreenType.UNDEFINED
             logger.warning('Account saw maintenance warning!')
+            await self._account_handler.mark_burnt(self._worker_state.device_id,
+                                                   BurnType.MAINTENANCE)
         elif screentype == ScreenType.POGO:
             screentype = await self.__check_pogo_screen_ban_or_loading(screentype, y_offset=y_offset)
         elif screentype == ScreenType.QUEST:
@@ -342,9 +333,9 @@ class WordToScreenMatching(object):
         return screentype
 
     async def __check_pogo_screen_ban_or_loading(self, screentype, y_offset: int = 0) -> ScreenType:
-        backgroundcolor = await self._pogoWindowManager.most_frequent_colour(await self.get_screenshot_path(),
-                                                                             self.origin,
-                                                                             y_offset=y_offset)
+        backgroundcolor = await self._worker_state.pogo_windows.most_frequent_colour(await self.get_screenshot_path(),
+                                                                                     self._worker_state.origin,
+                                                                                     y_offset=y_offset)
         if backgroundcolor is not None and (
                 backgroundcolor[0] == 0 and
                 backgroundcolor[1] == 0 and
@@ -387,13 +378,19 @@ class WordToScreenMatching(object):
 
     async def __handle_google_login(self, screentype) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
-        if self._logintype == LoginType.ptc:
+        usernames: Optional[str] = None
+        if self._worker_state.active_account and self._worker_state.active_account.login_type == LoginType.ptc.name:
             logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
-            username = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, '@gmail.com')
+            usernames: Optional[str] = await self.get_devicesettings_value(MappingManagerDevicemappingKey.GGL_LOGIN_MAIL, '@gmail.com')
+        elif self._worker_state.active_account:
+            usernames: Optional[str] = self._worker_state.active_account.username
         else:
-            ggl_login = await self.get_next_account()
-            username = ggl_login.username if ggl_login else None
-        if await self.parse_ggl(await self._communicator.uiautomator(), username):
+            logger.error("No active account set in worker_state")
+        if not usernames:
+            logger.error("Failed determining which google account to use")
+            return ScreenType.ERROR
+        usernames_to_check_for: List[str] = usernames.split(",")
+        if await self.parse_ggl(await self._communicator.uiautomator(), usernames_to_check_for):
             logger.info("Sleeping 50 seconds - please wait!")
             await asyncio.sleep(50)
         else:
@@ -414,14 +411,13 @@ class WordToScreenMatching(object):
 
     async def __handle_ptc_login(self) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
-        ptc = await self.get_next_account()
-        if not ptc:
+        if not self._worker_state.active_account:
             logger.error('No PTC Username and Password is set')
             return ScreenType.ERROR
         if float(self._ratio) >= 2:
-            username_y = self._height / 2.0 + self._screenshot_y_offset
-            password_y = self._height / 1.6 + self._screenshot_y_offset
-            button_y = self._height / 1.35 + self._screenshot_y_offset
+            username_y = self._height / 2.25 + self._screenshot_y_offset
+            password_y = self._height / 1.75 + self._screenshot_y_offset
+            button_y = self._height / 1.45 + self._screenshot_y_offset
         elif float(self._ratio) >= 1.7:
             username_y = self._height / 1.98 + self._screenshot_y_offset
             password_y = self._height / 1.51 + self._screenshot_y_offset
@@ -436,13 +432,13 @@ class WordToScreenMatching(object):
         # username
         await self._communicator.click(int(self._width / 2), int(username_y))
         await asyncio.sleep(.5)
-        await self._communicator.enter_text(ptc.username)
+        await self._communicator.enter_text(self._worker_state.active_account.username)
         await self._communicator.click(100, 100)
         await asyncio.sleep(2)
         # password
         await self._communicator.click(int(self._width / 2), int(password_y))
         await asyncio.sleep(.5)
-        await self._communicator.enter_text(ptc.password)
+        await self._communicator.enter_text(self._worker_state.active_account.password)
         await self._communicator.click(100, 100)
         await asyncio.sleep(2)
         # button
@@ -462,27 +458,28 @@ class WordToScreenMatching(object):
             if not result:
                 logger.error("Failed getting/analyzing screenshot")
                 return ScreenType.ERROR
-        if (self._width != 720 and self._height != 1280) and (self._width != 1080 and self._height != 1920) and (self._width != 1440 and self._height != 2560):
+        if (self._width != 720 and self._height != 1280) and (self._width != 1080 and self._height != 1920) and (
+                self._width != 1440 and self._height != 2560):
             logger.warning("The google consent screen can only be handled on 720x1280, 1080x1920 and 1440x2560 screens "
                            f"(width is {self._width}, height is {self._height})")
             return ScreenType.ERROR
         logger.info("Click accept button")
         if self._width == 720 and self._height == 1280:
-           await self._communicator.touch_and_hold(int(360), int(1080), int(360), int(500))
-           await self._communicator.click(480, 1080)
+            await self._communicator.touch_and_hold(int(360), int(1080), int(360), int(500))
+            await self._communicator.click(480, 1080)
         if self._width == 1080 and self._height == 1920:
-           await self._communicator.touch_and_hold(int(360), int(1800), int(360), int(400))
-           await self._communicator.click(830, 1638) 
+            await self._communicator.touch_and_hold(int(360), int(1800), int(360), int(400))
+            await self._communicator.click(830, 1638)
         if self._width == 1440 and self._height == 2560:
-           await self._communicator.touch_and_hold(int(360), int(2100), int(360), int(400))
-           await self._communicator.click(976, 2180)
+            await self._communicator.touch_and_hold(int(360), int(2100), int(360), int(400))
+            await self._communicator.click(976, 2180)
         await asyncio.sleep(10)
         return ScreenType.UNDEFINED
 
     async def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
         screenshot_path = await self.get_screenshot_path()
-        coordinates: Optional[ScreenCoordinates] = await self._pogoWindowManager.look_for_button(
+        coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
             screenshot_path,
             2.20, 3.01,
             upper=True)
@@ -521,7 +518,7 @@ class WordToScreenMatching(object):
         if screenpath is None or len(screenpath) == 0:
             logger.error("Invalid screen path: {}", screenpath)
             return ScreenType.ERROR
-        globaldict = await self._pogoWindowManager.get_screen_text(screenpath, self.origin)
+        globaldict = await self._worker_state.pogo_windows.get_screen_text(screenpath, self._worker_state.origin)
 
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         if not globaldict:
@@ -544,24 +541,30 @@ class WordToScreenMatching(object):
         if xml is None:
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
-        click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER', 'OK')
+        click_text = ('ZUGRIFF NUR', 'ZULASSEN', 'ALLOW', 'AUTORISER', 'OK')
         try:
             parser = ET.XMLParser(encoding="utf-8")
             xmlroot = ET.fromstring(xml, parser=parser)
             bounds: str = ""
+            found_nodes: List = []
             for item in xmlroot.iter('node'):
-                if str(item.attrib['text']).upper() in click_text:
-                    logger.debug("Found text {}", item.attrib['text'])
-                    bounds = item.attrib['bounds']
-                    logger.debug("Bounds {}", item.attrib['bounds'])
+                text_upper: str = str(item.attrib['text']).upper()
+                res = [ele for ele in click_text if (ele in text_upper)]
+                if res:
+                    found_nodes.append(item)
+            found_nodes.reverse()
+            for node in found_nodes:
+                logger.debug("Found text {}", node.attrib['text'])
+                bounds = node.attrib['bounds']
+                logger.debug("Bounds {}", node.attrib['bounds'])
 
-                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
 
-                    click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
-                    click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
-                    await self._communicator.click(int(click_x), int(click_y))
-                    await asyncio.sleep(2)
-                    return True
+                click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
+                await self._communicator.click(int(click_x), int(click_y))
+                await asyncio.sleep(2)
+                return True
         except Exception as e:
             logger.error('Something wrong while parsing xml: {}', e)
             logger.exception(e)
@@ -571,7 +574,7 @@ class WordToScreenMatching(object):
         logger.warning('Could not find any button...')
         return False
 
-    async def parse_ggl(self, xml, mail: Optional[str]) -> bool:
+    async def parse_ggl(self, xml, mails: List[str]) -> bool:
         if xml is None:
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
@@ -579,18 +582,19 @@ class WordToScreenMatching(object):
             parser = ET.XMLParser(encoding="utf-8")
             xmlroot = ET.fromstring(xml, parser=parser)
             for item in xmlroot.iter('node'):
-                if (mail and mail.lower() in str(item.attrib['text']).lower()
-                        or not mail and (item.attrib["resource-id"] == "com.google.android.gms:id/account_name"
-                                         or "@" in str(item.attrib['text']))):
-                    logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
-                    bounds = item.attrib['bounds']
-                    logger.debug("Bounds {}", item.attrib['bounds'])
-                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
-                    click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
-                    click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
-                    await self._communicator.click(int(click_x), int(click_y))
-                    await asyncio.sleep(5)
-                    return True
+                for mail in mails:
+                    if (mail and mail.lower() in str(item.attrib['text']).lower()
+                            or not mail and (item.attrib["resource-id"] == "com.google.android.gms:id/account_name"
+                                             or "@" in str(item.attrib['text']))):
+                        logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
+                        bounds = item.attrib['bounds']
+                        logger.debug("Bounds {}", item.attrib['bounds'])
+                        match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                        click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                        click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
+                        await self._communicator.click(int(click_x), int(click_y))
+                        await asyncio.sleep(5)
+                        return True
         except Exception as e:
             logger.error('Something wrong while parsing xml: {}', e)
             logger.exception(e)
@@ -601,12 +605,12 @@ class WordToScreenMatching(object):
         return False
 
     async def set_devicesettings_value(self, key: MappingManagerDevicemappingKey, value) -> None:
-        await self._mapping_manager.set_devicesetting_value_of(self.origin, key, value)
+        await self._mapping_manager.set_devicesetting_value_of(self._worker_state.origin, key, value)
 
     async def get_devicesettings_value(self, key: MappingManagerDevicemappingKey, default_value: object = None):
         logger.debug2("Fetching devicemappings")
         try:
-            value = await self._mapping_manager.get_devicesetting_value_of_device(self.origin, key)
+            value = await self._mapping_manager.get_devicesetting_value_of_device(self._worker_state.origin, key)
         except (EOFError, FileNotFoundError) as e:
             logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker", e)
             return None
@@ -640,7 +644,7 @@ class WordToScreenMatching(object):
         if fileaddon:
             addon: str = "_" + str(time.time())
 
-        screenshot_filename = "screenshot_{}{}{}".format(str(self.origin), str(addon), screenshot_ending)
+        screenshot_filename = "screenshot_{}{}{}".format(str(self._worker_state.origin), str(addon), screenshot_ending)
 
         if fileaddon:
             logger.info("Creating debugscreen: {}", screenshot_filename)
@@ -679,8 +683,8 @@ class WordToScreenMatching(object):
 
     async def _take_and_analyze_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False) -> \
             Optional[Tuple[ScreenType,
-                           Optional[
-                               dict], int]]:
+            Optional[
+                dict], int]]:
         if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
                 MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
                                            delay_after=2):
@@ -690,12 +694,16 @@ class WordToScreenMatching(object):
         screenpath = await self.get_screenshot_path()
 
         result: Optional[Tuple[ScreenType,
-                               Optional[
-                                   dict], int, int, int]] = await self._pogoWindowManager.screendetection_get_type_by_screen_analysis(
-            screenpath, self.origin)
+        Optional[
+            dict], int, int, int]] = await self._worker_state.pogo_windows \
+            .screendetection_get_type_by_screen_analysis(screenpath, self._worker_state.origin)
         if result is None:
             logger.error("Failed analyzing screen")
             return None
         else:
             returntype, global_dict, self._width, self._height, diff = result
             return returntype, global_dict, diff
+
+    async def clear_game_data(self):
+        await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+        await self._account_handler.notify_logout(self._worker_state.device_id)

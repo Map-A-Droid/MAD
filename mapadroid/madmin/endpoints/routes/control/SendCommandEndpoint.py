@@ -14,7 +14,6 @@ class SendCommandEndpoint(AbstractControlEndpoint):
     "/send_command"
     """
 
-    # TODO: Auth
     async def get(self):
         origin: Optional[str] = self.request.query.get("origin")
         devicemapping: Optional[DeviceMappingsEntry] = await self._get_mapping_manager().get_devicemappings_of(origin)

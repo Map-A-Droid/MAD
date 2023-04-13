@@ -7,6 +7,9 @@ from typing import Optional
 from aiohttp import web
 from redis import Redis
 
+from mapadroid.account_handler import setup_account_handler
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
 from mapadroid.data_handler.grpc.MitmMapperServer import MitmMapperServer
 from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
@@ -87,9 +90,9 @@ async def start():
     await event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
     await asyncio.sleep(.1)
-
+    account_handler: AbstractAccountHandler = await setup_account_handler(db_wrapper)
     mapping_manager: MappingManager = MappingManager(db_wrapper,
-                                                     application_args,
+                                                     account_handler=account_handler,
                                                      configmode=application_args.config_mode)
     await mapping_manager.setup()
     # Start MappingManagerServer in order to attach more mitmreceivers (minor scalability)
@@ -126,13 +129,14 @@ async def start():
     stats_handler: StatsHandlerServer = StatsHandlerServer(db_wrapper)
     await stats_handler.start()
 
-    mitm_data_processor_manager = InProcessMitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen)
+    mitm_data_processor_manager = InProcessMitmDataProcessorManager(mitm_mapper, stats_handler, db_wrapper, quest_gen,
+                                                                    account_handler=account_handler)
     await mitm_data_processor_manager.launch_processors()
 
     mitm_receiver = MITMReceiver(mitm_mapper, mapping_manager, db_wrapper,
                                  storage_elem,
                                  mitm_data_processor_manager.get_queue(),
-                                 enable_configmode=application_args.config_mode)
+                                 account_handler=account_handler)
     mitm_receiver_task: web.AppRunner = await mitm_receiver.start()
     logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
     ws_server = WebsocketServer(args=application_args,
@@ -142,6 +146,7 @@ async def start():
                                 mapping_manager=mapping_manager,
                                 pogo_window_manager=pogo_win_manager,
                                 event=event,
+                                account_handler=account_handler,
                                 enable_configmode=application_args.config_mode)
     # TODO: module/service?
     await ws_server.start_server()
@@ -177,7 +182,7 @@ async def start():
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
     madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
-                    quest_gen)
+                    quest_gen, account_handler)
     plugin_parts["madmin"] = madmin
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added
@@ -248,6 +253,8 @@ async def start():
 if __name__ == "__main__":
     global application_args
     os.environ['LANGUAGE'] = application_args.language
+    if application_args.omp_thread_limit:
+        os.environ['OMP_THREAD_LIMIT'] = f'{application_args.omp_thread_limit}'
     init_logging(application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)

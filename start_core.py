@@ -6,6 +6,10 @@ from typing import Optional
 
 from redis import Redis
 
+from mapadroid.account_handler import setup_account_handler
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
+from mapadroid.account_handler.AccountHandler import AccountHandler
 from mapadroid.data_handler.grpc.MitmMapperClient import MitmMapperClient
 from mapadroid.data_handler.grpc.MitmMapperClientConnector import \
     MitmMapperClientConnector
@@ -87,8 +91,9 @@ async def start():
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
     await asyncio.sleep(.1)
     # TODO: Externalize MappingManager as a service
+    account_handler: AbstractAccountHandler = await setup_account_handler(db_wrapper)
     mapping_manager: MappingManager = MappingManager(db_wrapper,
-                                                     application_args,
+                                                     account_handler=account_handler,
                                                      configmode=application_args.config_mode)
     await mapping_manager.setup()
     mapping_manager_grpc_server = MappingManagerServer(mapping_manager)
@@ -134,6 +139,7 @@ async def start():
                                 mapping_manager=mapping_manager,
                                 pogo_window_manager=pogo_win_manager,
                                 event=event,
+                                account_handler=account_handler,
                                 enable_configmode=application_args.config_mode)
     # TODO: module/service?
     await ws_server.start_server()
@@ -166,7 +172,7 @@ async def start():
 
     mad_plugins = PluginCollection('plugins', plugin_parts)
     madmin = MADmin(db_wrapper, ws_server, mapping_manager, device_updater, storage_elem,
-                    quest_gen)
+                    quest_gen, account_handler)
     plugin_parts["madmin"] = madmin
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added
@@ -230,6 +236,8 @@ async def start():
 if __name__ == "__main__":
     global application_args
     os.environ['LANGUAGE'] = application_args.language
+    if application_args.omp_thread_limit:
+        os.environ['OMP_THREAD_LIMIT'] = f'{application_args.omp_thread_limit}'
     init_logging(application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)

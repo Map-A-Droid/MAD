@@ -1,22 +1,28 @@
 from aiohttp import web
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
-from mapadroid.utils.PDConfig import PDConfig
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.utils.autoconfig import AutoConfIssue
+from mapadroid.utils.PDConfig import PDConfig
 
 
 class AutoconfPdEndpoint(AbstractMadminRootEndpoint):
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def post(self) -> web.Response:
         return await self.__save_config()
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def patch(self) -> web.Response:
         return await self.__save_config()
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def delete(self) -> web.Response:
         await PDConfig(self._session, self._get_instance_id(), self._get_mad_args()).delete(self._session)
         self._commit_trigger = True
         return await self._json_response()
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self) -> web.Response:
         config = PDConfig(self._session, self._get_instance_id(), self._get_mad_args())
         await config.load_config()

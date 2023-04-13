@@ -3,7 +3,9 @@ import os
 from aiofile import async_open
 from aiohttp import streamer, web
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.utils.functions import generate_path
 
 
@@ -12,7 +14,7 @@ class ScreenshotEndpoint(AbstractMadminRootEndpoint):
     "/screenshot/{path}"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         # TODO: Validate screenshot, otherwise we might be sending whatever....
         file_name = self.request.match_info['path']

@@ -1,7 +1,10 @@
 import aiohttp_jinja2
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import expand_context
-from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import AbstractStatisticsRootEndpoint
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    check_authorization_header, expand_context)
+from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import \
+    AbstractStatisticsRootEndpoint
 
 
 class StatusEndpoint(AbstractStatisticsRootEndpoint):
@@ -9,7 +12,6 @@ class StatusEndpoint(AbstractStatisticsRootEndpoint):
     "/status"
     """
 
-    # TODO: Auth
     @aiohttp_jinja2.template('status.html')
     @expand_context()
     async def get(self):

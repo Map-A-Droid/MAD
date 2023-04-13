@@ -13,7 +13,6 @@ class ClearGameDataEndpoint(AbstractControlEndpoint):
     "/clear_game_data"
     """
 
-    # TODO: Auth
     async def get(self):
         origin: Optional[str] = self.request.query.get("origin")
         useadb_raw: Optional[str] = self.request.query.get("adb")

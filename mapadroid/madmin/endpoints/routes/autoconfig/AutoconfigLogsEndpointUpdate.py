@@ -4,9 +4,11 @@ from aiohttp import web
 from aiohttp.abc import Request
 
 from mapadroid.db.helper.AutoconfigLogsHelper import AutoconfigLogsHelper
-from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
-from mapadroid.db.model import AutoconfigRegistration, AutoconfigLog
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.helper.AutoconfigRegistrationHelper import \
+    AutoconfigRegistrationHelper
+from mapadroid.db.model import AuthLevel, AutoconfigLog, AutoconfigRegistration
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 
 
 class AutoconfigLogsEndpointUpdate(AbstractMadminRootEndpoint):
@@ -18,7 +20,7 @@ class AutoconfigLogsEndpointUpdate(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         session_id: int = int(self.request.match_info['session_id'])
 

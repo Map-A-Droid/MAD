@@ -1,8 +1,10 @@
 from typing import Dict, Optional
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
-from mapadroid.db.model import SettingsGeofence
+from mapadroid.db.model import AuthLevel, SettingsGeofence
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    check_authorization_header
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 
@@ -12,7 +14,7 @@ class GetGeofencesEndpoint(AbstractControlEndpoint):
     "/get_geofences"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         geofences: Dict[int, SettingsGeofence] = await SettingsGeofenceHelper.get_all_mapped(self._session,
                                                                                              self._get_instance_id())

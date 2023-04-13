@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsAreaInitMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -25,6 +26,9 @@ class RouteManagerInit(SubrouteReplacingMixin, RouteManagerBase):
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaInitMitm = area
         self.remove_from_queue_backlog = None
+
+    def purpose(self) -> AccountPurpose:
+        return AccountPurpose.IV if self._mon_ids_iv else AccountPurpose.MON_RAID
 
     def _delete_coord_after_fetch(self) -> bool:
         return False

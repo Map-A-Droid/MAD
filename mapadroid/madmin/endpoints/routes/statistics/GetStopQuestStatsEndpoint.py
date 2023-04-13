@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Tuple
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
-from mapadroid.db.model import Pokestop, TrsQuest
+from mapadroid.db.model import Pokestop, SettingsAreaPokestop, TrsQuest
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.madmin.endpoints.routes.statistics.AbstractStatistictsRootEndpoint import \
     AbstractStatisticsRootEndpoint

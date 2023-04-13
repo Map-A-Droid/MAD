@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from asyncio_rlock import RLock
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsArea, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -107,6 +108,10 @@ class RouteManagerBase(ABC):
             self._prio_queue: Optional[RoutePriorityQueue] = None
         self._check_routepools_thread: Optional[Task] = None
         self._shutdown_route: asyncio.Event = asyncio.Event()
+
+    @abstractmethod
+    def purpose(self) -> AccountPurpose:
+        pass
 
     def get_ids_iv(self) -> List[int]:
         return self._mon_ids_iv
@@ -545,7 +550,7 @@ class RouteManagerBase(ABC):
         return False
 
     def _get_worker_rounds_run_through(self) -> int:
-        temp_worker_round_list: list = []
+        temp_worker_round_list: List[int] = []
         for _origin, entry in self._routepool.items():
             temp_worker_round_list.append(entry.rounds)
 
@@ -620,7 +625,7 @@ class RouteManagerBase(ABC):
             return len(entry.subroute) - len(entry.queue), len(entry.subroute)
         return -1, -1
 
-    def get_rounds(self, origin: str) -> int:
+    def get_rounds(self) -> int:
         return self._get_worker_rounds_run_through()
 
     def get_registered_workers(self) -> Set[str]:

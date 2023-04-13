@@ -2,16 +2,16 @@ import re
 import time
 from typing import Dict, Optional
 
-from redis import Redis
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbAccessor import DbAccessor
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
-from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.db.helper.MadminInstanceHelper import MadminInstanceHelper
 from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
 from mapadroid.db.helper.SettingsAreaIdleHelper import SettingsAreaIdleHelper
-from mapadroid.db.helper.SettingsAreaInitMitmHelper import SettingsAreaInitMitmHelper
+from mapadroid.db.helper.SettingsAreaInitMitmHelper import \
+    SettingsAreaInitMitmHelper
 from mapadroid.db.helper.SettingsAreaIvMitm import SettingsAreaIvMitmHelper
 from mapadroid.db.helper.SettingsAreaMonMitmHelper import \
     SettingsAreaMonMitmHelper
@@ -19,8 +19,11 @@ from mapadroid.db.helper.SettingsAreaPokestopHelper import \
     SettingsAreaPokestopHelper
 from mapadroid.db.helper.SettingsAreaRaidsMitm import \
     SettingsAreaRaidsMitmHelper
-from mapadroid.db.model import SettingsArea, MadminInstance, SettingsAreaIdle, SettingsAreaIvMitm, SettingsAreaMonMitm, \
-    SettingsAreaPokestop, SettingsAreaRaidsMitm, SettingsAreaInitMitm
+from mapadroid.db.model import (MadminInstance, SettingsArea, SettingsAreaIdle,
+                                SettingsAreaInitMitm, SettingsAreaIvMitm,
+                                SettingsAreaMonMitm, SettingsAreaPokestop,
+                                SettingsAreaRaidsMitm)
+from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.worker.WorkerType import WorkerType
 

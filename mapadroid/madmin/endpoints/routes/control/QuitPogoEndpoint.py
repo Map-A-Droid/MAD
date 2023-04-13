@@ -15,7 +15,6 @@ class QuitPogoEndpoint(AbstractControlEndpoint):
     "/quit_pogo"
     """
 
-    # TODO: Auth
     async def get(self) -> web.Response:
         origin: Optional[str] = self.request.query.get("origin")
         # origin_logger = get_origin_logger(self._logger, origin=origin)

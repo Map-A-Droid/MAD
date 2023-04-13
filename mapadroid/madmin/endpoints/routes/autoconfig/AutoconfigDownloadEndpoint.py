@@ -5,8 +5,9 @@ from aiohttp import web
 from aiohttp.abc import Request
 
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
-from mapadroid.db.model import SettingsAuth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.model import AuthLevel, SettingsAuth
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 from mapadroid.utils.PDConfig import PDConfig
 
@@ -19,7 +20,7 @@ class AutoconfigDownloadEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         ac_issues = AutoConfIssueGenerator()
         await ac_issues.setup(self._session, self._get_instance_id(),

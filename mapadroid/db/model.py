@@ -1,7 +1,10 @@
 # coding: utf-8
+import enum
+
 from sqlalchemy import Column, Float, ForeignKey, Index, String, text
 from sqlalchemy.dialects.mysql import (BIGINT, BOOLEAN, ENUM, INTEGER,
-                                       LONGBLOB, LONGTEXT, SMALLINT, TINYINT)
+                                       LONGBLOB, LONGTEXT, MEDIUMBLOB,
+                                       SMALLINT, TINYINT)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -10,6 +13,12 @@ from mapadroid.db.TZDateTime import TZDateTime
 
 Base = declarative_base()
 metadata = Base.metadata
+
+
+class AuthLevel(enum.Enum):
+    MADMIN_PUBLIC_PAGE = 1
+    MITM_DATA = 2
+    MADMIN_ADMIN = 4
 
 
 class FilestoreMeta(Base):
@@ -404,7 +413,7 @@ class TrsVisited(Base):
     __tablename__ = 'trs_visited'
 
     pokestop_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
-    origin = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
+    username = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True, nullable=False)
 
 
 class Version(Base):
@@ -598,6 +607,7 @@ class SettingsAuth(Base):
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     username = Column(String(32, 'utf8mb4_unicode_ci'), nullable=False)
     password = Column(String(32, 'utf8mb4_unicode_ci'), nullable=False)
+    auth_level = Column(INTEGER(10), nullable=False, server_default=text("'0'"))
 
     instance = relationship('MadminInstance')
 
@@ -693,7 +703,8 @@ class SettingsDevice(Base):
     screenshot_quality = Column(INTEGER(11))
     startcoords_of_walker = Column(String(256, 'utf8mb4_unicode_ci'))
     screendetection = Column(BOOLEAN)
-    logintype = Column(ENUM('google', 'ptc'))
+    # Google login mail set in device to be used with prio (optional).
+    # Accountswitching will attempt google login first. If it fails, fallback to any free PTC
     ggl_login_mail = Column(String(256, 'utf8mb4_unicode_ci'))
     clear_game_data = Column(BOOLEAN)
     account_rotation = Column(BOOLEAN)
@@ -732,9 +743,6 @@ class TrsStatus(Base):
     globalrebootcount = Column(INTEGER(11), server_default=text("'0'"))
     globalrestartcount = Column(INTEGER(11), server_default=text("'0'"))
     currentSleepTime = Column(INTEGER(11), nullable=False, server_default=text("'0'"))
-    last_softban_action = Column(TZDateTime, nullable=True)
-    last_softban_action_location = Column(GeometryColumnType, nullable=True)
-
     area = relationship('SettingsArea')
     instance = relationship('MadminInstance')
 
@@ -788,10 +796,16 @@ class SettingsPogoauth(Base):
 
     instance_id = Column(ForeignKey('madmin_instance.instance_id', ondelete='CASCADE'), nullable=False, index=True)
     account_id = Column(INTEGER(10), primary_key=True, autoincrement=True)
-    device_id = Column(ForeignKey('settings_device.device_id', ondelete='CASCADE'), index=True)
+    device_id = Column(ForeignKey('settings_device.device_id', ondelete='CASCADE'), index=True, nullable=True)
     login_type = Column(ENUM('google', 'ptc'), nullable=False)
     username = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
     password = Column(String(128, 'utf8mb4_unicode_ci'), nullable=False)
+    key_blob = Column(MEDIUMBLOB, nullable=True)
+    level = Column(SMALLINT(2), nullable=False, server_default=str(0))
+    last_burn = Column(TZDateTime, nullable=True)
+    last_burn_type = Column(ENUM('ban', 'suspended', 'maintenance'), nullable=True)
+    last_softban_action = Column(TZDateTime, nullable=True)
+    last_softban_action_location = Column(GeometryColumnType, nullable=True)
 
     device = relationship('SettingsDevice')
     instance = relationship('MadminInstance')

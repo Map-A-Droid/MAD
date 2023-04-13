@@ -14,7 +14,6 @@ class InstallFileEndpoint(AbstractControlEndpoint):
     "/install_file"
     """
 
-    # TODO: Auth
     @aiohttp_jinja2.template('uploaded_files.html')
     @expand_context()
     async def get(self):

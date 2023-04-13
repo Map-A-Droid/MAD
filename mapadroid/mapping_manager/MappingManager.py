@@ -1,11 +1,17 @@
 import asyncio
 import copy
 from asyncio import Task
+from datetime import datetime
 from threading import Event
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+from redis import WatchError
+from redis import asyncio as aioredis
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mapadroid.account_handler.AbstractAccountHandler import (
+    AbstractAccountHandler, AccountPurpose)
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
@@ -13,33 +19,31 @@ from mapadroid.db.helper.SettingsDevicepoolHelper import \
     SettingsDevicepoolHelper
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
 from mapadroid.db.helper.SettingsMonivlistHelper import SettingsMonivlistHelper
-from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.SettingsRoutecalcHelper import SettingsRoutecalcHelper
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
 from mapadroid.db.helper.SettingsWalkerHelper import SettingsWalkerHelper
 from mapadroid.db.helper.SettingsWalkerToWalkerareaHelper import \
     SettingsWalkerToWalkerareaHelper
-from mapadroid.db.helper.SettingsWalkerareaHelper import \
-    SettingsWalkerareaHelper
 from mapadroid.db.model import (SettingsArea, SettingsAuth, SettingsDevice,
                                 SettingsDevicepool, SettingsGeofence,
-                                SettingsPogoauth, SettingsRoutecalc,
-                                SettingsWalker, SettingsWalkerarea,
-                                SettingsWalkerToWalkerarea)
+                                SettingsRoutecalc, SettingsWalker,
+                                SettingsWalkerarea, SettingsWalkerToWalkerarea)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.mapping_manager.AbstractMappingManager import \
     AbstractMappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
+from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
+    RoutePriorityQueueEntry
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.route.RouteManagerIV import RouteManagerIV
-from mapadroid.route.prioq.strategy.AbstractRoutePriorityQueueStrategy import \
-    RoutePriorityQueueEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (PositionType, RoutemanagerShuttingDown,
-                                        ScreenshotType)
+                                        ScreenshotType, application_args)
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.utils)
@@ -74,7 +78,6 @@ mode_mapping = {
 class DeviceMappingsEntry:
     def __init__(self):
         self.device_settings: SettingsDevice = None
-        self.ptc_logins: List[SettingsPogoauth] = []
         self.pool_settings: SettingsDevicepool = None
         self.walker_areas: List[SettingsWalkerarea] = []
         # TODO: Ensure those values are being set properly from whereever...
@@ -100,34 +103,55 @@ class AreaEntry:
 
 
 class MappingManager(AbstractMappingManager):
-    def __init__(self, db_wrapper: DbWrapper, args, configmode: bool = False):
+    def __init__(self, db_wrapper: DbWrapper, account_handler: AbstractAccountHandler, configmode: bool = False):
         self.__jobstatus: Dict = {}
         self.__db_wrapper: DbWrapper = db_wrapper
-        self.__args = args
+        self.__account_handler: AbstractAccountHandler = account_handler
         self.__configmode: bool = configmode
 
         self._devicemappings: Optional[Dict[str, DeviceMappingsEntry]] = None
         self._geofence_helpers: Optional[Dict[int, GeofenceHelper]] = None
         self._areas: Optional[Dict[int, AreaEntry]] = None
         self._routemanagers: Optional[Dict[int, RouteManagerBase]] = None
-        self._auths: Optional[Dict[str, str]] = None
+        self._auths: Optional[Dict[str, SettingsAuth]] = None
         self.__areamons: Optional[Dict[int, List[int]]] = {}
         self._monlists: Optional[Dict[int, List[int]]] = None
         self.__shutdown_event: Event = Event()
 
         # TODO: Move to init or call __init__ differently...
         self.__paused_devices: List[int] = []
-        self.__mappings_mutex = None
+        self.__mappings_mutex: Optional[asyncio.Lock] = None
+        self.__ptc_mutex: Optional[asyncio.Lock] = None
+        self._redis_cache: Optional[Redis] = None
 
     async def setup(self):
         self.__mappings_mutex: asyncio.Lock = asyncio.Lock()
-
+        await self.setup_login_tracking()
         await self.update(full_lock=True)
+
+    async def setup_login_tracking(self):
+        if not application_args.enable_login_tracking:
+            return
+        self.__ptc_mutex: asyncio.Lock = asyncio.Lock()
+        # Check if special credentials have been passed, if not, just use the existing redis...
+        if application_args.login_tracking_host and application_args.login_tracking_port:
+            redis_credentials = {"host": application_args.login_tracking_host,
+                                 "port": application_args.login_tracking_port}
+            if application_args.login_tracking_username:
+                redis_credentials["username"] = application_args.login_tracking_username
+            if application_args.login_tracking_password:
+                redis_credentials["password"] = application_args.login_tracking_password
+            if application_args.login_tracking_database:
+                redis_credentials["db"] = application_args.login_tracking_database
+            self._redis_cache = await aioredis.Redis(**redis_credentials)
+            await self._redis_cache.ping()
+        else:
+            self._redis_cache = await self.__db_wrapper.get_cache()
 
     def shutdown(self):
         logger.info("MappingManager exiting")
 
-    async def get_auths(self) -> Optional[Dict[str, str]]:
+    async def get_auths(self) -> Optional[Dict[str, SettingsAuth]]:
         return self._auths
 
     def set_device_state(self, device_id: int, active: int) -> None:
@@ -245,8 +269,6 @@ class MappingManager(AbstractMappingManager):
             return devicemapping_entry.pool_settings.screenshot_y_offset if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_y_offset else devicemapping_entry.device_settings.screenshot_y_offset
         elif key == MappingManagerDevicemappingKey.SCREENSHOT_X_OFFSET:
             return devicemapping_entry.pool_settings.screenshot_x_offset if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.screenshot_x_offset else devicemapping_entry.device_settings.screenshot_x_offset
-        elif key == MappingManagerDevicemappingKey.LOGINTYPE:
-            return devicemapping_entry.device_settings.logintype
         elif key == MappingManagerDevicemappingKey.GGL_LOGIN_MAIL:
             return devicemapping_entry.device_settings.ggl_login_mail
         elif key == MappingManagerDevicemappingKey.STARTCOORDS_OF_WALKER:
@@ -303,9 +325,6 @@ class MappingManager(AbstractMappingManager):
             return devicemapping_entry.device_settings.clear_game_data if devicemapping_entry.device_settings.clear_game_data is not None else False
         elif key == MappingManagerDevicemappingKey.SOFTBAR_ENABLED:
             return devicemapping_entry.device_settings.softbar_enabled if devicemapping_entry.device_settings.softbar_enabled is not None else False
-        # Extra keys to e.g. retrieve PTC accounts
-        elif key == MappingManagerDevicemappingKey.PTC_LOGIN:
-            return devicemapping_entry.ptc_logins
         elif key == MappingManagerDevicemappingKey.ROTATION_WAITTIME:
             return devicemapping_entry.device_settings.rotation_waittime
         elif key == MappingManagerDevicemappingKey.ACCOUNT_ROTATION:
@@ -340,6 +359,43 @@ class MappingManager(AbstractMappingManager):
 
     async def get_all_routemanager_ids(self) -> List[int]:
         return list(self._routemanagers.keys())
+
+    async def ip_handle_login_request(self, ip, origin, limit_seconds=None, limit_count=None):
+        if not limit_seconds:
+            limit_seconds = int(application_args.login_tracking_timeout)
+        if not limit_count:
+            limit_count = int(application_args.login_tracking_limit)
+        now = int(datetime.timestamp(datetime.now()))
+
+        logger.warning(f"Handle PTC login request on {ip}")
+        async with self._redis_cache.pipeline() as pipe:
+            while True:
+                try:
+                    await pipe.watch(ip)
+                    try:
+                        ct = await self._redis_cache.zcount(ip, now - limit_seconds, "+inf")
+                        # origin_logger.warning(f"got count {ct} for {ip} from redis")
+                    except Exception as e:
+                        logger.warning("Failed getting count for {} from redis! Deny this attempt ... "
+                                       "({})", ip, e)
+                        return False
+                    if ct >= limit_count:
+                        logger.warning("Reached threshold of {} attempts per {} "
+                                       "seconds for {}! Deny this login attempt",
+                                       limit_count, limit_seconds, ip)
+                        return False
+                    else:
+                        logger.info("Got count {} for {}. Allow this login attempt, register {}.",
+                                    ct, ip, now)
+                        pipe.multi()
+                        await pipe.zadd(ip, {f"{origin}:{now}": now})
+                        await pipe.expire(ip, 60 * 60 * 24)
+                        await pipe.execute()
+                        return True
+
+                except WatchError as e:
+                    logger.warning(f"Redis count changed for {ip}, retry ... ({e})")
+                    await asyncio.sleep(1)
 
     def __fetch_routemanager(self, routemanager_id: int) -> Optional[RouteManagerBase]:
         routemanager: RouteManagerBase = self._routemanagers.get(routemanager_id, None)
@@ -408,9 +464,9 @@ class MappingManager(AbstractMappingManager):
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_route_status(origin) if routemanager is not None else None
 
-    async def routemanager_get_rounds(self, routemanager_id: int, worker_name: str) -> Optional[int]:
+    async def routemanager_get_rounds(self, routemanager_id: int) -> Optional[int]:
         routemanager = self.__fetch_routemanager(routemanager_id)
-        return routemanager.get_rounds(worker_name) if routemanager is not None else None
+        return routemanager.get_rounds() if routemanager is not None else None
 
     async def routemanager_redo_stop_immediately(self, routemanager_id: int, worker_name: str, lat: float,
                                                  lon: float) -> bool:
@@ -449,8 +505,8 @@ class MappingManager(AbstractMappingManager):
             return None
 
     async def routemanager_get_current_route(self, routemanager_id: int) -> Optional[Tuple[List[Location],
-                                                                                           Dict[
-                                                                                               str, List[Location]]]]:
+    Dict[
+        str, List[Location]]]]:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_current_route() if routemanager is not None else None
 
@@ -461,6 +517,10 @@ class MappingManager(AbstractMappingManager):
     async def routemanager_get_settings(self, routemanager_id: int) -> Optional[SettingsArea]:
         routemanager = self.__fetch_routemanager(routemanager_id)
         return routemanager.get_settings() if routemanager is not None else None
+
+    async def routemanager_get_purpose_of_device(self, routemanager_id: int) -> Optional[AccountPurpose]:
+        routemanager: Optional[RouteManagerBase] = self.__fetch_routemanager(routemanager_id)
+        return None if not routemanager else routemanager.purpose()
 
     async def routemanager_set_worker_sleeping(self, routemanager_id: int, worker_name: str,
                                                sleep_duration: float):
@@ -597,7 +657,8 @@ class MappingManager(AbstractMappingManager):
                                                                  routecalc=routecalc,
                                                                  s2_level=mode_mapping.get(area.mode, {}).get(
                                                                      "s2_cell_level", 30),
-                                                                 mon_ids_iv=self.get_monlist(area_id)
+                                                                 mon_ids_iv=self.get_monlist(area_id),
+                                                                 account_handler=self.__account_handler
                                                                  )
             logger.info("Initializing area {}", area.name)
             # task = loop.create_task(route_manager.calculate_route(False))
@@ -638,12 +699,6 @@ class MappingManager(AbstractMappingManager):
             device_entry: DeviceMappingsEntry = DeviceMappingsEntry()
             device_entry.device_settings = device
 
-            # Fetch the logins that are assigned to this device...
-            accounts_assigned: List[SettingsPogoauth] = await SettingsPogoauthHelper \
-                .get_assigned_to_device(session, self.__db_wrapper.get_instance_id(),
-                                        device_entry.device_settings.device_id)
-            device_entry.ptc_logins.extend(accounts_assigned)
-
             if device.pool_id is not None:
                 device_entry.pool_settings = all_pools.get(device.pool_id, None)
 
@@ -656,7 +711,7 @@ class MappingManager(AbstractMappingManager):
             devices[device.name] = device_entry
         return devices
 
-    async def __get_latest_auths(self, session: AsyncSession) -> Dict[str, str]:
+    async def __get_latest_auths(self, session: AsyncSession) -> Dict[str, SettingsAuth]:
         """
         Reads current self.__raw_json mappings dict and checks if auth directive is present.
         :return: Dict of username : password
@@ -665,9 +720,9 @@ class MappingManager(AbstractMappingManager):
         if all_auths is None or len(all_auths) == 0:
             return {}
 
-        auths = {}
+        auths: Dict[str, SettingsAuth] = {}
         for auth in all_auths:
-            auths[auth.username] = auth.password
+            auths[auth.username] = auth
         return auths
 
     async def __get_latest_areas(self, session: AsyncSession) -> Dict[int, AreaEntry]:

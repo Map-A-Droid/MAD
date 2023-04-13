@@ -9,7 +9,6 @@ class DeleteLogEndpoint(AbstractControlEndpoint):
     "/delete_log"
     """
 
-    # TODO: Auth
     async def get(self):
         only_success: Optional[str] = self.request.query.get('only_success')
 

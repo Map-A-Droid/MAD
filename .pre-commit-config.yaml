@@ -11,8 +11,8 @@ repos:
     rev: 1.0.3
     hooks:
       - id: save-commit-msg
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+  - repo: https://github.com/pycqa/flake8
+    rev: 3.9.2
     hooks:
       - id: flake8
         language_version: python3

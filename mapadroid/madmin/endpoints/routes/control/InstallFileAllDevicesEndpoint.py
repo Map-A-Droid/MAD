@@ -9,8 +9,6 @@ class InstallFileAllDevicesEndpoint(AbstractControlEndpoint):
     "/install_file_all_devices"
     """
 
-    # TODO: Auth
-    # TODO: Also "post"?
     async def get(self):
         jobname: Optional[str] = self.request.query.get('jobname')
         job_type_raw: Optional[str] = self.request.query.get('type')

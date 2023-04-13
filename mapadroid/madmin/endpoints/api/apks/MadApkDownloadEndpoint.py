@@ -1,11 +1,13 @@
 from aiohttp import web
 
+from mapadroid.db.model import AuthLevel
 from mapadroid.mad_apk.utils import convert_to_backend, stream_package
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 
 
 class MadApkDownloadEndpoint(AbstractMadminRootEndpoint):
-    # TODO: Require auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         response = web.StreamResponse()
         apk_type_raw: str = self.request.match_info['apk_type']

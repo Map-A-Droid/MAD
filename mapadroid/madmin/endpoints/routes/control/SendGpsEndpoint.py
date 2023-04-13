@@ -13,7 +13,6 @@ class SendGpsEndpoint(AbstractControlEndpoint):
     "/send_gps"
     """
 
-    # TODO: Auth
     async def get(self):
         origin: Optional[str] = self.request.query.get("origin")
         # devicemappings: Optional[DeviceMappingsEntry] = await self._get_mapping_manager().get_devicemappings_of(origin)

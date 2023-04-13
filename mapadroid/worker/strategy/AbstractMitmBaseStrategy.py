@@ -71,6 +71,10 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         self._latest_encounter_update = 0
         self._encounter_ids: Dict[str, int] = {}
 
+    async def _clear_game_data(self):
+        await super()._clear_game_data()
+        await self._mitm_mapper.set_level(self._worker_state.origin, 0)
+
     @abstractmethod
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,

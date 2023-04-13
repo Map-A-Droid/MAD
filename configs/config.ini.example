@@ -26,6 +26,8 @@
 # Size of MySQL pool (open connections to DB). If you have a lot of devices and madmin usage, this may need to be increased. Default: 5.
 #db_poolsize:
 
+# Configure whether the settings_pogoauth entries (PTC or google accounts) should be fetched only for the active instance or globally. Default: true
+#restrict_accounts_to_instance:
 
 ### Redis Caching
 ######################
@@ -45,6 +47,23 @@
 # Redis password
 #cache_password:
 
+
+# Enable login tracking (backed by Redis) to prevent ip bans
+#enable_login_tracking
+# Redis cache host for login tracking. If not specified, it will use the cache_host set for general redis caching. (Default: None).
+#login_tracking_host
+# Redis cache port. If not specified along with login_tracking_host, it will use the cache_port and cache_host set for general redis caching. (Default: 6379)
+#login_tracking_port
+# Redis database. Ideally use the same database (0-15) when tracking multiple running instances.
+#login_tracking_database
+# Redis username for login tracking
+#login_tracking_username:
+# Redis password for login tracking
+#login_tracking_password:
+# Max number of login attempts during 'login_tracking_timeout'.
+#login_tracking_limit
+# Duration in seconds during which a login attempt is counting towards 'login_tracking_limit'.
+#login_tracking_timeout
 
 ### MappingManager gRPC
 ######################
@@ -224,10 +243,8 @@
 ######################
 ## MADmin is used to see the overall status of all devices connected, control devices manually, and display statistics.
 ######################
-# SET IT VIA REVERSE PROXY/Apache2(AuthType Basic)/nginx(auth_basic). THIS IS NOT WORKING. check configs/examples/nginx/foo.conf
-#madmin_user:
-# SET IT VIA REVERSE PROXY/Apache2(AuthType Basic)/nginx(auth_basic). THIS IS NOT WORKING. check configs/examples/nginx/foo.conf
-#madmin_password:
+# Whether credentials from settings_auth table should be requested for
+#madmin_enable_auth:
 # Disable Madmin on the instance
 #disable_madmin:
 # Base path for madmin

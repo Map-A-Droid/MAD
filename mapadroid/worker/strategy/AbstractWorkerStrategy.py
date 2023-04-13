@@ -15,10 +15,10 @@ from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.pogoWindows import PogoWindows
-from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.ocr.screenPath import LoginType, WordToScreenMatching
 from mapadroid.utils.collections import Location, ScreenCoordinates
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_lat_lng_offsets_by_distance)
 from mapadroid.utils.madConstants import WALK_AFTER_TELEPORT_SPEED
@@ -211,8 +211,33 @@ class AbstractWorkerStrategy(ABC):
             await asyncio.sleep(
                 await self.get_devicesettings_value(MappingManagerDevicemappingKey.POST_TURN_SCREEN_ON_DELAY, 7))
 
+        if self._worker_state.active_account:
+            logger.info(f"logintype is {self._worker_state.active_account.login_type}")
+        else:
+            logger.warning("No active account set when starting pogo")
+
+        if self._worker_state.active_account and self._worker_state.active_account.login_type == LoginType.ptc.name\
+                and application_args.enable_login_tracking:
+            logger.debug("start_pogo: Login tracking enabled")
+            if not await self._word_to_screen_matching.check_ptc_login_ban():
+                # sleeping close to or longer than 5 minutes may cause a problem with a 5-minute timeout
+                # in the RGC websocket connection? Only sleep 60s and then do some nonsense ...
+                logger.warning("start_pogo: No permission for PTC login. Kill pogo data and wait for 4 minutes...")
+                await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+                await self._communicator.stop_app("com.nianticlabs.pokemongo")
+                c = 0
+                await self._communicator.passthrough("true")
+                while c < 4:
+                    logger.warning(f"start_pogo: sleep 60 more seconds ... c = {c}")
+                    c += 1
+                    await asyncio.sleep(60)
+                    await self._communicator.passthrough("true")
+                logger.warning("start_pogo: reboot after waiting ...")
+                await self._reboot()
+                return False
+            logger.success("start_pogo: Received permission for (potential) PTC login")
+
         await self._grant_permissions_to_pogo()
-        cur_time = time.time()
         start_result = False
         attempts = 0
         while not pogo_topmost:
@@ -228,9 +253,11 @@ class AbstractWorkerStrategy(ABC):
             logger.success("startPogo: Started pogo successfully...")
 
         await self._wait_pogo_start_delay()
+        start_delay: int = await self.get_devicesettings_value(
+            MappingManagerDevicemappingKey.POST_POGO_START_DELAY, 60)
         await self._mapping_manager.routemanager_set_worker_sleeping(self._area_id,
                                                                      self._worker_state.origin,
-                                                                     10)
+                                                                     start_delay)
         return start_result
 
     async def set_devicesettings_value(self, key: MappingManagerDevicemappingKey, value: Optional[Any]):
@@ -288,8 +315,7 @@ class AbstractWorkerStrategy(ABC):
                 await self.stop_pogo()
                 await self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
                 if await self.get_devicesettings_value(MappingManagerDevicemappingKey.CLEAR_GAME_DATA, False):
-                    logger.info('Clearing game data')
-                    await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+                    await self._clear_game_data()
                 self._worker_state.login_error_count = 0
                 await self._reboot()
                 break
@@ -362,6 +388,10 @@ class AbstractWorkerStrategy(ABC):
             self._worker_state.last_screen_type = screen_type
         return screen_type
 
+    async def _clear_game_data(self):
+        logger.info('Clearing game data')
+        await self._word_to_screen_matching.clear_game_data()
+
     async def _restart_pogo_safe(self):
         logger.info("WorkerBase::_restart_pogo_safe restarting pogo the long way")
         await self.stop_pogo()
@@ -384,7 +414,8 @@ class AbstractWorkerStrategy(ABC):
         logger.info('Switching User - please wait ...')
         await self.stop_pogo()
         await asyncio.sleep(5)
-        await self._communicator.reset_app_data("com.nianticlabs.pokemongo")
+        await self._clear_game_data()
+        await asyncio.sleep(5)
         await self.turn_screen_on_and_start_pogo()
         if not await self._ensure_pogo_topmost():
             logger.error('Kill Worker...')
@@ -464,6 +495,7 @@ class AbstractWorkerStrategy(ABC):
                 routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
                 worker_type: WorkerType = WorkerType(routemanager_settings.mode)
                 if not self._worker_state.current_location:
+                    logger.debug2("Setting location to 0, 0")
                     self._worker_state.current_location = Location(0, 0)
                 await self._stats_handler.stats_collect_location_data(self._worker_state.origin,
                                                                       self._worker_state.current_location, True, now_ts,
@@ -611,13 +643,11 @@ class AbstractWorkerStrategy(ABC):
         # self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, x_offset, y_offset)
 
     async def _grant_permissions_to_pogo(self) -> None:
-        if not await self.get_devicesettings_value(MappingManagerDevicemappingKey.EXTENDED_PERMISSION_TOGGLING, False):
-            return
-        command: str = "su -c 'magiskhide --add com.nianticlabs.pokemongo " \
-                       "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_FINE_LOCATION " \
+        command: str = "su -c 'pm grant com.nianticlabs.pokemongo android.permission.ACCESS_FINE_LOCATION " \
                        "&& pm grant com.nianticlabs.pokemongo android.permission.ACCESS_COARSE_LOCATION " \
-                       "&&  pm grant com.nianticlabs.pokemongo android.permission.CAMERA " \
-                       "&& pm grant com.nianticlabs.pokemongo android.permission.GET_ACCOUNTS'"
+                       "&& pm grant com.nianticlabs.pokemongo android.permission.CAMERA " \
+                       "&& pm grant com.nianticlabs.pokemongo android.permission.GET_ACCOUNTS " \
+                       "&& magiskhide --add com.nianticlabs.pokemongo'"
         await self._communicator.passthrough(command)
 
     @abstractmethod

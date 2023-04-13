@@ -2,10 +2,12 @@ from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import (
+    AbstractAccountHandler, AccountPurpose)
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
+from mapadroid.db.model import (Pokestop, SettingsAreaPokestop, SettingsDevice,
                                 SettingsRoutecalc)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.routecalc.RoutecalcUtil import RoutecalcUtil
@@ -16,6 +18,9 @@ from mapadroid.utils.madGlobals import RoutecalculationTypes
 
 
 class RouteManagerLeveling(RouteManagerBase):
+    def purpose(self) -> AccountPurpose:
+        return AccountPurpose.LEVEL
+
     async def _get_coords_fresh(self, dynamic: bool) -> List[Location]:
         # not necessary
         middle_of_fence: Tuple[float, float] = self.geofence_helper.get_middle_from_fence()
@@ -24,6 +29,7 @@ class RouteManagerLeveling(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, area: SettingsAreaPokestop, coords: Optional[List[Location]],
                  max_radius: int, max_coords_within_radius: int,
                  geofence_helper: GeofenceHelper, routecalc: SettingsRoutecalc,
+                 account_handler: AbstractAccountHandler,
                  mon_ids_iv: Optional[List[int]] = None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, area=area, coords=coords,
                                   max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
@@ -31,6 +37,7 @@ class RouteManagerLeveling(RouteManagerBase):
                                   mon_ids_iv=mon_ids_iv,
                                   initial_prioq_strategy=None)
         self.remove_from_queue_backlog = None
+        self.__account_handler = account_handler
 
     async def _worker_changed_update_routepools(self, routepool: Dict[str, RoutePoolEntry]) \
             -> Optional[Dict[str, RoutePoolEntry]]:
@@ -52,13 +59,25 @@ class RouteManagerLeveling(RouteManagerBase):
                         logger.debug("origin {} already has a queue, do not touch...", origin)
                         continue
                     current_worker_pos = entry.current_pos
+
+                    device: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(session,
+                                                                                                self.db_wrapper.get_instance_id(),
+                                                                                                origin)
+
+                    if not device:
+                        logger.error("Device for origin {} not found", origin)
+                        continue
+                    username: Optional[str] = await self.__account_handler.get_assigned_username(device.device_id)
+                    if not username:
+                        logger.error("Unable to determine the username last assigned to {}", origin)
+                        continue
                     unvisited_stops: List[Pokestop] = await PokestopHelper.get_nearby_increasing_range_within_area(
                         session,
                         geofence_helper=self.geofence_helper,
-                        origin=origin,
+                        username=username,
                         location=current_worker_pos,
-                        limit=30,
-                        ignore_spinned=True
+                        limit=150,
+                        ignore_spun=True
                         if self._settings.ignore_spinned_stops or self._settings.ignore_spinned_stops is None
                         else False,
                         max_distance=1)

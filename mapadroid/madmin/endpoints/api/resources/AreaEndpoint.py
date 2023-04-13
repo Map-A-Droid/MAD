@@ -1,18 +1,22 @@
-from typing import Dict, Optional, Set, List
+from typing import Dict, List, Optional, Set
 
 import sqlalchemy
 from aiohttp import web
 from loguru import logger
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
-from mapadroid.db.helper.SettingsWalkerareaHelper import SettingsWalkerareaHelper
-from mapadroid.db.model import Base, SettingsArea, SettingsRoutecalc, SettingsWalkerarea
+from mapadroid.db.helper.SettingsWalkerareaHelper import \
+    SettingsWalkerareaHelper
+from mapadroid.db.model import (AuthLevel, Base, SettingsArea,
+                                SettingsRoutecalc, SettingsWalkerarea)
 from mapadroid.db.resource_definitions.AreaIdle import AreaIdle
 from mapadroid.db.resource_definitions.AreaInitMitm import AreaInitMitm
 from mapadroid.db.resource_definitions.AreaIvMitm import AreaIvMitm
 from mapadroid.db.resource_definitions.AreaMonMitm import AreaMonMitm
 from mapadroid.db.resource_definitions.AreaPokestops import AreaPokestops
 from mapadroid.db.resource_definitions.AreaRaidsMitm import AreaRaidsMitm
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    check_authorization_header
 from mapadroid.madmin.endpoints.api.resources.AbstractResourceEndpoint import \
     AbstractResourceEndpoint
 from mapadroid.worker.WorkerType import WorkerType
@@ -91,6 +95,7 @@ class AreaEndpoint(AbstractResourceEndpoint):
     # TODO: '%s/<string:identifier>' optionally at the end of the route
     # TODO: ResourceEndpoint class that loads the mode accordingly before patch/post etc are called (populate_mode)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def post(self) -> web.Response:
         identifier = self.request.match_info.get('identifier', None)
         api_request_data = await self.request.json()

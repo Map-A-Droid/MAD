@@ -16,7 +16,6 @@ class UploadEndpoint(AbstractControlEndpoint):
     "/upload"
     """
 
-    # TODO: Auth
     @aiohttp_jinja2.template('upload.html')
     @expand_context()
     async def get(self):

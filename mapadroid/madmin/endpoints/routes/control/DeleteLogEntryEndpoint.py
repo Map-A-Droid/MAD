@@ -9,7 +9,6 @@ class DeleteLogEntryEndpoint(AbstractControlEndpoint):
     "/delete_log_entry"
     """
 
-    # TODO: Auth
     async def get(self):
         job_id: Optional[str] = self.request.query.get('id')
 

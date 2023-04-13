@@ -14,7 +14,6 @@ class SendTextEndpoint(AbstractControlEndpoint):
     "/send_text"
     """
 
-    # TODO: Auth
     async def get(self):
         origin: Optional[str] = self.request.query.get("origin")
         text: Optional[str] = self.request.query.get("text")

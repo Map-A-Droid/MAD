@@ -4,10 +4,12 @@ import aiohttp_jinja2
 from aiohttp import web
 from aiohttp.abc import Request
 
-from mapadroid.db.helper.SettingsDevicepoolHelper import SettingsDevicepoolHelper
-from mapadroid.db.model import SettingsDevicepool
+from mapadroid.db.helper.SettingsDevicepoolHelper import \
+    SettingsDevicepoolHelper
+from mapadroid.db.model import AuthLevel, SettingsDevicepool
 from mapadroid.db.resource_definitions.Devicepool import Devicepool
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint, expand_context
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header, expand_context)
 
 
 class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
@@ -18,7 +20,7 @@ class SettingsPoolEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         self._identifier: Optional[str] = self.request.query.get("id")
         if self._identifier:

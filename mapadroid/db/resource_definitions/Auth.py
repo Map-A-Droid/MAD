@@ -16,6 +16,14 @@ class Auth:
                     "description": "Password of device",
                     "expected": str
                 }
+            },
+            "auth_level": {
+                "settings": {
+                    "type": "select",
+                    "expected": int,
+                    "require": True,
+                    "description": "The permissions for the credentials. MADMIN allows full access to the settings!"
+                }
             }
         }
     }

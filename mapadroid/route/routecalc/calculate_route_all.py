@@ -1,16 +1,33 @@
+import asyncio
 import math
+import platform
+from concurrent.futures import ProcessPoolExecutor
 from typing import List
 
 import numpy as np
-from loguru import logger
 
+from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import RoutecalculationTypes
+from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
+from mapadroid.utils.madGlobals import RoutecalculationTypes, application_args
 
-try:
-    from ortools.constraint_solver import pywrapcp, routing_enums_pb2
-except Exception:
-    pass
+logger = get_logger(LoggerEnums.routecalc)
+
+
+def is_or_tools_available() -> bool:
+    or_tools_available: bool = False
+    if platform.architecture()[0] == "64bit":
+        try:
+            from ortools.constraint_solver import pywrapcp, routing_enums_pb2
+            pywrapcp
+            routing_enums_pb2
+        except Exception:
+            pass
+        else:
+            or_tools_available = True
+    else:
+        logger.info("OR Tools not available since the system is running {}", platform.architecture()[0])
+    return or_tools_available
 
 
 def create_data_model(less_coordinates):
@@ -55,7 +72,18 @@ def format_solution(manager, routing, solution):
     return route_through_nodes
 
 
+def _run_in_process_executor(method, less_coordinates, route_name):
+    # Utility method to init logging in process executor...
+    init_logging(application_args, print_info=False)
+    try:
+        return method(less_coordinates, route_name)
+    except Exception as e:
+        logger.critical("Failed calculating route: {}", e)
+        logger.exception(e)
+
+
 def route_calc_ortools(less_coordinates, route_name):
+    from ortools.constraint_solver import pywrapcp, routing_enums_pb2
     data = create_data_model(less_coordinates)
 
     # Create the routing index manager.
@@ -91,24 +119,21 @@ def route_calc_ortools(less_coordinates, route_name):
     return format_solution(manager, routing, solution)
 
 
-def route_calc_all(coords: List[Location], route_name, algorithm: RoutecalculationTypes):
+async def route_calc_all(coords: List[Location], route_name, algorithm: RoutecalculationTypes):
     # check to see if we can use OR-Tools to perform our routecalc
     coords_for_calc = np.zeros(shape=(len(coords), 2))
     for i in range(len(coords)):
         coords_for_calc[i][0] = coords[i].lat
         coords_for_calc[i][1] = coords[i].lng
-    import platform
-    if platform.architecture()[
-        0] == "64bit" and algorithm == RoutecalculationTypes.OR_TOOLS:  # OR-Tools is only available for 64bit python
-        logger.debug("64-bit python detected, checking if we can use OR-Tools")
-        try:
-            pywrapcp
-            routing_enums_pb2
-        except Exception:
-            logger.debug("OR-Tools not available, using MAD routecalc")
-        else:
+    loop = asyncio.get_running_loop()
+    with ProcessPoolExecutor() as executor:
+        if is_or_tools_available() and algorithm.OR_TOOLS:
             logger.debug("Using OR-Tools for routecalc")
-            return route_calc_ortools(coords_for_calc, route_name)
-    logger.debug("Using MAD quick routecalc")
-    from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
-    return route_calc_impl(coords_for_calc, route_name)
+            sol_best = await loop.run_in_executor(
+                executor, _run_in_process_executor, route_calc_ortools, coords_for_calc, route_name)
+        else:
+            logger.debug("Using MAD quick routecalc")
+            sol_best = await loop.run_in_executor(
+                executor, _run_in_process_executor, route_calc_impl, coords_for_calc, route_name)
+    logger.debug("Solution has {} coordinates", len(sol_best))
+    return sol_best

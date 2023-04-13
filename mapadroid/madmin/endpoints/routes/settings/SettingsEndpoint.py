@@ -1,6 +1,8 @@
 from aiohttp.abc import Request
 
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 
 
 class SettingsEndpoint(AbstractMadminRootEndpoint):
@@ -11,6 +13,6 @@ class SettingsEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         await self._redirect(self._url_for("settings_devices"))

@@ -3,6 +3,8 @@ from typing import NamedTuple, Optional, Set, Tuple
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
     AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
@@ -21,8 +23,6 @@ from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import QuestLayer, WrongAreaInWalker
 from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.worker.WorkerState import WorkerState
-from mapadroid.worker.WorkerType import WorkerType
 from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.strategy.NopStrategy import NopStrategy
@@ -38,6 +38,8 @@ from mapadroid.worker.strategy.quest.ARQuestLayerStrategy import \
     ARQuestLayerStrategy
 from mapadroid.worker.strategy.quest.NonARQuestLayerStrategy import \
     NonARQuestLayerStrategy
+from mapadroid.worker.WorkerState import WorkerState
+from mapadroid.worker.WorkerType import WorkerType
 
 
 class WalkerConfiguration(NamedTuple):
@@ -49,7 +51,8 @@ class WalkerConfiguration(NamedTuple):
 
 class StrategyFactory:
     def __init__(self, args, mapping_manager: MappingManager, mitm_mapper: AbstractMitmMapper,
-                 stats_handler: AbstractStatsHandler, db_wrapper: DbWrapper, pogo_windows: PogoWindows, event):
+                 stats_handler: AbstractStatsHandler, db_wrapper: DbWrapper, pogo_windows: PogoWindows, event,
+                 account_handler: AbstractAccountHandler):
         self.__args = args
         self.__mapping_manager: MappingManager = mapping_manager
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
@@ -58,6 +61,7 @@ class StrategyFactory:
         self.__pogo_windows: PogoWindows = pogo_windows
         self.__event = event
         self.__register_lock: asyncio.Lock = asyncio.Lock()
+        self.__account_handler: AbstractAccountHandler = account_handler
 
     async def get_strategy_using_settings(self, origin: str, enable_configmode: bool,
                                           communicator: AbstractCommunicator,
@@ -107,12 +111,11 @@ class StrategyFactory:
                            communicator: AbstractCommunicator,
                            walker_settings: Optional[SettingsWalkerarea],
                            worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
+        worker_state.area_id = area_id
         strategy: Optional[AbstractWorkerStrategy] = None
-        word_to_screen_matching: WordToScreenMatching = await WordToScreenMatching.create(communicator=communicator,
-                                                                                          pogo_win_manager=self.__pogo_windows,
-                                                                                          origin=worker_state.origin,
-                                                                                          resocalc=worker_state.resolution_calculator,
-                                                                                          mapping_mananger=self.__mapping_manager)
+        word_to_screen_matching: WordToScreenMatching = await WordToScreenMatching.create(
+            communicator=communicator, worker_state=worker_state, mapping_mananger=self.__mapping_manager,
+            account_handler=self.__account_handler)
         if not worker_type or worker_type in [WorkerType.UNDEFINED, WorkerType.CONFIGMODE, WorkerType.IDLE]:
             logger.info("Either no valid worker type or idle was passed, creating idle strategy.")
             strategy = NopStrategy(area_id=area_id,
@@ -268,7 +271,8 @@ class StrategyFactory:
 
         while not pre_check_value(walker_settings, self.__event.get_current_event_id(), location,
                                   await self._get_amount_of_registered_workers(origin, walker_settings),
-                                  await self._get_amount_of_coords_scannable(walker_settings)) \
+                                  await self._get_amount_of_coords_scannable(walker_settings),
+                                  await self._get_worker_rounds_run_through(walker_settings)) \
                 and client_mapping.walker_area_index < len(client_mapping.walker_areas):
             logger.info('not using area {} - Walkervalue out of range',
                         await self.__mapping_manager.routemanager_get_name(walker_settings.area_id))
@@ -304,6 +308,7 @@ class StrategyFactory:
         await self.__mapping_manager.set_devicesetting_value_of(origin, MappingManagerDevicemappingKey.FINISHED,
                                                                 False)
         client_mapping.walker_area_index = 0
+        # TODO: Reset rounds of routemanagers or handle it differently somehow?
 
     async def __area_middle_of_fence(self, walker_settings: SettingsWalkerarea):
         geofence_helper: Optional[GeofenceHelper] = await self.__mapping_manager.routemanager_get_geofence_helper(
@@ -340,3 +345,8 @@ class StrategyFactory:
             await self.__mapping_manager.set_devicesetting_value_of(origin,
                                                                     MappingManagerDevicemappingKey.LAST_LOCATION,
                                                                     Location(0.0, 0.0))
+
+    async def _get_worker_rounds_run_through(self, walker_settings: SettingsWalkerarea) -> int:
+        rounds: Optional[int] = await self.__mapping_manager.routemanager_get_rounds(
+            walker_settings.area_id)
+        return rounds if rounds is not None else 0

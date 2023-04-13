@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Union
 
 import sqlalchemy
-from redis import Redis
 from bitstring import BitArray
+from redis import Redis
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -981,7 +981,7 @@ class DbPogoProtoSubmit:
                 await TrsS2CellHelper.insert_update_cell(session, cell)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.debug("Failed committing cell {} ({})", cell_id, str(e))
-                await self._cache.set(cache_key, 1, ex=1)
+                await self._cache.set(cell_cache_key, 1, ex=1)
 
     async def _handle_single_incident(self, session: AsyncSession,
                                       stop_id: str,
@@ -992,7 +992,7 @@ class DbPogoProtoSubmit:
         incident_id: Optional[str] = incident_data.get("incident_id")
         if incident_id is None or len(incident_id.strip()) == 0:
             return
-        logger.debug("Handling incident '{}': {}", incident_id, incident_data)
+        logger.debug2("Handling incident '{}': {}", incident_id, incident_data)
         incident: Optional[PokestopIncident] = await PokestopIncidentHelper.get(session,
                                                                                 stop_id,
                                                                                 incident_id)
@@ -1022,7 +1022,6 @@ class DbPogoProtoSubmit:
                 logger.debug("Adding or updating incident {}", incident_id)
                 session.add(incident)
                 await nested_transaction.commit()
-                logger.info("Called commit of {}", incident_id)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing incident {} for pokestop {} ({})",
                                incident_id, stop_id, str(e))

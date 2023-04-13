@@ -7,7 +7,15 @@
 {% block scripts %}
 {{ super() }}
 <script type="text/javascript" src="{{ static('js/madmin_settings.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet"/>
+
 <script>
+var auth_levels = [
+    {% for enum_entry in auth_levels %}
+        "{{ enum_entry.name }}",
+    {% endfor %}
+]
 $(document).ready(function () {
     $("#submit").click(function() {
         loadingBlockUI('Saving {{ subtab }}');
@@ -18,7 +26,23 @@ $(document).ready(function () {
         } else {
             process_api_request("{{ uri }}", "{{ method }}", "{{ redirect }}");
         }
+
     });
+
+    $(".auth_level").select2({
+      data: auth_levels,
+      escapeMarkup: function (m) {
+          return m;
+      }
+    });
+
+    var authLevels = "{{ auth_level_set }}"
+    if (authLevels != "") {
+        authLevels = authLevels.toString().replace(/\s/g, "").split(",")
+        $('.auth_level').val(authLevels);
+        $('.auth_level').trigger('change');
+
+    }
 });
 </script>
 {% endblock %}
@@ -31,16 +55,32 @@ $(document).ready(function () {
 
 <div class="row">
   <div class="col-sm">
-    <div class="form-group">
-      <label for="username">username</label>
-      <input type="input" class="form-control" id="username" name="username" value="{{ element.username }}" data-default="{{ element.username }}">
-      <small class="form-text text-muted">Username</small>
-    </div>
-    <div class="form-group">
-      <label for="password">password</label>
-      <input type="input" class="form-control" id="password" name="password" value="{{ element.password }}" data-default="{{ element.password }}">
-      <small class="form-text text-muted">Password</small>
-    </div>
+
+    {% for key, field in settings_vars.fields|dictsort %}
+        {% if key not in [] %}
+            <div class="form-group">
+                <label for="{{ key }}">{{ key }}</label>
+                {% if field.settings.type == "option" %}
+                    <select class="form-control" name="{{ key }}" data-default="{{ element[key] }}">
+                            {% for option in field.settings["values"] %}
+                                <option value="{{ option }}"{% if element and key in element.__dict__ %}
+                                    {{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
+                            {% endfor %}
+                        </select>
+                {% elif field.settings.type == "select" %}
+                    <select class="form-control {{ key }}" data-default="
+                            {% if element is none and "default" in field.settings %}
+                            {{ field.settings.default }}
+                            {% elif element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}"
+                            name="{{ key }}" setting='true' multiple="multiple"></select>
+                {% else %}
+                        <input type="{{ field.type }}" name="{{ key }}" data-default="{{ element[key] }}" {{ 'required=true' if field.settings.require }}
+                               class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
+                {% endif %}
+                <small class="form-text text-muted">{{ field.settings.description }}</small>
+            </div>
+        {% endif %}
+    {% endfor %}
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
   </div>
 </div>

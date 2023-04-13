@@ -3,8 +3,9 @@ from typing import Dict, Optional
 from aiohttp.abc import Request
 
 from mapadroid.db.helper import SettingsRoutecalcHelper
-from mapadroid.db.model import SettingsArea, SettingsRoutecalc
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.model import AuthLevel, SettingsArea, SettingsRoutecalc
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 
 
 class RecalcStatusEndpoint(AbstractMadminRootEndpoint):
@@ -15,7 +16,7 @@ class RecalcStatusEndpoint(AbstractMadminRootEndpoint):
     def __init__(self, request: Request):
         super().__init__(request)
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         recalc = []
         areas: Dict[int, SettingsArea] = await self._get_db_wrapper().get_all_areas(self._session)

@@ -1,14 +1,20 @@
-from typing import Optional, Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 from aiocache import cached
 
-from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import GetAllLoadedOriginsResponse, \
-    GetAllLoadedOriginsRequest, GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse, \
-    GetAllowedAuthenticationCredentialsRequest, GetAllowedAuthenticationCredentialsResponse, \
-    IsRoutemanagerOfOriginLevelmodeRequest, IsRoutemanagerOfOriginLevelmodeResponse, \
-    GetQuestLayerToScanOfOriginResponse, GetQuestLayerToScanOfOriginRequest
-from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import MappingManagerStub
-from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
+from mapadroid.db.model import SettingsAuth
+from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import (
+    AuthCredentialEntry, GetAllLoadedOriginsRequest,
+    GetAllLoadedOriginsResponse, GetAllowedAuthenticationCredentialsRequest,
+    GetAllowedAuthenticationCredentialsResponse,
+    GetQuestLayerToScanOfOriginRequest, GetQuestLayerToScanOfOriginResponse,
+    GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse,
+    IsRoutemanagerOfOriginLevelmodeRequest,
+    IsRoutemanagerOfOriginLevelmodeResponse)
+from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import \
+    MappingManagerStub
+from mapadroid.mapping_manager.AbstractMappingManager import \
+    AbstractMappingManager
 
 
 class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
@@ -30,14 +36,19 @@ class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
         return item_ids
 
     @cached(ttl=360)
-    async def get_auths(self) -> Optional[Dict[str, str]]:
+    async def get_auths(self) -> Dict[str, SettingsAuth]:
         request = GetAllowedAuthenticationCredentialsRequest()
         response: GetAllowedAuthenticationCredentialsResponse = await self.GetAllowedAuthenticationCredentials(request)
 
-        auths: Dict[str, str] = {}
+        auths: Dict[str, SettingsAuth] = {}
         for username in response.allowed_credentials:
-            auths[username] = response.allowed_credentials[username]
-        return auths if auths else None
+            auth_credential_entry: AuthCredentialEntry = response.allowed_credentials[username]
+            local_auth_entry: SettingsAuth = SettingsAuth()
+            local_auth_entry.username = auth_credential_entry.username
+            local_auth_entry.password = auth_credential_entry.password
+            local_auth_entry.auth_level = auth_credential_entry.auth_level
+            auths[username] = local_auth_entry
+        return auths
 
     @cached(ttl=10)
     async def routemanager_of_origin_is_levelmode(self, origin: str) -> bool:

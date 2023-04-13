@@ -95,9 +95,3 @@ class SettingsDeviceHelper:
         stmt = select(SettingsDevice).where(SettingsDevice.pool_id == pool.pool_id)
         result = await session.execute(stmt)
         return result.scalars().all()
-
-    @staticmethod
-    async def get_by_google_login(session: AsyncSession, username: str) -> Optional[SettingsDevice]:
-        stmt = select(SettingsDevice).where(SettingsDevice.ggl_login_mail == username)
-        result = await session.execute(stmt)
-        return result.scalars().first()

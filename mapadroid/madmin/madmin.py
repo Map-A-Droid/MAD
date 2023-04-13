@@ -7,6 +7,7 @@ from aiohttp import web
 from aiohttp.web_runner import TCPSite, UnixSite
 
 import mapadroid
+from mapadroid.account_handler import AbstractAccountHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
@@ -32,10 +33,10 @@ from mapadroid.madmin.endpoints.routes.statistics import \
     register_routes_statistics_endpoints
 from mapadroid.mapping_manager import MappingManager
 from mapadroid.updater.updater import DeviceUpdater
+from mapadroid.utils.aiohttp.XPathForwardedFor import XPathForwarded
 from mapadroid.utils.JinjaFilters import (base64Filter, mad_json_filter,
                                           static_forwarded, subapp_static,
                                           subapp_url, url_for_forwarded)
-from mapadroid.utils.aiohttp.XPathForwardedFor import XPathForwarded
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
 from mapadroid.utils.questGen import QuestGen
@@ -46,7 +47,8 @@ logger = get_logger(LoggerEnums.madmin)
 
 class MADmin(object):
     def __init__(self, db_wrapper: DbWrapper, ws_server: WebsocketServer, mapping_manager: MappingManager,
-                 device_updater: DeviceUpdater, storage_obj, quest_gen: QuestGen):
+                 device_updater: DeviceUpdater, storage_obj, quest_gen: QuestGen,
+                 account_handler: AbstractAccountHandler):
         # Determine if there are duplicate MACs
         self._quest_gen: QuestGen = quest_gen
         self._db_wrapper: DbWrapper = db_wrapper
@@ -55,7 +57,8 @@ class MADmin(object):
         self._storage_obj = storage_obj
         self._device_updater: DeviceUpdater = device_updater
         self._ws_server: WebsocketServer = ws_server
-        self._plugin_hotlink: list = []
+        self._account_handler: AbstractAccountHandler = account_handler
+        self._plugin_hotlink: List[Dict] = []
         self.__init_app()
 
     # @logger.catch()
@@ -109,6 +112,7 @@ class MADmin(object):
         self._app["storage_obj"] = self._storage_obj
         self._app['device_updater'] = self._device_updater
         self._app['quest_gen'] = self._quest_gen
+        self._app['account_handler'] = self._account_handler
         self._app['mon_name_cache'] = {}
 
         if application_args.enable_x_forwarded_path_madmin:

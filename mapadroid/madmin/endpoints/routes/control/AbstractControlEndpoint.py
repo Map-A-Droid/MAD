@@ -3,15 +3,19 @@ import os
 from abc import ABC
 from typing import Optional
 
-from PIL import Image
 from aiohttp.abc import Request
 from loguru import logger
+from PIL import Image
 
 import mapadroid
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.madmin.functions import generate_device_screenshot_path
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
-from mapadroid.mapping_manager.MappingManagerDevicemappingKey import MappingManagerDevicemappingKey
+from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
+    MappingManagerDevicemappingKey
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.functions import creation_date, image_resize
 from mapadroid.utils.madGlobals import ScreenshotType
@@ -26,6 +30,10 @@ class AbstractControlEndpoint(AbstractMadminRootEndpoint, ABC):
         super().__init__(request)
         # TODO: ADB-Connect should be instantiated and passed using the aiohttp-server dict...
         self._adb_connect = ADBConnect(self._get_mad_args())
+
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
+    async def _iter(self):
+        return await super()._iter()
 
     async def _take_screenshot(self):
         origin: Optional[str] = self.request.query.get("origin")

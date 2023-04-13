@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.collections import Location
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.madGlobals import ScreenshotType
 
 
@@ -184,3 +184,21 @@ class AbstractCommunicator(ABC):
         Returns:
 
         """
+
+    @abstractmethod
+    async def get_external_ip(self) -> str:
+        """
+
+        Returns: the external IP address of the device
+
+        """
+        pass
+
+    @abstractmethod
+    async def get_ptc_status(self) -> Optional[int]:
+        """
+
+        Returns: The HTTP status code of the API of PTC
+
+        """
+        pass

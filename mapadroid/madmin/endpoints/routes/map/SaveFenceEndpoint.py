@@ -1,8 +1,9 @@
 from typing import Optional
 
 from mapadroid.db.helper.SettingsGeofenceHelper import SettingsGeofenceHelper
-from mapadroid.db.model import SettingsGeofence
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
+from mapadroid.db.model import AuthLevel, SettingsGeofence
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 
 
 class SaveFenceEndpoint(AbstractMadminRootEndpoint):
@@ -10,7 +11,7 @@ class SaveFenceEndpoint(AbstractMadminRootEndpoint):
     "/savefence"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def post(self):
         name: Optional[str] = self._request.query.get("name")
         coords: Optional[str] = self._request.query.get("coords")

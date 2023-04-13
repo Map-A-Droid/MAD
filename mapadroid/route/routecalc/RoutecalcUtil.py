@@ -1,15 +1,17 @@
 import asyncio
 import concurrent.futures
-from typing import List, Tuple, Optional
+from timeit import default_timer as timer
+from typing import List, Optional, Tuple
 
 from loguru import logger
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper import SettingsRoutecalcHelper
 from mapadroid.db.model import SettingsRoutecalc
+from mapadroid.route.routecalc.calculate_route_all import route_calc_all
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.madGlobals import RoutecalculationTypes
 
 
@@ -65,15 +67,9 @@ class RoutecalcUtil:
             logger.debug("less than 3 coordinates... not gonna take a shortest route on that")
         else:
             logger.info("Calculating a short route through all those coords. Might take a while")
-            from timeit import default_timer as timer
             start = timer()
-            from mapadroid.route.routecalc.calculate_route_all import \
-                route_calc_all
-            loop = asyncio.get_running_loop()
-            with concurrent.futures.ProcessPoolExecutor() as pool:
-                sol_best = await loop.run_in_executor(
-                    pool, route_calc_all, calculated_route, route_name, algorithm)
 
+            sol_best = await route_calc_all(calculated_route, route_name, algorithm)
             end = timer()
 
             calc_dur = (end - start) / 60

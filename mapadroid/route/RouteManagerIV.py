@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsAreaIvMitm, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -40,6 +41,9 @@ class RouteManagerIV(SubrouteReplacingMixin, RouteManagerBase):
         self._settings: SettingsAreaIvMitm = area
         self.starve_route: bool = True
         self.remove_from_queue_backlog: int = area.remove_from_queue_backlog
+
+    def purpose(self) -> AccountPurpose:
+        return AccountPurpose.IV
 
     async def _any_coords_left_after_finishing_route(self) -> bool:
         return True

@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import AccountPurpose
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.model import SettingsAreaIdle, SettingsRoutecalc
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -23,6 +24,9 @@ class RouteManagerIdle(SubrouteReplacingMixin, RouteManagerBase):
                                   initial_prioq_strategy=None)
         self._settings: SettingsAreaIdle = area
         self.remove_from_queue_backlog = None
+
+    def purpose(self) -> AccountPurpose:
+        return AccountPurpose.MON_RAID
 
     async def _any_coords_left_after_finishing_route(self):
         self._init_route_queue()

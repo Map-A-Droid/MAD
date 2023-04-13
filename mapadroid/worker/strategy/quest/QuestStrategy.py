@@ -20,10 +20,10 @@ from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
+from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.helper.TrsQuestHelper import TrsQuestHelper
-from mapadroid.db.helper.TrsStatusHelper import TrsStatusHelper
 from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
-                                SettingsWalkerarea, TrsStatus)
+                                SettingsPogoauth, SettingsWalkerarea)
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
@@ -34,6 +34,8 @@ from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import (calculate_cooldown,
                                               determine_current_quest_layer)
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.global_variables import (MIN_LEVEL_IV,
+                                              QUEST_WALK_SPEED_CALCULATED)
 from mapadroid.utils.madConstants import (FALLBACK_MITM_WAIT_TIMEOUT,
                                           STOP_SPIN_DISTANCE, TIMESTAMP_NEVER)
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
@@ -250,10 +252,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         # Calculate distance to the previous location and wait for the time needed. This also applies to "walking"
         #  since walking above a given speed may result in softbans as well
         delay_to_avoid_softban: int = 0
-        speed = 16.67  # Speed can be 60 km/h up to distances of 3km
         delay_to_avoid_softban, distance = await self._calculate_remaining_softban_avoidance_duration(cur_time,
                                                                                                       delay_to_avoid_softban,
-                                                                                                      distance, speed)
+                                                                                                      distance,
+                                                                                                      QUEST_WALK_SPEED_CALCULATED)
         if delay_to_avoid_softban == 0:
             last_action_time: Optional[int] = await self.get_devicesettings_value(MappingManagerDevicemappingKey
                                                                                   .LAST_ACTION_TIME, None)
@@ -265,7 +267,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 logger.info('Starting fresh round - using lower delay')
                 # Take into account trs_status possible softban
             else:
-                delay_to_avoid_softban = calculate_cooldown(distance, speed)
+                delay_to_avoid_softban = calculate_cooldown(distance, QUEST_WALK_SPEED_CALCULATED)
         if delay_to_avoid_softban > 0 and delay_to_avoid_softban > delay_used:
             delay_used = delay_to_avoid_softban
 
@@ -310,33 +312,43 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def _calculate_remaining_softban_avoidance_duration(self, cur_time, delay_to_avoid_softban, distance, speed):
         async with self._db_wrapper as session, session:
-            status: Optional[TrsStatus] = await TrsStatusHelper.get(session, self._worker_state.device_id)
-            if status and status.last_softban_action and status.last_softban_action_location:
+            if self._worker_state.active_account and self._worker_state.active_account.last_softban_action \
+                    and self._worker_state.active_account.last_softban_action_location:
                 logger.debug("Checking DB for last softban action")
-                last_action_location: Location = Location(status.last_softban_action_location[0],
-                                                          status.last_softban_action_location[1])
+                last_action_location: Location = Location(self._worker_state.active_account.last_softban_action_location[0],
+                                                          self._worker_state.active_account.last_softban_action_location[1])
                 distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
                                                                             last_action_location.lng,
                                                                             self._worker_state.current_location.lat,
                                                                             self._worker_state.current_location.lng)
                 delay_to_last_action = calculate_cooldown(distance_last_action, speed)
-                logger.debug("Last registered softban was at {} at {}", status.last_softban_action,
-                             status.last_softban_action_location)
-                if status.last_softban_action.timestamp() + delay_to_last_action > cur_time:
+                logger.debug("Last registered softban was at {} at {}", self._worker_state.active_account.last_softban_action,
+                             self._worker_state.active_account.last_softban_action_location)
+                if self._worker_state.active_account.last_softban_action.timestamp() + delay_to_last_action > cur_time:
                     logger.debug("Last registered softban requires further cooldown")
-                    delay_to_avoid_softban = cur_time - status.last_softban_action.timestamp() + delay_to_last_action
+                    delay_to_avoid_softban = cur_time - self._worker_state.active_account\
+                        .last_softban_action.timestamp() + delay_to_last_action
                     distance = distance_last_action
                 else:
                     logger.debug("Last registered softban action long enough in the past")
+            else:
+                logger.warning("Missing assignment of pogoauth to device {} ({}) or no last known softban action",
+                               self._worker_state.origin, self._worker_state.device_id)
         return delay_to_avoid_softban, distance
 
     async def _rotate_account_after_moving_locations_if_applicable(self, delay_used: int) -> int:
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.SCREENDETECTION, True) and \
-                await self._word_to_screen_matching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
+                delay_used >= self._rotation_waittime \
                 and await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION,
                                                         False) and not await self._is_levelmode():
-            # Waiting time to long and more then one account - switch! (not level mode!!)
+            # Waiting time too long and more than one account - switch! (not level mode!!)
             logger.info('Can use more than 1 account - switch & no cooldown')
+            await self.switch_account()
+            delay_used = -1
+        elif await self._is_levelmode() and await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV:
+            logger.info('Levelmode: Account of {} is level {}, i.e., >= {}, switching to next to level',
+                        self._worker_state.origin,
+                        await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV, MIN_LEVEL_IV)
             await self.switch_account()
             delay_used = -1
         return delay_used

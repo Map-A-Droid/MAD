@@ -47,7 +47,28 @@ $(document).ready(function () {
     } else {
         $('#no-configured-elements').hide();
     }
-}
+  }
+  $(".genTooltip").each(function() {
+    var _burntype = $(this).data("burntype");
+    if (_burntype == "maintenance") {
+      var _MAIN_TIME = $(this).data("burnsleep");
+      var _burntime_str = $(this).data("burntime");
+      var _burntime = moment.utc(_burntime_str);
+      var _past_main = _burntime.clone().add(_MAIN_TIME, "hours");
+
+      var _title = "Type: " + _burntype + "<br/>" + "Timestamp: " + _burntime_str + " (" + _burntime.fromNow() + ")";
+      if (moment.utc().isAfter(_past_main)) {
+        $(this).removeClass("genTooltip").addClass("fas fa-flag");
+        _title += "<br />Status: Ready to use"
+      } else {
+        $(this).removeClass("genTooltip").addClass("fas fa-hourglass-half");
+        _title += "<br />Status: Cooldown"
+     }
+     $(this).tooltip({placement: "bottom", title: _title, html: true});
+    } else {
+       // nothing for now, probably handle BAN if ever happens (-:
+    }
+   });
 </script>
 {% endblock %}
 
@@ -66,9 +87,11 @@ $(document).ready(function () {
       <thead>
         <tr>
           <th style="width: 15%" class="align-middle">Type <i class="fas fa-info-circle" data-toggle="tooltip" title="Login Type"></th>
-          <th style="width: 35%" class="align-middle">Username <i class="fas fa-info-circle" data-toggle="tooltip" title="Username for the login"></th>
-          <th style="width: 35%" class="align-middle">Device <i class="fas fa-info-circle" data-toggle="tooltip" title="Device assigned to this login"></th>
-          <th style="width: 15%" class="text-right align-middle"><a href='{{ url('settings_pogoauth', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
+          <th style="width: 30%" class="align-middle">Username <i class="fas fa-info-circle" data-toggle="tooltip" title="Username for the login"></th>
+          <th style="width: 30%" class="align-middle">Device <i class="fas fa-info-circle" data-toggle="tooltip" title="Device assigned to this login"></th>
+          <th style="width: 10%" class="text-center align-middle">Level <i class="fas fa-info-circle" data-toggle="tooltip" title="Account in-game level, 8 for raids, 30 for mons/quests"></th>
+          <th style="width: 5%" class="text-center align-middle"></th>
+          <th style="width: 10%" class="text-right align-middle"><a href='{{ url('settings_pogoauth', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
       {% if auth is none %}
@@ -87,6 +110,15 @@ $(document).ready(function () {
             {% if auth.device_id %}
              <a href="{{ url('settings_devices', query_={'id': auth.account_id }) }}">{{ devices[auth.device_id].name }}</a>
             {% endif %}
+          </td>
+          <td class="text-center align-middle">
+            {{ auth.level }}
+          </td>
+          <td class="text-center align-middle">
+              {% if auth.last_burn_type is not none %}
+                  <i class="genTooltip" data-burnsleep="{{ MAINTENANCE_COOLDOWN_HOURS }}" data-burntype="{{ auth.last_burn_type }}" data-burntime="{{ auth.last_burn }}" aria-hidden="true"></i>
+              {% endif %}
+          </td>
           <td class="text-right align-middle">
             <a href="{{ redirect }}?id={{ auth_id }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
               <button data-identifier='{{ auth_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>

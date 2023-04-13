@@ -1,5 +1,8 @@
-from typing import Optional, Dict
+from typing import Dict, Optional
 
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    check_authorization_header
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
@@ -10,7 +13,7 @@ class GetWorkersEndpoint(AbstractControlEndpoint):
     "/get_workers"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         positions = []
         devicemappings: Optional[

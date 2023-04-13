@@ -1,10 +1,10 @@
 from typing import Dict, Optional, Tuple
 
 from mapadroid.db.helper.PokestopHelper import PokestopHelper
-from mapadroid.db.model import Pokestop, TrsQuest
+from mapadroid.db.model import AuthLevel, Pokestop, TrsQuest
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.madmin.AbstractMadminRootEndpoint import \
-    AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.madmin.functions import (generate_coords_from_geofence,
                                         get_bound_params)
 from mapadroid.utils.collections import Location
@@ -16,7 +16,7 @@ class GetQuestsEndpoint(AbstractMadminRootEndpoint):
     "/get_quests"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         quests = []
 

@@ -5,6 +5,8 @@ from typing import List, Optional
 
 from loguru import logger
 
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
     AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
@@ -31,7 +33,7 @@ class InProcessMitmDataProcessorManager(AbstractMitmDataProcessingManager, Proce
      a shared queue.
     """
     def __init__(self, mitm_mapper: AbstractMitmMapper, stats_handler: AbstractStatsHandler, db_wrapper: DbWrapper,
-                 quest_gen: QuestGen):
+                 quest_gen: QuestGen, account_handler: AbstractAccountHandler):
         super(InProcessMitmDataProcessorManager, self).__init__()
         super(Process, self).__init__()
         self._worker_threads: List[Task] = []
@@ -39,6 +41,7 @@ class InProcessMitmDataProcessorManager(AbstractMitmDataProcessingManager, Proce
         self._stats_handler: AbstractStatsHandler = stats_handler
         self._db_wrapper = db_wrapper
         self._quest_gen: QuestGen = quest_gen
+        self._account_handler: AbstractAccountHandler = account_handler
 
     def run(self):
         try:
@@ -63,6 +66,7 @@ class InProcessMitmDataProcessorManager(AbstractMitmDataProcessingManager, Proce
                 self._mitm_mapper,
                 self._db_wrapper,
                 self._quest_gen,
+                account_handler=self._account_handler,
                 name="DataProc-%s" % str(i))
             # TODO: Own thread/loop?
             self._worker_threads.append(loop.create_task(data_processor.run()))

@@ -54,6 +54,9 @@ def parse_args():
                         help='Name of MySQL Database')
     parser.add_argument('-dbps', '--db_poolsize', type=int, default=5,
                         help='Size of MySQL pool (open connections to DB). Default: 5')
+    parser.add_argument('-rati', '--restrict_accounts_to_instance', default=True, type=bool,
+                        help='Configure whether the settings_pogoauth entries (PTC or google accounts) should be '
+                             'fetched only for the active instance or globally. Default: true')
 
     # DB Cleanup
     parser.add_argument('-ci', '--cleanup_interval', type=int, default=300,
@@ -94,6 +97,8 @@ def parse_args():
                         help="Path to unix socket file to use if TCP is not to be used for MITMReceiver...")
     parser.add_argument('-xfwdpmitmr', '--enable_x_forwarded_path_mitm_receiver', default=False, type=bool,
                         help='Enable X-Fordward-Path allowance for reverse proxy usage for MITMReceiver. Default: False')
+    parser.add_argument('-insecure', '--insecure_auth', default=False, type=bool,
+                        help='Remove enforcing of auth for, e.g., MITMReceiver. Default: False')
 
     # MappingManager gRPC
     parser.add_argument('-mmgrip', '--mappingmanager_ip', required=False, default="127.0.0.1", type=str,
@@ -160,6 +165,9 @@ def parse_args():
                         help='Use this instance only for scanning')
     parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
                         help='Amount of threads/processes to be used for screenshot-analysis. Default: 2')
+    parser.add_argument('-otl', '--omp_thread_limit', type=int, default=None,
+                        help='Set the environment variable OMP_THREAD_LIMIT. This does not default, i.e., '
+                             'it is not set at all. Some environments apparently require limitation to 1')
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
     parser.add_argument('-cm', '--config_mode', action='store_true', default=False,
@@ -222,10 +230,8 @@ def parse_args():
                         help='MADmin web port (Default: 5000)')
     parser.add_argument('-mus', '--madmin_unix_socket', required=False, default=None, type=str,
                         help="Path to unix socket file to use if TCP is not to be used for MADmin...")
-    parser.add_argument('-mmuser', '--madmin_user', default='',
-                        help='Username for MADmin Frontend.')
-    parser.add_argument('-mmpassword', '--madmin_password', default='',
-                        help='Password for MADmin Frontend.')
+    parser.add_argument('-mmauth', '--madmin_enable_auth', type=bool, default=False,
+                        help='Enable demanding of credentials based on settings_auth.')
     parser.add_argument('-mmt', '--madmin_time', default='24',
                         help='MADmin clock format (12/24) (Default: 24)')
     parser.add_argument('-mmnrsp', '--madmin_noresponsive', action='store_false', default=True,
@@ -351,19 +357,44 @@ def parse_args():
                         help='MAD PoGo auth is not required during autoconfiguration',
                         dest='autoconfig_no_auth')
 
+    # PTC Login tracking
+    parser.add_argument('-ips', '--ip_service', default='https://ifconfig.me',
+                        help=('Host to use to request the external IPv4 address of the device. '
+                              'MAD will search for the first IPv4 address via regex.'))
+    parser.add_argument('-elt', '--enable_login_tracking', action='store_true', default=False,
+                        help='Enable tracking of login attempts to PTC')
+    parser.add_argument('-lth', '--login_tracking_host', type=str, default=None,
+                        help='Redis cache host for login tracking. If not specified, it will use the cache_host set '
+                             'for general redis caching. (Default: None).')
+    parser.add_argument('-ltp', '--login_tracking_port', default=6379,
+                        help='Redis cache port. If not specified along with login_tracking_host, it will use the cache_'
+                             'port and cache_host set for general redis caching. (Default: 6379).')
+    parser.add_argument('-ltu', '--login_tracking_username', default='',
+                        help='Redis username for login tracking')
+    parser.add_argument('-ltpwd', '--login_tracking_password', default='',
+                        help='Redis password for login tracking')
+    parser.add_argument('-ltdb', '--login_tracking_database', default=0,
+                        help=('Redis database used by login tracking. Use different numbers (0-15) '
+                              'if you are running multiple instances'))
+    parser.add_argument('-ltt', '--login_tracking_timeout', default=360,
+                        help=('Duration in seconds during which a login attempt is counting towards '
+                              '\'login_tracking_limit\'.'))
+    parser.add_argument('-ltl', '--login_tracking_limit', default=15,
+                        help='Max number of login attempts during \'login_tracking_timeout\'.')
+
     # Redis cache
     parser.add_argument('-ch', '--cache_host', default='127.0.0.1',
-                        help=('Redis host used by caching'))
+                        help='Redis host used by caching')
     parser.add_argument('-csock', '--cache_socket', required=False,
-                        help=('Unix Socket to connect to redis - replaces cache_host'))
+                        help='Unix Socket to connect to redis - replaces cache_host')
     parser.add_argument('-cp', '--cache_port', default=6379,
-                        help=('Redis port used by caching'))
+                        help='Redis port used by caching')
     parser.add_argument('-cu', '--cache_username', default=None,
-                        help=('Redis username'))
+                        help='Redis username')
     parser.add_argument('-cpwd', '--cache_password', default=None,
-                        help=('Redis password'))
+                        help='Redis password')
     parser.add_argument('-cdb', '--cache_database', default=0,
-                        help=('Redis database. Use different numbers (0-15) if you are running multiple instances'))
+                        help='Redis database. Use different numbers (0-15) if you are running multiple instances')
 
     parser.add_argument('-rrqk', '--redis_report_queue_key', default=None,
                         help='Redis key used to store reported value')

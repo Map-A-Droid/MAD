@@ -4,17 +4,21 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 import sqlalchemy
-from redis import Redis
 from loguru import logger
+from redis.asyncio import Redis
 from sqlalchemy.exc import IntegrityError
 
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
 from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
     AbstractMitmMapper
 from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
+from mapadroid.db.model import SettingsDevice
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.gamemechanicutil import determine_current_quest_layer
 from mapadroid.utils.madGlobals import (MitmReceiverRetry, MonSeenTypes,
@@ -24,7 +28,9 @@ from mapadroid.utils.questGen import QuestGen
 
 class SerializedMitmDataProcessor:
     def __init__(self, data_queue: asyncio.Queue, stats_handler: AbstractStatsHandler,
-                 mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper, quest_gen: QuestGen, name=None):
+                 mitm_mapper: AbstractMitmMapper, db_wrapper: DbWrapper, quest_gen: QuestGen,
+                 account_handler: AbstractAccountHandler,
+                 name=None):
         self.__queue: asyncio.Queue = data_queue
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
@@ -32,6 +38,7 @@ class SerializedMitmDataProcessor:
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
         self.__quest_gen: QuestGen = quest_gen
         self.__name = name
+        self.__account_handler: AbstractAccountHandler = account_handler
 
     async def run(self):
         logger.info("Starting serialized MITM data processor")
@@ -95,7 +102,6 @@ class SerializedMitmDataProcessor:
                         if data["payload"]["result"] == 1:
                             async with session.begin_nested() as nested_transaction:
                                 fort_id = data["payload"].get("fort_id", None)
-                                await TrsVisitedHelper.mark_visited(session, origin, fort_id)
                                 try:
                                     await nested_transaction.commit()
                                 except sqlalchemy.exc.IntegrityError as e:
@@ -381,14 +387,23 @@ class SerializedMitmDataProcessor:
         if await cache.exists(cache_key):
             return
         stats = data['inventory_delta'].get("inventory_items", None)
-        if len(stats) > 0:
-            for data_inventory in stats:
-                player_stats = data_inventory['inventory_item_data']['player_stats']
-                player_level = player_stats['level']
-                if int(player_level) > 0:
-                    logger.debug2('{{gen_player_stats}} saving new playerstats')
-                    await self.__mitm_mapper.set_level(origin, int(player_level))
-                    await self.__mitm_mapper.set_pokestop_visits(origin,
-                                                                 int(player_stats['poke_stop_visits']))
-                    await cache.set(cache_key, int(time.time()), ex=60)
-                    return
+        if not stats:
+            return
+        for data_inventory in stats:
+            player_stats = data_inventory['inventory_item_data']['player_stats']
+            player_level = player_stats['level']
+            if int(player_level) > 0:
+                logger.debug2('{{gen_player_stats}} saving new playerstats')
+                if await self.__mitm_mapper.get_level(origin) != player_level:
+                    # Update the player level in DB...
+                    async with self.__db_wrapper as session, session:
+                        device_entry: Optional[SettingsDevice] = await SettingsDeviceHelper.get_by_origin(
+                            session, self.__db_wrapper.get_instance_id(), origin)
+                        if device_entry:
+                            await self.__account_handler.set_level(device_id=device_entry.device_id,
+                                                                   level=player_level)
+                await self.__mitm_mapper.set_level(origin, int(player_level))
+                await self.__mitm_mapper.set_pokestop_visits(origin,
+                                                             int(player_stats['poke_stop_visits']))
+                await cache.set(cache_key, int(time.time()), ex=60)
+                return

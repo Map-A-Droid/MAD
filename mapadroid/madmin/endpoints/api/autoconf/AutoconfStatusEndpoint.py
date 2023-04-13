@@ -1,17 +1,22 @@
-from typing import List, Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from aiohttp import web
 
-from mapadroid.db.helper.AutoconfigRegistrationHelper import AutoconfigRegistrationHelper
+from mapadroid.db.helper.AutoconfigRegistrationHelper import \
+    AutoconfigRegistrationHelper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper, LoginType
-from mapadroid.db.model import AutoconfigRegistration, SettingsDevice, SettingsPogoauth
-from mapadroid.madmin.AbstractMadminRootEndpoint import AbstractMadminRootEndpoint
-from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
+from mapadroid.db.helper.SettingsPogoauthHelper import (LoginType,
+                                                        SettingsPogoauthHelper)
+from mapadroid.db.model import (AuthLevel, AutoconfigRegistration,
+                                SettingsDevice, SettingsPogoauth)
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.utils.autoconfig import origin_generator
+from mapadroid.utils.AutoConfIssueGenerator import AutoConfIssueGenerator
 
 
 class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self) -> web.Response:
         # TODO: Ensure int
         session_id: int = self.request.match_info.get('session_id')
@@ -22,6 +27,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
         else:
             raise web.HTTPNotFound()
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def post(self) -> web.Response:
         request_body: Dict = await self.request.json()
         status = 2
@@ -57,24 +63,16 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
                         return hopper_response
                     else:
                         device_entry = hopper_response
-                        is_hopper = True
                         await nested_transaction.commit()
-            assigned_to_device: List[SettingsPogoauth] = await SettingsPogoauthHelper \
-                .get_assigned_to_device(self._session, self._get_instance_id(), device_entry.device_id)
+            assigned_to_device: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
+                .get_assigned_to_device(self._session, device_entry.device_id)
             if not self._get_mad_args().autoconfig_no_auth and (not assigned_to_device):
-                try:
-                    auth_type = LoginType(device_entry.logintype)
-                except (KeyError, ValueError):
-                    auth_type = LoginType.GOOGLE
-                # Find one that matches authtype
                 unassigned_accounts: List[SettingsPogoauth] = await SettingsPogoauthHelper \
-                    .get_unassigned(self._session, self._get_instance_id(), auth_type)
+                    .get_unassigned(self._session, self._get_instance_id(), auth_type=None)
                 if not unassigned_accounts:
                     return await self._json_response(text="No configured emails", status=400)
                 auth: SettingsPogoauth = unassigned_accounts.pop()
                 auth.device_id = device_entry.device_id
-                if is_hopper and auth_type != LoginType.GOOGLE:
-                    auth.login_type = auth_type.value
                 self._save(auth)
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']
@@ -86,6 +84,7 @@ class AutoconfStatusEndpoint(AbstractMadminRootEndpoint):
         self._commit_trigger = True
         return await self._json_response(autoconf_reg)
 
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def delete(self) -> web.Response:
         # TODO: Ensure int
         session_id: int = self.request.match_info['session_id']

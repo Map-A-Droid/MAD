@@ -1,6 +1,6 @@
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
-logger = get_logger(LoggerEnums.routemanager)
+logger = get_logger(LoggerEnums.routecalc)
 
 
 def route_calc_impl(coords, route_name):

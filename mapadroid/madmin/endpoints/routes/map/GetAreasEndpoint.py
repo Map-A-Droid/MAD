@@ -1,5 +1,8 @@
 from typing import Dict, Optional
 
+from mapadroid.db.model import AuthLevel
+from mapadroid.madmin.AbstractMadminRootEndpoint import \
+    check_authorization_header
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.madmin.functions import get_geofences
@@ -11,7 +14,7 @@ class GetAreasEndpoint(AbstractControlEndpoint):
     "/get_areas"
     """
 
-    # TODO: Auth
+    @check_authorization_header(AuthLevel.MADMIN_ADMIN)
     async def get(self):
         areas: Optional[Dict[int, AreaEntry]] = await self._get_mapping_manager().get_areas()
         areas_sorted = sorted(areas, key=lambda x: areas[x].settings.name)

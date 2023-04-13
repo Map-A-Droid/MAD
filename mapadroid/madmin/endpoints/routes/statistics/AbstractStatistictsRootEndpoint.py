@@ -5,10 +5,10 @@ from aiohttp.abc import Request
 from loguru import logger
 
 from mapadroid.db.helper.TrsSpawnHelper import TrsSpawnHelper
-from mapadroid.db.model import TrsEvent, TrsSpawn
+from mapadroid.db.model import AuthLevel, TrsEvent, TrsSpawn
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.madmin.AbstractMadminRootEndpoint import \
-    AbstractMadminRootEndpoint
+from mapadroid.madmin.AbstractMadminRootEndpoint import (
+    AbstractMadminRootEndpoint, check_authorization_header)
 from mapadroid.madmin.functions import (generate_coords_from_geofence,
                                         get_geofences)
 
@@ -21,6 +21,10 @@ class AbstractStatisticsRootEndpoint(AbstractMadminRootEndpoint, ABC):
     def __init__(self, request: Request):
         super().__init__(request)
         self.outdatedays: int = self._get_mad_args().outdated_spawnpoints
+
+    @check_authorization_header([AuthLevel.MADMIN_ADMIN, AuthLevel.MADMIN_PUBLIC_PAGE])
+    async def _iter(self):
+        return await super()._iter()
 
     @staticmethod
     def _generate_mon_icon_url(mon_id, form=None, costume=None, shiny=False):

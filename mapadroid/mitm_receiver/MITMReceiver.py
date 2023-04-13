@@ -6,7 +6,10 @@ from aiohttp import web
 from aiohttp.web_runner import TCPSite, UnixSite
 from loguru import logger
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.account_handler.AbstractAccountHandler import \
+    AbstractAccountHandler
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mapping_manager import MappingManager
@@ -23,13 +26,14 @@ from mapadroid.utils.madGlobals import application_args
 class MITMReceiver:
     def __init__(self, mitm_mapper: AbstractMitmMapper, mapping_manager: MappingManager,
                  db_wrapper: DbWrapper, storage_obj: AbstractAPKStorage, data_queue: asyncio.Queue,
-                 name=None, enable_configmode: Optional[bool] = False):
+                 account_handler: AbstractAccountHandler):
         self.__mapping_manager: MappingManager = mapping_manager
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
         self._db_wrapper: DbWrapper = db_wrapper
         self._data_queue: asyncio.Queue = data_queue
         self._storage_obj: AbstractAPKStorage = storage_obj
         self._app: Optional[web.Application] = None
+        self._account_handler: AbstractAccountHandler = account_handler
 
         self.__mitmreceiver_startup_time: float = time.time()
 
@@ -50,6 +54,7 @@ class MITMReceiver:
         self._app['db_wrapper'] = self._db_wrapper
         self._app['mad_args'] = application_args
         self._app['mapping_manager'] = self.__mapping_manager
+        self._app['account_handler'] = self._account_handler
         self._app["mitm_mapper"] = self.__mitm_mapper
         self._app["mitmreceiver_startup_time"] = self.__mitmreceiver_startup_time
         self._app["data_queue"] = self._data_queue
