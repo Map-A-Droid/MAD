@@ -108,7 +108,7 @@ $(document).ready(function () {
           </td>
           <td>
             {% if auth.device_id %}
-             <a href="{{ url('settings_devices', query_={'id': auth.account_id }) }}">{{ devices[auth.device_id].name }}</a>
+             <a href="{{ url('settings_devices', query_={'id': auth.device_id }) }}">{{ devices[auth.device_id].name }}</a>
             {% endif %}
           </td>
           <td class="text-center align-middle">
