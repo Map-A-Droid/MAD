@@ -10,9 +10,7 @@ from mapadroid.db.model import AuthLevel, SettingsAuth
 
 
 def check_auth(logger, auth_header: Optional[str], auths: Dict[str, SettingsAuth]):
-    if auths is None:
-        return True
-    elif not auth_header:
+    if not auth_header or not auths:
         return False
     username: Optional[str] = None
     try:

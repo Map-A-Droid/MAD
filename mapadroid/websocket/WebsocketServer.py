@@ -318,7 +318,7 @@ class WebsocketServer(object):
                     except IndexError:
                         logger.warning("Client tried to connect without auth header")
                         return origin, False
-                if valid_auths and not check_auth(logger, auth_base64, valid_auths):
+                if not check_auth(logger, auth_base64, valid_auths):
                     return origin, False
         return origin, True
 
