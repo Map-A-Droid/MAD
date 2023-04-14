@@ -22,13 +22,13 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('settings_auth', sa.Column('auth_level', INTEGER(10, unsigned=True), server_default="0"))
     try:
         op.create_unique_constraint('unique_username', 'settings_auth', ['username'])
     except Exception as e:
         logger.error("Failed adding uniqueness constraint on settings_auth's username. "
                      "Please make sure a single username is only used once in the table.")
         sys.exit(1)
+    op.add_column('settings_auth', sa.Column('auth_level', INTEGER(10, unsigned=True), server_default="0"))
     with op.get_bind() as conn:
         conn.execute(
             sa.text(
