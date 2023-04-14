@@ -306,21 +306,21 @@ class WebsocketServer(object):
                 logger.warning("Register attempt of unknown origin ({}). Please create the device in MADmin and"
                                " click 'APPLY SETTINGS'", origin)
             return origin, False
-
-        async with self.__db_wrapper as session, session:
-            valid_auths: Dict[str, SettingsAuth] = await get_auths_for_levl(self.__db_wrapper,
-                                                                              AuthLevel.MITM_DATA)
-            auth_base64 = None
-            if valid_auths:
-                try:
-                    auth_base64 = str(
-                        websocket_client_connection.request_headers.get_all("Authorization")[0])
-                except IndexError:
-                    logger.warning("Client tried to connect without auth header")
+        if not self.__args.insecure_auth:
+            async with self.__db_wrapper as session, session:
+                valid_auths: Dict[str, SettingsAuth] = await get_auths_for_levl(self.__db_wrapper,
+                                                                                AuthLevel.MITM_DATA)
+                auth_base64 = None
+                if valid_auths:
+                    try:
+                        auth_base64 = str(
+                            websocket_client_connection.request_headers.get_all("Authorization")[0])
+                    except IndexError:
+                        logger.warning("Client tried to connect without auth header")
+                        return origin, False
+                if valid_auths and not check_auth(logger, auth_base64, valid_auths):
                     return origin, False
-            if valid_auths and not check_auth(logger, auth_base64, valid_auths):
-                return origin, False
-            return origin, True
+        return origin, True
 
     async def __client_message_receiver(self, origin: str, client_entry: WebsocketConnectedClientEntry) -> None:
         if client_entry is None:
