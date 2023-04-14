@@ -131,7 +131,9 @@ class WordToScreenMatching(object):
                 location_to_scan
             )
             if not account_to_use:
-                logger.error("No account to use found, are there too few accounts in DB or did MAD screw up here?")
+                logger.error("No account to use found, are there too few accounts in DB or did MAD screw up here? "
+                             "Please make sure accounts in MADmin->Settings->Pogo Auth have correct level set - edit "
+                             "it manually if imported with 0/1 - MAD does not (auto)login to check levels.")
                 self._worker_state.active_account = None
                 self._worker_state.active_account_last_set = 0
             else:
