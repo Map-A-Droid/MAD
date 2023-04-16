@@ -271,6 +271,8 @@ class SerializedMitmDataProcessor:
 
     async def __process_nearby_mons(self, data, received_timestamp) -> Tuple[List[int], List[int], int]:
         nearby_mons_time_start = self.get_time_ms()
+        cell_encounters: List[int] = []
+        stop_encounters: List[int] = []
         async with self.__db_wrapper as session, session:
             try:
                 cell_encounters, stop_encounters = await self.__db_submit.mons_nearby(session, received_timestamp,
@@ -283,6 +285,7 @@ class SerializedMitmDataProcessor:
 
     async def __process_wild_mons(self, data, received_timestamp) -> Tuple[List[int], int]:
         mons_time_start = self.get_time_ms()
+        encounter_ids_in_gmo: List[int] = []
         async with self.__db_wrapper as session, session:
             try:
                 encounter_ids_in_gmo = await self.__db_submit.mons(session,
@@ -291,7 +294,6 @@ class SerializedMitmDataProcessor:
                 await session.commit()
             except Exception as e:
                 logger.warning("Failed submitting wild mons: {}", e)
-                encounter_ids_in_gmo = []
         mons_time = self.get_time_ms() - mons_time_start
         return encounter_ids_in_gmo, mons_time
 

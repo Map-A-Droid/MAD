@@ -77,7 +77,6 @@ class PooledQueryExecutor:
         else:
             db_uri: str = f"mysql+aiomysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
-
         logger.info("Connecting to DB")
         self._db_accessor: DbAccessor = DbAccessor(db_uri, self._poolsize)
         await self._db_accessor.setup()
