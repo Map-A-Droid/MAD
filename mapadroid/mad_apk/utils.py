@@ -268,6 +268,9 @@ async def supported_pogo_version(architecture: APKArch, version: str, token: Opt
     except NoMaddevApiTokenError:
         logger.warning("Maddev API token is not set, assuming a supported version being used.")
         return True
+    except ConnectionError:
+        logger.warning("Error connecting to MADdev, assuming a supported version being used.")
+        return True
     if version in supported_versions.get(bits, []):
         return True
     # If the version is not supported, check the local
@@ -309,6 +312,9 @@ async def get_supported_pogo(architecture: APKArch, token: Optional[str]) -> Dic
         supported_versions: Dict[str, List[str]] = await get_backend_versions(token)
     except NoMaddevApiTokenError:
         logger.warning("Maddev API token is not set and no local version_codes.json defined.")
+        raise
+    except ConnectionError:
+        logger.warning("Error connecting to MADdev!")
         raise
     return await translate_pogo_versions(supported_versions)
 
