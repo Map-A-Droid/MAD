@@ -32,7 +32,15 @@ screen_texts: dict = {1: ['Geburtdatum', 'birth.', 'naissance.', 'date'],
                       21: ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
                            'found.', 'gefunden.', 'Signal', 'geortet', 'detect', '(12)'],
                       23: ['CLUB', 'KIDS'],
-                      25: ['SIGNOUT', 'SIGN', 'ABMELDEN', '_DECONNECTER']}
+                      25: ['SIGNOUT', 'SIGN', 'ABMELDEN', '_DECONNECTER'],
+                      30: ['Welcome!', 'Willkommen!', 'Bienvenue!'],
+                      31: ['Terms', 'Service'],
+                      32: ['PRIVACY', 'DATENSCHUTZ', 'CONFIDENTIALITE'],
+                      33: ['Willow.'],
+                      34: ['nearby!', 'Nahe!', 'pres'],
+                      35: ['Congratulations!', 'Gluckwunsch!', 'felicitations!', 'first', 'erstes', 'abord'],
+                      36: ['Sync'],
+                      37: ['PokéStops.']}
 
 
 def screendetection_get_type_internal(image,
@@ -76,7 +84,7 @@ def screendetection_get_type_internal(image,
                             break
                         if len(globaldict['text'][index]) > 3:
                             for screen_elem in screen_texts:
-                                heightlimit = 0 if screen_elem == 21 else height / 4
+                                heightlimit = 0 if (screen_elem == 21 or screen_elem == 30) else height / 4
                                 if globaldict['top'][index] > heightlimit and globaldict['text'][index] in \
                                         screen_texts[screen_elem]:
                                     returntype = ScreenType(screen_elem)

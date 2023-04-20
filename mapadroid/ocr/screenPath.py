@@ -287,6 +287,22 @@ class WordToScreenMatching(object):
             await self.__handle_marketing_screen(diff, global_dict)
         elif screentype == ScreenType.CONSENT:
             screentype = await self.__handle_ggl_consent_screen()
+        elif screentype == ScreenType.WELCOME:
+            screentype = await self.__handle_welcome_screen()
+        elif screentype == ScreenType.TOS:
+            screentype = await self.__handle_tos_screen()
+        elif screentype == ScreenType.PRIVACY:
+            screentype = await self.__handle_privacy_screen()
+        elif screentype == ScreenType.WILLOWCHAR:
+            screentype = await self.__handle_character_selection_screen()
+        elif screentype == ScreenType.WILLOWCATCH:
+            screentype = await self.__handle_catch_tutorial()
+        elif screentype == ScreenType.WILLOWNAME:
+            screentype = await self.__handle_name_screen()
+        elif screentype == ScreenType.ADVENTURESYNC:
+            screentype = await self.__handle_adventure_sync_screen(screentype)
+        elif screentype == ScreenType.WILLOWGO:
+            screentype = await self.__handle_tutorial_end()
         elif screentype == ScreenType.SN:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.UPDATE:
@@ -348,6 +364,11 @@ class WordToScreenMatching(object):
                 backgroundcolor[2] == 33):
             # Got a strike warning
             screentype = ScreenType.STRIKE
+        elif backgroundcolor is not None and (
+                backgroundcolor[0] == 18 and
+                backgroundcolor[1] == 46 and
+                backgroundcolor[2] == 86):
+            screentype = ScreenType.WELCOME
         return screentype
 
     async def __handle_strike_screen(self, diff, global_dict) -> None:
@@ -373,7 +394,7 @@ class WordToScreenMatching(object):
         self._nextscreen = ScreenType.UNDEFINED
         if not await self.parse_permission(await self._communicator.uiautomator()):
             screentype = ScreenType.ERROR
-        await asyncio.sleep(2)
+        await asyncio.sleep(4)
         return screentype
 
     async def __handle_google_login(self, screentype) -> ScreenType:
@@ -484,6 +505,7 @@ class WordToScreenMatching(object):
             2.20, 3.01,
             upper=True)
         if coordinates:
+            coordinates = ScreenCoordinates(int(self._width / 2), int(self._height * 0.7))
             await self._communicator.click(coordinates.x, coordinates.y)
             await asyncio.sleep(2)
 
@@ -502,6 +524,160 @@ class WordToScreenMatching(object):
         click_y = int(click_y + (self._height / 8.53))
         await self._communicator.click(click_x, click_y)
         await asyncio.sleep(1)
+
+    async def __handle_welcome_screen(self) -> None:
+        #self._nextscreen = ScreenType.TOS
+        screenshot_path = await self.get_screenshot_path()
+        coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
+            screenshot_path,
+            2.20, 3.01,
+            upper=True)
+        if coordinates:
+            await self._communicator.click(coordinates.x, coordinates.y)
+            await asyncio.sleep(2)
+            return ScreenType.TOS
+        return ScreenType.NOTRESPONDING
+
+    async def __handle_tos_screen(self) -> None:
+        #self._nextscreen = ScreenType.PRIVACY
+        screenshot_path = await self.get_screenshot_path()
+        await self._communicator.click(int(self._width / 2), int(self._height * 0.47))
+        coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
+            screenshot_path,
+            2.20, 3.01,
+            upper=True)
+        if coordinates:
+            await self._communicator.click(coordinates.x, coordinates.y)
+            await asyncio.sleep(2)
+            return ScreenType.PRIVACY
+        return ScreenType.NOTRESPONDING
+
+    async def __handle_privacy_screen(self) -> None:
+        #self._nextscreen = ScreenType.WILLOWCHAR
+        screenshot_path = await self.get_screenshot_path()
+        coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
+            screenshot_path,
+            2.20, 3.01,
+            upper=True)
+        if coordinates:
+            await self._communicator.click(coordinates.x, coordinates.y)
+            await asyncio.sleep(3)
+            return ScreenType.WILLOWCHAR
+        return ScreenType.NOTRESPONDING
+
+    async def __handle_character_selection_screen(self) -> None:
+        #self._nextscreen = ScreenType.WILLOWCATCH
+        for _ in range(9):
+            await self._communicator.click(100, 100)
+            await asyncio.sleep(1)
+        await asyncio.sleep(1)
+        await self._communicator.click(int(self._width / 4), int(self._height / 2))
+        await asyncio.sleep(2)
+        for _ in range(3):
+            await self._communicator.click(int(self._width * 0.91), int(self._height * 0.94))
+            await asyncio.sleep(2)
+
+        if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
+                MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
+                                           delay_after=2):
+            logger.error("Failed getting screenshot")
+            return None
+
+        screenshot_path = await self.get_screenshot_path()
+        coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
+            screenshot_path,
+            2.20, 3.01,
+            upper=True)
+        if coordinates:
+            await self._communicator.click(coordinates.x, coordinates.y)
+            await asyncio.sleep(5)
+            return ScreenType.WILLOWCATCH
+        return ScreenType.NOTRESPONDING
+
+    async def __handle_catch_tutorial(self) -> None:
+        #self._nextscreen = ScreenType.WILLOWNAME
+        for _ in range(2):
+            await self._communicator.click(100, 100)
+        for x in range(1,10):
+            for y in range(1,10):
+                click_x = int(self._width * x/10)
+                click_y = int(self._height * y/20 + self._height / 2)
+                await self._communicator.click(click_x, click_y)
+            await asyncio.sleep(5)
+            if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
+                    MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
+                                               delay_after=2):
+                logger.error("Failed getting screenshot")
+                return None
+            screenshot_path = await self.get_screenshot_path()
+            globaldict = await self._worker_state.pogo_windows.get_screen_text(screenshot_path, self._worker_state.origin)
+            starter = ['Bulbasaur', 'Charmander', 'Squirtle', 'Bisasam', 'Glumanda', 'Schiggy', 'Bulbizarre', 'Salameche', 'Carapuce']
+            if any(text in starter for text in globaldict['text']):
+                logger.debug("Found Pokémon")
+                break
+
+        for _ in range(3):
+            click_x = int(self._width / 2)
+            click_y = int(self._height * 0.93)
+            await self._communicator.touch_and_hold(click_x, click_y, click_x, int(click_y - (self._height / 2)), 200)
+            await asyncio.sleep(15)
+
+            if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
+                    MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
+                                               delay_after=2):
+                logger.error("Failed getting screenshot")
+                return None
+
+            screenshot_path = await self.get_screenshot_path()
+            coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
+                screenshot_path,
+                2.20, 3.01,
+                upper=True)
+            if coordinates:
+                await self._communicator.click(coordinates.x, coordinates.y)
+                logger.info("Catched Pokémon.")
+                await asyncio.sleep(12)
+                await self._communicator.click(self._width / 2, self._height * 0.93)
+                await asyncio.sleep(2)
+                return ScreenType.UNDEFINED
+
+        logger.warning("Could not catch Pokémon.")
+        return ScreenType.NOTRESPONDING
+
+    async def __handle_name_screen(self) -> None:
+        #self._nextscreen = ScreenType.ADVENTURESYNC
+        for _ in range(2):
+            await self._communicator.click(100, 100)
+            await asyncio.sleep(1)
+        await asyncio.sleep(5)
+
+        if not self._worker_state.active_account:
+            logger.error('No PTC Username and Password is set')
+            return ScreenType.ERROR
+        username = self._worker_state.active_account.username
+        logger.debug('Setting name for Account to {}', username)
+        await self._communicator.enter_text(username)
+        await self._communicator.click(100, 100)
+        await asyncio.sleep(2)
+        await self._communicator.click(int(self._width / 2), int(self._height * 0.66))
+        await self._communicator.click(int(self._width / 2), int(self._height * 0.51))
+        await asyncio.sleep(2)
+        await self._communicator.click(100, 100)
+        await self._communicator.click(100, 100)
+        await asyncio.sleep(5)
+        return ScreenType.ADVENTURESYNC
+
+    async def __handle_adventure_sync_screen(self, screentype) -> None:
+        if not await self.parse_adventure_sync(await self._communicator.uiautomator()):
+            screentype = ScreenType.ERROR
+        await asyncio.sleep(5)
+        return screentype
+
+    async def __handle_tutorial_end(self) -> None:
+        for _ in range(4):
+            await self._communicator.click(100,100)
+        await asyncio.sleep(1)
+        return ScreenType.POGO
 
     async def detect_screentype(self, y_offset: int = 0) -> ScreenType:
         topmostapp = await self._communicator.topmost_app()
@@ -536,6 +712,38 @@ class WordToScreenMatching(object):
         await self._communicator.back_button()
         await asyncio.sleep(3)
         return ScreenType.UNDEFINED
+
+    async def parse_adventure_sync(self, xml) -> bool:
+        if xml is None:
+            logger.warning('Something wrong with processing - getting None Type from Websocket...')
+            return False
+        click_text = ('MAYBE LATER', 'VIELLEICHT SPATER', 'PEUT-ETRE PLUS TARD', 'OK')
+        try:
+            parser = ET.XMLParser(encoding="utf-8")
+            xmlroot = ET.fromstring(xml, parser=parser)
+            bounds: str = ""
+            for item in xmlroot.iter('node'):
+                logger.debug(str(item.attrib['text']))
+                if str(item.attrib['text']).upper() in click_text:
+                    logger.debug("Found text {}", item.attrib['text'])
+                    bounds = item.attrib['bounds']
+                    logger.debug("Bounds {}", item.attrib['bounds'])
+
+                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+
+                    click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                    click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(5)
+                    return True
+        except Exception as e:
+            logger.error('Something wrong while parsing xml: {}', e)
+            logger.exception(e)
+            return False
+
+        await asyncio.sleep(2)
+        logger.warning('Could not find any button...')
+        return False
 
     async def parse_permission(self, xml) -> bool:
         if xml is None:
