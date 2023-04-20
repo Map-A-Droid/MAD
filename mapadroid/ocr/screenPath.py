@@ -662,6 +662,21 @@ class WordToScreenMatching(object):
         await self._communicator.click(int(self._width / 2), int(self._height * 0.66))
         await self._communicator.click(int(self._width / 2), int(self._height * 0.51))
         await asyncio.sleep(2)
+
+        if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
+                MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
+                                           delay_after=2):
+            logger.error("Failed getting screenshot")
+            return None
+        screenshot_path = await self.get_screenshot_path()
+        globaldict = await self._worker_state.pogo_windows.get_screen_text(screenshot_path, self._worker_state.origin)
+        errortext = ['available','verfugbar','disponible']
+        if any(text in errortext for text in globaldict['text']):
+            logger.warning('Account name is not available. Marking account as permabanned!')
+            await self._account_handler.mark_burnt(self._worker_state.device_id,
+                                                   BurnType.BAN)
+            return ScreenType.MAINTENANCE
+
         await self._communicator.click(100, 100)
         await self._communicator.click(100, 100)
         await asyncio.sleep(5)
