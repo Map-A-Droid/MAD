@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import math
+import multiprocessing
 import os
 import os.path
 from concurrent.futures.process import BrokenProcessPool
@@ -31,7 +32,7 @@ def check_process_pool(func) -> Any:
             logger.warning("Broken process pool exception was raised ('{}'), trying to recreate the pool.", e)
             await self.shutdown()
             self.__process_executor_pool = concurrent.futures.ProcessPoolExecutor(
-                self._thread_count)
+                self._thread_count, mp_context=multiprocessing.get_context('spawn'))
             return await func(self, *args, **kwargs)
 
     return decorated
@@ -46,7 +47,7 @@ class PogoWindows:
             logger.info('PogoWindows: Temp directory created')
         self.temp_dir_path = temp_dir_path
         self.__process_executor_pool: concurrent.futures.ProcessPoolExecutor = concurrent.futures.ProcessPoolExecutor(
-            thread_count)
+            thread_count, mp_context=multiprocessing.get_context('spawn'))
 
     async def shutdown(self):
         self.__process_executor_pool.shutdown()
