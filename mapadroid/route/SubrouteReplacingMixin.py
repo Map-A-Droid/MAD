@@ -1,14 +1,16 @@
+import asyncio
 import collections
+import concurrent.futures
 import math
 from abc import ABC
 from operator import itemgetter
-from typing import List, Dict, Optional, Collection
+from typing import Collection, Dict, List, Optional
 
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.route.RoutePoolEntry import RoutePoolEntry
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.routemanager)
 
@@ -40,7 +42,6 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
             return await self._worker_changed_update_routepools(reduced_routepool_to_process)
 
         extra_length_workers = len(coords_to_use) % len(routepool)
-        i: int = 0
         temp_total_round: collections.deque = collections.deque(coords_to_use)
 
         if extra_length_workers > 0:
@@ -51,6 +52,20 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
         # we want to order the dict by the time's we added the workers to the areas
         # we first need to build a list of tuples with only origin, time_added
         logger.debug("Checking routepools in the following order: {}", sorted_routepools)
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ProcessPoolExecutor() as pool:
+            routepool = await loop.run_in_executor(pool, SubrouteReplacingMixin._populate_subroutes,
+                                                   extra_length_workers, new_subroute_length, routepool,
+                                                   sorted_routepools,
+                                                   temp_total_round)
+
+        logger.debug("Done updating subroutes")
+        return routepool
+
+    @staticmethod
+    def _populate_subroutes(extra_length_workers, new_subroute_length, routepool, sorted_routepools,
+                            temp_total_round):
+        i: int = 0
         for origin, _time_added in sorted_routepools:
             entry: RoutePoolEntry = routepool[origin]
             logger.debug("Collecting new subroute for {}", origin)
@@ -70,7 +85,7 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
             entry.subroute = new_subroute
             # Set the queue for the new subroute accordingly
             # Search for the closest spot within old queue and only start from there
-            closest_to_old_queue: Optional[Location] = self._find_closest_location(
+            closest_to_old_queue: Optional[Location] = SubrouteReplacingMixin._find_closest_location(
                 next(iter(entry.queue)) if entry.queue else None,
                 new_subroute)
             entry.queue.clear()
@@ -83,11 +98,10 @@ class SubrouteReplacingMixin(RouteManagerBase, ABC):
                         found = True
                     if found:
                         entry.queue.append(loc)
-
-        logger.debug("Done updating subroutes")
         return routepool
 
-    def _find_closest_location(self, location: Optional[Location], route: Collection[Location]) -> Optional[Location]:
+    @staticmethod
+    def _find_closest_location(location: Optional[Location], route: Collection[Location]) -> Optional[Location]:
         if not route or not location:
             return None
         closest: Location = next(iter(route))
