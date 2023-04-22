@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import asyncio
 import concurrent.futures
 import math
 import os
 import os.path
-from typing import List, Optional, Tuple
+from concurrent.futures.process import BrokenProcessPool
+from functools import wraps
+from typing import Any, List, Optional, Tuple
 
 import cv2
 import numpy as np
@@ -18,8 +22,24 @@ from mapadroid.utils.AsyncioOsUtil import AsyncioOsUtil
 from mapadroid.utils.collections import ScreenCoordinates
 
 
+def check_process_pool(func) -> Any:
+    @wraps(func)
+    async def decorated(self: PogoWindows, *args, **kwargs):
+        try:
+            return await func(self, *args, **kwargs)
+        except BrokenProcessPool as e:
+            logger.warning("Broken process pool exception was raised ('{}'), trying to recreate the pool.", e)
+            await self.shutdown()
+            self.__process_executor_pool = concurrent.futures.ProcessPoolExecutor(
+                self._thread_count)
+            return await func(self, *args, **kwargs)
+
+    return decorated
+
+
 class PogoWindows:
     def __init__(self, temp_dir_path, thread_count: int):
+        self._thread_count: int = thread_count
         # TODO: move to init? This will block if called in asyncio loop
         if not os.path.exists(temp_dir_path):
             os.makedirs(temp_dir_path)
@@ -31,6 +51,7 @@ class PogoWindows:
     async def shutdown(self):
         self.__process_executor_pool.shutdown()
 
+    @check_process_pool
     async def __read_circles(self, filename, ratio, xcord=False, crop=False,
                              canny=False, secondratio=False) -> List[ScreenCoordinates]:
         logger.debug2("__read_circles: Reading circles")
@@ -98,6 +119,7 @@ class PogoWindows:
 
         return await self.__internal_look_for_button(filename, ratiomin, ratiomax, upper)
 
+    @check_process_pool
     async def __internal_look_for_button(self, filename, ratiomin, ratiomax,
                                          upper) -> Optional[ScreenCoordinates]:
         logger.debug("lookForButton: Reading lines")
@@ -225,6 +247,7 @@ class PogoWindows:
 
         return np.asarray(sort_lines, dtype=np.int32)
 
+    @check_process_pool
     async def __check_raid_line(self, filename, left_side=False) -> Optional[ScreenCoordinates]:
         logger.debug("__check_raid_line: Reading lines")
         if left_side:
@@ -316,6 +339,7 @@ class PogoWindows:
                                          float(radiusratio), xcord=False, crop=True,
                                          canny=True)
 
+    @check_process_pool
     async def check_close_except_nearby_button(self, filename, identifier, close_raid=False) -> List[ScreenCoordinates]:
         if not await AsyncioOsUtil.isfile(filename):
             logger.error("check_close_except_nearby_button: {} does not exist", filename)
@@ -363,6 +387,7 @@ class PogoWindows:
                 return coordinates_of_close_found
         return []
 
+    @check_process_pool
     async def check_pogo_mainscreen(self, filename, identifier) -> bool:
         if not await AsyncioOsUtil.isfile(filename):
             logger.error("check_pogo_mainscreen: {} does not exist", filename)
@@ -371,6 +396,7 @@ class PogoWindows:
         return await loop.run_in_executor(self.__process_executor_pool, check_pogo_mainscreen,
                                           filename, identifier)
 
+    @check_process_pool
     async def get_screen_text(self, screenpath: str, identifier) -> Optional[dict]:
         if screenpath is None:
             logger.error("get_screen_text: image does not exist")
@@ -380,6 +406,7 @@ class PogoWindows:
         return await loop.run_in_executor(self.__process_executor_pool, get_screen_text,
                                           screenpath, identifier)
 
+    @check_process_pool
     async def most_frequent_colour(self, screenshot, identifier, y_offset: int = 0) -> Optional[List[int]]:
         if screenshot is None:
             logger.error("get_screen_text: image does not exist")
@@ -388,6 +415,7 @@ class PogoWindows:
         return await loop.run_in_executor(self.__process_executor_pool, most_frequent_colour_internal,
                                           screenshot, identifier, y_offset)
 
+    @check_process_pool
     async def screendetection_get_type_by_screen_analysis(self, image,
                                                           identifier) -> Optional[Tuple[ScreenType,
                                                                                         Optional[
