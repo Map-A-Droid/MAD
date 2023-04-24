@@ -670,7 +670,7 @@ class WordToScreenMatching(object):
             return None
         screenshot_path = await self.get_screenshot_path()
         globaldict = await self._worker_state.pogo_windows.get_screen_text(screenshot_path, self._worker_state.origin)
-        errortext = ['available','verfugbar','disponible']
+        errortext = ['available.','verfugbar.','disponible.']
         if any(text in errortext for text in globaldict['text']):
             logger.warning('Account name is not available. Marking account as permabanned!')
             await self._account_handler.mark_burnt(self._worker_state.device_id,
