@@ -58,20 +58,20 @@ $(document).ready(function () {
         $.unblockUI();
     });
     $(".bulk_update").change(function() {
-      var selected_uri = $(this).children("option:selected").val();
+      var selected_option = $(this).children("option:selected");
       var devices = $('.bulk_sel:checkbox:checked');
       if(devices.length > 0 && confirm('Are you sure you want to bulk update?')) {
         loadingBlockUI("Bulk Updating");
         var data = {};
         var operation = bulk_patch;
-        if(selected_uri.indexOf('walker') > 0) {
-          data = {"walker": selected_uri};
-        } else if(selected_uri.indexOf('pool') > 0) {
-          data = {"pool": selected_uri};
-        } else if(selected_uri === 'unpause') {
+        if(selected_option.attr('datatype') === 'walker') {
+          data = {"walker": selected_option.val()};
+        } else if(selected_option.attr('datatype') === 'pool') {
+          data = {"pool": selected_option.val()};
+        } else if(selected_option.val() === 'unpause') {
           operation = pause_toggle;
           data = 1;
-        } else if(selected_uri === 'pause') {
+        } else if(selected_option.val() === 'pause') {
           operation = pause_toggle;
           data = 0;
         } else {
@@ -245,10 +245,10 @@ $(document).ready(function () {
     <select class='bulk_update'>
       <option value="None">None</option>
       {% for walker_id, walker in walkers.items() %}
-       <option value="{{ walker_id }}">Set walker to {{ walker.name }}</option>
+       <option value="{{ walker_id }}" datatype="walker">Set walker to {{ walker.name }}</option>
       {% endfor %}
       {% for pool_id, pool in pools.items() %}
-       <option value="{{ pool_id }}">Set devicepool to {{ pool.name }}</option>
+       <option value="{{ pool_id }}" datatype="pool">Set devicepool to {{ pool.name }}</option>
       {% endfor %}
       <option value='pause'>Pause</option>
       <option value='unpause'>Unpause</option>
