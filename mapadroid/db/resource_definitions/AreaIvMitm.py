@@ -45,7 +45,7 @@ class AreaIvMitm:
             },
             "speed": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Speed of player in kmh",
                     "expected": float
@@ -53,7 +53,7 @@ class AreaIvMitm:
             },
             "max_distance": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Max. distance of walking - otherwise teleport to new location",
                     "expected": float
@@ -61,7 +61,7 @@ class AreaIvMitm:
             },
             "delay_after_prio_event": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to "
                                    "scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = "
@@ -71,7 +71,7 @@ class AreaIvMitm:
             },
             "priority_queue_clustering_timedelta": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Cluster events within the given timedelta in seconds. The latest event in time "
                                    "within a timedelta will be used to scan the clustered events (Default: 300)",
@@ -126,7 +126,7 @@ class AreaIvMitm:
             },
             "min_time_left_seconds": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Ignore mons with less spawn time in seconds (Default: None)",
                     "expected": int

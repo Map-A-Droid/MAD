@@ -104,7 +104,7 @@
                                         {% endfor %}
                                     </select>
                                 {% else %}
-                                    <input type="{{ field.type }}" name="{{ key }}" data-default="{{ element[key] }}" {{ 'required=true' if field.settings.require }}
+                                    <input type="{{ field.settings.type }}" name="{{ key }}" data-default="{{ element[key] }}" {{ 'required=true' if field.settings.require }}
                                            class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
                                 {% endif %}
                                 <small class="form-text text-muted">{{ field.settings.description }}</small>
