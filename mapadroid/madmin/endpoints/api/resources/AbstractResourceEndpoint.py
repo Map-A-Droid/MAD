@@ -149,6 +149,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                     if to_be_set is None and getattr(db_entry, variable, None) is None:
                         missing.append(variable)
             if missing:
+                logger.error("Missing fields: {}", missing)
                 self._commit_trigger = False
                 return await self._json_response({"missing": missing},
                                                  status=405)
