@@ -172,18 +172,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         if self._worker_state.stop_worker_event.is_set() or not await self._wait_for_injection():
             raise InternalStopWorkerException("Worker is supposed to be stopped while working waiting for injection")
 
-        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION, False) and not \
-                await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, False):
-            # TODO: Double check account_rotation_started, it is only set to True and never to be touched
-            #  again apparently
-            # switch to first account if first started and rotation is activated
-            if not await self._switch_user():
-                logger.error('Something happened during account rotation')
-                raise InternalStopWorkerException("Worker was supposed to switch accounts")
-            else:
-                await self.set_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, True)
-            await asyncio.sleep(10)
-
         await self.pre_work_loop_layer_preparation()
 
     @abstractmethod
