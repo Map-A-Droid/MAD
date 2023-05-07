@@ -26,8 +26,8 @@
 # Size of MySQL pool (open connections to DB). If you have a lot of devices and madmin usage, this may need to be increased. Default: 5.
 #db_poolsize:
 
-# Configure whether the settings_pogoauth entries (PTC or google accounts) should be fetched only for the active instance or globally. Default: true
-#restrict_accounts_to_instance:
+# Configure whether the settings_pogoauth entries (PTC or google accounts) should be fetched only for the active instance or globally. Default: False
+#no_restrict_accounts_to_instance:
 
 ### Redis Caching
 ######################
