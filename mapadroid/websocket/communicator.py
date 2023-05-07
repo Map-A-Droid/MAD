@@ -259,11 +259,13 @@ class Communicator(AbstractCommunicator):
 
     async def get_external_ip(self) -> Optional[str]:
         try:
-            res = await self.passthrough(f"echo \"$(curl -k -s {application_args.ip_service})\"")
+            res = await self.__run_get_gesponse(f"more http get {application_args.ip_service}\r\n")
         except Exception as e:
             logger.error(f"Failed getting external IP address from device: {e}")
             return None
-
+        if res.startswith("Failed"):
+            logger.error("Requesting IP failed")
+            return None
         # parse RGC return expression
         ip_address_found: Optional[str] = None
         try:
