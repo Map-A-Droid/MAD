@@ -78,8 +78,7 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
     @aiohttp_jinja2.template('settings_pogoauth.html')
     @expand_context()
     async def _render_overview(self):
-        devices: Dict[int, SettingsDevice] = await SettingsDeviceHelper.get_all_mapped(self._session,
-                                                                                       self._get_instance_id())
+        devices: Dict[int, SettingsDevice] = await SettingsDeviceHelper.get_all_mapped(self._session, None)
         pogoauth: Dict[int, SettingsPogoauth] = await SettingsPogoauthHelper.get_all_mapped(self._session,
                                                                                             self._get_instance_id())
         template_data: Dict = {

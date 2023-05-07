@@ -60,8 +60,10 @@ class SettingsDeviceHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsDevice]:
-        stmt = select(SettingsDevice).where(SettingsDevice.instance_id == instance_id)
+    async def get_all(session: AsyncSession, instance_id: Optional[int]) -> List[SettingsDevice]:
+        stmt = select(SettingsDevice)
+        if instance_id is not None:
+            stmt = stmt.where(SettingsDevice.instance_id == instance_id)
         result = await session.execute(stmt)
         return result.scalars().all()
 
@@ -72,7 +74,7 @@ class SettingsDeviceHelper:
         return result.scalars().all()
 
     @staticmethod
-    async def get_all_mapped(session: AsyncSession, instance_id: int) -> Dict[int, SettingsDevice]:
+    async def get_all_mapped(session: AsyncSession, instance_id: Optional[int]) -> Dict[int, SettingsDevice]:
         listed: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
         mapped: Dict[int, SettingsDevice] = {}
         for device in listed:
