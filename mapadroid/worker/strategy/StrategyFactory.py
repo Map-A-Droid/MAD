@@ -66,6 +66,7 @@ class StrategyFactory:
     async def get_strategy_using_settings(self, origin: str, enable_configmode: bool,
                                           communicator: AbstractCommunicator,
                                           worker_state: WorkerState) -> Optional[AbstractWorkerStrategy]:
+        # TODO: I suspect a blocking call somewhere here
         if enable_configmode:
             return await self.get_strategy(worker_type=WorkerType.CONFIGMODE,
                                            area_id=0,
