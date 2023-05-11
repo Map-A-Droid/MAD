@@ -393,6 +393,8 @@ class RouteManagerBase(ABC):
             if not await self._update_routepool() or origin not in self._routepool:
                 logger.info("Failed updating routepools after adding a worker to it")
                 return None
+            else:
+                routepool_entry: RoutePoolEntry = self._routepool.get(origin, None)
         elif routepool_entry.prio_coord and self._can_pass_prioq_coords():
             prioevent = routepool_entry.prio_coord
             routepool_entry.prio_coord = None

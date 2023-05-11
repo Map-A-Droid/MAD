@@ -2,7 +2,6 @@ import asyncio
 import logging
 import random as rand
 from asyncio import CancelledError
-from threading import current_thread
 from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
