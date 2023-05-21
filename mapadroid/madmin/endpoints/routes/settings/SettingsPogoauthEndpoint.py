@@ -52,9 +52,9 @@ class SettingsPogoauthEndpoint(AbstractMadminRootEndpoint):
         available_devices: Dict[int, SettingsDevice] = await SettingsPogoauthHelper.get_available_devices(self._session,
                                                                                                           self._get_instance_id(),
                                                                                                           int(self._identifier) if self._identifier != "new" else None)
-        # TODO: Does this make sense?
         for dev_id, dev in available_devices.items():
-            devs_google.append((dev_id, dev.name))
+            if not pogoauth or pogoauth and pogoauth.username in dev.ggl_login_mail:
+                devs_google.append((dev_id, dev.name))
         for dev_id, dev in available_devices.items():
             devs_ptc.append((dev_id, dev.name))
 

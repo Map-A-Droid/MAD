@@ -105,9 +105,6 @@ class SettingsPogoauthHelper:
                 if auth.account_id == identifier:
                     device_id = auth.device_id
                     break
-            if not device_id:
-                # Auth isn't found. Either it doesnt exist or auth_type mismatch
-                return avail_devices
         for pauth in pogoauths:
             if pauth.device_id is not None and device_id is not None and pauth.device_id != device_id:
                 invalid_devices.add(pauth.device_id)
