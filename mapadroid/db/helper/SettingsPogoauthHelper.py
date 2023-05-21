@@ -101,12 +101,14 @@ class SettingsPogoauthHelper:
         except (ValueError, TypeError):
             pass
         else:
+            # Fetch currently assigned device ID (there may not be one assigned)
             for auth in pogoauths:
                 if auth.account_id == identifier:
                     device_id = auth.device_id
                     break
         for pauth in pogoauths:
-            if pauth.device_id is not None and device_id is not None and pauth.device_id != device_id:
+            if pauth.device_id is not None and device_id is not None and pauth.device_id != device_id\
+                    or pauth.device_id is not None and device_id is None:
                 invalid_devices.add(pauth.device_id)
         devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
         for device in devices:
