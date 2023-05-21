@@ -31,7 +31,8 @@ screen_texts: dict = {1: ['Geburtdatum', 'birth.', 'naissance.', 'date'],
                       19: ['geplanter', 'Wartungsarbeiten', 'maintenance.', 'maintenance'],
                       21: ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
                            'found.', 'gefunden.', 'Signal', 'geortet', 'detect', '(12)'],
-                      23: ['CLUB', 'KIDS'],
+                      # Commented since blurry login may result in wrongfully thinking NEW PLAYER screen reached?
+                      # 23: ['CLUB', 'KIDS'],
                       25: ['SIGNOUT', 'SIGN', 'ABMELDEN', '_DECONNECTER']}
 
 
