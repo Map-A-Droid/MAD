@@ -300,25 +300,33 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def _calculate_remaining_softban_avoidance_duration(self, cur_time, delay_to_avoid_softban, distance, speed):
         async with self._db_wrapper as session, session:
-            if self._worker_state.active_account and self._worker_state.active_account.last_softban_action \
-                    and self._worker_state.active_account.last_softban_action_location:
+            if self._worker_state.active_account:
                 logger.debug("Checking DB for last softban action")
-                last_action_location: Location = Location(self._worker_state.active_account.last_softban_action_location[0],
-                                                          self._worker_state.active_account.last_softban_action_location[1])
-                distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
-                                                                            last_action_location.lng,
-                                                                            self._worker_state.current_location.lat,
-                                                                            self._worker_state.current_location.lng)
-                delay_to_last_action = calculate_cooldown(distance_last_action, speed)
-                logger.debug("Last registered softban was at {} at {}", self._worker_state.active_account.last_softban_action,
-                             self._worker_state.active_account.last_softban_action_location)
-                if self._worker_state.active_account.last_softban_action.timestamp() + delay_to_last_action > cur_time:
-                    logger.debug("Last registered softban requires further cooldown")
-                    delay_to_avoid_softban = cur_time - self._worker_state.active_account\
-                        .last_softban_action.timestamp() + delay_to_last_action
-                    distance = distance_last_action
+                await session.refresh(self._worker_state.active_account)
+                if self._worker_state.active_account.last_softban_action \
+                        and self._worker_state.active_account.last_softban_action_location:
+                    logger.debug("Last softban action at {} took place at {}",
+                                 self._worker_state.active_account.last_softban_action,
+                                 self._worker_state.active_account.last_softban_action_location)
+                    last_action_location: Location = Location(self._worker_state.active_account.last_softban_action_location[0],
+                                                              self._worker_state.active_account.last_softban_action_location[1])
+                    distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
+                                                                                last_action_location.lng,
+                                                                                self._worker_state.current_location.lat,
+                                                                                self._worker_state.current_location.lng)
+                    delay_to_last_action = calculate_cooldown(distance_last_action, speed)
+                    logger.debug("Last registered softban was at {} at {}", self._worker_state.active_account.last_softban_action,
+                                 self._worker_state.active_account.last_softban_action_location)
+                    if self._worker_state.active_account.last_softban_action.timestamp() + delay_to_last_action > cur_time:
+                        logger.debug("Last registered softban requires further cooldown")
+                        delay_to_avoid_softban = cur_time - self._worker_state.active_account\
+                            .last_softban_action.timestamp() + delay_to_last_action
+                        distance = distance_last_action
+                    else:
+                        logger.debug("Last registered softban action long enough in the past")
                 else:
-                    logger.debug("Last registered softban action long enough in the past")
+                    logger.warning("No last softban action known for active account ({})",
+                                   self._worker_state.active_account.account_id)
             else:
                 logger.warning("Missing assignment of pogoauth to device {} ({}) or no last known softban action",
                                self._worker_state.origin, self._worker_state.device_id)
@@ -520,7 +528,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY):
                 # Restart pogo, try again, abort if it fails...
                 logger.info("GMO invalid for current position, trying to restart pogo")
-                if not await self._restart_pogo():
+                if not await self._restart_pogo(clear_cache=False):
                     raise AbortStopProcessingException("Failed restarting pogo after lacking data in GMOs.")
                 timestamp = int(time.time())
                 stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
