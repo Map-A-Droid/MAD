@@ -600,13 +600,14 @@ class RouteManagerBase(ABC):
     # to be called regularly to remove inactive workers that used to be registered
     async def _check_routepools(self, timeout: int = 600):
         while not self._shutdown_route.is_set():
-            logger.debug("Checking routepool for idle/dead workers")
-            for origin in list(self._routepool):
-                entry: RoutePoolEntry = self._routepool.get(origin)
-                if entry and time.time() - entry.last_access > timeout + entry.worker_sleeping:
-                    logger.warning("Worker {} has not accessed a location in {} seconds, removing from "
-                                   "routemanager", origin, timeout)
-                    await self.unregister_worker(origin, True)
+            if not self._start_calc.is_set():
+                logger.debug("Checking routepool for idle/dead workers")
+                for origin in list(self._routepool):
+                    entry: RoutePoolEntry = self._routepool.get(origin)
+                    if entry and time.time() - entry.last_access > timeout + entry.worker_sleeping:
+                        logger.warning("Worker {} has not accessed a location in {} seconds, removing from "
+                                       "routemanager", origin, timeout)
+                        await self.unregister_worker(origin, True)
             await asyncio.sleep(60)
 
     def set_worker_sleeping(self, origin: str, sleep_duration: float) -> None:
