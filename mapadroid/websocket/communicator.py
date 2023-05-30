@@ -259,11 +259,12 @@ class Communicator(AbstractCommunicator):
 
     async def get_external_ip(self) -> Optional[str]:
         try:
-            res = await self.__run_get_gesponse(f"more http get {application_args.ip_service}\r\n")
+            res: Optional[MessageTyping] = await self.__run_get_gesponse(
+                f"more http get {application_args.ip_service}\r\n")
         except Exception as e:
             logger.error(f"Failed getting external IP address from device: {e}")
             return None
-        if res.startswith("Failed"):
+        if not res or res.startswith("Failed"):
             logger.error("Requesting IP failed")
             return None
         # parse RGC return expression
