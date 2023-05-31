@@ -95,7 +95,7 @@ class S2Helper:
         # moving outwards
         logger.info("Calculating positions for init scan")
         num_cores = multiprocessing.cpu_count()
-        with multiprocessing.Pool(processes=num_cores) as pool:
+        with multiprocessing.get_context("spawn").Pool(processes=num_cores) as pool:
             temp = [pool.apply(S2Helper._generate_star_locs, args=(
                 center, distance, i)) for i in range(1, step_limit)]
 
