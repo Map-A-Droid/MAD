@@ -1,6 +1,12 @@
 name: publish
 
-on: [push]
+on:
+  push: # Every branch
+  pull_request: # Every PR
+    types:
+      - opened
+      - reopened
+      - synchronize
 
 env:
   REGISTRY: ghcr.io
