@@ -27,6 +27,14 @@ class ScreenType(Enum):
     NOTRESPONDING = 24  # system popup about an app not responding, blocking most actions
     NOGGL = 23  # loginselect, but without the google button (probably failed to set a correct birthdate)
     LOGINTIMEOUT = 25  # login taking too long, sign out button is visible
+    WELCOME = 30 # Welcome screen for new account. One green button: CONTINUE
+    TOS = 31 # Terms of service. One green button: ACCEPT
+    PRIVACY = 32 # Privacy Policy notification. One green button: OK
+    WILLOWCHAR = 33 # Professor Blabla screen in tutorial before character is selected.
+    WILLOWCATCH = 34 # Professor Blabla screen in catch tutorial.
+    WILLOWNAME = 35 # Professor Blabla asking for name.
+    ADVENTURESYNC = 36 # Adventure Sync overlay after tutorial. One blue button: Turn it On!
+    WILLOWGO = 37 # Professor Blabla at end of tutorial.
     POGO = 99  # uhm, whatever... At least pogo is topmost, no idea where we are yet tho (in the process of switching)
     ERROR = 100  # some issue occurred while handling screentypes or not able to determine screen
     BLACK = 110  # screen is black, likely loading up game
