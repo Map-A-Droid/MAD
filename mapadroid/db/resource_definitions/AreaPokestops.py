@@ -65,7 +65,7 @@ class AreaPokestops:
             },
             "speed": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to "
                                    "determine if the worker should walk or teleport (Default: 0)",
@@ -74,7 +74,7 @@ class AreaPokestops:
             },
             "max_distance": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Max. distance of walking - If the distance between points is greater than this "
                                    "value the worker will teleport (Default: 0)",

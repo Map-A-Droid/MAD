@@ -88,7 +88,7 @@ $(document).ready(function () {
         <tr>
           <th style="width: 15%" class="align-middle">Type <i class="fas fa-info-circle" data-toggle="tooltip" title="Login Type"></th>
           <th style="width: 30%" class="align-middle">Username <i class="fas fa-info-circle" data-toggle="tooltip" title="Username for the login"></th>
-          <th style="width: 30%" class="align-middle">Device <i class="fas fa-info-circle" data-toggle="tooltip" title="Device assigned to this login"></th>
+          <th style="width: 30%" class="align-middle">Device <i class="fas fa-info-circle" data-toggle="tooltip" title="Device assigned to this login along with instance ID of the device"></th>
           <th style="width: 10%" class="text-center align-middle">Level <i class="fas fa-info-circle" data-toggle="tooltip" title="Account in-game level, 8 for raids, 30 for mons/quests"></th>
           <th style="width: 5%" class="text-center align-middle"></th>
           <th style="width: 10%" class="text-right align-middle"><a href='{{ url('settings_pogoauth', query_={'id': 'new'}) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
@@ -108,7 +108,7 @@ $(document).ready(function () {
           </td>
           <td>
             {% if auth.device_id %}
-             <a href="{{ url('settings_devices', query_={'id': auth.device_id }) }}">{{ devices[auth.device_id].name }}</a>
+             <a href="{{ url('settings_devices', query_={'id': auth.device_id }) }}">{{ devices[auth.device_id].name }} ({{ devices[auth.device_id].instance_id }})</a>
             {% endif %}
           </td>
           <td class="text-center align-middle">

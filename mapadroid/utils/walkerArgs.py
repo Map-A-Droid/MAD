@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 from time import strftime
@@ -54,9 +55,10 @@ def parse_args():
                         help='Name of MySQL Database')
     parser.add_argument('-dbps', '--db_poolsize', type=int, default=5,
                         help='Size of MySQL pool (open connections to DB). Default: 5')
-    parser.add_argument('-rati', '--restrict_accounts_to_instance', default=True, type=bool,
+    parser.add_argument('-nrati', '--no_restrict_accounts_to_instance', default=False, type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Configure whether the settings_pogoauth entries (PTC or google accounts) should be '
-                             'fetched only for the active instance or globally. Default: true')
+                             'fetched only for the active instance or globally. Default: False')
 
     # DB Cleanup
     parser.add_argument('-ci', '--cleanup_interval', type=int, default=300,
@@ -89,15 +91,18 @@ def parse_args():
     parser.add_argument('-miptt', '--mitm_ignore_proc_time_thresh', type=int, default=0,
                         help='Ignore MITM data having a timestamp too far in the past.'
                              'Specify in seconds. Default: 0 (off)')
-    parser.add_argument('-mipb', '--mitm_ignore_pre_boot', default=False, type=bool,
+    parser.add_argument('-mipb', '--mitm_ignore_pre_boot', type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Ignore MITM data having a timestamp pre MAD\'s startup time')
     parser.add_argument('-mspass', '--mitm_status_password', default='',
                         help='Header Authorization password for MITM /status/ page')
     parser.add_argument('-mitmus', '--mitm_unix_socket', required=False, default=None, type=str,
                         help="Path to unix socket file to use if TCP is not to be used for MITMReceiver...")
-    parser.add_argument('-xfwdpmitmr', '--enable_x_forwarded_path_mitm_receiver', default=False, type=bool,
+    parser.add_argument('-xfwdpmitmr', '--enable_x_forwarded_path_mitm_receiver', type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Enable X-Fordward-Path allowance for reverse proxy usage for MITMReceiver. Default: False')
-    parser.add_argument('-insecure', '--insecure_auth', default=False, type=bool,
+    parser.add_argument('-insecure', '--insecure_auth', type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Remove enforcing of auth for, e.g., MITMReceiver. Default: False')
 
     # MappingManager gRPC
@@ -109,7 +114,8 @@ def parse_args():
                         help='Path to file of private key file (MappingManager). Default: None')
     parser.add_argument('-mmgrtlscert', '--mappingmanager_tls_cert_file', required=False, default=None, type=str,
                         help='Path to file of certificate chain (MappingManager). Default: None')
-    parser.add_argument('-mmgrcomp', '--mappingmanager_compression', default=False, type=bool,
+    parser.add_argument('-mmgrcomp', '--mappingmanager_compression', type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Enable compression of data of the MappingManager gRPC communication. Default: False')
 
     parser.add_argument('-mitmtype', '--mitmmapper_type', type=MitmMapperType, choices=list(MitmMapperType),
@@ -123,7 +129,8 @@ def parse_args():
                         help='Path to file of private key file. Default: None')
     parser.add_argument('-mitmtlscert', '--mitmmapper_tls_cert_file', required=False, default=None, type=str,
                         help='Path to file of certificate chain. Default: None')
-    parser.add_argument('-mitmcomp', '--mitmmapper_compression', default=False, type=bool,
+    parser.add_argument('-mitmcomp', '--mitmmapper_compression', type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Enable compression of data of the MitmMapper gRPC communication. Default: False')
 
     # StatsHandler gRPC
@@ -135,7 +142,8 @@ def parse_args():
                         help='Path to file of private key file. Default: None')
     parser.add_argument('-statshtlscert', '--statshandler_tls_cert_file', required=False, default=None, type=str,
                         help='Path to file of certificate chain. Default: None')
-    parser.add_argument('-statshcomp', '--statshandler_compression', default=False, type=bool,
+    parser.add_argument('-statshcomp', '--statshandler_compression', type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Enable compression of data of the StatsHandler gRPC communication. Default: False')
 
     # Walk Settings
@@ -230,7 +238,8 @@ def parse_args():
                         help='MADmin web port (Default: 5000)')
     parser.add_argument('-mus', '--madmin_unix_socket', required=False, default=None, type=str,
                         help="Path to unix socket file to use if TCP is not to be used for MADmin...")
-    parser.add_argument('-mmauth', '--madmin_enable_auth', type=bool, default=False,
+    parser.add_argument('-mmauth', '--madmin_enable_auth', type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Enable demanding of credentials based on settings_auth.')
     parser.add_argument('-mmt', '--madmin_time', default='24',
                         help='MADmin clock format (12/24) (Default: 24)')
@@ -243,7 +252,8 @@ def parse_args():
                         help='Define when a spawnpoint is out of date (in days). Default: 3.')
     parser.add_argument('--quest_stats_fences', default="",
                         help="Comma separated list of geofences for stop/quest statistics (Empty: all)")
-    parser.add_argument('-xfwdpmadmin', '--enable_x_forwarded_path_madmin', default=False, type=bool,
+    parser.add_argument('-xfwdpmadmin', '--enable_x_forwarded_path_madmin', type=bool,
+                        action=argparse.BooleanOptionalAction,
                         help='Enable X-Fordward-Path allowance for reverse proxy usage for MADmin. Default: False')
 
     # Statistics

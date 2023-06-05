@@ -23,10 +23,10 @@ from mapadroid.updater.JobReturn import JobReturn
 from mapadroid.updater.JobStatus import JobStatus
 from mapadroid.updater.JobType import JobType
 from mapadroid.updater.SubJob import SubJob
-from mapadroid.utils.CustomTypes import MessageTyping
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.custom_types import MADPackages
+from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import application_args
 from mapadroid.websocket import AbstractCommunicator, WebsocketServer
@@ -129,7 +129,6 @@ class DeviceUpdater(object):
     def get_available_jobs(self) -> Dict[str, List[SubJob]]:
         return self._available_jobs
 
-    @logger.catch()
     async def restart_job(self, job_id: str):
         async with self._update_mutex:
             if job_id not in self._log:
@@ -352,7 +351,6 @@ class DeviceUpdater(object):
             await asyncio.sleep(2)
         logger.info("Updater thread stopped")
 
-    @logger.catch()
     async def add_job(self, origin: str, job_name: str,
                       auto_command: Optional[Autocommand] = None) -> bool:
         if job_name not in self._available_jobs:
@@ -379,7 +377,6 @@ class DeviceUpdater(object):
                     to_dump[job_id] = self._global_job_log_entry_schema.dump(entry, many=False)
                 json.dump(to_dump, outfile, indent=4)
 
-    @logger.catch()
     async def delete_log_id(self, job_id: str):
         async with self._update_mutex:
             if job_id not in self._log:
@@ -399,7 +396,6 @@ class DeviceUpdater(object):
         plain_list = self.get_log(including_auto_jobs)
         return self._global_job_log_entry_schema.dump(plain_list, many=True)
 
-    @logger.catch()
     async def __start_job_type(self, job_item: GlobalJobLogEntry, communicator: AbstractCommunicator) -> bool:
         """
 

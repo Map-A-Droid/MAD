@@ -68,7 +68,6 @@ class SerializedMitmDataProcessor:
                 except KeyboardInterrupt:
                     logger.info("Received keyboard interrupt, stopping MITM data processor")
 
-    # @logger.catch
     async def process_data(self, received_timestamp: int, data, origin):
         data_type = data.get("type", None)
         logger.debug("Processing received data")

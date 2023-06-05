@@ -55,7 +55,7 @@ class AreaInitMitm:
             },
             "max_distance": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Max. distance of walking - otherwise teleport to new location",
                     "expected": float
@@ -63,7 +63,7 @@ class AreaInitMitm:
             },
             "speed": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Speed of player in kmh. This value is used in conjunction with max_distance to "
                                    "determine if the worker should walk or teleport (Default: 0)",
@@ -72,8 +72,8 @@ class AreaInitMitm:
             },
             "init_mode_rounds": {
                 "settings": {
-                    "type": "text",
-                    "require": False,
+                    "type": "number",
+                    "require": True,
                     "description": "The amount of rounds to be taken through the area",
                     "expected": int
                 }

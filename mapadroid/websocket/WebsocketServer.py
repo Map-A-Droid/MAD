@@ -2,7 +2,6 @@ import asyncio
 import logging
 import random as rand
 from asyncio import CancelledError
-from threading import current_thread
 from typing import Dict, List, Optional, Set, Tuple
 
 import websockets
@@ -78,8 +77,7 @@ class WebsocketServer(object):
 
         # asyncio loop for the entire server
         self.__loop: Optional[asyncio.AbstractEventLoop] = None
-        self.__loop_tid: int = -1
-        self.__server_task = None
+        self.__server_task: Optional[websockets.WebSocketServer] = None
 
     async def __setup_first_loop(self):
         logger.debug("Device mappings: {}", await self.__mapping_manager.get_all_devicemappings())
@@ -94,9 +92,9 @@ class WebsocketServer(object):
         await self.__setup_first_loop()
         # the type-check here is sorta wrong, not entirely sure why
         # noinspection PyTypeChecker
-        await websockets.serve(self.__connection_handler, self.__args.ws_ip, int(self.__args.ws_port), max_size=2 ** 25,
-                               close_timeout=10)
-        self.__loop_tid = current_thread()
+        self.__server_task = await websockets.serve(self.__connection_handler, self.__args.ws_ip,
+                                                    int(self.__args.ws_port), max_size=2 ** 25,
+                                                    close_timeout=10)
 
     async def __close_all_connections_and_signal_stop(self):
         logger.info("Signaling all workers to stop")
@@ -117,9 +115,9 @@ class WebsocketServer(object):
             await asyncio.sleep(1)
 
         await self.__close_all_connections_and_signal_stop()
+        await self.__server_task.close()
         logger.info("Stopped websocket server")
 
-    @logger.catch()
     async def __connection_handler(self, websocket_client_connection: websockets.WebSocketClientProtocol,
                                    path: str) -> None:
         """
@@ -134,7 +132,6 @@ class WebsocketServer(object):
         """
         if self.__stop_server.is_set():
             return
-        # check auth and stuff TODO
         origin: Optional[str]
         success: Optional[bool]
         (origin, success) = await self.__authenticate_connection(websocket_client_connection)
@@ -179,8 +176,11 @@ class WebsocketServer(object):
                         await self.__handle_existing_connection(entry, origin)
                         entry.websocket_client_connection = websocket_client_connection
                     elif not entry:
-                        current_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
-                            session, device_id)
+                        async with self.__db_wrapper as session, session:
+                            current_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper\
+                                .get_assigned_to_device(session, device_id)
+                            if current_auth:
+                                session.expunge(current_auth)
                         # Just create a new entry...
                         worker_state: WorkerState = WorkerState(origin=origin,
                                                                 device_id=device_id,
@@ -212,7 +212,7 @@ class WebsocketServer(object):
 
             if entry:
                 try:
-                    await self.__client_message_receiver(origin, entry)
+                    await self.__client_message_receiver(entry)
                 except CancelledError:
                     logger.info("Connection to {} has been cancelled", origin)
                 # also check if thread is already running to not start it again. If it is not alive,
@@ -322,7 +322,7 @@ class WebsocketServer(object):
                     return origin, False
         return origin, True
 
-    async def __client_message_receiver(self, origin: str, client_entry: WebsocketConnectedClientEntry) -> None:
+    async def __client_message_receiver(self, client_entry: WebsocketConnectedClientEntry) -> None:
         if client_entry is None:
             return
         connection: websockets.WebSocketClientProtocol = client_entry.websocket_client_connection

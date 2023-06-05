@@ -54,7 +54,7 @@ class AreaRaidsMitm:
             },
             "speed": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to "
                                    "determine if the worker should walk or teleport (Default: 0)",
@@ -63,7 +63,7 @@ class AreaRaidsMitm:
             },
             "max_distance": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Max. distance of walking - If the distance between points is greater than this "
                                    "value the worker will teleport (Default: 0)",
@@ -72,7 +72,7 @@ class AreaRaidsMitm:
             },
             "delay_after_prio_event": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to "
                                    "scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = "
@@ -82,7 +82,7 @@ class AreaRaidsMitm:
             },
             "priority_queue_clustering_timedelta": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Cluster events within the given timedelta in seconds. The latest event in time "
                                    "within a timedelta will be used to scan the clustered events (Default: 600)",
@@ -91,7 +91,7 @@ class AreaRaidsMitm:
             },
             "remove_from_queue_backlog": {
                 "settings": {
-                    "type": "text",
+                    "type": "number",
                     "require": False,
                     "description": "Remove any events in priority queue that have been due for scanning before NOW - "
                                    "given time in seconds (Default: 0)",

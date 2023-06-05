@@ -227,8 +227,6 @@ class MappingManager(AbstractMappingManager):
             devicemapping_entry.last_known_mode = value
         elif key == MappingManagerDevicemappingKey.LAST_ACTION_TIME:
             devicemapping_entry.last_action_time = value
-        elif key == MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED:
-            devicemapping_entry.account_rotation_started = value
         elif key == MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME:
             devicemapping_entry.last_questclear_time = value
         elif key == MappingManagerDevicemappingKey.WALKER_AREA_INDEX:
@@ -260,8 +258,6 @@ class MappingManager(AbstractMappingManager):
             return devicemapping_entry.last_known_mode
         elif key == MappingManagerDevicemappingKey.LAST_ACTION_TIME:
             return devicemapping_entry.last_action_time
-        elif key == MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED:
-            return devicemapping_entry.account_rotation_started
         elif key == MappingManagerDevicemappingKey.LAST_QUESTCLEAR_TIME:
             return devicemapping_entry.last_questclear_time
         # DB stuff

@@ -1,18 +1,19 @@
 import asyncio
+import concurrent.futures
 import functools
 import time
-from _datetime import timedelta
 from datetime import datetime
-from typing import List, Optional, Tuple, Dict, Collection
+from typing import Collection, Dict, List, Optional, Tuple
 
-from sqlalchemy import and_, update, func, not_, delete
+from _datetime import timedelta
+from sqlalchemy import and_, delete, func, not_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from mapadroid.db.model import TrsSpawn, TrsEvent
+from mapadroid.db.model import TrsEvent, TrsSpawn
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 
 logger = get_logger(LoggerEnums.database)
@@ -55,8 +56,16 @@ class TrsSpawnHelper:
 
         stmt = select(TrsSpawn).where(where_condition)
         result = await session.execute(stmt)
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ProcessPoolExecutor() as pool:
+            list_of_spawns = await loop.run_in_executor(pool, TrsSpawnHelper._filter_in_geofence,
+                                                        geofence_helper, result.scalars().all())
+        return list_of_spawns
+
+    @staticmethod
+    def _filter_in_geofence(geofence_helper, result):
         list_of_spawns: List[TrsSpawn] = []
-        for spawnpoint in result.scalars().all():
+        for spawnpoint in result:
             if not geofence_helper.is_coord_inside_include_geofence([spawnpoint.latitude, spawnpoint.longitude]):
                 continue
             list_of_spawns.append(spawnpoint)

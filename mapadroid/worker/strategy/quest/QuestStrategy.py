@@ -172,18 +172,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         if self._worker_state.stop_worker_event.is_set() or not await self._wait_for_injection():
             raise InternalStopWorkerException("Worker is supposed to be stopped while working waiting for injection")
 
-        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION, False) and not \
-                await self.get_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, False):
-            # TODO: Double check account_rotation_started, it is only set to True and never to be touched
-            #  again apparently
-            # switch to first account if first started and rotation is activated
-            if not await self._switch_user():
-                logger.error('Something happened during account rotation')
-                raise InternalStopWorkerException("Worker was supposed to switch accounts")
-            else:
-                await self.set_devicesettings_value(MappingManagerDevicemappingKey.ACCOUNT_ROTATION_STARTED, True)
-            await asyncio.sleep(10)
-
         await self.pre_work_loop_layer_preparation()
 
     @abstractmethod
@@ -312,25 +300,34 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def _calculate_remaining_softban_avoidance_duration(self, cur_time, delay_to_avoid_softban, distance, speed):
         async with self._db_wrapper as session, session:
-            if self._worker_state.active_account and self._worker_state.active_account.last_softban_action \
-                    and self._worker_state.active_account.last_softban_action_location:
+            active_account: Optional[SettingsPogoauth] = await SettingsPogoauthHelper.get_assigned_to_device(
+                session, self._worker_state.device_id)
+            if active_account:
                 logger.debug("Checking DB for last softban action")
-                last_action_location: Location = Location(self._worker_state.active_account.last_softban_action_location[0],
-                                                          self._worker_state.active_account.last_softban_action_location[1])
-                distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
-                                                                            last_action_location.lng,
-                                                                            self._worker_state.current_location.lat,
-                                                                            self._worker_state.current_location.lng)
-                delay_to_last_action = calculate_cooldown(distance_last_action, speed)
-                logger.debug("Last registered softban was at {} at {}", self._worker_state.active_account.last_softban_action,
-                             self._worker_state.active_account.last_softban_action_location)
-                if self._worker_state.active_account.last_softban_action.timestamp() + delay_to_last_action > cur_time:
-                    logger.debug("Last registered softban requires further cooldown")
-                    delay_to_avoid_softban = cur_time - self._worker_state.active_account\
-                        .last_softban_action.timestamp() + delay_to_last_action
-                    distance = distance_last_action
+                if active_account.last_softban_action \
+                        and active_account.last_softban_action_location:
+                    logger.debug("Last softban action at {} took place at {}",
+                                 active_account.last_softban_action,
+                                 active_account.last_softban_action_location)
+                    last_action_location: Location = Location(active_account.last_softban_action_location[0],
+                                                              active_account.last_softban_action_location[1])
+                    distance_last_action = get_distance_of_two_points_in_meters(last_action_location.lat,
+                                                                                last_action_location.lng,
+                                                                                self._worker_state.current_location.lat,
+                                                                                self._worker_state.current_location.lng)
+                    delay_to_last_action = calculate_cooldown(distance_last_action, speed)
+                    logger.debug("Last registered softban was at {} at {}", active_account.last_softban_action,
+                                 active_account.last_softban_action_location)
+                    if active_account.last_softban_action.timestamp() + delay_to_last_action > cur_time:
+                        logger.debug("Last registered softban requires further cooldown")
+                        delay_to_avoid_softban = cur_time - active_account\
+                            .last_softban_action.timestamp() + delay_to_last_action
+                        distance = distance_last_action
+                    else:
+                        logger.debug("Last registered softban action long enough in the past")
                 else:
-                    logger.debug("Last registered softban action long enough in the past")
+                    logger.warning("No last softban action known for active account ({})",
+                                   active_account.account_id)
             else:
                 logger.warning("Missing assignment of pogoauth to device {} ({}) or no last known softban action",
                                self._worker_state.origin, self._worker_state.device_id)
@@ -532,7 +529,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY):
                 # Restart pogo, try again, abort if it fails...
                 logger.info("GMO invalid for current position, trying to restart pogo")
-                if not await self._restart_pogo():
+                if not await self._restart_pogo(clear_cache=False):
                     raise AbortStopProcessingException("Failed restarting pogo after lacking data in GMOs.")
                 timestamp = int(time.time())
                 stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)

@@ -27,7 +27,7 @@ class SettingsPogoauthHelper:
     @staticmethod
     async def get_unassigned(session: AsyncSession, instance_id: int, auth_type: Optional[LoginType]) \
             -> List[SettingsPogoauth]:
-        if application_args.restrict_accounts_to_instance:
+        if not application_args.no_restrict_accounts_to_instance:
             stmt = select(SettingsPogoauth).where(and_(SettingsPogoauth.device_id == None,
                                                        SettingsPogoauth.instance_id == instance_id))
         else:
@@ -47,7 +47,7 @@ class SettingsPogoauthHelper:
 
     @staticmethod
     async def get(session: AsyncSession, instance_id: int, identifier: int) -> Optional[SettingsPogoauth]:
-        if application_args.restrict_accounts_to_instance:
+        if not application_args.no_restrict_accounts_to_instance:
             # Restriction to accounts of instance...
             stmt = select(SettingsPogoauth).where(and_(SettingsPogoauth.instance_id == instance_id,
                                                        SettingsPogoauth.account_id == identifier))
@@ -59,7 +59,7 @@ class SettingsPogoauthHelper:
     @staticmethod
     async def get_all(session: AsyncSession, instance_id: int) -> List[SettingsPogoauth]:
         stmt = select(SettingsPogoauth)
-        if application_args.restrict_accounts_to_instance:
+        if not application_args.no_restrict_accounts_to_instance:
             stmt = stmt.where(SettingsPogoauth.instance_id == instance_id)
 
         result = await session.execute(stmt)
@@ -79,7 +79,7 @@ class SettingsPogoauthHelper:
         stmt = select(SettingsPogoauth) \
             .select_from(SettingsPogoauth) \
             .join(SettingsDevice, SettingsDevice.device_id == SettingsPogoauth.device_id, isouter=True)
-        if application_args.restrict_accounts_to_instance:
+        if not application_args.no_restrict_accounts_to_instance:
             stmt = stmt.where(and_(SettingsPogoauth.instance_id == instance_id,
                                    or_(SettingsDevice.device_id == None,
                                        SettingsDevice.device_id == device_id)))
@@ -101,15 +101,14 @@ class SettingsPogoauthHelper:
         except (ValueError, TypeError):
             pass
         else:
+            # Fetch currently assigned device ID (there may not be one assigned)
             for auth in pogoauths:
                 if auth.account_id == identifier:
                     device_id = auth.device_id
                     break
-            if not device_id:
-                # Auth isn't found. Either it doesnt exist or auth_type mismatch
-                return avail_devices
         for pauth in pogoauths:
-            if pauth.device_id is not None and device_id is not None and pauth.device_id != device_id:
+            if pauth.device_id is not None and device_id is not None and pauth.device_id != device_id\
+                    or pauth.device_id is not None and device_id is None:
                 invalid_devices.add(pauth.device_id)
         devices: List[SettingsDevice] = await SettingsDeviceHelper.get_all(session, instance_id)
         for device in devices:
@@ -136,7 +135,7 @@ class SettingsPogoauthHelper:
         """
         accounts: Dict[int, SettingsPogoauth] = {}
         stmt = select(SettingsPogoauth)
-        if application_args.restrict_accounts_to_instance:
+        if not application_args.no_restrict_accounts_to_instance:
             stmt = stmt.where(SettingsPogoauth.instance_id == instance_id)
         if auth_type is not None:
             stmt = stmt.where(SettingsPogoauth.login_type == auth_type.value)
@@ -164,7 +163,7 @@ class SettingsPogoauthHelper:
             .join(AutoconfigRegistration, AutoconfigRegistration.device_id == SettingsPogoauth.device_id)
         where_conditions = [AutoconfigRegistration.session_id == session_id,
                             SettingsPogoauth.login_type == LoginType.GOOGLE.value]
-        if application_args.restrict_accounts_to_instance:
+        if not application_args.no_restrict_accounts_to_instance:
             where_conditions.append(SettingsPogoauth.instance_id == instance_id)
         stmt = stmt.where(and_(*where_conditions))
 
@@ -177,7 +176,7 @@ class SettingsPogoauthHelper:
         stmt = select(SettingsPogoauth)
         where_conditions = [SettingsPogoauth.login_type == LoginType.GOOGLE.value,
                             SettingsPogoauth.username == ggl_login_mail]
-        if application_args.restrict_accounts_to_instance:
+        if not application_args.no_restrict_accounts_to_instance:
             where_conditions.append(SettingsPogoauth.instance_id == instance_id)
         stmt = stmt.where(and_(*where_conditions))
         result = await session.execute(stmt)

@@ -149,10 +149,11 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                     if to_be_set is None and getattr(db_entry, variable, None) is None:
                         missing.append(variable)
             if missing:
+                logger.error("Missing fields: {}", missing)
                 self._commit_trigger = False
                 return await self._json_response({"missing": missing},
                                                  status=405)
-
+            handled: Set[str] = set()
             for key, value in api_request_data.items():
                 if key in self._attributes_to_ignore() or key.startswith("_") or key not in vars_of_type:
                     continue
@@ -160,6 +161,7 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
                     # We only allow modifying columns ;)
                     continue
                 elif await self._handle_additional_keys(db_entry, key, value):
+                    handled.add(key)
                     continue
                 # validate whether a field is required...
                 elif ((getattr(vars_of_type.get(key), "primary_key", None)
@@ -181,12 +183,11 @@ class AbstractResourceEndpoint(AbstractMadminRootEndpoint, ABC):
             await self._session.commit()
             await self._session.refresh(db_entry)
             for key, value in api_request_data.items():
-                await self._handle_additional_keys(db_entry, key, value)
+                if key not in handled:
+                    await self._handle_additional_keys(db_entry, key, value)
             self._save(db_entry)
-            await self._session.commit()
         except Exception as err:
             self._commit_trigger = False
-            await self._session.rollback()
             logger.exception(err)
             return await self._json_response(str(err), status=400)
 

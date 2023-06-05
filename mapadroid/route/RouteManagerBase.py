@@ -393,6 +393,8 @@ class RouteManagerBase(ABC):
             if not await self._update_routepool() or origin not in self._routepool:
                 logger.info("Failed updating routepools after adding a worker to it")
                 return None
+            else:
+                routepool_entry: RoutePoolEntry = self._routepool.get(origin, None)
         elif routepool_entry.prio_coord and self._can_pass_prioq_coords():
             prioevent = routepool_entry.prio_coord
             routepool_entry.prio_coord = None
@@ -598,13 +600,15 @@ class RouteManagerBase(ABC):
     # to be called regularly to remove inactive workers that used to be registered
     async def _check_routepools(self, timeout: int = 600):
         while not self._shutdown_route.is_set():
-            logger.debug("Checking routepool for idle/dead workers")
-            for origin in list(self._routepool):
-                entry: RoutePoolEntry = self._routepool.get(origin)
-                if entry and time.time() - entry.last_access > timeout + entry.worker_sleeping:
-                    logger.warning("Worker {} has not accessed a location in {} seconds, removing from "
-                                   "routemanager", origin, timeout)
-                    await self.unregister_worker(origin, True)
+            if not self._start_calc.is_set():
+                logger.debug("Checking routepool for idle/dead workers")
+                for origin in list(self._routepool):
+                    entry: RoutePoolEntry = self._routepool.get(origin)
+                    if entry and time.time() > entry.last_access + timeout + entry.worker_sleeping:
+                        logger.warning("Worker {} has not accessed a location in {} seconds, removing from "
+                                       "routemanager. Sleeping value: {}, last access: {}", origin, timeout,
+                                       entry.worker_sleeping, entry.last_access)
+                        await self.unregister_worker(origin, True)
             await asyncio.sleep(60)
 
     def set_worker_sleeping(self, origin: str, sleep_duration: float) -> None:
@@ -612,6 +616,8 @@ class RouteManagerBase(ABC):
         Whether a worker is idling/sleeping/walking for long distances and should not be removed from the routepool
         """
         if sleep_duration > 0 and origin in self._routepool:
+            logger.info("Worker {} will sleep for {}s", origin, sleep_duration)
+            self._routepool[origin].last_access = time.time()
             self._routepool[origin].worker_sleeping = sleep_duration
 
     @abstractmethod
