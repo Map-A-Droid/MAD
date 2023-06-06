@@ -576,6 +576,8 @@ class WordToScreenMatching(object):
         for _ in range(3):
             await self._communicator.click(int(self._width * 0.91), int(self._height * 0.94))
             await asyncio.sleep(2)
+        await self._communicator.click(int(self._width * 0.91), int(self._height * 0.06))
+            await asyncio.sleep(2)
 
         if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
                 MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
