@@ -576,6 +576,21 @@ class WordToScreenMatching(object):
         for _ in range(3):
             await self._communicator.click(int(self._width * 0.91), int(self._height * 0.94))
             await asyncio.sleep(2)
+
+        if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
+                MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
+                                           delay_after=2):
+            logger.error("Failed getting screenshot")
+            return None
+
+        screenshot_path = await self.get_screenshot_path()
+        coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
+            screenshot_path,
+            2.20, 3.01,
+            upper=True)
+        if coordinates:
+            await self._communicator.click(coordinates.x, coordinates.y)
+            await asyncio.sleep(5)
         await self._communicator.click(int(self._width * 0.91), int(self._height * 0.06))
         await asyncio.sleep(2)
 
@@ -593,6 +608,7 @@ class WordToScreenMatching(object):
         if coordinates:
             await self._communicator.click(coordinates.x, coordinates.y)
             await asyncio.sleep(5)
+
             return ScreenType.WILLOWCATCH
         return ScreenType.NOTRESPONDING
 
