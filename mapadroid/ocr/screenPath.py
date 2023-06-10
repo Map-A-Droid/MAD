@@ -402,16 +402,7 @@ class WordToScreenMatching(object):
             logger.error("Failed determining which google account to use")
             return ScreenType.ERROR
         usernames_to_check_for: List[str] = usernames.split(",")
-        if application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
-            # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
-            # just as a plain startup of already logged in account/device
-            logger.debug("Login tracking enabled")
-            if not await self.check_ptc_login_ban():
-                logger.warning("Potential PTC ban, aborting login for now. Sleeping 30s")
-                await asyncio.sleep(30)
-                return ScreenType.ERROR
-            logger.success("Received permission for (potential) PTC login")
-        elif await self.parse_ggl(await self._communicator.uiautomator(), usernames_to_check_for):
+        if await self.parse_ggl(await self._communicator.uiautomator(), usernames_to_check_for):
             logger.info("Sleeping 50 seconds after clicking the account to login with - please wait!")
             await asyncio.sleep(50)
         else:
