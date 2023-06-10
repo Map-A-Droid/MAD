@@ -461,6 +461,7 @@ class WordToScreenMatching(object):
             if not await self.check_ptc_login_ban():
                 logger.warning("Potential PTC ban, aborting PTC login for now. Sleeping 30s")
                 await asyncio.sleep(30)
+                await self._communicator.stop_app("com.nianticlabs.pokemongo")
                 return ScreenType.ERROR
             logger.success("Received permission for (potential) PTC login")
         await self._communicator.click(int(self._width / 2), int(button_y))
