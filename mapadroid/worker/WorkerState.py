@@ -25,7 +25,7 @@ class WorkerState:
         self.active_account: Optional[SettingsPogoauth] = current_auth
         # Stores the time an account was last assigned. Avoid assigning accounts all the time
         self.active_account_last_set: int = 0
-        self.early_maintenance_detection: bool = False
+        self.maintenance_early_detection_triggered: bool = False
         self.area_id: Optional[int] = None
 
         self.current_location: Optional[Location] = Location(0.0, 0.0)
