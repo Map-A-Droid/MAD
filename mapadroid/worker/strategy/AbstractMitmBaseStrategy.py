@@ -336,7 +336,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
             # self._mitm_mapper.
             self._worker_state.restart_count = 0
-            self._worker_state.early_maintenance_detection = True
+            self._worker_state.maintenance_early_detection_triggered = True
             logger.warning("Too many timeouts - Restarting game")
             await self._restart_pogo(True)
 
@@ -353,7 +353,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         logger.debug('Routemanager: {}', self._area_id)
         logger.debug('Restart Counter: {}', self._worker_state.restart_count)
         logger.debug('Reboot Counter: {}', self._worker_state.reboot_count)
-        logger.debug('Early Maintenance Detection Flag: {}', self._worker_state.early_maintenance_detection)
+        logger.debug('Early Maintenance Detection Flag: {}', self._worker_state.maintenance_early_detection_triggered)
         logger.debug('Reboot Option: {}',
                      await self.get_devicesettings_value(MappingManagerDevicemappingKey.REBOOT, True))
         if self._worker_state.current_location:
