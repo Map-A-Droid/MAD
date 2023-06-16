@@ -401,7 +401,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         logger.success('Received data')
         self._worker_state.reboot_count = 0
         self._worker_state.restart_count = 0
-        self._worker_state.early_maintenance_detection = False
+        self._worker_state.maintenance_early_detection_triggered = False
         self._worker_state.last_received_data_time = DatetimeWrapper.now()
         now_ts: int = int(time.time())
         routemanager_settings = await self._mapping_manager.routemanager_get_settings(self._area_id)
