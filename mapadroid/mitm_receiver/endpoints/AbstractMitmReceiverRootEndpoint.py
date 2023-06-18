@@ -7,7 +7,6 @@ from abc import ABC
 from functools import wraps
 from typing import Any, Dict, Optional, Tuple, Union
 
-from aiocache import cached
 from aiohttp import web
 from aiohttp.abc import Request
 from aiohttp.helpers import sentinel
@@ -22,13 +21,12 @@ from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.AutoconfigRegistrationHelper import \
     AutoconfigRegistrationHelper
-from mapadroid.db.helper.SettingsAuthHelper import SettingsAuthHelper
 from mapadroid.db.model import (AuthLevel, AutoconfigLog,
                                 AutoconfigRegistration, Base, SettingsAuth)
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin import apiException
-from mapadroid.mapping_manager.MappingManager import MappingManager
+from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
 from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.authHelper import check_auth, get_auths_for_levl
@@ -176,7 +174,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
     def _get_mad_args(self):
         return self.request.app['mad_args']
 
-    def _get_mapping_manager(self) -> MappingManager:
+    def _get_mapping_manager(self) -> AbstractMappingManager:
         return self.request.app['mapping_manager']
 
     def _get_account_handler(self) -> AbstractAccountHandler:

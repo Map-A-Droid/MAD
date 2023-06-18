@@ -67,6 +67,7 @@ class MappingManagerClient(MappingManagerStub, AbstractMappingManager):
         else:
             return None
 
+    @cached(ttl=60)
     async def increment_login_tracking_by_origin(self, origin: str) -> bool:
         request = IncrementLoginTrackingByOriginRequest()
         request.worker.name = origin
