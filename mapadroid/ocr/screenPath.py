@@ -216,7 +216,7 @@ class WordToScreenMatching(object):
                     await asyncio.sleep(5)
                     return
 
-    async def check_ptc_login_ban(self) -> bool:
+    async def check_ptc_login_ban(self, increment_count: bool = True) -> bool:
         """
         Checks whether a PTC login is currently permissible.
         :return: True, if PTC login can be run through. False, otherwise.
@@ -229,7 +229,8 @@ class WordToScreenMatching(object):
         code = await self._communicator.get_ptc_status() or 500
         if code == 200:
             logger.debug(f"OK - PTC returned {code} on {ip}")
-            return await self._mapping_manager.ip_handle_login_request(ip, self._worker_state.origin)
+            return await self._mapping_manager.ip_handle_login_request(ip, self._worker_state.origin,
+                                                                       increment_count=increment_count)
         elif code == 403:
             logger.warning(f"PTC ban is active ({code}) on {ip}")
             return False
@@ -458,11 +459,13 @@ class WordToScreenMatching(object):
             # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
             # just as a plain startup of already logged in account/device
             logger.debug("Login tracking enabled")
-            if not await self.check_ptc_login_ban():
+            if not await self.check_ptc_login_ban(increment_count=True):
                 logger.warning("Potential PTC ban, aborting PTC login for now. Sleeping 30s")
                 await asyncio.sleep(30)
                 await self._communicator.stop_app("com.nianticlabs.pokemongo")
                 return ScreenType.ERROR
+            else:
+                await self._mapping_manager.login_tracking_remove_value(origin=self._worker_state.origin)
             logger.success("Received permission for (potential) PTC login")
         await self._communicator.click(int(self._width / 2), int(button_y))
         logger.info("Sleeping 50 seconds - please wait!")

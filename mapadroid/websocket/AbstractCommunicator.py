@@ -186,7 +186,7 @@ class AbstractCommunicator(ABC):
         """
 
     @abstractmethod
-    async def get_external_ip(self) -> str:
+    async def get_external_ip(self) -> Optional[str]:
         """
 
         Returns: the external IP address of the device

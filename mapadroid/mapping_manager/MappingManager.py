@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import time
 from asyncio import Task
 from datetime import datetime
 from threading import Event
@@ -356,7 +357,38 @@ class MappingManager(AbstractMappingManager):
     async def get_all_routemanager_ids(self) -> List[int]:
         return list(self._routemanagers.keys())
 
-    async def ip_handle_login_request(self, ip, origin, limit_seconds=None, limit_count=None):
+    LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED: str = "login_tracking_ip_{}"
+    LOGIN_TRACKING_TIMEOUT_ORIGIN_IP_MAPPED: int = 300
+
+    async def increment_login_tracking_by_origin(self, origin: str) -> bool:
+        """
+        Increments the login tracking counter for the IP stored mapped to the origin if there is one.
+        No locking due to getdel usage of redis.
+        """
+        now = int(time.time())
+        ip_retrieved: Optional[str] = await self._redis_cache.getdel(
+            MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin))
+        if not ip_retrieved:
+            logger.debug("Increment not needed as the IP was not stored for {}", origin)
+            return False
+        logger.warning("Incrementing login tracking of {}", origin)
+        async with self._redis_cache.pipeline() as pipe:
+            pipe.multi()
+            await pipe.zadd(ip_retrieved, {f"{origin}:{now}": now})
+            await pipe.expire(ip_retrieved, 60 * 60 * 24)
+            await pipe.execute()
+            return True
+
+    async def login_tracking_set_ip(self, origin: str, ip: str) -> None:
+        await self._redis_cache.set(name=MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin),
+                                    value=ip,
+                                    ex=MappingManager.LOGIN_TRACKING_TIMEOUT_ORIGIN_IP_MAPPED)
+
+    async def login_tracking_remove_value(self, origin: str) -> None:
+        await self._redis_cache.delete(MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin))
+
+    async def ip_handle_login_request(self, ip, origin, limit_seconds=None, limit_count=None,
+                                      increment_count: bool = True):
         if not limit_seconds:
             limit_seconds = int(application_args.login_tracking_timeout)
         if not limit_count:
@@ -380,13 +412,16 @@ class MappingManager(AbstractMappingManager):
                                        "seconds for {}! Deny this login attempt",
                                        limit_count, limit_seconds, ip)
                         return False
-                    else:
+                    elif increment_count:
                         logger.info("Got count {} for {}. Allow this login attempt, register {}.",
                                     ct, ip, now)
                         pipe.multi()
                         await pipe.zadd(ip, {f"{origin}:{now}": now})
                         await pipe.expire(ip, 60 * 60 * 24)
                         await pipe.execute()
+                        return True
+                    else:
+                        logger.info("Login tracking count is not to be incremented but no limit was found to apply.")
                         return True
 
                 except WatchError as e:

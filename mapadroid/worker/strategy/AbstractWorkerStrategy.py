@@ -219,7 +219,8 @@ class AbstractWorkerStrategy(ABC):
         if self._worker_state.active_account and self._worker_state.active_account.login_type == LoginType.ptc.name\
                 and application_args.enable_login_tracking:
             logger.debug("start_pogo: Login tracking enabled")
-            if not await self._word_to_screen_matching.check_ptc_login_ban():
+            if not await self._word_to_screen_matching.check_ptc_login_ban(increment_count=False):
+                # TODO: Why should we always reset app data here?
                 # sleeping close to or longer than 5 minutes may cause a problem with a 5-minute timeout
                 # in the RGC websocket connection? Only sleep 60s and then do some nonsense ...
                 logger.warning("start_pogo: No permission for PTC login. Kill pogo data and wait for 4 minutes...")
@@ -251,6 +252,11 @@ class AbstractWorkerStrategy(ABC):
 
         if start_result:
             logger.success("startPogo: Started pogo successfully...")
+            ip_of_device: Optional[str] = await self._communicator.get_external_ip()
+            if not ip_of_device:
+                logger.warning("Cannot retrieve IP of device.")
+            else:
+                await self._mapping_manager.login_tracking_set_ip(self._worker_state.origin, ip_of_device)
 
         await self._wait_pogo_start_delay()
         start_delay: int = await self.get_devicesettings_value(
