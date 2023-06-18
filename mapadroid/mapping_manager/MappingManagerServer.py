@@ -11,7 +11,9 @@ from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import (
     GetQuestLayerToScanOfOriginRequest, GetQuestLayerToScanOfOriginResponse,
     GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse,
     IsRoutemanagerOfOriginLevelmodeRequest,
-    IsRoutemanagerOfOriginLevelmodeResponse)
+    IsRoutemanagerOfOriginLevelmodeResponse,
+    IncrementLoginTrackingByOriginRequest,
+    IncrementLoginTrackingByOriginResponse)
 from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import (
     MappingManagerServicer, add_MappingManagerServicer_to_server)
 from mapadroid.mapping_manager.AbstractMappingManager import \
@@ -107,3 +109,10 @@ class MappingManagerServer(MappingManagerServicer):
         if quest_layer_to_scan is not None:
             response.layer = quest_layer_to_scan
         return response
+
+    async def IncrementLoginTrackingByOrigin(self, request: IncrementLoginTrackingByOriginRequest,
+                                             context: grpc.aio.ServicerContext)
+        -> IncrementLoginTrackingByOriginResponse:
+    response: IncrementLoginTrackingByOriginResponse = IncrementLoginTrackingByOriginResponse()
+    response.incremented = await self.__mapping_manager_impl.increment_login_tracking_by_origin(request.worker.name)
+    return response

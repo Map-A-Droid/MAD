@@ -22,3 +22,7 @@ class AbstractMappingManager(ABC):
     @abstractmethod
     async def routemanager_get_quest_layer_to_scan_of_origin(self, origin: str) -> Optional[int]:
         pass
+
+    @abstractmethod
+    async def increment_login_tracking_by_origin(self, origin: str) -> bool:
+        pass
