@@ -363,21 +363,22 @@ class MappingManager(AbstractMappingManager):
     async def increment_login_tracking_by_origin(self, origin: str) -> bool:
         """
         Increments the login tracking counter for the IP stored mapped to the origin if there is one.
-        No locking due to getdel usage of redis.
         """
-        now = int(time.time())
-        ip_retrieved: Optional[str] = await self._redis_cache.getdel(
-            MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin))
-        if not ip_retrieved:
-            logger.debug("Increment not needed as the IP was not stored for {}", origin)
-            return False
+        async with self.__mappings_mutex:
+            now = int(time.time())
+            ip_retrieved: Optional[str] = await self._redis_cache.get(
+                MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin))
+            if not ip_retrieved:
+                logger.debug("Increment not needed as the IP was not stored for {}", origin)
+                return False
+            await self._redis_cache.delete(MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin))
         logger.warning("Incrementing login tracking of {}", origin)
         async with self._redis_cache.pipeline() as pipe:
             pipe.multi()
             await pipe.zadd(ip_retrieved, {f"{origin}:{now}": now})
             await pipe.expire(ip_retrieved, 60 * 60 * 24)
             await pipe.execute()
-            return True
+        return True
 
     async def login_tracking_set_ip(self, origin: str, ip: str) -> None:
         await self._redis_cache.set(name=MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin),
