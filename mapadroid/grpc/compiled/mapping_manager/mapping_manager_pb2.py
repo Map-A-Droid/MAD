@@ -15,10 +15,12 @@ _sym_db = _symbol_database.Default()
 
 from mapadroid.grpc.compiled.shared import Worker_pb2 as shared_dot_Worker__pb2
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%mapping_manager/mapping_manager.proto\x12\x19mapadroid.mapping_manager\x1a\x13shared/Worker.proto\"N\n\"GetQuestLayerToScanOfOriginRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\"C\n#GetQuestLayerToScanOfOriginResponse\x12\x12\n\x05layer\x18\x01 \x01(\x05H\x00\x88\x01\x01\x42\x08\n\x06_layer\"R\n&IsRoutemanagerOfOriginLevelmodeRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\"?\n\'IsRoutemanagerOfOriginLevelmodeResponse\x12\x14\n\x0cis_levelmode\x18\x01 \x01(\x08\"J\n\x1eGetSafeItemsNotToDeleteRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\"3\n\x1fGetSafeItemsNotToDeleteResponse\x12\x10\n\x08item_ids\x18\x01 \x03(\x05\"@\n*GetAllowedAuthenticationCredentialsRequest\x12\x12\n\nauth_level\x18\x01 \x01(\x05\"M\n\x13\x41uthCredentialEntry\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x12\n\nauth_level\x18\x03 \x01(\x05\"\x95\x02\n+GetAllowedAuthenticationCredentialsResponse\x12{\n\x13\x61llowed_credentials\x18\x01 \x03(\x0b\x32^.mapadroid.mapping_manager.GetAllowedAuthenticationCredentialsResponse.AllowedCredentialsEntry\x1ai\n\x17\x41llowedCredentialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12=\n\x05value\x18\x02 \x01(\x0b\x32..mapadroid.mapping_manager.AuthCredentialEntry:\x02\x38\x01\"\x1c\n\x1aGetAllLoadedOriginsRequest\"5\n\x1bGetAllLoadedOriginsResponse\x12\x16\n\x0eloaded_origins\x18\x01 \x03(\t2\xab\x06\n\x0eMappingManager\x12\xb4\x01\n#GetAllowedAuthenticationCredentials\x12\x45.mapadroid.mapping_manager.GetAllowedAuthenticationCredentialsRequest\x1a\x46.mapadroid.mapping_manager.GetAllowedAuthenticationCredentialsResponse\x12\x84\x01\n\x13GetAllLoadedOrigins\x12\x35.mapadroid.mapping_manager.GetAllLoadedOriginsRequest\x1a\x36.mapadroid.mapping_manager.GetAllLoadedOriginsResponse\x12\x90\x01\n\x17GetSafeItemsNotToDelete\x12\x39.mapadroid.mapping_manager.GetSafeItemsNotToDeleteRequest\x1a:.mapadroid.mapping_manager.GetSafeItemsNotToDeleteResponse\x12\xa8\x01\n\x1fIsRoutemanagerOfOriginLevelmode\x12\x41.mapadroid.mapping_manager.IsRoutemanagerOfOriginLevelmodeRequest\x1a\x42.mapadroid.mapping_manager.IsRoutemanagerOfOriginLevelmodeResponse\x12\x9c\x01\n\x1bGetQuestLayerToScanOfOrigin\x12=.mapadroid.mapping_manager.GetQuestLayerToScanOfOriginRequest\x1a>.mapadroid.mapping_manager.GetQuestLayerToScanOfOriginResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n%mapping_manager/mapping_manager.proto\x12\x19mapadroid.mapping_manager\x1a\x13shared/Worker.proto\"Q\n%IncrementLoginTrackingByOriginRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\"=\n&IncrementLoginTrackingByOriginResponse\x12\x13\n\x0bincremented\x18\x01 \x01(\x08\"N\n\"GetQuestLayerToScanOfOriginRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\"C\n#GetQuestLayerToScanOfOriginResponse\x12\x12\n\x05layer\x18\x01 \x01(\x05H\x00\x88\x01\x01\x42\x08\n\x06_layer\"R\n&IsRoutemanagerOfOriginLevelmodeRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\"?\n\'IsRoutemanagerOfOriginLevelmodeResponse\x12\x14\n\x0cis_levelmode\x18\x01 \x01(\x08\"J\n\x1eGetSafeItemsNotToDeleteRequest\x12(\n\x06worker\x18\x01 \x01(\x0b\x32\x18.mapadroid.shared.Worker\"3\n\x1fGetSafeItemsNotToDeleteResponse\x12\x10\n\x08item_ids\x18\x01 \x03(\x05\"@\n*GetAllowedAuthenticationCredentialsRequest\x12\x12\n\nauth_level\x18\x01 \x01(\x05\"M\n\x13\x41uthCredentialEntry\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x12\n\nauth_level\x18\x03 \x01(\x05\"\x95\x02\n+GetAllowedAuthenticationCredentialsResponse\x12{\n\x13\x61llowed_credentials\x18\x01 \x03(\x0b\x32^.mapadroid.mapping_manager.GetAllowedAuthenticationCredentialsResponse.AllowedCredentialsEntry\x1ai\n\x17\x41llowedCredentialsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12=\n\x05value\x18\x02 \x01(\x0b\x32..mapadroid.mapping_manager.AuthCredentialEntry:\x02\x38\x01\"\x1c\n\x1aGetAllLoadedOriginsRequest\"5\n\x1bGetAllLoadedOriginsResponse\x12\x16\n\x0eloaded_origins\x18\x01 \x03(\t2\xd3\x07\n\x0eMappingManager\x12\xb4\x01\n#GetAllowedAuthenticationCredentials\x12\x45.mapadroid.mapping_manager.GetAllowedAuthenticationCredentialsRequest\x1a\x46.mapadroid.mapping_manager.GetAllowedAuthenticationCredentialsResponse\x12\x84\x01\n\x13GetAllLoadedOrigins\x12\x35.mapadroid.mapping_manager.GetAllLoadedOriginsRequest\x1a\x36.mapadroid.mapping_manager.GetAllLoadedOriginsResponse\x12\x90\x01\n\x17GetSafeItemsNotToDelete\x12\x39.mapadroid.mapping_manager.GetSafeItemsNotToDeleteRequest\x1a:.mapadroid.mapping_manager.GetSafeItemsNotToDeleteResponse\x12\xa8\x01\n\x1fIsRoutemanagerOfOriginLevelmode\x12\x41.mapadroid.mapping_manager.IsRoutemanagerOfOriginLevelmodeRequest\x1a\x42.mapadroid.mapping_manager.IsRoutemanagerOfOriginLevelmodeResponse\x12\x9c\x01\n\x1bGetQuestLayerToScanOfOrigin\x12=.mapadroid.mapping_manager.GetQuestLayerToScanOfOriginRequest\x1a>.mapadroid.mapping_manager.GetQuestLayerToScanOfOriginResponse\x12\xa5\x01\n\x1eIncrementLoginTrackingByOrigin\x12@.mapadroid.mapping_manager.IncrementLoginTrackingByOriginRequest\x1a\x41.mapadroid.mapping_manager.IncrementLoginTrackingByOriginResponseb\x06proto3')
 
 
 
+_INCREMENTLOGINTRACKINGBYORIGINREQUEST = DESCRIPTOR.message_types_by_name['IncrementLoginTrackingByOriginRequest']
+_INCREMENTLOGINTRACKINGBYORIGINRESPONSE = DESCRIPTOR.message_types_by_name['IncrementLoginTrackingByOriginResponse']
 _GETQUESTLAYERTOSCANOFORIGINREQUEST = DESCRIPTOR.message_types_by_name['GetQuestLayerToScanOfOriginRequest']
 _GETQUESTLAYERTOSCANOFORIGINRESPONSE = DESCRIPTOR.message_types_by_name['GetQuestLayerToScanOfOriginResponse']
 _ISROUTEMANAGEROFORIGINLEVELMODEREQUEST = DESCRIPTOR.message_types_by_name['IsRoutemanagerOfOriginLevelmodeRequest']
@@ -31,6 +33,20 @@ _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE = DESCRIPTOR.message_types_by_name[
 _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE_ALLOWEDCREDENTIALSENTRY = _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE.nested_types_by_name['AllowedCredentialsEntry']
 _GETALLLOADEDORIGINSREQUEST = DESCRIPTOR.message_types_by_name['GetAllLoadedOriginsRequest']
 _GETALLLOADEDORIGINSRESPONSE = DESCRIPTOR.message_types_by_name['GetAllLoadedOriginsResponse']
+IncrementLoginTrackingByOriginRequest = _reflection.GeneratedProtocolMessageType('IncrementLoginTrackingByOriginRequest', (_message.Message,), {
+  'DESCRIPTOR' : _INCREMENTLOGINTRACKINGBYORIGINREQUEST,
+  '__module__' : 'mapping_manager.mapping_manager_pb2'
+  # @@protoc_insertion_point(class_scope:mapadroid.mapping_manager.IncrementLoginTrackingByOriginRequest)
+  })
+_sym_db.RegisterMessage(IncrementLoginTrackingByOriginRequest)
+
+IncrementLoginTrackingByOriginResponse = _reflection.GeneratedProtocolMessageType('IncrementLoginTrackingByOriginResponse', (_message.Message,), {
+  'DESCRIPTOR' : _INCREMENTLOGINTRACKINGBYORIGINRESPONSE,
+  '__module__' : 'mapping_manager.mapping_manager_pb2'
+  # @@protoc_insertion_point(class_scope:mapadroid.mapping_manager.IncrementLoginTrackingByOriginResponse)
+  })
+_sym_db.RegisterMessage(IncrementLoginTrackingByOriginResponse)
+
 GetQuestLayerToScanOfOriginRequest = _reflection.GeneratedProtocolMessageType('GetQuestLayerToScanOfOriginRequest', (_message.Message,), {
   'DESCRIPTOR' : _GETQUESTLAYERTOSCANOFORIGINREQUEST,
   '__module__' : 'mapping_manager.mapping_manager_pb2'
@@ -122,30 +138,34 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
   _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE_ALLOWEDCREDENTIALSENTRY._options = None
   _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE_ALLOWEDCREDENTIALSENTRY._serialized_options = b'8\001'
-  _GETQUESTLAYERTOSCANOFORIGINREQUEST._serialized_start=89
-  _GETQUESTLAYERTOSCANOFORIGINREQUEST._serialized_end=167
-  _GETQUESTLAYERTOSCANOFORIGINRESPONSE._serialized_start=169
-  _GETQUESTLAYERTOSCANOFORIGINRESPONSE._serialized_end=236
-  _ISROUTEMANAGEROFORIGINLEVELMODEREQUEST._serialized_start=238
-  _ISROUTEMANAGEROFORIGINLEVELMODEREQUEST._serialized_end=320
-  _ISROUTEMANAGEROFORIGINLEVELMODERESPONSE._serialized_start=322
-  _ISROUTEMANAGEROFORIGINLEVELMODERESPONSE._serialized_end=385
-  _GETSAFEITEMSNOTTODELETEREQUEST._serialized_start=387
-  _GETSAFEITEMSNOTTODELETEREQUEST._serialized_end=461
-  _GETSAFEITEMSNOTTODELETERESPONSE._serialized_start=463
-  _GETSAFEITEMSNOTTODELETERESPONSE._serialized_end=514
-  _GETALLOWEDAUTHENTICATIONCREDENTIALSREQUEST._serialized_start=516
-  _GETALLOWEDAUTHENTICATIONCREDENTIALSREQUEST._serialized_end=580
-  _AUTHCREDENTIALENTRY._serialized_start=582
-  _AUTHCREDENTIALENTRY._serialized_end=659
-  _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE._serialized_start=662
-  _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE._serialized_end=939
-  _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE_ALLOWEDCREDENTIALSENTRY._serialized_start=834
-  _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE_ALLOWEDCREDENTIALSENTRY._serialized_end=939
-  _GETALLLOADEDORIGINSREQUEST._serialized_start=941
-  _GETALLLOADEDORIGINSREQUEST._serialized_end=969
-  _GETALLLOADEDORIGINSRESPONSE._serialized_start=971
-  _GETALLLOADEDORIGINSRESPONSE._serialized_end=1024
-  _MAPPINGMANAGER._serialized_start=1027
-  _MAPPINGMANAGER._serialized_end=1838
+  _INCREMENTLOGINTRACKINGBYORIGINREQUEST._serialized_start=89
+  _INCREMENTLOGINTRACKINGBYORIGINREQUEST._serialized_end=170
+  _INCREMENTLOGINTRACKINGBYORIGINRESPONSE._serialized_start=172
+  _INCREMENTLOGINTRACKINGBYORIGINRESPONSE._serialized_end=233
+  _GETQUESTLAYERTOSCANOFORIGINREQUEST._serialized_start=235
+  _GETQUESTLAYERTOSCANOFORIGINREQUEST._serialized_end=313
+  _GETQUESTLAYERTOSCANOFORIGINRESPONSE._serialized_start=315
+  _GETQUESTLAYERTOSCANOFORIGINRESPONSE._serialized_end=382
+  _ISROUTEMANAGEROFORIGINLEVELMODEREQUEST._serialized_start=384
+  _ISROUTEMANAGEROFORIGINLEVELMODEREQUEST._serialized_end=466
+  _ISROUTEMANAGEROFORIGINLEVELMODERESPONSE._serialized_start=468
+  _ISROUTEMANAGEROFORIGINLEVELMODERESPONSE._serialized_end=531
+  _GETSAFEITEMSNOTTODELETEREQUEST._serialized_start=533
+  _GETSAFEITEMSNOTTODELETEREQUEST._serialized_end=607
+  _GETSAFEITEMSNOTTODELETERESPONSE._serialized_start=609
+  _GETSAFEITEMSNOTTODELETERESPONSE._serialized_end=660
+  _GETALLOWEDAUTHENTICATIONCREDENTIALSREQUEST._serialized_start=662
+  _GETALLOWEDAUTHENTICATIONCREDENTIALSREQUEST._serialized_end=726
+  _AUTHCREDENTIALENTRY._serialized_start=728
+  _AUTHCREDENTIALENTRY._serialized_end=805
+  _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE._serialized_start=808
+  _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE._serialized_end=1085
+  _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE_ALLOWEDCREDENTIALSENTRY._serialized_start=980
+  _GETALLOWEDAUTHENTICATIONCREDENTIALSRESPONSE_ALLOWEDCREDENTIALSENTRY._serialized_end=1085
+  _GETALLLOADEDORIGINSREQUEST._serialized_start=1087
+  _GETALLLOADEDORIGINSREQUEST._serialized_end=1115
+  _GETALLLOADEDORIGINSRESPONSE._serialized_start=1117
+  _GETALLLOADEDORIGINSRESPONSE._serialized_end=1170
+  _MAPPINGMANAGER._serialized_start=1173
+  _MAPPINGMANAGER._serialized_end=2152
 # @@protoc_insertion_point(module_scope)
