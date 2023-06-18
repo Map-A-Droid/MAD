@@ -95,7 +95,8 @@ class MappingManagerServer(MappingManagerServicer):
         return response
 
     async def IsRoutemanagerOfOriginLevelmode(self, request: IsRoutemanagerOfOriginLevelmodeRequest,
-                                              context: grpc.aio.ServicerContext) -> IsRoutemanagerOfOriginLevelmodeResponse:
+                                              context: grpc.aio.ServicerContext) \
+            -> IsRoutemanagerOfOriginLevelmodeResponse:
         response = IsRoutemanagerOfOriginLevelmodeResponse()
         response.is_levelmode = await self.__mapping_manager_impl.routemanager_of_origin_is_levelmode(
             origin=request.worker.name)
@@ -111,8 +112,8 @@ class MappingManagerServer(MappingManagerServicer):
         return response
 
     async def IncrementLoginTrackingByOrigin(self, request: IncrementLoginTrackingByOriginRequest,
-                                             context: grpc.aio.ServicerContext)
-        -> IncrementLoginTrackingByOriginResponse:
-    response: IncrementLoginTrackingByOriginResponse = IncrementLoginTrackingByOriginResponse()
-    response.incremented = await self.__mapping_manager_impl.increment_login_tracking_by_origin(request.worker.name)
-    return response
+                                             context: grpc.aio.ServicerContext) \
+            -> IncrementLoginTrackingByOriginResponse:
+        response: IncrementLoginTrackingByOriginResponse = IncrementLoginTrackingByOriginResponse()
+        response.incremented = await self.__mapping_manager_impl.increment_login_tracking_by_origin(request.worker.name)
+        return response

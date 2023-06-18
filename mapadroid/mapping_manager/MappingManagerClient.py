@@ -11,7 +11,7 @@ from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import (
     GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse,
     IsRoutemanagerOfOriginLevelmodeRequest,
     IsRoutemanagerOfOriginLevelmodeResponse,
-    IncrementLoginTrackingByOriginRequest)
+    IncrementLoginTrackingByOriginRequest, IncrementLoginTrackingByOriginResponse)
 from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import \
     MappingManagerStub
 from mapadroid.mapping_manager.AbstractMappingManager import \
