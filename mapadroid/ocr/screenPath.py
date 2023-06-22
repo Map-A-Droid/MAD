@@ -269,6 +269,9 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.FAILURE:
             await self.__handle_failure_screen()
         elif screentype == ScreenType.RETRY:
+            if application_args.enable_early_maintenance_detection and self._worker_state.maintenance_early_detection_triggered:
+                logger.warning("Seen RETRY screen after multiple proto timeouts - most likely MAINTENANCE")
+                await self._account_handler.mark_burnt(self._worker_state.device_id, BurnType.MAINTENANCE)
             await self.__handle_retry_screen(diff, global_dict)
         elif screentype == ScreenType.WRONG:
             await self.__handle_returning_player_or_wrong_credentials()

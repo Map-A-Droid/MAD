@@ -374,6 +374,12 @@
 # MAD PoGo auth is not required during autoconfiguration
 #autoconfig_no_auth:
 
+# Early Maintenance Detection
+######################
+# Don't wait for Maintenance screen to show up (we need to relog for that) - mark account as burnt after proto timeouts + RETRY screen
+# This can be inaccurate (game down/internet down(?)) so use it only if you have a lot of spare accounts.
+# enable_early_maintenance_detection: True
+
 # Report MITMReceiver queue value to Redis
 # This is only useful for split/multi start_mitmreceiver.py approach and if you have anything that going to monitor your queue value.
 # Remember to set a unique key for each start_mitmreceiver you are running. You most likely want to override it in command line rather via config.ini
