@@ -37,7 +37,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         origin = self.request.headers.get("origin")
         with logger.contextualize(identifier=origin, name="receive_protos"):
             logger.debug2("Receiving proto")
-
+            await self._get_mapping_manager().increment_login_tracking_by_origin(origin)
             logger.debug4("Proto data received {}", data)
             if isinstance(data, list):
                 # list of protos... we hope so at least....

@@ -133,7 +133,8 @@ class WordToScreenMatching(object):
             if not account_to_use:
                 logger.error("No account to use found, are there too few accounts in DB or did MAD screw up here? "
                              "Please make sure accounts in MADmin->Settings->Pogo Auth have correct level set - edit "
-                             "it manually if imported with 0/1 - MAD does not (auto)login to check levels.")
+                             "it manually if imported with 0/1 - MAD does not (auto)login to check levels "
+                             "(unless levelmode is active.")
                 self._worker_state.active_account = None
                 self._worker_state.active_account_last_set = 0
             else:
@@ -144,15 +145,6 @@ class WordToScreenMatching(object):
             logger.error("No account set for device, sleeping 30s")
             await asyncio.sleep(30)
             return
-        elif application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
-            # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
-            # just as a plain startup of already logged in account/device
-            logger.debug("Login tracking enabled")
-            if not await self.check_ptc_login_ban():
-                logger.warning("Potential PTC ban, aborting login for now. Sleeping 30s")
-                await asyncio.sleep(30)
-                return
-            logger.success("Received permission for (potential) PTC login")
 
         for i in range(n_boxes):
             if 'Facebook' in (global_dict['text'][i]):
@@ -227,7 +219,7 @@ class WordToScreenMatching(object):
                     await asyncio.sleep(5)
                     return
 
-    async def check_ptc_login_ban(self) -> bool:
+    async def check_ptc_login_ban(self, increment_count: bool = True) -> bool:
         """
         Checks whether a PTC login is currently permissible.
         :return: True, if PTC login can be run through. False, otherwise.
@@ -240,7 +232,8 @@ class WordToScreenMatching(object):
         code = await self._communicator.get_ptc_status() or 500
         if code == 200:
             logger.debug(f"OK - PTC returned {code} on {ip}")
-            return await self._mapping_manager.ip_handle_login_request(ip, self._worker_state.origin)
+            return await self._mapping_manager.ip_handle_login_request(ip, self._worker_state.origin,
+                                                                       increment_count=increment_count)
         elif code == 403:
             logger.warning(f"PTC ban is active ({code}) on {ip}")
             return False
@@ -417,7 +410,7 @@ class WordToScreenMatching(object):
             return ScreenType.ERROR
         usernames_to_check_for: List[str] = usernames.split(",")
         if await self.parse_ggl(await self._communicator.uiautomator(), usernames_to_check_for):
-            logger.info("Sleeping 50 seconds - please wait!")
+            logger.info("Sleeping 50 seconds after clicking the account to login with - please wait!")
             await asyncio.sleep(50)
         else:
             screentype = ScreenType.ERROR
@@ -467,7 +460,19 @@ class WordToScreenMatching(object):
         await self._communicator.enter_text(self._worker_state.active_account.password)
         await self._communicator.click(100, 100)
         await asyncio.sleep(2)
-        # button
+        # button for actual login
+        if application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
+            # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
+            # just as a plain startup of already logged in account/device
+            logger.debug("Login tracking enabled")
+            if not await self.check_ptc_login_ban(increment_count=True):
+                logger.warning("Potential PTC ban, aborting PTC login for now. Sleeping 30s")
+                await asyncio.sleep(30)
+                await self._communicator.stop_app("com.nianticlabs.pokemongo")
+                return ScreenType.ERROR
+            else:
+                await self._mapping_manager.login_tracking_remove_value(origin=self._worker_state.origin)
+            logger.success("Received permission for (potential) PTC login")
         await self._communicator.click(int(self._width / 2), int(button_y))
         logger.info("Sleeping 50 seconds - please wait!")
         await asyncio.sleep(50)
@@ -530,7 +535,7 @@ class WordToScreenMatching(object):
         await self._communicator.click(click_x, click_y)
         await asyncio.sleep(1)
 
-    async def __handle_welcome_screen(self) -> None:
+    async def __handle_welcome_screen(self) -> ScreenType:
         #self._nextscreen = ScreenType.TOS
         screenshot_path = await self.get_screenshot_path()
         coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
@@ -543,7 +548,7 @@ class WordToScreenMatching(object):
             return ScreenType.TOS
         return ScreenType.NOTRESPONDING
 
-    async def __handle_tos_screen(self) -> None:
+    async def __handle_tos_screen(self) -> ScreenType:
         #self._nextscreen = ScreenType.PRIVACY
         screenshot_path = await self.get_screenshot_path()
         await self._communicator.click(int(self._width / 2), int(self._height * 0.47))
@@ -557,7 +562,7 @@ class WordToScreenMatching(object):
             return ScreenType.PRIVACY
         return ScreenType.NOTRESPONDING
 
-    async def __handle_privacy_screen(self) -> None:
+    async def __handle_privacy_screen(self) -> ScreenType:
         #self._nextscreen = ScreenType.WILLOWCHAR
         screenshot_path = await self.get_screenshot_path()
         coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
@@ -570,8 +575,7 @@ class WordToScreenMatching(object):
             return ScreenType.WILLOWCHAR
         return ScreenType.NOTRESPONDING
 
-    async def __handle_character_selection_screen(self) -> None:
-        #self._nextscreen = ScreenType.WILLOWCATCH
+    async def __handle_character_selection_screen(self) -> ScreenType:
         for _ in range(9):
             await self._communicator.click(100, 100)
             await asyncio.sleep(1)
@@ -586,7 +590,7 @@ class WordToScreenMatching(object):
                 MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
                                            delay_after=2):
             logger.error("Failed getting screenshot")
-            return None
+            return ScreenType.ERROR
 
         screenshot_path = await self.get_screenshot_path()
         coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
@@ -596,29 +600,10 @@ class WordToScreenMatching(object):
         if coordinates:
             await self._communicator.click(coordinates.x, coordinates.y)
             await asyncio.sleep(5)
-        await self._communicator.click(int(self._width * 0.91), int(self._height * 0.06))
-        await asyncio.sleep(2)
-
-        if not await self._take_screenshot(delay_before=await self.get_devicesettings_value(
-                MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
-                                           delay_after=2):
-            logger.error("Failed getting screenshot")
-            return None
-
-        screenshot_path = await self.get_screenshot_path()
-        coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
-            screenshot_path,
-            2.20, 3.01,
-            upper=True)
-        if coordinates:
-            await self._communicator.click(coordinates.x, coordinates.y)
-            await asyncio.sleep(5)
-
             return ScreenType.WILLOWCATCH
         return ScreenType.NOTRESPONDING
 
-    async def __handle_catch_tutorial(self) -> None:
-        #self._nextscreen = ScreenType.WILLOWNAME
+    async def __handle_catch_tutorial(self) -> ScreenType:
         for _ in range(2):
             await self._communicator.click(100, 100)
         for x in range(1,10):
@@ -631,7 +616,7 @@ class WordToScreenMatching(object):
                     MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
                                                delay_after=2):
                 logger.error("Failed getting screenshot")
-                return None
+                return ScreenType.ERROR
             screenshot_path = await self.get_screenshot_path()
             globaldict = await self._worker_state.pogo_windows.get_screen_text(screenshot_path, self._worker_state.origin)
             starter = ['Bulbasaur', 'Charmander', 'Squirtle', 'Bisasam', 'Glumanda', 'Schiggy', 'Bulbizarre', 'Salameche', 'Carapuce']
@@ -649,7 +634,7 @@ class WordToScreenMatching(object):
                     MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
                                                delay_after=2):
                 logger.error("Failed getting screenshot")
-                return None
+                return ScreenType.ERROR
 
             screenshot_path = await self.get_screenshot_path()
             coordinates: Optional[ScreenCoordinates] = await self._worker_state.pogo_windows.look_for_button(
@@ -660,15 +645,14 @@ class WordToScreenMatching(object):
                 await self._communicator.click(coordinates.x, coordinates.y)
                 logger.info("Catched Pokémon.")
                 await asyncio.sleep(12)
-                await self._communicator.click(self._width / 2, self._height * 0.93)
+                await self._communicator.click(int(self._width / 2), int(self._height * 0.93))
                 await asyncio.sleep(2)
                 return ScreenType.UNDEFINED
 
         logger.warning("Could not catch Pokémon.")
         return ScreenType.NOTRESPONDING
 
-    async def __handle_name_screen(self) -> None:
-        #self._nextscreen = ScreenType.ADVENTURESYNC
+    async def __handle_name_screen(self) -> ScreenType:
         for _ in range(2):
             await self._communicator.click(100, 100)
             await asyncio.sleep(1)
@@ -690,7 +674,7 @@ class WordToScreenMatching(object):
                 MappingManagerDevicemappingKey.POST_SCREENSHOT_DELAY, 1),
                                            delay_after=2):
             logger.error("Failed getting screenshot")
-            return None
+            return ScreenType.ERROR
         screenshot_path = await self.get_screenshot_path()
         globaldict = await self._worker_state.pogo_windows.get_screen_text(screenshot_path, self._worker_state.origin)
         errortext = ['available.','verfugbar.','disponible.']
@@ -705,15 +689,15 @@ class WordToScreenMatching(object):
         await asyncio.sleep(5)
         return ScreenType.ADVENTURESYNC
 
-    async def __handle_adventure_sync_screen(self, screentype) -> None:
+    async def __handle_adventure_sync_screen(self, screentype: ScreenType) -> ScreenType:
         if not await self.parse_adventure_sync(await self._communicator.uiautomator()):
             screentype = ScreenType.ERROR
         await asyncio.sleep(5)
         return screentype
 
-    async def __handle_tutorial_end(self) -> None:
+    async def __handle_tutorial_end(self) -> ScreenType:
         for _ in range(4):
-            await self._communicator.click(100,100)
+            await self._communicator.click(100, 100)
         await asyncio.sleep(1)
         return ScreenType.POGO
 

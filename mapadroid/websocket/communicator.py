@@ -248,13 +248,13 @@ class Communicator(AbstractCommunicator):
             return True
 
     async def get_ptc_status(self) -> int:
+        res: Optional[MessageTyping] = None
         try:
-            code: MessageTyping = await self.passthrough(
-                "curl -s -k -I https://sso.pokemon.com/sso/login -o /dev/null -w '%{http_code}'")
-            code = code.replace("[", "").replace("]", "")
-            return int(code)
+            res = await self.__run_get_gesponse(
+                f"more http head https://sso.pokemon.com/sso/login\r\n")
+            return int(res)
         except Exception as e:
-            logger.warning("Failed retrieving SSO status of PTC: {}", e)
+            logger.warning("Failed retrieving SSO status of PTC: {} ({})", e, res)
             return 500
 
     async def get_external_ip(self) -> Optional[str]:
@@ -265,7 +265,7 @@ class Communicator(AbstractCommunicator):
             logger.error(f"Failed getting external IP address from device: {e}")
             return None
         if not res or res.startswith("Failed"):
-            logger.error("Requesting IP failed")
+            logger.error("Requesting IP failed ({})", res)
             return None
         # parse RGC return expression
         ip_address_found: Optional[str] = None

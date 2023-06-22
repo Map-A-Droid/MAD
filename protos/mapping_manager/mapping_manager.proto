@@ -9,6 +9,15 @@ service MappingManager {
   rpc GetSafeItemsNotToDelete(GetSafeItemsNotToDeleteRequest) returns (GetSafeItemsNotToDeleteResponse);
   rpc IsRoutemanagerOfOriginLevelmode(IsRoutemanagerOfOriginLevelmodeRequest) returns (IsRoutemanagerOfOriginLevelmodeResponse);
   rpc GetQuestLayerToScanOfOrigin(GetQuestLayerToScanOfOriginRequest) returns (GetQuestLayerToScanOfOriginResponse);
+  rpc IncrementLoginTrackingByOrigin(IncrementLoginTrackingByOriginRequest) returns (IncrementLoginTrackingByOriginResponse);
+}
+
+message IncrementLoginTrackingByOriginRequest {
+  mapadroid.shared.Worker worker = 1;
+}
+
+message IncrementLoginTrackingByOriginResponse {
+  bool incremented = 1;
 }
 
 message GetQuestLayerToScanOfOriginRequest {

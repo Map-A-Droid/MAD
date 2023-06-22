@@ -2,7 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from mapadroid.grpc.compiled.mapping_manager import mapping_manager_pb2 as mapping__manager_dot_mapping__manager__pb2
+from mapadroid.grpc.compiled.mapping_manager import \
+    mapping_manager_pb2 as mapping__manager_dot_mapping__manager__pb2
 
 
 class MappingManagerStub(object):
@@ -39,6 +40,11 @@ class MappingManagerStub(object):
                 request_serializer=mapping__manager_dot_mapping__manager__pb2.GetQuestLayerToScanOfOriginRequest.SerializeToString,
                 response_deserializer=mapping__manager_dot_mapping__manager__pb2.GetQuestLayerToScanOfOriginResponse.FromString,
                 )
+        self.IncrementLoginTrackingByOrigin = channel.unary_unary(
+                '/mapadroid.mapping_manager.MappingManager/IncrementLoginTrackingByOrigin',
+                request_serializer=mapping__manager_dot_mapping__manager__pb2.IncrementLoginTrackingByOriginRequest.SerializeToString,
+                response_deserializer=mapping__manager_dot_mapping__manager__pb2.IncrementLoginTrackingByOriginResponse.FromString,
+                )
 
 
 class MappingManagerServicer(object):
@@ -74,6 +80,12 @@ class MappingManagerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def IncrementLoginTrackingByOrigin(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MappingManagerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -101,6 +113,11 @@ def add_MappingManagerServicer_to_server(servicer, server):
                     servicer.GetQuestLayerToScanOfOrigin,
                     request_deserializer=mapping__manager_dot_mapping__manager__pb2.GetQuestLayerToScanOfOriginRequest.FromString,
                     response_serializer=mapping__manager_dot_mapping__manager__pb2.GetQuestLayerToScanOfOriginResponse.SerializeToString,
+            ),
+            'IncrementLoginTrackingByOrigin': grpc.unary_unary_rpc_method_handler(
+                    servicer.IncrementLoginTrackingByOrigin,
+                    request_deserializer=mapping__manager_dot_mapping__manager__pb2.IncrementLoginTrackingByOriginRequest.FromString,
+                    response_serializer=mapping__manager_dot_mapping__manager__pb2.IncrementLoginTrackingByOriginResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -194,5 +211,22 @@ class MappingManager(object):
         return grpc.experimental.unary_unary(request, target, '/mapadroid.mapping_manager.MappingManager/GetQuestLayerToScanOfOrigin',
             mapping__manager_dot_mapping__manager__pb2.GetQuestLayerToScanOfOriginRequest.SerializeToString,
             mapping__manager_dot_mapping__manager__pb2.GetQuestLayerToScanOfOriginResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def IncrementLoginTrackingByOrigin(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/mapadroid.mapping_manager.MappingManager/IncrementLoginTrackingByOrigin',
+            mapping__manager_dot_mapping__manager__pb2.IncrementLoginTrackingByOriginRequest.SerializeToString,
+            mapping__manager_dot_mapping__manager__pb2.IncrementLoginTrackingByOriginResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

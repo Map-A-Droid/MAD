@@ -11,7 +11,9 @@ from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import (
     GetQuestLayerToScanOfOriginRequest, GetQuestLayerToScanOfOriginResponse,
     GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse,
     IsRoutemanagerOfOriginLevelmodeRequest,
-    IsRoutemanagerOfOriginLevelmodeResponse)
+    IsRoutemanagerOfOriginLevelmodeResponse,
+    IncrementLoginTrackingByOriginRequest,
+    IncrementLoginTrackingByOriginResponse)
 from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import (
     MappingManagerServicer, add_MappingManagerServicer_to_server)
 from mapadroid.mapping_manager.AbstractMappingManager import \
@@ -93,7 +95,8 @@ class MappingManagerServer(MappingManagerServicer):
         return response
 
     async def IsRoutemanagerOfOriginLevelmode(self, request: IsRoutemanagerOfOriginLevelmodeRequest,
-                                              context: grpc.aio.ServicerContext) -> IsRoutemanagerOfOriginLevelmodeResponse:
+                                              context: grpc.aio.ServicerContext) \
+            -> IsRoutemanagerOfOriginLevelmodeResponse:
         response = IsRoutemanagerOfOriginLevelmodeResponse()
         response.is_levelmode = await self.__mapping_manager_impl.routemanager_of_origin_is_levelmode(
             origin=request.worker.name)
@@ -106,4 +109,11 @@ class MappingManagerServer(MappingManagerServicer):
             .routemanager_get_quest_layer_to_scan_of_origin(request.worker.name)
         if quest_layer_to_scan is not None:
             response.layer = quest_layer_to_scan
+        return response
+
+    async def IncrementLoginTrackingByOrigin(self, request: IncrementLoginTrackingByOriginRequest,
+                                             context: grpc.aio.ServicerContext) \
+            -> IncrementLoginTrackingByOriginResponse:
+        response: IncrementLoginTrackingByOriginResponse = IncrementLoginTrackingByOriginResponse()
+        response.incremented = await self.__mapping_manager_impl.increment_login_tracking_by_origin(request.worker.name)
         return response

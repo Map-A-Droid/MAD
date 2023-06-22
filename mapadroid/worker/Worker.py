@@ -343,10 +343,10 @@ class Worker(AbstractWorker):
                 return False
             sleeptime = self._scan_strategy.walker.algo_value
             logger.info('going to sleep')
-            killpogo = False
+            stopped_pogo: bool = False
             if check_walker_value_type(sleeptime, await self.__area_middle_of_current_fence()):
                 await self._scan_strategy.stop_pogo()
-                killpogo = True
+                stopped_pogo = True
                 logger.debug("Setting device to idle for routemanager")
                 async with self._db_wrapper as session, session:
                     await TrsStatusHelper.save_idle_status(session, self._db_wrapper.get_instance_id(),
@@ -356,7 +356,7 @@ class Worker(AbstractWorker):
                    and check_walker_value_type(sleeptime, await self.__area_middle_of_current_fence())):
                 await asyncio.sleep(1)
             logger.info('just woke up')
-            if killpogo:
+            if stopped_pogo:
                 await self._scan_strategy.start_pogo()
             return False
         else:

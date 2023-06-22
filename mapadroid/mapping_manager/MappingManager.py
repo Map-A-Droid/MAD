@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import time
 from asyncio import Task
 from datetime import datetime
 from threading import Event
@@ -103,6 +104,9 @@ class AreaEntry:
 
 
 class MappingManager(AbstractMappingManager):
+    LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED: str = "login_tracking_ip_{}"
+    LOGIN_TRACKING_TIMEOUT_ORIGIN_IP_MAPPED: int = 300
+
     def __init__(self, db_wrapper: DbWrapper, account_handler: AbstractAccountHandler, configmode: bool = False):
         self.__jobstatus: Dict = {}
         self.__db_wrapper: DbWrapper = db_wrapper
@@ -356,42 +360,83 @@ class MappingManager(AbstractMappingManager):
     async def get_all_routemanager_ids(self) -> List[int]:
         return list(self._routemanagers.keys())
 
-    async def ip_handle_login_request(self, ip, origin, limit_seconds=None, limit_count=None):
+    async def increment_login_tracking_by_origin(self, origin: str) -> bool:
+        """
+        Increments the login tracking counter for the IP stored mapped to the origin if there is one.
+        """
+        if not self.__ptc_mutex:
+            return True
+        async with self.__ptc_mutex:
+            now = int(time.time())
+            ip_retrieved: Optional[str] = await self._redis_cache.get(
+                MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin))
+            if not ip_retrieved:
+                logger.debug("Increment not needed as the IP was not stored for {}", origin)
+                return False
+            await self._redis_cache.delete(MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin))
+        logger.warning("Incrementing login tracking of {}", origin)
+        async with self._redis_cache.pipeline() as pipe:
+            pipe.multi()
+            await pipe.zadd(ip_retrieved, {f"{origin}:{now}": now})
+            await pipe.expire(ip_retrieved, 60 * 60 * 24)
+            await pipe.execute()
+        return True
+
+    async def login_tracking_set_ip(self, origin: str, ip: str) -> None:
+        if not self.__ptc_mutex:
+            return
+        await self._redis_cache.set(name=MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin),
+                                    value=ip,
+                                    ex=MappingManager.LOGIN_TRACKING_TIMEOUT_ORIGIN_IP_MAPPED)
+
+    async def login_tracking_remove_value(self, origin: str) -> None:
+        if not self.__ptc_mutex:
+            return
+        async with self.__ptc_mutex:
+            await self._redis_cache.delete(MappingManager.LOGIN_TRACKING_KEY_ORIGIN_IP_MAPPED.format(origin))
+
+    async def ip_handle_login_request(self, ip, origin, limit_seconds=None, limit_count=None,
+                                      increment_count: bool = True) -> bool:
+        if not self.__ptc_mutex:
+            return True
         if not limit_seconds:
             limit_seconds = int(application_args.login_tracking_timeout)
         if not limit_count:
             limit_count = int(application_args.login_tracking_limit)
         now = int(datetime.timestamp(datetime.now()))
-
-        logger.warning(f"Handle PTC login request on {ip}")
-        async with self._redis_cache.pipeline() as pipe:
-            while True:
-                try:
-                    await pipe.watch(ip)
+        async with self.__ptc_mutex:
+            logger.warning(f"Handle PTC login request on {ip}")
+            async with self._redis_cache.pipeline() as pipe:
+                while True:
                     try:
-                        ct = await self._redis_cache.zcount(ip, now - limit_seconds, "+inf")
-                        # origin_logger.warning(f"got count {ct} for {ip} from redis")
-                    except Exception as e:
-                        logger.warning("Failed getting count for {} from redis! Deny this attempt ... "
-                                       "({})", ip, e)
-                        return False
-                    if ct >= limit_count:
-                        logger.warning("Reached threshold of {} attempts per {} "
-                                       "seconds for {}! Deny this login attempt",
-                                       limit_count, limit_seconds, ip)
-                        return False
-                    else:
-                        logger.info("Got count {} for {}. Allow this login attempt, register {}.",
-                                    ct, ip, now)
-                        pipe.multi()
-                        await pipe.zadd(ip, {f"{origin}:{now}": now})
-                        await pipe.expire(ip, 60 * 60 * 24)
-                        await pipe.execute()
-                        return True
+                        await pipe.watch(ip)
+                        try:
+                            ct = await self._redis_cache.zcount(ip, now - limit_seconds, "+inf")
+                            # origin_logger.warning(f"got count {ct} for {ip} from redis")
+                        except Exception as e:
+                            logger.warning("Failed getting count for {} from redis! Deny this attempt ... "
+                                           "({})", ip, e)
+                            return False
+                        if ct >= limit_count:
+                            logger.warning("Reached threshold of {} attempts per {} "
+                                           "seconds for {}! Deny this login attempt",
+                                           limit_count, limit_seconds, ip)
+                            return False
+                        elif increment_count:
+                            logger.info("Got count {} for {}. Allow this login attempt, register {}.",
+                                        ct, ip, now)
+                            pipe.multi()
+                            await pipe.zadd(ip, {f"{origin}:{now}": now})
+                            await pipe.expire(ip, 60 * 60 * 24)
+                            await pipe.execute()
+                            return True
+                        else:
+                            logger.info("Login tracking count is not to be incremented but no limit was found to apply.")
+                            return True
 
-                except WatchError as e:
-                    logger.warning(f"Redis count changed for {ip}, retry ... ({e})")
-                    await asyncio.sleep(1)
+                    except WatchError as e:
+                        logger.warning(f"Redis count changed for {ip}, retry ... ({e})")
+                        await asyncio.sleep(1)
 
     def __fetch_routemanager(self, routemanager_id: int) -> Optional[RouteManagerBase]:
         routemanager: RouteManagerBase = self._routemanagers.get(routemanager_id, None)
