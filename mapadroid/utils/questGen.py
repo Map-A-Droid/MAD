@@ -41,7 +41,8 @@ class QuestGen:
 
         if not args.no_quest_titles:
             locale_url = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20APK/{0}.txt"
-            remote_locale_url = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20Remote/" \
+            remote_locale_url = "https://raw.githubusercontent.com/" \
+                                "PokeMiners/pogo_assets/master/Texts/Latest%20Remote/" \
                                 "{0}.txt"
 
             asset_language = QUEST_LANGUAGES.get(args.language, 'English')
@@ -56,7 +57,8 @@ class QuestGen:
             if remote_locale is None:
                 remote_locale = {}
             self.locale_resources = {**apk_locale, **remote_locale}
-        else: self.locale_resources = None
+        else:
+            self.locale_resources = None
 
     @staticmethod
     def __gen_assets_locale(url):
@@ -166,13 +168,13 @@ class QuestGen:
         return "Unknown quest type placeholder: {0}"
 
     def rewarditem(self, itemid):
-        file = open_json_file('items')
-        if str(itemid) in file:
-            return (file[str(itemid)]['name'])
+        reward_file = open_json_file('items')
+        if str(itemid) in reward_file:
+            return (reward_file[str(itemid)]['name'])
         return "Item " + str(itemid)
 
-    def pokemonname(self, id):
-        return self.pokemen_file[str(int(id))]["name"]
+    def pokemonname(self, pokemon_id):
+        return self.pokemen_file[str(int(pokemon_id))]["name"]
 
     def get_pokemon_type_str(self, pt):
         return self.pokemon_types[str(pt)].title() + _('-type')
@@ -187,7 +189,7 @@ class QuestGen:
         gettext.find('quest', 'locales', all=True)
         throw_types = {"10": _("Nice"), "11": _("Great"),
                        "12": _("Excellent"), "13": _("Curveball")}
-        buddyLevels = {2: _("Good"), 3: _("Great"), 4: _("Ultra"), 5: _("Best")}
+        buddy_levels = {2: _("Good"), 3: _("Great"), 4: _("Ultra"), 5: _("Best")}
         arr = {'0': target}
         text = self.questtype(typeid)
         # TODO use the dict instead of regex parsing in all logic
@@ -238,9 +240,6 @@ class QuestGen:
                 elif condition_type == 26:
                     # Condition type 26 is alignment
                     alignment = con.get('with_pokemon_alignment', {}).get('alignment', [])
-                    # POKEMON_ALIGNMENT_UNSET = 0;
-                    # POKEMON_ALIGNMENT_SHADOW = 1;
-                    # POKEMON_ALIGNMENT_PURIFIED = 2;
                     if len(alignment) == 1 and alignment[0] == 1:
                         arr['different'] = _(" shadow")
                     elif len(alignment) == 1 and alignment[0] == 2:
@@ -309,7 +308,6 @@ class QuestGen:
                 if con.get('type', 0) == 11:
                     text = _("Use an item to {mega}evolve {0} Pokemon")
                     # Try to find the exact evolution item needed
-                    # [{"type": 11, "with_item": {"item": 1106}}]
                     with_item = con.get('with_item', {}).get('item', None)
                     if with_item is not None:
                         text = _('Use {item} to {mega}evolve {0} Pokemon')
@@ -435,7 +433,6 @@ class QuestGen:
                             cur += 1
                     text = _("Take {0} snapshots of {poke}")
             elif re.search(r'"type": 1', condition) is not None:
-                # [{"type": 1, "with_pokemon_type": {"pokemon_type": [6]}}]
                 text = _("Take {0} snapshots of wild {type} Pokemon")
                 arr['wb'] = ""
                 arr['type'] = ""
@@ -477,7 +474,7 @@ class QuestGen:
             for con in condition_dict:
                 if con.get('type', 0) == 28:
                     level = con.get('with_buddy', {}).get('min_buddy_level', 0)
-                    arr['level'] = buddyLevels.get(level, level)
+                    arr['level'] = buddy_levels.get(level, level)
         elif typeid == 53:
             # type 53 is to do charged attacks (any kind of way gym/pvp/rocket)
             arr['type'] = ''
@@ -508,8 +505,8 @@ class QuestGen:
             text = text.replace(_('PVP Battle(s)'), _('PVP Battle'))
             arr['0'] = _("a")
 
-        for key, val in arr.items():
-            text = text.replace('{' + key + '}', str(val))
+        for key, text_replacement in arr.items():
+            text = text.replace('{' + key + '}', str(text_replacement))
 
         text = text.replace('  ', ' ').strip()
         return text

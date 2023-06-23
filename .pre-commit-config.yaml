@@ -4,7 +4,7 @@ repos:
     hooks:
       - id: restore-commit-msg
   - repo: https://github.com/jorisroovers/gitlint
-    rev: v0.13.1
+    rev: v0.15.1
     hooks:
       - id: gitlint
   - repo: https://github.com/Seeefo/manage-commit-msg.git
@@ -12,18 +12,19 @@ repos:
     hooks:
       - id: save-commit-msg
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+    rev: 3.9.2
     hooks:
       - id: flake8
         language_version: python3
         additional_dependencies: [flake8-bugbear, flake8-logging-format, flake8-variables-names, pep8-naming, flake8-eradicate]
+        args: [ --builtins=_ ]
   - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.6.4
+    rev: v5.9.3
     hooks:
       - id: isort
         language_version: python3
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.5.0
+    rev: v4.0.1
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
