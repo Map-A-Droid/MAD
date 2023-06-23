@@ -23,7 +23,6 @@ libgl1-mesa-glx \
 && python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
 # cleanup
 && apt-get remove -y build-essential \
-&& apt-get remove -y python2.7 && rm -rf /usr/lib/python2.7 \
 && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
 && rm -rf /var/lib/apt/lists/*
 
