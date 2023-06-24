@@ -209,7 +209,7 @@ class SerializedMitmDataProcessor:
         nearby_mons_time = 0
         wild_encounter_ids_in_gmo, wild_mon_processing_time = await mons_task
         if nearby_task:
-            cell_encounters, stop_encounters, nearby_mons_time = await nearby_task
+            nearby_cell_encounter_ids, nearby_stop_encounter_ids, nearby_mons_time = await nearby_task
         if lure_no_iv_task:
             lure_encounter_ids, lure_processing_time = await lure_no_iv_task
 

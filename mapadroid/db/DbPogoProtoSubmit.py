@@ -207,40 +207,40 @@ class DbPogoProtoSubmit:
                     stop_encounters.append(encounter_id)
 
                 spawnpoint = 0
-                async with session.begin_nested() as nested_transaction:
-                    mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
-                    if not mon:
-                        mon: Pokemon = Pokemon()
-                        mon.encounter_id = encounter_id
-                        mon.spawnpoint_id = spawnpoint
-                        mon.latitude = lat
-                        mon.longitude = lon
-                        mon.cell_id = db_cell
-                        mon.fort_id = stop_id
-                        mon.seen_type = seen_type.name
-                        mon.disappear_time = disappear_time
+                try:
+                    async with session.begin_nested() as nested_transaction:
+                        mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
+                        if not mon:
+                            mon: Pokemon = Pokemon()
+                            mon.encounter_id = encounter_id
+                            mon.spawnpoint_id = spawnpoint
+                            mon.latitude = lat
+                            mon.longitude = lon
+                            mon.cell_id = db_cell
+                            mon.fort_id = stop_id
+                            mon.seen_type = seen_type.name
+                            mon.disappear_time = disappear_time
 
-                    if mon_id == 132:
-                        # handle ditto
-                        mon.pokemon_id = 132
-                        mon.gender = 3
-                        mon.costume = 0
-                        mon.form = 0
-                    else:
-                        mon.pokemon_id = mon_id
-                        mon.gender = gender
-                        mon.costume = costume
-                        mon.form = form
-                    mon.weather_boosted_condition = weather_boosted
-                    mon.last_modified = now
-                    try:
+                        if mon_id == 132:
+                            # handle ditto
+                            mon.pokemon_id = 132
+                            mon.gender = 3
+                            mon.costume = 0
+                            mon.form = 0
+                        else:
+                            mon.pokemon_id = mon_id
+                            mon.gender = gender
+                            mon.costume = costume
+                            mon.form = form
+                        mon.weather_boosted_condition = weather_boosted
+                        mon.last_modified = now
                         session.add(mon)
                         await nested_transaction.commit()
                         await self._cache.set(cache_key, 1, ex=self._args.default_nearby_timeleft * 60)
-                    except sqlalchemy.exc.IntegrityError as e:
-                        logger.debug("Failed committing nearby mon {} ({}). Safe to ignore.", encounter_id, str(e))
-                        await nested_transaction.rollback()
-
+                except sqlalchemy.exc.IntegrityError as e:
+                    logger.debug("Failed committing nearby mon {} ({}). Safe to ignore.", encounter_id, str(e))
+                    # await nested_transaction.rollback()
+                    continue
         return cell_encounters, stop_encounters
 
     async def mon_iv(self, session: AsyncSession, timestamp: float,
@@ -1093,7 +1093,7 @@ class DbPogoProtoSubmit:
                 await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_POKESTOP_DATA)
             except sqlalchemy.exc.IntegrityError as e:
                 logger.warning("Failed committing stop {} ({})", stop_id, str(e))
-                await nested_transaction.rollback()
+                await session.rollback()
         await self._handle_pokestop_incident_data(session, stop_id, stop_data)
 
     async def _extract_args_single_stop_details(self, session: AsyncSession, stop_data) -> Optional[Pokestop]:
