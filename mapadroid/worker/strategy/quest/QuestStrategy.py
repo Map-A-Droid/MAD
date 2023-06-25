@@ -675,13 +675,12 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 return stop_types.pop()
 
     async def _spinnable_data_failure(self):
-        if self._spinnable_data_failcount > 9:
+        if self._spinnable_data_failcount > 3:
             self._spinnable_data_failcount = 0
-            logger.warning("Worker failed spinning stop with GMO/data issues 10+ times - restart pogo")
-            if not await self._restart_pogo():
-                # TODO: put in loop, count up for a reboot ;)
-                raise InternalStopWorkerException("Failed restarting pogo after attempting to "
-                                                  "spin a stop")
+            logger.warning("Worker failed spinning stop with GMO/data issues 3+ times - restart pogo")
+            if not await self._restart_pogo() and not await self._reboot():
+                raise InternalStopWorkerException("Failed restarting pogo as well as rebooting device after "
+                                                  "attempting to spin a stop")
         else:
             self._spinnable_data_failcount += 1
 
