@@ -23,10 +23,9 @@ from mapadroid.utils.geo import (get_distance_of_two_points_in_meters,
                                  get_lat_lng_offsets_by_distance)
 from mapadroid.utils.madConstants import WALK_AFTER_TELEPORT_SPEED
 from mapadroid.utils.madGlobals import (InternalStopWorkerException,
-                                        PositionType, ScreenshotType,
-                                        TransportType,
-                                        WebsocketWorkerRemovedException,
-                                        application_args)
+                                        MadGlobals, PositionType,
+                                        ScreenshotType, TransportType,
+                                        WebsocketWorkerRemovedException)
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
@@ -217,7 +216,7 @@ class AbstractWorkerStrategy(ABC):
             logger.warning("No active account set when starting pogo")
 
         if self._worker_state.active_account and self._worker_state.active_account.login_type == LoginType.ptc.name\
-                and application_args.enable_login_tracking:
+                and MadGlobals.application_args.enable_login_tracking:
             logger.debug("start_pogo: Login tracking enabled")
             if not await self._word_to_screen_matching.check_ptc_login_ban(increment_count=False):
                 # TODO: Why should we always reset app data here?
@@ -402,7 +401,7 @@ class AbstractWorkerStrategy(ABC):
         logger.info("WorkerBase::_restart_pogo_safe restarting pogo the long way")
         await self.stop_pogo()
         await asyncio.sleep(1)
-        if application_args.enable_worker_specific_extra_start_stop_handling:
+        if MadGlobals.application_args.enable_worker_specific_extra_start_stop_handling:
             await self.worker_specific_setup_stop()
             await asyncio.sleep(1)
         if await self.get_devicesettings_value(MappingManagerDevicemappingKey.EXTENDED_PERMISSION_TOGGLING, False):
@@ -613,7 +612,7 @@ class AbstractWorkerStrategy(ABC):
         if fileaddon:
             logger.info("Creating debugscreen: {}", screenshot_filename)
 
-        return os.path.join(application_args.temp_path, screenshot_filename)
+        return os.path.join(MadGlobals.application_args.temp_path, screenshot_filename)
 
     async def _get_vps_delay(self) -> int:
         return int(await self.get_devicesettings_value(MappingManagerDevicemappingKey.VPS_DELAY, 0))

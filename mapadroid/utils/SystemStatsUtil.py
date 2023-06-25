@@ -7,7 +7,7 @@ import psutil
 
 from mapadroid.db.helper.TrsUsageHelper import TrsUsageHelper
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import application_args, terminate_mad
+from mapadroid.utils.madGlobals import MadGlobals, terminate_mad
 
 logger = get_logger(LoggerEnums.system)
 
@@ -16,7 +16,7 @@ async def get_system_infos(db_wrapper):
     pid = os.getpid()
     process_running = psutil.Process(pid)
     await asyncio.sleep(60)
-    if application_args.trace:
+    if MadGlobals.application_args.trace:
         import tracemalloc
         tracemalloc.start(5)
     while not terminate_mad.is_set():
@@ -25,9 +25,9 @@ async def get_system_infos(db_wrapper):
         cpu_usage, mem_usage, unixnow = await loop.run_in_executor(
             None, __run_system_stats, process_running)
         async with db_wrapper as session, session:
-            await TrsUsageHelper.add(session, application_args.status_name, cpu_usage, mem_usage, 0, unixnow)
+            await TrsUsageHelper.add(session, MadGlobals.application_args.status_name, cpu_usage, mem_usage, 0, unixnow)
             await session.commit()
-        await asyncio.sleep(application_args.statistic_interval)
+        await asyncio.sleep(MadGlobals.application_args.statistic_interval)
 
 
 last_snapshot = None
@@ -66,12 +66,12 @@ def __run_system_stats(py):
     mem_usage = py.memory_info()[0] / 2. ** 30
     cpu_usage = py.cpu_percent()
     logger.info('Instance name: "{}" - Memory usage: {:.3f} GB - CPU usage: {}',
-                str(application_args.status_name), mem_usage, str(cpu_usage))
+                str(MadGlobals.application_args.status_name), mem_usage, str(cpu_usage))
 
     zero = datetime.datetime.utcnow()
     unixnow = calendar.timegm(zero.utctimetuple())
 
-    if application_args.trace:
+    if MadGlobals.application_args.trace:
         import tracemalloc
         new_snapshot = tracemalloc.take_snapshot()
         if last_snapshot:

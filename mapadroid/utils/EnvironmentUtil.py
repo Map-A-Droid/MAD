@@ -11,9 +11,9 @@ from websockets.exceptions import WebSocketException
 
 from mapadroid.utils.logging import InterceptHandler, LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (
-    InternalStopWorkerException, NoMaddevApiTokenError, PrioQueueNoDueEntry,
-    RoutemanagerShuttingDown, WebsocketWorkerConnectionClosedException,
-    WebsocketWorkerTimeoutException, application_args)
+    InternalStopWorkerException, MadGlobals, NoMaddevApiTokenError,
+    PrioQueueNoDueEntry, RoutemanagerShuttingDown,
+    WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException)
 
 logger = get_logger(LoggerEnums.system)
 
@@ -21,9 +21,9 @@ logger = get_logger(LoggerEnums.system)
 def setup_runtime():
     check_dependencies()
     install_task_create_excepthook()
-    create_folder(application_args.file_path)
-    create_folder(application_args.upload_path)
-    create_folder(application_args.temp_path)
+    create_folder(MadGlobals.application_args.file_path)
+    create_folder(MadGlobals.application_args.upload_path)
+    create_folder(MadGlobals.application_args.temp_path)
 
 
 def setup_loggers():

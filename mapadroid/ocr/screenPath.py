@@ -17,7 +17,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils.collections import Location, ScreenCoordinates
-from mapadroid.utils.madGlobals import ScreenshotType, application_args
+from mapadroid.utils.madGlobals import MadGlobals, ScreenshotType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
 
@@ -264,7 +264,7 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.FAILURE:
             await self.__handle_failure_screen()
         elif screentype == ScreenType.RETRY:
-            if application_args.enable_early_maintenance_detection and self._worker_state.maintenance_early_detection_triggered:
+            if MadGlobals.application_args.enable_early_maintenance_detection and self._worker_state.maintenance_early_detection_triggered:
                 logger.warning("Seen RETRY screen after multiple proto timeouts - most likely MAINTENANCE")
                 await self._account_handler.mark_burnt(self._worker_state.device_id, BurnType.MAINTENANCE)
             await self.__handle_retry_screen(diff, global_dict)
@@ -461,7 +461,7 @@ class WordToScreenMatching(object):
         await self._communicator.click(100, 100)
         await asyncio.sleep(2)
         # button for actual login
-        if application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
+        if MadGlobals.application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
             # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
             # just as a plain startup of already logged in account/device
             logger.debug("Login tracking enabled")
@@ -880,7 +880,7 @@ class WordToScreenMatching(object):
             logger.info("Creating debugscreen: {}", screenshot_filename)
 
         return os.path.join(
-            application_args.temp_path, screenshot_filename)
+            MadGlobals.application_args.temp_path, screenshot_filename)
 
     async def _take_screenshot(self, delay_after=0.0, delay_before=0.0, errorscreen: bool = False):
         logger.debug("Taking screenshot...")

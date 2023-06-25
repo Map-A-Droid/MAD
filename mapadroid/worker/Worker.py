@@ -15,9 +15,9 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import (
-    InternalStopWorkerException, RoutemanagerShuttingDown,
+    InternalStopWorkerException, MadGlobals, RoutemanagerShuttingDown,
     WebsocketWorkerConnectionClosedException, WebsocketWorkerRemovedException,
-    WebsocketWorkerTimeoutException, application_args)
+    WebsocketWorkerTimeoutException)
 from mapadroid.utils.resolution import ResolutionCalculator
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.worker.AbstractWorker import AbstractWorker
@@ -246,7 +246,7 @@ class Worker(AbstractWorker):
             await self._cleanup_current()
         device_paused: bool = not await self._mapping_manager.is_device_active(
             self._worker_state.device_id)
-        configmode: bool = application_args.config_mode
+        configmode: bool = MadGlobals.application_args.config_mode
         paused_or_config: bool = device_paused or configmode
         scan_strategy: Optional[AbstractWorkerStrategy] = await self._strategy_factory \
             .get_strategy_using_settings(self._worker_state.origin,
@@ -258,7 +258,7 @@ class Worker(AbstractWorker):
     async def __update_strategy(self):
         device_paused: bool = not await self._mapping_manager.is_device_active(
             self._worker_state.device_id)
-        configmode: bool = application_args.config_mode
+        configmode: bool = MadGlobals.application_args.config_mode
         paused_or_config: bool = device_paused or configmode
         if not paused_or_config:
             scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use(set_finished=True)

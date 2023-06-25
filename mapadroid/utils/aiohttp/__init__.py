@@ -5,14 +5,14 @@ from aiohttp_remotes.exceptions import TooManyHeaders
 from yarl import URL
 
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 
 logger = get_logger(LoggerEnums.system)
 X_FORWARDED_PATH = "X-Forwarded-Path"
 
 
 def get_forwarded_path(headers) -> Optional[str]:
-    if not application_args.enable_x_forwarded_path_madmin:
+    if not MadGlobals.application_args.enable_x_forwarded_path_madmin:
         return None
     forwarded_host = headers.getall(X_FORWARDED_PATH, [])
     if len(forwarded_host) > 1:

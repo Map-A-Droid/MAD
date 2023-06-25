@@ -43,8 +43,9 @@ from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import get_mon_ids
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import (PositionType, RoutemanagerShuttingDown,
-                                        ScreenshotType, application_args)
+from mapadroid.utils.madGlobals import (MadGlobals, PositionType,
+                                        RoutemanagerShuttingDown,
+                                        ScreenshotType)
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.utils)
@@ -134,19 +135,19 @@ class MappingManager(AbstractMappingManager):
         await self.update(full_lock=True)
 
     async def setup_login_tracking(self):
-        if not application_args.enable_login_tracking:
+        if not MadGlobals.application_args.enable_login_tracking:
             return
         self.__ptc_mutex: asyncio.Lock = asyncio.Lock()
         # Check if special credentials have been passed, if not, just use the existing redis...
-        if application_args.login_tracking_host and application_args.login_tracking_port:
-            redis_credentials = {"host": application_args.login_tracking_host,
-                                 "port": application_args.login_tracking_port}
-            if application_args.login_tracking_username:
-                redis_credentials["username"] = application_args.login_tracking_username
-            if application_args.login_tracking_password:
-                redis_credentials["password"] = application_args.login_tracking_password
-            if application_args.login_tracking_database:
-                redis_credentials["db"] = application_args.login_tracking_database
+        if MadGlobals.application_args.login_tracking_host and MadGlobals.application_args.login_tracking_port:
+            redis_credentials = {"host": MadGlobals.application_args.login_tracking_host,
+                                 "port": MadGlobals.application_args.login_tracking_port}
+            if MadGlobals.application_args.login_tracking_username:
+                redis_credentials["username"] = MadGlobals.application_args.login_tracking_username
+            if MadGlobals.application_args.login_tracking_password:
+                redis_credentials["password"] = MadGlobals.application_args.login_tracking_password
+            if MadGlobals.application_args.login_tracking_database:
+                redis_credentials["db"] = MadGlobals.application_args.login_tracking_database
             self._redis_cache = await aioredis.Redis(**redis_credentials)
             await self._redis_cache.ping()
         else:
@@ -400,9 +401,9 @@ class MappingManager(AbstractMappingManager):
         if not self.__ptc_mutex:
             return True
         if not limit_seconds:
-            limit_seconds = int(application_args.login_tracking_timeout)
+            limit_seconds = int(MadGlobals.application_args.login_tracking_timeout)
         if not limit_count:
-            limit_count = int(application_args.login_tracking_limit)
+            limit_count = int(MadGlobals.application_args.login_tracking_limit)
         now = int(datetime.timestamp(datetime.now()))
         async with self.__ptc_mutex:
             logger.warning(f"Handle PTC login request on {ip}")

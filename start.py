@@ -34,7 +34,7 @@ from mapadroid.plugins.pluginBase import PluginCollection
 from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
-from mapadroid.utils.madGlobals import application_args, terminate_mad
+from mapadroid.utils.madGlobals import MadGlobals, terminate_mad
 from mapadroid.utils.pogoevent import PogoEvent
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.rarity import Rarity
@@ -68,38 +68,38 @@ async def start():
     t_usage: Optional[Task] = None
     setup_runtime()
 
-    if application_args.config_mode:
+    if MadGlobals.application_args.config_mode:
         logger.info('Starting MAD in config mode')
     else:
         logger.info('Starting MAD')
-    if application_args.config_mode and application_args.only_routes:
+    if MadGlobals.application_args.config_mode and MadGlobals.application_args.only_routes:
         logger.error('Unable to run with config_mode and only_routes.  Only use one option')
         sys.exit(1)
-    if not application_args.only_scan and not application_args.only_routes:
+    if not MadGlobals.application_args.only_scan and not MadGlobals.application_args.only_routes:
         logger.error("No runmode selected. \nAllowed modes:\n"
                      " -os    ---- start scanner/devicecontroller\n"
                      " -or    ---- only calculate routes")
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
-    db_wrapper, db_exec = await DbFactory.get_wrapper(application_args)
+    db_wrapper, db_exec = await DbFactory.get_wrapper(MadGlobals.application_args)
 
     # TODO: MADPatcher(args, data_manager)
     #  data_manager.clear_on_boot()
     #  data_manager.fix_routecalc_on_boot()
-    event = PogoEvent(application_args, db_wrapper)
+    event = PogoEvent(MadGlobals.application_args, db_wrapper)
     await event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
     await asyncio.sleep(.1)
     account_handler: AbstractAccountHandler = await setup_account_handler(db_wrapper)
     mapping_manager: MappingManager = MappingManager(db_wrapper,
                                                      account_handler=account_handler,
-                                                     configmode=application_args.config_mode)
+                                                     configmode=MadGlobals.application_args.config_mode)
     await mapping_manager.setup()
     # Start MappingManagerServer in order to attach more mitmreceivers (minor scalability)
     mapping_manager_grpc_server = MappingManagerServer(mapping_manager)
     await mapping_manager_grpc_server.start()
 
-    if application_args.only_routes:
+    if MadGlobals.application_args.only_routes:
         logger.info('Running in route recalculation mode. MAD will exit once complete')
         recalc_in_progress = True
         while recalc_in_progress:
@@ -109,13 +109,14 @@ async def start():
         logger.info("Done calculating routes!")
         # TODO: shutdown managers properly...
         sys.exit(0)
-    storage_elem = await get_storage_obj(application_args, db_wrapper)
-    if not application_args.config_mode:
-        pogo_win_manager = PogoWindows(application_args.temp_path, application_args.ocr_thread_count)
-        if application_args.mitmmapper_type == MitmMapperType.grpc:
+    storage_elem = await get_storage_obj(db_wrapper)
+    if not MadGlobals.application_args.config_mode:
+        pogo_win_manager = PogoWindows(MadGlobals.application_args.temp_path,
+                                       MadGlobals.application_args.ocr_thread_count)
+        if MadGlobals.application_args.mitmmapper_type == MitmMapperType.grpc:
             mitm_mapper: MitmMapperServer = MitmMapperServer()
             await mitm_mapper.start()
-        elif application_args.mitmmapper_type == MitmMapperType.redis:
+        elif MadGlobals.application_args.mitmmapper_type == MitmMapperType.redis:
             mitm_mapper: RedisMitmMapper = RedisMitmMapper(db_wrapper)
             # TODO... stats_handler needs to be handled using the MitmMapperServer (essentially that one needs to be split off)
             await mitm_mapper.start()
@@ -153,8 +154,8 @@ async def start():
 
     device_updater = DeviceUpdater(ws_server, db_wrapper, storage_elem)
     await device_updater.start_updater()
-    if not application_args.config_mode:
-        if application_args.webhook:
+    if not MadGlobals.application_args.config_mode:
+        if MadGlobals.application_args.webhook:
             rarity = Rarity(application_args, db_wrapper)
             await rarity.start_dynamic_rarity()
             webhook_worker = WebhookWorker(application_args, db_wrapper, mapping_manager, rarity, quest_gen)
@@ -165,7 +166,7 @@ async def start():
 
     # starting plugin system
     plugin_parts = {
-        'args': application_args,
+        'args': MadGlobals.application_args,
         'db_wrapper': db_wrapper,
         'device_updater': device_updater,
         'event': event,
@@ -187,11 +188,11 @@ async def start():
     await mad_plugins.finish_init()
     # MADmin needs to be started after sub-applications (plugins) have been added
 
-    if not application_args.disable_madmin or application_args.config_mode:
+    if not MadGlobals.application_args.disable_madmin or MadGlobals.application_args.config_mode:
         logger.info("Starting Madmin on port {}", str(application_args.madmin_port))
         madmin_app_runner = await madmin.madmin_start()
 
-    if application_args.statistic:
+    if MadGlobals.application_args.statistic:
         logger.info("Starting statistics collector")
         loop = asyncio.get_running_loop()
         t_usage = loop.create_task(get_system_infos(db_wrapper))
@@ -251,11 +252,11 @@ async def start():
 
 
 if __name__ == "__main__":
-    global application_args
-    os.environ['LANGUAGE'] = application_args.language
-    if application_args.omp_thread_limit:
-        os.environ['OMP_THREAD_LIMIT'] = f'{application_args.omp_thread_limit}'
-    init_logging(application_args)
+    MadGlobals.load_args()
+    os.environ['LANGUAGE'] = MadGlobals.application_args.language
+    if MadGlobals.application_args.omp_thread_limit:
+        os.environ['OMP_THREAD_LIMIT'] = f'{MadGlobals.application_args.omp_thread_limit}'
+    init_logging(MadGlobals.application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)
 

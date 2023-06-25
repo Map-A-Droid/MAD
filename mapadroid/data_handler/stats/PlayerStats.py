@@ -3,14 +3,19 @@ from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.stats.holder.stats_detect.StatsDetectHolder import StatsDetectHolder
-from mapadroid.data_handler.stats.holder.stats_location.StatsLocationHolder import StatsLocationHolder
-from mapadroid.data_handler.stats.holder.stats_location_raw.StatsLocationRawHolder import StatsLocationRawHolder
-from mapadroid.data_handler.stats.holder.wild_mon_stats.WildMonStatsHolder import WildMonStatsHolder
+from mapadroid.data_handler.stats.holder.AbstractStatsHolder import \
+    AbstractStatsHolder
+from mapadroid.data_handler.stats.holder.stats_detect.StatsDetectHolder import \
+    StatsDetectHolder
+from mapadroid.data_handler.stats.holder.stats_location.StatsLocationHolder import \
+    StatsLocationHolder
+from mapadroid.data_handler.stats.holder.stats_location_raw.StatsLocationRawHolder import \
+    StatsLocationRawHolder
+from mapadroid.data_handler.stats.holder.wild_mon_stats.WildMonStatsHolder import \
+    WildMonStatsHolder
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import PositionType, TransportType, application_args
+from mapadroid.utils.madGlobals import MadGlobals, PositionType, TransportType
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.stats_handler)
@@ -26,7 +31,7 @@ class PlayerStats(AbstractStatsHolder):
     def __init_holders(self):
         self._stats_detect_holder: StatsDetectHolder = StatsDetectHolder(self._worker)
         self._stats_location_holder: StatsLocationHolder = StatsLocationHolder(self._worker)
-        if application_args.game_stats_raw:
+        if MadGlobals.application_args.game_stats_raw:
             self._wild_mon_stats_holder: WildMonStatsHolder = WildMonStatsHolder(self._worker)
             self._stats_location_raw_holder: StatsLocationRawHolder = StatsLocationRawHolder(self._worker)
 
@@ -34,7 +39,7 @@ class PlayerStats(AbstractStatsHolder):
         holders_to_submit: List[AbstractStatsHolder] = [self._stats_detect_holder, self._stats_location_holder]
         if self._wild_mon_stats_holder:
             holders_to_submit.append(self._wild_mon_stats_holder)
-        if application_args.game_stats_raw:
+        if MadGlobals.application_args.game_stats_raw:
             holders_to_submit.append(self._stats_location_raw_holder)
         del self._stats_location_holder
         del self._stats_detect_holder

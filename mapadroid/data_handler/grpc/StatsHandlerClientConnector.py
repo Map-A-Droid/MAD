@@ -4,8 +4,8 @@ import grpc
 from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
 from mapadroid.data_handler.grpc.StatsHandlerClient import StatsHandlerClient
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import MadGlobals
 
 logger = get_logger(LoggerEnums.stats_handler)
 
@@ -19,12 +19,12 @@ class StatsHandlerClientConnector:
         options = [('grpc.max_message_length', max_message_length),
                    ('grpc.max_receive_message_length', max_message_length)]
         # TODO: add args
-        if application_args.statshandler_compression:
+        if MadGlobals.application_args.statshandler_compression:
             options.extend([('grpc.default_compression_algorithm', CompressionAlgorithm.gzip),
                             ('grpc.grpc.default_compression_level', CompressionLevel.medium)])
-        address = f'{application_args.statshandler_ip}:{application_args.statshandler_port}'
+        address = f'{MadGlobals.application_args.statshandler_ip}:{MadGlobals.application_args.statshandler_port}'
 
-        if application_args.statshandler_tls_cert_file:
+        if MadGlobals.application_args.statshandler_tls_cert_file:
             await self.__setup_secure_channel(address, options)
         else:
             await self.__setup_insecure_channel(address, options)
@@ -34,7 +34,7 @@ class StatsHandlerClientConnector:
         self._channel = grpc.aio.insecure_channel(address, options=options)
 
     async def __setup_secure_channel(self, address, options):
-        with open(application_args.statshandler_tls_cert_file, 'r') as certfile:
+        with open(MadGlobals.application_args.statshandler_tls_cert_file, 'r') as certfile:
             cert = certfile.read()
         credentials = grpc.ssl_channel_credentials(cert)
         self._channel = grpc.aio.secure_channel(address, credentials=credentials, options=options)

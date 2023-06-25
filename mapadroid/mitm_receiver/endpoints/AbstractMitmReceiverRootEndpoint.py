@@ -26,12 +26,13 @@ from mapadroid.db.model import (AuthLevel, AutoconfigLog,
 from mapadroid.mad_apk.abstract_apk_storage import AbstractAPKStorage
 from mapadroid.mad_apk.utils import convert_to_backend
 from mapadroid.madmin import apiException
-from mapadroid.mapping_manager.AbstractMappingManager import AbstractMappingManager
+from mapadroid.mapping_manager.AbstractMappingManager import \
+    AbstractMappingManager
 from mapadroid.updater.updater import DeviceUpdater
 from mapadroid.utils.apk_enums import APKArch, APKPackage, APKType
 from mapadroid.utils.authHelper import check_auth, get_auths_for_levl
 from mapadroid.utils.json_encoder import MADEncoder
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 
 
 def validate_accepted(func) -> Any:
@@ -82,7 +83,7 @@ class AbstractMitmReceiverRootEndpoint(web.View, ABC):
 
     async def _process_request(self):
         with logger.contextualize(identifier=self._get_request_address(), name="mitm-receiver-endpoint"):
-            if not application_args.insecure_auth:
+            if not MadGlobals.application_args.insecure_auth:
                 await self._check_mitm_device_auth()
 
             db_wrapper: DbWrapper = self._get_db_wrapper()

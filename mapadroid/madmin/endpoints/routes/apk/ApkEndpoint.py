@@ -5,7 +5,7 @@ from mapadroid.db.model import AuthLevel
 from mapadroid.mad_apk.utils import get_apk_status
 from mapadroid.madmin.AbstractMadminRootEndpoint import (
     AbstractMadminRootEndpoint, check_authorization_header, expand_context)
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 
 
 class ApkEndpoint(AbstractMadminRootEndpoint):
@@ -17,4 +17,4 @@ class ApkEndpoint(AbstractMadminRootEndpoint):
     @expand_context()
     async def get(self):
         return {"apks": await get_apk_status(self._get_storage_obj()),
-                "has_token": application_args.maddev_api_token not in [None, ""]}
+                "has_token": MadGlobals.application_args.maddev_api_token not in [None, ""]}

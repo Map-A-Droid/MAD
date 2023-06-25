@@ -1,15 +1,19 @@
 import asyncio
 from datetime import datetime
-from typing import Optional, List, Dict, Union
+from typing import Dict, List, Optional, Union
 
-from mapadroid.data_handler.mitm_data.AbstractMitmMapper import AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.AbstractMitmMapper import \
+    AbstractMitmMapper
+from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
+    LatestMitmDataEntry
 from mapadroid.data_handler.mitm_data.MitmDataHandler import MitmDataHandler
-from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
 from mapadroid.data_handler.stats.StatsHandler import StatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.madGlobals import PositionType, TransportType, MonSeenTypes, application_args
+from mapadroid.utils.madGlobals import (MadGlobals, MonSeenTypes, PositionType,
+                                        TransportType)
 from mapadroid.worker.WorkerType import WorkerType
 
 
@@ -19,7 +23,7 @@ class StandaloneMitmMapperAndStatsHandler(AbstractMitmMapper, AbstractStatsHandl
         self.__init_handlers()
 
     def __init_handlers(self):
-        if application_args.game_stats:
+        if MadGlobals.application_args.game_stats:
             self.__stats_handler: Optional[StatsHandler] = StatsHandler(self.__db_wrapper)
         else:
             self.__stats_handler: Optional[StatsHandler] = None

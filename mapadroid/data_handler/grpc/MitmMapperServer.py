@@ -1,27 +1,27 @@
 import asyncio
-from typing import Optional, List
+from typing import List, Optional
 
 import grpc
 from google.protobuf import json_format
 from grpc._cython.cygrpc import CompressionAlgorithm, CompressionLevel
 
-from mapadroid.data_handler.mitm_data.MitmMapper import MitmMapper
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
+from mapadroid.data_handler.mitm_data.MitmMapper import MitmMapper
 from mapadroid.grpc.compiled.mitm_mapper import mitm_mapper_pb2
 from mapadroid.grpc.compiled.mitm_mapper.mitm_mapper_pb2 import (
-    InjectedRequest, InjectionStatus,
+    GetQuestsHeldResponse, InjectedRequest, InjectionStatus,
     LastKnownLocationResponse, LastMoved, LatestMitmDataEntryRequest,
     LatestMitmDataEntryResponse, LatestMitmDataEntryUpdateRequest,
-    LevelResponse, PokestopVisitsResponse,
-    SetLevelRequest, SetPokestopVisitsRequest, SetQuestsHeldRequest, GetQuestsHeldResponse)
+    LevelResponse, PokestopVisitsResponse, SetLevelRequest,
+    SetPokestopVisitsRequest, SetQuestsHeldRequest)
 from mapadroid.grpc.compiled.shared.Ack_pb2 import Ack
 from mapadroid.grpc.compiled.shared.Worker_pb2 import Worker
 from mapadroid.grpc.stubs.mitm_mapper.mitm_mapper_pb2_grpc import (
     MitmMapperServicer, add_MitmMapperServicer_to_server)
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import (application_args)
+from mapadroid.utils.madGlobals import MadGlobals
 
 logger = get_logger(LoggerEnums.mitm_mapper)
 
@@ -35,14 +35,14 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         max_message_length = 100 * 1024 * 1024
         options = [('grpc.max_message_length', max_message_length),
                    ('grpc.max_receive_message_length', max_message_length)]
-        if application_args.mitmmapper_compression:
+        if MadGlobals.application_args.mitmmapper_compression:
             options.extend([('grpc.default_compression_algorithm', CompressionAlgorithm.gzip),
                             ('grpc.grpc.default_compression_level', CompressionLevel.medium)])
         self.__server = grpc.aio.server(options=options)
         add_MitmMapperServicer_to_server(self, self.__server)
-        address = f'{application_args.mitmmapper_ip}:{application_args.mitmmapper_port}'
+        address = f'{MadGlobals.application_args.mitmmapper_ip}:{MadGlobals.application_args.mitmmapper_port}'
 
-        if application_args.mitmmapper_tls_cert_file and application_args.mitmmapper_tls_private_key_file:
+        if MadGlobals.application_args.mitmmapper_tls_cert_file and MadGlobals.application_args.mitmmapper_tls_private_key_file:
             await self.__secure_port(address)
         else:
             await self.__insecure_port(address)
@@ -52,8 +52,8 @@ class MitmMapperServer(MitmMapperServicer, MitmMapper):
         await self.__server.start()
 
     async def __secure_port(self, address):
-        with open(application_args.mitmmapper_tls_private_key_file, 'r') as keyfile, open(
-                application_args.mitmmapper_tls_cert_file, 'r') as certfile:
+        with open(MadGlobals.application_args.mitmmapper_tls_private_key_file, 'r') as keyfile, open(
+                MadGlobals.application_args.mitmmapper_tls_cert_file, 'r') as certfile:
             private_key = keyfile.read()
             certificate_chain = certfile.read()
         credentials = grpc.ssl_server_credentials(

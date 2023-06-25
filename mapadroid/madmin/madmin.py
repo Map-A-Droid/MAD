@@ -38,7 +38,7 @@ from mapadroid.utils.JinjaFilters import (base64Filter, mad_json_filter,
                                           static_forwarded, subapp_static,
                                           subapp_url, url_for_forwarded)
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -77,13 +77,13 @@ class MADmin(object):
 
         runner: web.AppRunner = web.AppRunner(self._app)
         await runner.setup()
-        if application_args.madmin_unix_socket:
-            site: UnixSite = web.UnixSite(runner, application_args.madmin_unix_socket)
-            logger.info("Madmin starting at {}", application_args.madmin_unix_socket)
+        if MadGlobals.application_args.madmin_unix_socket:
+            site: UnixSite = web.UnixSite(runner, MadGlobals.application_args.madmin_unix_socket)
+            logger.info("Madmin starting at {}", MadGlobals.application_args.madmin_unix_socket)
         else:
 
-            site: TCPSite = web.TCPSite(runner, application_args.madmin_ip, application_args.madmin_port)
-            logger.info('Madmin starting at http://{}:{}', application_args.madmin_ip, application_args.madmin_port)
+            site: TCPSite = web.TCPSite(runner, MadGlobals.application_args.madmin_ip, MadGlobals.application_args.madmin_port)
+            logger.info('Madmin starting at http://{}:{}', MadGlobals.application_args.madmin_ip, MadGlobals.application_args.madmin_port)
         await site.start()
         # TODO: Return runner and call     await runner.cleanup()
         logger.info('Finished madmin')
@@ -104,7 +104,7 @@ class MADmin(object):
         self._app.secret_key = "8bc96865945be733f3973ba21d3c5949"
         self._app['SEND_FILE_MAX_AGE_DEFAULT'] = 0
         self._app['db_wrapper'] = self._db_wrapper
-        self._app['mad_args'] = application_args
+        self._app['mad_args'] = MadGlobals.application_args
         self._app['mapping_manager'] = self._mapping_manager
         self._app['websocket_server'] = self._ws_server
         self._app["plugin_hotlink"] = self._plugin_hotlink
@@ -114,7 +114,7 @@ class MADmin(object):
         self._app['account_handler'] = self._account_handler
         self._app['mon_name_cache'] = {}
 
-        if application_args.enable_x_forwarded_path_madmin:
+        if MadGlobals.application_args.enable_x_forwarded_path_madmin:
             reverse_proxied = XPathForwarded()
             self._app.middlewares.append(reverse_proxied.middleware)
         jinja2_env = aiohttp_jinja2.setup(self._app, loader=jinja2.FileSystemLoader([template_folder_path]))

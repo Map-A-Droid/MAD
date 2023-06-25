@@ -20,7 +20,7 @@ from mapadroid.mitm_receiver.endpoints.autoconfig import \
 from mapadroid.mitm_receiver.endpoints.mad_apk import \
     register_mad_apk_endpoints
 from mapadroid.utils.aiohttp.XPathForwardedFor import XPathForwarded
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 
 
 class MITMReceiver:
@@ -39,7 +39,7 @@ class MITMReceiver:
 
     async def shutdown(self):
         logger.info("MITMReceiver stop called...")
-        for _ in range(application_args.mitmreceiver_data_workers):
+        for _ in range(MadGlobals.application_args.mitmreceiver_data_workers):
             await self._data_queue.put(None)
 
     async def start(self) -> web.AppRunner:
@@ -52,14 +52,14 @@ class MITMReceiver:
         self._app.secret_key = "8bc96865945be733f3973ba21d3c5949"
         self._app['SEND_FILE_MAX_AGE_DEFAULT'] = 0
         self._app['db_wrapper'] = self._db_wrapper
-        self._app['mad_args'] = application_args
+        self._app['mad_args'] = MadGlobals.application_args
         self._app['mapping_manager'] = self.__mapping_manager
         self._app['account_handler'] = self._account_handler
         self._app["mitm_mapper"] = self.__mitm_mapper
         self._app["mitmreceiver_startup_time"] = self.__mitmreceiver_startup_time
         self._app["data_queue"] = self._data_queue
         self._app["storage_obj"] = self._storage_obj  # TODO
-        if application_args.enable_x_forwarded_path_mitm_receiver:
+        if MadGlobals.application_args.enable_x_forwarded_path_mitm_receiver:
             reverse_proxied = XPathForwarded()
             self._app.middlewares.append(reverse_proxied.middleware)
         register_autoconfig_endpoints(self._app)
@@ -68,14 +68,14 @@ class MITMReceiver:
 
         runner: web.AppRunner = web.AppRunner(self._app)
         await runner.setup()
-        if application_args.mitm_unix_socket:
-            site: UnixSite = web.UnixSite(runner, application_args.mitm_unix_socket)
-            logger.info("MITMReceiver starting at {}", application_args.mitm_unix_socket)
+        if MadGlobals.application_args.mitm_unix_socket:
+            site: UnixSite = web.UnixSite(runner, MadGlobals.application_args.mitm_unix_socket)
+            logger.info("MITMReceiver starting at {}", MadGlobals.application_args.mitm_unix_socket)
         else:
-            site: TCPSite = web.TCPSite(runner, application_args.mitmreceiver_ip, application_args.mitmreceiver_port)
+            site: TCPSite = web.TCPSite(runner, MadGlobals.application_args.mitmreceiver_ip, MadGlobals.application_args.mitmreceiver_port)
             logger.info(f'MITMReceiver starting at '
-                        f'http://{application_args.mitmreceiver_ip}:'
-                        f'{application_args.mitmreceiver_port}')
+                        f'http://{MadGlobals.application_args.mitmreceiver_ip}:'
+                        f'{MadGlobals.application_args.mitmreceiver_port}')
         await site.start()
         # TODO: Return runner and call     await runner.cleanup()
         logger.info('Finished madmin')

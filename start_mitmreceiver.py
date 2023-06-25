@@ -29,7 +29,7 @@ from mapadroid.mitm_receiver.data_processing.InProcessMitmDataProcessorManager i
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
-from mapadroid.utils.madGlobals import application_args, terminate_mad
+from mapadroid.utils.madGlobals import MadGlobals, terminate_mad
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.redisReport import report_queue_size
 from mapadroid.utils.SystemStatsUtil import get_system_infos
@@ -55,26 +55,26 @@ async def start():
     t_reporting: Optional[Task] = None
     mitm_mapper_connector: Optional[MitmMapperClientConnector] = None
     setup_runtime()
-    if application_args.config_mode and application_args.only_routes:
+    if MadGlobals.application_args.config_mode and MadGlobals.application_args.only_routes:
         logger.error('Unable to run with config_mode and only_routes.  Only use one option')
         sys.exit(1)
-    if not application_args.only_scan and not application_args.only_routes:
+    if not MadGlobals.application_args.only_scan and not MadGlobals.application_args.only_routes:
         logger.error("No runmode selected. \nAllowed modes:\n"
                      " -os    ---- start scanner/devicecontroller\n"
                      " -or    ---- only calculate routes")
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
-    db_wrapper, db_exec = await DbFactory.get_wrapper(application_args)
+    db_wrapper, db_exec = await DbFactory.get_wrapper(MadGlobals.application_args)
 
-    if application_args.mitmmapper_type == MitmMapperType.grpc:
+    if MadGlobals.application_args.mitmmapper_type == MitmMapperType.grpc:
         mitm_mapper_connector = MitmMapperClientConnector()
         await mitm_mapper_connector.start()
         mitm_mapper: MitmMapperClient = await mitm_mapper_connector.get_client()
-    elif application_args.mitmmapper_type == MitmMapperType.redis:
+    elif MadGlobals.application_args.mitmmapper_type == MitmMapperType.redis:
         mitm_mapper: RedisMitmMapper = RedisMitmMapper(db_wrapper)
         await mitm_mapper.start()
     else:
-        logger.critical("Unsupported MitmMapper type for multi-host/process setup {}", application_args.mitmmapper_type)
+        logger.critical("Unsupported MitmMapper type for multi-host/process setup {}", MadGlobals.application_args.mitmmapper_type)
         sys.exit(1)
 
     stats_handler_connector = StatsHandlerClientConnector()
@@ -94,7 +94,7 @@ async def start():
     await mapping_manager_connector.start()
     mapping_manager: AbstractMappingManager = await mapping_manager_connector.get_client()
 
-    storage_elem = await get_storage_obj(application_args, db_wrapper)
+    storage_elem = await get_storage_obj(db_wrapper)
 
     mitm_receiver = MITMReceiver(mitm_mapper, mapping_manager, db_wrapper,
                                  storage_elem,
@@ -103,12 +103,12 @@ async def start():
 
     mitm_receiver_task: web.AppRunner = await mitm_receiver.start()
 
-    if application_args.statistic:
+    if MadGlobals.application_args.statistic:
         logger.info("Starting statistics collector")
         loop = asyncio.get_running_loop()
         t_usage = loop.create_task(get_system_infos(db_wrapper))
-    if application_args.redis_report_queue_key:
-        logger.info("Starting report queue size to Redis via key: {}", application_args.redis_report_queue_key)
+    if MadGlobals.application_args.redis_report_queue_key:
+        logger.info("Starting report queue size to Redis via key: {}", MadGlobals.application_args.redis_report_queue_key)
         loop = asyncio.get_running_loop()
         t_reporting = loop.create_task(report_queue_size(db_wrapper, mitm_data_processor_manager.get_queue()))
     logger.info("MAD is now running.....")
@@ -145,9 +145,9 @@ async def start():
 
 
 if __name__ == "__main__":
-    global application_args
-    os.environ['LANGUAGE'] = application_args.language
-    init_logging(application_args)
+    MadGlobals.load_args()
+    os.environ['LANGUAGE'] = MadGlobals.application_args.language
+    init_logging(MadGlobals.application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)
 

@@ -28,7 +28,7 @@ from mapadroid.utils.custom_types import MADPackages
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 from mapadroid.websocket import AbstractCommunicator, WebsocketServer
 
 logger = get_logger(LoggerEnums.utils)
@@ -85,7 +85,7 @@ class DeviceUpdater(object):
         await self._load_automatic_jobs()
         self._stop_updater_threads.clear()
         loop = asyncio.get_running_loop()
-        for i in range(application_args.job_thread_count):
+        for i in range(MadGlobals.application_args.job_thread_count):
             updater_task: Task = loop.create_task(self._process_update_queue(i))
             self.t_updater.append(updater_task)
 
@@ -105,7 +105,7 @@ class DeviceUpdater(object):
                     logger.error('Cannot add job {} - Reason: {}', command_file, e)
 
             # Read all .apk files in the upload dir
-            for apk_file in glob.glob(str(application_args.upload_path) + "/*.apk"):
+            for apk_file in glob.glob(str(MadGlobals.application_args.upload_path) + "/*.apk"):
                 created: int = int(os.path.getmtime(apk_file))
 
                 self._available_jobs[os.path.basename(apk_file)] = [SubJob(TYPE=JobType.INSTALLATION,
@@ -193,13 +193,13 @@ class DeviceUpdater(object):
                     await self.restart_job(job_id=job_item.id)
                 job_item.last_status = JobStatus.FAILED
             elif job_item.last_status == JobStatus.NOT_CONNECTED \
-                    and application_args.job_restart_notconnect > 0:
+                    and MadGlobals.application_args.job_restart_notconnect > 0:
                 logger.error("Job {} for origin {} failed 3 times in row due to device not being connected - "
                              "requeing due to job_restart_notconnect being set to {}.",
                              job_item.job_name, job_item.origin,
-                             application_args.job_restart_notconnect)
+                             MadGlobals.application_args.job_restart_notconnect)
                 processtime = datetime.timestamp(
-                    DatetimeWrapper.now() + timedelta(minutes=application_args.job_restart_notconnect))
+                    DatetimeWrapper.now() + timedelta(minutes=MadGlobals.application_args.job_restart_notconnect))
                 job_item.processing_date = processtime
                 await self.restart_job(job_id=job_item.id)
             else:
@@ -411,11 +411,11 @@ class DeviceUpdater(object):
             if sub_job_to_run.TYPE == JobType.INSTALLATION:
                 if str(sub_job_to_run.SYNTAX).lower().endswith(".apk"):
                     returning = await communicator.install_apk(300,
-                                                               filepath=os.path.join(application_args.upload_path,
+                                                               filepath=os.path.join(MadGlobals.application_args.upload_path,
                                                                                      sub_job_to_run.SYNTAX))
                 elif str(sub_job_to_run.SYNTAX).lower().endswith(".zip"):
                     returning = await communicator.install_bundle(600,
-                                                                  filepath=os.path.join(application_args.upload_path,
+                                                                  filepath=os.path.join(MadGlobals.application_args.upload_path,
                                                                                         sub_job_to_run.SYNTAX))
                 else:
                     # unknown filetype
@@ -530,14 +530,14 @@ class DeviceUpdater(object):
             return
 
         try:
-            if status.name not in application_args.job_dt_send_type.split(
-                    '|') or not application_args.job_dt_wh:
+            if status.name not in MadGlobals.application_args.job_dt_send_type.split(
+                    '|') or not MadGlobals.application_args.job_dt_wh:
                 return
 
             from discord_webhook import DiscordEmbed, DiscordWebhook
 
             # TODO: Async
-            _webhook = DiscordWebhook(url=application_args.job_dt_wh_url)
+            _webhook = DiscordWebhook(url=MadGlobals.application_args.job_dt_wh_url)
 
             logger.info("Send discord status for device {} (Job: {})", job_item.origin, job_item.job_name)
 
@@ -558,7 +558,7 @@ class DeviceUpdater(object):
                          job_item.origin, job_item.job_name, e)
 
     async def _load_automatic_jobs(self):
-        autocommandfile = os.path.join(application_args.file_path, 'autocommands.json')
+        autocommandfile = os.path.join(MadGlobals.application_args.file_path, 'autocommands.json')
         if not os.path.exists(autocommandfile) or not os.path.isfile(autocommandfile):
             logger.info('No autocommand file available at {}', autocommandfile)
             return

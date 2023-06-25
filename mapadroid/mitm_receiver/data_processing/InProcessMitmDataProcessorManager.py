@@ -17,7 +17,7 @@ from mapadroid.mitm_receiver.data_processing.AbstractMitmDataProcessingManager i
     AbstractMitmDataProcessingManager
 from mapadroid.mitm_receiver.data_processing.SerializedMitmDataProcessor import \
     SerializedMitmDataProcessor
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 from mapadroid.utils.questGen import QuestGen
 
 
@@ -55,11 +55,11 @@ class InProcessMitmDataProcessorManager(AbstractMitmDataProcessingManager, Proce
     async def launch_processors(self):
         db_exec = None
         if not self._db_wrapper:
-            db_wrapper, db_exec = await DbFactory.get_wrapper(application_args,
-                                                              application_args.mitmreceiver_data_workers * 2)
+            db_wrapper, db_exec = await DbFactory.get_wrapper(MadGlobals.application_args,
+                                                              MadGlobals.application_args.mitmreceiver_data_workers * 2)
             self._db_wrapper = db_wrapper
         loop = asyncio.get_running_loop()
-        for i in range(application_args.mitmreceiver_data_workers):
+        for i in range(MadGlobals.application_args.mitmreceiver_data_workers):
             data_processor: SerializedMitmDataProcessor = SerializedMitmDataProcessor(
                 self._mitm_data_queue,
                 self._stats_handler,

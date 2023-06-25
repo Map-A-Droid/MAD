@@ -10,16 +10,16 @@ from mapadroid.grpc.compiled.mapping_manager.mapping_manager_pb2 import (
     GetAllowedAuthenticationCredentialsResponse,
     GetQuestLayerToScanOfOriginRequest, GetQuestLayerToScanOfOriginResponse,
     GetSafeItemsNotToDeleteRequest, GetSafeItemsNotToDeleteResponse,
-    IsRoutemanagerOfOriginLevelmodeRequest,
-    IsRoutemanagerOfOriginLevelmodeResponse,
     IncrementLoginTrackingByOriginRequest,
-    IncrementLoginTrackingByOriginResponse)
+    IncrementLoginTrackingByOriginResponse,
+    IsRoutemanagerOfOriginLevelmodeRequest,
+    IsRoutemanagerOfOriginLevelmodeResponse)
 from mapadroid.grpc.stubs.mapping_manager.mapping_manager_pb2_grpc import (
     MappingManagerServicer, add_MappingManagerServicer_to_server)
 from mapadroid.mapping_manager.AbstractMappingManager import \
     AbstractMappingManager
 from mapadroid.utils.logging import LoggerEnums, get_logger
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 
 logger = get_logger(LoggerEnums.mapping_manager)
 
@@ -33,13 +33,13 @@ class MappingManagerServer(MappingManagerServicer):
         max_message_length = 100 * 1024 * 1024
         options = [('grpc.max_message_length', max_message_length),
                    ('grpc.max_receive_message_length', max_message_length)]
-        if application_args.mappingmanager_compression:
+        if MadGlobals.application_args.mappingmanager_compression:
             options.extend([('grpc.default_compression_algorithm', CompressionAlgorithm.gzip),
                             ('grpc.grpc.default_compression_level', CompressionLevel.medium)])
         self.__server = grpc.aio.server(options=options)
         add_MappingManagerServicer_to_server(self, self.__server)
-        address = f'{application_args.mappingmanager_ip}:{application_args.mappingmanager_port}'
-        if application_args.mappingmanager_tls_cert_file and application_args.mappingmanager_tls_private_key_file:
+        address = f'{MadGlobals.application_args.mappingmanager_ip}:{MadGlobals.application_args.mappingmanager_port}'
+        if MadGlobals.application_args.mappingmanager_tls_cert_file and MadGlobals.application_args.mappingmanager_tls_private_key_file:
             await self.__secure_port(address)
         else:
             await self.__insecure_port(address)
@@ -48,8 +48,8 @@ class MappingManagerServer(MappingManagerServicer):
         await self.__server.start()
 
     async def __secure_port(self, address):
-        with open(application_args.mappingmanager_tls_private_key_file, 'r') as keyfile, open(
-                application_args.mappingmanager_tls_cert_file, 'r') as certfile:
+        with open(MadGlobals.application_args.mappingmanager_tls_private_key_file, 'r') as keyfile, open(
+                MadGlobals.application_args.mappingmanager_tls_cert_file, 'r') as certfile:
             private_key = keyfile.read()
             certificate_chain = certfile.read()
         credentials = grpc.ssl_server_credentials(

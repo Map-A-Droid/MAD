@@ -13,9 +13,10 @@ from mapadroid.utils.apk_enums import APKArch, APKType
 from mapadroid.utils.custom_types import MADapks, MADPackage, MADPackages
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.logging import LoggerEnums, get_logger
+
+from ..utils.global_variables import CHUNK_MAX_SIZE
 from .abstract_apk_storage import AbstractAPKStorage
 from .utils import generate_filename, lookup_apk_enum, lookup_arch_enum
-from ..utils.global_variables import CHUNK_MAX_SIZE
 
 logger = get_logger(LoggerEnums.storage)
 
@@ -58,7 +59,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
         storage mediums
 
     Args:
-        application_args: Arguments used at startup
+        MadGlobals.application_args: Arguments used at startup
 
     Attributes:
         apks (MADapks): All APKs known to the storage system

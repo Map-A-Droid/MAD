@@ -4,7 +4,14 @@ from threading import Event
 from mapadroid.utils.walkerArgs import parse_args
 
 terminate_mad = Event()
-application_args = parse_args()
+
+
+class MadGlobals:
+    application_args = None
+
+    @staticmethod
+    def load_args() -> None:
+        MadGlobals.application_args = parse_args()
 
 
 class WebsocketAbortRegistrationException(Exception):

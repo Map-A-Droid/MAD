@@ -37,9 +37,9 @@ from mapadroid.utils.madConstants import (
     SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER, TIMESTAMP_NEVER)
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
                                         InternalStopWorkerException,
-                                        PositionType, TransportType,
-                                        WebsocketWorkerRemovedException,
-                                        application_args)
+                                        MadGlobals, PositionType,
+                                        TransportType,
+                                        WebsocketWorkerRemovedException)
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
@@ -184,7 +184,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             elif latest:
                 last_time_received = latest.timestamp_of_data_retrieval
                 break
-            await asyncio.sleep(application_args.wait_for_data_sleep_duration)
+            await asyncio.sleep(MadGlobals.application_args.wait_for_data_sleep_duration)
 
         if proto_to_wait_for in [ProtoIdentifier.GMO, ProtoIdentifier.ENCOUNTER]:
             if type_of_data_returned != ReceivedType.UNDEFINED:
@@ -255,7 +255,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
                                                                 float(self._worker_state.current_location.lat),
                                                                 float(self._worker_state.current_location.lng))
         max_distance_of_mode = await self._mapping_manager.routemanager_get_max_radius(self._area_id)
-        max_distance_for_worker = application_args.maximum_valid_distance
+        max_distance_for_worker = MadGlobals.application_args.maximum_valid_distance
         if max_distance_for_worker > max_distance_of_mode > MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO:
             # some modes may be too strict (e.g. quests with 0.0001m calculations for routes)
             # yet, the route may "require" a stricter ruling than max valid distance

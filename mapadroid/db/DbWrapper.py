@@ -33,7 +33,7 @@ logger = get_logger(LoggerEnums.database)
 class DbWrapper:
     def __init__(self, db_exec: PooledQueryExecutor, args):
         self._db_exec: PooledQueryExecutor = db_exec
-        self.application_args = args
+        self.MadGlobals.application_args = args
         self._event_id: int = 1
 
         # TODO: Restore functionality...
@@ -73,7 +73,7 @@ class DbWrapper:
 
     async def update_instance_id(self, session: AsyncSession, instance_name: Optional[str] = None) -> MadminInstance:
         if instance_name is None:
-            instance_name = self.application_args.status_name
+            instance_name = self.MadGlobals.application_args.status_name
         instance: Optional[MadminInstance] = await MadminInstanceHelper.get_by_name(session, instance_name)
         if not instance:
             instance = MadminInstance()

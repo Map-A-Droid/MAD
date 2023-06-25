@@ -7,11 +7,9 @@ from typing import Optional
 from mapadroid.data_handler.grpc.StatsHandlerServer import StatsHandlerServer
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.utils.EnvironmentUtil import setup_loggers, setup_runtime
+from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
+from mapadroid.utils.madGlobals import MadGlobals, terminate_mad
 from mapadroid.utils.SystemStatsUtil import get_system_infos
-from mapadroid.utils.logging import (LoggerEnums, get_logger,
-                                     init_logging)
-from mapadroid.utils.madGlobals import application_args, terminate_mad
-
 
 try:
     import uvloop
@@ -33,21 +31,21 @@ async def start():
     t_usage: Optional[Task] = None
 
     setup_runtime()
-    if application_args.config_mode and application_args.only_routes:
+    if MadGlobals.application_args.config_mode and MadGlobals.application_args.only_routes:
         logger.error('Unable to run with config_mode and only_routes.  Only use one option')
         sys.exit(1)
-    if not application_args.only_scan and not application_args.only_routes:
+    if not MadGlobals.application_args.only_scan and not MadGlobals.application_args.only_routes:
         logger.error("No runmode selected. \nAllowed modes:\n"
                      " -os    ---- start scanner/devicecontroller\n"
                      " -or    ---- only calculate routes")
         sys.exit(1)
     # Elements that should initialized regardless of the functionality being used
-    db_wrapper, db_exec = await DbFactory.get_wrapper(application_args)
+    db_wrapper, db_exec = await DbFactory.get_wrapper(MadGlobals.application_args)
 
     stats_handler = StatsHandlerServer(db_wrapper)
     await stats_handler.start()
 
-    if application_args.statistic:
+    if MadGlobals.application_args.statistic:
         logger.info("Starting statistics collector")
         loop = asyncio.get_running_loop()
         t_usage = loop.create_task(get_system_infos(db_wrapper))
@@ -79,9 +77,9 @@ async def start():
 
 
 if __name__ == "__main__":
-    global application_args
-    os.environ['LANGUAGE'] = application_args.language
-    init_logging(application_args)
+    MadGlobals.load_args()
+    os.environ['LANGUAGE'] = MadGlobals.application_args.language
+    init_logging(MadGlobals.application_args)
     setup_loggers()
     logger = get_logger(LoggerEnums.system)
 

@@ -10,7 +10,7 @@ from mapadroid.mitm_receiver.data_processing.AbstractMitmDataProcessingManager i
     AbstractMitmDataProcessingManager
 from mapadroid.mitm_receiver.data_processing.InProcessMitmDataProcessorManager import \
     InProcessMitmDataProcessorManager
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
 from mapadroid.utils.questGen import QuestGen
 
 
@@ -33,13 +33,13 @@ class ProcessMitmDataProcessingManager(AbstractMitmDataProcessingManager):
         self._all_queues_of_processors = []
 
     async def launch_processors(self):
-        for i in range(application_args.mitmreceiver_data_workers):
+        for i in range(MadGlobals.application_args.mitmreceiver_data_workers):
             # As this loop starts processes, shared asyncio queues are not possible and need to be created and filled
             #  by this manager.
 
             data_processor: InProcessMitmDataProcessorManager = InProcessMitmDataProcessorManager(
                 queue_of_task,
-                application_args,
+                MadGlobals.application_args,
                 self._mitm_mapper,
                 self._db_wrapper,
                 self._quest_gen,

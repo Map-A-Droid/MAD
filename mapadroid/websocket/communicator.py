@@ -11,8 +11,8 @@ from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (
-    ScreenshotType, WebsocketWorkerConnectionClosedException,
-    WebsocketWorkerTimeoutException, application_args)
+    MadGlobals, ScreenshotType, WebsocketWorkerConnectionClosedException,
+    WebsocketWorkerTimeoutException)
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import \
     WebsocketConnectedClientEntry
@@ -260,7 +260,7 @@ class Communicator(AbstractCommunicator):
     async def get_external_ip(self) -> Optional[str]:
         try:
             res: Optional[MessageTyping] = await self.__run_get_gesponse(
-                f"more http get {application_args.ip_service}\r\n")
+                f"more http get {MadGlobals.application_args.ip_service}\r\n")
         except Exception as e:
             logger.error(f"Failed getting external IP address from device: {e}")
             return None

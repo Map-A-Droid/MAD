@@ -3,11 +3,11 @@ import json
 import re
 from typing import Dict, Optional
 
-from mapadroid.db.model import TrsQuest, Pokestop
-from mapadroid.utils.RestHelper import RestHelper, RestApiResult
+from mapadroid.db.model import Pokestop, TrsQuest
 from mapadroid.utils.gamemechanicutil import form_mapper
 from mapadroid.utils.language import i8ln, open_json_file
-from mapadroid.utils.madGlobals import application_args
+from mapadroid.utils.madGlobals import MadGlobals
+from mapadroid.utils.RestHelper import RestApiResult, RestHelper
 
 QUEST_LANGUAGES: Dict[str, str] = {
     'de': 'German',
@@ -45,12 +45,12 @@ class QuestGen:
         self.__quest_templates: Dict[str, str] = await open_json_file('quest_templates')
         self.__pokemen_file: Dict[str, Dict[str, str]] = await open_json_file('pokemon')
 
-        if not application_args.no_quest_titles:
+        if not MadGlobals.application_args.no_quest_titles:
             locale_url = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20APK/{0}.txt"
             remote_locale_url = "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Texts/Latest%20Remote/" \
                                 "{0}.txt"
 
-            asset_language = QUEST_LANGUAGES.get(application_args.language, 'English')
+            asset_language = QUEST_LANGUAGES.get(MadGlobals.application_args.language, 'English')
             apk_locale = await self.__gen_assets_locale(locale_url.format(asset_language))
             remote_locale = await self.__gen_assets_locale(remote_locale_url.format(asset_language))
             if apk_locale is None and remote_locale is None:

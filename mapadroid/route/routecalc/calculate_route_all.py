@@ -9,7 +9,7 @@ import numpy as np
 from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger, init_logging
-from mapadroid.utils.madGlobals import RoutecalculationTypes, application_args
+from mapadroid.utils.madGlobals import MadGlobals, RoutecalculationTypes
 
 logger = get_logger(LoggerEnums.routecalc)
 
@@ -74,7 +74,7 @@ def format_solution(manager, routing, solution):
 
 def _run_in_process_executor(method, less_coordinates, route_name):
     # Utility method to init logging in process executor...
-    init_logging(application_args, print_info=False)
+    init_logging(MadGlobals.application_args, print_info=False)
     try:
         return method(less_coordinates, route_name)
     except Exception as e:

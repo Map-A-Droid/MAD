@@ -22,8 +22,8 @@ from mapadroid.utils.aiohttp import add_prefix_to_url, get_forwarded_path
 from mapadroid.utils.authHelper import check_auth, get_auths_for_levl
 from mapadroid.utils.json_encoder import MADEncoder
 from mapadroid.utils.madGlobals import (
-    WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException,
-    application_args)
+    MadGlobals, WebsocketWorkerConnectionClosedException,
+    WebsocketWorkerTimeoutException)
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 
@@ -45,7 +45,7 @@ def check_authorization_header(auth_levels: Union[List[AuthLevel], AuthLevel]):
     def wrapper(func):
         @wraps(func)
         async def wrapped(self: AbstractMadminRootEndpoint, *args, **kwargs):
-            if application_args.madmin_enable_auth:
+            if MadGlobals.application_args.madmin_enable_auth:
                 auth: Optional[str] = self._request.headers.get('Authorization')
                 auths_allowed: Dict[str, SettingsAuth] = {}
                 if isinstance(auth_levels, list):

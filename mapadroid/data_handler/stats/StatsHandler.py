@@ -6,19 +6,25 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mapadroid.data_handler.stats.AbstractStatsHandler import AbstractStatsHandler
+from mapadroid.data_handler.stats.AbstractStatsHandler import \
+    AbstractStatsHandler
+from mapadroid.data_handler.stats.holder.AbstractStatsHolder import \
+    AbstractStatsHolder
+from mapadroid.data_handler.stats.holder.stats_detect_seen.StatsDetectSeenTypeHolder import \
+    StatsDetectSeenTypeHolder
 from mapadroid.data_handler.stats.PlayerStats import PlayerStats
-from mapadroid.data_handler.stats.holder.AbstractStatsHolder import AbstractStatsHolder
-from mapadroid.data_handler.stats.holder.stats_detect_seen.StatsDetectSeenTypeHolder import StatsDetectSeenTypeHolder
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.TrsStatsDetectHelper import TrsStatsDetectHelper
-from mapadroid.db.helper.TrsStatsDetectWildMonRawHelper import TrsStatsDetectWildMonRawHelper
+from mapadroid.db.helper.TrsStatsDetectWildMonRawHelper import \
+    TrsStatsDetectWildMonRawHelper
 from mapadroid.db.helper.TrsStatsLocationHelper import TrsStatsLocationHelper
-from mapadroid.db.helper.TrsStatsLocationRawHelper import TrsStatsLocationRawHelper
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.db.helper.TrsStatsLocationRawHelper import \
+    TrsStatsLocationRawHelper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import get_logger, LoggerEnums
-from mapadroid.utils.madGlobals import TransportType, PositionType, MonSeenTypes, application_args
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.logging import LoggerEnums, get_logger
+from mapadroid.utils.madGlobals import (MadGlobals, MonSeenTypes, PositionType,
+                                        TransportType)
 from mapadroid.worker.WorkerType import WorkerType
 
 logger = get_logger(LoggerEnums.stats_handler)
@@ -49,7 +55,7 @@ class StatsHandler(AbstractStatsHandler):
 
     def __init_stats_holders(self) -> None:
         self.__worker_stats: Dict[str, PlayerStats] = {}
-        if application_args.game_stats_mon_seen:
+        if MadGlobals.application_args.game_stats_mon_seen:
             self.__stats_detect_seen_type_holder: Optional[StatsDetectSeenTypeHolder] = StatsDetectSeenTypeHolder()
 
     def __ensure_player_stat(self, worker: str) -> PlayerStats:
@@ -94,7 +100,7 @@ class StatsHandler(AbstractStatsHandler):
                 self.__stats_detect_seen_type_holder.add(encounter_id, type_of_detection, time_of_scan)
 
     async def __stats_submission_loop(self):
-        repetition_duration: int = application_args.game_stats_save_time if application_args.game_stats_save_time > 15 else 300
+        repetition_duration: int = MadGlobals.application_args.game_stats_save_time if MadGlobals.application_args.game_stats_save_time > 15 else 300
         while True:
             await asyncio.sleep(repetition_duration)
             await self.__run_stats_processing()
@@ -129,6 +135,6 @@ class StatsHandler(AbstractStatsHandler):
         # TODO: Cleanup seen stuff...
         await TrsStatsDetectHelper.cleanup(session, delete_before_timestamp)
         await TrsStatsDetectWildMonRawHelper.cleanup(session, DatetimeWrapper.fromtimestamp(delete_before_timestamp),
-                                                     raw_delete_shiny_days=int(application_args.raw_delete_shiny))
+                                                     raw_delete_shiny_days=int(MadGlobals.application_args.raw_delete_shiny))
         await TrsStatsLocationHelper.cleanup(session, delete_before_timestamp)
         await TrsStatsLocationRawHelper.cleanup(session, delete_before_timestamp)

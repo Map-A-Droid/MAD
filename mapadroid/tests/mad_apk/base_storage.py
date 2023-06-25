@@ -4,8 +4,7 @@ from unittest import TestCase
 
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mad_apk import (APKArch, APKType, MADapks, MADPackage,
-                               MADPackages, file_generator, get_apk_status,
-                               get_storage_obj)
+                               MADPackages, get_apk_status, get_storage_obj)
 from mapadroid.tests.test_utils import filepath_rgc, mimetype, upload_package
 from mapadroid.utils.logging import init_logging
 from mapadroid.utils.walkerArgs import parse_args
@@ -28,7 +27,7 @@ class StorageBase(TestCase):
             args.apk_storage_interface = 'fs'
         else:
             args.apk_storage_interface = 'db'
-        (self.storage_manager, self.storage_elem) = get_storage_obj(args, self.db_wrapper)
+        (self.storage_manager, self.storage_elem) = get_storage_obj(self.db_wrapper)
         self.db_purge()
         self.storage_elem.delete_file(APKType.rgc, APKArch.noarch)
 
