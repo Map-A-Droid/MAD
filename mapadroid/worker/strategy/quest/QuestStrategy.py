@@ -161,7 +161,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             type_of_data_found = ReceivedType.GYM if fort_type == 0 else ReceivedType.STOP
         elif proto_to_wait_for == ProtoIdentifier.GMO \
                 and self._directly_surrounding_gmo_cells_containing_stops_around_current_position(
-            latest_proto.get("cells")):
+                        latest_proto.get("cells")
+                    ):
             data_found = latest_proto
             type_of_data_found = ReceivedType.GMO
 
@@ -320,7 +321,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                  active_account.last_softban_action_location)
                     if active_account.last_softban_action.timestamp() + delay_to_last_action > cur_time:
                         logger.debug("Last registered softban requires further cooldown")
-                        delay_to_avoid_softban = cur_time - active_account\
+                        delay_to_avoid_softban = cur_time - active_account \
                             .last_softban_action.timestamp() + delay_to_last_action
                         distance = distance_last_action
                     else:
@@ -342,7 +343,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             logger.info('Can use more than 1 account - switch & no cooldown')
             await self.switch_account()
             delay_used = -1
-        elif await self._is_levelmode() and await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV:
+        elif await self._is_levelmode() and await self._mitm_mapper.get_level(
+                self._worker_state.origin) >= MIN_LEVEL_IV:
             logger.info('Levelmode: Account of {} is level {}, i.e., >= {}, switching to next to level',
                         self._worker_state.origin,
                         await self._mitm_mapper.get_level(self._worker_state.origin) >= MIN_LEVEL_IV, MIN_LEVEL_IV)
@@ -527,10 +529,14 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 raise AbortStopProcessingException("No fort present or GMO empty, continuing in levelmode.")
         else:
             if stop_type in (PositionStopType.GMO_NOT_AVAILABLE, PositionStopType.GMO_EMPTY):
-                # Restart pogo, try again, abort if it fails...
-                logger.info("GMO invalid for current position, trying to restart pogo")
-                if not await self._restart_pogo(clear_cache=False):
-                    raise AbortStopProcessingException("Failed restarting pogo after lacking data in GMOs.")
+                # Since GMOs are checked in wait_for_data (and _spinnable_data_failure) and consecutive timeouts
+                #  will trigger device/pogo reboots,
+                #  we simply append the current stop to the end of the route to check it again.
+                logger.info("GMO invalid for current position, appending current location to the end of the route to "
+                            "check it again.")
+                await self._mapping_manager.routemanager_redo_stop_at_end(self._area_id,
+                                                                          self._worker_state.origin,
+                                                                          self._worker_state.current_location)
                 timestamp = int(time.time())
                 stop_type: PositionStopType = await self._current_position_has_spinnable_stop(timestamp)
 
@@ -811,10 +817,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                         and data_received == FortSearchResultTypes.INVENTORY):
                     logger.warning('Box is full... clear out items!')
                     await asyncio.sleep(1)
-                    if not await self._mapping_manager.routemanager_redo_stop_at_end(self._area_id,
-                                                                                     self._worker_state.origin,
-                                                                                     self._worker_state.current_location):
-                        logger.warning('Cannot process this stop again')
+                    await self._mapping_manager.routemanager_redo_stop_at_end(self._area_id,
+                                                                              self._worker_state.origin,
+                                                                              self._worker_state.current_location)
                     break
                 elif (type_received == ReceivedType.FORT_SEARCH_RESULT
                       and (data_received == FortSearchResultTypes.QUEST
@@ -866,9 +871,6 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                             self._worker_state.origin) > 6800:
                         logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
                                        await self._mitm_mapper.get_poke_stop_visits(self._worker_state.origin))
-                    else:
-                        vps_delay: int = await self._get_vps_delay()
-                        # await self._clear_quests(vps_delay)
 
                     await asyncio.sleep(1)
                 to += 1

@@ -671,7 +671,7 @@ class RouteManagerBase(ABC):
             return True
         return False
 
-    def redo_stop_at_end(self, worker: str, location: Location):
+    def redo_stop_at_end(self, worker: str, location: Location) -> None:
         logger.info('Redo an unprocessed location at the end of the route of {} ({})', worker, location)
         if worker in self._routepool:
             self._routepool[worker].queue.append(location)
