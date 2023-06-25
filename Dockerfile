@@ -1,7 +1,7 @@
 ############################
 # MAD
 ############################
-FROM python:3.9-slim AS mad-core
+FROM python:3.11-slim AS mad-core
 # Working directory for the application
 WORKDIR /usr/src/app
 
@@ -24,10 +24,9 @@ libgl1-mesa-glx \
 # cleanup
 && apt-get remove -y build-essential \
 && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
-&& rm -rf /var/lib/apt/lists/*
-
+&& rm -rf /var/lib/apt/lists/* \
 # tesseract
-RUN apt-get update && apt-get -y install tesseract-ocr
+&& apt-get -y install tesseract-ocr
 
 # Copy everything to the working directory (Python files, templates, config) in one go.
 COPY . /usr/src/app/
