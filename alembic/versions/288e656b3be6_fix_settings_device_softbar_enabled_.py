@@ -5,9 +5,9 @@ Revises: bab9bc231ee5
 Create Date: 2021-11-03 19:10:40.587355
 
 """
+from sqlalchemy import text
+
 from alembic import op
-from sqlalchemy import (Column, Float, ForeignKey, Index,
-                        String, Table, text)
 
 # revision identifiers, used by Alembic.
 revision = '288e656b3be6'

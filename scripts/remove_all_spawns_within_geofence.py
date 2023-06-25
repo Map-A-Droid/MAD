@@ -4,11 +4,12 @@ import collections
 import os
 import re
 import sys
+from typing import List
 
 import mysql.connector
 
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.utils.logging import initLogging, logger
+from mapadroid.utils.logging import init_logging, logger
 
 sys.path.append("..")
 
@@ -44,7 +45,7 @@ def get_value_for(regex_string, force_exit=True):
 
 def main():
     args = Args()
-    initLogging(args)
+    init_logging(args)
 
     if len(sys.argv) != 2:
         logger.error("usage: remove_all_spawns_within_geofence.py GEOFENCE_FILENAME")

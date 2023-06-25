@@ -1,9 +1,12 @@
 import asyncio
 
+from redis.asyncio.client import Redis
+
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import MadGlobals, terminate_mad
 
 logger = get_logger(LoggerEnums.system)
+
 
 async def report_queue_size(__db_wrapper, __queueObject):
     __cache_key = MadGlobals.application_args.redis_report_queue_key

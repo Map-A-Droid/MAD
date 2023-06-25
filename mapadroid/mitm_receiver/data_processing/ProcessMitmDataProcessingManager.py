@@ -39,7 +39,6 @@ class ProcessMitmDataProcessingManager(AbstractMitmDataProcessingManager):
 
             data_processor: InProcessMitmDataProcessorManager = InProcessMitmDataProcessorManager(
                 queue_of_task,
-                MadGlobals.application_args,
                 self._mitm_mapper,
                 self._db_wrapper,
                 self._quest_gen,

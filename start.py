@@ -139,8 +139,8 @@ async def start():
                                  mitm_data_processor_manager.get_queue(),
                                  account_handler=account_handler)
     mitm_receiver_task: web.AppRunner = await mitm_receiver.start()
-    logger.info('Starting websocket server on port {}'.format(str(application_args.ws_port)))
-    ws_server = WebsocketServer(args=application_args,
+    logger.info('Starting websocket server on port {}'.format(str(MadGlobals.application_args.ws_port)))
+    ws_server = WebsocketServer(args=MadGlobals.application_args,
                                 mitm_mapper=mitm_mapper,
                                 stats_handler=stats_handler,
                                 db_wrapper=db_wrapper,
@@ -148,7 +148,7 @@ async def start():
                                 pogo_window_manager=pogo_win_manager,
                                 event=event,
                                 account_handler=account_handler,
-                                enable_configmode=application_args.config_mode)
+                                enable_configmode=MadGlobals.application_args.config_mode)
     # TODO: module/service?
     await ws_server.start_server()
 
@@ -156,9 +156,9 @@ async def start():
     await device_updater.start_updater()
     if not MadGlobals.application_args.config_mode:
         if MadGlobals.application_args.webhook:
-            rarity = Rarity(application_args, db_wrapper)
+            rarity = Rarity(MadGlobals.application_args, db_wrapper)
             await rarity.start_dynamic_rarity()
-            webhook_worker = WebhookWorker(application_args, db_wrapper, mapping_manager, rarity, quest_gen)
+            webhook_worker = WebhookWorker(MadGlobals.application_args, db_wrapper, mapping_manager, rarity, quest_gen)
             webhook_task: Task = await webhook_worker.start()
             # TODO: Stop webhook_task properly
 
@@ -189,7 +189,7 @@ async def start():
     # MADmin needs to be started after sub-applications (plugins) have been added
 
     if not MadGlobals.application_args.disable_madmin or MadGlobals.application_args.config_mode:
-        logger.info("Starting Madmin on port {}", str(application_args.madmin_port))
+        logger.info("Starting Madmin on port {}", str(MadGlobals.application_args.madmin_port))
         madmin_app_runner = await madmin.madmin_start()
 
     if MadGlobals.application_args.statistic:
