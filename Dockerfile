@@ -25,8 +25,8 @@ libgl1-mesa-glx \
 && apt-get remove -y build-essential \
 && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
 && rm -rf /var/lib/apt/lists/* \
-# tesseract
-&& apt-get -y install tesseract-ocr
+# tesseract-ocr was apparently replaced by libtesseract5 ?
+&& apt-get -y install libtesseract5
 
 # Copy everything to the working directory (Python files, templates, config) in one go.
 COPY . /usr/src/app/
