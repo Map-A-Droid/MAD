@@ -82,8 +82,10 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             fort_search = data["payload"]
             result: int = fort_search.get("result", 0)
             if result == 2:
+                location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
                 # Fort search out of range, abort
-                logger.debug("Received out of range fort search")
+                logger.debug("Received out of range fort search for {}. Location of data: {}",
+                             fort_search.get("fort_id", "unknown_id"), location_of_data)
                 return
 
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
