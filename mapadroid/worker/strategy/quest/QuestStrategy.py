@@ -320,8 +320,8 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                  active_account.last_softban_action_location)
                     if active_account.last_softban_action.timestamp() + delay_to_last_action > cur_time:
                         logger.debug("Last registered softban requires further cooldown")
-                        delay_to_avoid_softban = cur_time - active_account\
-                            .last_softban_action.timestamp() + delay_to_last_action
+                        delay_to_avoid_softban = max(0.0, delay_to_last_action \
+                            - (cur_time - active_account.last_softban_action.timestamp()))
                         distance = distance_last_action
                     else:
                         logger.debug("Last registered softban action long enough in the past")
