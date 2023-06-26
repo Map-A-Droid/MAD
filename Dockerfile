@@ -19,7 +19,7 @@ default-libmysqlclient-dev \
 python3-opencv \
 libsm6 \
 libgl1-mesa-glx \
-# tesseract-ocr was apparently replaced by libtesseract5 ?
+# tesseract-ocr needs to be up here since the apt-get update will make it visible
 tesseract-ocr \
 # python reqs
 && python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
