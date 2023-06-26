@@ -19,14 +19,15 @@ default-libmysqlclient-dev \
 python3-opencv \
 libsm6 \
 libgl1-mesa-glx \
+# tesseract-ocr was apparently replaced by libtesseract5 ?
+tesseract-ocr \
 # python reqs
 && python3 -m pip install --no-cache-dir -r requirements.txt ortools redis \
 # cleanup
 && apt-get remove -y build-essential \
 && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
-&& rm -rf /var/lib/apt/lists/* \
-# tesseract-ocr was apparently replaced by libtesseract5 ?
-&& apt-get -y install libtesseract5
+&& rm -rf /var/lib/apt/lists/*
+
 
 # Copy everything to the working directory (Python files, templates, config) in one go.
 COPY . /usr/src/app/
