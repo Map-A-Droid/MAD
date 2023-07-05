@@ -14,7 +14,6 @@ from mapadroid.data_handler.stats.AbstractStatsHandler import \
     AbstractStatsHandler
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
-from mapadroid.db.helper.SettingsPogoauthHelper import SettingsPogoauthHelper
 from mapadroid.db.model import (AuthLevel, SettingsAuth, SettingsDevice,
                                 SettingsPogoauth)
 from mapadroid.mapping_manager.MappingManager import MappingManager
@@ -56,6 +55,7 @@ class WebsocketServer(object):
         self.__pogo_window_manager: PogoWindows = pogo_window_manager
         self.__mitm_mapper: AbstractMitmMapper = mitm_mapper
         self.__stats_handler: AbstractStatsHandler = stats_handler
+        self.__account_handler: AbstractAccountHandler = account_handler
         self.__enable_configmode: bool = enable_configmode
 
         # Event to signal that the server is to be stopped. Used to not accept new connections for example
@@ -177,10 +177,7 @@ class WebsocketServer(object):
                         entry.websocket_client_connection = websocket_client_connection
                     elif not entry:
                         async with self.__db_wrapper as session, session:
-                            current_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper\
-                                .get_assigned_to_device(session, device_id)
-                            if current_auth:
-                                session.expunge(current_auth)
+                            current_auth: Optional[SettingsPogoauth] = await self.__account_handler.get_assignment(device_id)
                         # Just create a new entry...
                         worker_state: WorkerState = WorkerState(origin=origin,
                                                                 device_id=device_id,
