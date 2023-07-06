@@ -114,7 +114,7 @@ class WorkerMITM(MITMBase):
             # worker has to sleep, just empty out the settings...
             ids_iv = []
             scanmode = "nothing"
-        elif routemanager_mode == "mon_mitm":
+        elif routemanager_mode == "mon_mitm" or routemanager_mode == "iv_mitm":
             scanmode = "mons"
             routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
             if routemanager_settings is not None:
@@ -124,9 +124,6 @@ class WorkerMITM(MITMBase):
             routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
             if routemanager_settings is not None:
                 ids_iv = self._mapping_manager.get_monlist(self._routemanager_name)
-        elif routemanager_mode == "iv_mitm":
-            scanmode = "ivs"
-            ids_iv = self._mapping_manager.routemanager_get_encounter_ids_left(self._routemanager_name)
         else:
             # TODO: should we throw an exception here?
             ids_iv = []
