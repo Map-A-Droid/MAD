@@ -1,6 +1,6 @@
 aiocache==0.12.1
 aiofile==3.8.5
-aiohttp==3.8.4
+aiohttp==3.8.5
 aiohttp-remotes==1.2.0
 aiohttp-jinja2==1.5.1
 aiohttp-session==2.12.0
