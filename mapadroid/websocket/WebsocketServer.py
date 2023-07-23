@@ -92,9 +92,11 @@ class WebsocketServer(object):
         await self.__setup_first_loop()
         # the type-check here is sorta wrong, not entirely sure why
         # noinspection PyTypeChecker
-        self.__server_task = await websockets.serve(self.__connection_handler, self.__args.ws_ip,
-                                                    int(self.__args.ws_port), max_size=2 ** 25,
-                                                    close_timeout=10)
+        self.__server_task: websockets.WebSocketServer = await websockets.serve(self.__connection_handler,
+                                                                                self.__args.ws_ip,
+                                                                                int(self.__args.ws_port),
+                                                                                max_size=2 ** 25,
+                                                                                close_timeout=10)
 
     async def __close_all_connections_and_signal_stop(self):
         logger.info("Signaling all workers to stop")
@@ -115,7 +117,8 @@ class WebsocketServer(object):
             await asyncio.sleep(1)
 
         await self.__close_all_connections_and_signal_stop()
-        await self.__server_task.close()
+        self.__server_task.close()
+        await self.__server_task.wait_closed()
         logger.info("Stopped websocket server")
 
     async def __connection_handler(self, websocket_client_connection: websockets.WebSocketClientProtocol,
@@ -177,7 +180,7 @@ class WebsocketServer(object):
                         entry.websocket_client_connection = websocket_client_connection
                     elif not entry:
                         async with self.__db_wrapper as session, session:
-                            current_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper\
+                            current_auth: Optional[SettingsPogoauth] = await SettingsPogoauthHelper \
                                 .get_assigned_to_device(session, device_id)
                             if current_auth:
                                 session.expunge(current_auth)
@@ -335,7 +338,7 @@ class WebsocketServer(object):
             except asyncio.TimeoutError:
                 await asyncio.sleep(0.02)
             except websockets.ConnectionClosed as cc:
-                logger.warning("Connection was closed, stopping receiver. Exception: {}", cc)
+                logger.warning("Connection was closed, stopping receiver. Exception: {}", repr(cc))
                 return
 
             if message is not None:
@@ -361,7 +364,7 @@ class WebsocketServer(object):
                 message_id = int.from_bytes(message[:4], byteorder='big', signed=False)
                 response = message[4:]
         except ValueError as e:
-            logger.warning("Failed reading message ID of message received for {} ({})", client_entry.origin, e)
+            logger.warning("Failed reading message ID of message received for {} ({})", client_entry.origin, repr(e))
             return
         await client_entry.set_message_response(message_id, response)
 
