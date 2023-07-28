@@ -2,8 +2,8 @@ from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
-from PIL import Image
 from loguru import logger
+from PIL import Image
 from pytesseract import Output, pytesseract
 
 from mapadroid.ocr.screen_type import ScreenType
@@ -62,7 +62,7 @@ def screendetection_get_type_internal(image,
 
                 if width < 1080:
                     logger.info('Resize screen ...')
-                    frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
+                    frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.LANCZOS)
                     diff: int = 2
 
                 texts = [frame_org]
