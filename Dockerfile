@@ -15,6 +15,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && apt-get update \
 && apt-get install -y --no-install-recommends \
 build-essential \
 default-libmysqlclient-dev \
+pkg-config \
+libmariadb-dev \
 # OpenCV & dependencies
 python3-opencv \
 libsm6 \

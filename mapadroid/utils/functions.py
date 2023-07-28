@@ -4,9 +4,9 @@ import os
 import time
 
 import ujson
-from PIL import Image
 from aiocache import cached
 from aiofile import async_open
+from PIL import Image
 
 import mapadroid
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -38,7 +38,7 @@ def _process_image_resize(image, savepath, width):
     with Image.open(image) as img:
         wpercent = (basewidth / float(img.size[0]))
         hsize = int((float(img.size[1]) * float(wpercent)))
-        img = img.resize((basewidth, hsize), Image.ANTIALIAS)
+        img = img.resize((basewidth, hsize), Image.LANCZOS)
         pre, _ = os.path.splitext(filename)
         img.save(os.path.join(savepath, str(pre) + '.jpg'))
 
