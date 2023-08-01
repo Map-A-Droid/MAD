@@ -67,7 +67,7 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         if self._get_mad_args().mitm_ignore_pre_boot is True and timestamp < self._get_mitmreceiver_startup_time():
             return
 
-        if proto_type not in (106, 102, 101, 104, 4, 156, 145):
+        if proto_type not in (106, 102, 101, 104, 4, 156, 145, 1405):
             # trash protos - ignoring
             return
         elif proto_type == 106 and not data["payload"].get("cells", []):
@@ -75,6 +75,9 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             return
         elif proto_type == 102 and not data["payload"].get("status", None) == 1:
             logger.warning("Encounter with status {} being ignored", data["payload"].get("status", None))
+            return
+        elif proto_type == 1405 and not data["payload"].get("route_map_cell", []):
+            logger.info("No routes in payload to be processed")
             return
         elif proto_type == 101:
             # FORT_SEARCH

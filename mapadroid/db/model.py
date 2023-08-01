@@ -839,3 +839,34 @@ class AutoconfigLog(Base):
     msg = Column(String(1024, 'utf8mb4_unicode_ci'), nullable=False)
 
     session = relationship('AutoconfigRegistration')
+
+
+class Route(Base):
+    __tablename__ = 'route'
+
+    route_id = Column(String(50), primary_key=True)
+    waypoints = Column(LONGTEXT, nullable=False)
+    type = Column(TINYINT(2), nullable=False, server_default=text("'0'"))
+    path_type = Column(TINYINT(2), nullable=False, server_default=text("'0'"))
+    name = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False)
+    description = Column(String(255, 'utf8mb4_unicode_ci'), nullable=False)
+    version = Column(INTEGER(11), nullable=False)
+    reversible = Column(BOOLEAN, nullable=False)
+    submission_time = Column(TZDateTime, nullable=False)
+    route_distance_meters = Column(INTEGER(11), nullable=False)
+    route_duration_seconds = Column(INTEGER(11), nullable=False)
+    pins = Column(LONGTEXT, nullable=True)
+    tags = Column(LONGTEXT, nullable=True)
+    image = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
+    image_border_color_hex = Column(String(8, 'utf8mb4_unicode_ci'), nullable=True)
+    route_submission_status = Column(TINYINT(2), nullable=False, server_default=text("'0'"))
+    route_submission_update_time = Column(TZDateTime, nullable=False)
+    start_poi_fort_id = Column(String(50, 'utf8mb4_unicode_ci'), nullable=False)
+    start_poi_latitude = Column(Float(asdecimal=True), nullable=False)
+    start_poi_longitude = Column(Float(asdecimal=True), nullable=False)
+    start_poi_image_url = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
+    end_poi_fort_id = Column(String(50, 'utf8mb4_unicode_ci'), nullable=False)
+    end_poi_latitude = Column(Float(asdecimal=True), nullable=False)
+    end_poi_longitude = Column(Float(asdecimal=True), nullable=False)
+    end_poi_image_url = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
+    last_updated = Column(TZDateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
