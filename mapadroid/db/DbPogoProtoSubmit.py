@@ -1037,7 +1037,7 @@ class DbPogoProtoSubmit:
                 route.end_poi_longitude = end_poi_anchor.get("lng_degrees")
                 route.end_poi_image_url = end_poi_data.get("image_url")
 
-                route.last_updated = DatetimeWrapper.fromtimestamp(date_received)
+                route.last_updated = date_received
 
                 session.add(route)
                 await self._cache.set(cache_key, 1, ex=REDIS_CACHETIME_ROUTE)
