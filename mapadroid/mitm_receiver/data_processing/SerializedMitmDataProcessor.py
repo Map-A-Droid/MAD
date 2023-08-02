@@ -1,7 +1,7 @@
 import asyncio
 import time
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import sqlalchemy
 from loguru import logger
@@ -133,6 +133,11 @@ class SerializedMitmDataProcessor:
                 await self._handle_inventory_data(origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
                 logger.debug("Done processing proto 4 in {}ms", end_time)
+            elif data_type == 1405:
+                logger.debug("Processing proto 1405 (GET_ROUTES)")
+                await self.__process_routes(data["payload"], received_timestamp)
+                end_time = self.get_time_ms() - start_time
+                logger.debug("Done processing proto 1405 in {}ms", end_time)
             elif data_type == 156:
                 logger.debug("Processing proto 156 (GYM_GET_INFO)")
                 async with self.__db_wrapper as session, session:
@@ -144,6 +149,8 @@ class SerializedMitmDataProcessor:
 
                 end_time = self.get_time_ms() - start_time
                 logger.debug("Done processing proto 156 in {}ms", end_time)
+            else:
+                logger.warning("Type {} was not processed as no processing is defined.", data_type)
 
     async def __process_lured_encounter(self, data, origin, processed_timestamp, received_timestamp, start_time):
         playerlevel = await self.__mitm_mapper.get_level(origin)
@@ -338,6 +345,18 @@ class SerializedMitmDataProcessor:
                 logger.warning("Failed submitting raids: {}", e)
         raids_time = self.get_time_ms() - raids_time_start
         return raids_time, amount_raids
+
+    async def __process_routes(self, data: Dict, received_timestamp: int) -> None:
+        routes_time_start = self.get_time_ms()
+        async with self.__db_wrapper as session, session:
+            try:
+                await self.__db_submit.routes(session, data, received_timestamp)
+                await session.commit()
+            except Exception as e:
+                logger.warning("Failed submitting routes: {}", e)
+                logger.exception(e)
+        routes_time = self.get_time_ms() - routes_time_start
+        logger.debug("Processing routes took {}ms", routes_time)
 
     async def __process_gyms(self, data, received_timestamp: int):
         gyms_time_start = self.get_time_ms()
