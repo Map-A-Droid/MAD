@@ -1005,13 +1005,11 @@ class DbPogoProtoSubmit:
                 route.route_distance_meters = route_data.get("route_distance_meters")
                 route.route_duration_seconds = route_data.get("route_duration_seconds")
 
-                pins_raw: Optional[Dict] = route_data.get("pins")
-                if pins_raw:
-                    route.pins = json.dumps(pins_raw)
+                pins_raw: Optional[Dict] = route_data.get("pins", {})
+                route.pins = json.dumps(pins_raw)
 
-                tags_raw: Optional[Dict] = route_data.get("tags")
-                if tags_raw:
-                    route.tags = json.dumps(tags_raw)
+                tags_raw: Optional[Dict] = route_data.get("tags", {})
+                route.tags = json.dumps(tags_raw)
 
                 image_data: Dict = route_data.get("image", {})
                 route.image = image_data.get("image_url")
