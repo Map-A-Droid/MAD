@@ -1000,7 +1000,7 @@ class DbPogoProtoSubmit:
 
                 submission_time_raw: int = route_data.get("submission_time")
                 logger.debug2("Submission time raw: {}", submission_time_raw)
-                submission_time: datetime = DatetimeWrapper.fromtimestamp(submission_time_raw)
+                submission_time: datetime = DatetimeWrapper.fromtimestamp(submission_time_raw / 1000)
                 route.submission_time = submission_time
                 route.route_distance_meters = route_data.get("route_distance_meters")
                 route.route_duration_seconds = route_data.get("route_duration_seconds")
@@ -1021,7 +1021,7 @@ class DbPogoProtoSubmit:
                 route.route_submission_status = route_submission_status_data.get("status", 0)
                 route_submission_update_time: int = route_submission_status_data.get(
                     "submission_status_update_time_ms", 0)
-                route.route_submission_update_time = DatetimeWrapper.fromtimestamp(route_submission_update_time)
+                route.route_submission_update_time = DatetimeWrapper.fromtimestamp(route_submission_update_time / 1000)
 
                 start_poi_data: Dict = route_data.get("start_poi", {})
                 start_poi_anchor: Dict = start_poi_data.get("anchor")
