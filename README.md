@@ -22,7 +22,7 @@ Map'A'Droid is a scanner for PoGo based on Android devices.
 
 ## Requirements
 
-* A supported version of Python: **3.8**, **3.9**
+* A supported version of Python: **3.9**, **3.10**, **3.11**
 * MySQL database, with RocketMap structure
 * Rooted Android device
 * PogoDroid token, obtainable [maddev.eu](https://maddev.eu/shop/)
