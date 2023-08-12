@@ -1,7 +1,7 @@
 # coding: utf-8
 import enum
 
-from sqlalchemy import Column, Float, ForeignKey, Index, String, text
+from sqlalchemy import Column, Double, Float, ForeignKey, Index, String, text
 from sqlalchemy.dialects.mysql import (BIGINT, BOOLEAN, ENUM, INTEGER,
                                        LONGBLOB, LONGTEXT, MEDIUMBLOB,
                                        SMALLINT, TINYINT)
@@ -53,8 +53,8 @@ class Gym(Base):
     guard_pokemon_id = Column(SMALLINT(6), nullable=False)
     slots_available = Column(SMALLINT(6), nullable=False)
     enabled = Column(BOOLEAN, nullable=False)
-    latitude = Column(Float(asdecimal=True), nullable=False)
-    longitude = Column(Float(asdecimal=True), nullable=False)
+    latitude = Column(Double(asdecimal=True), nullable=False)
+    longitude = Column(Double(asdecimal=True), nullable=False)
     total_cp = Column(SMALLINT(6), nullable=False)
     is_in_battle = Column(BOOLEAN, nullable=False)
     weather_boosted_condition = Column(SMALLINT(6))
@@ -110,8 +110,8 @@ class Pokemon(Base):
     encounter_id = Column(BIGINT(20), primary_key=True)
     spawnpoint_id = Column(BIGINT(20), nullable=False, index=True)
     pokemon_id = Column(SMALLINT(6), nullable=False, index=True)
-    latitude = Column(Float(asdecimal=True), nullable=False)
-    longitude = Column(Float(asdecimal=True), nullable=False)
+    latitude = Column(Double(asdecimal=True), nullable=False)
+    longitude = Column(Double(asdecimal=True), nullable=False)
     disappear_time = Column(TZDateTime, nullable=False)
     individual_attack = Column(SMALLINT(6), index=True)
     individual_defense = Column(SMALLINT(6))
@@ -125,9 +125,9 @@ class Pokemon(Base):
     gender = Column(SMALLINT(6))
     form = Column(SMALLINT(6))
     costume = Column(SMALLINT(6))
-    catch_prob_1 = Column(Float(asdecimal=True))
-    catch_prob_2 = Column(Float(asdecimal=True))
-    catch_prob_3 = Column(Float(asdecimal=True))
+    catch_prob_1 = Column(Double(asdecimal=True))
+    catch_prob_2 = Column(Double(asdecimal=True))
+    catch_prob_3 = Column(Double(asdecimal=True))
     rating_attack = Column(String(2, 'utf8mb4_unicode_ci'))
     rating_defense = Column(String(2, 'utf8mb4_unicode_ci'))
     weather_boosted_condition = Column(SMALLINT(6))
@@ -157,8 +157,8 @@ class Pokestop(Base):
 
     pokestop_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True)
     enabled = Column(BOOLEAN, nullable=False)
-    latitude = Column(Float(asdecimal=True), nullable=False)
-    longitude = Column(Float(asdecimal=True), nullable=False)
+    latitude = Column(Double(asdecimal=True), nullable=False)
+    longitude = Column(Double(asdecimal=True), nullable=False)
     last_modified = Column(TZDateTime, nullable=False, index=True)
     lure_expiration = Column(TZDateTime, index=True)
     active_fort_modifier = Column(SMALLINT(6), index=True)
@@ -214,8 +214,8 @@ class Scannedlocation(Base):
     )
 
     cellid = Column(BIGINT(20), primary_key=True)
-    latitude = Column(Float(asdecimal=True), nullable=False)
-    longitude = Column(Float(asdecimal=True), nullable=False)
+    latitude = Column(Double(asdecimal=True), nullable=False)
+    longitude = Column(Double(asdecimal=True), nullable=False)
     last_modified = Column(TZDateTime, index=True)
     done = Column(BOOLEAN, nullable=False)
     band1 = Column(SMALLINT(6), nullable=False)
@@ -262,8 +262,8 @@ class Spawnpoint(Base):
     )
 
     id = Column(BIGINT(20), primary_key=True)
-    latitude = Column(Float(asdecimal=True), nullable=False)
-    longitude = Column(Float(asdecimal=True), nullable=False)
+    latitude = Column(Double(asdecimal=True), nullable=False)
+    longitude = Column(Double(asdecimal=True), nullable=False)
     last_scanned = Column(TZDateTime, nullable=False, index=True)
     kind = Column(String(4, 'utf8mb4_unicode_ci'), nullable=False)
     links = Column(String(4, 'utf8mb4_unicode_ci'), nullable=False)
@@ -310,8 +310,8 @@ class TrsS2Cell(Base):
 
     id = Column(BIGINT(20), primary_key=True)
     level = Column(INTEGER(11), nullable=False)
-    center_latitude = Column(Float(asdecimal=True), nullable=False)
-    center_longitude = Column(Float(asdecimal=True), nullable=False)
+    center_latitude = Column(Double(asdecimal=True), nullable=False)
+    center_longitude = Column(Double(asdecimal=True), nullable=False)
     updated = Column(INTEGER(11), nullable=False)
 
 
@@ -322,8 +322,8 @@ class TrsSpawn(Base):
     )
 
     spawnpoint = Column(BIGINT(20), primary_key=True)
-    latitude = Column(Float(asdecimal=True), nullable=False)
-    longitude = Column(Float(asdecimal=True), nullable=False)
+    latitude = Column(Double(asdecimal=True), nullable=False)
+    longitude = Column(Double(asdecimal=True), nullable=False)
     spawndef = Column(INTEGER(11), nullable=False, server_default=text("'240'"))
     earliest_unseen = Column(INTEGER(6), nullable=False)
     last_scanned = Column(TZDateTime)
@@ -387,8 +387,8 @@ class TrsStatsLocationRaw(Base):
 
     id = Column(INTEGER(11), primary_key=True)
     worker = Column(String(100, 'utf8mb4_unicode_ci'), nullable=False)
-    lat = Column(Float(asdecimal=True), nullable=False)
-    lng = Column(Float(asdecimal=True), nullable=False)
+    lat = Column(Double(asdecimal=True), nullable=False)
+    lng = Column(Double(asdecimal=True), nullable=False)
     fix_ts = Column(INTEGER(11), nullable=False)
     data_ts = Column(INTEGER(11), nullable=False)
     type = Column(TINYINT(1), nullable=False)
@@ -427,8 +427,8 @@ class Weather(Base):
     __tablename__ = 'weather'
 
     s2_cell_id = Column(String(50, 'utf8mb4_unicode_ci'), primary_key=True)
-    latitude = Column(Float(asdecimal=True), nullable=False)
-    longitude = Column(Float(asdecimal=True), nullable=False)
+    latitude = Column(Double(asdecimal=True), nullable=False)
+    longitude = Column(Double(asdecimal=True), nullable=False)
     cloud_level = Column(SMALLINT(6))
     rain_level = Column(SMALLINT(6))
     wind_level = Column(SMALLINT(6))
@@ -862,11 +862,11 @@ class Route(Base):
     route_submission_status = Column(TINYINT(2), nullable=False, server_default=text("'0'"))
     route_submission_update_time = Column(TZDateTime, nullable=False)
     start_poi_fort_id = Column(String(50, 'utf8mb4_unicode_ci'), nullable=False)
-    start_poi_latitude = Column(Float(asdecimal=True), nullable=False)
-    start_poi_longitude = Column(Float(asdecimal=True), nullable=False)
+    start_poi_latitude = Column(Double(asdecimal=True), nullable=False)
+    start_poi_longitude = Column(Double(asdecimal=True), nullable=False)
     start_poi_image_url = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
     end_poi_fort_id = Column(String(50, 'utf8mb4_unicode_ci'), nullable=False)
-    end_poi_latitude = Column(Float(asdecimal=True), nullable=False)
-    end_poi_longitude = Column(Float(asdecimal=True), nullable=False)
+    end_poi_latitude = Column(Double(asdecimal=True), nullable=False)
+    end_poi_longitude = Column(Double(asdecimal=True), nullable=False)
     end_poi_image_url = Column(String(255, 'utf8mb4_unicode_ci'), nullable=True)
     last_updated = Column(TZDateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
