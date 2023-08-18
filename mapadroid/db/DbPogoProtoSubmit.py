@@ -1,6 +1,7 @@
 import json
 import math
 import time
+from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 
 from bitstring import BitArray
@@ -14,6 +15,86 @@ from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
 
 logger = get_logger(LoggerEnums.database)
+
+REDIS_CACHETIME_ROUTE = 900
+
+# No migration. Just paste this into mariadb/mysql before
+# you run this code.
+_ROUTE_CREATE_TABLE = """
+create table if not exists route (
+    `route_id` varchar(50) NOT NULL,
+    `waypoints` LONGTEXT NOT NULL,
+    `type` TINYINT(2) NOT NULL DEFAULT 0,
+    `path_type` TINYINT(2) NOT NULL DEFAULT 0,
+    `name` VARCHAR(255) NOT NULL,
+    `description` VARCHAR(255) NOT NULL,
+    `version` INT NOT NULL,
+    `reversible` BOOL NOT NULL,
+    `submission_time` TIMESTAMP NOT NULL,
+    `route_distance_meters` INT NOT NULL,
+    `route_duration_seconds` INT NOT NULL,
+    `pins` LONGTEXT NULL,
+    `tags` LONGTEXT NULL,
+    `image` VARCHAR(255) NULL,
+    `image_border_color_hex` VARCHAR(8) NULL,
+    `route_submission_status` TINYINT(2) NOT NULL DEFAULT 0,
+    `route_submission_update_time` TIMESTAMP NOT NULL,
+    `start_poi_fort_id` VARCHAR(50) NOT NULL,
+    `start_poi_latitude` DOUBLE NOT NULL,
+    `start_poi_longitude` DOUBLE NOT NULL,
+    `start_poi_image_url` VARCHAR(255) NULL,
+    `end_poi_fort_id` VARCHAR(50) NOT NULL,
+    `end_poi_latitude` DECIMAL NOT NULL,
+    `end_poi_longitude` DECIMAL NOT NULL,
+    `end_poi_image_url` VARCHAR(255) NULL,
+    `last_updated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+"""
+
+_ROUTE_COLS_INFO = {
+    'route_id': '%s',
+    'waypoints': '%s',
+    'type': '%s',
+    'path_type': '%s',
+    'name': '%s',
+    'description': '%s',
+    'version': '%s',
+    'reversible': '%s',
+    'submission_time': 'FROM_UNIXTIME(%s)',
+    'route_distance_meters': '%s',
+    'route_duration_seconds': '%s',
+    'pins': '%s',
+    'tags': '%s',
+    'image': '%s',
+    'image_border_color_hex': '%s',
+    'route_submission_status': '%s',
+    'route_submission_update_time': 'FROM_UNIXTIME(%s)',
+    'start_poi_fort_id': '%s',
+    'start_poi_latitude': '%s',
+    'start_poi_longitude': '%s',
+    'start_poi_image_url': '%s',
+    'end_poi_fort_id': '%s',
+    'end_poi_latitude': '%s',
+    'end_poi_longitude': '%s',
+    'end_poi_image_url': '%s'}
+
+ROUTE_COLS = list(_ROUTE_COLS_INFO.keys())
+
+_ROUTE_COLS_STR = '(' + ','.join(['`'+x+'`' for x in ROUTE_COLS]) + ')'
+_ROUTE_VALUES = 'VALUES (' + ','.join([_ROUTE_COLS_INFO[x] for x in ROUTE_COLS]) + ')'
+_ROUTE_UPDATES = ','.join(['`%s`=VALUES(`%s`)' % (x,x) for x in ROUTE_COLS])
+
+ROUTE_INSERT_QUERY = ('INSERT INTO route ' +
+    _ROUTE_COLS_STR +
+    ' ' + _ROUTE_VALUES +
+    ' ON DUPLICATE KEY UPDATE ' + _ROUTE_UPDATES)
+
+# This is a substitute for the sqlalchemy model in
+# async version. This allowed to copy most of the route
+# processing code verbatim from async.
+class Route:
+    def __getattr__(self, k):
+        return None
 
 
 class DbPogoProtoSubmit:
@@ -943,6 +1024,99 @@ class DbPogoProtoSubmit:
         self._db_exec.executemany(query_raid, raid_args, commit=True)
         origin_logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
         return True
+
+    def routes(self, origin: str, routes_proto: dict,
+               timestamp_received: int) -> None:
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug3("DbPogoProtoSubmit::routes called with data received")
+        status: int = routes_proto.get("status", 0)
+        # The status of the GetRoutesOutProto indicates the reset of the values being useful for us where a value of 1
+        #  maps to success
+        if status != 1:
+            origin_logger.warning("Routes response not useful ({})", status)
+            return
+
+        cells: List[Dict] = routes_proto.get("route_map_cell", [])
+        if not cells:
+            origin_logger.warning("No cells to process in routes proto")
+            return
+
+        db_routes = []
+        for cell in cells:
+            s2_cell_id: int = cell.get("s2_cell_id")
+            if s2_cell_id < 0:
+                s2_cell_id += 2**64
+            routes: List[Dict] = cell.get('route') or []
+            for route in routes:
+                route_obj = self._get_route_from_route_cell(origin, s2_cell_id, route, timestamp_received)
+                if route_obj:
+                    db_routes.append(tuple([ getattr(route_obj, x, None) for x in ROUTE_COLS ]))
+
+        if db_routes:
+            self._db_exec.executemany(ROUTE_INSERT_QUERY, db_routes, commit=True)
+
+    def _get_route_from_route_cell(self, origin: str, s2_cell_id: int, route_data: Dict,
+                           timestamp_received: int) -> None:
+        origin_logger = get_origin_logger(logger, origin=origin)
+        cache = get_cache(self._args)
+        route_id: str = route_data.get("id")
+        cache_key = "route{}".format(route_id)
+        if cache.exists(cache_key):
+            return
+        date_received = timestamp_received
+        try:
+            route = Route()
+            route.route_id = route_id
+            route.waypoints = json.dumps(route_data.get("waypoints"))
+            route.type = route_data.get("type", 0)
+            route.path_type = route_data.get("path_type", 0)
+            route.name = route_data.get("name")
+            route.version = route_data.get("version")
+            route.description = route_data.get("description")
+            route.reversible = route_data.get("reversible")
+
+            submission_time_raw: int = route_data.get("submission_time")
+            origin_logger.debug2("Submission time raw: {}", submission_time_raw)
+            route.submission_time = submission_time_raw / 1000
+            route.route_distance_meters = route_data.get("route_distance_meters")
+            route.route_duration_seconds = route_data.get("route_duration_seconds")
+
+            pins_raw: Optional[Dict] = route_data.get("pins", {})
+            route.pins = json.dumps(pins_raw)
+
+            tags_raw: Optional[Dict] = route_data.get("tags", {})
+            route.tags = json.dumps(tags_raw)
+
+            image_data: Dict = route_data.get("image", {})
+            route.image = image_data.get("image_url")
+            route.image_border_color_hex = image_data.get("border_color_hex")
+
+            route_submission_status_data: Dict = route_data.get("route_submission_status", {})
+            route.route_submission_status = route_submission_status_data.get("status", 0)
+            route_submission_update_time: int = route_submission_status_data.get(
+                "submission_status_update_time_ms", 0)
+            route.route_submission_update_time = route_submission_update_time / 1000
+
+            start_poi_data: Dict = route_data.get("start_poi", {})
+            start_poi_anchor: Dict = start_poi_data.get("anchor")
+            route.start_poi_fort_id = start_poi_anchor.get("fort_id")
+            route.start_poi_latitude = start_poi_anchor.get("lat_degrees")
+            route.start_poi_longitude = start_poi_anchor.get("lng_degrees")
+            route.start_poi_image_url = start_poi_data.get("image_url")
+
+            end_poi_data: Dict = route_data.get("end_poi", {})
+            end_poi_anchor: Dict = end_poi_data.get("anchor")
+            route.end_poi_fort_id = end_poi_anchor.get("fort_id")
+            route.end_poi_latitude = end_poi_anchor.get("lat_degrees")
+            route.end_poi_longitude = end_poi_anchor.get("lng_degrees")
+            route.end_poi_image_url = end_poi_data.get("image_url")
+
+            route.last_updated = date_received
+
+            return route
+        except Exception as e:
+            origin_logger.warning("Failed to generate Route obj for route {} of cell {} ({})", route_id, s2_cell_id, str(e))
+            return None
 
     def weather(self, origin, map_proto, received_timestamp):
         """
