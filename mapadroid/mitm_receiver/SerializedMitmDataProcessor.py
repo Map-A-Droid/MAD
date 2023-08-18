@@ -183,6 +183,11 @@ class SerializedMitmDataProcessor(Process):
                 self.__db_submit.gym(origin, data["payload"])
                 end_time = self.get_time_ms() - start_time
                 origin_logger.debug("Done processing proto 156 in {}ms", end_time)
+            elif data_type == 1405:
+                origin_logger.debug("Processing proto 1405 (GET_ROUTES)")
+                self.__db_submit.routes(origin, data['payload'], received_timestamp)
+                end_time = self.get_time_ms() - start_time
+                origin_logger.debug("Done processing proto 1405 in {}ms", end_time)
 
     @staticmethod
     def get_time_ms():

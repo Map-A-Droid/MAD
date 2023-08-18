@@ -269,7 +269,7 @@ class MITMReceiver(Process):
             origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
-        if proto_type not in (106, 102, 101, 104, 4, 156, 145):
+        if proto_type not in (106, 102, 101, 104, 4, 156, 145, 1405):
             # trash protos - ignoring
             return
 
