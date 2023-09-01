@@ -371,6 +371,9 @@ class AbstractWorkerStrategy(ABC):
             elif screen_type == ScreenType.MAINTENANCE:
                 logger.warning("Maintenance screen - switch account ...")
                 await self._switch_user()
+            elif screen_type == ScreenType.LIMITATIONS:
+                logger.warning("Limitations/Maintenance screen - switch account ...")
+                await self._switch_user()
             elif screen_type in [ScreenType.ERROR, ScreenType.FAILURE]:
                 logger.warning('Something wrong with screendetection or pogo failure screen')
                 self._worker_state.login_error_count += 1
