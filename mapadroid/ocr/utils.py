@@ -43,6 +43,7 @@ screen_texts: dict = {1: ['Geburtdatum', 'birth.', 'naissance.', 'date'],
                       35: ['Congratulations!', 'Gluckwunsch!', 'felicitations!', 'first', 'erstes', 'abord'],
                       36: ['Sync'],
                       37: ['PokéStops.']
+                      38: ['limitations']
                      }
 
 
