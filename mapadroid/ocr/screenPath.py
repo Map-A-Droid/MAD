@@ -267,8 +267,6 @@ class WordToScreenMatching(object):
             if MadGlobals.application_args.enable_early_maintenance_detection and self._worker_state.maintenance_early_detection_triggered:
                 logger.warning("Seen RETRY screen after multiple proto timeouts - most likely MAINTENANCE")
                 await self._account_handler.mark_burnt(self._worker_state.device_id, BurnType.MAINTENANCE)
-            # forcing clear_game_data here due to Niantic changes and game now remembering/pre-filling username on login
-            await self.clear_game_data()
             await self.__handle_retry_screen(diff, global_dict)
         elif screentype == ScreenType.WRONG:
             await self.__handle_returning_player_or_wrong_credentials()
@@ -425,8 +423,12 @@ class WordToScreenMatching(object):
 
     async def __handle_retry_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
-        await self.__click_center_button_text(click_text, diff, global_dict)
+        # forcing clear_game_data here due to Niantic changes and game now remembering/pre-filling username on login
+        await self.clear_game_data()
+        # after clear_game_data there should be no reason to click this button as game gets killed
+        # but let's leave it here if Niantic decides this is a bug rather than QOL change
+        #click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
+        #await self.__click_center_button_text(click_text, diff, global_dict)
 
     async def __click_center_button_text(self, click_text, diff, global_dict):
         n_boxes = len(global_dict['text'])
