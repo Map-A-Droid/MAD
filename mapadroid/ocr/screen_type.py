@@ -35,6 +35,7 @@ class ScreenType(Enum):
     WILLOWNAME = 35 # Professor Blabla asking for name.
     ADVENTURESYNC = 36 # Adventure Sync overlay after tutorial. One blue button: Turn it On!
     WILLOWGO = 37 # Professor Blabla at end of tutorial.
+    LIMITATIONS = 38 # Most likely new MAINTENANCE/24h cooldown
     POGO = 99  # uhm, whatever... At least pogo is topmost, no idea where we are yet tho (in the process of switching)
     ERROR = 100  # some issue occurred while handling screentypes or not able to determine screen
     BLACK = 110  # screen is black, likely loading up game

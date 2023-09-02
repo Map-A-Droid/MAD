@@ -326,6 +326,11 @@ class WordToScreenMatching(object):
             logger.warning('Account saw maintenance warning!')
             await self._account_handler.mark_burnt(self._worker_state.device_id,
                                                    BurnType.MAINTENANCE)
+        elif screentype == ScreenType.LIMITATIONS:
+            self._nextscreen = ScreenType.UNDEFINED
+            logger.warning('Account saw limitations/maintenance warning!')
+            await self._account_handler.mark_burnt(self._worker_state.device_id,
+                                                   BurnType.MAINTENANCE)
         elif screentype == ScreenType.POGO:
             screentype = await self.__check_pogo_screen_ban_or_loading(screentype, y_offset=y_offset)
         elif screentype == ScreenType.QUEST:
@@ -418,8 +423,12 @@ class WordToScreenMatching(object):
 
     async def __handle_retry_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
-        await self.__click_center_button_text(click_text, diff, global_dict)
+        # forcing clear_game_data here due to Niantic changes and game now remembering/pre-filling username on login
+        await self.clear_game_data()
+        # after clear_game_data there should be no reason to click this button as game gets killed
+        # but let's leave it here if Niantic decides this is a bug rather than QOL change
+        #click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
+        #await self.__click_center_button_text(click_text, diff, global_dict)
 
     async def __click_center_button_text(self, click_text, diff, global_dict):
         n_boxes = len(global_dict['text'])
