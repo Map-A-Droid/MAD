@@ -2668,5 +2668,365 @@
   },
   "890": {
     "name": "Eternatus"
+  },
+  "891": {
+    "name": "Kubfu"
+  },
+  "892": {
+    "name": "Urshifu"
+  },
+  "893": {
+    "name": "Zarude"
+  },
+  "894": {
+    "name": "Regieleki"
+  },
+  "895": {
+    "name": "Regidrago"
+  },
+  "896": {
+    "name": "Glastrier"
+  },
+  "897": {
+    "name": "Spectrier"
+  },
+  "898": {
+    "name": "Calyrex"
+  },
+  "899": {
+    "name": "Wyrdeer"
+  },
+  "900": {
+    "name": "Kleavor"
+  },
+  "901": {
+    "name": "Ursaluna"
+  },
+  "902": {
+    "name": "Basculegion"
+  },
+  "903": {
+    "name": "Sneasler"
+  },
+  "904": {
+    "name": "Overqwil"
+  },
+  "905": {
+    "name": "Enamorus"
+  },
+  "906": {
+    "name": "Sprigatito"
+  },
+  "907": {
+    "name": "Floragato"
+  },
+  "908": {
+    "name": "Meowscarada"
+  },
+  "909": {
+    "name": "Fuecoco"
+  },
+  "910": {
+    "name": "Crocalor"
+  },
+  "911": {
+    "name": "Skeledirge"
+  },
+  "912": {
+    "name": "Quaxly"
+  },
+  "913": {
+    "name": "Quaxwell"
+  },
+  "914": {
+    "name": "Quaquaval"
+  },
+  "915": {
+    "name": "Lechonk"
+  },
+  "916": {
+    "name": "Oinkologne"
+  },
+  "917": {
+    "name": "Tarountula"
+  },
+  "918": {
+    "name": "Spidops"
+  },
+  "919": {
+    "name": "Nymble"
+  },
+  "920": {
+    "name": "Lokix"
+  },
+  "921": {
+    "name": "Pawmi"
+  },
+  "922": {
+    "name": "Pawmo"
+  },
+  "923": {
+    "name": "Pawmot"
+  },
+  "924": {
+    "name": "Tandemaus"
+  },
+  "925": {
+    "name": "Maushold"
+  },
+  "926": {
+    "name": "Fidough"
+  },
+  "927": {
+    "name": "Dachsbun"
+  },
+  "928": {
+    "name": "Smoliv"
+  },
+  "929": {
+    "name": "Dolliv"
+  },
+  "930": {
+    "name": "Arboliva"
+  },
+  "931": {
+    "name": "Squawkabilly"
+  },
+  "932": {
+    "name": "Nacli"
+  },
+  "933": {
+    "name": "Naclstack"
+  },
+  "934": {
+    "name": "Garganacl"
+  },
+  "935": {
+    "name": "Charcadet"
+  },
+  "936": {
+    "name": "Armarouge"
+  },
+  "937": {
+    "name": "Ceruledge"
+  },
+  "938": {
+    "name": "Tadbulb"
+  },
+  "939": {
+    "name": "Bellibolt"
+  },
+  "940": {
+    "name": "Wattrel"
+  },
+  "941": {
+    "name": "Kilowattrel"
+  },
+  "942": {
+    "name": "Maschiff"
+  },
+  "943": {
+    "name": "Mabosstiff"
+  },
+  "944": {
+    "name": "Shroodle"
+  },
+  "945": {
+    "name": "Grafaiai"
+  },
+  "946": {
+    "name": "Bramblin"
+  },
+  "947": {
+    "name": "Brambleghast"
+  },
+  "948": {
+    "name": "Toedscool"
+  },
+  "949": {
+    "name": "Toedscruel"
+  },
+  "950": {
+    "name": "Klawf"
+  },
+  "951": {
+    "name": "Capsakid"
+  },
+  "952": {
+    "name": "Scovillain"
+  },
+  "953": {
+    "name": "Rellor"
+  },
+  "954": {
+    "name": "Rabsca"
+  },
+  "955": {
+    "name": "Flittle"
+  },
+  "956": {
+    "name": "Espathra"
+  },
+  "957": {
+    "name": "Tinkatink"
+  },
+  "958": {
+    "name": "Tinkatuff"
+  },
+  "959": {
+    "name": "Tinkaton"
+  },
+  "960": {
+    "name": "Wiglett"
+  },
+  "961": {
+    "name": "Wugtrio"
+  },
+  "962": {
+    "name": "Bombirdier"
+  },
+  "963": {
+    "name": "Finizen"
+  },
+  "964": {
+    "name": "Palafin"
+  },
+  "965": {
+    "name": "Varoom"
+  },
+  "966": {
+    "name": "Revavroom"
+  },
+  "967": {
+    "name": "Cyclizar"
+  },
+  "968": {
+    "name": "Orthworm"
+  },
+  "969": {
+    "name": "Glimmet"
+  },
+  "970": {
+    "name": "Glimmora"
+  },
+  "971": {
+    "name": "Greavard"
+  },
+  "972": {
+    "name": "Houndstone"
+  },
+  "973": {
+    "name": "Flamigo"
+  },
+  "974": {
+    "name": "Cetoddle"
+  },
+  "975": {
+    "name": "Cetitan"
+  },
+  "976": {
+    "name": "Veluza"
+  },
+  "977": {
+    "name": "Dondozo"
+  },
+  "978": {
+    "name": "Tatsugiri"
+  },
+  "979": {
+    "name": "Annihilape"
+  },
+  "980": {
+    "name": "Clodsire"
+  },
+  "981": {
+    "name": "Farigiraf"
+  },
+  "982": {
+    "name": "Dudunsparce"
+  },
+  "983": {
+    "name": "Kingambit"
+  },
+  "984": {
+    "name": "Great Tusk"
+  },
+  "985": {
+    "name": "Scream Tail"
+  },
+  "986": {
+    "name": "Brute Bonnet"
+  },
+  "987": {
+    "name": "Flutter Mane"
+  },
+  "988": {
+    "name": "Slither Wing"
+  },
+  "989": {
+    "name": "Sandy Shocks"
+  },
+  "990": {
+    "name": "Iron Treads"
+  },
+  "991": {
+    "name": "Iron Bundle"
+  },
+  "992": {
+    "name": "Iron Hands"
+  },
+  "993": {
+    "name": "Iron Jugulis"
+  },
+  "994": {
+    "name": "Iron Moth"
+  },
+  "995": {
+    "name": "Iron Thorns"
+  },
+  "996": {
+    "name": "Frigibax"
+  },
+  "997": {
+    "name": "Arctibax"
+  },
+  "998": {
+    "name": "Baxcalibur"
+  },
+  "999": {
+    "name": "Gimmighoul"
+  },
+  "1000": {
+    "name": "Gholdengo"
+  },
+  "1001": {
+    "name": "Wo-Chien"
+  },
+  "1002": {
+    "name": "Chien-Pao"
+  },
+  "1003": {
+    "name": "Ting-Lu"
+  },
+  "1004": {
+    "name": "Chi-Yu"
+  },
+  "1005": {
+    "name": "Roaring Moon"
+  },
+  "1006": {
+    "name": "Iron Valiant"
+  },
+  "1007": {
+    "name": "Koraidon"
+  },
+  "1008": {
+    "name": "Miraidon"
+  },
+  "1009": {
+    "name": "Walking Wake"
+  },
+  "1010": {
+    "name": "Iron Leaves"
   }
 }
