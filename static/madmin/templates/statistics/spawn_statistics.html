@@ -142,8 +142,8 @@
           return a["name"].toLowerCase() > b["name"].toLowerCase() ? 1 : -1;
         });
         $("select#geofence_type_selector_overkill").append($('<option>', { value: -1, text: "-- select geofence --" }));
-        for (fence in tmp_fences) {
-          $("select#geofence_type_selector_overkill").append($('<option>', { value: tmp_fences[fence].area_id, text: tmp_fences[fence].name + " [" + tmp_fences[fence].mode + "]" }));
+        for (fence_id in tmp_fences) {
+          $("select#geofence_type_selector_overkill").append($('<option>', { value: tmp_fences[fence_id].area_id, text: tmp_fences[fence_id].name + " [" + tmp_fences[fence_id].mode + "]" }));
         }
         // 1500000 is totally arbitrary number, it all depends from database, number of events, etc.
         if (result.events.length * result.spawnpoints_count * mon_mitm_fences_count > 1500000) {
