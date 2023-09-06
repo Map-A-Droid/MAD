@@ -316,11 +316,9 @@ class AbstractWorkerStrategy(ABC):
         screen_type: ScreenType = ScreenType.UNDEFINED
         while not self._worker_state.stop_worker_event.is_set():
             if self._worker_state.login_error_count > 2:
-                logger.warning('Could not login again - (clearing game data + restarting device')
+                logger.warning('Could not login again - clearing game data and restarting device')
                 await self.stop_pogo()
-                await self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
-                if await self.get_devicesettings_value(MappingManagerDevicemappingKey.CLEAR_GAME_DATA, False):
-                    await self._clear_game_data()
+                await self._clear_game_data()
                 self._worker_state.login_error_count = 0
                 await self._reboot()
                 break
