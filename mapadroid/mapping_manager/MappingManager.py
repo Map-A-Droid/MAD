@@ -848,6 +848,10 @@ class MappingManager(AbstractMappingManager):
 
             logger.info("Restoring old devicesettings")
             for dev, mapping in self._devicemappings.items():
+                if dev not in devicemappings_tmp:
+                    logger.warning("{} is not in new devicemappings. "
+                                   "This is fine in case of autoconfig running during a mappings update.")
+                    continue
                 devicemappings_tmp[dev].last_location = mapping.last_location
                 devicemappings_tmp[dev].last_known_mode = mapping.last_known_mode
                 devicemappings_tmp[dev].account_index = mapping.account_index
