@@ -35,11 +35,11 @@ class DbCleanup(object):
         while True:
             try:
                 async with self.__db_wrapper as session, session:
+                    mon_limit: Optional[int] = None if MadGlobals.application_args.delete_mons_limit <= 0 \
+                        else MadGlobals.application_args.delete_mons_limit
                     if MadGlobals.application_args.delete_mons_n_hours:
                         logger.info("Cleaning up records of mons disappeared more than {} hours ago.",
                                     MadGlobals.application_args.delete_mons_n_hours)
-                        mon_limit: Optional[int] = None if MadGlobals.application_args.delete_mons_limit <= 0 \
-                            else MadGlobals.application_args.delete_mons_limit
                         await PokemonHelper.delete_older_than_n_hours(session,
                                                                       MadGlobals.application_args.delete_mons_n_hours,
                                                                       mon_limit)
