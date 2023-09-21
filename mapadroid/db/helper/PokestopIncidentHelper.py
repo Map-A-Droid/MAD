@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional
 
-from sqlalchemy import and_, delete
+from sqlalchemy import and_, delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -24,4 +24,9 @@ class PokestopIncidentHelper:
     async def delete_older_than_n_hours(session: AsyncSession, hours: int) -> None:
         where_condition = PokestopIncident.incident_expiration < DatetimeWrapper.now() - datetime.timedelta(hours=hours)
         stmt = delete(PokestopIncident).where(where_condition)
+        await session.execute(stmt)
+
+    @staticmethod
+    async def run_optimize(session: AsyncSession) -> None:
+        stmt = text(f"OPTIMIZE {PokestopIncident.__tablename__}")
         await session.execute(stmt)

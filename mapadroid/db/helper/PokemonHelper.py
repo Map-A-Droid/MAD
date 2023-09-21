@@ -3,15 +3,15 @@ import time
 from functools import reduce
 from typing import Dict, List, Optional, Set, Tuple
 
-from sqlalchemy import and_, delete, desc, func
+from sqlalchemy import and_, delete, desc, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from mapadroid.db.model import (Pokemon, PokemonDisplay, Pokestop, TrsSpawn,
                                 TrsStatsDetectWildMonRaw)
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
-from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.collections import Location
+from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import MonSeenTypes
 
@@ -187,7 +187,8 @@ class PokemonHelper:
             timestamp_after:
             timestamp_before:
 
-        Returns: List of tuples consisting of (count('*'), Pokemon.pokemon_id, Pokemon.form, Pokemon.gender, Pokemon.costume)
+        Returns: List of tuples consisting of (count('*'),
+            Pokemon.pokemon_id, Pokemon.form, Pokemon.gender, Pokemon.costume)
             of all mons that have been scanned for IV
 
         """
@@ -323,4 +324,9 @@ class PokemonHelper:
             result_encounter_ids = await session.execute(encounter_ids_query)
             encounter_ids = result_encounter_ids.scalars().all()
             stmt = delete(Pokemon).where(Pokemon.encounter_id.in_(encounter_ids))
+        await session.execute(stmt)
+
+    @staticmethod
+    async def run_optimize(session: AsyncSession) -> None:
+        stmt = text(f"OPTIMIZE {Pokemon.__tablename__}")
         await session.execute(stmt)

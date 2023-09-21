@@ -38,13 +38,15 @@ class DbCleanup(object):
                                 MadGlobals.application_args.delete_mons_n_hours)
                     mon_limit: Optional[int] = None if MadGlobals.application_args.delete_mons_limit <= 0 \
                         else MadGlobals.application_args.delete_mons_limit
-                    await PokemonHelper.delete_older_than_n_hours(session, MadGlobals.application_args.delete_mons_n_hours,
+                    await PokemonHelper.delete_older_than_n_hours(session,
+                                                                  MadGlobals.application_args.delete_mons_n_hours,
                                                                   mon_limit)
+                    await PokemonHelper.run_optimize(session)
                 if MadGlobals.application_args.delete_incidents_n_hours:
                     logger.info("Cleaning up records of incidents disappeared more than {} hours ago.",
                                 MadGlobals.application_args.delete_incidents_n_hours)
-                    await PokestopIncidentHelper.delete_older_than_n_hours(session,
-                                                                           MadGlobals.application_args.delete_incidents_n_hours)
-
+                    await PokestopIncidentHelper.delete_older_than_n_hours(
+                        session, MadGlobals.application_args.delete_incidents_n_hours)
+                    await PokestopIncidentHelper.run_optimize(session)
                 await session.commit()
             await asyncio.sleep(MadGlobals.application_args.cleanup_interval)
