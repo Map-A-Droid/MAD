@@ -320,10 +320,7 @@ class PokemonHelper:
         where_condition = Pokemon.disappear_time < DatetimeWrapper.now() - datetime.timedelta(hours=hours)
         stmt = delete(Pokemon).where(where_condition)
         if limit:
-            encounter_ids_query = select(Pokemon.encounter_id).where(where_condition).limit(limit)
-            result_encounter_ids = await session.execute(encounter_ids_query)
-            encounter_ids = result_encounter_ids.scalars().all()
-            stmt = delete(Pokemon).where(Pokemon.encounter_id.in_(encounter_ids))
+            stmt = stmt.with_dialect_options(mysql_limit=limit, mariadb_limit=limit)
         await session.execute(stmt)
 
     @staticmethod

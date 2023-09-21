@@ -21,9 +21,11 @@ class PokestopIncidentHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def delete_older_than_n_hours(session: AsyncSession, hours: int) -> None:
+    async def delete_older_than_n_hours(session: AsyncSession, hours: int, limit: Optional[int]) -> None:
         where_condition = PokestopIncident.incident_expiration < DatetimeWrapper.now() - datetime.timedelta(hours=hours)
         stmt = delete(PokestopIncident).where(where_condition)
+        if limit is not None:
+            stmt = stmt.with_dialect_options(mysql_limit=limit, mariadb_limit=limit)
         await session.execute(stmt)
 
     @staticmethod
