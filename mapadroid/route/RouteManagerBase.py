@@ -1,5 +1,6 @@
 import asyncio
 import collections
+import statistics
 import time
 from abc import ABC, abstractmethod
 from asyncio import CancelledError, Task
@@ -71,7 +72,6 @@ class RouteManagerBase(ABC):
         self._current_route_round_coords: List[Location] = []
         self._start_calc: asyncio.Event = asyncio.Event()
         self._coords_to_be_ignored = set()
-        # self._level = area.level if area.mode == "pokestop" else False
         self._overwrite_calculation: bool = False
         self._routepool: Dict[str, RoutePoolEntry] = {}
         self._roundcount: int = 0
@@ -203,8 +203,10 @@ class RouteManagerBase(ABC):
         """
         Calculates a new route based off the internal acquisition of coords within the routemanager itself.
 
-        :param dynamic: If True, coords to be ignored are respected and route is not loaded from the DB if overwrite_persisted_route is set
-        :param overwrite_persisted_route: Whether the calculated route should be persisted in the database (True -> persist)
+        :param dynamic: If True, coords to be ignored are respected and route is not loaded from the DB
+            if overwrite_persisted_route is set
+        :param overwrite_persisted_route: Whether the calculated route should be persisted in the database
+            (True -> persist)
         """
         # If dynamic, recalc using OR tools in all cases (if possible) and do not persist to DB
         coords: List[Location] = await self._get_coords_fresh(dynamic)
@@ -417,7 +419,8 @@ class RouteManagerBase(ABC):
                 next_timestamp, next_coord = None, None
                 if not self._has_normal_route():
                     logger.debug("Waiting for a prioQ event")
-                    # "blocking" to wait for a coord. TODO: Update timestamps somewhere to abort unregistering from routemanagers?
+                    # "blocking" to wait for a coord.
+                    # TODO: Update timestamps somewhere to abort unregistering from routemanagers?
                     while not next_timestamp:
                         try:
                             prioq_entry: RoutePriorityQueueEntry = await self._prio_queue.pop_event()
@@ -462,7 +465,6 @@ class RouteManagerBase(ABC):
             return None
         logger.debug("Moving on with route")
         routepool_entry.last_position_type = PositionType.NORMAL
-        # TODO: this check is likely always true now.............
         if self._get_worker_rounds_run_through() > self._roundcount:
             self._roundcount = self._get_worker_rounds_run_through()
             if self._round_started_time is not None:
@@ -555,8 +557,8 @@ class RouteManagerBase(ABC):
         temp_worker_round_list: List[int] = []
         for _origin, entry in self._routepool.items():
             temp_worker_round_list.append(entry.rounds)
-
-        return 0 if len(temp_worker_round_list) == 0 else min(temp_worker_round_list)
+        # Using median to remove potentially low performing or high performing devices from the rounds inspected
+        return 0 if len(temp_worker_round_list) == 0 else statistics.median(temp_worker_round_list)
 
     def _other_worker_closer_to_prioq(self, prioqcoord, origin):
         logger.debug('Check distances from worker to PrioQ coord')
@@ -632,7 +634,7 @@ class RouteManagerBase(ABC):
         return -1, -1
 
     def get_rounds(self) -> int:
-        return self._get_worker_rounds_run_through()
+        return self._roundcount
 
     def get_registered_workers(self) -> Set[str]:
         return self._workers_registered
@@ -690,7 +692,8 @@ class RouteManagerBase(ABC):
 
     def _remove_deprecated_prio_events(self) -> bool:
         """
-        Whether the Route may remove deprecated coords (e.g. iv_mitm currently does not hold the necessary data for that)
+        Whether the Route may remove deprecated coords (e.g. iv_mitm currently does not hold the
+        necessary data for that)
         Returns:
         """
         return True

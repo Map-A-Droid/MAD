@@ -155,16 +155,16 @@ class Worker(AbstractWorker):
                         self._scan_task = loop.create_task(self._run_scan())
                     try:
                         await self._scan_task
-                    except CancelledError as e:
+                    except CancelledError:
                         logger.warning(
                             "Scan task was cancelled externally, assuming the strategy was changed (for now...)")
                         # If the strategy was changed externally, we do not want to update it, all other cases should
                         #  be handled accordingly
                     except (InternalStopWorkerException, WebsocketWorkerTimeoutException,
                             WebsocketWorkerConnectionClosedException) as e:
-                        logger.info("Websocket connectivity issues or stop was issued internally")
+                        logger.info("Websocket connectivity issues or stop was issued internally: {}", e)
                     except RoutemanagerShuttingDown as e:
-                        logger.info("Routemanager is shutting down, moving on through walker.")
+                        logger.info("Routemanager is shutting down, moving on through walker: {}", e)
                     finally:
                         await asyncio.sleep(5)
                         async with self._work_mutex:
@@ -172,7 +172,7 @@ class Worker(AbstractWorker):
                         await self.__update_strategy()
             except (CancelledError,
                     asyncio.TimeoutError,
-                    WebsocketWorkerRemovedException) as e:
+                    WebsocketWorkerRemovedException):
                 logger.info("Worker task cancelled or websocket worker removed")
             except Exception as e:
                 logger.error("Unhandled exception in scan task: {}", e)
@@ -261,7 +261,8 @@ class Worker(AbstractWorker):
         configmode: bool = MadGlobals.application_args.config_mode
         paused_or_config: bool = device_paused or configmode
         if not paused_or_config:
-            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use(set_finished=True)
+            scan_strategy: Optional[AbstractWorkerStrategy] = await self.__get_current_strategy_to_use(
+                set_finished=True)
             if scan_strategy:
                 await self.set_scan_strategy(scan_strategy)
 
@@ -317,10 +318,9 @@ class Worker(AbstractWorker):
             if len(rounds) == 0:
                 logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
-            processed_rounds = await self._mapping_manager.routemanager_get_rounds(
+            processed_rounds: Optional[int] = await self._mapping_manager.routemanager_get_rounds(
                 self._scan_strategy.area_id)
-            # TODO: use mod or reset rounds?
-            if int(processed_rounds) >= int(rounds):
+            if processed_rounds is not None and int(processed_rounds) >= int(rounds):
                 return False
             return True
         elif mode == "period":
