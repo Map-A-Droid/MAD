@@ -700,6 +700,9 @@ class DbPogoProtoSubmit:
         if reward_type == 4:
             item_amount = reward.get('candy', {}).get('amount', 0)
             pokemon_id = reward.get('candy', {}).get('pokemon_id', 0)
+        if reward_type == 9:
+            item_amount = reward.get('xl_candy', {}).get('amount', 0)
+            pokemon_id = reward.get('xl_candy', {}).get('pokemon_id', 0)
         elif reward_type == 12:
             item_amount = reward.get('mega_resource', {}).get('amount', 0)
             pokemon_id = reward.get('mega_resource', {}).get('pokemon_id', 0)
