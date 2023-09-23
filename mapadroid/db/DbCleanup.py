@@ -51,6 +51,7 @@ class DbCleanup(object):
                             session, MadGlobals.application_args.delete_incidents_n_hours, mon_limit)
                         await PokestopIncidentHelper.run_optimize(session)
                     await session.commit()
+                    logger.success("Done cleaning up DB, sleeping {}s", MadGlobals.application_args.cleanup_interval)
             except Exception as e:
                 logger.error("Failed cleaning up DB.")
                 logger.exception(e)
