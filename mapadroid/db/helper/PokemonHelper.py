@@ -69,7 +69,8 @@ class PokemonHelper:
 
     @staticmethod
     async def get_to_be_encountered(session: AsyncSession, geofence_helper: Optional[GeofenceHelper],
-                                    min_time_left_seconds: int, eligible_mon_ids: Optional[List[int]]) -> List[Tuple[int, Location, int]]:
+                                    min_time_left_seconds: int, eligible_mon_ids: Optional[List[int]]) -> List[
+        Tuple[int, Location, int]]:
         if min_time_left_seconds is None or not eligible_mon_ids:
             logger.warning(
                 "DbWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
@@ -144,8 +145,8 @@ class PokemonHelper:
     @staticmethod
     async def get_all_shiny(session: AsyncSession, timestamp_after: Optional[int] = None,
                             timestamp_before: Optional[int] = None) -> Dict[int,
-                                                                            Tuple[Pokemon,
-                                                                                  List[TrsStatsDetectWildMonRaw]]]:
+    Tuple[Pokemon,
+    List[TrsStatsDetectWildMonRaw]]]:
         """
         Used to be DbStatsReader::get_shiny_stats_v2
         Args:
@@ -294,8 +295,8 @@ class PokemonHelper:
     @staticmethod
     async def get_changed_since(session: AsyncSession, _timestamp: int,
                                 mon_types: Optional[Set[MonSeenTypes]] = None) -> List[Tuple[Pokemon, TrsSpawn,
-                                                                                             Optional[Pokestop],
-                                                                                             Optional[PokemonDisplay]]]:
+    Optional[Pokestop],
+    Optional[PokemonDisplay]]]:
         if not mon_types:
             mon_types = {MonSeenTypes.encounter, MonSeenTypes.lure_encounter}
 
@@ -320,10 +321,18 @@ class PokemonHelper:
         where_condition = Pokemon.disappear_time < DatetimeWrapper.now() - datetime.timedelta(hours=hours)
         stmt = delete(Pokemon).where(where_condition)
         if limit:
-            stmt = stmt.with_dialect_options(mysql_limit=limit, mariadb_limit=limit)
-        await session.execute(stmt)
+            # Rather ugly construct as stmt.with_dialect_options currently does not work
+            # See https://groups.google.com/g/sqlalchemy/c/WDKhyAt6eAk/m/feteFNZnAAAJ
+            stmt = text(f"{str(stmt)} LIMIT :limit")
+            await session.execute(stmt,
+                                  {
+                                      "disappear_time_1": DatetimeWrapper.now() - datetime.timedelta(hours=hours),
+                                      "limit": limit
+                                  })
+        else:
+            await session.execute(stmt)
 
     @staticmethod
     async def run_optimize(session: AsyncSession) -> None:
-        stmt = text(f"OPTIMIZE {Pokemon.__tablename__}")
+        stmt = text(f"OPTIMIZE TABLE {Pokemon.__tablename__}")
         await session.execute(stmt)
