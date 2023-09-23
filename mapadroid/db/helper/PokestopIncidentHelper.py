@@ -28,12 +28,14 @@ class PokestopIncidentHelper:
             # Rather ugly construct as stmt.with_dialect_options currently does not work
             # See https://groups.google.com/g/sqlalchemy/c/WDKhyAt6eAk/m/feteFNZnAAAJ
             stmt = text(f"{str(stmt)} LIMIT :limit")
-            await session.execute(stmt,
+            result = await session.execute(stmt,
                                   {
                                       "incident_expiration_1": DatetimeWrapper.now() - datetime.timedelta(hours=hours),
                                       "limit": limit
                                   }
                                   )
+            # The resulting object is of type CursorResult -> rowcount is available
+            logger.info("Removed {} rows of incidents", result.rowcount)
         else:
             await session.execute(stmt)
 

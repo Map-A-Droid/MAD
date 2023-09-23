@@ -3,7 +3,7 @@ import time
 from functools import reduce
 from typing import Dict, List, Optional, Set, Tuple
 
-from sqlalchemy import and_, delete, desc, func, text
+from sqlalchemy import Result, and_, delete, desc, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -324,11 +324,13 @@ class PokemonHelper:
             # Rather ugly construct as stmt.with_dialect_options currently does not work
             # See https://groups.google.com/g/sqlalchemy/c/WDKhyAt6eAk/m/feteFNZnAAAJ
             stmt = text(f"{str(stmt)} LIMIT :limit")
-            await session.execute(stmt,
+            result = await session.execute(stmt,
                                   {
                                       "disappear_time_1": DatetimeWrapper.now() - datetime.timedelta(hours=hours),
                                       "limit": limit
                                   })
+            # The resulting object is of type CursorResult -> rowcount is available
+            logger.info("Removed {} rows of mons", result.rowcount)
         else:
             await session.execute(stmt)
 
