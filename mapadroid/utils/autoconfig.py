@@ -82,6 +82,7 @@ async def origin_generator(session: AsyncSession,
     device.walker_id = walker.walker_id
     device.name = origin
     device.instance_id = instance_id
+    device.extended_permission_toggling = True
     session.add(device)
     return device
 
