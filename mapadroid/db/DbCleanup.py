@@ -32,6 +32,7 @@ class DbCleanup(object):
             self.__cleanup_task = None
 
     async def _run_cleanup_routine(self):
+        optimize_counter: int = 0
         while True:
             try:
                 async with self.__db_wrapper as session, session:
@@ -43,16 +44,21 @@ class DbCleanup(object):
                         await PokemonHelper.delete_older_than_n_hours(session,
                                                                       MadGlobals.application_args.delete_mons_n_hours,
                                                                       mon_limit)
-                        await PokemonHelper.run_optimize(session)
+                        if optimize_counter == 0:
+                            logger.info("Cleanup reached threshold to call optimize for pokemon table")
+                            await PokemonHelper.run_optimize(session)
                     if MadGlobals.application_args.delete_incidents_n_hours:
                         logger.info("Cleaning up records of incidents disappeared more than {} hours ago.",
                                     MadGlobals.application_args.delete_incidents_n_hours)
                         await PokestopIncidentHelper.delete_older_than_n_hours(
                             session, MadGlobals.application_args.delete_incidents_n_hours, mon_limit)
-                        await PokestopIncidentHelper.run_optimize(session)
+                        if optimize_counter == 0:
+                            logger.info("Cleanup reached threshold to call optimize for incident table")
+                            await PokestopIncidentHelper.run_optimize(session)
                     await session.commit()
                     logger.success("Done cleaning up DB, sleeping {}s", MadGlobals.application_args.cleanup_interval)
             except Exception as e:
                 logger.error("Failed cleaning up DB.")
                 logger.exception(e)
             await asyncio.sleep(MadGlobals.application_args.cleanup_interval)
+            optimize_counter = (optimize_counter + 1) % 10
