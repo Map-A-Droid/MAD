@@ -19,6 +19,7 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
+from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.gamemechanicutil import determine_current_quest_layer
 from mapadroid.utils.madGlobals import (MadGlobals, MitmReceiverRetry,
                                         MonSeenTypes, QuestLayer)
@@ -49,7 +50,16 @@ class SerializedMitmDataProcessor:
                     if item is None:
                         logger.info("Received signal to stop MITM data processor")
                         break
+                    threshold_seconds = MadGlobals.application_args.mitm_ignore_proc_time_thresh
                     start_time = self.get_time_ms()
+                    if threshold_seconds > 0:
+                        minimum_timestamp = (start_time / 1000) - threshold_seconds
+                        if item[0] < minimum_timestamp:
+                            logger.debug(
+                                "Data received at {} is older than configured threshold of {}s ({}). Ignoring data.",
+                                item[0], threshold_seconds,
+                                DatetimeWrapper.fromtimestamp(minimum_timestamp))
+                            return
                     try:
                         with logger.contextualize(identifier=item[2], name="mitm-processor"):
                             if item[1].get("raw", False):
@@ -71,9 +81,16 @@ class SerializedMitmDataProcessor:
                 except KeyboardInterrupt:
                     logger.info("Received keyboard interrupt, stopping MITM data processor")
 
-    async def _process_data_raw(self, received_timestamp: int, data: str, origin: str):
-        """
-        """
+    async def _process_data_raw(self, received_timestamp: int, data: Dict, origin: str):
+        method_id: Optional[int] = data.get("type", None)
+        logger.debug("Processing received data")
+        processed_timestamp: datetime = DatetimeWrapper.fromtimestamp(received_timestamp)
+        if not method_id or not data.get("raw", False):
+            logger.error("Data received from {} does not contain a valid method ID or is not in raw format")
+            return
+        start_time = self.get_time_ms()
+        if method_id == ProtoIdentifier.GMO.value:
+            await self.__process_gmo_raw(data, origin, processed_timestamp, received_timestamp, start_time)
 
 
     async def process_data_json(self, received_timestamp: int, data, origin):
@@ -83,17 +100,8 @@ class SerializedMitmDataProcessor:
 
         if data_type and not data.get("raw", False):
             logger.debug4("Received data: {}", data)
-            threshold_seconds = MadGlobals.application_args.mitm_ignore_proc_time_thresh
 
             start_time = self.get_time_ms()
-            if threshold_seconds > 0:
-                minimum_timestamp = (start_time / 1000) - threshold_seconds
-                if received_timestamp < minimum_timestamp:
-                    logger.debug(
-                        "Data received at {} is older than configured threshold of {}s ({}). Ignoring data.",
-                        processed_timestamp, threshold_seconds, DatetimeWrapper.fromtimestamp(minimum_timestamp))
-                    return
-
             # We can use the current session easily...
             if data_type == 106:
                 await self.__process_gmo(data, origin, processed_timestamp, received_timestamp, start_time)
@@ -196,6 +204,10 @@ class SerializedMitmDataProcessor:
 
     async def __stats_mon_iv(self, origin: str, encounter_id: int, received_date: datetime, is_shiny: bool):
         await self.__stats_handler.stats_collect_mon_iv(origin, encounter_id, received_date, is_shiny)
+
+    async def __process_gmo_raw(self, data: Dict, origin: str, received_date: datetime,
+                                received_timestamp: int, start_time_ms: int):
+
 
     async def __process_gmo(self, data, origin, received_date: datetime, received_timestamp: int, start_time):
         logger.debug("Processing GMO. Received at {}", received_date)

@@ -1,6 +1,6 @@
 import asyncio
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from aiohttp import web
 from loguru import logger
@@ -86,16 +86,16 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             # Parsing raw data should be done within the data processor rather than the endpoint except for time
             # relevant information as the update_latest directive for example?
             decoded_raw_proto: bytes = ProtoHelper.decode(data["payload"])
-            if proto_type == 106:
-                gmo_proto: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
-                    decoded_raw_proto)
-                if len(gmo_proto.map_cell) == 0:
-                    logger.debug("Ignoring apparently empty GMO (raw proto)")
-                    return
             await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
-                                                        timestamp_received_receiver=time_received, key=str(proto_type),
+                                                        timestamp_received_receiver=time_received,
+                                                        key=str(proto_type),
                                                         value=decoded_raw_proto,
                                                         location=location_of_data)
+            if proto_type == ProtoIdentifier.FORT_SEARCH.value:
+                logger.debug("Checking fort search proto type 101")
+                fort_search: pogoprotos.FortSearchOutProto = pogoprotos.FortSearchOutProto.ParseFromString(
+                    decoded_raw_proto)
+                await self._handle_fort_search_proto(origin, fort_search, location_of_data, timestamp)
         else:
             # Legacy json processing...
             if proto_type == 106 and not data["payload"].get("cells", []):
@@ -119,19 +119,19 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
                                  fort_search.get("fort_id", "unknown_id"), location_of_data)
                     return
 
-            # TODO: data["payload"] only works for legacy JSON processing. Add "bytes" as valid value...
             await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
-                                                        timestamp_received_receiver=time_received, key=str(proto_type),
+                                                        timestamp_received_receiver=time_received,
+                                                        key=str(proto_type),
                                                         value=data["payload"],
                                                         location=location_of_data)
             if proto_type == ProtoIdentifier.FORT_SEARCH.value:
                 logger.debug("Checking fort search proto type 101")
-                # TODO: data["payload"] only works for legacy JSON processing
                 await self._handle_fort_search_proto(origin, data["payload"], location_of_data, timestamp)
         logger.debug2("Placing data received to data_queue")
         await self._add_to_queue((timestamp, data, origin))
 
-    async def _handle_fort_search_proto(self, origin: str, quest_proto: Dict, location_of_data: Location,
+    async def _handle_fort_search_proto(self, origin: str, quest_proto: Union[Dict, pogoprotos.FortSearchOutProto],
+                                        location_of_data: Location,
                                         timestamp: int) -> None:
         instance_id = self._get_db_wrapper().get_instance_id()
         logger.debug("Checking fort search of {} of instance {}", origin, instance_id)
@@ -145,8 +145,10 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             device.device_id, location_of_action=location_of_data,
             time_of_action=DatetimeWrapper.fromtimestamp(timestamp))
         self._commit_trigger = True
-
-        fort_id = quest_proto.get("fort_id", None)
+        if isinstance(quest_proto, dict):
+            fort_id = quest_proto.get("fort_id", None)
+        else:
+            fort_id = quest_proto.fort_id
         if fort_id is None:
             logger.debug("No fort id in fort search")
             return
@@ -156,11 +158,16 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         else:
             logger.warning("Unable to retrieve username last assigned to {} to mark stop as visited", origin)
 
-        if "challenge_quest" not in quest_proto:
+        if isinstance(quest_proto, dict) and "challenge_quest" not in quest_proto\
+                or isinstance(quest_proto, pogoprotos.FortSearchOutProto) and not quest_proto.challenge_quest:
             logger.debug("No challenge quest in fort search")
             return
-        protoquest = quest_proto["challenge_quest"]["quest"]
-        rewards = protoquest.get("quest_rewards", None)
+        if isinstance(quest_proto, dict):
+            protoquest = quest_proto["challenge_quest"]["quest"]
+            rewards = protoquest.get("quest_rewards", None)
+        else:
+            # TODO: This chaining of property access probably is not safe to call like this...
+            rewards = quest_proto.challenge_quest.quest.quest_rewards
         if not rewards:
             logger.debug("No quest rewards in fort search")
             return

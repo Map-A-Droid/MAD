@@ -6,6 +6,7 @@ from loguru import logger
 
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.madGlobals import QuestLayer
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 
 def calculate_mon_level(cp_multiplier):
@@ -256,6 +257,27 @@ def form_mapper(mon_id, form_id):
     mon_form = mon.get(str(form_id), 0)
 
     return mon_form
+
+
+def is_mon_ditto_raw(pokemon_data: pogoprotos.PokemonProto):
+    logger.debug3('Determining if mon is a ditto')
+    logger.debug4(pokemon_data)
+    weather_boost = pokemon_data.pokemon_display.weather_boosted_condition
+    valid_atk = pokemon_data.individual_attack < 4
+    valid_def = pokemon_data.individual_defense < 4
+    valid_sta = pokemon_data.individual_stamina < 4
+    cp_multi = pokemon_data.cp_multiplier
+    valid_boost_attrs = valid_atk or valid_def or valid_sta or cp_multi < .3
+    if weather_boost is None:
+        return False
+    elif weather_boost > 0 and valid_boost_attrs:
+        # Weather boosted mon, but the iv is lower than threshold
+        return True
+    elif weather_boost == 0 and cp_multi > 0.733:
+        # Not weather boosted, but the level is > 30
+        return True
+    else:
+        return False
 
 
 def is_mon_ditto(pokemon_data):
