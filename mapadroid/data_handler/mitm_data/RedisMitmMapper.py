@@ -13,6 +13,7 @@ from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntr
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 
 class RedisMitmMapper(AbstractMitmMapper):
@@ -46,7 +47,7 @@ class RedisMitmMapper(AbstractMitmMapper):
         last_moved: Optional[int] = await self.__cache.get(RedisMitmMapper.LAST_POSSIBLY_MOVED_KEY.format(worker))
         return int(last_moved) if last_moved else 0
 
-    async def update_latest(self, worker: str, key: str, value: Union[List, Dict],
+    async def update_latest(self, worker: str, key: str, value: Union[List, Dict, bytes],
                             timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         if timestamp_received_raw is None:
@@ -71,12 +72,18 @@ class RedisMitmMapper(AbstractMitmMapper):
             await self.__parse_gmo_for_location(worker, value, timestamp_received_raw, location)
             await self.__cache.set(RedisMitmMapper.IS_INJECTED_KEY.format(worker), 1)
 
-    async def __parse_gmo_for_location(self, worker: str, gmo_payload: Dict, timestamp: int,
+    async def __parse_gmo_for_location(self, worker: str, gmo_payload: Union[Dict, bytes], timestamp: int,
                                        location: Optional[Location]):
-        cells = gmo_payload.get("cells", None)
-        if not cells:
-            return
-        cell_ids: List[int] = [cell['id'] for cell in cells]
+        if isinstance(gmo_payload, dict):
+            cells = gmo_payload.get("cells", None)
+            if not cells:
+                return
+            cell_ids: List[int] = [cell['id'] for cell in cells]
+        else:
+            # Raw proto...
+            gmo_proto: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
+                gmo_payload)
+            cell_ids: List[int] = [cell.s2_cell_id for cell in gmo_proto.map_cell]
         last_cell_ids_raw: Optional[str] = await self.__cache.get(RedisMitmMapper.LAST_CELL_IDS_KEY.format(worker))
         last_cell_ids: List[int] = []
         if last_cell_ids_raw:

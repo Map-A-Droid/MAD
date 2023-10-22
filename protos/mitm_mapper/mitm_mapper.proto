@@ -89,6 +89,7 @@ message LatestMitmDataEntry {
   oneof data {
     google.protobuf.Struct some_dictionary = 4;
     google.protobuf.ListValue some_list = 5;
+    bytes raw_message = 6;
   }
 }
 

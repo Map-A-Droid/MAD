@@ -52,8 +52,12 @@ class SerializedMitmDataProcessor:
                     start_time = self.get_time_ms()
                     try:
                         with logger.contextualize(identifier=item[2], name="mitm-processor"):
-                            await self.process_data(received_timestamp=item[0], data=item[1],
-                                                    origin=item[2])
+                            if item[1].get("raw", False):
+                                await self._process_data_raw(received_timestamp=item[0], data=item[1],
+                                                             origin=item[2])
+                            else:
+                                await self.process_data_json(received_timestamp=item[0], data=item[1],
+                                                             origin=item[2])
                         del item
                     except (sqlalchemy.exc.IntegrityError, MitmReceiverRetry, sqlalchemy.exc.InternalError) as e:
                         logger.info("Failed submitting data to DB, rescheduling. {}", e)
@@ -67,7 +71,12 @@ class SerializedMitmDataProcessor:
                 except KeyboardInterrupt:
                     logger.info("Received keyboard interrupt, stopping MITM data processor")
 
-    async def process_data(self, received_timestamp: int, data, origin):
+    async def _process_data_raw(self, received_timestamp: int, data: str, origin: str):
+        """
+        """
+
+
+    async def process_data_json(self, received_timestamp: int, data, origin):
         data_type = data.get("type", None)
         logger.debug("Processing received data")
         processed_timestamp: datetime = DatetimeWrapper.fromtimestamp(received_timestamp)

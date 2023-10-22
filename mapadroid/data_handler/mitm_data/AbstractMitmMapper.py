@@ -15,7 +15,7 @@ class AbstractMitmMapper(ABC):
         pass
 
     @abstractmethod
-    async def update_latest(self, worker: str, key: str, value: Union[List, Dict],
+    async def update_latest(self, worker: str, key: str, value: Union[List, Dict, bytes],
                             timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         pass

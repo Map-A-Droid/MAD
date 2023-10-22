@@ -9,13 +9,13 @@ from mapadroid.utils.collections import Location
 
 class LatestMitmDataEntry:
     def __init__(self, location: Optional[Location], timestamp_received: Optional[int],
-                 timestamp_of_data_retrieval: Optional[int], data: Union[List, Dict]):
+                 timestamp_of_data_retrieval: Optional[int], data: Union[List, Dict, bytes]):
         self.location: Optional[Location] = location
         # The time MAD received the data from a device/worker
         self.timestamp_received: Optional[int] = timestamp_received
         # The time that the device/worker received the data
         self.timestamp_of_data_retrieval: Optional[int] = timestamp_of_data_retrieval
-        self.data: Union[List, Dict] = data
+        self.data: Union[List, Dict, bytes] = data
 
     @staticmethod
     async def from_json(json_data: Union[bytes, str]) -> Optional[LatestMitmDataEntry]:

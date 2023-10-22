@@ -4,11 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf.internal import enum_type_wrapper
-
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -18,19 +15,11 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19shared/MonSeenTypes.proto\x12\x10mapadroid.shared*l\n\x0cMonSeenTypes\x12\x08\n\x04WILD\x10\x00\x12\r\n\tENCOUNTER\x10\x01\x12\x12\n\x0eLURE_ENCOUNTER\x10\x02\x12\r\n\tLURE_WILD\x10\x03\x12\x0f\n\x0bNEARBY_STOP\x10\x04\x12\x0f\n\x0bNEARBY_CELL\x10\x05\x62\x06proto3')
 
-_MONSEENTYPES = DESCRIPTOR.enum_types_by_name['MonSeenTypes']
-MonSeenTypes = enum_type_wrapper.EnumTypeWrapper(_MONSEENTYPES)
-WILD = 0
-ENCOUNTER = 1
-LURE_ENCOUNTER = 2
-LURE_WILD = 3
-NEARBY_STOP = 4
-NEARBY_CELL = 5
-
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'shared.MonSeenTypes_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
-  _MONSEENTYPES._serialized_start=47
-  _MONSEENTYPES._serialized_end=155
+  _globals['_MONSEENTYPES']._serialized_start=47
+  _globals['_MONSEENTYPES']._serialized_end=155
 # @@protoc_insertion_point(module_scope)

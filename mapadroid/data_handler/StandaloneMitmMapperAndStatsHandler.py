@@ -81,10 +81,12 @@ class StandaloneMitmMapperAndStatsHandler(AbstractMitmMapper, AbstractStatsHandl
     async def get_last_possibly_moved(self, worker: str) -> int:
         return await self.__mitm_data_handler.get_last_possibly_moved(worker)
 
-    async def update_latest(self, worker: str, key: str, value: Union[list, dict], timestamp_received_raw: float = None,
+    async def update_latest(self, worker: str, key: str, value: Union[List, Dict, bytes],
+                            timestamp_received_raw: float = None,
                             timestamp_received_receiver: float = None, location: Location = None) -> None:
         loop = asyncio.get_running_loop()
-        loop.run_in_executor(None, self.__mitm_data_handler.update_latest, worker, key, value, timestamp_received_raw,
+        loop.run_in_executor(None, self.__mitm_data_handler.update_latest, worker, key, value,
+                             timestamp_received_raw,
                              timestamp_received_receiver, location)
 
     async def request_latest(self, worker: str, key: str,

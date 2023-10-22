@@ -11,9 +11,11 @@ from mapadroid.db.helper.TrsVisitedHelper import TrsVisitedHelper
 from mapadroid.db.model import SettingsDevice
 from mapadroid.mitm_receiver.endpoints.AbstractMitmReceiverRootEndpoint import \
     AbstractMitmReceiverRootEndpoint
+from mapadroid.mitm_receiver.protos.ProtoHelper import ProtoHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 
 class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
@@ -70,26 +72,6 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
         if proto_type not in (106, 102, 101, 104, 4, 156, 145, 1405):
             # trash protos - ignoring
             return
-        elif proto_type == 106 and not data["payload"].get("cells", []):
-            logger.debug("Ignoring apparently empty GMO")
-            return
-        elif proto_type == 102 and not data["payload"].get("status", None) == 1:
-            logger.warning("Encounter with status {} being ignored", data["payload"].get("status", None))
-            return
-        elif proto_type == 1405 and not data["payload"].get("route_map_cell", []):
-            logger.info("No routes in payload to be processed")
-            return
-        elif proto_type == 101:
-            # FORT_SEARCH
-            # check if it is out of range. If so, ignore it
-            fort_search = data["payload"]
-            result: int = fort_search.get("result", 0)
-            if result == 2:
-                location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
-                # Fort search out of range, abort
-                logger.debug("Received out of range fort search for {}. Location of data: {}",
-                             fort_search.get("fort_id", "unknown_id"), location_of_data)
-                return
 
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90 or
@@ -97,15 +79,55 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             location_of_data: Location = Location(0.0, 0.0)
         time_received: int = int(time.time())
 
-        if proto_type == ProtoIdentifier.FORT_SEARCH.value:
-            logger.debug("Checking fort search proto type 101")
-            await self._handle_fort_search_proto(origin, data["payload"], location_of_data, timestamp)
         quests_held: Optional[List[int]] = data.get("quests_held", None)
         await self._get_mitm_mapper().set_quests_held(origin, quests_held)
-        await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
-                                                    timestamp_received_receiver=time_received, key=str(proto_type),
-                                                    value=data["payload"],
-                                                    location=location_of_data)
+
+        if data.get("raw", False):
+            # Parsing raw data should be done within the data processor rather than the endpoint except for time
+            # relevant information as the update_latest directive for example?
+            decoded_raw_proto: bytes = ProtoHelper.decode(data["payload"])
+            if proto_type == 106:
+                gmo_proto: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
+                    decoded_raw_proto)
+                if len(gmo_proto.map_cell) == 0:
+                    logger.debug("Ignoring apparently empty GMO (raw proto)")
+                    return
+            await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
+                                                        timestamp_received_receiver=time_received, key=str(proto_type),
+                                                        value=decoded_raw_proto,
+                                                        location=location_of_data)
+        else:
+            # Legacy json processing...
+            if proto_type == 106 and not data["payload"].get("cells", []):
+                logger.debug("Ignoring apparently empty GMO")
+                return
+            elif proto_type == 102 and not data["payload"].get("status", None) == 1:
+                logger.warning("Encounter with status {} being ignored", data["payload"].get("status", None))
+                return
+            elif proto_type == 1405 and not data["payload"].get("route_map_cell", []):
+                logger.info("No routes in payload to be processed")
+                return
+            elif proto_type == 101:
+                # FORT_SEARCH
+                # check if it is out of range. If so, ignore it
+                fort_search = data["payload"]
+                result: int = fort_search.get("result", 0)
+                if result == 2:
+                    location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
+                    # Fort search out of range, abort
+                    logger.debug("Received out of range fort search for {}. Location of data: {}",
+                                 fort_search.get("fort_id", "unknown_id"), location_of_data)
+                    return
+
+            # TODO: data["payload"] only works for legacy JSON processing. Add "bytes" as valid value...
+            await self._get_mitm_mapper().update_latest(origin, timestamp_received_raw=timestamp,
+                                                        timestamp_received_receiver=time_received, key=str(proto_type),
+                                                        value=data["payload"],
+                                                        location=location_of_data)
+            if proto_type == ProtoIdentifier.FORT_SEARCH.value:
+                logger.debug("Checking fort search proto type 101")
+                # TODO: data["payload"] only works for legacy JSON processing
+                await self._handle_fort_search_proto(origin, data["payload"], location_of_data, timestamp)
         logger.debug2("Placing data received to data_queue")
         await self._add_to_queue((timestamp, data, origin))
 

@@ -4,11 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf.internal import enum_type_wrapper
-
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -18,18 +15,11 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19shared/PositionType.proto\x12\x10mapadroid.shared*K\n\x0cPositionType\x12\n\n\x06NORMAL\x10\x00\x12\t\n\x05PRIOQ\x10\x01\x12\x0b\n\x07STARTUP\x10\x02\x12\n\n\x06REBOOT\x10\x03\x12\x0b\n\x07RESTART\x10\x04\x62\x06proto3')
 
-_POSITIONTYPE = DESCRIPTOR.enum_types_by_name['PositionType']
-PositionType = enum_type_wrapper.EnumTypeWrapper(_POSITIONTYPE)
-NORMAL = 0
-PRIOQ = 1
-STARTUP = 2
-REBOOT = 3
-RESTART = 4
-
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'shared.PositionType_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
-  _POSITIONTYPE._serialized_start=47
-  _POSITIONTYPE._serialized_end=122
+  _globals['_POSITIONTYPE']._serialized_start=47
+  _globals['_POSITIONTYPE']._serialized_end=122
 # @@protoc_insertion_point(module_scope)

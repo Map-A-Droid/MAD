@@ -4,10 +4,8 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -17,19 +15,11 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15shared/Location.proto\x12\x10mapadroid.shared\"/\n\x08Location\x12\x10\n\x08latitude\x18\x01 \x01(\x01\x12\x11\n\tlongitude\x18\x02 \x01(\x01\x62\x06proto3')
 
-
-
-_LOCATION = DESCRIPTOR.message_types_by_name['Location']
-Location = _reflection.GeneratedProtocolMessageType('Location', (_message.Message,), {
-  'DESCRIPTOR' : _LOCATION,
-  '__module__' : 'shared.Location_pb2'
-  # @@protoc_insertion_point(class_scope:mapadroid.shared.Location)
-  })
-_sym_db.RegisterMessage(Location)
-
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'shared.Location_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
-  _LOCATION._serialized_start=43
-  _LOCATION._serialized_end=90
+  _globals['_LOCATION']._serialized_start=43
+  _globals['_LOCATION']._serialized_end=90
 # @@protoc_insertion_point(module_scope)
