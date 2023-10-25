@@ -355,17 +355,17 @@ class DbPogoProtoSubmitRaw:
         return form, gender, mon_id, move_1, move_2
 
     async def mon_lure_iv(self, session: AsyncSession, timestamp: float,
-                          encounter_proto: dict) -> Optional[Tuple[int, datetime]]:
+                          encounter_proto: pogoprotos.DiskEncounterOutProto) -> Optional[Tuple[int, datetime]]:
         """
         Update/Insert a lure mon with IVs
         """
         logger.debug3("Updating IV sent for encounter at {}", timestamp)
 
-        pokemon_data = encounter_proto.get("pokemon", {})
-        mon_id = pokemon_data.get("id")
-        display = pokemon_data.get("display", {})
-        weather_boosted = display.get('weather_boosted_value')
-        encounter_id = display.get("display_id", 0)
+        pokemon_data: pogoprotos.PokemonProto = encounter_proto.pokemon
+        mon_id: int = pokemon_data.id
+        display: pogoprotos.PokemonDisplayProto = pokemon_data.pokemon_display
+        weather_boosted: int = display.weather_boosted_condition
+        encounter_id: int = display.display_id
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
@@ -378,10 +378,8 @@ class DbPogoProtoSubmitRaw:
         form, gender, mon_id, move_1, move_2 = await self._extract_data_or_set_ditto(mon_id, pokemon_data,
                                                                                      display)
 
-        capture_probability = encounter_proto.get("capture_probability", {})
-        capture_probability_list = capture_probability.get("capture_probability_list", None)
-        if capture_probability_list is not None:
-            capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
+        capture_probability: pogoprotos.CaptureProbabilityProto = encounter_proto.capture_probability
+        capture_probability_list: RepeatedScalarFieldContainer[float] = capture_probability.capture_probability
 
         now = DatetimeWrapper.fromtimestamp(timestamp)
         time_start_submit = time.time()
@@ -397,19 +395,19 @@ class DbPogoProtoSubmitRaw:
                 mon.disappear_time = now + timedelta(minutes=2)
                 mon.rating_attack = mon.rating_defense = None
             mon.pokemon_id = mon_id
-            mon.costume = display.get("costume_value", None)
+            mon.costume = display.costume
             mon.form = form
             mon.gender = gender
             mon.seen_type = MonSeenTypes.lure_encounter.name
-            mon.individual_attack = pokemon_data.get("individual_attack")
-            mon.individual_defense = pokemon_data.get("individual_defense")
-            mon.individual_stamina = pokemon_data.get("individual_stamina")
+            mon.individual_attack = pokemon_data.individual_attack
+            mon.individual_defense = pokemon_data.individual_defense
+            mon.individual_stamina = pokemon_data.individual_stamina
             mon.move_1 = move_1
             mon.move_2 = move_2
-            mon.cp = pokemon_data.get("cp")
-            mon.cp_multiplier = pokemon_data.get("cp_multiplier")
-            mon.weight = pokemon_data.get("weight")
-            mon.height = pokemon_data.get("height")
+            mon.cp = pokemon_data.cp
+            mon.cp_multiplier = pokemon_data.cp_multiplier
+            mon.weight = pokemon_data.weight_kg
+            mon.height = pokemon_data.height_m
             if capture_probability_list:
                 mon.catch_prob_1 = float(capture_probability_list[0])
                 mon.catch_prob_2 = float(capture_probability_list[1])
@@ -426,22 +424,24 @@ class DbPogoProtoSubmitRaw:
             logger.debug("Done updating mon lure IV in DB in {} seconds", time_done)
         return encounter_id, now
 
-    async def mon_lure_noiv(self, session: AsyncSession, timestamp: float, gmo: dict) -> List[int]:
+    async def mon_lure_noiv(self, session: AsyncSession, timestamp: float,
+                            gmo: pogoprotos.GetMapObjectsOutProto) -> List[int]:
         """
         Update/Insert Lure mons from a map_proto dict
         """
         logger.debug3("DbPogoProtoSubmit::mon_lure_noiv called with data received")
-        cells = gmo.get("cells", None)
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = gmo.map_cell
         encounter_ids: List[int] = []
-        if cells is None:
+        if not cells:
             return encounter_ids
 
         for cell in cells:
-            for fort in cell["forts"]:
-                lure_mon = fort.get("active_pokemon", {})
-                mon_id = lure_mon.get("id", 0)
-                if fort["type"] == 1 and mon_id > 0:
-                    encounter_id = lure_mon["encounter_id"]
+            for fort in cell.fort:
+                lure_mon: pogoprotos.MapPokemonProto = fort.active_pokemon
+                mon_id: int = lure_mon.pokedex_type_id
+                # TODO: Ensure fort_type is properly checked here
+                if fort.fort_type == pogoprotos.FortType.CHECKPOINT and mon_id > 0:
+                    encounter_id: int = lure_mon.encounter_id
 
                     if encounter_id < 0:
                         encounter_id = encounter_id + 2 ** 64
@@ -450,36 +450,29 @@ class DbPogoProtoSubmitRaw:
                     if await self._cache.exists(cache_key):
                         continue
 
-                    lat = fort["latitude"]
-                    lon = fort["longitude"]
-                    stopid = fort["id"]
                     disappear_time = DatetimeWrapper.fromtimestamp(
-                        lure_mon["expiration_timestamp"] / 1000)
+                        lure_mon.expiration_time_ms / 1000)
 
                     now = DatetimeWrapper.fromtimestamp(timestamp)
-
-                    display = lure_mon["display"]
-                    form = display["form_value"]
-                    costume = display["costume_value"]
-                    gender = display["gender_value"]
-                    weather_boosted = display["weather_boosted_value"]
 
                     async with session.begin_nested() as nested_transaction:
                         mon: Optional[Pokemon] = await PokemonHelper.get(session, encounter_id)
                         if not mon:
+                            display = lure_mon.pokemon_display
+
                             mon: Pokemon = Pokemon()
                             mon.encounter_id = encounter_id
                             mon.spawnpoint_id = 0
                             mon.seen_type = MonSeenTypes.lure_wild.name
                             mon.pokemon_id = mon_id
-                            mon.gender = gender
-                            mon.weather_boosted_condition = weather_boosted
-                            mon.costume = costume
-                            mon.form = form
-                        mon.latitude = lat
-                        mon.longitude = lon
+                            mon.gender = display.gender
+                            mon.costume = display.costume
+                            mon.form = display.form
+                        mon.weather_boosted_condition = display.weather_boosted_condition
+                        mon.latitude = fort.latitude
+                        mon.longitude = fort.longitude
                         mon.disappear_time = disappear_time
-                        mon.fort_id = stopid
+                        mon.fort_id = fort.fort_id
                         mon.last_modified = now
                         try:
                             logger.debug("Submitting lured non-IV mon {}", encounter_id)
@@ -538,40 +531,41 @@ class DbPogoProtoSubmitRaw:
                     await nested_transaction.rollback()
                     logger.debug("Failed submitting stat...")
 
-    async def spawnpoints(self, session: AsyncSession, map_proto: dict, received_timestamp: int):
+    async def spawnpoints(self, session: AsyncSession, map_proto: pogoprotos.GetMapObjectsOutProto,
+                          received_timestamp: int):
         logger.debug3("DbPogoProtoSubmit::spawnpoints called with data received")
-        cells = map_proto.get("cells", None)
-        if cells is None:
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = map_proto.map_cell
+        if not cells:
             return False
         spawn_ids: List[int] = []
         for cell in cells:
-            for wild_mon in cell["wild_pokemon"]:
-                spawn_ids.append(int(str(wild_mon['spawnpoint_id']), 16))
+            for wild_mon in cell.wild_pokemon:
+                spawn_ids.append(int(str(wild_mon.spawn_point_id), 16))
 
         spawndef: Dict[int, TrsSpawn] = await self._get_spawndef(session, spawn_ids)
         current_event: Optional[TrsEvent] = await TrsEventHelper.get_current_event(session, True)
         spawns_do_add: List[TrsSpawn] = []
         received_time: datetime = DatetimeWrapper.fromtimestamp(received_timestamp)
         for cell in cells:
-            for wild_mon in cell["wild_pokemon"]:
-                spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
+            for wild_mon in cell.wild_pokemon:
+                spawnid: int = int(str(wild_mon.spawn_point_id), 16)
                 lat, lng, _ = S2Helper.get_position_from_cell(
-                    int(str(wild_mon["spawnpoint_id"]) + "00000", 16))
-                despawntime = wild_mon["time_till_hidden"]
+                    int(str(wild_mon.spawn_point_id) + "00000", 16))
+                despawntime: int = wild_mon.time_till_hidden_ms
 
-                minpos = self._get_current_spawndef_pos()
+                minpos: Optional[int] = self._get_current_spawndef_pos()
                 # TODO: retrieve the spawndefs by a single executemany and pass that...
-                spawn = spawndef.get(spawnid, None)
+                spawn: Optional[TrsSpawn] = spawndef.get(spawnid, None)
                 if spawn:
-                    newspawndef = self._set_spawn_see_minutesgroup(spawn.spawndef, minpos)
+                    newspawndef: int = self._set_spawn_see_minutesgroup(spawn.spawndef, minpos)
                 else:
-                    newspawndef = self._set_spawn_see_minutesgroup(self.default_spawndef, minpos)
+                    newspawndef: int = self._set_spawn_see_minutesgroup(self.default_spawndef, minpos)
 
                 # TODO: This may break another known timer...
                 if 0 <= int(despawntime) <= 90000:
-                    fulldate = received_time + timedelta(milliseconds=despawntime)
-                    earliest_unseen = int(despawntime)
-                    calcendtime = fulldate.strftime("%M:%S")
+                    fulldate: datetime = received_time + timedelta(milliseconds=despawntime)
+                    earliest_unseen: int = int(despawntime)
+                    calcendtime: str = fulldate.strftime("%M:%S")
 
                     # TODO: First try to fetch a TrsSpawn, then handle the above...
                     # TODO: We can just use the above dict of spawns....
@@ -609,29 +603,30 @@ class DbPogoProtoSubmitRaw:
                 spawns_do_add.append(spawn)
         session.add_all(spawns_do_add)
 
-    async def stops(self, session: AsyncSession, map_proto: dict):
+    async def stops(self, session: AsyncSession, map_proto: pogoprotos.GetMapObjectsOutProto):
         """
         Update/Insert pokestops from a map_proto dict
         """
         logger.debug3("DbPogoProtoSubmit::stops called with data received")
-        cells = map_proto.get("cells", None)
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = map_proto.map_cell
         if cells is None:
             return False
 
         for cell in cells:
-            cell_id = cell["id"]
+            cell_id: int = cell.s2_cell_id
             cell_cache_key: str = f"stops_{cell_id}"
             if await self._cache.exists(cell_cache_key):
                 continue
-            for fort in cell["forts"]:
-                if fort["type"] == 1:
+            for fort in cell.fort:
+                if fort.fort_type == pogoprotos.FortType.CHECKPOINT:
                     await self._handle_pokestop_data(session, fort)
             await self._cache.set(cell_cache_key, 1, ex=REDIS_CACHETIME_CELLS)
         return True
 
-    async def stop_details(self, session: AsyncSession, stop_proto: dict):
+    async def stop_details(self, session: AsyncSession, stop_proto: pogoprotos.FortDetailsOutProto):
         """
         Update/Insert pokestop details from a GMO
+        :param session:
         :param stop_proto:
         :return:
 
@@ -643,9 +638,9 @@ class DbPogoProtoSubmitRaw:
 
         stop: Optional[Pokestop] = await self._extract_args_single_stop_details(session, stop_proto)
         if stop:
-            last_modified = stop_proto.get("last_modified_timestamp_ms")
-            if not last_modified:
-                last_modified = int(math.ceil(DatetimeWrapper.now().timestamp() / 1000)) * 1000
+            # Last modified is not available for stop details!
+            # Consider using the FortModifier's expiration timestamps when modifying/adding functionality here
+            last_modified: int = 0
             cache_key = "stopdetail{}{}".format(stop.pokestop_id, last_modified)
             if await self._cache.exists(cache_key):
                 return True
@@ -659,7 +654,8 @@ class DbPogoProtoSubmitRaw:
                     await nested_transaction.rollback()
         return stop is not None
 
-    async def quest(self, session: AsyncSession, quest_proto: dict, quest_gen: QuestGen,
+    async def quest(self, session: AsyncSession, quest_proto: pogoprotos.FortSearchOutProto,
+                    quest_gen: QuestGen,
                     quest_layer: QuestLayer) -> bool:
         """
 
@@ -673,48 +669,51 @@ class DbPogoProtoSubmitRaw:
 
         """
         logger.debug3("DbPogoProtoSubmit::quest called")
-        fort_id = quest_proto.get("fort_id", None)
-        if fort_id is None:
+        fort_id: str = quest_proto.fort_id
+        if not fort_id:
             return False
-        if "challenge_quest" not in quest_proto:
+        if not quest_proto.challenge_quest:
             return False
-        protoquest = quest_proto["challenge_quest"]["quest"]
-        rewards = protoquest.get("quest_rewards", None)
+        quest: pogoprotos.QuestProto = quest_proto.challenge_quest.quest
+        rewards: RepeatedCompositeFieldContainer[pogoprotos.QuestRewardProto] = quest.quest_rewards
         if not rewards:
             return False
-        protoquest_display = quest_proto["challenge_quest"]["quest_display"]
-        quest_title_resource_id = protoquest_display.get("title", None)
-        reward = rewards[0]
-        item = reward['item']
-        encounter = reward['pokemon_encounter']
-        goal = protoquest['goal']
+        display: pogoprotos.QuestDisplayProto = quest_proto.challenge_quest.quest_display
+        quest_title_resource_id = display.title
+        reward: pogoprotos.QuestRewardProto = rewards[0]
+        item: pogoprotos.ItemRewardProto = reward.item
+        encounter: pogoprotos.PokemonEncounterRewardProto = reward.pokemon_encounter
+        goal: pogoprotos.QuestGoalProto = quest.goal
 
-        quest_type = protoquest.get("quest_type", None)
-        quest_template = protoquest.get("template_id", None)
+        quest_type: int = quest.quest_type.real
+        quest_template: Optional[str] = quest.template_id
 
-        reward_type = reward.get("type", None)
-        item_item = item.get("item", None)
-        item_amount = item.get("amount", None)
-        pokemon_id = encounter.get("pokemon_id", None)
-        stardust = reward.get("stardust", None)
+        reward_type: int = reward.type.real
+        item_item: int = item.item.real
+        item_amount: int = item.amount
+        # TODO: Check if .real can be used (i.e., if the ValueType can be None and would throw exception
+        pokemon_id: Optional[int] = encounter.pokemon_id
+        stardust: Optional[int] = reward.stardust
 
         if reward_type == 4:
-            item_amount = reward.get('candy', {}).get('amount', 0)
-            pokemon_id = reward.get('candy', {}).get('pokemon_id', 0)
+            item_amount = reward.candy.amount
+            pokemon_id = reward.candy.pokemon_id
         elif reward_type == 12:
-            item_amount = reward.get('mega_resource', {}).get('amount', 0)
-            pokemon_id = reward.get('mega_resource', {}).get('pokemon_id', 0)
+            item_amount = reward.mega_resource.amount
+            pokemon_id = reward.mega_resource.pokemon_id
         elif reward_type == 1:
             #item_amount = reward.get('exp', 0)
-            stardust = reward.get('exp', 0)
+            stardust = reward.exp
 
-        form_id = encounter.get("pokemon_display", {}).get("form_value", 0)
-        costume_id = encounter.get("pokemon_display", {}).get("costume_value", 0)
-        target = goal.get("target", None)
-        condition = goal.get("condition", None)
+        # TODO: Check form works like this or .real needed with check for None
+        form_id: Optional[int] = encounter.pokemon_display.form
+        costume_id: Optional[int] = encounter.pokemon_display.costume
+        target: Optional[int] = goal.target
+        condition: RepeatedCompositeFieldContainer[pogoprotos.QuestConditionProto] = goal.condition
 
-        json_condition = json.dumps(condition)
-        task = await quest_gen.questtask(int(quest_type), json_condition, int(target), str(quest_template),
+        # TODO: Json dumping protos...
+        json_condition: str = json.dumps(condition)
+        task = await quest_gen.questtask(int(quest_type), json_condition, int(target), quest_template,
                                          quest_title_resource_id)
         quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id, quest_layer)
         if not quest:
@@ -747,41 +746,35 @@ class DbPogoProtoSubmitRaw:
                 await nested_transaction.rollback()
         return True
 
-    async def gyms(self, session: AsyncSession, map_proto: dict, received_timestamp: int):
+    async def gyms(self, session: AsyncSession, map_proto: pogoprotos.GetMapObjectsOutProto, received_timestamp: int):
         """
         Update/Insert gyms from a map_proto dict
         """
         logger.debug3("DbPogoProtoSubmit::gyms called with data received from")
-        cells = map_proto.get("cells", None)
-        if cells is None:
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = map_proto.map_cell
+        if not cells:
             return False
         time_receiver: datetime = DatetimeWrapper.fromtimestamp(received_timestamp)
         for cell in cells:
-            cell_id = cell["id"]
+            cell_id: int = cell.s2_cell_id
             cell_cache_key: str = f"gyms_{cell_id}"
             if await self._cache.exists(cell_cache_key):
                 continue
-            for gym in cell["forts"]:
-                if gym["type"] == 0:
-                    gymid = gym["id"]
-                    last_modified_ts = gym["last_modified_timestamp_ms"] / 1000
-                    last_modified = DatetimeWrapper.fromtimestamp(
+            for gym in cell.fort:
+                if gym.fort_type == pogoprotos.FortType.GYM:
+                    gymid: str = gym.fort_id
+                    last_modified_ts: float = gym.last_modified_ms / 1000
+                    last_modified: datetime = DatetimeWrapper.fromtimestamp(
                         last_modified_ts)
-                    latitude = gym["latitude"]
-                    longitude = gym["longitude"]
-                    s2_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude)
+                    s2_cell_id = S2Helper.lat_lng_to_cell_id(gym.latitude, gym.longitude)
                     weather: Optional[Weather] = await WeatherHelper.get(session, str(s2_cell_id))
                     gameplay_weather: int = weather.gameplay_weather if weather is not None else 0
                     cache_key = "gym{}{}{}".format(gymid, last_modified_ts, gameplay_weather)
                     if await self._cache.exists(cache_key):
                         continue
-                    guard_pokemon_id = gym["gym_details"]["guard_pokemon"]
-                    team_id = gym["gym_details"]["owned_by_team"]
-                    slots_available = gym["gym_details"]["slots_available"]
-                    is_ex_raid_eligible = gym["gym_details"]["is_ex_raid_eligible"]
-                    is_ar_scan_eligible = gym["is_ar_scan_eligible"]
-                    is_in_battle = gym['gym_details']['is_in_battle']
-                    is_enabled = gym.get('enabled', 1)
+                    # TODO: Check if this works or .real needed
+                    guard_pokemon_id: int = gym.guard_pokemon_id
+                    team_id: int = gym.team
 
                     gym_obj: Optional[Gym] = await GymHelper.get(session, gymid)
                     if not gym_obj:
@@ -789,16 +782,16 @@ class DbPogoProtoSubmitRaw:
                         gym_obj.gym_id = gymid
                     gym_obj.team_id = team_id
                     gym_obj.guard_pokemon_id = guard_pokemon_id
-                    gym_obj.slots_available = slots_available
-                    gym_obj.enabled = is_enabled
-                    gym_obj.latitude = latitude
-                    gym_obj.longitude = longitude
-                    gym_obj.total_cp = gym.get("gym_display", {}).get("total_gym_cp", 0)
-                    gym_obj.is_in_battle = is_in_battle
+                    gym_obj.slots_available = gym.gym_display.slots_available
+                    gym_obj.enabled = gym.enabled
+                    gym_obj.latitude = gym.latitude
+                    gym_obj.longitude = gym.longitude
+                    gym_obj.total_cp = gym.gym_display.total_gym_cp
+                    gym_obj.is_in_battle = gym.is_in_battle
                     gym_obj.last_modified = last_modified
                     gym_obj.last_scanned = time_receiver
-                    gym_obj.is_ex_raid_eligible = is_ex_raid_eligible
-                    gym_obj.is_ar_scan_eligible = is_ar_scan_eligible
+                    gym_obj.is_ex_raid_eligible = gym.is_ex_raid_eligible
+                    gym_obj.is_ar_scan_eligible = gym.is_ar_scan_eligible
                     gym_obj.weather_boosted_condition = gameplay_weather
 
                     gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gymid)
@@ -807,7 +800,7 @@ class DbPogoProtoSubmitRaw:
                         gym_detail.gym_id = gymid
                         gym_detail.name = "unknown"
                         gym_detail.url = ""
-                    gym_url = gym.get("image_url", "")
+                    gym_url: Optional[str] = gym.image_url
                     if gym_url and gym_url.strip():
                         gym_detail.url = gym_url.strip()
                     gym_detail.last_scanned = time_receiver
@@ -824,37 +817,34 @@ class DbPogoProtoSubmitRaw:
             await self._cache.set(cell_cache_key, 1, ex=REDIS_CACHETIME_CELLS)
         return True
 
-    async def gym(self, session: AsyncSession, map_proto: dict):
+    async def gym_info(self, session: AsyncSession, gym_info: pogoprotos.GymGetInfoOutProto):
         """
         Update gyms from a map_proto dict
         """
         logger.debug3("Updating gyms")
-        if map_proto.get("result", 0) != 1:
+        if gym_info.result != 1:
             return False
-        status = map_proto.get("gym_status_and_defenders", None)
+        status: Optional[pogoprotos.GymStatusAndDefendersProto] = gym_info.gym_status_and_defenders
         if status is None:
             return False
-        fort_proto = status.get("pokemon_fort_proto", None)
+        fort_proto: Optional[pogoprotos.PokemonFortProto] = status.pokemon_fort_proto
         if fort_proto is None:
             return False
-        gym_id = fort_proto["id"]
-        name = map_proto["name"]
-        description = map_proto["description"]
-        url = map_proto["url"]
+        gym_id: str = fort_proto.fort_id
 
         gym_detail: Optional[GymDetail] = await GymDetailHelper.get(session, gym_id)
         if not gym_detail:
             return False
         touched: bool = False
-        if name is not None and name != "":
+        if gym_info.name:
             touched = True
-            gym_detail.name = name
-        if description is not None and description != "":
+            gym_detail.name = gym_info.name
+        if gym_info.description:
             touched = True
-            gym_detail.description = description
-        if url is not None and url != "":
+            gym_detail.description = gym_info.description
+        if gym_info.url:
             touched = True
-            gym_detail.url = url
+            gym_detail.url = gym_info.url
         if touched:
             async with session.begin_nested() as nested_transaction:
                 try:
@@ -865,63 +855,60 @@ class DbPogoProtoSubmitRaw:
                     await nested_transaction.rollback()
         return True
 
-    async def raids(self, session: AsyncSession, map_proto: dict, timestamp: int) -> int:
+    async def raids(self, session: AsyncSession, map_proto: pogoprotos.GetMapObjectsOutProto, timestamp: int) -> int:
         """
         Update/Insert raids from a map_proto dict
 
         Returns: amount of raids in GMO processed
         """
         logger.debug3("DbPogoProtoSubmit::raids called with data received")
-        cells = map_proto.get("cells", None)
-        if cells is None:
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = map_proto.map_cell
+        if not cells:
             return False
         raids_seen: int = 0
         received_at: datetime = DatetimeWrapper.fromtimestamp(timestamp)
         for cell in cells:
-            for gym in cell["forts"]:
-                if gym["type"] == 0 and gym["gym_details"]["has_raid"]:
-                    gym_has_raid = gym["gym_details"]["raid_info"]["has_pokemon"]
-                    if gym_has_raid:
+            for gym in cell.fort:
+                if gym.fort_type == pogoprotos.FortType.GYM and gym.raid_info:
+                    if gym.raid_info.raid_pokemon:
                         raids_seen += 1
-                        raid_info = gym["gym_details"]["raid_info"]
+                        raid_info: pogoprotos.RaidInfoProto = gym.raid_info
 
-                        pokemon_id = raid_info["raid_pokemon"]["id"]
-                        cp = raid_info["raid_pokemon"]["cp"]
-                        move_1 = raid_info["raid_pokemon"]["move_1"]
-                        move_2 = raid_info["raid_pokemon"]["move_2"]
-                        form = raid_info["raid_pokemon"]["display"]["form_value"]
-                        gender = raid_info["raid_pokemon"]["display"]["gender_value"]
-                        costume = raid_info["raid_pokemon"]["display"]["costume_value"]
-                        evolution = raid_info["raid_pokemon"]["display"].get("current_temp_evolution", 0)
+                        pokemon_id: Optional[int] = raid_info.raid_pokemon.pokemon_id
+                        cp: int = raid_info.raid_pokemon.cp
+                        move_1: int = raid_info.raid_pokemon.move1
+                        move_2: int = raid_info.raid_pokemon.move2
+                        form: Optional[int] = raid_info.raid_pokemon.pokemon_display.form
+                        gender: Optional[int] = raid_info.raid_pokemon.pokemon_display.gender
+                        costume: Optional[int] = raid_info.raid_pokemon.pokemon_display.costume
+                        evolution: Optional[int] = raid_info.raid_pokemon.pokemon_display.current_temp_evolution
                     else:
-                        pokemon_id = None
-                        cp = 0
+                        pokemon_id: Optional[int] = None
+                        cp: int = 0
                         move_1 = 1
                         move_2 = 2
-                        form = None
-                        gender = None
-                        costume = None
-                        evolution = 0
+                        form: Optional[int] = None
+                        gender: Optional[int] = None
+                        costume: Optional[int] = None
+                        evolution: Optional[int] = 0
 
-                    raid_end_sec = int(gym["gym_details"]["raid_info"]["raid_end"] / 1000)
-                    raid_spawn_sec = int(gym["gym_details"]["raid_info"]["raid_spawn"] / 1000)
-                    raid_battle_sec = int(gym["gym_details"]["raid_info"]["raid_battle"] / 1000)
-
+                    raid_end_sec: int = int(gym.raid_info.raid_end_ms / 1000)
                     raidend_date = DatetimeWrapper.fromtimestamp(
                         float(raid_end_sec))
-                    raidspawn_date = DatetimeWrapper.fromtimestamp(float(raid_spawn_sec))
-                    raidstart_date = DatetimeWrapper.fromtimestamp(float(raid_battle_sec))
 
-                    is_exclusive = gym["gym_details"]["raid_info"]["is_exclusive"]
-                    level = gym["gym_details"]["raid_info"]["level"]
-                    gymid = gym["id"]
+                    gymid: str = gym.fort_id
 
-                    logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, level,
+                    logger.debug3("Adding/Updating gym {} with level {} ending at {}", gymid, gym.raid_info.raid_level,
                                   raidend_date.strftime("%Y-%m-%d %H:%M:%S"))
 
                     cache_key = "raid{}{}{}".format(gymid, pokemon_id, raid_end_sec)
                     if await self._cache.exists(cache_key):
                         continue
+
+                    raid_spawn_sec: int = int(gym.raid_info.raid_spawn_ms / 1000)
+                    raid_battle_sec: int = int(gym.raid_info.raid_battle_ms / 1000)
+                    raidspawn_date = DatetimeWrapper.fromtimestamp(float(raid_spawn_sec))
+                    raidstart_date = DatetimeWrapper.fromtimestamp(float(raid_battle_sec))
 
                     raid: Optional[Raid] = await RaidHelper.get(session, gymid)
                     if not raid:
@@ -929,7 +916,7 @@ class DbPogoProtoSubmitRaw:
                         raid.gym_id = gymid
                     elif raid.last_scanned > received_at:
                         continue
-                    raid.level = level
+                    raid.level = gym.raid_info.raid_level
                     raid.spawn = raidspawn_date
                     raid.start = raidstart_date
                     raid.end = raidend_date
@@ -939,7 +926,7 @@ class DbPogoProtoSubmitRaw:
                     raid.move_2 = move_2
                     raid.last_scanned = received_at
                     raid.form = form
-                    raid.is_exclusive = is_exclusive
+                    raid.is_exclusive = gym.raid_info.is_exclusive
                     raid.gender = gender
                     raid.costume = costume
                     raid.evolution = evolution
@@ -954,32 +941,32 @@ class DbPogoProtoSubmitRaw:
         logger.debug3("DbPogoProtoSubmit::raids: Done submitting raids with data received")
         return raids_seen
 
-    async def routes(self, session: AsyncSession, routes_proto: Dict,
+    async def routes(self, session: AsyncSession, routes_proto: pogoprotos.GetRoutesOutProto,
                      timestamp_received: int) -> None:
         logger.debug3("DbPogoProtoSubmit::routes called with data received")
-        status: int = routes_proto.get("status", 0)
+        status: int = routes_proto.status
         # The status of the GetRoutesOutProto indicates the reset of the values being useful for us where a value of 1
         #  maps to success
         if status != 1:
             logger.warning("Routes response not useful ({})", status)
             return
 
-        cells: List[Dict] = routes_proto.get("route_map_cell", [])
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientRouteMapCellProto] = routes_proto.route_map_cell
         if not cells:
             logger.warning("No cells to process in routes proto")
             return
 
         for cell in cells:
-            s2_cell_id: int = cell.get("s2_cell_id")
-            routes: List[Dict] = cell.get("route", [])
+            s2_cell_id: int = cell.s2_cell_id
+            routes: RepeatedCompositeFieldContainer[pogoprotos.SharedRouteProto] = cell.route
             if not routes:
                 continue
             for route in routes:
                 await self._handle_route_cell(session, s2_cell_id, route, timestamp_received)
 
-    async def _handle_route_cell(self, session: AsyncSession, s2_cell_id: int, route_data: Dict,
+    async def _handle_route_cell(self, session: AsyncSession, s2_cell_id: int, route_data: pogoprotos.SharedRouteProto,
                                  timestamp_received: int) -> None:
-        route_id: str = route_data.get("id")
+        route_id: str = route_data.id
         cache_key = "route{}".format(route_id)
         if await self._cache.exists(cache_key):
             return
@@ -991,50 +978,52 @@ class DbPogoProtoSubmitRaw:
                     route: Route = Route()
                     route.route_id = route_id
 
-                route.waypoints = json.dumps(route_data.get("waypoints"))
-                route.type = route_data.get("type", 0)
-                route.path_type = route_data.get("path_type", 0)
-                route.name = route_data.get("name")
-                route.version = route_data.get("version")
-                route.description = route_data.get("description")
-                route.reversible = route_data.get("reversible")
+                # TODO: Make sure dumps works properly...
+                route.waypoints = json.dumps(route_data.waypoints)
+                route.type = route_data.type
+                route.path_type = route_data.path_type
+                route.name = route_data.name
+                route.version = route_data.version
+                route.description = route_data.description
+                route.reversible = route_data.reversible
 
-                submission_time_raw: int = route_data.get("submission_time")
+                submission_time_raw: int = route_data.submission_time
                 logger.debug2("Submission time raw: {}", submission_time_raw)
                 submission_time: datetime = DatetimeWrapper.fromtimestamp(submission_time_raw / 1000)
                 route.submission_time = submission_time
-                route.route_distance_meters = route_data.get("route_distance_meters")
-                route.route_duration_seconds = route_data.get("route_duration_seconds")
+                route.route_distance_meters = route_data.route_distance_meters
+                route.route_duration_seconds = route_data.route_duration_seconds
 
-                pins_raw: Optional[Dict] = route_data.get("pins", {})
+                pins_raw: Optional[Dict] = route_data.pins
+                # TODO: Make sure dumps works properly...
                 route.pins = json.dumps(pins_raw)
 
-                tags_raw: Optional[Dict] = route_data.get("tags", {})
+                tags_raw: Optional[Dict] = route_data.tags
+                # TODO: Make sure dumps works properly...
                 route.tags = json.dumps(tags_raw)
 
-                image_data: Dict = route_data.get("image", {})
-                route.image = image_data.get("image_url")
-                route.image_border_color_hex = image_data.get("border_color_hex")
+                image_data: pogoprotos.RouteImageProto = route_data.image
+                route.image = image_data.image_url
+                route.image_border_color_hex = image_data.border_color_hex
 
-                route_submission_status_data: Dict = route_data.get("route_submission_status", {})
-                route.route_submission_status = route_submission_status_data.get("status", 0)
-                route_submission_update_time: int = route_submission_status_data.get(
-                    "submission_status_update_time_ms", 0)
+                route_submission_status_data: pogoprotos.RouteSubmissionStatus = route_data.route_submission_status
+                route.route_submission_status = route_submission_status_data.status
+                route_submission_update_time: int = route_submission_status_data.submission_status_update_time_ms
                 route.route_submission_update_time = DatetimeWrapper.fromtimestamp(route_submission_update_time / 1000)
 
-                start_poi_data: Dict = route_data.get("start_poi", {})
-                start_poi_anchor: Dict = start_poi_data.get("anchor")
-                route.start_poi_fort_id = start_poi_anchor.get("fort_id")
-                route.start_poi_latitude = start_poi_anchor.get("lat_degrees")
-                route.start_poi_longitude = start_poi_anchor.get("lng_degrees")
-                route.start_poi_image_url = start_poi_data.get("image_url")
+                start_poi_data: pogoprotos.RoutePoiAnchor = route_data.start_poi
+                start_poi_anchor: pogoprotos.RouteWaypointProto = start_poi_data.anchor
+                route.start_poi_fort_id = start_poi_anchor.fort_id
+                route.start_poi_latitude = start_poi_anchor.lat_degrees
+                route.start_poi_longitude = start_poi_anchor.lng_degrees
+                route.start_poi_image_url = start_poi_data.image_url
 
-                end_poi_data: Dict = route_data.get("end_poi", {})
-                end_poi_anchor: Dict = end_poi_data.get("anchor")
-                route.end_poi_fort_id = end_poi_anchor.get("fort_id")
-                route.end_poi_latitude = end_poi_anchor.get("lat_degrees")
-                route.end_poi_longitude = end_poi_anchor.get("lng_degrees")
-                route.end_poi_image_url = end_poi_data.get("image_url")
+                end_poi_data: pogoprotos.RoutePoiAnchor = route_data.end_poi
+                end_poi_anchor: pogoprotos.RouteWaypointProto = end_poi_data.anchor
+                route.end_poi_fort_id = end_poi_anchor.fort_id
+                route.end_poi_latitude = end_poi_anchor.lat_degrees
+                route.end_poi_longitude = end_poi_anchor.lng_degrees
+                route.end_poi_image_url = end_poi_data.image_url
 
                 route.last_updated = date_received
 
@@ -1045,25 +1034,26 @@ class DbPogoProtoSubmitRaw:
                 logger.warning("Failed committing route {} of cell {} ({})", route_id, s2_cell_id, str(e))
                 await nested_transaction.rollback()
 
-    async def weather(self, session: AsyncSession, map_proto, received_timestamp) -> bool:
+    async def weather(self, session: AsyncSession, map_proto: pogoprotos.GetMapObjectsOutProto,
+                      received_timestamp: int) -> bool:
         """
         Update/Insert weather from a map_proto dict
         """
         logger.debug3("DbPogoProtoSubmit::weather called with data received")
-        cells = map_proto.get("cells", None)
-        if cells is None:
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = map_proto.map_cell
+        if not cells:
             return False
 
-        for client_weather in map_proto["client_weather"]:
-            time_of_day = map_proto.get("time_of_day_value", 0)
+        for client_weather in map_proto.client_weather:
+            time_of_day: int = map_proto.time_of_day
             await self._handle_weather_data(session, client_weather, time_of_day, received_timestamp)
         return True
 
-    async def cells(self, session: AsyncSession, map_proto: dict):
-        protocells = map_proto.get("cells", [])
+    async def cells(self, session: AsyncSession, map_proto: pogoprotos.GetMapObjectsOutProto):
+        protocells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = map_proto.map_cell
 
         for cell in protocells:
-            cell_id = cell["id"]
+            cell_id: int = cell.s2_cell_id
 
             if cell_id < 0:
                 cell_id = cell_id + 2 ** 64
@@ -1080,11 +1070,11 @@ class DbPogoProtoSubmitRaw:
 
     async def _handle_single_incident(self, session: AsyncSession,
                                       stop_id: str,
-                                      incident_data: Optional[Dict]):
+                                      incident_data: Optional[pogoprotos.PokestopIncidentDisplayProto]):
         if not incident_data:
             logger.warning("Incident data is empty")
             return
-        incident_id: Optional[str] = incident_data.get("incident_id")
+        incident_id: Optional[str] = incident_data.incident_id
         if incident_id is None or len(incident_id.strip()) == 0:
             return
         logger.debug2("Handling incident '{}': {}", incident_id, incident_data)
@@ -1095,22 +1085,22 @@ class DbPogoProtoSubmitRaw:
             incident = PokestopIncident()
             incident.pokestop_id = stop_id
             incident.incident_id = incident_id
-        incident_start = incident_data.get("incident_start_ms", 0) / 1000
+        incident_start: float = incident_data.incident_start_ms / 1000
         if incident_start > 0:
             incident.incident_start = DatetimeWrapper.fromtimestamp(incident_start)
 
-        incident_expiration = incident_data.get("incident_expiration_ms", 0) / 1000
+        incident_expiration: float = incident_data.incident_expiration_ms / 1000
         if incident_expiration > 0:
             incident.incident_expiration = DatetimeWrapper.fromtimestamp(incident_expiration)
 
-        incident.hide_incident = incident_data.get("hide_incident", False)
-        incident.incident_display_type = incident_data.get("incident_display_type")
-        incident.incident_display_order_priority = incident_data.get("incident_display_order_priority")
-        incident.custom_display = incident_data.get("custom_display", {}).get("style_config_address")
-        incident.is_cross_stop_incident = incident_data.get("is_cross_stop_incident", False)
+        incident.hide_incident = incident_data.hide_incident
+        incident.incident_display_type = incident_data.incident_display_type
+        incident.incident_display_order_priority = incident_data.incident_display_order_priority
+        incident.custom_display = incident_data.custom_display.style_config_address
+        incident.is_cross_stop_incident = incident_data.is_cross_stop_incident
 
-        character_display = incident_data.get("character_display")
-        incident.character_display = character_display.get("character") if character_display is not None else 0
+        character_display: Optional[pogoprotos.CharacterDisplayProto] = incident_data.character_display
+        incident.character_display = character_display.character if character_display else 0
 
         async with session.begin_nested() as nested_transaction:
             try:
@@ -1124,23 +1114,24 @@ class DbPogoProtoSubmitRaw:
 
     async def _handle_pokestop_incident_data(self, session: AsyncSession,
                                              stop_id: str,
-                                             stop_data: Dict):
-        if "pokestop_display" in stop_data:
-            await self._handle_single_incident(session, stop_id, stop_data.get("pokestop_display"))
-        incident_displays: Optional[List[Dict]] = stop_data.get("pokestop_displays")
+                                             stop_data: pogoprotos.PokemonFortProto):
+        if stop_data.pokestop_display:
+            await self._handle_single_incident(session, stop_id, stop_data.pokestop_display)
+        incident_displays: Optional[RepeatedCompositeFieldContainer[pogoprotos.PokestopIncidentDisplayProto]] = (
+            stop_data.pokestop_displays)
         if incident_displays:
             for incident in incident_displays:
                 await self._handle_single_incident(session, stop_id, incident)
 
     async def _handle_pokestop_data(self, session: AsyncSession,
-                                    stop_data: Dict) -> Optional[Pokestop]:
-        if stop_data["type"] != 1:
+                                    stop_data: pogoprotos.PokemonFortProto) -> Optional[Pokestop]:
+        if stop_data.fort_type != pogoprotos.FortType.CHECKPOINT:
             logger.info("{} is not a pokestop", stop_data)
             return
 
         # We can detect changes of the incidents by simply appending all incident IDs sent in the proto I guess...
-        stop_id: str = stop_data["id"]
-        last_modified_timestamp: int = stop_data.get("last_modified_timestamp_ms")
+        stop_id: str = stop_data.fort_id
+        last_modified_timestamp: int = stop_data.last_modified_ms
         if not last_modified_timestamp:
             last_modified_timestamp = int(math.ceil(DatetimeWrapper.now().timestamp() / 1000)) * 1000
         cache_key = "stop{}{}".format(stop_id, last_modified_timestamp)
@@ -1149,13 +1140,13 @@ class DbPogoProtoSubmitRaw:
 
         now = DatetimeWrapper.fromtimestamp(time.time())
         last_modified: datetime = DatetimeWrapper.fromtimestamp(
-            stop_data["last_modified_timestamp_ms"] / 1000
+            stop_data.last_modified_ms / 1000
         )
-        lure = DatetimeWrapper.fromtimestamp(0)
-        active_fort_modifier = None
-        is_ar_scan_eligible = stop_data["is_ar_scan_eligible"]
+        lure: datetime = DatetimeWrapper.fromtimestamp(0)
+        active_fort_modifier: Optional[int] = None
+        is_ar_scan_eligible = stop_data.is_ar_scan_eligible
 
-        if len(stop_data["active_fort_modifier"]) > 0:
+        if len(stop_data.active_fort_modifier) > 0:
             # get current lure duration
             trs_event: Optional[TrsEvent] = await TrsEventHelper.get_current_event(session)
             if trs_event and trs_event.event_lure_duration:
@@ -1163,19 +1154,18 @@ class DbPogoProtoSubmitRaw:
             else:
                 lure_duration = int(30)
 
-            active_fort_modifier = stop_data["active_fort_modifier"][0]
+            active_fort_modifier = stop_data.active_fort_modifier[0]
             lure = DatetimeWrapper.fromtimestamp(
-                lure_duration * 60 + (stop_data["last_modified_timestamp_ms"] / 1000)
+                lure_duration * 60 + (stop_data.last_modified_ms / 1000)
             )
-        stop_id = stop_data["id"]
 
         pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_id)
         if not pokestop:
             pokestop: Pokestop = Pokestop()
             pokestop.pokestop_id = stop_id
-        pokestop.enabled = stop_data.get("enabled", 1)
-        pokestop.latitude = stop_data["latitude"]
-        pokestop.longitude = stop_data["longitude"]
+        pokestop.enabled = stop_data.enabled
+        pokestop.latitude = stop_data.latitude
+        pokestop.longitude = stop_data.longitude
         pokestop.last_modified = last_modified
         pokestop.lure_expiration = lure
         pokestop.last_updated = now
@@ -1191,45 +1181,43 @@ class DbPogoProtoSubmitRaw:
                 await session.rollback()
         await self._handle_pokestop_incident_data(session, stop_id, stop_data)
 
-    async def _extract_args_single_stop_details(self, session: AsyncSession, stop_data) -> Optional[Pokestop]:
-        if stop_data.get("type", 999) != 1:
+    async def _extract_args_single_stop_details(self, session: AsyncSession,
+                                                stop_data: pogoprotos.FortDetailsOutProto) -> Optional[Pokestop]:
+        if stop_data.fort_type != pogoprotos.FortType.CHECKPOINT:
             return None
-        image = stop_data.get("image_urls", None)
-        name = stop_data.get("name", None)
-        now = DatetimeWrapper.now()
-        stop_id = stop_data["fort_id"]
-        pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_id)
+        image: RepeatedScalarFieldContainer[str] = stop_data.image_url
+        now: datetime = DatetimeWrapper.now()
+        pokestop: Optional[Pokestop] = await PokestopHelper.get(session, stop_data.id)
         if not pokestop:
             pokestop: Pokestop = Pokestop()
-            pokestop.pokestop_id = stop_data["id"]
+            pokestop.pokestop_id = stop_data.id
+            pokestop.enabled = True
+            pokestop.last_modified = DatetimeWrapper.fromtimestamp(0)
         elif pokestop.last_updated > now:
             return None
-        pokestop.latitude = stop_data["latitude"]
-        pokestop.longitude = stop_data["longitude"]
-        pokestop.name = name
+        pokestop.latitude = stop_data.latitude
+        pokestop.longitude = stop_data.longitude
+        pokestop.name = stop_data.name
         if image and image[0]:
             pokestop.image = image[0]
         pokestop.last_updated = now
-        pokestop.enabled = stop_data.get("enabled", 1)
-        pokestop.last_modified = DatetimeWrapper.fromtimestamp(
-            stop_data.get("last_modified_timestamp_ms", 0) / 1000)
         return pokestop
 
-    async def _handle_weather_data(self, session: AsyncSession, client_weather_data, time_of_day,
-                                   received_timestamp) -> None:
-        cell_id = client_weather_data["cell_id"]
+    async def _handle_weather_data(self, session: AsyncSession, client_weather_data: pogoprotos.ClientWeatherProto,
+                                   time_of_day: int,
+                                   received_timestamp: int) -> None:
+        cell_id: int = client_weather_data.s2_cell_id
         real_lat, real_lng = S2Helper.middle_of_cell(cell_id)
-
-        display_weather_data = client_weather_data.get("display_weather", None)
-        if display_weather_data is None:
+        display_weather_data: Optional[pogoprotos.DisplayWeatherProto] = client_weather_data.display_weather
+        if not display_weather_data:
             return
         else:
-            gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
-        cache_key = "weather{}{}{}{}{}{}{}".format(cell_id, display_weather_data.get("rain_level", 0),
-                                                   display_weather_data.get("wind_level", 0),
-                                                   display_weather_data.get("snow_level", 0),
-                                                   display_weather_data.get("fog_level", 0),
-                                                   display_weather_data.get("wind_direction", 0),
+            gameplay_weather: int = client_weather_data.gameplay_weather.gameplay_condition
+        cache_key = "weather{}{}{}{}{}{}{}".format(cell_id, display_weather_data.rain_level,
+                                                   display_weather_data.wind_level,
+                                                   display_weather_data.snow_level,
+                                                   display_weather_data.fog_level,
+                                                   display_weather_data.wind_direction,
                                                    gameplay_weather)
         if await self._cache.exists(cache_key):
             return
@@ -1242,16 +1230,16 @@ class DbPogoProtoSubmitRaw:
                     weather.s2_cell_id = str(cell_id)
                     weather.latitude = real_lat
                     weather.longitude = real_lng
-                weather.cloud_level = display_weather_data.get("cloud_level", 0)
-                weather.rain_level = display_weather_data.get("rain_level", 0)
-                weather.wind_level = display_weather_data.get("wind_level", 0)
-                weather.snow_level = display_weather_data.get("snow_level", 0)
-                weather.fog_level = display_weather_data.get("fog_level", 0)
-                weather.wind_direction = display_weather_data.get("wind_direction", 0)
+                weather.cloud_level = display_weather_data.cloud_level
+                weather.rain_level = display_weather_data.rain_level
+                weather.wind_level = display_weather_data.wind_level
+                weather.snow_level = display_weather_data.snow_level
+                weather.fog_level = display_weather_data.fog_level
+                weather.wind_direction = display_weather_data.wind_direction
                 weather.gameplay_weather = gameplay_weather
-                # TODO: Properly extract severity and warn..
-                weather.warn_weather = 0
-                weather.severity = 0
+                alerts: RepeatedCompositeFieldContainer[pogoprotos.WeatherAlertProto] = client_weather_data.alerts
+                weather.warn_weather = alerts[0].warn_weather if alerts else 0
+                weather.severity = alerts[0].severity if alerts else 0
                 weather.world_time = time_of_day
                 weather.last_updated = date_received
 
@@ -1276,7 +1264,7 @@ class DbPogoProtoSubmitRaw:
             spawnret[int(spawn.spawnpoint)] = spawn
         return spawnret
 
-    def _get_current_spawndef_pos(self):
+    def _get_current_spawndef_pos(self) -> Optional[int]:
         minute_value = int(DatetimeWrapper.now().strftime("%M"))
         if minute_value < 15:
             pos = 4
@@ -1309,12 +1297,13 @@ class DbPogoProtoSubmitRaw:
     def get_time_ms(self):
         return int(time.time() * 1000)
 
-    async def maybe_save_ditto(self, session: AsyncSession, display: Dict, encounter_id: int, mon_id: int,
-                               pokemon_data: Dict):
+    async def maybe_save_ditto(self, session: AsyncSession, display: pogoprotos.PokemonDisplayProto,
+                               encounter_id: int, mon_id: int,
+                               pokemon_data: pogoprotos.PokemonProto):
         if mon_id == 132:
             # Save ditto disguise
             await PokemonDisplayHelper.insert_ignore(session, encounter_id,
-                                                     pokemon_id=pokemon_data.get('id'),
-                                                     form=display.get("form_value", None),
-                                                     gender=display.get("gender_value", None),
-                                                     costume=display.get("costume_value", None))
+                                                     pokemon_id=pokemon_data.pokemon_id,
+                                                     form=display.form,
+                                                     gender=display.gender,
+                                                     costume=display.costume)

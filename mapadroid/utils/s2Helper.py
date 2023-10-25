@@ -1,6 +1,6 @@
 import math
 import multiprocessing
-from typing import List
+from typing import List, Tuple
 
 import gpxdata
 import s2sphere
@@ -30,9 +30,9 @@ class S2Helper:
     # RM stores lat, long as well...
     # returns tuple  <lat, lng>
     @staticmethod
-    def middle_of_cell(cell_id):
-        cell = s2sphere.CellId(cell_id)
-        lat_lng = cell.to_lat_lng()
+    def middle_of_cell(cell_id: int) -> Tuple[float, float]:
+        cell: s2sphere.CellId = s2sphere.CellId(cell_id)
+        lat_lng: s2sphere.LatLng = cell.to_lat_lng()
         return lat_lng.lat().degrees, lat_lng.lng().degrees
 
     @staticmethod
