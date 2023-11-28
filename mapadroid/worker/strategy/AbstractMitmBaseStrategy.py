@@ -1,6 +1,8 @@
 import asyncio
 import sys
 
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+
 from mapadroid.db.helper.PokemonHelper import PokemonHelper
 
 if sys.version_info.major == 3 and sys.version_info.minor >= 10:
@@ -11,7 +13,7 @@ else:
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union, Any
 
 from loguru import logger
 
@@ -35,8 +37,7 @@ from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.madConstants import (
     FALLBACK_MITM_WAIT_TIMEOUT, MINIMUM_DISTANCE_ALLOWANCE_FOR_GMO,
     SECONDS_BEFORE_ARRIVAL_OF_WALK_BUFFER, TIMESTAMP_NEVER)
-from mapadroid.utils.madGlobals import (FortSearchResultTypes,
-                                        InternalStopWorkerException,
+from mapadroid.utils.madGlobals import (InternalStopWorkerException,
                                         MadGlobals, PositionType,
                                         TransportType,
                                         WebsocketWorkerRemovedException)
@@ -47,6 +48,7 @@ from mapadroid.worker.strategy.AbstractWorkerStrategy import \
     AbstractWorkerStrategy
 from mapadroid.worker.WorkerState import WorkerState
 from mapadroid.worker.WorkerType import WorkerType
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 
 class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
@@ -79,7 +81,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
                                       timestamp: int) \
-            -> Tuple[ReceivedType, Optional[object]]:
+            -> Tuple[ReceivedType, Optional[Any]]:
         """
         Wait_for_data for each worker
         :return:
@@ -140,7 +142,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
 
     async def _wait_for_data(self, timestamp: float = None,
                              proto_to_wait_for: ProtoIdentifier = ProtoIdentifier.GMO, timeout=None) \
-            -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]], float]:
+            -> Tuple[ReceivedType, Optional[Any], float]:
         key = str(proto_to_wait_for.value)
         if timestamp is None:
             timestamp = time.time()
@@ -158,9 +160,9 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         position_type = await self._mapping_manager.routemanager_get_position_type(self._area_id,
                                                                                    self._worker_state.origin)
         type_of_data_returned = ReceivedType.UNDEFINED
-        data = None
+        data: Optional[Any] = None
         last_time_received = TIMESTAMP_NEVER
-
+        latest: Optional[LatestMitmDataEntry] = None
         data, latest, type_of_data_returned = await self._request_data(data, key, proto_to_wait_for, timestamp,
                                                                        type_of_data_returned)
         if latest:
@@ -207,7 +209,8 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         # await self.worker_stats()
         return type_of_data_returned, data, last_time_received
 
-    async def _request_data(self, data, key, proto_to_wait_for, timestamp, type_of_data_returned):
+    async def _request_data(self, data, key, proto_to_wait_for, timestamp, type_of_data_returned)\
+            -> Tuple[Optional[Any], Optional[LatestMitmDataEntry], ReceivedType]:
         latest_location: Optional[Location] = await self._mitm_mapper.get_last_known_location(
             self._worker_state.origin)
         check_data = True
@@ -452,20 +455,21 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
         return True
 
     @staticmethod
-    def _gmo_cells_contain_multiple_of_key(gmo: dict, keys_in_cell: Union[str, Collection[str]]) -> bool:
-        if not gmo or not keys_in_cell or "cells" not in gmo:
+    def _gmo_cells_contain_multiple_of_key(gmo: pogoprotos.GetMapObjectsOutProto,
+                                           keys_in_cell: Union[str, Collection[str]]) -> bool:
+        if not gmo or not keys_in_cell or not gmo.map_cell:
             return False
         keys: List[str] = []
         if isinstance(keys_in_cell, str):
             keys.append(keys_in_cell)
         else:
             keys.extend(keys_in_cell)
-        cells = gmo.get("cells", [])
-        if not cells or not isinstance(cells, list):
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = gmo.map_cell
+        if not cells or not isinstance(cells, RepeatedCompositeFieldContainer):
             return False
         for cell in cells:
             for key in keys:
-                value_of_key = cell.get(key, None)
+                value_of_key: Optional[Any] = getattr(cell, key, None)
                 if value_of_key and isinstance(value_of_key, list) and len(value_of_key) > 0:
                     return True
         return False

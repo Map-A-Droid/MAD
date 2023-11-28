@@ -126,10 +126,14 @@ class MitmMapperClient(MitmMapperStub, AbstractMitmMapper):
         elif entry.HasField(
                 "some_list"):
             data = entry.some_list
+        elif entry.HasField("raw_message"):
+            data = entry.raw_message
         else:
             data = None
-        if data:
+        if data is not None and not isinstance(data, bytes):
             formatted = json_format.MessageToDict(data)
+        elif data is not None:
+            formatted = data
         else:
             formatted = None
         entry: LatestMitmDataEntry = LatestMitmDataEntry(location=location,

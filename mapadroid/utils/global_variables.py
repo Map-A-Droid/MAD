@@ -16,3 +16,5 @@ MIN_LEVEL_RAID = 8
 MIN_LEVEL_IV = 30
 # Speed can be 60 km/h up to distances of 3km
 QUEST_WALK_SPEED_CALCULATED = 16.67
+# Distance to consider mons being available for encounters in meters
+DISTANCE_CONSIDER_ENCOUNTERS = 65

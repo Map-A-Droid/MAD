@@ -5,8 +5,9 @@ import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union, Any
 
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from loguru import logger
 from s2sphere import CellId
 from sqlalchemy import exc
@@ -48,6 +49,7 @@ from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import \
     AbstractMitmBaseStrategy
 from mapadroid.worker.WorkerState import WorkerState
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 # The diff to lat/lng values to consider that the worker is standing on top of the stop
 S2_GMO_CELL_LEVEL = 15
@@ -111,9 +113,9 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
 
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
-                                      timestamp: int) -> Tuple[ReceivedType, Optional[object]]:
+                                      timestamp: int) -> Tuple[ReceivedType, Optional[Any]]:
         type_of_data_found: ReceivedType = ReceivedType.UNDEFINED
-        data_found: Optional[object] = None
+        data_found: Optional[Any] = None
 
         # proto has previously been received, let's check the timestamp...
         if not latest:
@@ -128,24 +130,25 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             return type_of_data_found, data_found
 
         # TODO: consider resetting timestamp here since we clearly received SOMETHING
-        latest_proto = latest.data
+        latest_proto: Union[List, Dict, bytes] = latest.data
         logger.debug4("Latest data received: {}", latest_proto)
-        if latest_proto is None:
-            return type_of_data_found, data_found
-        logger.debug2("Checking for Quest related data in proto {}", proto_to_wait_for)
         if latest_proto is None:
             logger.debug("No proto data for {} at {} after {}", proto_to_wait_for,
                          timestamp_of_proto, timestamp)
-        elif proto_to_wait_for == ProtoIdentifier.FORT_SEARCH:
-            quest_type: int = latest_proto.get('challenge_quest', {}) \
-                .get('quest', {}) \
-                .get('quest_type', 0)
-            result: int = latest_proto.get("result", 0)
-            if result == 1 and len(latest_proto.get('items_awarded', [])) == 0:
+            return type_of_data_found, data_found
+        logger.debug2("Checking for Quest related data in proto {}", proto_to_wait_for)
+        if proto_to_wait_for == ProtoIdentifier.FORT_SEARCH:
+            fort_search: pogoprotos.FortSearchOutProto = pogoprotos.FortSearchOutProto.ParseFromString(
+                latest_proto)
+            # TODO..
+            quest_type: int = fort_search.challenge_quest.quest.quest_type
+            result: int = fort_search.result
+            amount_items_awarded: int = len(fort_search.items)
+            if result == 1 and amount_items_awarded == 0:
                 return ReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.TIME
             elif result == 1 and quest_type == 0:
                 return ReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.FULL
-            elif result == 1 and len(latest_proto.get('items_awarded', [])) > 0:
+            elif result == 1 and amount_items_awarded > 0:
                 return ReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.QUEST
             elif result == 2:
                 return ReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.OUT_OF_RANGE
@@ -156,15 +159,16 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             elif result == 5:
                 return ReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.LIMIT
         elif proto_to_wait_for == ProtoIdentifier.FORT_DETAILS:
-            fort_type: int = latest_proto.get("type", 0)
-            data_found = latest_proto
+            fort_details: pogoprotos.FortDetailsOutProto = pogoprotos.FortDetailsOutProto.ParseFromString(
+                latest_proto)
+            fort_type: int = fort_details.fort_type
+            data_found = fort_details
             type_of_data_found = ReceivedType.GYM if fort_type == 0 else ReceivedType.STOP
-        elif proto_to_wait_for == ProtoIdentifier.GMO \
-                and self._directly_surrounding_gmo_cells_containing_stops_around_current_position(
-                        latest_proto.get("cells")
-                    ):
-            data_found = latest_proto
-            type_of_data_found = ReceivedType.GMO
+        elif proto_to_wait_for == ProtoIdentifier.GMO:
+            gmo_proto: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(latest_proto)
+            if self._directly_surrounding_gmo_cells_containing_stops_around_current_position(gmo_proto):
+                data_found = latest_proto
+                type_of_data_found = ReceivedType.GMO
 
         return type_of_data_found, data_found
 
@@ -505,7 +509,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         return ids_iv, scanmode
 
     async def _wait_for_data_after_moving(self, timestamp: float, proto_to_wait_for: ProtoIdentifier, timeout) \
-            -> Tuple[ReceivedType, Optional[Union[dict, FortSearchResultTypes]], float]:
+            -> Tuple[ReceivedType, Optional[Any], float]:
         try:
             timeout_default: int = await self.get_devicesettings_value(MappingManagerDevicemappingKey.MITM_WAIT_TIMEOUT,
                                                                        FALLBACK_MITM_WAIT_TIMEOUT)
@@ -575,30 +579,32 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
     async def _current_position_has_spinnable_stop(self, timestamp: float) -> PositionStopType:
         type_received, data_received, time_received = await self._wait_for_data_after_moving(timestamp,
                                                                                              ProtoIdentifier.GMO, 35)
-        if type_received != ReceivedType.GMO or data_received is None:
+        if (type_received != ReceivedType.GMO or data_received is None
+                or not isinstance(data_received, pogoprotos.GetMapObjectsOutProto)):
             await self._spinnable_data_failure()
             return PositionStopType.GMO_NOT_AVAILABLE
-        latest_proto = data_received
-        gmo_cells: list = latest_proto.get("cells", None)
+        latest_proto: pogoprotos.GetMapObjectsOutProto = data_received
 
-        if not gmo_cells:
+        if not latest_proto.map_cell:
             logger.warning("Can't spin stop - no map info in GMO!")
             await self._spinnable_data_failure()
             return PositionStopType.GMO_EMPTY
 
         distance_to_consider_for_stops = STOP_SPIN_DISTANCE
-        cells_with_stops = self._directly_surrounding_gmo_cells_containing_stops_around_current_position(gmo_cells)
+        cells_with_stops: List[
+            pogoprotos.ClientMapCellProto] = self._directly_surrounding_gmo_cells_containing_stops_around_current_position(latest_proto)
         stop_types: Set[PositionStopType] = set()
         async with self._db_wrapper as session, session:
             for cell in cells_with_stops:
-                forts: list = cell.get("forts", None)
+                forts: RepeatedCompositeFieldContainer[pogoprotos.PokemonFortProto] = cell.fort
                 if not forts:
                     continue
 
                 for fort in forts:
-                    latitude: float = fort.get("latitude", 0.0)
-                    longitude: float = fort.get("longitude", 0.0)
-                    fort_type: int = fort.get("type", 0)
+                    latitude: float = fort.latitude
+                    longitude: float = fort.longitude
+                    # TODO: Ensure this and the following IF works
+                    fort_type: int = fort.fort_type
 
                     if latitude == 0.0 or longitude == 0.0 or fort_type == 0:
                         # invalid location or fort is a gym
@@ -619,26 +625,22 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                             latitude, longitude)
                         continue
 
-                    visited: bool = fort.get("visited", False)
-                    if await self._is_levelmode() and self._ignore_spinned_stops and visited:
+                    if await self._is_levelmode() and self._ignore_spinned_stops and fort.visited:
                         logger.info("Level mode: Stop already visited - skipping it")
                         self._spinnable_data_failcount = 0
                         stop_types.add(PositionStopType.VISITED_STOP_IN_LEVEL_MODE_TO_IGNORE)
                         continue
 
-                    enabled: bool = fort.get("enabled", True)
-                    if not enabled:
+                    if not fort.enabled:
                         logger.info("Can't spin the stop - it is disabled")
                         stop_types.add(PositionStopType.STOP_DISABLED)
                         continue
-                    closed: bool = fort.get("closed", False)
-                    if closed:
+                    if fort.closed:
                         logger.info("Can't spin the stop - it is closed")
                         stop_types.add(PositionStopType.STOP_CLOSED)
                         continue
 
-                    cooldown: int = fort.get("cooldown_complete_ms", 0)
-                    if not cooldown == 0:
+                    if not fort.cooldown_complete_ms == 0:
                         logger.info("Can't spin the stop - it has cooldown, it has been spun already.")
                         stop_types.add(PositionStopType.STOP_COOLDOWN)
                         self._spinnable_data_failcount = 0
@@ -650,7 +652,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                 logger.warning("Unable to confirm the current location ({}) yielding a spinnable stop "
                                "- likely not standing exactly on top ...",
                                self._worker_state.current_location)
-                await self._check_if_stop_was_nearby_and_update_location(session, gmo_cells)
+                await self._check_if_stop_was_nearby_and_update_location(session, latest_proto)
                 await self._spinnable_data_failure()
                 try:
                     await session.commit()
@@ -684,17 +686,18 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
         else:
             self._spinnable_data_failcount += 1
 
-    def _directly_surrounding_gmo_cells_containing_stops_around_current_position(self, gmo_cells) -> List:
+    def _directly_surrounding_gmo_cells_containing_stops_around_current_position(
+            self, gmo: pogoprotos.GetMapObjectsOutProto) -> List[pogoprotos.ClientMapCellProto]:
         """
         Returns a list of cells containing forts
         Args:
-            gmo_cells:
+            gmo:
 
         Returns:
             List of cells that actually contain forts around the current position
         """
-        cells_with_forts = []
-        if not gmo_cells:
+        cells_with_forts: List[pogoprotos.ClientMapCellProto] = []
+        if not gmo.map_cell:
             logger.debug("No GMO cells passed for surrounding cell check")
             return cells_with_forts
         # 35m radius around current location (thus cells that may be touched by that radius hopefully get included)
@@ -704,12 +707,12 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                                              RADIUS_FOR_CELLS_CONSIDERED_FOR_STOP_SCAN,
                                              S2_GMO_CELL_LEVEL)
         s2cell_ids_valid: List[str] = [s2cell.id() for s2cell in s2cells_valid_around_location]
-        for cell in gmo_cells:
+        for cell in gmo.map_cell:
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
             # very very little jitter) and check its properties
-            if cell["id"] not in s2cell_ids_valid:
+            if cell.s2_cell_id not in s2cell_ids_valid:
                 continue
-            forts: list = cell.get("forts", None)
+            forts: RepeatedCompositeFieldContainer[pogoprotos.PokemonFortProto] = cell.fort
             if forts:
                 cells_with_forts.append(cell)
 
@@ -718,35 +721,36 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                           self._worker_state.current_location)
         return cells_with_forts
 
-    async def _check_if_stop_was_nearby_and_update_location(self, session: AsyncSession, gmo_cells):
+    async def _check_if_stop_was_nearby_and_update_location(self, session: AsyncSession,
+                                                            gmo: pogoprotos.GetMapObjectsOutProto) -> None:
         logger.info("Checking stops around current location ({}) for deleted stops.",
                     self._worker_state.current_location)
 
         stops: Dict[str, Pokestop] = await PokestopHelper.get_nearby(session, self._worker_state.current_location)
         logger.debug("Checking if GMO contains location changes or DB has stops that are already deleted. In DB: "
-                     "{}. GMO cells: {}", str(stops), gmo_cells)
+                     "{}. GMO cells: {}", str(stops), gmo.map_cell)
+        # TODO: str()?
         # stops may contain multiple stops now. We can check each ID (key of dict) with the IDs in the GMO.
         # Then cross check against the location. If that differs, we need to update/delete the entries in the DB
-        for cell in gmo_cells:
-            forts: list = cell.get("forts", None)
+        for cell in gmo.map_cell:
+            forts: RepeatedCompositeFieldContainer[pogoprotos.PokemonFortProto] = cell.fort
             if not forts:
                 continue
 
             for fort in forts:
-                latitude: float = fort.get("latitude", None)
-                longitude: float = fort.get("longitude", None)
-                fort_id: str = fort.get("id", None)
-                if not latitude or not longitude or not fort_id:
+                if not fort.latitude or not fort.longitude or not fort.fort_id:
                     logger.warning("Cannot process fort without id, lat or lon")
                     continue
-                stop: Optional[Pokestop] = stops.get(fort_id)
+                stop: Optional[Pokestop] = stops.get(fort.fort_id)
                 if stop is None:
                     # new stop we have not seen before, MITM processors should take care of that
-                    logger.debug2("Stop not in DB (in range) with ID {} at {}, {}", fort_id, latitude, longitude)
+                    logger.debug2("Stop not in DB (in range) with ID {} at {}, {}",
+                                  fort.fort_id, fort.latitude, fort.longitude)
                     continue
                 else:
-                    stops.pop(fort_id)
-                if float(stop.latitude) == latitude and float(stop.longitude) == longitude:
+                    stops.pop(fort.fort_id)
+                # TODO: Is this comparison too strict?
+                if float(stop.latitude) == fort.latitude and float(stop.longitude) == fort.longitude:
                     # Location of fort has not changed
                     # logger.debug2("Fort {} has not moved", fort_id)
                     continue
@@ -755,9 +759,10 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
                     # the one we are currently processing, thus SAME fort_id
                     # now update the stop
                     logger.warning("Updating fort {} with previous location {}, {} now placed at {}, {}",
-                                   fort_id, stop.latitude, stop.longitude, latitude, longitude)
+                                   fort.fort_id, stop.latitude, stop.longitude, fort.latitude, fort.longitude)
                     async with self._db_wrapper as fresh_session, fresh_session:
-                        await PokestopHelper.update_location(fresh_session, fort_id, Location(latitude, longitude))
+                        await PokestopHelper.update_location(fresh_session, fort.fort_id,
+                                                             Location(fort.latitude, fort.longitude))
                         try:
                             await fresh_session.commit()
                         except exc.InternalError as e:

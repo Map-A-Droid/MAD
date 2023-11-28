@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple, List, Union, Any, Dict
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
@@ -7,6 +7,7 @@ from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import FortSearchResultTypes
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.strategy.plain.AbstractWorkerMitmStrategy import AbstractWorkerMitmStrategy
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 logger = get_logger(LoggerEnums.worker)
 
@@ -14,9 +15,9 @@ logger = get_logger(LoggerEnums.worker)
 class WorkerMonMitmStrategy(AbstractWorkerMitmStrategy):
     async def _check_for_data_content(self, latest: Optional[LatestMitmDataEntry],
                                       proto_to_wait_for: ProtoIdentifier,
-                                      timestamp: int) -> Tuple[ReceivedType, Optional[object]]:
+                                      timestamp: int) -> Tuple[ReceivedType, Optional[Any]]:
         type_of_data_found: ReceivedType = ReceivedType.UNDEFINED
-        data_found: Optional[object] = None
+        data_found: Optional[Any] = None
         if not latest:
             return type_of_data_found, data_found
         # proto has previously been received, let's check the timestamp...
@@ -31,18 +32,21 @@ class WorkerMonMitmStrategy(AbstractWorkerMitmStrategy):
             # TODO: latter indicates too high speeds for example
             return type_of_data_found, data_found
 
-        latest_proto_data: dict = latest.data
-        if latest_proto_data is None:
+        latest_proto_data: Union[List, Dict, bytes] = latest.data
+        if not latest_proto_data:
             return ReceivedType.UNDEFINED, data_found
-        if proto_to_wait_for == ProtoIdentifier.GMO:
-            if await self._gmo_contains_wild_mons_closeby(latest_proto_data):
+        elif proto_to_wait_for == ProtoIdentifier.GMO:
+            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
+                latest_proto_data)
+            if await self._gmo_contains_wild_mons_closeby(gmo):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO
             else:
                 # TODO: If there is no spawnpoint with a valid timer, this results in timeouts during ordinary routes...
                 logger.debug("Data looked for not in GMO")
         elif proto_to_wait_for == ProtoIdentifier.ENCOUNTER:
-            data_found = latest_proto_data
+            data_found: pogoprotos.EncounterOutProto = pogoprotos.EncounterOutProto.ParseFromString(
+                latest_proto_data)
             type_of_data_found = ReceivedType.MON
 
         return type_of_data_found, data_found
@@ -54,6 +58,12 @@ class WorkerMonMitmStrategy(AbstractWorkerMitmStrategy):
         if not received:
             return None
         type_received, data_gmo, time_received = received
+        if not isinstance(data_gmo, pogoprotos.GetMapObjectsOutProto):
+            logger.warning("No GMO received after moving to location {}, {}",
+                           self._worker_state.current_location.lat,
+                           self._worker_state.current_location.lng
+                           )
+            return None
         if data_gmo and await self._gmo_contains_mons_to_be_encountered(
                 data_gmo):
             # Subtract a second as... encounters may overtake GMOs

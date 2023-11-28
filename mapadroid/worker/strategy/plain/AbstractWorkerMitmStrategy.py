@@ -2,8 +2,9 @@ import asyncio
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Optional, Set, Tuple, Union
+from typing import Optional, Set, Tuple, Union, Any
 
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from redis import Redis
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
@@ -12,6 +13,7 @@ from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.global_variables import DISTANCE_CONSIDER_ENCOUNTERS
 from mapadroid.utils.logging import LoggerEnums, get_logger
 from mapadroid.utils.madGlobals import (FortSearchResultTypes,
                                         InternalStopWorkerException,
@@ -20,6 +22,7 @@ from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.worker.ReceivedTypeEnum import ReceivedType
 from mapadroid.worker.strategy.AbstractMitmBaseStrategy import \
     AbstractMitmBaseStrategy
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 logger = get_logger(LoggerEnums.worker)
 
@@ -97,10 +100,7 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
         self._worker_state.last_location = self._worker_state.current_location
         return timestamp_to_use
 
-    async def post_move_location_routine(self, timestamp) -> Optional[Tuple[ReceivedType,
-                                                                            Optional[Union[dict,
-                                                                                           FortSearchResultTypes]],
-                                                                            float]]:
+    async def post_move_location_routine(self, timestamp) -> Optional[Tuple[ReceivedType, Optional[Any], float]]:
         # TODO: pass the appropriate proto number if IV?
         type_received, data_gmo, time_received = await self._wait_for_data(timestamp)
         if type_received != ReceivedType.GMO or not data_gmo:
@@ -110,28 +110,28 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
             return None
         return type_received, data_gmo, time_received
 
-    async def _gmo_contains_wild_mons_closeby(self, gmo) -> bool:
-        cells = gmo.get("cells", None)
+    async def _gmo_contains_wild_mons_closeby(self, gmo: pogoprotos.GetMapObjectsOutProto) -> bool:
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = gmo.map_cell
         if not cells:
             return False
         for cell in cells:
-            for wild_mon in cell["wild_pokemon"]:
-                lat = wild_mon["latitude"]
-                lon = wild_mon["longitude"]
-                distance_to_mon: float = get_distance_of_two_points_in_meters(lat, lon,
+            for wild_mon in cell.wild_pokemon:
+                distance_to_mon: float = get_distance_of_two_points_in_meters(wild_mon.latitude, wild_mon.longitude,
                                                                               self._worker_state.current_location.lat,
                                                                               self._worker_state.current_location.lng)
-                # TODO: Distance probably incorrect
-                if distance_to_mon > 70:
+                # TODO: Distance probably incorrect -> Should be read from proto indicating distances allowed
+                if distance_to_mon > DISTANCE_CONSIDER_ENCOUNTERS:
                     logger.debug("Distance to mon around considered to be too far away to await encounter")
                     continue
                 else:
-                    logger.debug2("Mon at {:.5f}, {:.5f} at distance {}", lat, lon, distance_to_mon)
+                    logger.debug2("Mon at {:.5f}, {:.5f} at distance {}",
+                                  wild_mon.latitude, wild_mon.longitude, distance_to_mon)
                     return True
         return False
 
-    async def _gmo_contains_mons_to_be_encountered(self, gmo, check_encounter_id: bool = False) -> bool:
-        cells = gmo.get("cells", None)
+    async def _gmo_contains_mons_to_be_encountered(self, gmo: pogoprotos.GetMapObjectsOutProto,
+                                                   check_encounter_id: bool = False) -> bool:
+        cells: RepeatedCompositeFieldContainer[pogoprotos.ClientMapCellProto] = gmo.map_cell
         if not cells:
             return False
         ids_to_encounter: Set[int] = set()
@@ -146,23 +146,21 @@ class AbstractWorkerMitmStrategy(AbstractMitmBaseStrategy, ABC):
             ids_to_encounter = {id_to_encounter for id_to_encounter in ids_iv}
 
         for cell in cells:
-            for wild_mon in cell["wild_pokemon"]:
-                spawnid = int(str(wild_mon["spawnpoint_id"]), 16)
-                lat = wild_mon["latitude"]
-                lon = wild_mon["longitude"]
-                distance_to_mon: float = get_distance_of_two_points_in_meters(lat, lon,
+            for wild_mon in cell.wild_pokemon:
+                distance_to_mon: float = get_distance_of_two_points_in_meters(wild_mon.latitude, wild_mon.longitude,
                                                                               self._worker_state.current_location.lat,
                                                                               self._worker_state.current_location.lng)
-                # TODO: Distance probably incorrect
-                if distance_to_mon > 65:
+                # TODO: Distance probably incorrect -> Should be read from proto indicating distances allowed
+                if distance_to_mon > DISTANCE_CONSIDER_ENCOUNTERS:
                     logger.debug("Distance to mon around considered to be too far away to await encounter")
                     continue
                 # If the mon has been encountered before, continue as it cannot be expected to be encountered again
-                encounter_id = wild_mon["encounter_id"]
-                pokemon_data = wild_mon.get("pokemon_data")
-                mon_id = pokemon_data.get("id")
-                pokemon_display = pokemon_data.get("display", {})
-                weather_boosted = pokemon_display.get('weather_boosted_value', None)
+                encounter_id: int = wild_mon.encounter_id
+                pokemon_data: pogoprotos.PokemonProto = wild_mon.pokemon
+                mon_id: int = pokemon_data.id
+                pokemon_display: pogoprotos.PokemonDisplayProto = pokemon_data.pokemon_display
+                # TODO: Ensure this works
+                weather_boosted: int = pokemon_display.weather_boosted_condition
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
                 cache_key = "moniv{}-{}-{}".format(encounter_id, weather_boosted, mon_id)

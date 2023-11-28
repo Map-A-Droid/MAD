@@ -35,7 +35,8 @@ class LatestMitmDataEntry:
 
         timestamp_received: Optional[int] = loaded.get("timestamp_received")
         timestamp_of_data_retrieval: Optional[int] = loaded.get("timestamp_of_data_retrieval")
-        data: Union[List, Dict] = loaded.get("data")
+        # TODO: Likely data is a str which needs to be translated to bytes?
+        data: Union[List, Dict, bytes] = loaded.get("data")
         obj: LatestMitmDataEntry = LatestMitmDataEntry(location,
                                                        timestamp_received,
                                                        timestamp_of_data_retrieval,
