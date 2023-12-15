@@ -16,8 +16,8 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.CustomTypes import MessageTyping
+from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.madGlobals import MadGlobals, ScreenshotType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
@@ -327,8 +327,6 @@ class WordToScreenMatching(object):
                                                    BurnType.MAINTENANCE)
         elif screentype == ScreenType.POGO:
             screentype = await self.__check_pogo_screen_ban_or_loading(screentype, y_offset=y_offset)
-            if screentype == ScreenType.WELCOME:
-                screentype = await self.__handle_welcome_screen()
         elif screentype == ScreenType.QUEST:
             logger.warning("Already on quest screen")
             # TODO: consider closing quest window?
