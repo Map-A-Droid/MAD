@@ -65,6 +65,12 @@ $(document).ready(function () {
         _title += "<br />Status: Cooldown"
      }
      $(this).tooltip({placement: "bottom", title: _title, html: true});
+    } else if (_burntype == "suspended") {
+      $(this).removeClass("genTooltip").addClass("fas fa-ban");
+      var _burntime_str = $(this).data("burntime");
+      var _burntime = moment.utc(_burntime_str);
+      var _title = "Type: " + _burntype + "<br/>" + "Timestamp: " + _burntime_str + " (" + _burntime.fromNow() + ")";
+      $(this).tooltip({placement: "bottom", title: _title, html: true});
     } else {
        // nothing for now, probably handle BAN if ever happens (-:
     }
