@@ -140,6 +140,9 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, q
             var url = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${quest_pokemon_form_id}${costume}.png`;
             var image = `<img class="mr-3" src="${url}" width="50">`;
             break;
+        case 9:
+            var image = '<img class="mr-3" src="static/quest/reward_xl_candy.png" width="50">';
+            break;
         case 12:
             var url = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/rewards/reward_mega_energy.png'
             var image = `<img class="mr-3" src="${url}" width="50">`;
