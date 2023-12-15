@@ -16,6 +16,7 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.collections import Location, ScreenCoordinates
 from mapadroid.utils.madGlobals import MadGlobals, ScreenshotType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
@@ -60,6 +61,8 @@ class WordToScreenMatching(object):
         returntype: ScreenType = ScreenType.UNDEFINED
         global_dict: dict = {}
         diff = 1
+        if "ExternalAppBrowserActivity" in topmost_app:
+            return ScreenType.PTC, global_dict, diff
         if "AccountPickerActivity" in topmost_app or 'SignInActivity' in topmost_app:
             return ScreenType.GGL, global_dict, diff
         elif "GrantPermissionsActivity" in topmost_app:
@@ -442,50 +445,74 @@ class WordToScreenMatching(object):
         if not self._worker_state.active_account:
             logger.error('No PTC Username and Password is set')
             return ScreenType.ERROR
-        if float(self._ratio) >= 2:
-            username_y = self._height / 2.25 + self._screenshot_y_offset
-            password_y = self._height / 1.75 + self._screenshot_y_offset
-            button_y = self._height / 1.45 + self._screenshot_y_offset
-        elif float(self._ratio) >= 1.7:
-            username_y = self._height / 1.98 + self._screenshot_y_offset
-            password_y = self._height / 1.51 + self._screenshot_y_offset
-            button_y = self._height / 1.24 + self._screenshot_y_offset
-        elif float(self._ratio) < 1.7:
-            username_y = self._height / 1.98 + self._screenshot_y_offset
-            password_y = self._height / 1.51 + self._screenshot_y_offset
-            button_y = self._height / 1.24 + self._screenshot_y_offset
-        else:
-            logger.error("Unhandled ratio, unlikely to be the case. Do open a github issue")
+        xml: Optional[MessageTyping] = await self._communicator.uiautomator()
+        if xml is None:
+            logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return ScreenType.ERROR
-        # username
-        await self._communicator.click(int(self._width / 2), int(username_y))
-        await asyncio.sleep(.5)
-        await self._communicator.enter_text(self._worker_state.active_account.username)
-        await self._communicator.click(100, 100)
-        await asyncio.sleep(2)
-        # password
-        await self._communicator.click(int(self._width / 2), int(password_y))
-        await asyncio.sleep(.5)
-        await self._communicator.enter_text(self._worker_state.active_account.password)
-        await self._communicator.click(100, 100)
-        await asyncio.sleep(2)
-        # button for actual login
-        if MadGlobals.application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
-            # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
-            # just as a plain startup of already logged in account/device
-            logger.debug("Login tracking enabled")
-            if not await self.check_ptc_login_ban(increment_count=True):
-                logger.warning("Potential PTC ban, aborting PTC login for now. Sleeping 30s")
-                await asyncio.sleep(30)
-                await self._communicator.stop_app("com.nianticlabs.pokemongo")
-                return ScreenType.ERROR
+        try:
+            parser = ET.XMLParser(encoding="utf-8")
+            xmlroot = ET.fromstring(xml, parser=parser)
+            bounds: str = ""
+            accept_x: Optional[int] = None
+            accept_y: Optional[int] = None
+            for item in xmlroot.iter('node'):
+                if item.attrib["resource-id"] == "email":
+                    bounds = item.attrib['bounds']
+                    logger.info("Found email/login field, clicking, filling, clicking")
+                    logger.debug("email-node Bounds {}", item.attrib['bounds'])
+                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                    click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                    click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(2)
+                    await self._communicator.enter_text(self._worker_state.active_account.username)
+                    await self._communicator.click(100, 100)
+                    await asyncio.sleep(2)
+                if item.attrib["resource-id"] == "password":
+                    bounds = item.attrib['bounds']
+                    logger.debug("password-node Bounds {}", item.attrib['bounds'])
+                    logger.info("Found password field, clicking, filling, clicking")
+                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                    click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                    click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
+                    await self._communicator.click(int(click_x), int(click_y))
+                    await asyncio.sleep(2)
+                    await self._communicator.enter_text(self._worker_state.active_account.password)
+                    await self._communicator.click(100, 100)
+                    await asyncio.sleep(2)
+                if item.attrib["resource-id"] == "accept":
+                    bounds = item.attrib['bounds']
+                    logger.info("Found Log In button")
+                    logger.debug("accept-node Bounds {}", item.attrib['bounds'])
+                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                    accept_x = int(int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2))
+                    accept_y = int(int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2))
+                    # button for actual login
+                    if MadGlobals.application_args.enable_login_tracking and self._worker_state.active_account.login_type == LoginType.ptc.name:
+                    # Check whether a PTC login rate limit applies before trying to login using credentials as this may trigger
+                    # just as a plain startup of already logged in account/device
+                        logger.debug("Login tracking enabled")
+                        if not await self.check_ptc_login_ban(increment_count=True):
+                            logger.warning("Potential PTC ban, aborting PTC login for now. Sleeping 30s")
+                            await asyncio.sleep(30)
+                            await self._communicator.stop_app("com.nianticlabs.pokemongo")
+                            return ScreenType.ERROR
+                        else:
+                            await self._mapping_manager.login_tracking_remove_value(origin=self._worker_state.origin)
+                            logger.success("Received permission for (potential) PTC login")
+            if accept_x and accept_y:
+                await self._communicator.click(accept_x, accept_y)
+                logger.info("Clicking Log In and sleeping 50 seconds - please wait!")
+                await asyncio.sleep(50)
+                return ScreenType.PTC
             else:
-                await self._mapping_manager.login_tracking_remove_value(origin=self._worker_state.origin)
-            logger.success("Received permission for (potential) PTC login")
-        await self._communicator.click(int(self._width / 2), int(button_y))
-        logger.info("Sleeping 50 seconds - please wait!")
-        await asyncio.sleep(50)
-        return ScreenType.PTC
+                logger.error("Log in [accept] button not found?")
+                return ScreenType.ERROR
+
+        except Exception as e:
+            logger.error('Something wrong while parsing xml: {}', e)
+            logger.exception(e)
+            return ScreenType.ERROR
 
     async def __handle_failure_screen(self) -> None:
         await self.__handle_returning_player_or_wrong_credentials()
