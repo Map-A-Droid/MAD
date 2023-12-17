@@ -16,8 +16,8 @@ from mapadroid.mapping_manager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.collections import Location, ScreenCoordinates
+from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.madGlobals import MadGlobals, ScreenshotType
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerState import WorkerState
@@ -420,6 +420,8 @@ class WordToScreenMatching(object):
         if await self.parse_ggl(await self._communicator.uiautomator(), usernames_to_check_for):
             logger.info("Sleeping 50 seconds after clicking the account to login with - please wait!")
             await asyncio.sleep(50)
+            await self._communicator.passthrough(
+                "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
         else:
             screentype = ScreenType.ERROR
         return screentype
@@ -504,6 +506,9 @@ class WordToScreenMatching(object):
                 await self._communicator.click(accept_x, accept_y)
                 logger.info("Clicking Log In and sleeping 50 seconds - please wait!")
                 await asyncio.sleep(50)
+                # Start pogodroid service again to make sure we are running PD properly here
+                await self._communicator.passthrough(
+                    "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
                 return ScreenType.PTC
             else:
                 logger.error("Log in [accept] button not found?")
@@ -556,6 +561,12 @@ class WordToScreenMatching(object):
             await asyncio.sleep(2)
 
     async def __handle_birthday_screen(self) -> None:
+        # First disable pogodroid at this point to avoid the injection triggering any checks in other libraries
+        await self._communicator.passthrough(
+            "su -c 'am stopservice -n com.mad.pogodroid/.services.HookReceiverService'")
+        await self._communicator.restart_app("com.nianticlabs.pokemongo")
+        await asyncio.sleep(30)
+        # After having restarted pogo, we should again be on the birthday screen now and PD is turned off
         self._nextscreen = ScreenType.RETURNING
         click_x = int((self._width / 2) + (self._width / 4))
         click_y = int((self._height / 1.69) + self._screenshot_y_offset)
