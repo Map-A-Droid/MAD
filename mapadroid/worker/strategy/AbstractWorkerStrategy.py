@@ -312,7 +312,7 @@ class AbstractWorkerStrategy(ABC):
         else:
             return False
 
-    async def _handle_screen(self):
+    async def _handle_screen(self) -> ScreenType:
         screen_type: ScreenType = ScreenType.UNDEFINED
         while not self._worker_state.stop_worker_event.is_set():
             if self._worker_state.login_error_count > 2:
