@@ -421,6 +421,9 @@ class WordToScreenMatching(object):
             logger.info("Sleeping 50 seconds after clicking the account to login with - please wait!")
             await asyncio.sleep(50)
             await self._communicator.passthrough(
+                "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
+            await asyncio.sleep(5)
+            await self._communicator.passthrough(
                 "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
         else:
             screentype = ScreenType.ERROR
@@ -508,6 +511,9 @@ class WordToScreenMatching(object):
                 await asyncio.sleep(50)
                 # Start pogodroid service again to make sure we are running PD properly here
                 await self._communicator.passthrough(
+                    "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
+                await asyncio.sleep(5)
+                await self._communicator.passthrough(
                     "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
                 return ScreenType.PTC
             else:
@@ -562,6 +568,9 @@ class WordToScreenMatching(object):
 
     async def __handle_birthday_screen(self) -> None:
         # First disable pogodroid at this point to avoid the injection triggering any checks in other libraries
+        await self._communicator.passthrough(
+            "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value true'")
+        await asyncio.sleep(5)
         await self._communicator.passthrough(
             "su -c 'am stopservice -n com.mad.pogodroid/.services.HookReceiverService'")
         await self._communicator.restart_app("com.nianticlabs.pokemongo")
