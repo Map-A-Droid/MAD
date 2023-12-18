@@ -573,8 +573,11 @@ class WordToScreenMatching(object):
         await asyncio.sleep(5)
         await self._communicator.passthrough(
             "su -c 'am stopservice -n com.mad.pogodroid/.services.HookReceiverService'")
-        await self._communicator.restart_app("com.nianticlabs.pokemongo")
+        await self._communicator.stop_app("com.nianticlabs.pokemongo")
+        await asyncio.sleep(10)
+        await self._communicator.start_app("com.nianticlabs.pokemongo")
         await asyncio.sleep(30)
+
         # After having restarted pogo, we should again be on the birthday screen now and PD is turned off
         self._nextscreen = ScreenType.RETURNING
         click_x = int((self._width / 2) + (self._width / 4))
