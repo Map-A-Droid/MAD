@@ -455,7 +455,18 @@ class WordToScreenMatching(object):
             bounds: str = ""
             accept_x: Optional[int] = None
             accept_y: Optional[int] = None
+            # On some resolutions (100, 100) position that MAD clicks by default to close keyboard
+            # ended on clicking Firefox SSL certifcate icon and it nuked whole flow by opening something else
+            # Changing it to (300, 300), but also detecting big logo image on website and taking this as new coords
+            exit_keyboard_x: int = 300
+            exit_keyboard_y: int = 300
             for item in xmlroot.iter('node'):
+                if item.attrib["class"] == "android.widget.Image":
+                    bounds = item.attrib['bounds']
+                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                    logger.debug("Logo image Bounds {}", item.attrib['bounds'])
+                    exit_keyboard_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                    exit_keyboard_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
                 if item.attrib["resource-id"] == "email":
                     bounds = item.attrib['bounds']
                     logger.info("Found email/login field, clicking, filling, clicking")
@@ -466,7 +477,7 @@ class WordToScreenMatching(object):
                     await self._communicator.click(int(click_x), int(click_y))
                     await asyncio.sleep(2)
                     await self._communicator.enter_text(self._worker_state.active_account.username)
-                    await self._communicator.click(100, 100)
+                    await self._communicator.click(exit_keyboard_x, exit_keyboard_y)
                     await asyncio.sleep(2)
                 if item.attrib["resource-id"] == "password":
                     bounds = item.attrib['bounds']
@@ -478,7 +489,7 @@ class WordToScreenMatching(object):
                     await self._communicator.click(int(click_x), int(click_y))
                     await asyncio.sleep(2)
                     await self._communicator.enter_text(self._worker_state.active_account.password)
-                    await self._communicator.click(100, 100)
+                    await self._communicator.click(exit_keyboard_x, exit_keyboard_y)
                     await asyncio.sleep(2)
                 if item.attrib["resource-id"] == "accept":
                     bounds = item.attrib['bounds']
