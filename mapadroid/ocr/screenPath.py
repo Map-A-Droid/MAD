@@ -424,7 +424,7 @@ class WordToScreenMatching(object):
                 "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
             await asyncio.sleep(5)
             await self._communicator.passthrough(
-                "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
+                "su -c 'am start-foreground-service -n com.mad.pogodroid/.services.HookReceiverService'")
         else:
             screentype = ScreenType.ERROR
         return screentype
@@ -514,7 +514,7 @@ class WordToScreenMatching(object):
                     "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
                 await asyncio.sleep(5)
                 await self._communicator.passthrough(
-                    "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
+                    "su -c 'am start-foreground-service -n com.mad.pogodroid/.services.HookReceiverService'")
                 return ScreenType.PTC
             else:
                 logger.error("Log in [accept] button not found?")
