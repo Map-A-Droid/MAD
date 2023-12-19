@@ -478,7 +478,7 @@ class AbstractMitmBaseStrategy(AbstractWorkerStrategy, ABC):
             "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
         await asyncio.sleep(5)
         await self._communicator.passthrough(
-            "su -c 'am startservice -n com.mad.pogodroid/.services.HookReceiverService'")
+            "su -c 'am start-foreground-service -n com.mad.pogodroid/.services.HookReceiverService'")
 
     async def _get_unquest_stops(self) -> Set[str]:
         """
