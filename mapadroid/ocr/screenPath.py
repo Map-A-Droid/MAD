@@ -61,7 +61,7 @@ class WordToScreenMatching(object):
         returntype: ScreenType = ScreenType.UNDEFINED
         global_dict: dict = {}
         diff = 1
-        if "ExternalAppBrowserActivity" in topmost_app:
+        if "ExternalAppBrowserActivity" in topmost_app or "CustomTabActivity" in topmost_app:
             return ScreenType.PTC, global_dict, diff
         if "AccountPickerActivity" in topmost_app or 'SignInActivity' in topmost_app:
             return ScreenType.GGL, global_dict, diff
