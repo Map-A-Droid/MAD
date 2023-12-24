@@ -346,9 +346,12 @@ class WordToScreenMatching(object):
         return screentype
 
     async def __check_pogo_screen_ban_or_loading(self, screentype, y_offset: int = 0) -> ScreenType:
-        backgroundcolor = await self._worker_state.pogo_windows.most_frequent_colour(await self.get_screenshot_path(),
+        screenshot_path: str = await self.get_screenshot_path()
+        backgroundcolor = await self._worker_state.pogo_windows.most_frequent_colour(screenshot_path,
                                                                                      self._worker_state.origin,
                                                                                      y_offset=y_offset)
+        globaldict = await self._worker_state.pogo_windows.get_screen_text(screenshot_path, self._worker_state.origin)
+        welcome_text = ['Willkommen', 'Welcome']
         if backgroundcolor is not None and (
                 backgroundcolor[0] == 0 and
                 backgroundcolor[1] == 0 and
@@ -362,9 +365,13 @@ class WordToScreenMatching(object):
             # Got a strike warning
             screentype = ScreenType.STRIKE
         elif backgroundcolor is not None and (
+                any(text in welcome_text for text in globaldict['text']) or (
                 backgroundcolor[0] == 18 and
                 backgroundcolor[1] == 46 and
-                backgroundcolor[2] == 86):
+                backgroundcolor[2] == 86) or (
+                backgroundcolor[0] == 55 and
+                backgroundcolor[1] == 72 and
+                backgroundcolor[2] == 88)):
             screentype = ScreenType.WELCOME
         return screentype
 
