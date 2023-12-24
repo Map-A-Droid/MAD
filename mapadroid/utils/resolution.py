@@ -7,6 +7,10 @@ class ResolutionCalculator:
         self._x_offset: int = 0
 
     @property
+    def x_y_ratio(self):
+        return self._x_y_ratio
+
+    @property
     def y_offset(self) -> int:
         return self._y_offset
 
