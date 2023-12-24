@@ -327,6 +327,8 @@ class WordToScreenMatching(object):
                                                    BurnType.MAINTENANCE)
         elif screentype == ScreenType.POGO:
             screentype = await self.__check_pogo_screen_ban_or_loading(screentype, y_offset=y_offset)
+            if screentype == ScreenType.WELCOME:
+                screentype = await self.__handle_welcome_screen()
         elif screentype == ScreenType.QUEST:
             logger.warning("Already on quest screen")
             # TODO: consider closing quest window?
@@ -420,9 +422,14 @@ class WordToScreenMatching(object):
             await asyncio.sleep(120)
             await self._communicator.passthrough(
                 "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
-            await asyncio.sleep(5)
+            await asyncio.sleep(2)
             await self._communicator.passthrough(
                 "su -c 'am start-foreground-service -n com.mad.pogodroid/.services.HookReceiverService'")
+            await asyncio.sleep(5)
+            await self._communicator.stop_app("com.nianticlabs.pokemongo")
+            await asyncio.sleep(10)
+            await self._communicator.start_app("com.nianticlabs.pokemongo")
+            await asyncio.sleep(120)
         else:
             screentype = ScreenType.ERROR
         return screentype
@@ -521,9 +528,14 @@ class WordToScreenMatching(object):
                 # Start pogodroid service again to make sure we are running PD properly here
                 await self._communicator.passthrough(
                     "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
-                await asyncio.sleep(5)
+                await asyncio.sleep(2)
                 await self._communicator.passthrough(
                     "su -c 'am start-foreground-service -n com.mad.pogodroid/.services.HookReceiverService'")
+                await asyncio.sleep(5)
+                await self._communicator.stop_app("com.nianticlabs.pokemongo")
+                await asyncio.sleep(10)
+                await self._communicator.start_app("com.nianticlabs.pokemongo")
+                await asyncio.sleep(120)
                 return ScreenType.PTC
             else:
                 logger.error("Log in [accept] button not found?")
