@@ -39,6 +39,10 @@ $(document).ready(function () {
     });
     // Toggle on boot
     toggleConfiguredElement();
+    $("#pogoauth_table").DataTable({
+         "pageLength": 50,
+         order: [[2, 'desc']]
+    });
   });
 
   function toggleConfiguredElement() {
