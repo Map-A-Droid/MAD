@@ -126,6 +126,7 @@ $(document).ready(function () {
           </td>
           <td class="text-center align-middle">
               {% if auth.last_burn_type is not none %}
+                  <small hidden>{{ auth.last_burn_type }}</small>
                   <i class="genTooltip" data-burnsleep="{{ MAINTENANCE_COOLDOWN_HOURS }}" data-burntype="{{ auth.last_burn_type }}" data-burntime="{{ auth.last_burn }}" aria-hidden="true"></i>
               {% endif %}
           </td>
