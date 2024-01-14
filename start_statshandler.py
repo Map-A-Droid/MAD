@@ -83,15 +83,8 @@ if __name__ == "__main__":
     setup_loggers()
     logger = get_logger(LoggerEnums.system)
 
-    loop = asyncio.get_event_loop()
-    # signal.signal(signal.SIGINT, signal_handler)
-    # signal.signal(signal.SIGTERM, signal_handler)
-
-    loop_being_run = loop
     try:
-        # loop.run_until_complete(start())
         asyncio.run(start(), debug=True)
     except (KeyboardInterrupt, Exception) as e:
-        # shutdown(loop_being_run)
         logger.info(f"Shutting down. {e}")
         logger.exception(e)
