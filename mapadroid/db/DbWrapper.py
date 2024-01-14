@@ -6,7 +6,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mapadroid.db.DbAccessor import DbAccessor
-from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
+from mapadroid.db.DbPogoProtoSubmitRaw import DbPogoProtoSubmitRaw
 from mapadroid.db.helper.MadminInstanceHelper import MadminInstanceHelper
 from mapadroid.db.helper.SettingsAreaHelper import SettingsAreaHelper
 from mapadroid.db.helper.SettingsAreaIdleHelper import SettingsAreaIdleHelper
@@ -41,7 +41,7 @@ class DbWrapper:
         # self.sanity_check.check_all()
         # self.supports_apks = self.sanity_check.supports_apks
 
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args)
+        self.proto_submit: DbPogoProtoSubmitRaw = DbPogoProtoSubmitRaw(db_exec)
         self.__instance_id: Optional[int] = None
 
     async def setup(self) -> None:

@@ -8,6 +8,7 @@ from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataHold
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LoggerEnums, get_logger
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 logger = get_logger(LoggerEnums.mitm_mapper)
 
@@ -62,26 +63,28 @@ class PlayerData(AbstractWorkerHolder):
     def get_full_latest_data(self) -> Dict[Union[int, str], LatestMitmDataEntry]:
         return self._latest_data_holder.get_all()
 
-    def update_latest(self, key: str, value: Optional[Union[List, Dict]],
+    def update_latest(self, key: str, value: Union[List, Dict, bytes],
                       timestamp_received: Optional[int] = None,
                       timestamp_of_data_retrieval: Optional[int] = None,
                       location: Optional[Location] = None) -> None:
         self._latest_data_holder.update(key, value, timestamp_received, timestamp_of_data_retrieval, location)
-        if key == str(ProtoIdentifier.GMO.value):
-            self.__parse_gmo_for_location(value, timestamp_received, location)
+        if key == str(ProtoIdentifier.GMO.value) and isinstance(value, bytes):
+            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
+                value)
+            self.__parse_gmo_for_location(gmo, timestamp_received, location)
             self._injected = True
+        else:
+            logger.warning("update_latest not of GMO type")
 
     # Async since we may move it to DB for persistence, same for above methods like level and
     # pokestops visited (today/week/total/whatever)
     async def get_last_possibly_moved(self) -> int:
         return self.__last_possibly_moved
 
-    # TODO: Call it from within update_latest accordingly rather than externally...
-    def __parse_gmo_for_location(self, gmo_payload: Dict, timestamp: int, location: Optional[Location]):
-        cells = gmo_payload.get("cells", None)
-        if not cells:
+    def __parse_gmo_for_location(self, gmo_payload: pogoprotos.GetMapObjectsOutProto, timestamp: int, location: Optional[Location]):
+        if not gmo_payload.map_cell:
             return
-        cell_ids: List[int] = [cell['id'] for cell in cells]
+        cell_ids: List[int] = [cell.s2_cell_id for cell in gmo_payload.map_cell]
         if not bool(set(cell_ids).intersection(self.__last_cell_ids)):
             self.__last_cell_ids = cell_ids
             self.__last_possibly_moved = timestamp

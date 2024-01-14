@@ -7,4 +7,6 @@ class ProtoIdentifier(IntEnum):
     ENCOUNTER = 102
     FORT_DETAILS = 104
     GMO = 106
+    DISK_ENCOUNTER = 145
     GYM_INFO = 156
+    GET_ROUTES = 1405

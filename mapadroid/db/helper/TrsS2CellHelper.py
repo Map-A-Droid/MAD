@@ -8,6 +8,7 @@ from sqlalchemy.future import select
 from mapadroid.db.model import TrsS2Cell
 from mapadroid.utils.collections import Location
 from mapadroid.utils.s2Helper import S2Helper
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 
 class TrsS2CellHelper:
@@ -18,17 +19,16 @@ class TrsS2CellHelper:
         return result.scalars().first()
 
     @staticmethod
-    async def insert_update_cell(session: AsyncSession, cell: dict) -> None:
-        cell_id = cell["id"]
-        if cell_id < 0:
-            cell_id = cell_id + 2 ** 64
-        lat, lng, _ = S2Helper.get_position_from_cell(cell_id)
+    async def insert_update_cell(session: AsyncSession, cell: pogoprotos.ClientMapCellProto) -> None:
+        if cell.s2_cell_id < 0:
+            cell.s2_cell_id = cell.s2_cell_id + 2 ** 64
+        lat, lng, _ = S2Helper.get_position_from_cell(cell.s2_cell_id)
         insert_stmt = insert(TrsS2Cell).values(
-            id=str(cell_id),
+            id=str(cell.s2_cell_id),
             level=15,
             center_latitude=lat,
             center_longitude=lng,
-            updated=int(cell["current_timestamp"] / 1000)
+            updated=int(cell.as_of_time_ms / 1000)
         )
         on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
             updated=insert_stmt.inserted.updated

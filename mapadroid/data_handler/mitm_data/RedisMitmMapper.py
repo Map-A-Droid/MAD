@@ -68,22 +68,15 @@ class RedisMitmMapper(AbstractMitmMapper):
                 await self.__cache.set(RedisMitmMapper.LATEST_DATA_KEY.format(worker, key), json_data)
             except Exception as e:
                 logger.exception(e)
-        if key == str(ProtoIdentifier.GMO.value):
-            await self.__parse_gmo_for_location(worker, value, timestamp_received_raw, location)
+        if key == str(ProtoIdentifier.GMO.value) and isinstance(value, bytes):
+            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
+                value)
+            await self.__parse_gmo_for_location(worker, gmo, timestamp_received_raw, location)
             await self.__cache.set(RedisMitmMapper.IS_INJECTED_KEY.format(worker), 1)
 
-    async def __parse_gmo_for_location(self, worker: str, gmo_payload: Union[Dict, bytes], timestamp: int,
+    async def __parse_gmo_for_location(self, worker: str, gmo_proto: pogoprotos.GetMapObjectsOutProto, timestamp: int,
                                        location: Optional[Location]):
-        if isinstance(gmo_payload, dict):
-            cells = gmo_payload.get("cells", None)
-            if not cells:
-                return
-            cell_ids: List[int] = [cell['id'] for cell in cells]
-        else:
-            # Raw proto...
-            gmo_proto: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
-                gmo_payload)
-            cell_ids: List[int] = [cell.s2_cell_id for cell in gmo_proto.map_cell]
+        cell_ids: List[int] = [cell.s2_cell_id for cell in gmo_proto.map_cell]
         last_cell_ids_raw: Optional[str] = await self.__cache.get(RedisMitmMapper.LAST_CELL_IDS_KEY.format(worker))
         last_cell_ids: List[int] = []
         if last_cell_ids_raw:

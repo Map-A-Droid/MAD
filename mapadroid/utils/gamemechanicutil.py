@@ -280,27 +280,6 @@ def is_mon_ditto_raw(pokemon_data: pogoprotos.PokemonProto):
         return False
 
 
-def is_mon_ditto(pokemon_data):
-    logger.debug3('Determining if mon is a ditto')
-    logger.debug4(pokemon_data)
-    weather_boost = pokemon_data.get("display", {}).get("weather_boosted_value", None)
-    valid_atk = pokemon_data.get("individual_attack") < 4
-    valid_def = pokemon_data.get("individual_defense") < 4
-    valid_sta = pokemon_data.get("individual_stamina") < 4
-    cp_multi = pokemon_data.get("cp_multiplier")
-    valid_boost_attrs = valid_atk or valid_def or valid_sta or cp_multi < .3
-    if weather_boost is None:
-        return False
-    elif weather_boost > 0 and valid_boost_attrs:
-        # Weather boosted mon, but the iv is lower than threshold
-        return True
-    elif weather_boost == 0 and cp_multi > 0.733:
-        # Not weather boosted, but the level is > 30
-        return True
-    else:
-        return False
-
-
 def calculate_cooldown(distance, speed):
     if distance >= 1335000:
         speed = 180.43  # Speed can be abt 650 km/h
