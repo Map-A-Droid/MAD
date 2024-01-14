@@ -272,7 +272,7 @@ class Communicator(AbstractCommunicator):
         try:
             # Regex ^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$ from
             # https://stackoverflow.com/questions/5284147/validating-ipv4-addresses-with-regexp
-            found = re.search('(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\\b){4})', res)
+            found = re.search(r'(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\\b){4})', res)
             if found:
                 ip_address_found = found.group(1)
         except Exception as e:
