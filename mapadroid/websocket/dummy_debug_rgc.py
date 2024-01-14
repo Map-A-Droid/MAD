@@ -50,5 +50,5 @@ port = 8080
 start_server = websockets.serve(hello, '0.0.0.0', port)
 
 print("Starting to serve ws://%s:%s" % (socket.gethostbyname(socket.gethostname()), port))
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+asyncio.new_event_loop().run_until_complete(start_server)
+asyncio.new_event_loop().run_forever()

@@ -5,7 +5,7 @@ from asyncio import CancelledError, Task
 from typing import Optional
 
 from aiohttp import web
-from redis import Redis
+from redis import asyncio as aioredis
 
 from mapadroid.account_handler import setup_account_handler
 from mapadroid.account_handler.AbstractAccountHandler import \
@@ -238,8 +238,8 @@ async def start():
             #    storage_manager.shutdown()
             if db_exec is not None:
                 logger.debug("Calling db_pool_manager shutdown")
-                cache: Redis = await db_wrapper.get_cache()
-                await cache.close()
+                cache: aioredis.Redis = await db_wrapper.get_cache()
+                await cache.aclose()
                 await db_exec.shutdown()
                 logger.debug("Done shutting down db_pool_manager")
             if pogo_win_manager:
@@ -260,15 +260,8 @@ if __name__ == "__main__":
     setup_loggers()
     logger = get_logger(LoggerEnums.system)
 
-    loop = asyncio.get_event_loop()
-    # signal.signal(signal.SIGINT, signal_handler)
-    # signal.signal(signal.SIGTERM, signal_handler)
-
-    loop_being_run = loop
     try:
-        # loop.run_until_complete(start())
         asyncio.run(start(), debug=True)
     except (KeyboardInterrupt, Exception) as e:
-        # shutdown(loop_being_run)
         logger.info(f"Shutting down. {e}")
         logger.exception(e)
