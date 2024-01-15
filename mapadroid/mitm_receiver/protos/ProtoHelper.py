@@ -64,8 +64,9 @@ class ProtoHelper:
         if isinstance(value, Message):
             return MessageToJson(value)
         elif isinstance(value, list) or isinstance(value, MutableSequence):
-            listed: List[Dict] = []
-            [listed.append(MessageToDict(message)) for message in value]
+            listed: List[Any] = []
+            [listed.append(MessageToDict(entry)) if isinstance(entry, Message) else listed.append(entry)
+             for entry in value]
             return json.dumps(listed)
         else:
             raise ValueError("Cannot convert passed value")
