@@ -698,6 +698,9 @@ class DbPogoProtoSubmitRaw:
         if reward_type == 4:
             item_amount = reward.candy.amount
             pokemon_id = reward.candy.pokemon_id
+        if reward_type == 9:
+            item_amount = reward.xl_candy.amount
+            pokemon_id = reward.xl_candy.pokemon_id
         elif reward_type == 12:
             item_amount = reward.mega_resource.amount
             pokemon_id = reward.mega_resource.pokemon_id
