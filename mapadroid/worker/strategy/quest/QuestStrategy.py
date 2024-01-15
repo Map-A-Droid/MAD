@@ -28,6 +28,7 @@ from mapadroid.db.model import (Pokestop, SettingsAreaPokestop,
 from mapadroid.mapping_manager.MappingManager import MappingManager
 from mapadroid.mapping_manager.MappingManagerDevicemappingKey import \
     MappingManagerDevicemappingKey
+from mapadroid.mitm_receiver.protos.ProtoHelper import ProtoHelper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.utils.collections import Location, ScreenCoordinates
@@ -138,8 +139,7 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             return type_of_data_found, data_found
         logger.debug2("Checking for Quest related data in proto {}", proto_to_wait_for)
         if proto_to_wait_for == ProtoIdentifier.FORT_SEARCH:
-            fort_search: pogoprotos.FortSearchOutProto = pogoprotos.FortSearchOutProto.ParseFromString(
-                latest_proto)
+            fort_search: pogoprotos.FortSearchOutProto = ProtoHelper.parse(ProtoIdentifier.FORT_SEARCH, latest_proto)
             # TODO..
             quest_type: int = fort_search.challenge_quest.quest.quest_type
             result: int = fort_search.result
@@ -159,14 +159,13 @@ class QuestStrategy(AbstractMitmBaseStrategy, ABC):
             elif result == 5:
                 return ReceivedType.FORT_SEARCH_RESULT, FortSearchResultTypes.LIMIT
         elif proto_to_wait_for == ProtoIdentifier.FORT_DETAILS:
-            fort_details: pogoprotos.FortDetailsOutProto = pogoprotos.FortDetailsOutProto.ParseFromString(
-                latest_proto)
+            fort_details: pogoprotos.FortDetailsOutProto = ProtoHelper.parse(ProtoIdentifier.FORT_DETAILS, latest_proto)
             fort_type: int = fort_details.fort_type
             data_found = fort_details
             type_of_data_found = ReceivedType.GYM if fort_type == 0 else ReceivedType.STOP
         elif proto_to_wait_for == ProtoIdentifier.GMO:
-            gmo_proto: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(latest_proto)
-            if self._directly_surrounding_gmo_cells_containing_stops_around_current_position(gmo_proto):
+            gmo: pogoprotos.GetMapObjectsOutProto = ProtoHelper.parse(ProtoIdentifier.GMO, latest_proto)
+            if self._directly_surrounding_gmo_cells_containing_stops_around_current_position(gmo):
                 data_found = latest_proto
                 type_of_data_found = ReceivedType.GMO
 

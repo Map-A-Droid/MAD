@@ -99,15 +99,14 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
                                                     location=location_of_data)
         if proto_type == ProtoIdentifier.GMO.value:
             # TODO: Offload transformation
-            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
-                decoded_raw_proto)
+            gmo: pogoprotos.GetMapObjectsOutProto = ProtoHelper.parse(ProtoIdentifier.GMO, decoded_raw_proto)
             if not gmo.map_cell:
                 logger.debug("Ignoring apparently empty GMO")
                 return
         elif proto_type == ProtoIdentifier.FORT_SEARCH.value:
             logger.debug("Checking fort search proto type 101")
-            fort_search: pogoprotos.FortSearchOutProto = pogoprotos.FortSearchOutProto.ParseFromString(
-                decoded_raw_proto)
+            fort_search: pogoprotos.FortSearchOutProto = ProtoHelper.parse(ProtoIdentifier.FORT_SEARCH,
+                                                                           decoded_raw_proto)
             if fort_search.result == 2:
                 location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
                 # Fort search out of range, abort
@@ -118,14 +117,12 @@ class ReceiveProtosEndpoint(AbstractMitmReceiverRootEndpoint):
             await self._handle_fort_search_proto(origin, fort_search, location_of_data, timestamp)
         elif proto_type == ProtoIdentifier.ENCOUNTER.value:
             # TODO: Offload transformation
-            encounter: pogoprotos.EncounterOutProto = pogoprotos.EncounterOutProto.ParseFromString(
-                decoded_raw_proto)
+            encounter: pogoprotos.EncounterOutProto = ProtoHelper.parse(ProtoIdentifier.ENCOUNTER, decoded_raw_proto)
             if encounter.status != 1:
                 logger.warning("Encounter with status {} being ignored", encounter.status)
                 return
         elif proto_type == ProtoIdentifier.GET_ROUTES.value:
-            get_routes: pogoprotos.GetRoutesOutProto = pogoprotos.GetRoutesOutProto.ParseFromString(
-                decoded_raw_proto)
+            get_routes: pogoprotos.GetRoutesOutProto = ProtoHelper.parse(ProtoIdentifier.GET_ROUTES, decoded_raw_proto)
             if not get_routes.route_map_cell:
                 logger.info("No routes in payload to be processed")
                 return

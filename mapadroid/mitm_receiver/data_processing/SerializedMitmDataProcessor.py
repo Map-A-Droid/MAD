@@ -19,6 +19,7 @@ from mapadroid.db.DbPogoProtoSubmitRaw import DbPogoProtoSubmitRaw
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.db.helper.SettingsDeviceHelper import SettingsDeviceHelper
 from mapadroid.db.model import SettingsDevice
+from mapadroid.mitm_receiver.protos.ProtoHelper import ProtoHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.gamemechanicutil import determine_current_quest_layer
@@ -101,8 +102,8 @@ class SerializedMitmDataProcessor:
             logger.debug("Processing proto 101 (FORT_SEARCH)")
             async with self.__db_wrapper as session, session:
                 try:
-                    fort_search: pogoprotos.FortSearchOutProto = pogoprotos.FortSearchOutProto.ParseFromString(
-                        data["payload"])
+                    fort_search: pogoprotos.FortSearchOutProto = pogoprotos.FortSearchOutProto()
+                    fort_search.ParseFromString(data["payload"])
                     # TODO: Check enum works with int comparison
                     if fort_search.result == 1:
                         async with session.begin_nested() as nested_transaction:
@@ -127,8 +128,8 @@ class SerializedMitmDataProcessor:
             logger.debug("Processing proto 104 (FORT_DETAILS)")
             async with self.__db_wrapper as session, session:
                 try:
-                    fort_details: pogoprotos.FortDetailsOutProto = pogoprotos.FortDetailsOutProto.ParseFromString(
-                        data["payload"])
+                    fort_details: pogoprotos.FortDetailsOutProto = pogoprotos.FortDetailsOutProto()
+                    fort_details.ParseFromString(data["payload"])
                     await self.__db_submit.stop_details(session, fort_details)
                     await session.commit()
                 except Exception as e:
@@ -148,8 +149,8 @@ class SerializedMitmDataProcessor:
             logger.debug("Done processing proto 1405 in {}ms", end_time)
         elif method_id == ProtoIdentifier.GYM_INFO.value:
             logger.debug("Processing proto 156 (GYM_GET_INFO)")
-            gym_info: pogoprotos.GymGetInfoOutProto = pogoprotos.GymGetInfoOutProto.ParseFromString(
-                data["payload"])
+            gym_info: pogoprotos.GymGetInfoOutProto = pogoprotos.GymGetInfoOutProto()
+            gym_info.ParseFromString(data["payload"])
             async with self.__db_wrapper as session, session:
                 try:
                     await self.__db_submit.gym_info(session, gym_info)
@@ -167,8 +168,8 @@ class SerializedMitmDataProcessor:
         playerlevel = await self.__mitm_mapper.get_level(origin)
         if MadGlobals.application_args.scan_lured_mons and (playerlevel >= 30):
             logger.debug("Processing lure encounter received at {}", processed_timestamp)
-            encounter_proto: pogoprotos.DiskEncounterOutProto = pogoprotos.DiskEncounterOutProto.ParseFromString(
-                data["payload"])
+            encounter_proto: pogoprotos.DiskEncounterOutProto = ProtoHelper.parse(ProtoIdentifier.DISK_ENCOUNTER,
+                                                                                  data["payload"])
             async with self.__db_wrapper as session, session:
                 lure_encounter: Optional[Tuple[int, datetime]] = await self.__db_submit \
                     .mon_lure_iv(session, received_timestamp, encounter_proto)
@@ -181,8 +182,7 @@ class SerializedMitmDataProcessor:
 
     async def __process_encounter(self, data: Dict, origin: str, received_date: datetime, received_timestamp: int,
                                   start_time_ms: int):
-        encounter_proto: pogoprotos.EncounterOutProto = pogoprotos.EncounterOutProto.ParseFromString(
-            data["payload"])
+        encounter_proto: pogoprotos.EncounterOutProto = ProtoHelper.parse(ProtoIdentifier.ENCOUNTER, data["payload"])
         # TODO: Cache result in SerializedMitmDataProcessor to not spam the MITMMapper too much in that regard
         playerlevel = await self.__mitm_mapper.get_level(origin)
         if playerlevel >= 30:
@@ -207,8 +207,7 @@ class SerializedMitmDataProcessor:
                                 received_timestamp: int, start_time_ms: int):
         logger.debug("Processing GMO. Received at {}", received_date)
         # TODO: Offload conversion?
-        gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
-            data["payload"])
+        gmo: pogoprotos.GetMapObjectsOutProto = ProtoHelper.parse(ProtoIdentifier.GMO, data["payload"])
         loop = asyncio.get_running_loop()
         weather_task = loop.create_task(self.__process_weather(gmo, received_timestamp))
         stops_task = loop.create_task(self.__process_stops(gmo))
@@ -370,8 +369,7 @@ class SerializedMitmDataProcessor:
 
     async def __process_routes(self, data: bytes, received_timestamp: int) -> None:
         routes_time_start = self.get_time_ms()
-        routes: pogoprotos.GetRoutesOutProto = pogoprotos.GetRoutesOutProto.ParseFromString(
-            data)
+        routes: pogoprotos.GetRoutesOutProto = ProtoHelper.parse(ProtoIdentifier.GET_ROUTES, data)
         async with self.__db_wrapper as session, session:
             try:
                 await self.__db_submit.routes(session, routes, received_timestamp)
@@ -422,8 +420,7 @@ class SerializedMitmDataProcessor:
         return int(time.time() * 1000)
 
     async def _handle_inventory_data(self, origin: str, data: bytes) -> None:
-        inventory_data: pogoprotos.GetHoloholoInventoryOutProto = pogoprotos.GetHoloholoInventoryOutProto.ParseFromString(
-            data)
+        inventory_data: pogoprotos.GetHoloholoInventoryOutProto = ProtoHelper.parse(ProtoIdentifier.INVENTORY, data)
         if not inventory_data.inventory_delta:
             logger.debug2('gen_player_stats cannot generate new stats')
             return

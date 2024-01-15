@@ -1,6 +1,7 @@
 from typing import Optional, Tuple, List, Union, Dict
 
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import LatestMitmDataEntry
+from mapadroid.mitm_receiver.protos.ProtoHelper import ProtoHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -35,8 +36,7 @@ class WorkerRaidsStrategy(AbstractWorkerMitmStrategy):
         if not latest_proto_data:
             return ReceivedType.UNDEFINED, data_found
         elif proto_to_wait_for == ProtoIdentifier.GMO:
-            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
-                latest_proto_data)
+            gmo: pogoprotos.GetMapObjectsOutProto = ProtoHelper.parse(ProtoIdentifier.GMO, latest_proto_data)
             if self._gmo_cells_contain_multiple_of_key(gmo, "forts"):
                 data_found = latest_proto_data
                 type_of_data_found = ReceivedType.GMO

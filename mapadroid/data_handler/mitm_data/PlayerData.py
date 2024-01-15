@@ -69,12 +69,10 @@ class PlayerData(AbstractWorkerHolder):
                       location: Optional[Location] = None) -> None:
         self._latest_data_holder.update(key, value, timestamp_received, timestamp_of_data_retrieval, location)
         if key == str(ProtoIdentifier.GMO.value) and isinstance(value, bytes):
-            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
-                value)
+            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto()
+            gmo.ParseFromString(value)
             self.__parse_gmo_for_location(gmo, timestamp_received, location)
             self._injected = True
-        else:
-            logger.warning("update_latest not of GMO type")
 
     # Async since we may move it to DB for persistence, same for above methods like level and
     # pokestops visited (today/week/total/whatever)

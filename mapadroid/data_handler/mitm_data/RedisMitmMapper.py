@@ -69,8 +69,8 @@ class RedisMitmMapper(AbstractMitmMapper):
             except Exception as e:
                 logger.exception(e)
         if key == str(ProtoIdentifier.GMO.value) and isinstance(value, bytes):
-            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
-                value)
+            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto()
+            gmo.ParseFromString(value)
             await self.__parse_gmo_for_location(worker, gmo, timestamp_received_raw, location)
             await self.__cache.set(RedisMitmMapper.IS_INJECTED_KEY.format(worker), 1)
 

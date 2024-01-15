@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple, Any, Union, Dict
 from mapadroid.data_handler.mitm_data.holder.latest_mitm_data.LatestMitmDataEntry import \
     LatestMitmDataEntry
 from mapadroid.db.model import SettingsAreaInitMitm
+from mapadroid.mitm_receiver.protos.ProtoHelper import ProtoHelper
 from mapadroid.utils.DatetimeWrapper import DatetimeWrapper
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
 from mapadroid.utils.logging import LoggerEnums, get_logger
@@ -48,8 +49,7 @@ class WorkerInitStrategy(AbstractWorkerMitmStrategy):
         if not latest_proto_data:
             return ReceivedType.UNDEFINED, data_found
         elif proto_to_wait_for == ProtoIdentifier.GMO:
-            gmo: pogoprotos.GetMapObjectsOutProto = pogoprotos.GetMapObjectsOutProto.ParseFromString(
-                latest_proto_data)
+            gmo: pogoprotos.GetMapObjectsOutProto = ProtoHelper.parse(ProtoIdentifier.GMO, latest_proto_data)
             area_settings: Optional[SettingsAreaInitMitm] = await self._mapping_manager.routemanager_get_settings(
                 self._area_id)
             init_type: InitTypes = InitTypes(area_settings.init_type)
@@ -62,8 +62,7 @@ class WorkerInitStrategy(AbstractWorkerMitmStrategy):
             else:
                 logger.debug("Data looked for not in GMO")
         elif proto_to_wait_for == ProtoIdentifier.ENCOUNTER:
-            data_found: pogoprotos.EncounterOutProto = pogoprotos.EncounterOutProto.ParseFromString(
-                latest_proto_data)
+            data_found: pogoprotos.EncounterOutProto = ProtoHelper.parse(ProtoIdentifier.ENCOUNTER, latest_proto_data)
             type_of_data_found = ReceivedType.MON
 
         return type_of_data_found, data_found

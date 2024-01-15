@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import sqlalchemy
 from bitstring import BitArray
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer, RepeatedScalarFieldContainer
+from google.protobuf.json_format import MessageToJson
 from redis import Redis
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -714,8 +715,7 @@ class DbPogoProtoSubmitRaw:
         target: Optional[int] = goal.target
         condition: RepeatedCompositeFieldContainer[pogoprotos.QuestConditionProto] = goal.condition
 
-        # TODO: Json dumping protos...
-        json_condition: str = json.dumps(condition)
+        json_condition: str = MessageToJson(condition)
         task = await quest_gen.questtask(int(quest_type), json_condition, int(target), quest_template,
                                          quest_title_resource_id)
         quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id, quest_layer)
@@ -982,7 +982,7 @@ class DbPogoProtoSubmitRaw:
                     route.route_id = route_id
 
                 # TODO: Make sure dumps works properly...
-                route.waypoints = json.dumps(route_data.waypoints)
+                route.waypoints = MessageToJson(route_data.waypoints)
                 route.type = route_data.type
                 route.path_type = route_data.path_type
                 route.name = route_data.name
@@ -997,13 +997,11 @@ class DbPogoProtoSubmitRaw:
                 route.route_distance_meters = route_data.route_distance_meters
                 route.route_duration_seconds = route_data.route_duration_seconds
 
-                pins_raw: Optional[Dict] = route_data.pins
-                # TODO: Make sure dumps works properly...
-                route.pins = json.dumps(pins_raw)
+                pins_raw: RepeatedCompositeFieldContainer[pogoprotos.RoutePin] = route_data.pins
+                route.pins = MessageToJson(pins_raw)
 
-                tags_raw: Optional[Dict] = route_data.tags
-                # TODO: Make sure dumps works properly...
-                route.tags = json.dumps(tags_raw)
+                tags_raw: RepeatedScalarFieldContainer[str] = route_data.tags
+                route.tags = MessageToJson(tags_raw)
 
                 image_data: pogoprotos.RouteImageProto = route_data.image
                 route.image = image_data.image_url
