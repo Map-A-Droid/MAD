@@ -1,7 +1,10 @@
 import base64
+import json
 import pickle
-from typing import Any, Optional, Union, Type
+from collections.abc import MutableSequence
+from typing import Any, Optional, Union, List, Dict
 
+from google.protobuf.json_format import MessageToJson, MessageToDict
 from google.protobuf.message import Message
 
 from mapadroid.utils.ProtoIdentifier import ProtoIdentifier
@@ -55,3 +58,14 @@ class ProtoHelper:
 
         message.ParseFromString(value)
         return message
+
+    @staticmethod
+    def to_json(value: Union[Message, List[Message], MutableSequence]) -> str:
+        if isinstance(value, Message):
+            return MessageToJson(value)
+        elif isinstance(value, list) or isinstance(value, MutableSequence):
+            listed: List[Dict] = []
+            [listed.append(MessageToDict(message)) for message in value]
+            return json.dumps(listed)
+        else:
+            raise ValueError("Cannot convert passed value")
