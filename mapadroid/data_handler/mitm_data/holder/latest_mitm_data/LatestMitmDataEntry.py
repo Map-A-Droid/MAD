@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from typing import Dict, List, Optional, Union
 
 from orjson import orjson
@@ -36,7 +37,13 @@ class LatestMitmDataEntry:
         timestamp_received: Optional[int] = loaded.get("timestamp_received")
         timestamp_of_data_retrieval: Optional[int] = loaded.get("timestamp_of_data_retrieval")
         # TODO: Likely data is a str which needs to be translated to bytes?
-        data: Union[List, Dict, bytes] = loaded.get("data")
+        raw_data: Optional[Union[List, Dict, bytes, str]] = loaded.get("data")
+        if not raw_data:
+            return None
+        elif isinstance(raw_data, str):
+            data: Union[List, Dict, bytes] = base64.b64decode(raw_data)
+        else:
+            data: Union[List, Dict, bytes] = raw_data
         obj: LatestMitmDataEntry = LatestMitmDataEntry(location,
                                                        timestamp_received,
                                                        timestamp_of_data_retrieval,
@@ -44,4 +51,6 @@ class LatestMitmDataEntry:
         return obj
 
     async def to_json(self) -> bytes:
+        if isinstance(self.data, bytes):
+            self.data = base64.b64encode(self.data)
         return orjson.dumps(self.__dict__)
