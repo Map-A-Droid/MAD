@@ -104,7 +104,8 @@ def get_apk_info(downloaded_file: io.BytesIO) -> Tuple[Optional[str], Optional[s
     package_version: Optional[str] = None
     package_name: Optional[str] = None
     try:
-        apk = apkutils.APK.from_io(downloaded_file).parse_resouce()
+        apk: apkutils.APK = apkutils.APK.from_io(downloaded_file)
+        apk = apk.parse_resource()
     except Exception as e:  # noqa: E722 B001
         logger.warning('Unable to parse APK file')
         logger.exception(e)
