@@ -82,6 +82,7 @@ class SerializedMitmDataProcessor:
                     logger.debug("MITM data processor {} finished queue item in {}ms", self.__name, end_time)
                 except KeyboardInterrupt:
                     logger.info("Received keyboard interrupt, stopping MITM data processor")
+                    return
 
     async def _process_data_raw(self, received_timestamp: int, data: Dict, origin: str):
         method_id: Optional[int] = data.get("type", None)

@@ -130,7 +130,6 @@ class DbPogoProtoSubmitRaw:
                         mon.form = 0
                     else:
                         mon.pokemon_id = mon_id
-                        # TODO: Is "real" the correct reference here?
                         mon.gender = mon_display.gender.real
                         mon.costume = mon_display.costume.real
                         mon.form = mon_display.form.real
@@ -259,7 +258,6 @@ class DbPogoProtoSubmitRaw:
         if wild_pokemon is None or wild_pokemon.encounter_id == 0 or not wild_pokemon.spawn_point_id:
             logger.warning("Encounter proto of no use (status: {}).", encounter_proto.status.real)
             return None
-        # TODO: Does it work without ".real"?
         encounter_id: int = wild_pokemon.encounter_id
         pokemon_data: pogoprotos.PokemonProto = wild_pokemon.pokemon
         mon_id: int = pokemon_data.id
@@ -692,7 +690,6 @@ class DbPogoProtoSubmitRaw:
         reward_type: int = reward.type.real
         item_item: int = item.item.real
         item_amount: int = item.amount
-        # TODO: Check if .real can be used (i.e., if the ValueType can be None and would throw exception
         pokemon_id: Optional[int] = encounter.pokemon_id
         stardust: Optional[int] = reward.stardust
 
@@ -775,7 +772,6 @@ class DbPogoProtoSubmitRaw:
                     cache_key = "gym{}{}{}".format(gymid, last_modified_ts, gameplay_weather)
                     if await self._cache.exists(cache_key):
                         continue
-                    # TODO: Check if this works or .real needed
                     guard_pokemon_id: int = gym.guard_pokemon_id
                     team_id: int = gym.team
 
