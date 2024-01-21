@@ -41,7 +41,10 @@ class LatestMitmDataEntry:
         if not raw_data:
             return None
         elif isinstance(raw_data, str):
-            data: Union[List, Dict, bytes] = base64.b64decode(raw_data)
+            try:
+                data: Union[List, Dict, bytes] = base64.b64decode(raw_data)
+            except Exception:
+                return None
         else:
             data: Union[List, Dict, bytes] = raw_data
         obj: LatestMitmDataEntry = LatestMitmDataEntry(location,
