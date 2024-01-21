@@ -52,5 +52,5 @@ class LatestMitmDataEntry:
 
     async def to_json(self) -> bytes:
         if isinstance(self.data, bytes):
-            self.data = str(base64.b64encode(self.data))
+            self.data = str(base64.b64encode(self.data), "utf-8")
         return orjson.dumps(self.__dict__)
