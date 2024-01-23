@@ -84,7 +84,7 @@ class DbPogoProtoSubmitRaw:
                 spawnid: int = int(str(wild_mon.spawn_point_id), 16)
                 lat: float = wild_mon.latitude
                 lon: float = wild_mon.longitude
-                mon_id: int = wild_mon.pokemon.id
+                mon_id: int = wild_mon.pokemon.pokemon_id
                 encounter_id: int = wild_mon.encounter_id
 
                 if encounter_id < 0:
@@ -260,7 +260,7 @@ class DbPogoProtoSubmitRaw:
             return None
         encounter_id: int = wild_pokemon.encounter_id
         pokemon_data: pogoprotos.PokemonProto = wild_pokemon.pokemon
-        mon_id: int = pokemon_data.id
+        mon_id: int = pokemon_data.pokemon_id
         pokemon_display: pogoprotos.PokemonDisplayProto = pokemon_data.pokemon_display
         weather_boosted: int = pokemon_display.weather_boosted_condition
         if encounter_id < 0:
@@ -361,7 +361,7 @@ class DbPogoProtoSubmitRaw:
         logger.debug3("Updating IV sent for encounter at {}", timestamp)
 
         pokemon_data: pogoprotos.PokemonProto = encounter_proto.pokemon
-        mon_id: int = pokemon_data.id
+        mon_id: int = pokemon_data.pokemon_id
         display: pogoprotos.PokemonDisplayProto = pokemon_data.pokemon_display
         weather_boosted: int = display.weather_boosted_condition
         encounter_id: int = display.display_id
@@ -873,7 +873,7 @@ class DbPogoProtoSubmitRaw:
                         raids_seen += 1
                         raid_info: pogoprotos.RaidInfoProto = gym.raid_info
 
-                        pokemon_id: Optional[int] = raid_info.raid_pokemon.pokemon_id
+                        pokemon_id: Optional[int] = raid_info.raid_pokemon.pokemon_id.real
                         cp: int = raid_info.raid_pokemon.cp
                         move_1: int = raid_info.raid_pokemon.move1
                         move_2: int = raid_info.raid_pokemon.move2
