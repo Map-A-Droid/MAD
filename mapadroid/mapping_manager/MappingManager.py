@@ -334,6 +334,8 @@ class MappingManager(AbstractMappingManager):
             return devicemapping_entry.device_settings.rotate_on_lvl_30
         elif key == MappingManagerDevicemappingKey.EXTENDED_PERMISSION_TOGGLING:
             return devicemapping_entry.device_settings.extended_permission_toggling
+        elif key == MappingManagerDevicemappingKey.EXTENDED_LOGIN:
+            return devicemapping_entry.pool_settings.extended_login if devicemapping_entry.pool_settings and devicemapping_entry.pool_settings.extended_login else devicemapping_entry.device_settings.extended_login
         else:
             # TODO: Get all the DB values...
             pass

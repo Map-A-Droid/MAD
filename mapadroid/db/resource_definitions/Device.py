@@ -326,6 +326,16 @@ class Device(Resource):
                     "expected": str,
                     "default": "1401, 1402, 1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301"
                 }
-            }
+            },
+            "extended_login": {
+                "settings": {
+                    "type": "option",
+                    "values": [False, True],
+                    "require": False,
+                    "description": "Extended login routine triggering full stop of PD. Default: False. "
+                                   "Breaks forced version suppression.",
+                    "expected": bool
+                }
+            },
         }
     }
