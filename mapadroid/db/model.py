@@ -641,6 +641,7 @@ class SettingsDevicepool(Base):
     injection_thresh_reboot = Column(INTEGER(11))
     screendetection = Column(BOOLEAN)
     enhanced_mode_quest_safe_items = Column(String(500, 'utf8mb4_unicode_ci'))
+    extended_login = Column(BOOLEAN, server_default=text("'0'"))
 
     instance = relationship('MadminInstance')
 
@@ -716,6 +717,7 @@ class SettingsDevice(Base):
     interface_type = Column(ENUM('lan', 'wlan'), server_default=text("'lan'"))
     softbar_enabled = Column(BOOLEAN, server_default=text("'0'"))
     extended_permission_toggling = Column(BOOLEAN, server_default=text("'0'"))
+    extended_login = Column(BOOLEAN, server_default=text("'0'"))
 
     instance = relationship('MadminInstance')
     pool = relationship('SettingsDevicepool')
