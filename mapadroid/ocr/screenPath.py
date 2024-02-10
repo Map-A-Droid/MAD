@@ -418,18 +418,20 @@ class WordToScreenMatching(object):
             return ScreenType.ERROR
         usernames_to_check_for: List[str] = usernames.split(",")
         if await self.parse_ggl(await self._communicator.uiautomator(), usernames_to_check_for):
-            logger.info("Sleeping 50 seconds after clicking the account to login with - please wait!")
+            logger.info("Sleeping 120 seconds after clicking the account to login with - please wait!")
             await asyncio.sleep(120)
-            await self._communicator.passthrough(
-                "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
-            await asyncio.sleep(2)
-            await self._communicator.passthrough(
-                "su -c 'am start-foreground-service -n com.mad.pogodroid/.services.HookReceiverService'")
-            await asyncio.sleep(5)
-            await self._communicator.stop_app("com.nianticlabs.pokemongo")
-            await asyncio.sleep(10)
-            await self._communicator.start_app("com.nianticlabs.pokemongo")
-            await asyncio.sleep(120)
+            if await self.get_devicesettings_value(MappingManagerDevicemappingKey.EXTENDED_LOGIN, False):
+                logger.info("Extended login enabled. Restarting pogo with PD fully enabled again")
+                await self._communicator.passthrough(
+                    "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value false'")
+                await asyncio.sleep(2)
+                await self._communicator.passthrough(
+                    "su -c 'am start-foreground-service -n com.mad.pogodroid/.services.HookReceiverService'")
+                await asyncio.sleep(5)
+                await self._communicator.stop_app("com.nianticlabs.pokemongo")
+                await asyncio.sleep(10)
+                await self._communicator.start_app("com.nianticlabs.pokemongo")
+                await asyncio.sleep(120)
         else:
             screentype = ScreenType.ERROR
         return screentype
@@ -590,15 +592,17 @@ class WordToScreenMatching(object):
             await asyncio.sleep(2)
 
     async def __handle_birthday_screen(self) -> None:
-        # First disable pogodroid at this point to avoid the injection triggering any checks in other libraries
-        await self._communicator.passthrough(
-            "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value true'")
-        await asyncio.sleep(5)
-        await self._communicator.passthrough(
-            "su -c 'am stopservice -n com.mad.pogodroid/.services.HookReceiverService'")
-        await self._communicator.stop_app("com.nianticlabs.pokemongo")
-        await asyncio.sleep(10)
-        await self._communicator.start_app("com.nianticlabs.pokemongo")
+        if await self.get_devicesettings_value(MappingManagerDevicemappingKey.EXTENDED_LOGIN, False):
+            logger.info("Extended login, stopping PD entirely and restarting POGO.")
+            # First disable pogodroid at this point to avoid the injection triggering any checks in other libraries
+            await self._communicator.passthrough(
+                "su -c 'am broadcast -a com.mad.pogodroid.SET_INTENTIONAL_STOP -c android.intent.category.DEFAULT -n com.mad.pogodroid/.IntentionalStopSetterReceiver --ez value true'")
+            await asyncio.sleep(5)
+            await self._communicator.passthrough(
+                "su -c 'am stopservice -n com.mad.pogodroid/.services.HookReceiverService'")
+            await self._communicator.stop_app("com.nianticlabs.pokemongo")
+            await asyncio.sleep(10)
+            await self._communicator.start_app("com.nianticlabs.pokemongo")
         await asyncio.sleep(30)
 
         # After having restarted pogo, we should again be on the birthday screen now and PD is turned off
