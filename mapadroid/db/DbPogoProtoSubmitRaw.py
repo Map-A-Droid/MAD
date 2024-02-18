@@ -6,11 +6,13 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import sqlalchemy
 from bitstring import BitArray
-from google.protobuf.internal.containers import RepeatedCompositeFieldContainer, RepeatedScalarFieldContainer
+from google.protobuf.internal.containers import (
+    RepeatedCompositeFieldContainer, RepeatedScalarFieldContainer)
 from redis import Redis
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 from mapadroid.db.helper.GymDetailHelper import GymDetailHelper
 from mapadroid.db.helper.GymHelper import GymHelper
 from mapadroid.db.helper.PokemonDisplayHelper import PokemonDisplayHelper
@@ -44,10 +46,9 @@ from mapadroid.utils.madConstants import (REDIS_CACHETIME_CELLS,
                                           REDIS_CACHETIME_ROUTE,
                                           REDIS_CACHETIME_STOP_DETAILS,
                                           REDIS_CACHETIME_WEATHER)
-from mapadroid.utils.madGlobals import MonSeenTypes, QuestLayer, MadGlobals
+from mapadroid.utils.madGlobals import MadGlobals, MonSeenTypes, QuestLayer
 from mapadroid.utils.questGen import QuestGen
 from mapadroid.utils.s2Helper import S2Helper
-import mapadroid.mitm_receiver.protos.Rpc_pb2 as pogoprotos
 
 logger = get_logger(LoggerEnums.database)
 
@@ -712,8 +713,7 @@ class DbPogoProtoSubmitRaw:
         target: Optional[int] = goal.target
         condition: RepeatedCompositeFieldContainer[pogoprotos.QuestConditionProto] = goal.condition
 
-        # TODO: Json dumping protos...
-        json_condition: str = json.dumps(condition)
+        json_condition: str = ProtoHelper.to_json(condition)
         task = await quest_gen.questtask(int(quest_type), json_condition, int(target), quest_template,
                                          quest_title_resource_id)
         quest: Optional[TrsQuest] = await TrsQuestHelper.get(session, fort_id, quest_layer)
@@ -732,7 +732,7 @@ class DbPogoProtoSubmitRaw:
         quest.quest_item_amount = item_amount
         quest.quest_target = target
         quest.quest_condition = json_condition
-        quest.quest_reward = json.dumps(rewards)
+        quest.quest_reward = ProtoHelper.to_json(rewards)
         quest.quest_task = task
         quest.quest_template = quest_template
         quest.quest_title = quest_title_resource_id
