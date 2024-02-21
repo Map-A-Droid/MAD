@@ -6,6 +6,7 @@ from loguru import logger
 from mapadroid.madmin.endpoints.routes.control.AbstractControlEndpoint import \
     AbstractControlEndpoint
 from mapadroid.mapping_manager.MappingManager import DeviceMappingsEntry
+from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 
 
 class ClearGameDataEndpoint(AbstractControlEndpoint):
@@ -29,6 +30,8 @@ class ClearGameDataEndpoint(AbstractControlEndpoint):
             pass
             # origin_logger.info('MADmin: ADB shell command successfully')
         else:
-            temp_comm = self._get_ws_server().get_origin_communicator(origin)
+            temp_comm: Optional[AbstractCommunicator] = self._get_ws_server().get_origin_communicator(origin)
+            if not temp_comm:
+                return web.Response(text="Failed fetching connection to device.")
             await temp_comm.reset_app_data("com.nianticlabs.pokemongo")
         raise web.HTTPFound(self._url_for("get_phonescreens"))
